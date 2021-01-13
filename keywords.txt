@@ -1,0 +1,242 @@
+#########################################
+# Syntax Coloring Map Firebase-ESP-Client
+#########################################
+
+#########################################
+# Classes (KEYWORD1)
+#########################################
+
+Firebase    KEYWORD1
+FirebaseData    KEYWORD1
+FirebaseStream  KEYWORD1
+MultiPathStream KEYWORD1
+QueryFilter KEYWORD1
+QueueManager    KEYWORD1
+QueueInfo   KEYWORD1
+FCM KEYWORD1
+RTDB    KEYWORD1
+Storage KEYWORD1
+FirebaseJson    KEYWORD1
+FirebaseJsonArray   KEYWORD1
+FirebaseJsonData    KEYWORD1
+FirebaseConfig  KEYWORD1
+FirebaseAuth    KEYWORD1
+
+
+###############################################
+# Methods and Functions for Firebase (KEYWORD2)
+###############################################
+
+begin   KEYWORD2
+reconnectWiFi   KEYWORD2
+setFloatDigits  KEYWORD2
+setDoubleDigits KEYWORD2
+setReadTimeout  KEYWORD2
+setwriteSizeLimit   KEYWORD2
+getShallowData  KEYWORD2
+enableClassicRequest    KEYWORD2
+setPriority KEYWORD2
+getPriority KEYWORD2
+getRules    KEYWORD2
+setRules    KEYWORD2
+pathExist   KEYWORD2
+getETag KEYWORD2
+enableClassicRequest    KEYWORD2
+pushInt KEYWORD2
+pushFloat   KEYWORD2
+pushDouble  KEYWORD2
+pushBool    KEYWORD2
+pushString  KEYWORD2
+pushJSON    KEYWORD2
+pushBlob    KEYWORD2
+pushFile    KEYWORD2
+pushTimestamp   KEYWORD2
+setInt  KEYWORD2
+setFloat    KEYWORD2
+setDouble   KEYWORD2
+setBool KEYWORD2
+setString   KEYWORD2
+setJSON KEYWORD2
+setBlob KEYWORD2
+setFile KEYWORD2
+setTimestamp    KEYWORD2
+updateNode  KEYWORD2
+updateNodeSilent    KEYWORD2
+getInt  KEYWORD2
+getFloat    KEYWORD2
+getDouble   KEYWORD2
+getBool KEYWORD2
+getString   KEYWORD2
+getJSON KEYWORD2
+getBlob KEYWORD2
+getFile KEYWORD2
+deleteNode  KEYWORD2
+beginStream KEYWORD2
+beginMultiPathStream    KEYWORD2
+readStream  KEYWORD2
+endStream   KEYWORD2
+setStreamCallback   KEYWORD2
+setMultiPathStreamCallback  KEYWORD2
+removeStreamCallback    KEYWORD2
+removeMultiPathStreamCallback   KEYWORD2
+beginAutoRunErrorQueue  KEYWORD2
+endAutoRunErrorQueue    KEYWORD2
+clearErrorQueue KEYWORD2
+backup  KEYWORD2
+restore KEYWORD2
+sdBegin KEYWORD2
+setMaxRetry KEYWORD2
+setMaxErrorQueue    KEYWORD2
+saveErrorQueue  KEYWORD2
+deleteStorageFile   KEYWORD2
+restoreErrorQueue   KEYWORD2
+errorQueueCount KEYWORD2
+isErrorQueueFull    KEYWORD2
+processErrorQueue   KEYWORD2
+getErrorQueueID KEYWORD2
+isErrorQueueExisted KEYWORD2
+errorToString   KEYWORD2
+sendMessage KEYWORD2
+broadcastMessage    KEYWORD2
+sendTopic   KEYWORD2
+setStreamTaskStackSize  KEYWORD2
+allowMultipleRequests    KEYWORD2
+authTokenInfo   KEYWORD2
+signUp  KEYWORD2
+sendEmailVerification   KEYWORD2
+sendResetPassword   KEYWORD2
+
+#############################################
+# Methods for Firebase Data object (KEYWORD2)
+#############################################
+
+pauseFirebase   KEYWORD2
+getWiFiClient   KEYWORD2
+dataType    KEYWORD2
+eventType   KEYWORD2
+ETag    KEYWORD2
+streamPath  KEYWORD2
+dataPath    KEYWORD2
+errorReason KEYWORD2
+intData KEYWORD2
+floatData   KEYWORD2
+doubleData  KEYWORD2
+boolData    KEYWORD2
+stringData  KEYWORD2
+jsonData    KEYWORD2
+jsonObjectPtr   KEYWORD2
+jsonObject  KEYWORD2
+jsonArrayPtr    KEYWORD2
+jsonArray   KEYWORD2
+jsonDataPtr KEYWORD2
+jsonString  KEYWORD2
+blobData    KEYWORD2
+pushName    KEYWORD2
+isStream    KEYWORD2
+httpConnected   KEYWORD2
+streamTimeout   KEYWORD2
+dataAvailable   KEYWORD2
+streamAvailable KEYWORD2
+mismatchDataType    KEYWORD2
+httpCode    KEYWORD2
+getBackupFilename   KEYWORD2
+getBackupFileSize   KEYWORD2
+clear   KEYWORD2
+fileTransferError   KEYWORD2
+payload KEYWORD2
+queryFilter KEYWORD2
+empty   KEYWORD2
+stopWiFiClient  KEYWORD2
+fileStream  KEYWORD2
+setResponseSize KEYWORD2
+bufferOverflow  KEYWORD2
+
+########################################################
+# Methods for Firebase Cloud Messaging Object (KEYWORD2)
+########################################################
+addDeviceToken  KEYWORD2
+removeDeviceToken   KEYWORD2
+clearDeviceToken    KEYWORD2
+setNotifyMessage    KEYWORD2
+addCustomNotifyMessage  KEYWORD2
+clearNotifyMessage  KEYWORD2
+setDataMessage  KEYWORD2
+clearDataMessage    KEYWORD2
+setPriority KEYWORD2
+setCollapseKey  KEYWORD2
+setTimeToLive   KEYWORD2
+setTopic    KEYWORD2
+getSendResult   KEYWORD2
+
+####################################
+# Methods for QueryFilter (KEYWORD2)
+####################################
+
+orderBy KEYWORD2
+limitToFirst    KEYWORD2
+limitToLast KEYWORD2
+startAt KEYWORD2
+endAt   KEYWORD2
+equalTo KEYWORD2
+
+################################
+# Methods for QueInfo (KEYWORD2)
+################################
+
+totalQueues KEYWORD2
+currentQueueID  KEYWORD2
+isQueueFull KEYWORD2
+dataType    KEYWORD2
+firebaseMethod  KEYWORD2
+dataPath    EYWORD2
+
+#######################################
+# Struct (LITERAL1)
+#######################################
+
+FirebaseDataType    LITERAL1
+FirebaseMethod  LITERAL1
+QueueStorageType    LITERAL1
+QueueItem   LITERAL1
+token_info_t    LITERAL1
+
+
+###########################################################
+# Methods for FirebaseJSON and FirebaseJsonArray (KEYWORD2)
+###########################################################
+
+clear   KEYWORD2
+setJsonData KEYWORD2
+add KEYWORD2
+toString    KEYWORD2
+get KEYWORD2
+parse   KEYWORD2
+iteratorBegin   KEYWORD2
+iteratorEnd KEYWORD2
+iteratorGet KEYWORD2
+set KEYWORD2
+remove  KEYWORD2
+size    KEYWORD2
+stringValue KEYWORD2
+intValue    KEYWORD2
+floatValue  KEYWORD2
+doubleValue KEYWORD2
+boolValue   KEYWORD2
+type    KEYWORD2
+typeNum KEYWORD2
+success KEYWORD2
+getArray    KEYWORD2
+getJson KEYWORD2
+
+######################################
+# Constants (LITERAL1)
+#######################################
+JSON_UNDEFINED  LITERAL1
+JSON_OBJECT LITERAL1
+JSON_ARRAY  LITERAL1
+JSON_STRING LITERAL1
+JSON_INT    LITERAL1
+JSON_FLOAT  LITERAL1
+JSON_DOUBLE LITERAL1
+JSON_BOOL   LITERAL1
+JSON_NULL   LITERAL1
