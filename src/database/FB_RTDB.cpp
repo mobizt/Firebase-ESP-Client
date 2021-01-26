@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.0
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created January 26, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -3865,16 +3865,13 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                 }
                 else
                 {
-                    if (chunkBufSize <= 2)
-                        chunkBufSize++;
-
                     delay(0);
                     dataTime = millis();
                     //the next chunk data can be the remaining http header
                     if (isHeader)
                     {
                         //read one line of next header field until the empty header has found
-                        tmp = ut->newS(chunkBufSize);
+                        tmp = ut->newS(chunkBufSize + 10);
                         int readLen = ut->readLine(stream, tmp, chunkBufSize);
                         bool headerEnded = false;
 
@@ -3949,12 +3946,12 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                         {
                             pChunkIdx++;
 
-                            pChunk = ut->newS(chunkBufSize + 1);
+                            pChunk = ut->newS(chunkBufSize + 10);
 
                             if (!payload || pstate == 0)
                             {
                                 pstate = 1;
-                                payload = ut->newS(payloadLen + 1);
+                                payload = ut->newS(payloadLen + 10);
                             }
 
                             //read the avilable data

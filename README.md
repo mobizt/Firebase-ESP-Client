@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino ClientLibrary for ESP8266 and ESP32 v 1.0.1
+Google's Firebase Arduino ClientLibrary for ESP8266 and ESP32 v 1.0.2
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -24,9 +24,9 @@ This library supports ESP8266 and ESP32 MCU from Espressif. The following are pl
  * TTGO T8 V1.8
 
 
- ## Unsupported Mobile network modem bridge
+ ## Unsupported AT command and Mobile Network modem Bridge
 
-The library access the internet through WiFi connection.  The others UART/Serial bridge mobile network modem which work with AT commands and ESP8266 AT commands were unsupported.
+The library access to the Firebase server through the WiFi for the internet connection.  The others UART/Serial mobile network modem bridge connection and AT commands were not supported.
 
 
 ## Features
@@ -160,16 +160,46 @@ Firebase.RTDB.setMaxErrorQueue(&fbdo, 30);
 //device connected behind the Firewall that allows only GET and POST requests.
 Firebase.RTDB.enableClassicRequest(&fbdo, true);
 
+#if defined(ESP8266)
 //Optional, set the size of BearSSL WiFi to receive and transmit buffers
 //Firebase may not support the data transfer fragmentation, you may need to reserve the buffer to match
 //the data to transport.
 fbdo.setBSSLBufferSize(1024, 1024); //minimum size is 512 bytes, maximum size is 16384 bytes
+#endif
+
 
 //Optional, set the size of HTTP response buffer
 //Prevent out of memory for large payload but data may be truncated and can't determine its type.
 fbdo.setResponseSize(1024); //minimum size is 1024 bytes
 ```
+
+### Authentication
+
+This library supports many authentication methods.
+
 See [Other authentication examples](/examples/Authentications) for more authentication methods.
+
+Some authentication methods need the token generaion and exchanging process which take more time than using the legacy token.
+
+The authentication with custom and OAuth2.0 tokens take the time in overall process included NTP time acquisition, JWT token generation and signing, more than 10 seconds in ESP8266 and 1 or 2 seconds in ESP32.
+
+While using Email and password sign-in which use in the id token generation process takes minimum time.
+
+The time for legacy token generation is zero as it was taken from database secret (FIREBASE_AUTH in the example).
+
+The data transmission time depends on the SSL/TLS handshaking, the size of http request header/payload and response header/payload.
+
+The time used in data transmission also depend on the size of token (string) which is the part of request header.
+
+The legacy token size is smallest, approx 40 bytes, the lowest data trasmission time (averaged 200 - 400 ms for 1 byte of payload).
+
+The id token using sign-in Email and password has approx 900 bytes in its size, the maximum data trasmission time (averaged 400 - 500 ms for 1 byte of payload).
+
+
+The SSL/TLS handshake process may take 1-2 seconds to complete. The http session will be reused when you dont share a Firebase Data object usage among with the normal Firebase calls i.e. set, get, push, update and delete with other stream, messaging and storage operations.
+
+The system time setting is required when you use the custom and OAuth2.0 tokens or when you provide the certificate for secured transmission, and it used the time for acquiring the NTP server time data.
+
 
 
 ### Read Data
