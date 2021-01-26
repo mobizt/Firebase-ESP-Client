@@ -37,6 +37,7 @@
 
 FB_RTDB::FB_RTDB()
 {
+    
 }
 
 FB_RTDB::~FB_RTDB()
@@ -3801,7 +3802,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
     }
 
     dataTime = millis();
-
+   
     if (chunkBufSize > 1)
     {
         while (chunkBufSize > 0)

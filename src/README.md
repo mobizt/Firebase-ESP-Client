@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 1.0.2
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 1.0.3
 
 
 ## Global functions

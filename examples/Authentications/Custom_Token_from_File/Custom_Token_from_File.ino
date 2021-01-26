@@ -244,8 +244,6 @@ void prepareDatabaseRules(const char *path, const char *var, const char *readVal
     //We will sign in using legacy token (database secret) for full RTDB access
     config.signer.tokens.legacy_token = FIREBASE_AUTH;
     Firebase.begin(&config, &auth);
-    //Set to empty string to sign in with other tokens
-    config.signer.tokens.legacy_token = "";
 
     Serial.println("------------------------------------");
     Serial.println("Read database ruless...");
@@ -307,6 +305,9 @@ void prepareDatabaseRules(const char *path, const char *var, const char *readVal
     {
         Serial.println("Failed to read the database rules, " + fbdo.errorReason());
     }
+    
+    //Set to empty string to sign in with other tokens
+    config.signer.tokens.legacy_token = "";
 }
 
 void printResult(FirebaseData &data)

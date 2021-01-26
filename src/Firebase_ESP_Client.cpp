@@ -1,5 +1,5 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.cpp version 1.0.2
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -75,7 +75,9 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
             _cfg->signer.tokens.status = token_status_uninitialized;
     }
 
-    if (Signer.tokenSigninDataReady())
+    if (_cfg->signer.tokens.legacy_token.length() > 0)
+        Signer.setTokenType(token_type_legacy_token);
+    else if (Signer.tokenSigninDataReady())
     {
         if (_auth->token.uid.length() == 0)
             Signer.setTokenType(token_type_oauth2_access_token);
@@ -84,8 +86,6 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     }
     else if (Signer.userSigninDataReady())
         Signer.setTokenType(token_type_id_token);
-    else if (_cfg->signer.tokens.legacy_token.length() > 0)
-        Signer.setTokenType(token_type_legacy_token);
 
     struct fb_esp_url_info_t uinfo;
     _cfg->_int.fb_auth_uri = _cfg->signer.tokens.token_type == token_type_legacy_token || _cfg->signer.tokens.token_type == token_type_id_token;
