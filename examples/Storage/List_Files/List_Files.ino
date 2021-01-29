@@ -80,7 +80,7 @@ void setup()
     fbdo.setResponseSize(1024);
 
     Serial.println("------------------------------------");
-    Serial.println("Get file meta datatest...");
+    Serial.println("List files test...");
 
     if (Firebase.Storage.listFiles(&fbdo, STORAGE_BUCKET_ID))
     {

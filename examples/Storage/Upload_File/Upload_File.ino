@@ -82,7 +82,7 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println("Upload file test...");
 
-    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID, "path/to/local/fie/filename.png", mem_storage_type_flash, "path/to/save/filename.png", "image/png"))
+    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID, "path/to/local/file/filename.png", mem_storage_type_flash, "path/to/save/filename.png", "image/png"))
     {
 
         Serial.printf("Download URL: %s\n", fbdo.downloadURL().c_str());

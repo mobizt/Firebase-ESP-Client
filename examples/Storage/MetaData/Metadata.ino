@@ -80,9 +80,9 @@ void setup()
     fbdo.setResponseSize(1024);
 
     Serial.println("------------------------------------");
-    Serial.println("Get file meta datatest...");
+    Serial.println("Get file meta data test...");
 
-    if (Firebase.Storage.getMetadata(&fbdo, STORAGE_BUCKET_ID, "path/to/fie/filename.png"))
+    if (Firebase.Storage.getMetadata(&fbdo, STORAGE_BUCKET_ID, "path/to/file/filename.png"))
     {
         Serial.println("PASSED");
         FileMetaInfo meta = fbdo.metaData();
