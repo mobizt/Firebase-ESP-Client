@@ -170,6 +170,7 @@ class FirebaseJson
     friend class FirebaseStream;
     friend class FB_RTDB;
     friend class FB_CM;
+    friend class FB_Firestore;
 
 public:
     typedef enum

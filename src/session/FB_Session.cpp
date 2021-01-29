@@ -469,7 +469,12 @@ String FirebaseData::fileTransferError()
 
 String FirebaseData::payload()
 {
-    return _ss.rtdb.data.c_str();
+    if (_ss.con_mode== fb_esp_con_mode_rtdb)
+        return _ss.rtdb.data.c_str();
+    else if (_ss.con_mode == fb_esp_con_mode_firestore)
+        return _ss.cfs.payload.c_str();
+    else
+        return "";
 }
 
 String FirebaseData::errorReason()

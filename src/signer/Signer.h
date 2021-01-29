@@ -48,6 +48,7 @@ class Firebase_Signer
     friend class FirebaseStream;
     friend class QueryFilter;
     friend class MultiPathStream;
+    friend class FB_Firestore;
 
 public:
     Firebase_Signer();

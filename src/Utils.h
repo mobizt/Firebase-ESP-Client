@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.0
+ * Google's Firebase Util class, Utils.h version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created January 29, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
@@ -1520,6 +1520,23 @@ public:
         }
 #endif
         return true;
+    }
+
+    void splitTk(const std::string &str, std::vector<std::string> &tk, const char *delim)
+    {
+        std::size_t current, previous = 0;
+        current = str.find(delim, previous);
+        std::string s;
+        while (current != std::string::npos)
+        {
+            s = str.substr(previous, current - previous);
+            tk.push_back(s);
+            previous = current + strlen(delim);
+            current = str.find(delim, previous);
+        }
+        s = str.substr(previous, current - previous);
+        tk.push_back(s);
+        std::string().swap(s);
     }
 
 private:

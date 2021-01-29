@@ -105,6 +105,14 @@ authTokenInfo   KEYWORD2
 signUp  KEYWORD2
 sendEmailVerification   KEYWORD2
 sendResetPassword   KEYWORD2
+exportDocuments KEYWORD2
+importDocuments KEYWORD2
+createDocument  KEYWORD2
+patchDocument   KEYWORD2
+getDocument KEYWORD2
+deleteDocument  KEYWORD2
+listDocuments   KEYWORD2
+listCollectionIds   KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)

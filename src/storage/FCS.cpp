@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Storage class, FCS.cpp version 1.0.0
+ * Google's Firebase Cloud Storage class, FCS.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created January 29, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -161,13 +161,43 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
 
     if (req->requestType == fb_esp_fcs_request_type_download)
     {
-        Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "w");
+        if (req->storageType == mem_storage_type_sd)
+        {
+            if (!ut->sdTest(Signer.getCfg()->_int.fb_file))
+            {
+                fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
+                return false;
+            }
+            Signer.getCfg()->_int.fb_file = SD.open(req->localFileName.c_str(), FILE_WRITE);
+        }
+        else if (req->storageType == mem_storage_type_flash)
+        {
+            if (!Signer.getCfg()->_int.fb_flash_rdy)
+                Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+            Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "w");
+        }
     }
     else
     {
         if (req->requestType == fb_esp_fcs_request_type_upload)
         {
-            Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "r");
+            if (req->storageType == mem_storage_type_sd)
+            {
+                if (!ut->sdTest(Signer.getCfg()->_int.fb_file))
+                {
+                    fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
+                    return false;
+                }
+                   
+                Signer.getCfg()->_int.fb_file = SD.open(req->localFileName.c_str(), FILE_READ);
+            }
+            else if (req->storageType == mem_storage_type_flash)
+            {
+                if (!Signer.getCfg()->_int.fb_flash_rdy)
+                    Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+                Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "r");
+            }
+
             fbdo->_ss.fcs.fileSize = Signer.getCfg()->_int.fb_file.size();
         }
     }

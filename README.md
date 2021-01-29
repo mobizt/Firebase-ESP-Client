@@ -1,10 +1,10 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino ClientLibrary for ESP8266 and ESP32 v 1.0.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 1.1.0
 
 
-This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
+This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
 
 
 * [Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
@@ -34,6 +34,8 @@ The library access to the Firebase server through the WiFi for the internet conn
 
 
 * **Supports Realtime database.**
+
+* **Supports Firebase Cloud Firestore (REST APIs).**
 
 * **Supports Firebase Cloud Storage.**
 
@@ -102,9 +104,9 @@ Go to menu **Files** -> **Examples** -> **Firebase-ESP-Client-master** and choos
 ## Usages
 
 
-See [All examples](/examples) for complete usages.
+See [this](/examples) for complete usages.
 
-See [Function description](/src/README.md) for all available functions.
+See [this](/src/README.md) for all functions details.
 
 
 
@@ -200,6 +202,31 @@ The SSL/TLS handshake process may take 1-2 seconds to complete. The http session
 
 The system time setting is required when you use the custom and OAuth2.0 tokens or when you provide the certificate for secured transmission, and it used the time for acquiring the NTP server time data.
 
+To use Email/Password sign-in authentication as in the examples, the Email/Password Sign-in provider must be enabled.
+
+![Enable Email/Password Sign-in provider](/media/images/Enable_Email_Password_Provider.png)
+
+To get API Key used in Email/Password sign-in
+
+![API Key](/media/images/API_Key.png)
+
+To get the Service accounts key JSON file used in Custom and OAuth2.0 tokens athentications.
+
+![Service Account Key File](/media/images/Service_Account_Key.png)
+
+
+The Firebase Host and database secret for RTDB usages.
+
+![Firebase Host](/media/images/Firebase_Host.png)
+
+![Firebase Auth](/media/images/Firebase_Auth.png)
+
+
+
+
+## Realtime Database
+
+See [RTDB examples](/examples/RTDB) for complete usages.
 
 
 ### Read Data
@@ -976,13 +1003,64 @@ else
 ```
 
 
+## Firebase Cloud Firestore
+
+This library implements a REST Client for Cloud Firestore database. The RPC APIs are not implemented in this library. 
+
+The support functions for Cloud Firestore are export, import, create, patch, get, delete the document and list the documents and collection.
+
+See the [Firestore examples](/examples/Firestore) for the usages.
+
+The unsecured security rules that allows the public usage of Firestore is
+
+```
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /todos/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+For secured Firestore usages, the security rules should include the auth field similar to this.
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth.uid != null;
+    }
+  }
+}
+```
+
+Some firestore functions requires the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
+
+You may still get the error permission denined error even using OAuth2.0 authen with Service Account credentials, because the client in the Service Account does not has the owner permission.
+
+To assign the owner permission to the client.
+
+Go to https://console.cloud.google.com/iam-admin
+
+Choose the project, look at the member which matches the client email in service account credentials. Edit the permission, add the role Owner under the Basic
+
+![IAM Edit Permission 1](/media/images/IAM_Permission_Role1.png)
+
+![IAM Edit Permission 2](/media/images/IAM_Permission_Role2.png)
+
+![IAM Edit Permission 3](/media/images/IAM_Permission_Role3.png)
 
 
-## Firebase Cloud Storage (FCS)
+
+
+## Firebase Cloud Storage
 
 The Firebase Cloud Storage bucket file upload, download, read its meta data and listing are supported. 
 
 See the [Storage examples](/examples/Storage) for the usages.
+
 
 
 ## Parse, Create and Edit JSON Objects

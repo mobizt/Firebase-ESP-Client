@@ -1,11 +1,11 @@
 /**
- * Created January 12, 2021
+ * Created January 29, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -64,7 +64,7 @@ class FirebaseData;
 #define MAX_BLOB_PAYLOAD_SIZE 1024
 #define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
 
-    enum fb_esp_fcm_msg_mode
+enum fb_esp_fcm_msg_mode
 {
     fb_esp_fcm_msg_mode_legacy_http,
     fb_esp_fcm_msg_mode_httpv1,
@@ -87,7 +87,8 @@ enum fb_esp_con_mode
     fb_esp_con_mode_rtdb,
     fb_esp_con_mode_rtdb_stream,
     fb_esp_con_mode_fcm,
-    fb_esp_con_mode_storage
+    fb_esp_con_mode_storage,
+    fb_esp_con_mode_firestore
 };
 
 enum fb_esp_data_type
@@ -190,6 +191,19 @@ enum fb_esp_fcs_request_type
     fb_esp_fcs_request_type_get_meta,
     fb_esp_fcs_request_type_delete,
     fb_esp_fcs_request_type_list
+};
+
+enum fb_esp_firestore_request_type
+{
+    fb_esp_firestore_request_type_undefined,
+    fb_esp_firestore_request_type_export_docs,
+    fb_esp_firestore_request_type_import_docs,
+    fb_esp_firestore_request_type_get_doc,
+    fb_esp_firestore_request_type_create_doc,
+    fb_esp_firestore_request_type_patch_doc,
+    fb_esp_firestore_request_type_delete_doc,
+    fb_esp_firestore_request_type_list_doc,
+    fb_esp_firestore_request_type_list_collection
 };
 
 struct fb_esp_rtdb_request_info_t
@@ -382,22 +396,22 @@ struct fb_esp_stream_info_t
 struct fb_esp_cfg_int_t
 {
     bool fb_multiple_requests = false;
-    bool fb_processing  = false;
-    uint8_t fb_stream_idx  = 0;
+    bool fb_processing = false;
+    uint8_t fb_stream_idx = 0;
     fs::File fb_file;
     bool fb_sd_rdy = false;
-    bool fb_flash_rdy  = false;
-     bool fb_sd_used  = false;
-     bool fb_reconnect_wifi  = false;
-     unsigned long fb_last_reconnect_millis  = 0;
-     uint16_t fb_reconnect_tmo  = WIFI_RECONNECT_TIMEOUT;
-     bool fb_clock_rdy  = false;
-     float fb_gmt_offset  = 0;
-     std::shared_ptr<const char> fb_caCert = nullptr;
-     uint8_t fb_float_digits  = 5;
-     uint8_t fb_double_digits  = 9;
-     bool fb_auth_uri  = false;
-     std::vector<std::reference_wrapper<FirebaseData>> fb_sdo;
+    bool fb_flash_rdy = false;
+    bool fb_sd_used = false;
+    bool fb_reconnect_wifi = false;
+    unsigned long fb_last_reconnect_millis = 0;
+    uint16_t fb_reconnect_tmo = WIFI_RECONNECT_TIMEOUT;
+    bool fb_clock_rdy = false;
+    float fb_gmt_offset = 0;
+    std::shared_ptr<const char> fb_caCert = nullptr;
+    uint8_t fb_float_digits = 5;
+    uint8_t fb_double_digits = 9;
+    bool fb_auth_uri = false;
+    std::vector<std::reference_wrapper<FirebaseData>> fb_sdo;
 };
 
 struct fb_esp_cfg_t
@@ -710,6 +724,13 @@ struct fb_esp_fcs_info_t
     struct fb_esp_fcs_file_list_t files;
 };
 
+struct fb_esp_firestore_info_t
+{
+    fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
+    int contentLength = 0;
+    std::string payload = "";
+};
+
 struct fb_esp_session_info_t
 {
     FirebaseJson json;
@@ -729,6 +750,7 @@ struct fb_esp_session_info_t
     struct fb_esp_gcs_info_t gcs;
     struct fb_esp_fcs_info_t fcs;
     struct fb_esp_fcm_info_t fcm;
+    struct fb_esp_firestore_info_t cfs;
 
 #if defined(ESP8266)
     uint16_t bssl_rx_size = 512;
@@ -755,6 +777,27 @@ struct fb_esp_fcs_req_t
     fb_esp_fcs_request_type requestType = fb_esp_fcs_request_type_undefined;
 };
 
+struct fb_esp_firestore_req_t
+{
+    std::string projectId = "";
+    std::string databaseId = "";
+    std::string collectionId = "";
+    std::string documentId = "";
+    std::string documentPath = "";
+    std::string mask = "";
+    std::string updateMask = "";
+    std::string payload = "";
+    std::string exists = "";
+    std::string updateTime = "";
+    std::string readTime = "";
+    std::string transaction = "";
+    int pageSize = 10;
+    std::string pageToken = "";
+    std::string orderBy = "";
+    bool showMissing = false;
+    fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
+};
+
 typedef struct fb_esp_fcs_meta_info_t FileMetaInfo;
 typedef struct fb_esp_fcs_file_list_t FileList;
 typedef struct fb_esp_fcs_file_list_item_t FileItem;
@@ -764,7 +807,6 @@ typedef struct fb_esp_fcm_legacy_http_message_info_t FCM_Legacy_HTTP_Message;
 typedef struct fb_esp_fcm_http_v1_message_info_t FCM_HTTPv1_JSON_Message;
 
 typedef std::function<void(void)> callback_function_t;
-
 
 static const char fb_esp_pgm_str_1[] PROGMEM = "/";
 static const char fb_esp_pgm_str_2[] PROGMEM = ".json?auth=";
@@ -1106,6 +1148,29 @@ static const char fb_esp_pgm_str_336[] PROGMEM = "?details=true";
 static const char fb_esp_pgm_str_337[] PROGMEM = "application";
 static const char fb_esp_pgm_str_338[] PROGMEM = "sandbox";
 static const char fb_esp_pgm_str_339[] PROGMEM = "apns_tokens";
+static const char fb_esp_pgm_str_340[] PROGMEM = "firestore.";
+static const char fb_esp_pgm_str_341[] PROGMEM = "/databases/";
+static const char fb_esp_pgm_str_342[] PROGMEM = "(default)";
+static const char fb_esp_pgm_str_343[] PROGMEM = "?documentId=";
+static const char fb_esp_pgm_str_344[] PROGMEM = ":exportDocuments";
+static const char fb_esp_pgm_str_345[] PROGMEM = ":importDocuments";
+static const char fb_esp_pgm_str_346[] PROGMEM = "collectionIds";
+static const char fb_esp_pgm_str_347[] PROGMEM = "outputUriPrefix";
+static const char fb_esp_pgm_str_348[] PROGMEM = "inputUriPrefix";
+static const char fb_esp_pgm_str_349[] PROGMEM = "mask.fieldPaths=";
+static const char fb_esp_pgm_str_350[] PROGMEM = "gs://";
+static const char fb_esp_pgm_str_351[] PROGMEM = "/documents";
+static const char fb_esp_pgm_str_352[] PROGMEM = "updateMask.fieldPaths=";
+static const char fb_esp_pgm_str_353[] PROGMEM = "currentDocument.exists=";
+static const char fb_esp_pgm_str_354[] PROGMEM = "currentDocument.updateTime=";
+static const char fb_esp_pgm_str_355[] PROGMEM = "transaction=";
+static const char fb_esp_pgm_str_356[] PROGMEM = "readTime=";
+static const char fb_esp_pgm_str_357[] PROGMEM = "pageSize";
+static const char fb_esp_pgm_str_358[] PROGMEM = "pageToken";
+static const char fb_esp_pgm_str_359[] PROGMEM = "orderBy=";
+static const char fb_esp_pgm_str_360[] PROGMEM = "showMissing=";
+static const char fb_esp_pgm_str_361[] PROGMEM = "=";
+static const char fb_esp_pgm_str_362[] PROGMEM = ":listCollectionIds";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

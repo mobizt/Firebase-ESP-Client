@@ -36,8 +36,8 @@
 #include "Utils.h"
 #include "stream/FB_Stream.h"
 #include "stream/FB_MP_Stream.h"
-#include "database/QueueInfo.h"
-#include "database/QueueManager.h"
+#include "rtdb/QueueInfo.h"
+#include "rtdb/QueueManager.h"
 
 #include "signer/Signer.h"
 
@@ -48,6 +48,7 @@ class FirebaseData
   friend class GG_CloudStorage;
   friend class FB_CloudStorage;
   friend class UtilsClass;
+  friend class FB_Firestore;
 
 public:
   typedef void (*StreamEventCallback)(FirebaseStream);
