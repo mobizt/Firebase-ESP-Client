@@ -50,8 +50,6 @@
 #include <FS.h>
 #include "json/FirebaseJson.h"
 
-#include "miniz/miniz.h"
-
 class FirebaseData;
 
 #define FIREBASE_PORT 443
