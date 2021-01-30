@@ -1,6 +1,6 @@
 
 /**
- *Copied version WiFiClientSecure.h version 1.0.2
+ *Copied version of WiFiClientSecure.h version 1.0.2
 */
 
 /**

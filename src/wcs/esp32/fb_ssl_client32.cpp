@@ -1,5 +1,5 @@
 /**
- *Modified version ssl_client.cpp version 1.0.2
+ *Modified version of ssl_client.cpp version 1.0.2
 */
 
 /** Provide SSL/TLS functions to ESP32 with Arduino IDE

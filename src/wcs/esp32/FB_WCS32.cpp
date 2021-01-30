@@ -1,5 +1,5 @@
 /**
- *Copied version WiFiClientSecure.cpp version 1.0.2
+ *Copied version of WiFiClientSecure.cpp version 1.0.2
 */
 
 /**

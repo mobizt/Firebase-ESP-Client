@@ -380,7 +380,7 @@ bool FB_CloudStorage::handleResponse(FirebaseData *fbdo)
 
                 if (chunkIdx == 0)
                 {
-                    //the first chunk can be stream event data (no header) or http response header
+                    //the first chunk can be http response header
                     header = ut->newS(chunkBufSize);
                     hstate = 1;
                     int readLen = ut->readLine(stream, header, chunkBufSize);

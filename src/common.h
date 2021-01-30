@@ -50,6 +50,8 @@
 #include <FS.h>
 #include "json/FirebaseJson.h"
 
+#include "miniz/miniz.h"
+
 class FirebaseData;
 
 #define FIREBASE_PORT 443
@@ -585,7 +587,7 @@ struct fb_esp_fcm_legacy_http_message_info_t
 struct fb_esp_fcm_http_v1_notification_t
 {
     const char *title = ""; //string
-    const char *body = "";  //tring
+    const char *body = "";  //string
     const char *image = ""; //string
 };
 
@@ -602,16 +604,16 @@ struct fb_esp_fcm_http_v1_android_fcm_options_t
 struct fb_esp_fcm_http_v1_android_light_settings_color_t
 {
     const char *red = "";   //string
-    const char *green = ""; //tring
-    const char *blue = "";  //tring
-    const char *alpha = ""; //tring
+    const char *green = ""; //string
+    const char *blue = "";  //string
+    const char *alpha = ""; //string
 };
 
 struct fb_esp_fcm_http_v1_android_light_settings_t
 {
     struct fb_esp_fcm_http_v1_android_light_settings_color_t color; //object {}
     const char *light_on_duration = "";                             //string
-    const char *light_off_duration = "";                            //tring
+    const char *light_off_duration = "";                            //string
 };
 
 struct fb_esp_fcm_http_v1_android_noti_t
@@ -658,12 +660,12 @@ struct fb_esp_fcm_http_v1_android_config_t
 struct fb_esp_fcm_http_v1_apns_fcm_opt_t
 {
     const char *analytics_label = ""; //string Label associated with the message's analytics data
-    const char *image = "";           //tring contains the URL of an image that is going to be displayed in a notification.
+    const char *image = "";           //string contains the URL of an image that is going to be displayed in a notification.
 };
 
 struct fb_esp_fcm_http_v1_webpush_fcm_opt_t
 {
-    const char *link = "";            //tring, The link to open when the user clicks on the notification.
+    const char *link = "";            //string, The link to open when the user clicks on the notification.
     const char *analytics_label = ""; //string, Label associated with the message's analytics data.
 };
 
@@ -685,9 +687,9 @@ struct fb_esp_fcm_http_v1_webpush_config_t
 
 struct fb_esp_fcm_http_v1_message_info_t
 {
-    const char *token = "";     //tring
-    const char *topic = "";     //tring
-    const char *condition = ""; //tring
+    const char *token = "";     //string
+    const char *topic = "";     //string
+    const char *condition = ""; //string
     struct fb_esp_fcm_http_v1_fcm_options_t fcm_options;
     struct fb_esp_fcm_http_v1_notification_t notification;
     const char *data = ""; //object {} abitrary key/value payload
