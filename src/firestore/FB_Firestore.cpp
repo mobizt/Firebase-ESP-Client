@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.0
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 29, 2021
+ * Created February 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -51,7 +51,7 @@ bool FB_Firestore::exportDocuments(FirebaseData *fbdo, const char *projectId, co
 
     std::string outputUriPrefix;
 
-    FirebaseJson js;
+    fbdo->_ss.json.clear();
 
     ut->appendP(outputUriPrefix, fb_esp_pgm_str_350);
     outputUriPrefix += bucketID;
@@ -59,24 +59,24 @@ bool FB_Firestore::exportDocuments(FirebaseData *fbdo, const char *projectId, co
     outputUriPrefix += storagePath;
 
     char *tmp = ut->strP(fb_esp_pgm_str_347);
-    js.add(tmp, outputUriPrefix.c_str());
+    fbdo->_ss.json.add(tmp, outputUriPrefix.c_str());
     ut->delS(tmp);
 
     tmp = ut->strP(fb_esp_pgm_str_346);
-    FirebaseJsonArray arr;
+    fbdo->_ss.arr.clear();
 
     if (strlen(collectionIds) > 0)
     {
         std::vector<std::string> colIds = std::vector<std::string>();
         ut->splitTk(collectionIds, colIds, ",");
         for (size_t i = 0; i < colIds.size(); i++)
-            arr.add(colIds[i].c_str());
+            fbdo->_ss.arr.add(colIds[i].c_str());
     }
 
-    js.add(tmp, arr);
+    fbdo->_ss.json.add(tmp, fbdo->_ss.arr);
     ut->delS(tmp);
 
-    js._tostr(req.payload);
+    fbdo->_ss.json._tostr(req.payload);
 
     return sendRequest(fbdo, &req);
 }
@@ -90,7 +90,7 @@ bool FB_Firestore::importDocuments(FirebaseData *fbdo, const char *projectId, co
 
     std::string inputUriPrefix;
 
-    FirebaseJson js;
+    fbdo->_ss.json.clear();
 
     ut->appendP(inputUriPrefix, fb_esp_pgm_str_350);
     inputUriPrefix += bucketID;
@@ -98,24 +98,24 @@ bool FB_Firestore::importDocuments(FirebaseData *fbdo, const char *projectId, co
     inputUriPrefix += storagePath;
 
     char *tmp = ut->strP(fb_esp_pgm_str_348);
-    js.add(tmp, inputUriPrefix.c_str());
+    fbdo->_ss.json.add(tmp, inputUriPrefix.c_str());
     ut->delS(tmp);
 
     tmp = ut->strP(fb_esp_pgm_str_346);
-    FirebaseJsonArray arr;
+    fbdo->_ss.arr.clear();
 
     if (strlen(collectionIds) > 0)
     {
         std::vector<std::string> colIds = std::vector<std::string>();
         ut->splitTk(collectionIds, colIds, ",");
         for (size_t i = 0; i < colIds.size(); i++)
-            arr.add(colIds[i].c_str());
+            fbdo->_ss.arr.add(colIds[i].c_str());
     }
 
-    js.add(tmp, arr);
+    fbdo->_ss.json.add(tmp, fbdo->_ss.arr);
     ut->delS(tmp);
 
-    js._tostr(req.payload);
+    fbdo->_ss.json._tostr(req.payload);
 
     return sendRequest(fbdo, &req);
 }
@@ -217,15 +217,15 @@ bool FB_Firestore::listCollectionIds(FirebaseData *fbdo, const char *projectId, 
     req.databaseId = databaseId;
     req.documentPath = documentPath;
 
-    FirebaseJson json;
+    fbdo->_ss.json.clear();
     char *tmp = ut->strP(fb_esp_pgm_str_357);
-    json.add(tmp, pageSize);
+    fbdo->_ss.json.add(tmp, pageSize);
     ut->delS(tmp);
     tmp = ut->strP(fb_esp_pgm_str_358);
-    json.add(tmp, pageToken);
+    fbdo->_ss.json.add(tmp, pageToken);
     ut->delS(tmp);
 
-    json._tostr(req.payload);
+    fbdo->_ss.json._tostr(req.payload);
 
     return sendRequest(fbdo, &req);
 }
@@ -237,9 +237,25 @@ void FB_Firestore::begin(UtilsClass *u)
 
 bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req)
 {
+    if (fbdo->_ss.rtdb.pause)
+        return true;
+
+    if (!fbdo->reconnect())
+        return false;
 
     if (!Signer.tokenReady())
         return false;
+
+    if (fbdo->_ss.long_running_task > 0)
+    {
+        fbdo->_ss.http_code = FIREBASE_ERROR_LONG_RUNNING_TASK;
+        return false;
+    }
+
+    if (Signer.getCfg()->_int.fb_processing)
+        return false;
+
+    Signer.getCfg()->_int.fb_processing = true;
 
     fbdo->_ss.cfs.payload.clear();
 
@@ -250,7 +266,6 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
 
 bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req)
 {
-
     std::string token = Signer.getToken(Signer.getTokenType());
 
     std::string header;
@@ -464,33 +479,53 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     ut->appendP(header, fb_esp_pgm_str_36);
     ut->appendP(header, fb_esp_pgm_str_21);
 
+    fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+
     int ret = fbdo->httpClient.send(header.c_str(), req->payload.c_str());
+    header.clear();
+    req->payload.clear();
+    std::string().swap(header);
+    std::string().swap(req->payload);
 
     if (ret == 0)
-        return handleResponse(fbdo);
+    {
+        if (handleResponse(fbdo))
+        {
+            Signer.getCfg()->_int.fb_processing = false;
+            return true;
+        }
+    }
+
+    Signer.getCfg()->_int.fb_processing = false;
 
     return false;
 }
 
-bool FB_Firestore::connect(FirebaseData *fbdo)
+void FB_Firestore::rescon(FirebaseData *fbdo, const char *host)
 {
-
-    if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_firestore)
+    if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_firestore || strcmp(host, _host.c_str()) != 0)
     {
         fbdo->closeSession();
         fbdo->setSecure();
     }
+    _host = host;
+    fbdo->_ss.con_mode = fb_esp_con_mode_firestore;
+}
 
+bool FB_Firestore::connect(FirebaseData *fbdo)
+{
     std::string host;
     ut->appendP(host, fb_esp_pgm_str_340);
     ut->appendP(host, fb_esp_pgm_str_120);
+    rescon(fbdo, host.c_str());
     fbdo->httpClient.begin(host.c_str(), 443);
-    fbdo->_ss.con_mode = fb_esp_con_mode_firestore;
     return true;
 }
 
 bool FB_Firestore::handleResponse(FirebaseData *fbdo)
 {
+    if (!fbdo->reconnect())
+        return false;
 
     unsigned long dataTime = millis();
 
@@ -499,7 +534,6 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
     char *pChunk = nullptr;
     char *tmp = nullptr;
     char *header = nullptr;
-    char *payload = nullptr;
     bool isHeader = false;
 
     struct server_response_data_t response;
@@ -507,11 +541,9 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
     int chunkIdx = 0;
     int pChunkIdx = 0;
     int payloadLen = fbdo->_ss.resp_size;
-    int pBufPos = 0;
     int hBufPos = 0;
     int chunkBufSize = stream->available();
     int hstate = 0;
-    int pstate = 0;
     int chunkedDataState = 0;
     int chunkedDataSize = 0;
     int chunkedDataLen = 0;
@@ -519,10 +551,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
     size_t defaultChunkSize = fbdo->_ss.resp_size;
     struct fb_esp_auth_token_error_t error;
     error.code = -1;
-    std::string js;
-    FirebaseJson json;
-    FirebaseJsonData data;
-    fbdo->_ss.fcs.files.items.clear();
+    fbdo->_ss.cfs.payload.clear();
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->_ss.content_length = -1;
@@ -540,20 +569,22 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
         delay(0);
     }
 
-    chunkBufSize = stream->available();
+    int availablePayload = chunkBufSize;
 
     dataTime = millis();
 
+    fbdo->_ss.cfn.payload.clear();
+
     if (chunkBufSize > 1)
     {
-        while (chunkBufSize > 0 || payloadRead < response.contentLen)
+        while (chunkBufSize > 0 || availablePayload > 0 || payloadRead < response.contentLen)
         {
             if (!fbdo->reconnect(dataTime))
                 return false;
 
             chunkBufSize = stream->available();
 
-            if (chunkBufSize <= 0 && payloadRead >= response.contentLen && response.contentLen > 0)
+            if (chunkBufSize <= 0 && availablePayload <= 0 && payloadRead >= response.contentLen && response.contentLen > 0)
                 break;
 
             if (chunkBufSize > 0)
@@ -579,16 +610,6 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                         response.httpCode = atoi(tmp);
                         fbdo->_ss.http_code = response.httpCode;
                         ut->delS(tmp);
-                    }
-                    else
-                    {
-                        //stream payload data
-                        payload = ut->newS(payloadLen);
-                        pstate = 1;
-                        memcpy(payload, header, readLen);
-                        pBufPos = readLen;
-                        ut->delS(header);
-                        hstate = 0;
                     }
                 }
                 else
@@ -625,6 +646,12 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                             if (hstate == 1)
                                 ut->delS(header);
                             hstate = 0;
+
+                            if (response.contentLen == 0)
+                            {
+                                ut->delS(tmp);
+                                break;
+                            }
                         }
                         else
                         {
@@ -632,7 +659,6 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                             memcpy(header + hBufPos, tmp, readLen);
                             hBufPos += readLen;
                         }
-
                         ut->delS(tmp);
                     }
                     else
@@ -642,67 +668,42 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                         {
 
                             pChunkIdx++;
-
                             pChunk = ut->newS(chunkBufSize + 1);
 
-                            if (!payload || pstate == 0)
-                            {
-                                pstate = 1;
-                                payload = ut->newS(payloadLen + 1);
-                            }
-
+                            if (response.isChunkedEnc)
+                                delay(10);
                             //read the avilable data
-                            int readLen = 0;
-
                             //chunk transfer encoding?
                             if (response.isChunkedEnc)
-                                readLen = ut->readChunkedData(stream, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
+                                availablePayload = ut->readChunkedData(stream, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
                             else
+                                availablePayload = ut->readLine(stream, pChunk, chunkBufSize);
+
+                            if (availablePayload > 0)
                             {
-                                if (fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_list)
-                                    readLen = ut->readLine(stream, pChunk, chunkBufSize);
-                                else
-                                    readLen = stream->readBytes(pChunk, chunkBufSize);
-                            }
-
-                            if (readLen > 0)
-                            {
-                                payloadRead += readLen;
-
-                                if (pBufPos + readLen <= payloadLen)
-                                    memcpy(payload + pBufPos, pChunk, readLen);
-                                else
-                                {
-                                    //in case of the accumulated payload size is bigger than the char array
-                                    //reallocate the char array
-                                    char *buf = ut->newS(pBufPos + readLen + 1);
-                                    memcpy(buf, payload, pBufPos);
-
-                                    memcpy(buf + pBufPos, pChunk, readLen);
-
-                                    payloadLen = pBufPos + readLen;
-                                    ut->delS(payload);
-                                    payload = ut->newS(payloadLen + 1);
-                                    memcpy(payload, buf, payloadLen);
-                                    ut->delS(buf);
-                                }
+                                payloadRead += availablePayload;
+                                if (payloadRead < payloadLen)
+                                    fbdo->_ss.cfs.payload += pChunk;
                             }
 
                             ut->delS(pChunk);
-                            if (readLen < 0 && payloadRead >= response.contentLen)
+
+                            if (availablePayload < 0 || (payloadRead >= response.contentLen && !response.isChunkedEnc))
+                            {
+                                while (stream->available() > 0)
+                                    stream->read();
                                 break;
-                            if (readLen > 0)
-                                pBufPos += readLen;
+                            }
                         }
                         else
                         {
                             //read all the rest data
                             while (stream->available() > 0)
                                 stream->read();
+                            break;
                         }
                     }
                 }
-
                 chunkIdx++;
             }
         }
@@ -711,30 +712,26 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
             ut->delS(header);
 
         //parse the payload
-        if (payload)
+        if (fbdo->_ss.cfs.payload.length() > 0)
         {
-            if (payload[0] == '{')
+            if (fbdo->_ss.cfs.payload[0] == '{')
             {
-                FirebaseJson json;
-                FirebaseJsonData data;
-                json.setJsonData(payload);
-
+                fbdo->_ss.json.setJsonData(fbdo->_ss.cfs.payload.c_str());
                 char *tmp = ut->strP(fb_esp_pgm_str_257);
-                json.get(data, tmp);
+                fbdo->_ss.json.get(fbdo->_ss.data, tmp);
                 ut->delS(tmp);
-
-                if (data.success)
+                if (fbdo->_ss.data.success)
                 {
-                    error.code = data.intValue;
+                    error.code = fbdo->_ss.data.intValue;
                     tmp = ut->strP(fb_esp_pgm_str_258);
-                    json.get(data, tmp);
+                    fbdo->_ss.json.get(fbdo->_ss.data, tmp);
                     ut->delS(tmp);
-                    if (data.success)
-                        fbdo->_ss.error = data.stringValue.c_str();
+                    if (fbdo->_ss.data.success)
+                        fbdo->_ss.error = fbdo->_ss.data.stringValue.c_str();
+                    fbdo->_ss.cfs.payload.clear();
                 }
                 else
                 {
-                    fbdo->_ss.cfs.payload = payload;
                     error.code = 0;
                 }
             }
@@ -744,9 +741,6 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
             fbdo->_ss.json.clear();
             fbdo->_ss.arr.clear();
         }
-
-        if (pstate == 1)
-            ut->delS(payload);
 
         return error.code == 0;
     }

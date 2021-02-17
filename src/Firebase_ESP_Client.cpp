@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 1.1.3
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 30, 2021
+ * Created February 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -62,6 +62,8 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     FCM.begin(ut);
     Storage.begin(ut);
     Firestore.begin(ut);
+    Functions.begin(ut);
+    GCStorage.begin(ut);
 
     _cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
 

@@ -9,7 +9,8 @@
  *
 */
 
-//This example shows how to download file from Firebase storage bucket.
+//This example shows how to delete file from Firebase and Google Cloud Storage bucket via Google Cloud Storage JSON API.
+//The Google Cloud Storage JSON API function required OAuth2.0 authen.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -22,16 +23,16 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name and API Key */
+/* 2. Define the Firebase project host name (required) */
 #define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
-#define API_KEY "API_KEY"
 
-/* 3. Define the user Email and password that alreadey registerd or added in your project */
-#define USER_EMAIL "USER_EMAIL"
-#define USER_PASSWORD "USER_PASSWORD"
-
-/* 4. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
+/* 3. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
+
+/* 4 The following Service Account credentials required for OAuth2.0 authen in Google Cloud Storage JSON API delete file */
+#define FIREBASE_PROJECT_ID "PROJECT_ID"
+#define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
+const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
 
 //Define Firebase Data object
 FirebaseData fbdo;
@@ -60,13 +61,14 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    /* Assign the project host and api key (required) */
+    /* Assign the project host (required) */
     config.host = FIREBASE_HOST;
-    config.api_key = API_KEY;
 
-    /* Assign the user sign in credentials */
-    auth.user.email = USER_EMAIL;
-    auth.user.password = USER_PASSWORD;
+    /* Assign the Service Account credentials for OAuth2.0 authen */
+    config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
+    config.service_account.data.project_id = FIREBASE_PROJECT_ID;
+    config.service_account.data.private_key = PRIVATE_KEY;
+
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
@@ -76,13 +78,14 @@ void setup()
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
 
-    //Set the size of HTTP response buffers in the case where we want to work with large data.
-    fbdo.setResponseSize(1024);
 
     Serial.println("------------------------------------");
-    Serial.println("Download file test...");
+    Serial.println("Delete file with Google Cloud Storage JSON API test...");
 
-    if (Firebase.Storage.download(&fbdo, STORAGE_BUCKET_ID, "path/to/fie/filename.png", "/path/to/save/filename.png", mem_storage_type_flash))
+    //DeleteOptions option;
+    //For query parameters description of DeleteOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/delete#optional-parameters
+
+    if (Firebase.GCStorage.deleteFile(&fbdo, STORAGE_BUCKET_ID /* The Firebase or Google Cloud Storage bucket id */, "path/to/file/filename" /* remote file path stored in the Storage bucket*/, nullptr /* DeleteOptions data */))
     {
         Serial.println("PASSED");
         Serial.println("------------------------------------");

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Storage class, FCS.h version 1.0.1
+ * Google's Firebase Cloud Storage class, FCS.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 29, 2021
+ * Created February 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -62,6 +62,22 @@ public:
     */
     bool upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remotetFileName, const char *mime);
 
+    /** Upload byte array to the Firebase Storage data bucket.
+     * 
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param bucketID The Firebase storage bucket ID in the project.
+     * @param data The byte array of data.
+     * @param len The size of byte array data in bytes.
+     * @param remotetFileName The file path includes its name of uploaded file in data bucket.
+     * @param mime The file MIME type
+     * .
+     * @return Boolean value, indicates the success of the operation. 
+     * 
+     * @note Use FirebaseData.downloadURL() to get the download link.
+     * 
+    */
+    bool upload(FirebaseData *fbdo, const char *bucketID, const uint8_t *data, size_t len, const char *remoteFileName, const char *mime);
+
     /** Download file from the Firebase Storage data bucket.
      * 
      * @param fbdo The pointer to Firebase Data Object.
@@ -115,8 +131,10 @@ public:
 private:
     
     UtilsClass *ut = nullptr;
+    std::string _host = "";
     void begin(UtilsClass *u);
     bool sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req);
+    void rescon(FirebaseData *fbdo, const char *host);
     bool fcs_connect(FirebaseData *fbdo);
     bool fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req);
     bool handleResponse(FirebaseData *fbdo);

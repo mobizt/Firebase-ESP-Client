@@ -153,7 +153,7 @@ protected:
   std::unique_ptr<char> _cacert;
   std::string _host = "";
   uint16_t _port = 0;
-  unsigned long timeout = FIREBASE_DEFAULT_TCP_TIMEOUT * 1000;
+  unsigned long timeout = FIREBASE_DEFAULT_TCP_TIMEOUT;
 
   std::string _CAFile = "";
   uint8_t _CAFileStoreageType = 0;

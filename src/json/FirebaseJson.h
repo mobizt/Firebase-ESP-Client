@@ -80,6 +80,7 @@ class FirebaseJsonData
     friend class FB_CM;
     friend class FirebaseStream;
     friend class FirebaseData;
+    friend class GG_CloudStorage;
 
 public:
     FirebaseJsonData();
@@ -171,10 +172,13 @@ class FirebaseJson
     friend class FB_RTDB;
     friend class FB_CM;
     friend class FB_Firestore;
+    friend class FB_Functions;
+    friend class PolicyBuilder;
+    friend class PolicyInfo;
+    friend class GG_CloudStorage;
 
 public:
-    typedef enum
-    {
+    typedef enum {
         JSON_UNDEFINED = 0,
         JSON_OBJECT = 1,
         JSON_ARRAY = 2,
@@ -186,8 +190,7 @@ public:
         JSON_NULL = 8
     } jsonDataType;
 
-    typedef enum
-    {
+    typedef enum {
         PRINT_MODE_NONE = -1,
         PRINT_MODE_PLAIN = 0,
         PRINT_MODE_PRETTY = 1
@@ -244,8 +247,7 @@ public:
     * 	o String
     * 	o Other primitive: number, boolean (true/false) or null
     */
-    typedef enum
-    {
+    typedef enum {
         JSMN_UNDEFINED = 0,
         JSMN_OBJECT = 1,
         JSMN_ARRAY = 2,
@@ -791,8 +793,6 @@ public:
     ~FirebaseJsonArray();
     void _init();
     void _finalize();
-
-    
 
     /*
     Add null to FirebaseJsonArray object.

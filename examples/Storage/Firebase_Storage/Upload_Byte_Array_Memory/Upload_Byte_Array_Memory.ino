@@ -9,7 +9,7 @@
  *
 */
 
-//This example shows how to delete file from Firebase storage bucket.
+//This example shows how to upload byte array from flash or ram to Firebase storage bucket.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -79,12 +79,17 @@ void setup()
     //Set the size of HTTP response buffers in the case where we want to work with large data.
     fbdo.setResponseSize(1024);
 
-    Serial.println("------------------------------------");
-    Serial.println("Delete file test...");
+    uint8_t test_data[256];
+    for (int i = 0; i < 256; i++)
+        test_data[i] = i;
 
-    if (Firebase.Storage.deleteFile(&fbdo, STORAGE_BUCKET_ID, "path/to/fie/filename.png"))
+    Serial.println("------------------------------------");
+    Serial.println("Upload byte array test...");
+
+    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, test_data /* byte array from ram or flash */, 256 /*  size of data in bytes */, "test.dat" /* path of remote file stored in the bucket */, "application/octet-stream" /* mime type */))
     {
-        Serial.println("PASSED");
+
+        Serial.printf("Download URL: %s\n", fbdo.downloadURL().c_str());
         Serial.println("------------------------------------");
         Serial.println();
     }

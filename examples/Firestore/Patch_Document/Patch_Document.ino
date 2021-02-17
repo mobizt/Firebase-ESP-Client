@@ -24,8 +24,9 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the project ID */
+/* 2. Define the project ID and API Key */
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
+#define API_KEY "API_KEY"
 
 /* 3. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
@@ -56,6 +57,9 @@ void setup()
     Serial.print("Connected with IP: ");
     Serial.println(WiFi.localIP());
     Serial.println();
+
+    /* Assign API Key */
+    config.api_key = API_KEY;
 
     /* Assign the user sign in credentials */
     auth.user.email = USER_EMAIL;
@@ -117,7 +121,6 @@ void loop()
         js.set("fields/status/booleanValue", count % 2 == 0);
         js.toString(content);
        
-
         Serial.println("------------------------------------");
         Serial.println("Update a document...");
 

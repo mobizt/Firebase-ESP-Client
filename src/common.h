@@ -1,5 +1,6 @@
+
 /**
- * Created January 29, 2021
+ * Created February 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -51,6 +52,8 @@
 #include "json/FirebaseJson.h"
 
 class FirebaseData;
+class PolicyInfo;
+class FunctionsConfig;
 
 #define FIREBASE_PORT 443
 #define KEEP_ALIVE_TIMEOUT 45000
@@ -88,7 +91,9 @@ enum fb_esp_con_mode
     fb_esp_con_mode_rtdb_stream,
     fb_esp_con_mode_fcm,
     fb_esp_con_mode_storage,
-    fb_esp_con_mode_firestore
+    fb_esp_con_mode_gc_storage,
+    fb_esp_con_mode_firestore,
+    fb_esp_con_mode_functions
 };
 
 enum fb_esp_data_type
@@ -183,10 +188,18 @@ enum fb_esp_gcs_request_type
     fb_esp_gcs_request_type_list
 };
 
+enum fb_esp_gcs_upload_type
+{
+    gcs_upload_type_simple,
+    gcs_upload_type_multipart,
+    gcs_upload_type_resumable
+};
+
 enum fb_esp_fcs_request_type
 {
     fb_esp_fcs_request_type_undefined,
     fb_esp_fcs_request_type_upload,
+    fb_esp_fcs_request_type_upload_pgm_data,
     fb_esp_fcs_request_type_download,
     fb_esp_fcs_request_type_get_meta,
     fb_esp_fcs_request_type_delete,
@@ -204,6 +217,87 @@ enum fb_esp_firestore_request_type
     fb_esp_firestore_request_type_delete_doc,
     fb_esp_firestore_request_type_list_doc,
     fb_esp_firestore_request_type_list_collection
+};
+
+enum fb_esp_functions_creation_step
+{
+    fb_esp_functions_creation_step_idle,
+    fb_esp_functions_creation_step_gen_upload_url,
+    fb_esp_functions_creation_step_upload_zip_file,
+    fb_esp_functions_creation_step_upload_source_files,
+    fb_esp_functions_creation_step_deploy,
+    fb_esp_functions_creation_step_polling_status,
+    fb_esp_functions_creation_step_set_iam_policy,
+    fb_esp_functions_creation_step_delete
+};
+
+enum fb_esp_functions_request_type
+{
+    fb_esp_functions_request_type_undefined,
+    fb_esp_functions_request_type_call,
+    fb_esp_functions_request_type_create,
+    fb_esp_functions_request_type_delete,
+    fb_esp_functions_request_type_gen_download_url,
+    fb_esp_functions_request_type_gen_upload_url,
+    fb_esp_functions_request_type_upload,
+    fb_esp_functions_request_type_pgm_upload,
+    fb_esp_functions_request_type_upload_bucket_sources,
+    fb_esp_functions_request_type_get,
+    fb_esp_functions_request_type_get_iam_policy,
+    fb_esp_functions_request_type_list,
+    fb_esp_functions_request_type_patch,
+    fb_esp_functions_request_type_set_iam_policy,
+    fb_esp_functions_request_type_test_iam_policy,
+    fb_esp_functions_request_type_list_operations,
+};
+
+enum fb_esp_functions_sources_type
+{
+    functions_sources_type_undefined,
+    functions_sources_type_storage_bucket_archive,
+    functions_sources_type_storage_bucket_sources,
+    functions_sources_type_flash_data,
+    functions_sources_type_local_archive,
+    functions_sources_type_repository,
+
+};
+
+enum fb_esp_functions_trigger_type
+{
+    fb_esp_functions_trigger_type_undefined,
+    fb_esp_functions_trigger_type_https,
+    fb_esp_functions_trigger_type_event
+};
+
+enum fb_esp_functions_status
+{
+    fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED,
+    fb_esp_functions_status_ACTIVE,
+    fb_esp_functions_status_OFFLINE,
+    fb_esp_functions_status_DEPLOY_IN_PROGRESS,
+    fb_esp_functions_status_DELETE_IN_PROGRESS,
+    fb_esp_functions_status_UNKNOWN
+};
+
+enum fb_esp_functions_operation_status
+{
+    fb_esp_functions_operation_status_unknown,
+    fb_esp_functions_operation_status_generate_upload_url,
+    fb_esp_functions_operation_status_upload_source_file_in_progress,
+    fb_esp_functions_operation_status_deploy_in_progress,
+    fb_esp_functions_operation_status_set_iam_policy_in_progress,
+    fb_esp_functions_operation_status_delete_in_progress,
+    fb_esp_functions_operation_status_finished,
+    fb_esp_functions_operation_status_error
+};
+
+enum fb_esp_gcs_upload_status
+{
+    fb_esp_gcs_upload_status_error = -1,
+    fb_esp_gcs_upload_status_unknown = 0,
+    fb_esp_gcs_upload_status_init,
+    fb_esp_gcs_upload_status_upload,
+    fb_esp_gcs_upload_status_complete
 };
 
 struct fb_esp_rtdb_request_info_t
@@ -412,6 +506,12 @@ struct fb_esp_cfg_int_t
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
     std::vector<std::reference_wrapper<FirebaseData>> fb_sdo;
+
+#if defined(ESP32)
+    TaskHandle_t resumable_upload_task_handle = NULL;
+    TaskHandle_t functions_check_task_handle = NULL;
+    TaskHandle_t functions_deployment_task_handle = NULL;
+#endif
 };
 
 struct fb_esp_cfg_t
@@ -434,9 +534,23 @@ struct fb_esp_url_info_t
 
 struct fb_esp_fcs_file_list_item_t
 {
-    std::string name;
-    std::string bucket;
+    std::string name = "";
+    std::string bucket = "";
+    std::string contentType = "";
+    size_t size = 0;
 };
+
+typedef struct fb_esp_gcs_upload_status_info_t
+{
+    size_t progress;
+    fb_esp_gcs_upload_status status = fb_esp_gcs_upload_status_unknown;
+    std::string localFileName = "";
+    std::string remoteFileName = "";
+    std::string errorMsg = "";
+
+} UploadStatusInfo;
+
+typedef void (*ProgressCallback)(UploadStatusInfo);
 
 struct fb_esp_fcs_file_list_t
 {
@@ -520,17 +634,79 @@ struct fb_esp_rtdb_info_t
 #endif
 };
 
-struct fb_esp_fcs_meta_info_t
+typedef struct fb_esp_function_operation_info_t
+{
+    fb_esp_functions_operation_status status = fb_esp_functions_operation_status_unknown;
+    std::string errorMsg = "";
+    std::string triggerUrl = "";
+    std::string functionId = "";
+} FunctionsOperationStatusInfo;
+
+typedef void (*FunctionsOperationCallback)(FunctionsOperationStatusInfo);
+
+struct fb_esp_deploy_task_info_t
+{
+    std::string projectId = "";
+    std::string locationId = "";
+    std::string functionId = "";
+    std::string policy = "";
+    std::string httpsTriggerUrl = "";
+    FunctionsConfig *config = nullptr;
+    fb_esp_functions_creation_step step = fb_esp_functions_creation_step_idle;
+    fb_esp_functions_creation_step nextStep = fb_esp_functions_creation_step_idle;
+
+    FunctionsOperationStatusInfo *statusInfo = nullptr;
+    bool active = false;
+    bool _delete = false;
+    bool done = false;
+    bool setPolicy = false;
+    bool patch = false;
+    FunctionsOperationCallback callback = NULL;
+    FirebaseData *fbdo = nullptr;
+    std::string uploadUrl = "";
+};
+
+struct fb_esp_gcs_meta_info_t
 {
     std::string name = "";
     std::string bucket = "";
     unsigned long generation = 0;
+    unsigned long metageneration = 0;
     std::string contentType = "";
     size_t size = 0;
     std::string etag = "";
     std::string crc32 = "";
     std::string downloadTokens = "";
+    std::string mediaLink = "";
 };
+
+typedef struct fb_esp_gcs_request_properties_t
+{
+    const char *acl = ""; //array
+    const char *cacheControl = "";
+    const char *contentDisposition = "";
+    const char *contentEncoding = "";
+    const char *contentLanguage = "";
+    const char *contentType = "";
+    const char *crc32c = "";
+    const char *customTime = "";     //date time
+    const char *eventBasedHold = ""; //boolean
+    const char *md5Hash = "";
+    const char *metadata = ""; // object
+    const char *name = "";
+    const char *storageClass = "";
+    const char *temporaryHold = ""; //boolean
+}RequestProperties;
+
+typedef struct fb_esp_gcs_get_options_t
+{
+    const char *generation = "";
+    const char *ifGenerationMatch = "";
+    const char *ifGenerationNotMatch = "";
+    const char *ifMetagenerationMatch = "";
+    const char *ifMetagenerationNotMatch = "";
+    const char *projection = "";
+} StorageGetOptions;
 
 struct fb_esp_fcm_legacy_notification_payload_t
 {
@@ -703,15 +879,11 @@ struct fb_esp_fcm_info_t
 
 struct fb_esp_gcs_info_t
 {
-    std::string local_filename = "";
-    std::string remote_filename = "";
-    std::string bucketID = "";
-    std::string mime = "";
-    std::string location = "";
+    UploadStatusInfo cbInfo;
     fb_esp_gcs_request_type requestType = fb_esp_gcs_request_type_undefined;
-    size_t fileSize = 0;
-    fb_esp_mem_storage_type storage_type = mem_storage_type_undefined;
     int contentLength = 0;
+    std::string payload = "";
+    struct fb_esp_gcs_meta_info_t meta;
 };
 
 struct fb_esp_fcs_info_t
@@ -720,7 +892,7 @@ struct fb_esp_fcs_info_t
     size_t fileSize = 0;
     fb_esp_mem_storage_type storage_type = mem_storage_type_undefined;
     int contentLength = 0;
-    struct fb_esp_fcs_meta_info_t meta;
+    struct fb_esp_gcs_meta_info_t meta;
     struct fb_esp_fcs_file_list_t files;
 };
 
@@ -731,8 +903,18 @@ struct fb_esp_firestore_info_t
     std::string payload = "";
 };
 
+struct fb_esp_functions_info_t
+{
+    fb_esp_functions_request_type requestType = fb_esp_functions_request_type_undefined;
+    int contentLength = 0;
+    fb_esp_functions_operation_status last_status = fb_esp_functions_operation_status_unknown;
+    FunctionsOperationStatusInfo cbInfo;
+    std::string payload = "";
+};
+
 struct fb_esp_session_info_t
 {
+    int long_running_task = 0;
     FirebaseJson json;
     FirebaseJsonArray arr;
     FirebaseJsonData data;
@@ -742,7 +924,7 @@ struct fb_esp_session_info_t
     bool connected = false;
     bool classic_request = false;
 
-    uint16_t resp_size = 1024;
+    uint16_t resp_size = 2048;
     int http_code = -1000;
     int content_length = 0;
     std::string error = "";
@@ -751,6 +933,7 @@ struct fb_esp_session_info_t
     struct fb_esp_fcs_info_t fcs;
     struct fb_esp_fcm_info_t fcm;
     struct fb_esp_firestore_info_t cfs;
+    struct fb_esp_functions_info_t cfn;
 
 #if defined(ESP8266)
     uint16_t bssl_rx_size = 512;
@@ -758,13 +941,69 @@ struct fb_esp_session_info_t
 #endif
 };
 
+typedef struct fb_esp_gcs_upload_options_t
+{
+    const char *contentEncoding = "";
+    const char *ifGenerationMatch = "";        //long
+    const char *ifGenerationNotMatch = "";     //long
+    const char *ifMetagenerationMatch = "";    //long
+    const char *ifMetagenerationNotMatch = ""; //long
+    const char *kmsKeyName = "";
+    const char *projection = "";
+    const char *predefinedAcl = "";
+} UploadOptions;
+
+typedef struct fb_esp_gcs_delete_options_t
+{
+    const char *generation = "";
+    const char *ifGenerationMatch = "";        //long
+    const char *ifGenerationNotMatch = "";     //long
+    const char *ifMetagenerationMatch = "";    //long
+    const char *ifMetagenerationNotMatch = ""; //long
+} DeleteOptions;
+
+typedef struct fb_esp_gcs_list_options_t
+{
+    const char *delimiter = "";
+    const char *endOffset = "";
+    const char *includeTrailingDelimiter = ""; //bool
+    const char *maxResults = "";               //number
+    const char *pageToken = "";
+    const char *prefix = "";
+    const char *projection = "";
+    const char *startOffset = "";
+    const char *versions = ""; //bool
+} ListOptions;
+
 struct fb_esp_gcs_req_t
 {
-    std::string sourceFileName = "";
+    std::string remoteFileName = "";
+    std::string localFileName = "";
+    std::string bucketID = "";
+    std::string mime = "";
+    std::string location = "";
+    int chunkIndex = -1;
+    int chunkRange = -1;
+    int chunkPos = 0;
+    int chunkLen = 0;
+    size_t fileSize = 0;
+    ListOptions *listOptions = nullptr;
+    StorageGetOptions *getOptions = nullptr;
+    UploadOptions *uploadOptions = nullptr;
+    DeleteOptions *deleteOptions = nullptr;
+    RequestProperties *requestProps = nullptr;
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
     fb_esp_gcs_request_type requestType = fb_esp_gcs_request_type_undefined;
-    std::string targetFileName = "";
-    std::string mime = "";
+    UploadStatusInfo *statusInfo = nullptr;
+    ProgressCallback callback = NULL;
+    int reportState = -1;
+};
+
+struct fb_gcs_upload_resumable_task_info_t
+{
+    FirebaseData *fbdo = nullptr;
+    struct fb_esp_gcs_req_t req;
+    bool done = false;
 };
 
 struct fb_esp_fcs_req_t
@@ -773,6 +1012,9 @@ struct fb_esp_fcs_req_t
     std::string localFileName = "";
     std::string bucketID = "";
     std::string mime = "";
+    const uint8_t *pgmArc = nullptr;
+    size_t pgmArcLen = 0;
+    size_t fileSize = 0;
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
     fb_esp_fcs_request_type requestType = fb_esp_fcs_request_type_undefined;
 };
@@ -798,7 +1040,43 @@ struct fb_esp_firestore_req_t
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
 };
 
-typedef struct fb_esp_fcs_meta_info_t FileMetaInfo;
+struct fb_esp_functions_https_trigger_t
+{
+    std::string url = "";
+};
+
+struct fb_esp_functions_event_trigger_t
+{
+    std::string eventType = "";
+    std::string resource = "";
+    std::string service = "";
+    std::string failurePolicy = "";
+};
+
+struct fb_esp_functions_req_t
+{
+    std::string projectId = "";
+    std::string locationId = "";
+    std::string functionId = "";
+    std::string databaseURL = "";
+    std::string bucketID = "";
+    std::string payload = "";
+    std::string filter = "";
+    std::string host = "";
+    std::string uri = "";
+    std::string filePath = "";
+    const uint8_t *pgmArc = nullptr;
+    size_t pgmArcLen = 0;
+    fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
+    std::string policyVersion = "";
+    size_t versionId = 0;
+    size_t pageSize = 0;
+    std::string pageToken = "";
+    std::vector<std::string> *updateMask = nullptr;
+    fb_esp_functions_request_type requestType = fb_esp_functions_request_type_undefined;
+};
+
+typedef struct fb_esp_gcs_meta_info_t FileMetaInfo;
 typedef struct fb_esp_fcs_file_list_t FileList;
 typedef struct fb_esp_fcs_file_list_item_t FileItem;
 typedef struct fb_esp_auth_signin_provider_t FirebaseAuth;
@@ -1171,6 +1449,178 @@ static const char fb_esp_pgm_str_359[] PROGMEM = "orderBy=";
 static const char fb_esp_pgm_str_360[] PROGMEM = "showMissing=";
 static const char fb_esp_pgm_str_361[] PROGMEM = "=";
 static const char fb_esp_pgm_str_362[] PROGMEM = ":listCollectionIds";
+static const char fb_esp_pgm_str_363[] PROGMEM = "cloudfunctions.";
+static const char fb_esp_pgm_str_364[] PROGMEM = "/locations/";
+static const char fb_esp_pgm_str_365[] PROGMEM = "/functions";
+static const char fb_esp_pgm_str_366[] PROGMEM = ":call";
+static const char fb_esp_pgm_str_367[] PROGMEM = "description";
+static const char fb_esp_pgm_str_368[] PROGMEM = "entryPoint";
+static const char fb_esp_pgm_str_369[] PROGMEM = "runtime";
+static const char fb_esp_pgm_str_370[] PROGMEM = "timeout";
+static const char fb_esp_pgm_str_371[] PROGMEM = "availableMemoryMb";
+static const char fb_esp_pgm_str_372[] PROGMEM = "serviceAccountEmail";
+static const char fb_esp_pgm_str_373[] PROGMEM = "labels";
+static const char fb_esp_pgm_str_374[] PROGMEM = "environmentVariables";
+static const char fb_esp_pgm_str_375[] PROGMEM = "buildEnvironmentVariables";
+static const char fb_esp_pgm_str_376[] PROGMEM = "network";
+static const char fb_esp_pgm_str_377[] PROGMEM = "maxInstances";
+static const char fb_esp_pgm_str_378[] PROGMEM = "vpcConnector";
+static const char fb_esp_pgm_str_379[] PROGMEM = "vpcConnectorEgressSettings";
+static const char fb_esp_pgm_str_380[] PROGMEM = "ingressSettings";
+static const char fb_esp_pgm_str_381[] PROGMEM = "sourceArchiveUrl";
+static const char fb_esp_pgm_str_382[] PROGMEM = "sourceRepository";
+static const char fb_esp_pgm_str_383[] PROGMEM = "sourceUploadUrl";
+static const char fb_esp_pgm_str_384[] PROGMEM = "httpsTrigger/url";
+static const char fb_esp_pgm_str_385[] PROGMEM = "eventTrigger/eventType";
+static const char fb_esp_pgm_str_386[] PROGMEM = "FIREBASE_CONFIG";
+static const char fb_esp_pgm_str_387[] PROGMEM = "projectId";
+static const char fb_esp_pgm_str_388[] PROGMEM = "databaseURL";
+static const char fb_esp_pgm_str_389[] PROGMEM = "storageBucket";
+static const char fb_esp_pgm_str_390[] PROGMEM = "locationId";
+static const char fb_esp_pgm_str_391[] PROGMEM = "eventTrigger/resource";
+static const char fb_esp_pgm_str_392[] PROGMEM = "eventTrigger/service";
+static const char fb_esp_pgm_str_393[] PROGMEM = "eventTrigger/failurePolicy";
+static const char fb_esp_pgm_str_394[] PROGMEM = "{\"retry\":{}}";
+static const char fb_esp_pgm_str_395[] PROGMEM = "projects/";
+static const char fb_esp_pgm_str_396[] PROGMEM = "\\\"";
+static const char fb_esp_pgm_str_397[] PROGMEM = "-";
+static const char fb_esp_pgm_str_398[] PROGMEM = ".cloudfunctions.net";
+static const char fb_esp_pgm_str_399[] PROGMEM = "policy";
+static const char fb_esp_pgm_str_400[] PROGMEM = "updateMask";
+static const char fb_esp_pgm_str_401[] PROGMEM = ":setIamPolicy";
+static const char fb_esp_pgm_str_402[] PROGMEM = "role";
+static const char fb_esp_pgm_str_403[] PROGMEM = "members";
+static const char fb_esp_pgm_str_404[] PROGMEM = "bindings";
+static const char fb_esp_pgm_str_405[] PROGMEM = "condition";
+static const char fb_esp_pgm_str_406[] PROGMEM = "expression";
+static const char fb_esp_pgm_str_407[] PROGMEM = "title";
+static const char fb_esp_pgm_str_408[] PROGMEM = "description";
+static const char fb_esp_pgm_str_409[] PROGMEM = "location";
+static const char fb_esp_pgm_str_410[] PROGMEM = "version";
+static const char fb_esp_pgm_str_411[] PROGMEM = "auditConfigs";
+static const char fb_esp_pgm_str_412[] PROGMEM = "etag";
+static const char fb_esp_pgm_str_413[] PROGMEM = "auditLogConfigs";
+static const char fb_esp_pgm_str_414[] PROGMEM = "logType";
+static const char fb_esp_pgm_str_415[] PROGMEM = "exemptedMembers";
+static const char fb_esp_pgm_str_416[] PROGMEM = "service";
+static const char fb_esp_pgm_str_417[] PROGMEM = "s";
+static const char fb_esp_pgm_str_418[] PROGMEM = "error/details";
+static const char fb_esp_pgm_str_419[] PROGMEM = "status";
+static const char fb_esp_pgm_str_420[] PROGMEM = "CLOUD_FUNCTION_STATUS_UNSPECIFIED";
+static const char fb_esp_pgm_str_421[] PROGMEM = "ACTIVE";
+static const char fb_esp_pgm_str_422[] PROGMEM = "OFFLINE";
+static const char fb_esp_pgm_str_423[] PROGMEM = "DEPLOY_IN_PROGRESS";
+static const char fb_esp_pgm_str_424[] PROGMEM = "DELETE_IN_PROGRESS";
+static const char fb_esp_pgm_str_425[] PROGMEM = "UNKNOWN";
+static const char fb_esp_pgm_str_426[] PROGMEM = "/v1/operations";
+static const char fb_esp_pgm_str_427[] PROGMEM = "filter=";
+static const char fb_esp_pgm_str_428[] PROGMEM = "project:";
+static const char fb_esp_pgm_str_429[] PROGMEM = ",location:";
+static const char fb_esp_pgm_str_430[] PROGMEM = ",function:";
+static const char fb_esp_pgm_str_431[] PROGMEM = ",latest:true";
+static const char fb_esp_pgm_str_432[] PROGMEM = "operations/[0]/error/message";
+static const char fb_esp_pgm_str_433[] PROGMEM = "\"FIREBASE_CONFIG\":";
+static const char fb_esp_pgm_str_434[] PROGMEM = "\\\"}\"";
+static const char fb_esp_pgm_str_435[] PROGMEM = "\"environmentVariables\":";
+static const char fb_esp_pgm_str_436[] PROGMEM = "{},";
+static const char fb_esp_pgm_str_437[] PROGMEM = "versionId";
+static const char fb_esp_pgm_str_438[] PROGMEM = ":generateDownloadUrl";
+static const char fb_esp_pgm_str_439[] PROGMEM = ":generateUploadUrl";
+static const char fb_esp_pgm_str_440[] PROGMEM = "uploadUrl";
+static const char fb_esp_pgm_str_441[] PROGMEM = "https://%[^/]/%s";
+static const char fb_esp_pgm_str_442[] PROGMEM = "http://%[^/]/%s";
+static const char fb_esp_pgm_str_443[] PROGMEM = "%[^/]/%s";
+static const char fb_esp_pgm_str_444[] PROGMEM = "%[^?]?%s";
+static const char fb_esp_pgm_str_445[] PROGMEM = "auth=";
+static const char fb_esp_pgm_str_446[] PROGMEM = "%[^&]";
+static const char fb_esp_pgm_str_447[] PROGMEM = "application/zip";
+static const char fb_esp_pgm_str_448[] PROGMEM = "x-goog-content-length-range: 0,104857600";
+static const char fb_esp_pgm_str_449[] PROGMEM = "File not found";
+static const char fb_esp_pgm_str_450[] PROGMEM = "Archive not found";
+static const char fb_esp_pgm_str_451[] PROGMEM = "iam";
+static const char fb_esp_pgm_str_452[] PROGMEM = "autozip";
+static const char fb_esp_pgm_str_453[] PROGMEM = "zip";
+static const char fb_esp_pgm_str_454[] PROGMEM = "accessToken";
+static const char fb_esp_pgm_str_455[] PROGMEM = "path";
+static const char fb_esp_pgm_str_456[] PROGMEM = "tmp.zip";
+static const char fb_esp_pgm_str_457[] PROGMEM = "status/uploadUrl";
+static const char fb_esp_pgm_str_458[] PROGMEM = "missing autozip function, please deploy it first";
+static const char fb_esp_pgm_str_459[] PROGMEM = "nodejs12";
+static const char fb_esp_pgm_str_460[] PROGMEM = "ALLOW_ALL";
+static const char fb_esp_pgm_str_461[] PROGMEM = "roles/cloudfunctions.invoker";
+static const char fb_esp_pgm_str_462[] PROGMEM = "allUsers";
+static const char fb_esp_pgm_str_463[] PROGMEM = "\"sourceUploadUrl\":";
+static const char fb_esp_pgm_str_464[] PROGMEM = "\",";
+static const char fb_esp_pgm_str_465[] PROGMEM = ":getIamPolicy";
+static const char fb_esp_pgm_str_466[] PROGMEM = "options.requestedPolicyVersion";
+static const char fb_esp_pgm_str_467[] PROGMEM = "updateTime";
+static const char fb_esp_pgm_str_468[] PROGMEM = "buildId";
+static const char fb_esp_pgm_str_469[] PROGMEM = "},";
+static const char fb_esp_pgm_str_470[] PROGMEM = "updateMask=";
+static const char fb_esp_pgm_str_471[] PROGMEM = "UPDATE_FUNCTION";
+static const char fb_esp_pgm_str_472[] PROGMEM = "eventTrigger";
+static const char fb_esp_pgm_str_473[] PROGMEM = "policy";
+static const char fb_esp_pgm_str_474[] PROGMEM = "The function deployment timeout";
+static const char fb_esp_pgm_str_475[] PROGMEM = "deployTask";
+static const char fb_esp_pgm_str_476[] PROGMEM = "\"name\": \"";
+static const char fb_esp_pgm_str_477[] PROGMEM = "\"bucket\": \"";
+static const char fb_esp_pgm_str_478[] PROGMEM = "crc32c";
+static const char fb_esp_pgm_str_479[] PROGMEM = "metadata/firebaseStorageDownloadTokens";
+static const char fb_esp_pgm_str_480[] PROGMEM = "resumableUploadTask";
+static const char fb_esp_pgm_str_481[] PROGMEM = "Range: bytes=0-";
+static const char fb_esp_pgm_str_482[] PROGMEM = "\"contentType\": \"";
+static const char fb_esp_pgm_str_483[] PROGMEM = "\"size\": \"";
+static const char fb_esp_pgm_str_484[] PROGMEM = "maxResults=";
+static const char fb_esp_pgm_str_485[] PROGMEM = "delimiter=";
+static const char fb_esp_pgm_str_486[] PROGMEM = "endOffset=";
+static const char fb_esp_pgm_str_487[] PROGMEM = "includeTrailingDelimiter=";
+static const char fb_esp_pgm_str_488[] PROGMEM = "prefix=";
+static const char fb_esp_pgm_str_489[] PROGMEM = "projection=";
+static const char fb_esp_pgm_str_490[] PROGMEM = "startOffset=";
+static const char fb_esp_pgm_str_491[] PROGMEM = "versions=";
+static const char fb_esp_pgm_str_492[] PROGMEM = "mediaLink";
+static const char fb_esp_pgm_str_493[] PROGMEM = "generation=";
+static const char fb_esp_pgm_str_494[] PROGMEM = "ifGenerationMatch=";
+static const char fb_esp_pgm_str_495[] PROGMEM = "ifGenerationNotMatch=";
+static const char fb_esp_pgm_str_496[] PROGMEM = "ifMetagenerationMatch=";
+static const char fb_esp_pgm_str_497[] PROGMEM = "ifMetagenerationNotMatch=";
+static const char fb_esp_pgm_str_498[] PROGMEM = "projection=";
+static const char fb_esp_pgm_str_499[] PROGMEM = "contentEncoding=";
+static const char fb_esp_pgm_str_500[] PROGMEM = "kmsKeyName=";
+static const char fb_esp_pgm_str_501[] PROGMEM = "predefinedAcl=";
+static const char fb_esp_pgm_str_502[] PROGMEM = "projection=";
+static const char fb_esp_pgm_str_503[] PROGMEM = "metageneration";
+static const char fb_esp_pgm_str_504[] PROGMEM = "acl";
+static const char fb_esp_pgm_str_505[] PROGMEM = "cacheControl";
+static const char fb_esp_pgm_str_506[] PROGMEM = "contentDisposition";
+static const char fb_esp_pgm_str_507[] PROGMEM = "contentEncoding";
+static const char fb_esp_pgm_str_508[] PROGMEM = "contentLanguage";
+static const char fb_esp_pgm_str_509[] PROGMEM = "contentType";
+static const char fb_esp_pgm_str_510[] PROGMEM = "crc32c";
+static const char fb_esp_pgm_str_511[] PROGMEM = "customTime";
+static const char fb_esp_pgm_str_512[] PROGMEM = "eventBasedHold";
+static const char fb_esp_pgm_str_513[] PROGMEM = "md5Hash";
+static const char fb_esp_pgm_str_514[] PROGMEM = "metadata"; 
+static const char fb_esp_pgm_str_515[] PROGMEM = "name";
+static const char fb_esp_pgm_str_516[] PROGMEM = "storageClass";
+static const char fb_esp_pgm_str_517[] PROGMEM = "temporaryHold";
+static const char fb_esp_pgm_str_518[] PROGMEM = "firebaseStorageDownloadTokens";
+static const char fb_esp_pgm_str_519[] PROGMEM = "a82781ce-a115-442f-bac6-a52f7f63b3e8";
+static const char fb_esp_pgm_str_520[] PROGMEM = "/storage/v1/b/";
+static const char fb_esp_pgm_str_521[] PROGMEM = "/upload";
+static const char fb_esp_pgm_str_522[] PROGMEM = "/o";
+static const char fb_esp_pgm_str_523[] PROGMEM = "?alt=media";
+static const char fb_esp_pgm_str_524[] PROGMEM = "?uploadType=media&name=";
+static const char fb_esp_pgm_str_525[] PROGMEM = "?uploadType=multipart";
+static const char fb_esp_pgm_str_526[] PROGMEM = "?uploadType=resumable&name=";
+static const char fb_esp_pgm_str_527[] PROGMEM = "?alt=json";
+static const char fb_esp_pgm_str_528[] PROGMEM = "Content-Type: application/json; charset=UTF-8\r\n";
+static const char fb_esp_pgm_str_529[] PROGMEM = "--";
+static const char fb_esp_pgm_str_530[] PROGMEM = "X-Upload-Content-Type: ";
+static const char fb_esp_pgm_str_531[] PROGMEM = "X-Upload-Content-Length: ";
+static const char fb_esp_pgm_str_532[] PROGMEM = "Content-Range: bytes ";
+static const char fb_esp_pgm_str_533[] PROGMEM = "multipart/related; boundary=";
+static const char fb_esp_pgm_str_534[] PROGMEM = "operation ignored due to long running task is being processed.";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

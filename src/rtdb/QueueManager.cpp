@@ -1,4 +1,3 @@
-
 /**
  * Google's Firebase QueueManager class, QueueManager.cpp version 1.0.0
  * 

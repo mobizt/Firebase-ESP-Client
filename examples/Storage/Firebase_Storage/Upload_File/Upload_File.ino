@@ -9,7 +9,8 @@
  *
 */
 
-//This example shows how to list all files in Firebase storage bucket.
+//This example shows how to upload file to Firebase storage bucket using the Firebase Storage API.
+//The file media.mp4 in the data folder should be uploaded to the device flash memory before test.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -33,6 +34,7 @@
 /* 4. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
 
+
 //Define Firebase Data object
 FirebaseData fbdo;
 
@@ -40,6 +42,7 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 String path = "/Test";
+
 
 void setup()
 {
@@ -68,6 +71,7 @@ void setup()
     auth.user.email = USER_EMAIL;
     auth.user.password = USER_PASSWORD;
 
+
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
 
@@ -80,14 +84,15 @@ void setup()
     fbdo.setResponseSize(1024);
 
     Serial.println("------------------------------------");
-    Serial.println("List files test...");
+    Serial.println("Upload file test...");
 
-    if (Firebase.Storage.listFiles(&fbdo, STORAGE_BUCKET_ID))
+    //Upload large file over fews hundreds KiB is not allowable in Firebase Storage by using this method.
+    //To upload the large file, please use the Firebase.GCStorage.upload instead.
+    //The following upload will be error 503 service unavailable (upload rejected due to the large file size)
+    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "/media.mp4" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, "media.mp4" /* path of remote file stored in the bucket */, "video/mp4" /* mime type */))
     {
-        Serial.println("PASSED");
-        FileList *files = fbdo.fileList();
-        for (size_t i = 0; i < files->items.size(); i++)
-            Serial.printf("name: %s, bucket: %s\n", files->items[i].name.c_str(), files->items[i].bucket.c_str());
+
+        Serial.printf("Download URL: %s\n", fbdo.downloadURL().c_str());
         Serial.println("------------------------------------");
         Serial.println();
     }
@@ -99,6 +104,7 @@ void setup()
         Serial.println();
     }
 }
+
 
 void loop()
 {

@@ -282,11 +282,19 @@ bool Firebase_Signer::hanldeToken()
         return true;
     }
     else
+    {
+        if (config->signer.tokens.token_type == token_type_undefined)
+            setTokenError(FIREBASE_ERROR_TOKEN_NOT_READY);
+
         return config->signer.tokens.status == token_status_ready;
+    }
 }
 
 bool Firebase_Signer::refreshToken()
 {
+    if (WiFi.status() != WL_CONNECTED)
+        return false;
+
     config->signer.attempts++;
     delay(0);
 
@@ -500,7 +508,8 @@ bool Firebase_Signer::handleSignerError(int code)
         break;
     case 2:
 #if defined(ESP32)
-        config->signer.wcs->stream()->stop();
+        if (config->signer.wcs->stream())
+            config->signer.wcs->stream()->stop();
 #elif defined(ESP8266)
         config->signer.wcs->stop();
 #endif
@@ -508,7 +517,8 @@ bool Firebase_Signer::handleSignerError(int code)
         break;
     case 3:
 #if defined(ESP32)
-        config->signer.wcs->stream()->stop();
+        if (config->signer.wcs->stream())
+            config->signer.wcs->stream()->stop();
 #elif defined(ESP8266)
         config->signer.wcs->stop();
 #endif
@@ -549,6 +559,9 @@ bool Firebase_Signer::handleSignerError(int code)
 
 bool Firebase_Signer::handleTokenResponse()
 {
+    if (WiFi.status() != WL_CONNECTED)
+        return false;
+
     struct server_response_data_t response;
 
     int chunkIdx = 0;
@@ -676,7 +689,11 @@ bool Firebase_Signer::handleTokenResponse()
                                 if (response.isChunkedEnc)
                                     readLen = ut->readChunkedData(stream, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
                                 else
+                                {
+                                    if (stream->available() < chunkBufSize)
+                                        chunkBufSize = stream->available();
                                     readLen = stream->readBytes(pChunk, chunkBufSize);
+                                }
 
                                 if (readLen > 0)
                                     memcpy(payload + pBufPos, pChunk, readLen);
@@ -829,19 +846,26 @@ bool Firebase_Signer::createJWT()
 
             std::string s = buri;
             ut->appendP(s, fb_esp_pgm_str_221);
+
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_222);
+
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
-
             ut->appendP(s, fb_esp_pgm_str_223);
+
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_224);
+
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_225);
+
+            ut->appendP(s, fb_esp_pgm_str_6);
+            s += buri;
+            ut->appendP(s, fb_esp_pgm_str_451);
 
             tmp = ut->strP(fb_esp_pgm_str_220);
             config->signer.json->add(tmp, s.c_str());
@@ -1037,6 +1061,8 @@ bool Firebase_Signer::createJWT()
 
 bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char *password)
 {
+    if (WiFi.status() != WL_CONNECTED)
+        return false;
 
     config->signer.attempts++;
     config->signer.signup = false;
@@ -1044,7 +1070,6 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 
     if (auth == nullptr)
         return false;
-
 
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->_int.fb_processing)
         return false;
@@ -1155,7 +1180,6 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 
     config->signer.json->clear();
 
-
     if (handleTokenResponse())
     {
         struct fb_esp_auth_token_error_t error;
@@ -1225,6 +1249,9 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 
 bool Firebase_Signer::requestTokens()
 {
+    if (WiFi.status() != WL_CONNECTED)
+        return false;
+
     config->signer.attempts++;
     delay(0);
 
@@ -1400,6 +1427,8 @@ bool Firebase_Signer::requestTokens()
 
 bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_sending_type type)
 {
+    if (WiFi.status() != WL_CONNECTED)
+        return false;
 
     delay(0);
 
@@ -1705,6 +1734,12 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_FILE_IO_ERROR:
         ut->appendP(buff, fb_esp_pgm_str_192);
         return;
+    case FIREBASE_ERROR_FILE_NOT_FOUND:
+        ut->appendP(buff, fb_esp_pgm_str_449);
+        return;
+    case FIREBASE_ERROR_ARCHIVE_NOT_FOUND:
+        ut->appendP(buff, fb_esp_pgm_str_450);
+        return;
     case FIREBASE_ERROR_TOKEN_NOT_READY:
         ut->appendP(buff, fb_esp_pgm_str_252);
         return;
@@ -1714,7 +1749,10 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
         ut->appendP(buff, fb_esp_pgm_str_328);
         return;
-    default:
+    case FIREBASE_ERROR_LONG_RUNNING_TASK:
+        ut->appendP(buff, fb_esp_pgm_str_534);
+        return;
+     default:
         return;
     }
 }

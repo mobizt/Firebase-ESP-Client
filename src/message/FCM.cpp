@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.0
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created February 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -299,7 +299,8 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
 
     if (strlen(msg->targets.registration_ids) > 0)
     {
-        FirebaseJsonArray arr;
+        static FirebaseJsonArray arr;
+        arr.clear();
         arr.setJsonArrayData(msg->targets.registration_ids);
         tmp = ut->strP(fb_esp_pgm_str_130);
         _fcmPayload.add(tmp, arr);
@@ -375,7 +376,8 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
 
     if (strlen(msg->payloads.data) > 0)
     {
-        FirebaseJson js;
+        static FirebaseJson js;
+        js.clear();
         js.setJsonData(msg->payloads.data);
         tmp = ut->strP(fb_esp_pgm_str_135);
         _fcmPayload.add(tmp, js);
@@ -443,7 +445,8 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_289);
-        FirebaseJsonArray arr;
+        static FirebaseJsonArray arr;
+        arr.clear();
         arr.setJsonArrayData(msg->payloads.notification.body_loc_args);
         _fcmPayload.add(s.c_str(), arr);
     }
@@ -461,7 +464,8 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_291);
-        FirebaseJsonArray arr;
+        static FirebaseJsonArray arr;
+        arr.clear();
         arr.setJsonArrayData(msg->payloads.notification.title_loc_args);
         _fcmPayload.add(s.c_str(), arr);
     }
@@ -513,7 +517,8 @@ void FB_CM::fcm_preparSubscriptionPayload(std::string &buf, const char *topic, c
     _fcmPayload.add(tmp, s.c_str());
     ut->delS(tmp);
 
-    FirebaseJsonArray arr;
+    static FirebaseJsonArray arr;
+    arr.clear();
     for (size_t i = 0; i < numToken; i++)
     {
         if (IID[i])
@@ -544,7 +549,8 @@ void FB_CM::fcm_preparAPNsRegistPayload(std::string &buf, const char *applicatio
     _fcmPayload.add(tmp, sandbox);
     ut->delS(tmp);
 
-    FirebaseJsonArray arr;
+    static FirebaseJsonArray arr;
+    arr.clear();
     for (size_t i = 0; i < numToken; i++)
     {
         if (APNs[i])
@@ -565,7 +571,6 @@ void FB_CM::fcm_preparAPNsRegistPayload(std::string &buf, const char *applicatio
 
 void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
 {
-
     _fcmPayload.clear();
     std::string s;
     std::string base;
@@ -595,7 +600,8 @@ void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
 
     if (strlen(msg->data) > 0)
     {
-        FirebaseJson js;
+        static FirebaseJson js;
+        js.clear();
         js.setJsonData(msg->data);
         s = base;
         ut->appendP(s, fb_esp_pgm_str_135);
@@ -678,7 +684,8 @@ void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
 
     if (strlen(msg->android.data) > 0)
     {
-        FirebaseJson js;
+        static FirebaseJson js;
+        js.clear();
         js.setJsonData(msg->android.data);
         s = base;
         ut->appendP(s, fb_esp_pgm_str_300);
@@ -800,7 +807,8 @@ void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
         ut->appendP(s, fb_esp_pgm_str_122);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_289);
-        FirebaseJsonArray arr;
+        static FirebaseJsonArray arr;
+        arr.clear();
         arr.setJsonArrayData(msg->android.notification.body_loc_args);
         _fcmPayload.set(s.c_str(), arr);
     }
@@ -824,7 +832,8 @@ void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
         ut->appendP(s, fb_esp_pgm_str_122);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_291);
-        FirebaseJsonArray arr;
+        static FirebaseJsonArray arr;
+        arr.clear();
         arr.setJsonArrayData(msg->android.notification.title_loc_args);
         _fcmPayload.set(s.c_str(), arr);
     }
@@ -927,7 +936,8 @@ void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
         ut->appendP(s, fb_esp_pgm_str_122);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_313);
-        FirebaseJsonArray arr;
+        static FirebaseJsonArray arr;
+        arr.clear();
         arr.setJsonArrayData(msg->android.notification.vibrate_timings);
         _fcmPayload.set(s.c_str(), arr);
     }
@@ -1020,7 +1030,8 @@ void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
 
     ////// WebpushConfig
 
-    FirebaseJson js;
+    static FirebaseJson js;
+    js.clear();
     base = _base;
 
     if (strlen(msg->webpush.headers) > 0)
@@ -1134,7 +1145,10 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &
 
     if (Signer.getTokenType() != token_type_undefined)
         if (!Signer.tokenReady())
+        {
+            Signer.getCfg()->_int.fb_processing = false;
             return false;
+        }
 
     std::string header = "";
     fcm_prepareHeader(header, mode, msg);
@@ -1145,17 +1159,20 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &
     if (ret != 0)
     {
         fbdo->closeSession();
+        Signer.getCfg()->_int.fb_processing = false;
         return false;
     }
     else
         fbdo->_ss.connected = true;
 
     ret = waitResponse(fbdo);
+    Signer.getCfg()->_int.fb_processing = false;
 
     bool msgMode = (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1);
 
     if (!ret || !msgMode)
         fbdo->closeSession();
+
     return ret;
 }
 
@@ -1262,7 +1279,6 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     }
                     else
                     {
-                        //stream payload data
                         payload = ut->newS(payloadLen);
                         pstate = 1;
                         memcpy(payload, header, readLen);
@@ -1335,7 +1351,11 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                             if (response.isChunkedEnc)
                                 readLen = ut->readChunkedData(stream, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
                             else
+                            {
+                                if (stream->available() < chunkBufSize)
+                                    chunkBufSize = stream->available();
                                 readLen = stream->readBytes(pChunk, chunkBufSize);
+                            }
 
                             if (readLen > 0)
                             {
@@ -1396,22 +1416,20 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                 std::string t = ut->trim(payload);
                 if (t[0] == '{' && t[t.length() - 1] == '}')
                 {
-                    FirebaseJson json;
-                    FirebaseJsonData data;
-                    json.setJsonData(t.c_str());
+                    fbdo->_ss.json.setJsonData(t.c_str());
 
                     char *tmp = ut->strP(fb_esp_pgm_str_257);
-                    json.get(data, tmp);
+                    fbdo->_ss.json.get(fbdo->_ss.data, tmp);
                     ut->delS(tmp);
 
-                    if (data.success)
+                    if (fbdo->_ss.data.success)
                     {
-                        error.code = data.intValue;
+                        error.code = fbdo->_ss.data.intValue;
                         tmp = ut->strP(fb_esp_pgm_str_258);
-                        json.get(data, tmp);
+                        fbdo->_ss.json.get(fbdo->_ss.data, tmp);
                         ut->delS(tmp);
-                        if (data.success)
-                            fbdo->_ss.error = data.stringValue.c_str();
+                        if (fbdo->_ss.data.success)
+                            fbdo->_ss.error = fbdo->_ss.data.stringValue.c_str();
                     }
                     else
                         error.code = 0;
@@ -1438,11 +1456,23 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
 bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &payload)
 {
+
     if (!fbdo->reconnect())
         return false;
 
     if (!ut->waitIdle(fbdo->_ss.http_code))
         return false;
+
+    if (fbdo->_ss.long_running_task > 0)
+    {
+        fbdo->_ss.http_code = FIREBASE_ERROR_LONG_RUNNING_TASK;
+        return false;
+    }
+
+    if (Signer.getCfg()->_int.fb_processing)
+        return false;
+
+    Signer.getCfg()->_int.fb_processing = true;
 
     if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_fcm)
     {

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 1.1.3
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 30, 2021
+ * Created February 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -39,7 +39,10 @@
 #include "message/FCM.h"
 #include "Utils.h"
 #include "storage/FCS.h"
+#include "gcs/GCS.h"
 #include "firestore/FB_Firestore.h"
+#include "functions/FB_Functions.h"
+#include "functions/FunctionsConfig.h"
 
 class Firebase_ESP_Client
 {
@@ -51,6 +54,8 @@ public:
     FB_CM FCM;
     FB_CloudStorage Storage;
     FB_Firestore Firestore;
+    FB_Functions Functions;
+    GG_CloudStorage GCStorage;
 
     Firebase_ESP_Client();
     ~Firebase_ESP_Client();

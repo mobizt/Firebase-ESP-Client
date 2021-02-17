@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.0
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created February 12, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -120,6 +120,8 @@ bool FirebaseData::pauseFirebase(bool pause)
     {
         if (httpClient.stream()->connected())
             httpClient.stream()->stop();
+
+        _ss.connected = false;
 
         if (!httpClient.connected())
         {
@@ -469,10 +471,12 @@ String FirebaseData::fileTransferError()
 
 String FirebaseData::payload()
 {
-    if (_ss.con_mode== fb_esp_con_mode_rtdb)
+    if (_ss.con_mode == fb_esp_con_mode_rtdb)
         return _ss.rtdb.data.c_str();
     else if (_ss.con_mode == fb_esp_con_mode_firestore)
         return _ss.cfs.payload.c_str();
+    else if (_ss.con_mode == fb_esp_con_mode_functions)
+        return _ss.cfn.payload.c_str();
     else
         return "";
 }
@@ -489,7 +493,10 @@ String FirebaseData::errorReason()
 
 FileMetaInfo FirebaseData::metaData()
 {
-    return _ss.fcs.meta;
+    if (_ss.con_mode == fb_esp_con_mode_gc_storage)
+        return _ss.gcs.meta;
+    else
+        return _ss.fcs.meta;
 }
 
 FileList *FirebaseData::fileList()
@@ -503,22 +510,45 @@ String FirebaseData::downloadURL()
         return "";
 
     std::string link;
-    if (_ss.fcs.meta.downloadTokens.length() > 0)
+    if (_ss.con_mode == fb_esp_con_mode_storage)
     {
-        ut->appendP(link, fb_esp_pgm_str_112);
-        ut->appendP(link, fb_esp_pgm_str_265);
-        ut->appendP(link, fb_esp_pgm_str_120);
-        ut->appendP(link, fb_esp_pgm_str_266);
-        link += _ss.fcs.meta.bucket;
-        ut->appendP(link, fb_esp_pgm_str_267);
-        ut->appendP(link, fb_esp_pgm_str_1);
-        link += ut->url_encode(_ss.fcs.meta.name);
-        ut->appendP(link, fb_esp_pgm_str_173);
-        ut->appendP(link, fb_esp_pgm_str_269);
-        ut->appendP(link, fb_esp_pgm_str_172);
-        ut->appendP(link, fb_esp_pgm_str_273);
-        link += _ss.fcs.meta.downloadTokens.c_str();
+        if (_ss.fcs.meta.downloadTokens.length() > 0)
+        {
+            ut->appendP(link, fb_esp_pgm_str_112);
+            ut->appendP(link, fb_esp_pgm_str_265);
+            ut->appendP(link, fb_esp_pgm_str_120);
+            ut->appendP(link, fb_esp_pgm_str_266);
+            link += _ss.fcs.meta.bucket;
+            ut->appendP(link, fb_esp_pgm_str_267);
+            ut->appendP(link, fb_esp_pgm_str_1);
+            link += ut->url_encode(_ss.fcs.meta.name);
+            ut->appendP(link, fb_esp_pgm_str_173);
+            ut->appendP(link, fb_esp_pgm_str_269);
+            ut->appendP(link, fb_esp_pgm_str_172);
+            ut->appendP(link, fb_esp_pgm_str_273);
+            link += _ss.fcs.meta.downloadTokens.c_str();
+        }
     }
+    else if (_ss.con_mode == fb_esp_con_mode_gc_storage)
+    {
+        if (_ss.gcs.meta.downloadTokens.length() > 0)
+        {
+            ut->appendP(link, fb_esp_pgm_str_112);
+            ut->appendP(link, fb_esp_pgm_str_265);
+            ut->appendP(link, fb_esp_pgm_str_120);
+            ut->appendP(link, fb_esp_pgm_str_266);
+            link += _ss.gcs.meta.bucket;
+            ut->appendP(link, fb_esp_pgm_str_267);
+            ut->appendP(link, fb_esp_pgm_str_1);
+            link += ut->url_encode(_ss.gcs.meta.name);
+            ut->appendP(link, fb_esp_pgm_str_173);
+            ut->appendP(link, fb_esp_pgm_str_269);
+            ut->appendP(link, fb_esp_pgm_str_172);
+            ut->appendP(link, fb_esp_pgm_str_273);
+            link += _ss.gcs.meta.downloadTokens.c_str();
+        }
+    }
+
     return link.c_str();
 }
 
@@ -530,15 +560,13 @@ int FirebaseData::httpCode()
 void FirebaseData::closeSession()
 {
     //close the socket and free the resources used by the BearSSL data
-    if (_ss.connected)
+    if (_ss.connected || httpClient.stream())
     {
-        if (httpClient.stream())
-        {
-            if (httpClient.stream()->connected())
-                httpClient.stream()->stop();
-        }
         Signer.getCfg()->_int.fb_last_reconnect_millis = millis();
+        if (httpClient.stream()->connected())
+            httpClient.stream()->stop();
     }
+
     if (_ss.con_mode == fb_esp_con_mode_rtdb_stream)
     {
         _ss.rtdb.stream_tmo_Millis = millis();
@@ -704,8 +732,45 @@ void FirebaseData::clear()
     {
         if (httpClient.stream()->connected())
             httpClient.stream()->stop();
+        _ss.connected = false;
     }
+    _ss.cfn.payload.clear();
+    std::string()
+        .swap(_ss.cfn.payload);
+    _ss.json.clear();
+    _ss.arr.clear();
+
+    std::string().swap(_ss.rtdb.data);
+    std::string().swap(_ss.rtdb.data2);
+    std::string().swap(_ss.rtdb.push_name);
+    std::string().swap(_ss.rtdb.file_name);
+    std::string().swap(_ss.rtdb.redirect_url);
+    std::string().swap(_ss.rtdb.event_type);
+    std::string().swap(_ss.rtdb.req_etag);
+    std::string().swap(_ss.rtdb.resp_etag);
+    std::string().swap(_ss.rtdb.priority);
+
+    std::string().swap(_ss.gcs.meta.bucket);
+    std::string().swap(_ss.gcs.meta.contentType);
+    std::string().swap(_ss.gcs.meta.crc32);
+    std::string().swap(_ss.gcs.meta.downloadTokens);
+    std::string().swap(_ss.gcs.meta.etag);
+    std::string().swap(_ss.gcs.meta.name);
+
+    std::string().swap(_ss.fcs.meta.name);
+    std::string().swap(_ss.fcs.meta.bucket);
+    std::string().swap(_ss.fcs.meta.contentType);
+    std::string().swap(_ss.fcs.meta.etag);
+    std::string().swap(_ss.fcs.meta.crc32);
+    std::string().swap(_ss.fcs.meta.downloadTokens);
+    std::string().swap(_ss.fcs.meta.bucket);
+    std::string().swap(_ss.fcs.meta.contentType);
+    std::string().swap(_ss.fcs.meta.crc32);
+    std::string().swap(_ss.fcs.meta.downloadTokens);
+    std::string().swap(_ss.fcs.meta.etag);
+    std::string().swap(_ss.fcs.meta.name);
     _ss.fcs.files.items.clear();
+    std::string().swap(_ss.cfs.payload);
 }
 
 #endif

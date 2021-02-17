@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.1
+ * Google's Firebase Util class, Utils.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 29, 2021
+ * Created February 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
@@ -56,10 +56,10 @@ public:
 
     char *strP(PGM_P pgm)
     {
-        size_t len = strlen_P(pgm) + 1;
+        size_t len = strlen_P(pgm) + 5;
         char *buf = newS(len);
+        memset(buf, 0, len);
         strcpy_P(buf, pgm);
-        buf[len - 1] = 0;
         return buf;
     }
 
@@ -302,90 +302,51 @@ public:
     }
     void getUrlInfo(const std::string url, struct fb_esp_url_info_t &info)
     {
-        size_t p1;
-        size_t p2;
-        int scheme = 0;
-        char *tmp = nullptr;
-        std::string _h;
-        tmp = strP(fb_esp_pgm_str_111);
-        p1 = url.find(tmp, 0);
+        char *host = newS(url.length());
+        char *uri = newS(url.length());
+        char *auth = newS(url.length());
+
+        int p1 = 0;
+        char *tmp = strP(fb_esp_pgm_str_441);
+        int x = sscanf(url.c_str(), tmp, host, uri);
         delS(tmp);
-        if (p1 == std::string::npos)
-        {
-            tmp = strP(fb_esp_pgm_str_112);
-            p1 = url.find(tmp, 0);
-            delS(tmp);
-            if (p1 != std::string::npos)
-                scheme = 2;
-        }
-        else
-            scheme = 1;
-
-        if (scheme == 1)
-            p1 += strlen_P(fb_esp_pgm_str_111);
-        else if (scheme == 2)
-            p1 += strlen_P(fb_esp_pgm_str_112);
-        else
-            p1 = 0;
-
-        if (p1 + 3 < url.length())
-            if (url[p1] == 'w' && url[p1 + 1] == 'w' && url[p1 + 2] == 'w' && url[p1 + 3] == '.')
-                p1 += 4;
-
-        tmp = strP(fb_esp_pgm_str_1);
-        p2 = url.find(tmp, p1 + 1);
+        tmp = strP(fb_esp_pgm_str_442);
+        x ? p1 = 8 : x = sscanf(url.c_str(), tmp, host, uri);
         delS(tmp);
-        if (p2 == std::string::npos)
+        tmp = strP(fb_esp_pgm_str_443);
+        x ? p1 = 7 : x = sscanf(url.c_str(), tmp, host, uri);
+        delS(tmp);
+
+        int p2 = 0;
+        if (x > 0)
         {
             tmp = strP(fb_esp_pgm_str_173);
-            p2 = url.find(tmp, p1 + 1);
+            p2 = strpos(host, tmp, 0);
             delS(tmp);
-            if (p2 == std::string::npos)
+            if (p2 > -1)
             {
-                tmp = strP(fb_esp_pgm_str_174);
-                p2 = url.find(tmp, p1 + 1);
+                tmp = strP(fb_esp_pgm_str_444);
+                x = sscanf(url.c_str() + p1, tmp, host, uri);
                 delS(tmp);
-                if (p2 == std::string::npos)
-                    p2 = url.length();
             }
         }
 
-        _h = url.substr(p1, p2 - p1);
-
-        if (_h[0] == '/')
-            info.uri = _h;
-        else
-            info.host = _h;
-
-        if (config->_int.fb_auth_uri)
+        if (strlen(uri) > 0)
         {
-            //get uri
-            if (p2 != _h.length())
+            tmp = strP(fb_esp_pgm_str_445);
+            p2 = strpos(uri, tmp, 0);
+            delS(tmp);
+            if (p2 > -1)
             {
-                info.uri = url.substr(p2, url.length() - p2);
-                tmp = strP(fb_esp_pgm_str_170);
-                p1 = _h.find(tmp, url.length());
+                tmp = strP(fb_esp_pgm_str_446);
+                x = sscanf(uri + p2 + 5, tmp, auth);
                 delS(tmp);
-
-                if (p1 == std::string::npos)
-                {
-                    tmp = strP(fb_esp_pgm_str_171);
-                    p1 = _h.find(tmp, url.length());
-                    delS(tmp);
-                }
-
-                if (p1 != std::string::npos)
-                {
-                    p1 += 6;
-                    tmp = strP(fb_esp_pgm_str_172);
-                    p2 = _h.find(tmp, p1);
-                    delS(tmp);
-                    if (p2 == std::string::npos)
-                        p2 = _h.length();
-                    info.auth = _h.substr(p1, p2 - p1);
-                }
             }
         }
+
+        info.uri = uri;
+        info.host= host;
+        info.auth = auth;
     }
 
     int url_decode(const char *s, char *dec)
@@ -563,7 +524,7 @@ public:
                 delS(tmp);
             }
 
-            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
+            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK || response.httpCode == FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
             {
                 if (pmax < beginPos)
                     pmax = beginPos;
@@ -1537,6 +1498,18 @@ public:
         s = str.substr(previous, current - previous);
         tk.push_back(s);
         std::string().swap(s);
+    }
+
+    void replaceAll(std::string &str, const std::string &from, const std::string &to)
+    {
+        if (from.empty())
+            return;
+        size_t start_pos = 0;
+        while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+        {
+            str.replace(start_pos, from.length(), to);
+            start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+        }
     }
 
 private:

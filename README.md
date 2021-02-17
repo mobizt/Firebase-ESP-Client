@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 1.1.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.0
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -37,9 +37,13 @@ The library access to the Firebase server through the WiFi for the internet conn
 
 * **Supports Firebase Cloud Firestore (REST APIs).**
 
-* **Supports Firebase Cloud Storage.**
+* **Supports Firebase Storage.**
+
+* **Supports Google Cloud Storage.**
 
 * **Supports Firebase Cloud Messaging**
+
+* **Supports Google Cloud Functions**
 
 * **Supports Email/Password, custom and access token authentications using Service Account**
 
@@ -1036,7 +1040,40 @@ service cloud.firestore {
 }
 ```
 
-Some firestore functions requires the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
+
+
+## Firebase Storage
+
+The Firebase Storage bucket file upload, download, read its meta data and listing are supported. 
+
+See the [Firebase Storage examples](/examples/Storage/Firebase_Storage) for the usages.
+
+
+## Google Cloud Storage
+
+The Firebase or Google Cloud Storage bucket file upload, download, read its meta data and listing are supported.
+
+This Google Cloud Storage supported allows large files upload which upload the large file via the Firebase Storage functions is not allowable.
+
+
+See the [Google Cloud Storage examples](/examples/Storage/Google_Cloud_Storage) for the usages.
+
+
+
+## Google Cloud Functions
+
+The Google Cloud Functions create/deployment, update, call, delete and list are supported.
+
+The library also support the source code deployment which you can edit the functions and deploy it using the embedded device.
+
+See [Cloud Functions examples](/examples/Cloud_Functions) for complete usages.
+
+
+
+### IAM Permission and API Enable
+
+
+Some Firestore functions and all Cloud Functions functions requires the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
 
 You may still get the error permission denined error even using OAuth2.0 authen with Service Account credentials, because the client in the Service Account does not has the owner permission.
 
@@ -1053,13 +1090,8 @@ Choose the project, look at the member which matches the client email in service
 ![IAM Edit Permission 3](/media/images/IAM_Permission_Role3.png)
 
 
+For Cloud Functions Cloud Build API must be enabled for the project. To enable Cloud Build API go to https://console.developers.google.com/apis/library/cloudbuild.googleapis.com
 
-
-## Firebase Cloud Storage
-
-The Firebase Cloud Storage bucket file upload, download, read its meta data and listing are supported. 
-
-See the [Storage examples](/examples/Storage) for the usages.
 
 
 

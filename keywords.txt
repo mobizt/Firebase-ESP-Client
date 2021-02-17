@@ -21,7 +21,21 @@ FirebaseJsonArray   KEYWORD1
 FirebaseJsonData    KEYWORD1
 FirebaseConfig  KEYWORD1
 FirebaseAuth    KEYWORD1
-
+Functions   KEYWORD1
+FunctionsConfig KEYWORD1
+PolicyBuilder   KEYWORD1
+Binding KEYWORD1
+AuditLogConfig  KEYWORD1
+AuditConfig KEYWORD1
+UploadOptions   KEYWORD1
+RequestProperties   KEYWORD1
+UploadStatusInfo    KEYWORD1
+ProgressCallback    KEYWORD1
+StorageGetOptions   KEYWORD1
+DeleteOptions   KEYWORD1
+ListOptions KEYWORD1
+FunctionsOperationCallback  KEYWORD1
+FunctionsOperationStatusInfo    KEYWORD1
 
 ###############################################
 # Methods and Functions for Firebase (KEYWORD2)
@@ -113,6 +127,54 @@ getDocument KEYWORD2
 deleteDocument  KEYWORD2
 listDocuments   KEYWORD2
 listCollectionIds   KEYWORD2
+callFunction    KEYWORD2
+createFunction  KEYWORD2
+patchFunction   KEYWORD2
+setIamPolicy    KEYWORD2
+getIamPolicy    KEYWORD2
+getFunction KEYWORD2
+deleteFunction  KEYWORD2
+generateDownloadUrl KEYWORD2
+generateUploadUrl   KEYWORD2
+listFunctions   KEYWORD2
+listOperations  KEYWORD2
+setName KEYWORD2
+setDescription  KEYWORD2
+setEntryPoint   KEYWORD2
+setRuntime  KEYWORD2
+setTimeout  KEYWORD2
+setAvailableMemoryMb    KEYWORD2
+setMaxInstances KEYWORD2
+setSource   KEYWORD2
+addLabel    KEYWORD2
+clearLabels KEYWORD2
+addEnvironmentVariable  KEYWORD2
+clearEnvironmentVariables   KEYWORD2
+addBuildEnvironmentVariable KEYWORD2
+clearBuildEnvironmentVariables  KEYWORD2
+setNetwork  KEYWORD2
+setVpcConnector KEYWORD2
+setVpcConnectorEgressSettings   KEYWORD2
+setIngressSettings  KEYWORD2
+setEventTrigger KEYWORD2
+setIamPolicy    KEYWORD2
+getTriggerUrl   KEYWORD2
+setLogType  KEYWORD2
+addexemptedMembers  KEYWORD2
+clearexemptedMembers    KEYWORD2
+setService  KEYWORD2
+addAuditLogConfig   KEYWORD2
+clearAuditLogConfigs    KEYWORD2
+addMember   KEYWORD2
+setRole KEYWORD2
+setCondition    KEYWORD2
+clearMembers    KEYWORD2
+addAuditConfig  KEYWORD2
+clearAuditConfigs   KEYWORD2
+addBinding  KEYWORD2
+setVersion  KEYWORD2
+setETag KEYWORD2
+clearBindings   KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
@@ -176,6 +238,7 @@ setTimeToLive   KEYWORD2
 setTopic    KEYWORD2
 getSendResult   KEYWORD2
 
+
 ####################################
 # Methods for QueryFilter (KEYWORD2)
 ####################################
@@ -207,6 +270,7 @@ FirebaseMethod  LITERAL1
 QueueStorageType    LITERAL1
 QueueItem   LITERAL1
 token_info_t    LITERAL1
+
 
 
 ###########################################################

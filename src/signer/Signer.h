@@ -49,6 +49,12 @@ class Firebase_Signer
     friend class QueryFilter;
     friend class MultiPathStream;
     friend class FB_Firestore;
+    friend class FB_Functions;
+    friend class Binding;
+    friend class PolicyBuilder;
+    friend class AuditLogConfig;
+    friend class AuditConfig;
+    friend class FunctionsConfig;
 
 public:
     Firebase_Signer();

@@ -12,7 +12,6 @@
 
 //This example shows how to create a document in a document collection. This operation required Email/password, custom or OAUth2.0 authentication.
 
-
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -24,8 +23,9 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the project ID */
+/* 2. Define the project ID and API Key */
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
+#define API_KEY "API_KEY"
 
 /* 3. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
@@ -57,6 +57,9 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
+    /* Assign API Key */
+    config.api_key = API_KEY;
+
     /* Assign the user sign in credentials */
     auth.user.email = USER_EMAIL;
     auth.user.password = USER_PASSWORD;
@@ -79,16 +82,16 @@ void loop()
 
         String content;
         FirebaseJson js;
-        
+
         //We will create the nested document in the parent path "a0/b0/c0
-        //a0 is the collection id, b0 is the document id in collection a0 and c0 is the collection id id in the document b0.
+        //a0 is the collection id, b0 is the document id in collection a0 and c0 is the collection id in the document b0.
         //and d? is the document id in the document collection id c0 which we will create.
         String documentPath = "a0/b0/c0/d" + String(count);
 
         js.set("fields/count/integerValue", String(count).c_str());
         js.set("fields/status/booleanValue", count % 2 == 0);
         js.toString(content);
-        
+
         count++;
 
         Serial.println("------------------------------------");

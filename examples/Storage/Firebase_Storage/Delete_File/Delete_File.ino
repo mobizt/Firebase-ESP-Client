@@ -9,7 +9,7 @@
  *
 */
 
-//This example shows how to upload file to Firebase storage bucket.
+//This example shows how to delete file from Firebase Storage bucket.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -32,6 +32,7 @@
 
 /* 4. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
+
 
 //Define Firebase Data object
 FirebaseData fbdo;
@@ -76,16 +77,13 @@ void setup()
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
 
-    //Set the size of HTTP response buffers in the case where we want to work with large data.
-    fbdo.setResponseSize(1024);
 
     Serial.println("------------------------------------");
-    Serial.println("Upload file test...");
+    Serial.println("Delete file test...");
 
-    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID, "path/to/local/file/filename.png", mem_storage_type_flash, "path/to/save/filename.png", "image/png"))
+    if (Firebase.Storage.deleteFile(&fbdo, STORAGE_BUCKET_ID, "path/to/file/filename"))
     {
-
-        Serial.printf("Download URL: %s\n", fbdo.downloadURL().c_str());
+        Serial.println("PASSED");
         Serial.println("------------------------------------");
         Serial.println();
     }
@@ -96,6 +94,7 @@ void setup()
         Serial.println("------------------------------------");
         Serial.println();
     }
+
 }
 
 void loop()

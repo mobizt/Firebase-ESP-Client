@@ -44,10 +44,9 @@
 
 //Teensy 3.0, 3.2,3.5,3.6, 4.0 and 4.1
 #if defined(__arm__) && defined(TEENSYDUINO) && (defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__IMXRT1062__))
-extern "C"
-{
-    int __exidx_start() { return -1; }
-    int __exidx_end() { return -1; }
+extern "C" {
+int __exidx_start() { return -1; }
+int __exidx_end() { return -1; }
 }
 
 #endif
@@ -419,7 +418,7 @@ void FirebaseJson::_toStdString(std::string &s, bool isJson)
 
 FirebaseJson &FirebaseJson::_add(const char *key, const char *value, size_t klen, size_t vlen, bool isString, bool isJson)
 {
-    size_t bufSize = klen + vlen + 20;
+    size_t bufSize = klen + vlen + 1024;
     char *buf = _newPtr(bufSize);
     if (_rawbuf.length() > 0)
         strcpy_P(buf, FirebaseJson_STR_1);
@@ -481,7 +480,7 @@ size_t FirebaseJson::iteratorBegin(const char *data)
     _fbjs_parse(true);
     std::string s;
     _toStdString(s);
-    int bufLen = s.length() + 20;
+    int bufLen = s.length() + 1024;
     char *buf = _newPtr(bufLen);
     char *nbuf = _newPtr(2);
     strcpy(buf, s.c_str());
@@ -515,7 +514,7 @@ void FirebaseJson::iteratorGet(size_t index, int &type, String &key, String &val
         return;
     std::string s;
     _toStdString(s);
-    int bufLen = s.length() + 20;
+    int bufLen = s.length() + 1024;
     char *buf = _newPtr(bufLen);
     strcpy(buf, s.c_str());
     std::string().swap(s);
@@ -553,7 +552,7 @@ void FirebaseJson::_fbjs_parse(bool collectTk)
 {
     std::string s;
     _toStdString(s);
-    int bufLen = s.length() + 20;
+    int bufLen = s.length() + 1024;
     char *buf = _newPtr(bufLen);
     strcpy(buf, s.c_str());
     std::string().swap(s);
@@ -1826,7 +1825,7 @@ void FirebaseJson::_get(const char *key, int depth, int index)
     {
         std::string s;
         _toStdString(s);
-        int bufLen = s.length() + 20;
+        int bufLen = s.length() + 1024;
         char *buf = _newPtr(bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
@@ -1985,7 +1984,7 @@ void FirebaseJson::_parse(const char *key, int depth, int index, PRINT_MODE prin
     {
         std::string s;
         _toStdString(s);
-        int bufLen = s.length() + 20;
+        int bufLen = s.length() + 1024;
         char *buf = _newPtr(bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
@@ -2041,7 +2040,7 @@ void FirebaseJson::_compile(const char *key, int depth, int index, const char *r
     {
         std::string s;
         _toStdString(s);
-        int bufLen = s.length() + 20;
+        int bufLen = s.length() + 1024;
         char *buf = _newPtr(bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
@@ -2069,7 +2068,7 @@ void FirebaseJson::_remove(const char *key, int depth, int index, const char *re
     {
         std::string s;
         _toStdString(s);
-        int bufLen = s.length() + 20;
+        int bufLen = s.length() + 1024;
         char *buf = _newPtr(bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
@@ -2182,7 +2181,7 @@ bool FirebaseJson::set(const String &path, T value)
 
 void FirebaseJson::_setString(const std::string &path, const std::string &value)
 {
-    char *tmp = _newPtr(value.length() + 20);
+    char *tmp = _newPtr(value.length() + 1024);
     strcpy(tmp, _qt);
     strcat(tmp, value.c_str());
     strcat(tmp, _qt);
@@ -2448,8 +2447,8 @@ void FirebaseJson::_resetParseResult()
 void FirebaseJson::_setElementType()
 {
     bool typeSet = false;
-    char *buf = _newPtr(20);
-    char *tmp = _newPtr(20);
+    char *buf = _newPtr(1024);
+    char *tmp = _newPtr(1024);
     char *tmp2 = nullptr;
     if (_jsonData._type == FirebaseJson::JSMN_PRIMITIVE)
     {
@@ -3438,7 +3437,7 @@ void FirebaseJsonArray::_trimDouble(char *buf)
 
 void FirebaseJsonArray::toString(String &buf, bool prettify)
 {
-    char *tmp = _newPtr(20);
+    char *tmp = _newPtr(1024);
     std::string().swap(_json._jsonData._dbuf);
     std::string().swap(_json._tbuf);
     _json._toStdString(_jbuf, false);
@@ -3855,15 +3854,15 @@ bool FirebaseJsonData::getArray(FirebaseJsonArray &jsonArray)
 {
     if (typeNum != FirebaseJson::JSON_ARRAY || !success)
         return false;
-    char *tmp = new char[20];
-    memset(tmp, 0, 20);
+    char *tmp = new char[1024];
+    memset(tmp, 0, 1024);
     char *nbuf = new char[2];
     memset(nbuf, 0, 2);
     strcpy_P(tmp, FirebaseJson_STR_21);
     jsonArray._json._toStdString(jsonArray._jbuf, false);
     jsonArray._json._rawbuf = tmp;
     jsonArray._json._rawbuf += stringValue.c_str();
-    memset(tmp, 0, 20);
+    memset(tmp, 0, 1024);
     strcpy_P(tmp, FirebaseJson_STR_26);
     std::string().swap(jsonArray._json._jsonData._dbuf);
     std::string().swap(jsonArray._json._tbuf);

@@ -10,7 +10,12 @@
  *
 */
 
-//This example shows how to import the documents from the Firebase Storage Bucket . This operation required OAUth2.0 authentication.
+/** Prerequisite
+ * IAM owner permission required for service account,
+ * https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
+*/
+
+//This example shows how to import the documents from the Firebase Storage Bucket. This operation required OAUth2.0 authentication.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -23,8 +28,8 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the project ID */
-#define FIREBASE_PROJECT_ID "PROJECT_ID"
+/* 2. Define the Firebase project host name (required) */
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
 
 /** 3. Define the Service Account credentials (required for token generation)
  * 
@@ -46,9 +51,6 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-unsigned long dataMillis = 0;
-int count = 0;
-
 void setup()
 {
 
@@ -65,6 +67,9 @@ void setup()
     Serial.print("Connected with IP: ");
     Serial.println(WiFi.localIP());
     Serial.println();
+
+    /* Assign the project host (required) */
+    config.host = FIREBASE_HOST;
 
     /* Assign the user sign in credentials */
     config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;

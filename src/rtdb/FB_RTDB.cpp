@@ -37,7 +37,6 @@
 
 FB_RTDB::FB_RTDB()
 {
-    
 }
 
 FB_RTDB::~FB_RTDB()
@@ -3398,6 +3397,11 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     if (!fbdo->validRequest(req->path))
         return FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
 
+    if (fbdo->_ss.long_running_task > 0)
+    {
+        return FIREBASE_ERROR_LONG_RUNNING_TASK;
+    }
+
     uint8_t attempts = 0;
     uint8_t maxRetry = 5;
 
@@ -3642,6 +3646,10 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     //Send request
     ret = fbdo->httpClient.send(header.c_str(), payloadBuf.c_str());
+    header.clear();
+    payloadBuf.clear();
+    std::string().swap(header);
+    std::string().swap(payloadBuf);
 
     //Retry
     if (req->method != fb_esp_method::m_stream)
@@ -3657,6 +3665,10 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
                 return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
 
             ret = fbdo->httpClient.send(header.c_str(), payloadBuf.c_str());
+            header.clear();
+            payloadBuf.clear();
+            std::string().swap(header);
+            std::string().swap(payloadBuf);
         }
     }
 
@@ -3802,7 +3814,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
     }
 
     dataTime = millis();
-   
+
     if (chunkBufSize > 1)
     {
         while (chunkBufSize > 0)
@@ -3962,7 +3974,11 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                             if (response.isChunkedEnc)
                                 readLen = ut->readChunkedData(stream, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
                             else
+                            {
+                                if (stream->available() < chunkBufSize)
+                                    chunkBufSize = stream->available();
                                 readLen = stream->readBytes(pChunk, chunkBufSize);
+                            }
 
                             if (readLen > 0)
                             {

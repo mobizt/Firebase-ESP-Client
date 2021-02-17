@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 1.1.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.0
 
 
 ## Global functions
@@ -3275,9 +3275,9 @@ String payload(FirebaseData *fbdo);
 
 
 
-## Firebase Cloud Storage Functions.
+## Firebase Storage Functions.
 
-These functions can be called directly from CS object in the Firebase object e.g. Firebase.CS.[Function Name]
+These functions can be called directly from Storage object in the Firebase object e.g. Firebase.Storage.[Function Name]
 
 
 
@@ -3303,6 +3303,33 @@ Use FirebaseData.downloadURL() to get the download link.
 bool upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remotetFileName, const char *mime);
 ```
 
+
+
+
+
+
+
+#### Upload byte array to the Firebase Storage data bucket.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`bucketID`** The Firebase storage bucket ID in the project.
+
+param **`data`** The byte array of data.
+
+param **`len`** The size of byte array data in bytes.
+
+param **`remotetFileName`** The file path includes its name of uploaded file in data bucket.
+
+param **`mime`** The file MIME type
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.downloadURL() to get the download link.
+
+```cpp
+bool upload(FirebaseData *fbdo, const char *bucketID, uint8_t *data, size_t len, const char *remoteFileName, const char *mime);
+```
 
 
 
@@ -3380,6 +3407,525 @@ Use the FileList type data to get name and bucket properties for each item.
 ```cpp
 bool listFiles(FirebaseData *fbdo, const char *bucketID);
 ```
+
+
+
+
+
+
+
+
+## Google Cloud Storage Functions.
+
+These functions can be called directly from GCStorage object in the Firebase object e.g. Firebase.GCStorage.[Function Name]
+
+
+
+#### Upload file to the Google Cloud Storage data bucket.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`bucketID`** The Firebase or Google Cloud Storage bucket ID.
+
+param **`localFileName`** The file path includes its name to upload.
+
+param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+param **`uploadType`** The enum of type of upload methods e.g. gcs_upload_type_simple, gcs_upload_type_multipart, gcs_upload_type_resumable
+
+param **`remotetFileName`** The file path includes its name of uploaded file in data bucket.
+
+param **`mime`** The file MIME type.
+
+param **`uploadOptions`** Optional. The UploadOptions data contains the query parameters options.
+
+For query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-parameters
+
+param **`requestProps`** Optional. The RequestProperties data contains the request payload properties.
+
+For request payload properties, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-properties
+
+param **`status`** Optional. The UploadStatusInfo data to get the upload status.
+
+param **`callback`** Optional. The callback function that accept UploadStatusInfo data.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+This function requires OAuth2.0 authentication.
+
+The upload types of methods can be selectable.
+
+The gcs_upload_type_simple upload type is used for small file upload in a single request without metadata.
+
+gcs_upload_type_multipart upload type is for small file upload in a single reques with metadata.
+
+gcs_upload_type_resumable upload type is for medium or large file (larger than or equal to 256 256 KiB) upload with metadata and can be resumable.
+
+The upload with metadata supports allows the library to add the metadata internally for Firebase to request the download access token in Firebase Storage bucket.
+
+User also can add custom metadata for the uploading file (object).
+
+```cpp
+bool upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, const char *remoteFileName, const char *mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, ProgressCallback callback = NULL);
+```
+
+
+
+
+
+
+#### Downoad file from the Google Cloud Storage data bucket.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`bucketID`** The Firebase or Google Cloud Storage bucket ID.
+
+param **`remotetFileName`** The file path includes its name of file in the data bucket to download.
+
+param **`localFileName`** The file path includes its name to save.
+
+param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+param **`option`** Optional. The pointer to StorageGetOptions data that contains the get query parameters.
+
+For the query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool download(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr);
+```
+
+
+
+
+
+####  Get the meta data of file in Firebase or Google Cloud Storage data bucket.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`bucketID`** The Firebase or Google Cloud Storage bucket ID.
+
+param **`remotetFileName`** The file path includes its name of file in the data bucket.
+
+param **`options`** Optional. The pointer to StorageGetOptions data that contains the get query parameters.
+
+For the query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use the FileMetaInfo type data to get name, bucket, contentType, size, 
+generation, metageneration, etag, crc32, downloadTokens properties from file.
+
+```cpp
+bool getMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName);
+```
+
+
+
+
+
+#### Delete file from Firebase or Google Cloud Storage data bucket.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`bucketID`** The Firebase or Google Cloud Storage bucket ID.
+
+param **`remotetFileName`** The file path includes its name of file in the data bucket.
+
+param **`options`** Optional. The pointer to DeleteOptions data contains the query parameters.
+
+For query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/delete#optional-parameters
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+```cpp
+bool deleteFile(FirebaseData *fbdo, const char *bucketID, const char *fileName, DeleteOptions *options = nullptr);
+```
+
+
+
+
+#### List all files in the Firebase or Google Cloud Storage data bucket.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`bucketID`** The Firebase or Google Cloud Storage bucket ID.
+
+param **`options`** Optional. The pointer to ListOptions data that contains the query parameters
+
+Fore query parameters description, see https://cloud.google.com/storage/docs/json_api/v1/objects/list#optional-parameters
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use the FileList type data to get name and bucket properties for each item.
+
+```cpp
+bool listFiles(FirebaseData *fbdo, const char *bucketID, ListOptions *options = nullptr);
+```
+
+
+
+
+
+
+
+
+
+## Google Cloud Function Functions
+
+
+These functions can be called directly from Functions object in the Firebase object e.g. Firebase.Functions.[Function Name]
+
+
+
+
+#### Synchronously invokes a deployed Cloud Function. 
+
+To be used for testing purposes as very limited traffic is allowed. 
+
+For more information on the actual limits, refer to Rate Limits. https://cloud.google.com/functions/quotas#rate_limits
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+param **`functionId`** The name of function.
+
+param **`data`** The Input to be passed to the function.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool callFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *data);
+```
+
+
+
+
+
+
+
+#### Creates a new function. 
+
+If a function with the given name already exists in the specified project, the long running operation will return ALREADY_EXISTS error.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`config`** The pointer to FunctionsConfig object that encapsulates the function and triggers configurationston.
+
+param **`callback`** The callback function to get the Cloud Function creation status.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool createFunction(FirebaseData *fbdo, FunctionsConfig *config, FunctionsOperationCallback callback = NULL);
+```
+
+
+
+
+
+
+#### Creates a new function. 
+
+If a function with the given name already exists in the specified project, the long running operation will return ALREADY_EXISTS error.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`config`** The pointer to FunctionsConfig object that encapsulates the function and triggers configurationston.
+
+param **`statusInfo`** The pointer to FunctionsOperationStatusInfo data to get the Cloud Function creation status later.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool createFunction(FirebaseData *fbdo, FunctionsConfig *config, FunctionsOperationStatusInfo *statusInfo);
+```
+
+
+
+
+#### Updates existing function. 
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`functionId`** The name of function.
+
+param **`patchData`** The pointer to FunctionsConfig object that encapsulates the function and triggers configurationston.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool patchFunction(FirebaseData *fbdo, const char *functionId, FunctionsConfig *patchData);
+```
+
+
+
+
+
+
+#### Sets the IAM access control policy on the specified function. Replaces any existing policy.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+param **`functionId`** The name of function.
+
+param **`policy`** The pointer to PolicyBuilder data concapsulates the policy configuration.
+
+The complete policy to be applied to the resource.
+
+param **`updateMask`** A FieldMask specifying which fields of the policy to modify. 
+
+Only the fields in the mask will be modified. If no mask is provided, the following default mask is used:
+
+paths: "bindings, etag"
+
+A comma-separated list of fully qualified names of fields. Example: "user.displayName,photo"
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool setIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, PolicyBuilder *policy, const char *updateMask = "");
+```
+
+
+
+
+
+
+#### Gets the IAM access control policy for a function. 
+
+Returns an empty policy if the function exists and does not have a policy set.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+param **`functionId`** The name of function.
+
+param **`version`** Optional. The policy format version to be returned.
+
+Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool getIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *version = "");
+```
+
+
+
+
+
+
+#### Returns a function with the given name from the requested project. 
+
+Returns an empty policy if the function exists and does not have a policy set.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+param **`functionId`** The name of function.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool getFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId);
+```
+
+
+
+
+
+
+#### Deletes a function with the given name from the specified project. 
+
+If the given function is used by some trigger, the trigger will be updated to remove this function. 
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+param **`functionId`** The name of function.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool deleteFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId);
+```
+
+
+
+
+
+
+#### Returns a signed URL for downloading deployed function source code. 
+
+The URL is only valid for a limited period and should be used within minutes after generation.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+param **`functionId`** The name of function.
+
+param **`versionId`** The optional version of function. If not set, default, current version is used.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool generateDownloadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *versionId = "");
+```
+
+
+
+
+
+
+#### Returns a signed URL for uploading a function source code. 
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool generateUploadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId);
+```
+
+
+
+
+
+#### Returns a list of functions that belong to the requested project.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`locationId`** The project location.
+
+param **`pageSize`** Maximum number of functions to return per call.
+
+param **`pageToken`** The value returned by the last ListFunctionsResponse; indicates that this is a continuation of a prior functions.list call, and that the system should return the next page of data.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool listFunctions(FirebaseData *fbdo, const char *projectId, const char *locationId, size_t pageSize, const char *pageToken = "");
+```
+
+
+
+
+
+#### Returns a function with the given name from the requested project.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`filter`** filter The Firebase project id (only the name without the firebaseio.com).
+
+A filter for matching the requested operations.
+
+The supported formats of filter are: 
+
+To query for a specific function:
+
+project:*,location:*,function:*
+
+To query for all of the latest operations for a project:
+
+project:*,latest:true
+
+param **`pageSize`** he maximum number of records that should be returned.
+
+Requested page size cannot exceed 100. If not set, the default page size is 100
+
+param **`pageToken`** Token identifying which result to start with, which is returned by a previous list call.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool listOperations(FirebaseData *fbdo, const char *filter, int pageSize, const char *pageToken);
+```
+
+
+
+
+
+## PolicyBuilder and FunctionsConfig classes
+
+The description of PolicyBuilder and FunctionsConfig classes and their functions are available in the header files
+[/src/functions/PolicyBuilder.h](/functions/PolicyBuilder.h) and [/src/functions/FunctionsConfig.h](/functions/FunctionsConfig.h).
 
 
 

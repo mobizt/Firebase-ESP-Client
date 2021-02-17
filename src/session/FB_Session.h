@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.0.0
+ * Google's Firebase Data class, FB_Session.h version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created  February 12, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -41,6 +41,7 @@
 
 #include "signer/Signer.h"
 
+
 class FirebaseData
 {
   friend class FB_CM;
@@ -49,12 +50,14 @@ class FirebaseData
   friend class FB_CloudStorage;
   friend class UtilsClass;
   friend class FB_Firestore;
+  friend class FB_Functions;
 
 public:
   typedef void (*StreamEventCallback)(FirebaseStream);
   typedef void (*MultiPathStreamEventCallback)(MultiPathStream);
   typedef void (*StreamTimeoutCallback)(bool);
   typedef void (*QueueInfoCallback)(QueueInfo);
+ 
 
   FirebaseData();
   ~FirebaseData();
@@ -368,6 +371,7 @@ private:
   MultiPathStreamEventCallback _multiPathDataCallback = NULL;
   StreamTimeoutCallback _timeoutCallback = NULL;
   QueueInfoCallback _queueInfoCallback = NULL;
+  FunctionsOperationCallback _functionsOperationCallback = NULL;
 
   UtilsClass *ut = nullptr;
   QueueManager _qMan;
