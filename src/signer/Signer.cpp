@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.0
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created February 18, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -202,6 +202,9 @@ bool Firebase_Signer::userSigninDataReady()
 bool Firebase_Signer::hanldeToken()
 {
     if (!config || !auth)
+        return false;
+
+    if (config->host.length() == 0)
         return false;
 
     if ((config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token) && (millis() > config->signer.tokens.expires - config->signer.preRefreshMillis || config->signer.tokens.expires == 0))
@@ -1577,6 +1580,8 @@ void Firebase_Signer::checkToken()
 {
     if (!config || !auth)
         return;
+    if (config->host.length() == 0)
+        return;
     if ((config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token) && (millis() > config->signer.tokens.expires - config->signer.preRefreshMillis || config->signer.tokens.expires == 0))
         hanldeToken();
 }
@@ -1585,7 +1590,8 @@ bool Firebase_Signer::tokenReady()
 {
     if (!auth || !config)
         return false;
-
+    if (config->host.length() == 0)
+        return false;
     checkToken();
     return config->signer.tokens.status == token_status_ready;
 };
@@ -1752,7 +1758,7 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_LONG_RUNNING_TASK:
         ut->appendP(buff, fb_esp_pgm_str_534);
         return;
-     default:
+    default:
         return;
     }
 }

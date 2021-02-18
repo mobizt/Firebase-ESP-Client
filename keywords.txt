@@ -175,6 +175,7 @@ addBinding  KEYWORD2
 setVersion  KEYWORD2
 setETag KEYWORD2
 clearBindings   KEYWORD2
+runQuery    KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)

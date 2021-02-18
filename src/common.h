@@ -215,8 +215,17 @@ enum fb_esp_firestore_request_type
     fb_esp_firestore_request_type_create_doc,
     fb_esp_firestore_request_type_patch_doc,
     fb_esp_firestore_request_type_delete_doc,
+    fb_esp_firestore_request_type_run_query,
     fb_esp_firestore_request_type_list_doc,
     fb_esp_firestore_request_type_list_collection
+};
+
+enum fb_esp_firestore_consistency_mode
+{
+    fb_esp_firestore_consistency_mode_undefined,
+    fb_esp_firestore_consistency_mode_transaction,
+    fb_esp_firestore_consistency_mode_newTransaction,
+    fb_esp_firestore_consistency_mode_readTime
 };
 
 enum fb_esp_functions_creation_step
@@ -696,7 +705,7 @@ typedef struct fb_esp_gcs_request_properties_t
     const char *name = "";
     const char *storageClass = "";
     const char *temporaryHold = ""; //boolean
-}RequestProperties;
+} RequestProperties;
 
 typedef struct fb_esp_gcs_get_options_t
 {
@@ -1600,7 +1609,7 @@ static const char fb_esp_pgm_str_510[] PROGMEM = "crc32c";
 static const char fb_esp_pgm_str_511[] PROGMEM = "customTime";
 static const char fb_esp_pgm_str_512[] PROGMEM = "eventBasedHold";
 static const char fb_esp_pgm_str_513[] PROGMEM = "md5Hash";
-static const char fb_esp_pgm_str_514[] PROGMEM = "metadata"; 
+static const char fb_esp_pgm_str_514[] PROGMEM = "metadata";
 static const char fb_esp_pgm_str_515[] PROGMEM = "name";
 static const char fb_esp_pgm_str_516[] PROGMEM = "storageClass";
 static const char fb_esp_pgm_str_517[] PROGMEM = "temporaryHold";
@@ -1621,6 +1630,11 @@ static const char fb_esp_pgm_str_531[] PROGMEM = "X-Upload-Content-Length: ";
 static const char fb_esp_pgm_str_532[] PROGMEM = "Content-Range: bytes ";
 static const char fb_esp_pgm_str_533[] PROGMEM = "multipart/related; boundary=";
 static const char fb_esp_pgm_str_534[] PROGMEM = "operation ignored due to long running task is being processed.";
+static const char fb_esp_pgm_str_535[] PROGMEM = ":runQuery";
+static const char fb_esp_pgm_str_536[] PROGMEM = "structuredQuery";
+static const char fb_esp_pgm_str_537[] PROGMEM = "transaction";
+static const char fb_esp_pgm_str_538[] PROGMEM = "newTransaction";
+static const char fb_esp_pgm_str_539[] PROGMEM = "readTime";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

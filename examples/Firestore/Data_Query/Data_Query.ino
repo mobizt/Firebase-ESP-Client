@@ -10,7 +10,7 @@
  *
 */
 
-//This example shows how to get a document from a document collection. This operation required Email/password, custom or OAUth2.0 authentication.
+//This example shows how to run a query. This operation required Email/password, custom or OAUth2.0 authentication.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -41,6 +41,7 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 unsigned long dataMillis = 0;
+int count = 0;
 
 void setup()
 {
@@ -74,43 +75,6 @@ void setup()
     //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
-
-    String content;
-
-    FirebaseJson js;
-
-    js.set("fields/Japan/mapValue/fields/time_zone/integerValue", "9");
-    js.set("fields/Japan/mapValue/fields/population/integerValue", "125570000");
-
-    js.set("fields/Belgium/mapValue/fields/time_zone/integerValue", "1");
-    js.set("fields/Belgium/mapValue/fields/population/integerValue", "11492641");
-
-    js.set("fields/Singapore/mapValue/fields/time_zone/integerValue", "8");
-    js.set("fields/Singapore/mapValue/fields/population/integerValue", "5703600");
-
-    js.toString(content);
-
-    //info is the collection id, countries is the document id in collection info.
-    String documentPath = "info/countries";
-
-    Serial.println("------------------------------------");
-    Serial.println("Create document...");
-
-    if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.c_str()))
-    {
-        Serial.println("PASSED");
-        Serial.println("------------------------------------");
-        Serial.println(fbdo.payload());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
-    else
-    {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
 }
 
 void loop()
@@ -120,13 +84,32 @@ void loop()
     {
         dataMillis = millis();
 
-        String documentPath = "info/countries";
-        String mask = "Singapore";
-
         Serial.println("------------------------------------");
-        Serial.println("Get a document...");
+        Serial.println("Query a Firestore database...");
 
-        if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), mask.c_str()))
+        //If you have run the Create_Documents example, the document b0 (in collection a0) contains the document collection c0, and
+        //c0 contains the collections d?.
+
+        //The following query will query at collection c0 to get the 3 documents in the payload result with descending order.
+
+        FirebaseJson query;
+
+        query.set("select/fields/[0]/fieldPath", "count");
+        query.set("select/fields/[1]/fieldPath", "random");
+        //query.set("select/fields/[2]/fieldPath", "status");
+
+        query.set("from/collectionId", "c0");
+        query.set("from/allDescendants", false);
+        query.set("orderBy/field/fieldPath", "count");
+        query.set("orderBy/direction", "DESCENDING");
+        query.set("limit", 3);
+
+        //The consistencyMode and consistency arguments are not assigned
+        //The consistencyMode is set to fb_esp_firestore_consistency_mode_undefined by default.
+        //The arguments is the consistencyMode value, see the function description at
+        //https://github.com/mobizt/Firebase-ESP-Client/tree/main/src#runs-a-query
+
+        if (Firebase.Firestore.runQuery(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, "a0/b0" /* The document path */, &query /* The FirebaseJson object holds the StructuredQuery data */))
         {
             Serial.println("PASSED");
             Serial.println("------------------------------------");

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.1
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 17, 2021
+ * Created February 18, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -182,6 +182,43 @@ bool FB_Firestore::getDocument(FirebaseData *fbdo, const char *projectId, const 
     return sendRequest(fbdo, &req);
 }
 
+bool FB_Firestore::runQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode, const char *consistency)
+{
+    struct fb_esp_firestore_req_t req;
+    req.requestType = fb_esp_firestore_request_type_run_query;
+    req.projectId = projectId;
+    req.databaseId = databaseId;
+    req.documentPath = documentPath;
+    char *tmp = nullptr;
+    fbdo->_ss.json.clear();
+    if (consistencyMode != fb_esp_firestore_consistency_mode_undefined)
+    {
+        if (consistencyMode != fb_esp_firestore_consistency_mode_transaction)
+            tmp = ut->strP(fb_esp_pgm_str_537);
+        else if (consistencyMode != fb_esp_firestore_consistency_mode_newTransaction)
+            tmp = ut->strP(fb_esp_pgm_str_538);
+        else if (consistencyMode != fb_esp_firestore_consistency_mode_readTime)
+            tmp = ut->strP(fb_esp_pgm_str_539);
+        fbdo->_ss.json.add((const char *)tmp, consistency);
+        ut->delS(tmp);
+    }
+
+    tmp = ut->strP(fb_esp_pgm_str_536);
+    if (structuredQuery)
+        fbdo->_ss.json.add((const char *)tmp, *structuredQuery);
+    else
+    {
+        static FirebaseJson js;
+        fbdo->_ss.json.add((const char *)tmp, js);
+    }
+    ut->delS(tmp);
+
+    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.clear();
+
+    return sendRequest(fbdo, &req);
+}
+
 bool FB_Firestore::deleteDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *exists, const char *updateTime)
 {
     struct fb_esp_firestore_req_t req;
@@ -243,6 +280,12 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
     if (!fbdo->reconnect())
         return false;
 
+    if (Signer.config->host.length() == 0)
+    {
+        fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
+        return false;
+    }
+
     if (!Signer.tokenReady())
         return false;
 
@@ -271,7 +314,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     std::string header;
     if (req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_list_doc)
         ut->appendP(header, fb_esp_pgm_str_25);
-    else if (req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_export_docs || req->requestType == fb_esp_firestore_request_type_import_docs || req->requestType == fb_esp_firestore_request_type_create_doc)
+    else if (req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_export_docs || req->requestType == fb_esp_firestore_request_type_import_docs || req->requestType == fb_esp_firestore_request_type_create_doc)
         ut->appendP(header, fb_esp_pgm_str_24);
     else if (req->requestType == fb_esp_firestore_request_type_patch_doc)
         ut->appendP(header, fb_esp_pgm_str_26);
@@ -296,7 +339,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         ut->appendP(header, fb_esp_pgm_str_344);
     else if (req->requestType == fb_esp_firestore_request_type_import_docs)
         ut->appendP(header, fb_esp_pgm_str_345);
-    else if (req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_list_doc || req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_create_doc || req->requestType == fb_esp_firestore_request_type_patch_doc || req->requestType == fb_esp_firestore_request_type_delete_doc)
+    else if (req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_list_doc || req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_create_doc || req->requestType == fb_esp_firestore_request_type_patch_doc || req->requestType == fb_esp_firestore_request_type_delete_doc)
     {
         ut->appendP(header, fb_esp_pgm_str_351);
 
@@ -316,7 +359,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
             header += req->documentId;
             hasParam = true;
         }
-        else if (req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_patch_doc || req->requestType == fb_esp_firestore_request_type_delete_doc)
+        else if (req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_patch_doc || req->requestType == fb_esp_firestore_request_type_delete_doc)
         {
             if (req->documentPath.length() > 0)
             {
@@ -329,6 +372,8 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
             header += req->documentPath;
             if (req->requestType == fb_esp_firestore_request_type_list_collection)
                 ut->appendP(header, fb_esp_pgm_str_362);
+            else if (req->requestType == fb_esp_firestore_request_type_run_query)
+                ut->appendP(header, fb_esp_pgm_str_535);
         }
         else if (req->requestType == fb_esp_firestore_request_type_list_doc)
         {
@@ -666,7 +711,6 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                         //the next chuunk data is the payload
                         if (!response.noContent)
                         {
-
                             pChunkIdx++;
                             pChunk = ut->newS(chunkBufSize + 1);
 
@@ -735,6 +779,9 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                     error.code = 0;
                 }
             }
+            //JSON Array payload
+            else if (fbdo->_ss.cfs.payload[0] == '[')
+                error.code = 0;
 
             fbdo->_ss.content_length = response.payloadLen;
 

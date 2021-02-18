@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.0.1
+ * Google's Cloud Firestore class, Forestore.h version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 17, 2021
+ * Created February 18, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -165,6 +165,27 @@ public:
      * 
     */
     bool getDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask = "", const char *transaction = "", const char *readTime = "");
+
+    /** Runs a query.
+     * 
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param documentPath The relative path of document to get.
+     * @param structuredQuery The pointer to FirebaseJson object that contains the Firestore query. For the description of structuredQuery, see https://cloud.google.com/firestore/docs/reference/rest/v1/StructuredQuery
+     * @param consistencyMode Optional. The consistency mode for this transaction e.g. fb_esp_firestore_consistency_mode_transaction,fb_esp_firestore_consistency_mode_newTransaction
+     * and fb_esp_firestore_consistency_mode_readTime
+     * @param consistency Optional. The value based on consistency mode e.g. transaction string, TransactionOptions (JSON) and date time string.
+     * 
+     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/runQuery#body.request_body.FIELDS
+     * 
+     * @return Boolean value, indicates the success of the operation. 
+     * 
+     * @note Use FirebaseData.payload() to get the returned payload.
+     * 
+     * 
+    */
+    bool runQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode = fb_esp_firestore_consistency_mode_undefined, const char *consistency = "");
 
     /** Delete a document at the defined path.
      * 

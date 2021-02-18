@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.0
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 17, 2021
+ * Created February 18, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -92,8 +92,12 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
 
     struct fb_esp_url_info_t uinfo;
     _cfg->_int.fb_auth_uri = _cfg->signer.tokens.token_type == token_type_legacy_token || _cfg->signer.tokens.token_type == token_type_id_token;
-    ut->getUrlInfo(_cfg->host.c_str(), uinfo);
-    _cfg->host = uinfo.host;
+
+    if (_cfg->host.length() > 0)
+    {
+        ut->getUrlInfo(_cfg->host.c_str(), uinfo);
+        _cfg->host = uinfo.host;
+    }
 
     if (strlen_P(_cfg->cert.data))
         _cfg->_int.fb_caCert = std::shared_ptr<const char>(_cfg->cert.data);

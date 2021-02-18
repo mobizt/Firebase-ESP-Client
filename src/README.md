@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.1
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.2
 
 
 ## Global functions
@@ -2965,6 +2965,43 @@ This function requires Email/password, Custom token or OAuth2.0 authentication.
 
 ```cpp
 bool getDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask = "", const char *transaction = "", const char *readTime = "");
+```
+
+
+
+
+
+
+
+#### Get a document at the defined path.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`documentPath`** The relative path of document to get.
+
+param **`structuredQuery`** The pointer to FirebaseJson object that contains the Firestore query. For the description of structuredQuery, see https://cloud.google.com/firestore/docs/reference/rest/v1/StructuredQuery
+
+param **`consistencyMode`** Optional. The consistency mode for this transaction 
+e.g. fb_esp_firestore_consistency_mode_transaction,
+fb_esp_firestore_consistency_mode_newTransaction
+and fb_esp_firestore_consistency_mode_readTime
+
+param **`consistency`** Optional. The value based on consistency mode e.g. transaction string, TransactionOptions (JSON) and date time string.
+
+For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/runQuery#body.request_body.FIELDS
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires Email/password, Custom token or OAuth2.0 authentication.
+
+```cpp
+bool runQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode, const char *consistency);
 ```
 
 

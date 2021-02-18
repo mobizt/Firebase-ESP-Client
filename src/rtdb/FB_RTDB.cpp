@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.1
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 26, 2021
+ * Created February 18, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -3390,6 +3390,12 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     if (!fbdo->reconnect())
         return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+
+    if (Signer.config->host.length() == 0)
+    {
+        fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
+        return false;
+    }
 
     if (!fbdo->tokenReady())
         return FIREBASE_ERROR_TOKEN_NOT_READY;
