@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.2
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -2221,7 +2221,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     //trying to reconnect the stream when required at some interval as running in the loop
     if (millis() - STREAM_RECONNECT_INTERVAL > fbdo->_ss.rtdb.stream_resume_millis)
     {
-        reconnectStream = (fbdo->_ss.rtdb.data_tmo && !fbdo->_ss.connected) || fbdo->_ss.con_mode == fb_esp_con_mode_fcm || fbdo->_ss.con_mode == fb_esp_con_mode_storage;
+        reconnectStream = (fbdo->_ss.rtdb.data_tmo && !fbdo->_ss.connected) || fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream;
 
         if (fbdo->_ss.rtdb.data_tmo)
             fbdo->closeSession();
@@ -2277,13 +2277,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     }
 
     if (!waitResponse(fbdo))
-    {
-        fbdo->_ss.rtdb.data_tmo = true;
-        if (!fbdo->_ss.connected) //not connected in fcm shared object usage
-            return true;
-        else
-            return ret;
-    }
+        return ret;
 
     return true;
 }
@@ -3285,6 +3279,33 @@ void FB_RTDB::allowMultipleRequests(bool enable)
 }
 #endif
 
+void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_info_t *req)
+{
+    if (req->method == fb_esp_method::m_stream)
+    {
+        if (req->path != fbdo->_ss.rtdb.stream_path)
+            fbdo->_ss.rtdb.stream_path_changed = true;
+        else
+            fbdo->_ss.rtdb.stream_path_changed = false;
+    }
+
+    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.rtdb.stream_path_changed || (req->method == fb_esp_method::m_stream && fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream) || (req->method != fb_esp_method::m_stream && fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream) || strcmp(host, fbdo->_ss.host.c_str()) != 0)
+    {
+        fbdo->_ss.last_conn_ms = millis();
+        fbdo->closeSession();
+        fbdo->setSecure();
+    }
+
+    fbdo->_ss.host = host;
+    if (req->method == fb_esp_method::m_stream)
+        fbdo->_ss.con_mode = fb_esp_con_mode_rtdb_stream;
+    else
+        fbdo->_ss.con_mode = fb_esp_con_mode_rtdb;
+
+    if (fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream)
+        fbdo->_ss.rtdb.stream_resume_millis = 0;
+}
+
 bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
     fbdo->_ss.error.clear();
@@ -3315,15 +3336,10 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
     fbdo->_ss.rtdb.priority = req->priority;
     fbdo->_ss.rtdb.storage_type = req->storageType;
 
-    if (req->method != fb_esp_method::m_stream)
-        if (!fbdo->_ss.rtdb.keep_alive)
-            fbdo->closeSession();
-
     fbdo->_ss.rtdb.redirect_url.clear();
     fbdo->_ss.rtdb.req_method = req->method;
     fbdo->_ss.rtdb.req_data_type = req->dataType;
     fbdo->_ss.rtdb.data_mismatch = false;
-
     int ret = sendRequest(fbdo, req);
     if (ret == 0)
     {
@@ -3422,18 +3438,10 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     std::string payloadBuf = "";
     std::string header = "";
 
+    rescon(fbdo, Signer.getCfg()->host.c_str(), req);
+
     if (req->method == fb_esp_method::m_stream)
     {
-        //stream path change? reset the current (keep alive) connection
-        if (req->path != fbdo->_ss.rtdb.stream_path)
-            fbdo->_ss.rtdb.stream_path_changed = true;
-
-        if (fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream || fbdo->_ss.rtdb.stream_path_changed || fbdo->_ss.con_mode == fb_esp_con_mode_fcm)
-            fbdo->closeSession();
-
-        if (fbdo->_ss.con_mode == fb_esp_con_mode_fcm || fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream)
-            fbdo->setSecure();
-
         fbdo->_ss.rtdb.stream_path.clear();
 
         if (req->path.length() > 0)
@@ -3441,21 +3449,9 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
                 ut->appendP(fbdo->_ss.rtdb.stream_path, fb_esp_pgm_str_1, true);
 
         fbdo->_ss.rtdb.stream_path += req->path;
-        fbdo->_ss.con_mode = fb_esp_con_mode_rtdb_stream;
     }
     else
     {
-        //last requested req->method was stream or fcm?, close the connection
-        if (fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream || fbdo->_ss.con_mode == fb_esp_con_mode_fcm)
-            fbdo->closeSession();
-
-        if (!fbdo->_ss.connected || fbdo->_ss.con_mode == fb_esp_con_mode_fcm || fbdo->_ss.con_mode != fb_esp_con_mode_rtdb)
-        {
-            fbdo->setSecure();
-        }
-
-        fbdo->_ss.con_mode = fb_esp_con_mode_rtdb;
-
         fbdo->_ss.rtdb.path.clear();
         fbdo->_ss.rtdb.resp_etag.clear();
 
@@ -3802,9 +3798,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
     fbdo->_ss.chunked_encoding = false;
     fbdo->_ss.buffer_ovf = false;
 
-    if (fbdo->_ss.con_mode == fb_esp_con_mode_fcm)
-        defaultChunkSize = 768;
-
     if (fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream)
     {
         while (fbdo->httpClient.connected() && chunkBufSize <= 0)
@@ -3939,9 +3932,9 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                             }
 
                             if (ut->stringCompare(response.connection.c_str(), 0, fb_esp_pgm_str_11))
-                                fbdo->_ss.rtdb.keep_alive = true;
+                                fbdo->_ss.rtdb.http_resp_conn_type = fb_esp_http_connection_type_keep_alive;
                             else
-                                fbdo->_ss.rtdb.keep_alive = false;
+                                fbdo->_ss.rtdb.http_resp_conn_type = fb_esp_http_connection_type_close;
 
                             fbdo->_ss.chunked_encoding = response.isChunkedEnc;
 
@@ -4013,7 +4006,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                                 }
                             }
 
-                            if (!fbdo->_ss.rtdb.data_tmo && fbdo->_ss.con_mode != fb_esp_con_mode_fcm && !fbdo->_ss.buffer_ovf)
+                            if (!fbdo->_ss.rtdb.data_tmo && !fbdo->_ss.buffer_ovf)
                             {
                                 //try to parse the payload for stream event data
                                 if (response.dataType == 0 || (response.isEvent && !response.hasEventData))
@@ -4132,7 +4125,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
         if (hstate == 1)
             ut->delS(header);
 
-        if (!fbdo->_ss.rtdb.data_tmo && fbdo->_ss.con_mode != fb_esp_con_mode_fcm && !fbdo->_ss.buffer_ovf)
+        if (!fbdo->_ss.rtdb.data_tmo && !fbdo->_ss.buffer_ovf)
         {
 
             //parse the payload
@@ -4313,13 +4306,8 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
             fbdo->_ss.rtdb.data_millis = millis();
             fbdo->_ss.rtdb.data_tmo = false;
         }
-        else if (fbdo->_ss.con_mode != fb_esp_con_mode_fcm)
-        {
+        else
             ut->closeFileHandle(fbdo->_ss.rtdb.storage_type == mem_storage_type_sd);
-        }
-
-        if (fbdo->_ss.con_mode == fb_esp_con_mode_fcm && payload)
-            fbdo->_ss.rtdb.data = payload;
 
         if (pstate == 1)
             ut->delS(payload);
@@ -4652,15 +4640,18 @@ void FB_RTDB::prepareHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
 
     if (req->method == fb_esp_method::m_stream)
     {
+        fbdo->_ss.rtdb.http_req_conn_type = fb_esp_http_connection_type_keep_alive;
         ut->appendP(header, fb_esp_pgm_str_34);
         ut->appendP(header, fb_esp_pgm_str_35);
     }
     else if (req->method == fb_esp_method::m_download || req->method == fb_esp_method::m_restore)
     {
+        fbdo->_ss.rtdb.http_req_conn_type = fb_esp_http_connection_type_close;
         ut->appendP(header, fb_esp_pgm_str_34);
     }
     else
     {
+        fbdo->_ss.rtdb.http_req_conn_type = fb_esp_http_connection_type_keep_alive;
         ut->appendP(header, fb_esp_pgm_str_36);
         ut->appendP(header, fb_esp_pgm_str_37);
     }

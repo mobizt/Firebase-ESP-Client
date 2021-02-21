@@ -1,11 +1,11 @@
 # Migrate from Firebase-ESP32 or Firebase-ESP8266 library to Firebase-ESP-Client library
 
 
-This library includes the Firebase Storage fnctions and the Firebase Cloud Messageing upgrades.
+This library includes the Firebase and Google Cloud Storage fnctions, Cloud Firestore, Cloud Functions and the Firebase Cloud Messageing upgrades.
 
 The major changes from Firebase-ESP32 or Firebase-ESP8266 library are.
 
-* All Firebase Realtime database functions moved from Firebase class to Firebase.RTDB class.
+* All Firebase Realtime database functions moved from Firebase class to Firebase.RTDB member class.
 
 * All parameters in RTDB functions are the pointer to the variables unless the String type value.
 

@@ -89,7 +89,7 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println("Import documents from the Storage bucket...");
 
-    if (Firebase.Firestore.importDocuments(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, STORAGE_BUCKET_ID, "test_path" /* The path in the Firebase Storage bucket to store the data */, "" /* Which collection ids to export. Unspecified means all collections. */))
+    if (Firebase.Firestore.importDocuments(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, STORAGE_BUCKET_ID, "test_path" /* The path in the Firebase Storage bucket to store the data */, "" /* Which collection ids to import. Unspecified means all collections. */))
     {
         Serial.println("PASSED");
         Serial.println("------------------------------------");

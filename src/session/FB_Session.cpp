@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.1
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 12, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -421,6 +421,8 @@ bool FirebaseData::httpConnected()
 
 bool FirebaseData::streamTimeout()
 {
+    if (_ss.rtdb.stream_stop)
+        return false;
     if (millis() - STREAM_ERROR_NOTIFIED_INTERVAL > _ss.rtdb.stream_tmo_Millis || _ss.rtdb.stream_tmo_Millis == 0)
     {
         _ss.rtdb.stream_tmo_Millis = millis();
@@ -438,7 +440,7 @@ bool FirebaseData::dataAvailable()
 
 bool FirebaseData::streamAvailable()
 {
-    bool ret = _ss.connected && _ss.rtdb.data_available && _ss.rtdb.stream_data_changed;
+    bool ret = _ss.connected && !_ss.rtdb.stream_stop && _ss.rtdb.data_available && _ss.rtdb.stream_data_changed;
     _ss.rtdb.data_available = false;
     _ss.rtdb.stream_data_changed = false;
     return ret;
@@ -559,12 +561,16 @@ int FirebaseData::httpCode()
 
 void FirebaseData::closeSession()
 {
-    //close the socket and free the resources used by the BearSSL data
-    if (_ss.connected || httpClient.stream())
+    if (WiFi.status() == WL_CONNECTED)
     {
-        Signer.getCfg()->_int.fb_last_reconnect_millis = millis();
-        if (httpClient.stream()->connected())
-            httpClient.stream()->stop();
+        //close the socket and free the resources used by the BearSSL data
+        if (_ss.connected || httpClient.stream())
+        {
+            Signer.getCfg()->_int.fb_last_reconnect_millis = millis();
+            if (httpClient.stream())
+                if (httpClient.stream()->connected())
+                    httpClient.stream()->stop();
+        }
     }
 
     if (_ss.con_mode == fb_esp_con_mode_rtdb_stream)

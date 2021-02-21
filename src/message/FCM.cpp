@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.2
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -40,11 +40,24 @@ FB_CM::~FB_CM()
     clear();
 }
 
-bool FB_CM::init()
+bool FB_CM::init(bool clearInt)
 {
     if (!Signer.getCfg())
         return false;
 
+    if (clearInt)
+    {
+        if (_ut)
+            delete _ut;
+        if (_cfg)
+            delete _cfg;
+        if (_auth)
+            delete _auth;
+
+        _ut = nullptr;
+        _cfg = nullptr;
+        _auth = nullptr;
+    }
     if (!ut)
         ut = new UtilsClass(Signer.getCfg());
 
@@ -53,6 +66,7 @@ bool FB_CM::init()
 
 void FB_CM::begin(UtilsClass *u)
 {
+    init(true);
     ut = u;
 }
 
@@ -64,12 +78,16 @@ void FB_CM::setServerKey(const char *serverKey)
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 {
     if (!Signer.getCfg())
-        return false;
+    {
+        _cfg = new FirebaseConfig();
+        _auth = new FirebaseAuth();
+        _ut = new UtilsClass(_cfg);
+        ut = _ut;
+        Signer.begin(_ut, _cfg, _auth);
+    }
 
     if (!init())
         return false;
-
-    Signer.tokenReady();
 
     if (_server_key.length() == 0)
     {
@@ -175,7 +193,7 @@ String FB_CM::payload(FirebaseData *fbdo)
     return fbdo->_ss.fcm.payload.c_str();
 }
 
-void FB_CM::fcm_begin(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
+void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
 {
 
     if (Signer.getTokenType() != token_type_undefined)
@@ -191,6 +209,8 @@ void FB_CM::fcm_begin(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
         ut->appendP(host, fb_esp_pgm_str_329);
     ut->appendP(host, fb_esp_pgm_str_4);
     ut->appendP(host, fb_esp_pgm_str_120);
+
+    rescon(fbdo, host.c_str());
     fbdo->httpClient.begin(host.c_str(), _port);
 }
 
@@ -1454,6 +1474,18 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
     return false;
 }
 
+void FB_CM::rescon(FirebaseData *fbdo, const char *host)
+{
+    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_fcm || strcmp(host, fbdo->_ss.host.c_str()) != 0)
+    {
+        fbdo->_ss.last_conn_ms = millis();
+        fbdo->closeSession();
+        fbdo->setSecure();
+    }
+    fbdo->_ss.host = host;
+    fbdo->_ss.con_mode = fb_esp_con_mode_fcm;
+}
+
 bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &payload)
 {
 
@@ -1466,10 +1498,13 @@ bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::
     if (fbdo->_ss.rtdb.pause)
         return true;
 
-    if (Signer.config->host.length() == 0)
+    if (mode == fb_esp_fcm_msg_mode_httpv1)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
-        return false;
+        if (Signer.config->host.length() == 0)
+        {
+            fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
+            return false;
+        }
     }
 
     if (fbdo->_ss.long_running_task > 0)
@@ -1483,13 +1518,7 @@ bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::
 
     Signer.getCfg()->_int.fb_processing = true;
 
-    if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_fcm)
-    {
-        fbdo->closeSession();
-        fbdo->setSecure();
-    }
-
-    fcm_begin(fbdo, mode);
+    fcm_connect(fbdo, mode);
 
     fbdo->_ss.con_mode = fb_esp_con_mode_fcm;
 
@@ -1505,6 +1534,12 @@ void FB_CM::clear()
     _index = 0;
     _tokens.clear();
     std::vector<std::string>().swap(_tokens);
+    if (_ut)
+        delete _ut;
+    if (_cfg)
+        delete _cfg;
+    if (_auth)
+        delete _auth;
 }
 
 #endif

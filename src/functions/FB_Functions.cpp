@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.0.1
+ * Google's Cloud Functions class, Functions.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -816,7 +816,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     }
 
     ut->appendP(header, fb_esp_pgm_str_32);
-    ut->appendP(header, fb_esp_pgm_str_36);
+    ut->appendP(header, fb_esp_pgm_str_34);
     ut->appendP(header, fb_esp_pgm_str_21);
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
@@ -829,6 +829,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
     if (ret == 0)
     {
+        fbdo->_ss.connected = true;
         if (req->requestType == fb_esp_functions_request_type_upload)
         {
             int available = Signer.getCfg()->_int.fb_file.available();
@@ -875,6 +876,8 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             return true;
         }
     }
+    else
+        fbdo->_ss.connected = false;
 
     Signer.getCfg()->_int.fb_processing = false;
     return false;
@@ -882,12 +885,13 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
 void FB_Functions::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_functions || strcmp(host, _host.c_str()) != 0)
+    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_functions || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
+        fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
     }
-    _host = host;
+    fbdo->_ss.host = host;
     fbdo->_ss.con_mode = fb_esp_con_mode_functions;
 }
 

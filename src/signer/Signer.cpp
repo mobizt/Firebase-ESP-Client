@@ -870,7 +870,21 @@ bool Firebase_Signer::createJWT()
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_451);
 
-            tmp = ut->strP(fb_esp_pgm_str_220);
+            if (config->signer.tokens.scope.length() > 0)
+            {
+                std::vector<std::string> scopes = std::vector<std::string>();
+                ut->splitTk(config->signer.tokens.scope, scopes, ",");
+                for (size_t i = 0; i < scopes.size(); i++)
+                {
+                    ut->appendP(s, fb_esp_pgm_str_6);
+                    s += scopes[i];
+                    scopes[i].clear();
+                    std::string().swap(scopes[i]);
+                }
+                scopes.clear();
+            }
+
+                tmp = ut->strP(fb_esp_pgm_str_220);
             config->signer.json->add(tmp, s.c_str());
             ut->delS(tmp);
         }

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.2
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -534,12 +534,15 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
 
     if (ret == 0)
     {
+        fbdo->_ss.connected = true;
         if (handleResponse(fbdo))
         {
             Signer.getCfg()->_int.fb_processing = false;
             return true;
         }
     }
+    else
+        fbdo->_ss.connected = false;
 
     Signer.getCfg()->_int.fb_processing = false;
 
@@ -548,12 +551,14 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
 
 void FB_Firestore::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_firestore || strcmp(host, _host.c_str()) != 0)
+    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout ||  fbdo->_ss.con_mode != fb_esp_con_mode_firestore || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
+        fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
     }
-    _host = host;
+
+    fbdo->_ss.host = host;
     fbdo->_ss.con_mode = fb_esp_con_mode_firestore;
 }
 

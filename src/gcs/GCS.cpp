@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.0.1
+ * Google's Cloud Storage class, GCS.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -142,7 +142,19 @@ bool GG_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *r
         }
     }
 
-    return gcs_sendRequest(fbdo, req);
+    bool ret = gcs_sendRequest(fbdo, req);
+    if (!ret && (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init))
+    {
+        fbdo->_ss.gcs.cbInfo.status = fb_esp_gcs_upload_status_error;
+        UploadStatusInfo in;
+        in.localFileName = req->localFileName;
+        in.remoteFileName = req->remoteFileName;
+        in.status = fb_esp_gcs_upload_status_error;
+        in.progress = 0;
+        in.errorMsg = fbdo->errorReason().c_str();
+        sendCallback(fbdo, in, req->callback, req->statusInfo);
+    }
+    return ret;
 }
 
 bool GG_CloudStorage::download(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options)
@@ -197,12 +209,13 @@ bool GG_CloudStorage::gcs_connect(FirebaseData *fbdo)
 
 void GG_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_gc_storage || strcmp(host, _host.c_str()) != 0)
+    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_gc_storage || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
+        fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
     }
-    _host = host;
+    fbdo->_ss.host = host;
     fbdo->_ss.con_mode = fb_esp_con_mode_gc_storage;
 }
 
@@ -604,6 +617,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     if (ret == 0)
     {
+        fbdo->_ss.connected = true;
         if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart)
         {
 
@@ -630,7 +644,11 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 byteRead += read;
                 reportUpploadProgress(fbdo, req, byteRead);
                 if (fbdo->httpClient.stream()->write(buf, read) != read)
+                {
+                    fbdo->_ss.connected = false;
                     break;
+                }
+
                 available = Signer.getCfg()->_int.fb_file.available();
             }
             delete[] buf;
@@ -672,7 +690,11 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                     available = bufLen;
                 read = Signer.getCfg()->_int.fb_file.read(buf, available);
                 if (fbdo->httpClient.stream()->write(buf, read) != read)
+                {
+                    fbdo->_ss.connected = false;
                     break;
+                }
+
                 byteRead += read;
                 reportUpploadProgress(fbdo, req, byteRead);
                 available = Signer.getCfg()->_int.fb_file.available();
@@ -684,29 +706,18 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 Signer.getCfg()->_int.fb_file.close();
         }
 
-        ret = handleResponse(fbdo, req);
-
-        if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_gcs_request_type_download)
-            Signer.getCfg()->_int.fb_file.close();
-
-        Signer.getCfg()->_int.fb_processing = false;
-
-        if (ret)
+        if (fbdo->_ss.connected)
         {
+            ret = handleResponse(fbdo, req);
             fbdo->closeSession();
+            if (ret)
+            {
+                if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_gcs_request_type_download)
+                    Signer.getCfg()->_int.fb_file.close();
 
-            if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart)
-            {
-                UploadStatusInfo in;
-                in.localFileName = req->localFileName;
-                in.remoteFileName = req->remoteFileName;
-                in.status = fb_esp_gcs_upload_status_complete;
-                in.progress = 100;
-                sendCallback(fbdo, in, req->callback, req->statusInfo);
-            }
-            else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
-            {
-                if (Signer.getCfg()->_int.fb_file.available() == 0)
+                Signer.getCfg()->_int.fb_processing = false;
+
+                if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart)
                 {
                     UploadStatusInfo in;
                     in.localFileName = req->localFileName;
@@ -715,8 +726,20 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                     in.progress = 100;
                     sendCallback(fbdo, in, req->callback, req->statusInfo);
                 }
+                else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
+                {
+                    if (Signer.getCfg()->_int.fb_file.available() == 0)
+                    {
+                        UploadStatusInfo in;
+                        in.localFileName = req->localFileName;
+                        in.remoteFileName = req->remoteFileName;
+                        in.status = fb_esp_gcs_upload_status_complete;
+                        in.progress = 100;
+                        sendCallback(fbdo, in, req->callback, req->statusInfo);
+                    }
+                }
+                return ret;
             }
-            return ret;
         }
     }
 

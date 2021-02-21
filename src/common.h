@@ -133,6 +133,13 @@ enum fb_esp_method
     m_set_priority,
 };
 
+enum fb_esp_http_connection_type
+{
+    fb_esp_http_connection_type_undefined,
+    fb_esp_http_connection_type_keep_alive,
+    fb_esp_http_connection_type_close
+};
+
 enum fb_esp_settings_provider_type
 {
     auth_provider_type_login,
@@ -387,6 +394,7 @@ struct fb_esp_auth_token_info_t
     std::string legacy_token;
     std::string auth_type;
     std::string jwt;
+    std::string scope;
     unsigned long expires = 0;
     fb_esp_auth_token_type token_type = token_type_undefined;
     fb_esp_auth_token_status status = token_status_uninitialized;
@@ -551,7 +559,7 @@ struct fb_esp_fcs_file_list_item_t
 
 typedef struct fb_esp_gcs_upload_status_info_t
 {
-    size_t progress;
+    size_t progress = 0;
     fb_esp_gcs_upload_status status = fb_esp_gcs_upload_status_unknown;
     std::string localFileName = "";
     std::string remoteFileName = "";
@@ -583,11 +591,12 @@ struct fb_esp_rtdb_info_t
     bool stream_data_changed = false;
     bool stream_path_changed = false;
     bool data_available = false;
-    bool keep_alive = false;
+    fb_esp_http_connection_type http_req_conn_type = fb_esp_http_connection_type_undefined;
+    fb_esp_http_connection_type http_resp_conn_type = fb_esp_http_connection_type_undefined;
     bool data_mismatch = false;
     bool path_not_found = false;
     bool pause = false;
-    bool stream_stop = false;
+    bool stream_stop = true;
 
     uint8_t connection_status = 0;
     uint32_t queue_ID = 0;
@@ -932,6 +941,9 @@ struct fb_esp_session_info_t
     bool chunked_encoding = false;
     bool connected = false;
     bool classic_request = false;
+    std::string host = "";
+    unsigned long last_conn_ms = 0;
+    const uint32_t conn_timeout = 3 * 60 * 1000;
 
     uint16_t resp_size = 2048;
     int http_code = -1000;

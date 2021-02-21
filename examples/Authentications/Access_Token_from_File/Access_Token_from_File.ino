@@ -84,6 +84,11 @@ void setup()
     /** The user UID set to empty to sign in as admin */
     auth.token.uid = "";
 
+    /** The scope of the OAuth2.0 authentication 
+     * If you wan't this access token for others Google Cloud Services.
+    */
+    //config.signer.tokens.scope = "Google Scope 1 Url, Google Scope 2 Url,..";
+
     Firebase.reconnectWiFi(true);
 
     /* Now we start to signin using access token */

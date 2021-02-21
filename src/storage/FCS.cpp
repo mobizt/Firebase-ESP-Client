@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Storage class, FCS.cpp version 1.0.4
+ * Google's Firebase Cloud Storage class, FCS.cpp version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -168,12 +168,13 @@ bool FB_CloudStorage::listFiles(FirebaseData *fbdo, const char *bucketID)
 
 void FB_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (!fbdo->_ss.connected || fbdo->_ss.con_mode != fb_esp_con_mode_storage || strcmp(host, _host.c_str()) != 0)
+    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_storage || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
+        fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
     }
-    _host = host;
+    fbdo->_ss.host = host;
     fbdo->_ss.con_mode = fb_esp_con_mode_storage;
 }
 
@@ -251,7 +252,7 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
                     fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
                     return false;
                 }
-                
+
                 if (!FLASH_FS.exists(req->localFileName.c_str()))
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
@@ -346,6 +347,7 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
 
     if (ret == 0)
     {
+        fbdo->_ss.connected = true;
         if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_upload)
         {
             int available = Signer.getCfg()->_int.fb_file.available();
@@ -386,6 +388,7 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
         }
 
         ret = handleResponse(fbdo);
+        fbdo->closeSession();
 
         if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download)
             Signer.getCfg()->_int.fb_file.close();
@@ -393,6 +396,8 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
         Signer.getCfg()->_int.fb_processing = false;
         return ret;
     }
+    else
+        fbdo->_ss.connected = false;
 
     if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download)
         Signer.getCfg()->_int.fb_file.close();
@@ -620,7 +625,6 @@ bool FB_CloudStorage::handleResponse(FirebaseData *fbdo)
                                                     part1.clear();
                                                 }
                                             }
-                                         
                                         }
                                     }
 

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.0.1
+ * Google's Cloud Storage class, GCS.h version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -142,7 +142,6 @@ private:
     uint32_t gcs_chunkSize = 256 * 1024;
     bool _resumable_upload_task_enable = false;
     UtilsClass *ut = nullptr;
-    std::string _host = "";
     std::vector<struct fb_gcs_upload_resumable_task_info_t> _resumableUploadTasks = std::vector<struct fb_gcs_upload_resumable_task_info_t>();
     size_t _resumableUplaodTaskIndex = 0;
 

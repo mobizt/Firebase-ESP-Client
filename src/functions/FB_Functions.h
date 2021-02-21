@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.h version 1.0.1
+ * Google's Cloud Functions class, Functions.h version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -262,7 +262,6 @@ public:
     bool listOperations(FirebaseData *fbdo, const char *filter, int pageSize, const char *pageToken);
 
 private:
-    std::string _host = "";
     fb_esp_functions_status _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
     UtilsClass *ut = nullptr;
     unsigned long _lasPollMs = 0;

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.0.2
+ * Google's Cloud Firestore class, Forestore.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -247,7 +247,6 @@ public:
 
 private:
     UtilsClass *ut = nullptr;
-    std::string _host = "";
     void begin(UtilsClass *u);
     void rescon(FirebaseData *fbdo, const char *host);
     bool connect(FirebaseData *fbdo);

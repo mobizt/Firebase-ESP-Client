@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.2
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created February 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -152,12 +152,13 @@ public:
   String payload(FirebaseData *fbdo);
 
 private:
-  bool init();
+  bool init(bool clearInt= false);
   void begin(UtilsClass *u);
   bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &payload);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
-  void fcm_begin(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode);
+  void rescon(FirebaseData *fbdo, const char *host);
+  void fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode);
   bool fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &msg);
   void fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, std::string &payload);
   void fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *msg);
@@ -166,7 +167,9 @@ private:
   void fcm_preparAPNsRegistPayload(std::string &buf, const char *application, bool sandbox, const char *APNs[], size_t numToken);
 
   void clear();
-
+  FirebaseConfig *_cfg = nullptr;
+  FirebaseAuth *_auth = nullptr;
+  UtilsClass *_ut = nullptr;
   std::string _topic = "";
   std::string _server_key = "";
   std::string _token = "";
