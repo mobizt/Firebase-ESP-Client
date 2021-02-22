@@ -4910,11 +4910,11 @@ void set(const String &path, FirebaseJson &json);
 
 
 
-#### Set nested FirebaseJsonAtrray object to FirebaseJson object at specified node path.
+#### Set nested FirebaseJsonArray object to FirebaseJson object at specified node path.
     
-param **`path`** The relative path that nested FirebaseJsonAtrray object to be set.
+param **`path`** The relative path that nested FirebaseJsonArray object to be set.
 
-param **`arr`** The FirebaseJsonAtrray object to set.
+param **`arr`** The FirebaseJsonArray object to set.
 
 The relative path can be mixed with array index (number placed inside square brackets) and node names 
 e.g. /myRoot/[2]/Sensor1/myData/[3].
