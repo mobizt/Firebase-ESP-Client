@@ -33,12 +33,10 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <time.h>
-#include <SD.h>
 #include <vector>
 #include <functional>
 #if defined(ESP32)
 #include <WiFi.h>
-#include <SPIFFS.h>
 #include "wcs/esp32/FB_HTTPClient32.h"
 #elif defined(ESP8266)
 #include <Schedule.h>
@@ -1647,6 +1645,9 @@ static const char fb_esp_pgm_str_536[] PROGMEM = "structuredQuery";
 static const char fb_esp_pgm_str_537[] PROGMEM = "transaction";
 static const char fb_esp_pgm_str_538[] PROGMEM = "newTransaction";
 static const char fb_esp_pgm_str_539[] PROGMEM = "readTime";
+static const char fb_esp_pgm_str_540[] PROGMEM = "upload timed out";
+static const char fb_esp_pgm_str_541[] PROGMEM = "upload data sent error";
+
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

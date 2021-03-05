@@ -3,7 +3,7 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -37,6 +37,7 @@
 #include "Utils.h"
 #include "session/FB_Session.h"
 
+
 class GG_CloudStorage
 {
     friend class Firebase_ESP_Client;
@@ -51,7 +52,7 @@ public:
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param localFileName The file path includes its name to upload.
-     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
      * @param uploadType The enum of type of upload methods e.g. gcs_upload_type_simple, gcs_upload_type_multipart, gcs_upload_type_resumable
      * @param remotetFileName The file path includes its name of uploaded file in data bucket.
      * @param mime The file MIME type.
@@ -83,7 +84,7 @@ public:
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param remotetFileName The file path includes its name of file in the data bucket to download.
      * @param localFileName The file path includes its name to save.
-     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
      * @param options Optional. The pointer to StorageGetOptions data that contains the get query parameters.
      * For the query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
      * 

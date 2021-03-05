@@ -111,6 +111,7 @@ void setup()
   fbdo.setResponseSize(1024);
 
   //Open and retore Firebase Error Queues from file.
+  //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
   if (Firebase.RTDB.errorQueueCount(&fbdo, "/test.txt", mem_storage_type_flash) > 0)
   {
     Firebase.RTDB.restoreErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
@@ -285,6 +286,7 @@ void setup()
     Serial.println();
 
     //Save Error Queues to file
+    //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
     Firebase.RTDB.saveErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
   }
 

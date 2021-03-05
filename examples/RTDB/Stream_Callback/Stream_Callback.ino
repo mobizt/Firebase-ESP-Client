@@ -111,6 +111,8 @@ void setup()
   //Set the size of HTTP response buffers in the case where we want to work with large data.
   fbdo2.setResponseSize(1024);
 
+  //The data under the node being stream (parent path) should keep small
+  //Large stream payload leads to the parsing error due to memory allocation.
   if (!Firebase.RTDB.beginStream(&fbdo1, path.c_str()))
   {
     Serial.println("------------------------------------");

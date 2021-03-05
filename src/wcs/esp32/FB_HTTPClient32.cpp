@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload
  * 
- * v 1.0.5
+ * v 1.0.6
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -39,8 +39,6 @@
 
 FB_HTTPClient32::FB_HTTPClient32()
 {
-    transportTraits = FB_ESP_TransportTraitsPtr(new TLSTraits(nullptr));
-    _wcs = transportTraits->create();
 }
 
 FB_HTTPClient32::~FB_HTTPClient32()
@@ -55,7 +53,6 @@ FB_HTTPClient32::~FB_HTTPClient32()
     std::string().swap(_CAFile);
     _cacert.reset(new char);
     _cacert = nullptr;
-    transportTraits.reset(nullptr);
 }
 
 bool FB_HTTPClient32::begin(const char *host, uint16_t port)
@@ -72,11 +69,18 @@ bool FB_HTTPClient32::connected()
     return false;
 }
 
+void FB_HTTPClient32::stop()
+{
+    if (!connected())
+        return;
+    return _wcs->stop();
+}
+
 bool FB_HTTPClient32::send(const char *header)
 {
     if (!connected())
         return false;
-    return (_wcs->write(header, strlen(header)) == strlen(header));
+    return (_wcs->print(header) == strlen(header));
 }
 
 int FB_HTTPClient32::send(const char *header, const char *payload)
@@ -97,7 +101,7 @@ int FB_HTTPClient32::send(const char *header, const char *payload)
 
     if (size > 0)
     {
-        if (_wcs->write(&payload[0], size) != size)
+        if (_wcs->print(payload) != size)
         {
             return FIREBASE_ERROR_HTTPC_ERROR_SEND_PAYLOAD_FAILED;
         }
@@ -122,10 +126,6 @@ bool FB_HTTPClient32::connect(void)
         return true;
     }
 
-    if (!transportTraits)
-        return false;
-
-    transportTraits->verify(*_wcs, _host.c_str());
     if (!_wcs->connect(_host.c_str(), _port))
         return false;
 
@@ -134,14 +134,29 @@ bool FB_HTTPClient32::connect(void)
 
 void FB_HTTPClient32::setCACert(const char *caCert)
 {
+    _wcs->setCACert(caCert);
     if (caCert)
-    {
-        transportTraits.reset(nullptr);
-        transportTraits = FB_ESP_TransportTraitsPtr(new TLSTraits(caCert));
         _certType = 1;
-    }
     else
+    {
+
+#ifdef CONFIG_ARDUINO_IDF_BRANCH
+        size_t len = strlen_P(esp_idf_branch_str);
+        char *tmp = new char[len + 1];
+        memset(tmp, 0, len + 1);
+        std::string s = CONFIG_ARDUINO_IDF_BRANCH;
+        size_t p1 = s.find(tmp, 0);
+        if (p1 != std::string::npos)
+        {
+            float v = atof(s.substr(p1 + len, s.length() - p1 - len).c_str());
+            if (v >= 3.3f)
+                _wcs->setInsecure();
+        }
+        delete[] tmp;
+#endif
         _certType = 0;
+    }
+    //_wcs->setNoDelay(true);
 }
 
 void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType, uint8_t sdPin)
@@ -155,7 +170,7 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
         if (storageType == 0)
             t = FLASH_FS.begin(true);
         else
-            t = SD.begin();
+            t = SD_FS.begin();
         if (!t)
             return;
 
@@ -167,8 +182,8 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
         }
         else if (storageType == 2)
         {
-            if (SD.exists(caCertFile))
-                f = SD.open(caCertFile, FILE_READ);
+            if (SD_FS.exists(caCertFile))
+                f = SD_FS.open(caCertFile, FILE_READ);
         }
 
         if (f)
@@ -182,11 +197,10 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
                 f.readBytes(_cacert.get(), len);
 
             f.close();
-
-            transportTraits.reset(nullptr);
-            transportTraits = FB_ESP_TransportTraitsPtr(new TLSTraits(_cacert.get()));
+            _wcs->setCACert(_cacert.get());
         }
     }
+    //_wcs->setNoDelay(true);
 }
 
 #endif /* ESP32 */

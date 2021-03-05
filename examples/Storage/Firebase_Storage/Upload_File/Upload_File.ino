@@ -89,6 +89,8 @@ void setup()
     //Upload large file over fews hundreds KiB is not allowable in Firebase Storage by using this method.
     //To upload the large file, please use the Firebase.GCStorage.upload instead.
     //The following upload will be error 503 service unavailable (upload rejected due to the large file size)
+    //MIME type should be valid to avoid the download problem.
+    //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
     if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "/media.mp4" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, "media.mp4" /* path of remote file stored in the bucket */, "video/mp4" /* mime type */))
     {
 

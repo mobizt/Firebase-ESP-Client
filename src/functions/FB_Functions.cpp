@@ -143,14 +143,14 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
                     return false;
                 }
 
-                if (!SD.exists(config->_uploadArchiveFile.c_str()))
+                if (!SD_FS.exists(config->_uploadArchiveFile.c_str()))
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_ARCHIVE_NOT_FOUND;
                     sendCallback(fbdo, fb_esp_functions_operation_status_error, fbdo->errorReason().c_str(), cb, info);
                     return false;
                 }
 
-                Signer.getCfg()->_int.fb_file = SD.open(config->_uploadArchiveFile.c_str(), FILE_READ);
+                Signer.getCfg()->_int.fb_file = SD_FS.open(config->_uploadArchiveFile.c_str(), FILE_READ);
             }
             else if (config->_uploadArchiveStorageType == mem_storage_type_flash)
             {

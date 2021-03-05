@@ -36,7 +36,7 @@
 #include "Utils.h"
 #include "QueryFilter.h"
 
-struct QueueItem
+typedef struct fb_esp_rtdb_queue_item_info_t
 {
     fb_esp_data_type dataType = fb_esp_data_type::d_any;
     fb_esp_method method = fb_esp_method::m_put;
@@ -58,7 +58,7 @@ struct QueueItem
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonArray *arrPtr = nullptr;
     std::vector<uint8_t> *blobPtr = nullptr;
-};
+} QueueItem;
 
 class QueueInfo
 {

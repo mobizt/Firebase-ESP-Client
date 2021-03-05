@@ -110,6 +110,8 @@ void setup()
     config.host = FIREBASE_HOST;
     config.api_key = API_KEY;
 
+    /* The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. */
+
     /* Assign the sevice account JSON file and the file storage type (required) */
     config.service_account.json.path = "/service_account_file.json"; //change this for your json file
     config.service_account.json.storage_type = mem_storage_type_flash; //or mem_storage_type_sd

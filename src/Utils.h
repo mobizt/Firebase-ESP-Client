@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.3
+ * Google's Firebase Util class, Utils.h version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 17, 2021
+ * Created March 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
@@ -302,9 +302,9 @@ public:
     }
     void getUrlInfo(const std::string url, struct fb_esp_url_info_t &info)
     {
-        char *host = newS(url.length());
-        char *uri = newS(url.length());
-        char *auth = newS(url.length());
+        char *host = newS(url.length() + 5);
+        char *uri = newS(url.length() + 5);
+        char *auth = newS(url.length()+ 5);
 
         int p1 = 0;
         char *tmp = strP(fb_esp_pgm_str_441);
@@ -347,6 +347,9 @@ public:
         info.uri = uri;
         info.host= host;
         info.auth = auth;
+        delS(uri);
+        delS(host);
+        delS(auth);
     }
 
     int url_decode(const char *s, char *dec)
@@ -869,7 +872,7 @@ public:
                 if (dir.length() > 0)
                 {
                     if (storageType == mem_storage_type_sd)
-                        SD.mkdir(dir.substr(0, dir.length() - 1).c_str());
+                        SD_FS.mkdir(dir.substr(0, dir.length() - 1).c_str());
                 }
 
                 count = 0;
@@ -878,7 +881,7 @@ public:
         if (count > 0)
         {
             if (storageType == mem_storage_type_sd)
-                SD.mkdir(dir.c_str());
+                SD_FS.mkdir(dir.c_str());
         }
         std::string().swap(dir);
     }
@@ -891,7 +894,7 @@ public:
         {
             config->_int.fb_sd_used = false;
             config->_int.fb_sd_rdy = false;
-            SD.end();
+            SD_FS.end();
         }
     }
 
@@ -1057,7 +1060,7 @@ public:
         if (storageType == mem_storage_type_flash)
             file = FLASH_FS.open(filePath.c_str(), "r");
         else if (storageType == mem_storage_type_sd)
-            file = SD.open(filePath.c_str(), FILE_READ);
+            file = SD_FS.open(filePath.c_str(), FILE_READ);
 
         if (!file)
             return;
@@ -1383,9 +1386,9 @@ public:
     {
         std::string filepath = "/sdtest01.txt";
 
-        SD.begin(SD_CS_PIN);
+        SD_FS.begin(SD_CS_PIN);
 
-        file = SD.open(filepath.c_str(), FILE_WRITE);
+        file = SD_FS.open(filepath.c_str(), FILE_WRITE);
         if (!file)
             return false;
 
@@ -1397,7 +1400,7 @@ public:
 
         file.close();
 
-        file = SD.open(filepath.c_str());
+        file = SD_FS.open(filepath.c_str());
         if (!file)
             return false;
 
@@ -1411,7 +1414,7 @@ public:
         }
         file.close();
 
-        SD.remove(filepath.c_str());
+        SD_FS.remove(filepath.c_str());
 
         std::string().swap(filepath);
 

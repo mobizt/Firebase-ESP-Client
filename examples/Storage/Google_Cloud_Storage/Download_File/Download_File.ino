@@ -82,7 +82,7 @@ void setup()
 
     //StorageGetOptions option;
     //For query parameters description of StorageGetOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
-
+    //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
     if (Firebase.GCStorage.download(&fbdo, STORAGE_BUCKET_ID /* Firebase or Google Cloud Storage bucket id */, "path/to/file/filename" /* path of remote file stored in the bucket */, "/path/to/save/filename" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, nullptr /* StorageGetOptions data */))
     {
         Serial.println("PASSED");

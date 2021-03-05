@@ -63,8 +63,10 @@ void setup()
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
+#ifdef ESP8266
   //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
   fbdo.setBSSLBufferSize(1024, 1024);
+#endif
 
   //Set the size of HTTP response buffers in the case where we want to work with large data.
   fbdo.setResponseSize(1024);
@@ -75,7 +77,7 @@ void setup()
   //Download and save data to Flash memory.
   //{TARGET_NODE_PATH} is the full path of database to backup and restore.
   //{FILE_NAME} is file name included path to save to Flash meory
-
+  //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
   if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_flash, "/{TARGET_NODE_PATH}", "/{FILE_NAME}"))
   {
     Serial.println("FAILED");
@@ -98,7 +100,7 @@ void setup()
   //Restore data to defined database path using backup file on Flash memory.
   //{TARGET_NODE_PATH} is the full path of database to restore
   //{FILE_NAME} is file name included path of backed up file.
-
+  //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
   if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_flash, "/{TARGET_NODE_PATH}", "/{FILE_NAME}"))
   {
     Serial.println("FAILED");

@@ -207,7 +207,7 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
                 fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
                 return false;
             }
-            Signer.getCfg()->_int.fb_file = SD.open(req->localFileName.c_str(), FILE_WRITE);
+            Signer.getCfg()->_int.fb_file = SD_FS.open(req->localFileName.c_str(), FILE_WRITE);
         }
         else if (req->storageType == mem_storage_type_flash)
         {
@@ -234,13 +234,13 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
                     return false;
                 }
 
-                if (!SD.exists(req->localFileName.c_str()))
+                if (!SD_FS.exists(req->localFileName.c_str()))
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
                     return false;
                 }
 
-                Signer.getCfg()->_int.fb_file = SD.open(req->localFileName.c_str(), FILE_READ);
+                Signer.getCfg()->_int.fb_file = SD_FS.open(req->localFileName.c_str(), FILE_READ);
             }
             else if (req->storageType == mem_storage_type_flash)
             {

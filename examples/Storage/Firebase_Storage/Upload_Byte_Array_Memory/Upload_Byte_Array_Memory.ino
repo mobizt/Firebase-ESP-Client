@@ -85,7 +85,8 @@ void setup()
 
     Serial.println("------------------------------------");
     Serial.println("Upload byte array test...");
-
+    
+    //MIME type should be valid to avoid the download problem.
     if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, test_data /* byte array from ram or flash */, 256 /*  size of data in bytes */, "test.dat" /* path of remote file stored in the bucket */, "application/octet-stream" /* mime type */))
     {
 

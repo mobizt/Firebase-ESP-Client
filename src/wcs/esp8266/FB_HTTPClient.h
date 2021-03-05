@@ -1,5 +1,5 @@
 /**
- * HTTP Client wrapper v1.1.5
+ * HTTP Client wrapper v1.1.6
  * 
  * This library provides ESP8266 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -33,22 +33,6 @@
 
 #ifdef ESP8266
 
-//ARDUINO_ESP8266_GIT_VER
-//2.6.2 0xbc204a9b
-//2.6.1 0x482516e3
-//2.6.0 0x643ec203
-//2.5.2 0x8b899c12
-//2.5.1 0xac02aff5
-//2.5.0 0x951aeffa
-//2.5.0-beta3 0x21db8fc9
-//2.5.0-beta2 0x0fd86a07
-//2.5.0-beta1 0x9c1e03a1
-//2.4.2 0xbb28d4a3
-//2.4.1 0x614f7c32
-//2.4.0 0x4ceabea9
-//2.4.0-rc2 0x0c897c37
-//2.4.0-rc1 0xf6d232f1
-
 #include <Arduino.h>
 #include <core_version.h>
 #include <time.h>
@@ -62,39 +46,25 @@
 #error Due to bugs in BearSSL in ESP8266 Arduino Core SDK version 2.6.1, please update ESP8266 Arduino Core SDK to newer version. The issue was found here https:\/\/github.com/esp8266/Arduino/issues/6811.
 #endif
 
-#if ARDUINO_ESP8266_GIT_VER != 0xf6d232f1 && ARDUINO_ESP8266_GIT_VER != 0x0c897c37 && ARDUINO_ESP8266_GIT_VER != 0x4ceabea9 && ARDUINO_ESP8266_GIT_VER != 0x614f7c32 && ARDUINO_ESP8266_GIT_VER != 0xbb28d4a3
 #include <WiFiClientSecure.h>
 #include <CertStoreBearSSL.h>
 #define FB_ESP_SSL_CLIENT BearSSL::WiFiClientSecure
 
-#elif ARDUINO_ESP8266_GIT_VER == 0xbb28d4a3
-#define USING_AXTLS
-#include <WiFiClientSecureAxTLS.h>
-using namespace axTLS;
-#define FB_ESP_SSL_CLIENT axTLS::WiFiClientSecure
-#else
-#define USING_AXTLS
-#include <WiFiClientSecure.h>
-#define FB_ESP_SSL_CLIENT WiFiClientSecure
-#endif
-
 #define FS_NO_GLOBALS
 #include <FS.h>
 #include <SD.h>
+#include <LittleFS.h>
 #include "FirebaseFS.h"
 
-#ifdef USE_LITTLEFS
-#include <LittleFS.h>
-#define FLASH_FS LittleFS
-#else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#define FLASH_FS SPIFFS
-#endif
 
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.
 #endif
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#define FLASH_FS DEFAULT_FLASH_FS
+#define SD_FS DEFAULT_SD_FS
 
 #include "wcs/HTTPCode.h"
 

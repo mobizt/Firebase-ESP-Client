@@ -147,7 +147,7 @@ void FirebaseData::stopWiFiClient()
     _ss.connected = false;
 }
 
-FB_ESP_SSL_CLIENT *FirebaseData::getWiFiClient()
+WiFiClientSecure *FirebaseData::getWiFiClient()
 {
     return httpClient._wcs.get();
 }

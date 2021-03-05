@@ -1,5 +1,5 @@
 /**
- * HTTP Client wrapper v1.1.5
+ * HTTP Client wrapper v1.1.6
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -201,13 +201,13 @@ void FB_HTTPClient::setCACertFile(const char* caCertFile, uint8_t storageType, u
     }
     else if (storageType == 2)
     {
-      bool t = SD.begin(_sdPin);
+      bool t = SD_FS.begin(_sdPin);
       if (t)
       {
         File f;
-        if (SD.exists(caCertFile))
+        if (SD_FS.exists(caCertFile))
         {
-          f = SD.open(caCertFile, FILE_READ);
+          f = SD_FS.open(caCertFile, FILE_READ);
           size_t len = f.size();
           uint8_t *der = new uint8_t[len];
           if (f.available())

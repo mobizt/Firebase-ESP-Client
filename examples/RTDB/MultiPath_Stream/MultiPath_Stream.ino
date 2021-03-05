@@ -117,6 +117,14 @@ void setup()
   //Set the size of HTTP response buffers in the case where we want to work with large data.
   fbdo2.setResponseSize(1024);
 
+  //The data under the node being stream (parent path) should keep small
+  //Large stream payload leads to the parsing error due to memory allocation.
+
+  //The operations is the same as normal stream unless the JSON stream payload will be parsed 
+  //with the predefined node path (child paths).
+
+  //The changes occurred in any child node that is not in the child paths array will sent to the
+  //client as usual.
   if (!Firebase.RTDB.beginMultiPathStream(&fbdo1, parentPath.c_str(), childPath, childPathSize))
   {
     Serial.println("------------------------------------");

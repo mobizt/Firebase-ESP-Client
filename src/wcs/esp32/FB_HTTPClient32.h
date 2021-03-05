@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload
  * 
- * v 1.0.5
+ * v 1.0.6
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -35,63 +35,27 @@
 
 #ifdef ESP32
 
+
 #include <Arduino.h>
 #include <WiFiClient.h>
 #include <FS.h>
 #include <SPIFFS.h>
 #include <SD.h>
-#include "wcs/esp32/FB_WCS32.h"
+#include "FirebaseFS.h"
+#include <WiFiClientSecure.h>
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.
 #endif
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#define FLASH_FS DEFAULT_FLASH_FS
+#define SD_FS DEFAULT_SD_FS
+
 #include "wcs/HTTPCode.h"
 
-#define FB_ESP_SSL_CLIENT WiFiClient
-
-class TransportTraits
-{
-public:
-  virtual ~TransportTraits() {}
-
-  virtual std::unique_ptr<WiFiClient> create()
-  {
-    return std::unique_ptr<WiFiClient>(new WiFiClient());
-  }
-
-  virtual bool
-  verify(WiFiClient &client, const char *host)
-  {
-    return true;
-  }
-};
-
-class TLSTraits : public TransportTraits
-{
-public:
-  TLSTraits(const char *CAcert, const char *clicert = nullptr, const char *clikey = nullptr) : _cacert(CAcert), _clicert(clicert), _clikey(clikey) {}
-
-  std::unique_ptr<WiFiClient> create() override
-  {
-    return std::unique_ptr<WiFiClient>(new FB_WCS32());
-  }
-
-  bool verify(WiFiClient &client, const char *host) override
-  {
-    FB_WCS32 &wcs = static_cast<FB_WCS32 &>(client);
-    wcs.setCACert(_cacert);
-    wcs.setCertificate(_clicert);
-    wcs.setPrivateKey(_clikey);
-    return true;
-  }
-
-protected:
-  const char *_cacert;
-  const char *_clicert;
-  const char *_clikey;
-};
-
-typedef std::unique_ptr<TransportTraits> FB_ESP_TransportTraitsPtr;
+static const char esp_idf_branch_str[] PROGMEM = "release/v";
 
 class FB_HTTPClient32
 {
@@ -143,13 +107,14 @@ public:
     */
   WiFiClient *stream(void);
 
+  void stop();
+
   bool connect(void);
   void setCACert(const char *caCert);
   void setCACertFile(const char *caCertFile, uint8_t storageType, uint8_t sdPin);
 
 protected:
-  FB_ESP_TransportTraitsPtr transportTraits;
-  std::unique_ptr<FB_ESP_SSL_CLIENT> _wcs;
+  std::unique_ptr<WiFiClientSecure> _wcs = std::unique_ptr<WiFiClientSecure>(new WiFiClientSecure());
   std::unique_ptr<char> _cacert;
   std::string _host = "";
   uint16_t _port = 0;

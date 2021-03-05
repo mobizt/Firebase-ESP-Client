@@ -1,7 +1,14 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.4
+
+
+The default filessystem used in the library is SPIFFS for flash and SD.
+
+
+To use other flash file systems other than SPIFFS e.g. LittleFS file system, change the config in **FirebaseFS.h**
+
 
 
 ## Global functions
@@ -23,15 +30,6 @@ void begin(FirebaseConfig *config, FirebaseAuth *auth);
 
 
 
-
-
-To use LittleFS file system for flash memory instead of SPIFFS (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
-
-For Auth_Provider data usage, see the examples.
-
-```cpp
-#define USE_LITTLEFS
-```
 
 
 
@@ -696,6 +694,8 @@ bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, floa
 param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
 
 param **`path`** The path to the node in which binary data will be appended.
 
@@ -1458,6 +1458,8 @@ param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
 
+The file systems can be changed in FirebaseFS.h.
+
 param **`path`** The path to the node in which binary data will be set.
 
 param **`fileName`** The file path includes its name.
@@ -1499,6 +1501,8 @@ bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *pa
 param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
 
 param **`path`** The path to the node in which binary data from the file will be set.
 
@@ -2191,6 +2195,8 @@ param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
 
+The file systems can be changed in FirebaseFS.h.
+
 param **`nodePath`** The path to the node that file data will be downloaded.
 
 param **`fileName`**  The file path includes its name.
@@ -2438,6 +2444,8 @@ param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
 
+The file systems can be changed in FirebaseFS.h.
+
 param **`nodePath`** The path to the node to be backuped.
 
 param **`fileName`**  File name to save.
@@ -2465,6 +2473,8 @@ To use LittleFS file system for flash memory instead of SPIFFS (only for ESP8266
 param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
 
 param **`nodePath`** The path to the node to be restored the data.
 
@@ -2529,6 +2539,8 @@ param **`fbdo`** The pointer to Firebase Data Object.
 param **`filename`** Filename to be saved.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
     
 ```cpp
 bool saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
@@ -2545,6 +2557,8 @@ bool saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage
 param **`filename`** File name to delete.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
     
 ```cpp
 bool deleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType);
@@ -2569,6 +2583,8 @@ param **`fbdo`** The pointer to Firebase Data Object.
 param **`filename`** Filename to be read and restore queues.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
     
 ```cpp
 bool restoreErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
@@ -2587,6 +2603,7 @@ param **`filename`** Filename to be read and count for queues.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
 
+The file systems can be changed in FirebaseFS.h.
 
 return **`Number`** (0-255) of queues store in defined queue file.
 
@@ -3328,6 +3345,8 @@ param **`localFileName`** The file path includes its name to upload.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
 
+The file systems can be changed in FirebaseFS.h.
+
 param **`remotetFileName`** The file path includes its name of uploaded file in data bucket.
 
 param **`mime`** The file MIME type
@@ -3382,6 +3401,8 @@ param **`remotetFileName`** The file path includes its name of file in the data 
 param **`localFileName`** The file path includes its name to save.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
 
 return **`Boolean`** value, indicates the success of the operation. 
 
@@ -3468,6 +3489,8 @@ param **`localFileName`** The file path includes its name to upload.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
 
+The file systems can be changed in FirebaseFS.h.
+
 param **`uploadType`** The enum of type of upload methods e.g. gcs_upload_type_simple, gcs_upload_type_multipart, gcs_upload_type_resumable
 
 param **`remotetFileName`** The file path includes its name of uploaded file in data bucket.
@@ -3522,6 +3545,8 @@ param **`remotetFileName`** The file path includes its name of file in the data 
 param **`localFileName`** The file path includes its name to save.
 
 param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+
+The file systems can be changed in FirebaseFS.h.
 
 param **`option`** Optional. The pointer to StorageGetOptions data that contains the get query parameters.
 

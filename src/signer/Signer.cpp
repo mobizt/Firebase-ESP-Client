@@ -68,8 +68,8 @@ bool Firebase_Signer::parseSAFile()
         }
         else
         {
-            if (SD.exists(config->service_account.json.path.c_str()))
-                config->_int.fb_file = SD.open(config->service_account.json.path.c_str(), "r");
+            if (SD_FS.exists(config->service_account.json.path.c_str()))
+                config->_int.fb_file = SD_FS.open(config->service_account.json.path.c_str(), "r");
         }
 
         if (config->_int.fb_file)
@@ -717,10 +717,11 @@ bool Firebase_Signer::handleTokenResponse()
                     }
                     chunkIdx++;
                 }
-            }
 
-            if (millis() - datatime > 5000)
-                complete = true;
+                if (millis() - datatime > 5000)
+                    complete = true;
+            }
+            
         }
     }
 
@@ -1772,7 +1773,13 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_LONG_RUNNING_TASK:
         ut->appendP(buff, fb_esp_pgm_str_534);
         return;
-    default:
+    case FIREBASE_ERROR_UPLOAD_TIME_OUT:
+        ut->appendP(buff, fb_esp_pgm_str_540);
+        return;
+    case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
+        ut->appendP(buff, fb_esp_pgm_str_541);
+        return;
+     default:
         return;
     }
 }

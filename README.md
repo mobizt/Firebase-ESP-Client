@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.4
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -18,7 +18,7 @@ This library supports ESP8266 and ESP32 MCU from Espressif. The following are pl
  * NodeMCU (ESP8266)
  * ESP-12F
  * LinkNode (ESP8266)
-* Sparkfun ESP32 Thing
+ * Sparkfun ESP32 Thing
  * NodeMCU-32
  * WEMOS LOLIN32
  * TTGO T8 V1.8
@@ -337,12 +337,8 @@ The server's **Timestamp** can be stored in the database through `Firebase.RTDB.
 
 The returned **Timestamp** value can get from `fbdo.intData()`. 
 
+The file systems for flash and sd memory can be changed in [**FirebaseFS.h**](/src/FirebaseFS.h).
 
-To use LittleFS file system for flash memory instead of SPIFFS (for ESP8266 at this time), add the following macro in **FirebaseFS.h**
-
-```C++
-#define USE_LITTLEFS
-```
 
 The following example showed how to store file data to flash memory at node "/test/file_data".
 
@@ -352,7 +348,7 @@ The following example showed how to store file data to flash memory at node "/te
 
 if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_flash, "/test/file_data", "/test.txt"))
 {
-  //To use LittleFS file system, add #define USE_LITTLEFS in FirebaseFS.h
+  //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
   File file = FLASH_FS.open("/test.txt", "r");
 
   while (file.available())
@@ -732,13 +728,9 @@ if (fbdo.streamAvailable())
 
 This library allows you to backup and restores the database at the defined path.
 
-The backup file will store in SD card or flash memory (SPIFFS or LittleFS file systems).
+The backup file will store in SD/SDMMC card or flash memory.
 
-To use LittleFS file system for flash memory instead of SPIFFS (for ESP8266 only at this time), add the following macro in **FirebaseFS.h**
-
-```C++
-#define USE_LITTLEFS
-```
+The file systems for flash and sd memory can be changed in [**FirebaseFS.h**](/src/FirebaseFS.h).
 
 Due to SD library used, only 8.3 DOS format file name supported.
 
@@ -907,13 +899,9 @@ Serial.println();
 ```
 
 
-Error Queues can be saved as a file in SD card or flash memory with function `saveErrorQueue`.
+Error Queues can be saved as a file in SD/SDMMC card or flash memory with function `saveErrorQueue`.
 
-To use LittleFS file system for flash memory instead of SPIFFS, add the following macro in **FirebaseFS.h**
-
-```C++
-#define USE_LITTLEFS
-```
+The file systems for flash and sd memory can be changed in [**FirebaseFS.h**](/src/FirebaseFS.h).
 
 Error Queues store as a file can be restored to Error Queue collection with function `restoreErrorQueue`.
 
@@ -1189,7 +1177,7 @@ String jsonStr;
 json.toString(jsonStr, true);
 Serial.println(jsonStr);
 
-/*
+/**
 This is the result of the above code
 
 {
@@ -1215,7 +1203,7 @@ json.set("temp1/[7]", 25); //null will be created at array index 6
 json.toString(jsonStr, true);
 Serial.println(jsonStr);
 
-/*
+/**
 The result of the above code
 
 {
@@ -1248,7 +1236,7 @@ json.remove("temp2");
 json.toString(jsonStr, true);
 Serial.println(jsonStr);
 
-/*
+/**
 The result of the above code
 
 {
@@ -1288,7 +1276,7 @@ if (jsonData.success)
 }
 
 //The above code will show
-/*
+/**
 string
 Celcius
 */
@@ -1318,7 +1306,7 @@ for (size_t i = 0; i < myArr.size(); i++)
   Serial.println(jsonData.stringValue);
 }
 
-/*
+/**
 The result of above code
 Array index: 0, type: int, value: 47
 Array index: 1, type: int, value: 34
@@ -1359,7 +1347,7 @@ String arrStr;
 arr.toString(arrStr, true);
 Serial.println(arrStr);
 
-/*
+/**
 This is the result of the above code
 
 [
@@ -1389,7 +1377,7 @@ arr.remove("[4]/[0]/[1]/amount");
 arr.toString(arrStr, true);
 Serial.println(arrStr);
 
-/*
+/**
 The result of the above code
 
 [
@@ -1430,7 +1418,7 @@ if(jsonData.success)
 }
 
 //The above code will show
-/*
+/**
 string
 salad
 */
@@ -1471,7 +1459,7 @@ for (size_t i = 0; i < len; i++)
 myJson.iteratorEnd();
 
 
-/*
+/**
 The result of the above code
 
 0, Type: object, Key: food, Value: salad

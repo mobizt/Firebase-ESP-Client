@@ -90,7 +90,7 @@ public:
    * 
    * @return WiFi client instance.
   */
-  FB_ESP_SSL_CLIENT *getWiFiClient();
+  WiFiClientSecure *getWiFiClient();
 
   /** Close the keep-alive connection of the internal WiFi client.
    * 

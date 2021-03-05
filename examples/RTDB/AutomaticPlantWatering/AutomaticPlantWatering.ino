@@ -135,8 +135,10 @@ void setup()
 
     Firebase.reconnectWiFi(true);
 
+#ifdef ESP8266
     //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
-    fbdo2.setBSSLBufferSize(1024, 1024);
+    fbdo.setBSSLBufferSize(1024, 1024);
+#endif
 
     //Set the size of HTTP response buffers in the case where we want to work with large data.
     fbdo2.setResponseSize(1024);
@@ -359,7 +361,7 @@ void setClock(float time_zone, float daylight_offset_in_sec)
     if (timeReady)
         Firebase.RTDB.set(&fbdo2, Path.c_str(), "idle");
     else
-        Firebase.RTDB.set(&fbdo2,Path.c_str(), "cannot get time");
+        Firebase.RTDB.set(&fbdo2, Path.c_str(), "cannot get time");
 }
 
 void addPump(String id, String name, String location, int gpio, int state, FirebaseJsonArray *pumpConfig)
@@ -471,10 +473,10 @@ void runSchedule()
 
                         scheduleInfo[i].state = 2;
                         Path = path + "/control/" + pumpInfo[index].id;
-                        Firebase.RTDB.set(&fbdo2,Path.c_str(), scheduleInfo[i].active);
+                        Firebase.RTDB.set(&fbdo2, Path.c_str(), scheduleInfo[i].active);
                         setPumpState(index, scheduleInfo[i].active);
                         Path = path + "/status/terminal";
-                        Firebase.RTDB.set(&fbdo2,Path.c_str(), status);
+                        Firebase.RTDB.set(&fbdo2, Path.c_str(), status);
                     }
                 }
             }

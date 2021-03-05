@@ -96,7 +96,8 @@ void setup()
 
   Serial.println("------------------------------------");
   Serial.println("Backup test...");
-
+  
+  //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
   if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_flash, "/PATH_TO_THE_NODE", "/PATH_TO_SAVE_FILE"))
   {
     Serial.println("FAILED");

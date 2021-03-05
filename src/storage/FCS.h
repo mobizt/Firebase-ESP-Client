@@ -51,7 +51,7 @@ public:
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param localFileName The file path includes its name to upload.
-     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
      * @param remotetFileName The file path includes its name of uploaded file in data bucket.
      * @param mime The file MIME type
      * .
@@ -84,7 +84,7 @@ public:
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param remotetFileName The file path includes its name of file in the data bucket to download.
      * @param localFileName The file path includes its name to save.
-     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+     * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
      * 
      * @return Boolean value, indicates the success of the operation. 
      * 

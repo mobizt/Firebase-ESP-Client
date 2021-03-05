@@ -331,7 +331,7 @@ public:
   /** Append (post) new binary data from file stores on storage memory to the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @param path The path to the node in which binary data will be appended.
    * @param fileName The file path includes its name.
    * @return Boolean value, indicates the success of the operation.
@@ -768,7 +768,7 @@ public:
   /** Set (put) the binary data from file to the defined node. 
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @param path The path to the node in which binary data will be set.
    * @param fileName  The file path includes its name.
    * @return Boolean value, indicates the success of the operation. 
@@ -788,7 +788,7 @@ public:
   /** Set (put) the binary data from file to the defined node if defined node's ETag matched the ETag value.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @param path The path to the node in which binary data from the file will be set.
    * @param fileName  The file path includes its name.
    * @param ETag Known unique identifier string (ETag) of defined node.
@@ -1193,7 +1193,7 @@ public:
    * then please make sure that data at the defined node is the file type.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @param nodePath The path to the node that file data will be downloaded.
    * @param fileName  The file path includes its name.
    * @return Boolean value, indicates the success of the operation.
@@ -1328,7 +1328,7 @@ public:
   /** Backup (download) the database at the defined node to the storage memory.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @param nodePath The path to the node to be backuped.
    * @param fileName File name to save.
    * @return Boolean value, indicates the success of the operation.
@@ -1340,7 +1340,7 @@ public:
   /** Restore the database at a defined path using backup file saved on SD card/Flash memory.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @param nodePath The path to the node to be restored the data.
    * @param fileName File name to read.
    * @return Boolean value, indicates the success of the operation.
@@ -1371,14 +1371,14 @@ public:
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param filename Filename to be saved.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
   */
   bool saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
 
   /** Delete file in storage memory.
    * 
    * @param filename File name to delete.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
   */
   bool deleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType);
 
@@ -1386,7 +1386,7 @@ public:
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param filename Filename to be read and restore queues.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
   */
   bool restoreErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
 
@@ -1394,7 +1394,7 @@ public:
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param filename Filename to be read and count for queues.
-   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd.
+   * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @return Number (0-255) of queues store in defined queue file.
   */
   uint8_t errorQueueCount(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);

@@ -89,12 +89,14 @@ void setup()
 
   /**
    * In case using flash mem to keep the certificate files
-   * Upload the certificate files cert.cer and cert.der to flash memory.
+   * Upload the certificate files cert.pem and cert.der to flash memory.
    * Use the following lines to set the certificate file.
    * 
    * config.cert.file = "/cert.der"; or
-   * config.cert.file = "/cert.cer";
+   * config.cert.file = "/cert.pem";
    * config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
+   * 
+   * The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. 
   */
 
   /* In case the certificate data was used  */

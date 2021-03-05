@@ -64,8 +64,10 @@ void setup()
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
+#ifdef ESP8266
   //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
   fbdo.setBSSLBufferSize(1024, 1024);
+#endif
 
   //Set the size of HTTP response buffers in the case where we want to work with large data.
   fbdo.setResponseSize(1024);
@@ -81,7 +83,7 @@ void setup()
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + fbdo.fileTransferError());
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
   else
@@ -89,7 +91,7 @@ void setup()
     Serial.println("PASSED");
     Serial.println("BACKUP FILE: " + fbdo.getBackupFilename());
     Serial.println("FILE SIZE: " + String(fbdo.getBackupFileSize()));
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
 
@@ -100,18 +102,19 @@ void setup()
   //{TARGET_NODE_PATH} is the full path of database to restore
   //{FILE_NAME} is file name in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
 
+  //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
   if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_sd, "/{TARGET_NODE_PATH}", "/{FILE_NAME}"))
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + fbdo.fileTransferError());
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
   else
   {
     Serial.println("PASSED");
     Serial.println("BACKUP FILE: " + fbdo.getBackupFilename());
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
 }
