@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.4
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.5
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -43,7 +43,7 @@ The library access to the Firebase server through the WiFi for the internet conn
 
 * **Supports Firebase Cloud Messaging**
 
-* **Supports Google Cloud Functions**
+* **Supports Cloud Functions for Firebase**
 
 * **Supports Email/Password, custom and access token authentications using Service Account**
 
@@ -1048,9 +1048,9 @@ See the [Google Cloud Storage examples](/examples/Storage/Google_Cloud_Storage) 
 
 
 
-## Google Cloud Functions
+## Cloud Functions for Firebase
 
-The Google Cloud Functions create/deployment, update, call, delete and list are supported.
+The Cloud Functions create/deployment, update, call, delete and list are supported.
 
 The library also support the source code deployment which you can edit the functions and deploy it using the embedded device.
 

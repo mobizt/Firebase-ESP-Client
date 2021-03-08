@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.4
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 5, 2021
+ * Created March 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -100,7 +100,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     }
 
     if (strlen_P(_cfg->cert.data))
-        _cfg->_int.fb_caCert = std::shared_ptr<const char>(_cfg->cert.data);
+        _cfg->_int.fb_caCert = _cfg->cert.data;
 
     if (_cfg->cert.file.length() > 0)
     {

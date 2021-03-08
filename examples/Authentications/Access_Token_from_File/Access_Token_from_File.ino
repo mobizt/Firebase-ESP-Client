@@ -71,7 +71,7 @@ void setup()
     Serial.println();
 
     /* Assign the certificate file (optional) */
-    config.cert.file = "/cert.cer";
+    config.cert.file = "/gsr2.pem";
     config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
 
     /* Assign the project host (required) */

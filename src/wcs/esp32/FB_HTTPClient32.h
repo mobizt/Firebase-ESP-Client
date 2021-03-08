@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload
  * 
- * v 1.0.6
+ * v 1.0.7
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -35,7 +35,6 @@
 
 #ifdef ESP32
 
-
 #include <Arduino.h>
 #include <WiFiClient.h>
 #include <FS.h>
@@ -46,7 +45,6 @@
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.
 #endif
-
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -70,42 +68,47 @@ public:
   ~FB_HTTPClient32();
 
   /**
-    * Initialization of new http connection.
-    * \param host - Host name without protocols.
-    * \param port - Server's port.
-    * \return True as default.
-    * If no certificate string provided, use (const char*)NULL to CAcert param 
-    */
+   * Initialization of new http connection.
+   * \param host - Host name without protocols.
+   * \param port - Server's port.
+   * \return True as default.
+   * If no certificate string provided, use (const char*)NULL to CAcert param 
+  */
   bool begin(const char *host, uint16_t port);
 
   /**
-    * Check the http connection status.
-    * \return True if connected.
-    */
+   *  Check the http connection status.
+   * \return True if connected.
+  */
   bool connected();
 
   /**
-    * Establish http connection if header provided and send it, send payload if provided.
-    * \param header - The header string (constant chars array).
-    * \param payload - The payload string (constant chars array), optional.
-    * \return http status code, Return zero if new http connection and header and/or payload sent 
-    * with no error or no header and payload provided. If obly payload provided, no new http connection was established.
-    */
+   * Establish http connection if header provided and send it, send payload if provided.
+   * \param header - The header string (constant chars array).
+   * \param payload - The payload string (constant chars array), optional.
+   * \return http status code, Return zero if new http connection and header and/or payload sent
+   * with no error or no header and payload provided. If obly payload provided, no new http connection was established.
+  */
   int send(const char *header, const char *payload);
 
   /**
-    * Send extra header without making new http connection (if send with header has been called)
-    * \param header - The header string (constant chars array).
-    * \return True if header sending success.
-    * Need to call send with header first. 
-    */
+   * Send extra header without making new http connection (if send with header has been called)
+   * \param header - The header string (constant chars array).
+   * \return True if header sending success.
+   * Need to call send with header first. 
+  */
   bool send(const char *header);
 
   /**
-    * Get the WiFi client pointer.
-    * \return WiFi client pointer.
-    */
+   * Get the WiFi client pointer.
+   * \return WiFi client pointer.
+  */
   WiFiClient *stream(void);
+
+  /**
+   * Set insecure mode
+  */
+  void setInsecure();
 
   void stop();
 
@@ -115,7 +118,6 @@ public:
 
 protected:
   std::unique_ptr<WiFiClientSecure> _wcs = std::unique_ptr<WiFiClientSecure>(new WiFiClientSecure());
-  std::unique_ptr<char> _cacert;
   std::string _host = "";
   uint16_t _port = 0;
   unsigned long timeout = FIREBASE_DEFAULT_TCP_TIMEOUT;

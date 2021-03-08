@@ -18,7 +18,7 @@
  * https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
 */
 
-/** This example shows how to call the Google Cloud Function. 
+/** This example shows how to call the Cloud Function. 
  * This operation required OAUth2.0 authentication.
 */
 
@@ -211,7 +211,7 @@ void callFunction()
     //Assumed that the function named helloWorld is already created and deployed for project.
 
     Serial.println("------------------------------------");
-    Serial.println("Call the Googgle Cloud Function...");
+    Serial.println("Call the Cloud Function...");
 
     if (Firebase.Functions.callFunction(&fbdo, FIREBASE_PROJECT_ID /* project id */, PROJECT_LOCATION /* location id */, "helloWorld" /* function name */, "" /* data pass to Cloud function */))
     {

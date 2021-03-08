@@ -29,6 +29,7 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
+/* Google Root CA can be downloaded from https://pki.goog/repository/ */
 const char rootCACert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
                                   "MIIDujCCAqKgAwIBAgILBAAAAAABD4Ym5g0wDQYJKoZIhvcNAQEFBQAwTDEgMB4G\n"
                                   "A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjIxEzARBgNVBAoTCkdsb2JhbFNp\n"
@@ -80,30 +81,32 @@ void setup()
   Serial.println();
 
   /* Assign the project host and api key (required) */
-  config.host = FIREBASE_HOST;
-  config.api_key = API_KEY;
+config.host = FIREBASE_HOST;
+config.api_key = API_KEY;
 
-  /* Assign the user sign in credentials */
-  auth.user.email = USER_EMAIL;
-  auth.user.password = USER_PASSWORD;
+/* Assign the user sign in credentials */
+auth.user.email = USER_EMAIL;
+auth.user.password = USER_PASSWORD;
 
-  /**
+/**
    * In case using flash mem to keep the certificate files
    * Upload the certificate files cert.pem and cert.der to flash memory.
    * Use the following lines to set the certificate file.
    * 
-   * config.cert.file = "/cert.der"; or
-   * config.cert.file = "/cert.pem";
+   * config.cert.file = "/gsr2.der"; or
+   * config.cert.file = "/gsr2.pem";
    * config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
+   * 
+   * ESP32 ssl_client class is alble to parse PEM certificate format.
    * 
    * The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. 
   */
 
-  /* In case the certificate data was used  */
-  config.cert.data = rootCACert;
+/* In case the certificate data was used  */
+config.cert.data = rootCACert;
 
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
+Firebase.begin(&config, &auth);
+Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
   //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.

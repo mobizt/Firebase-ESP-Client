@@ -64,6 +64,7 @@ class FunctionsConfig;
 #define QUEUE_TASK_STACK_SIZE 8192
 #define MAX_BLOB_PAYLOAD_SIZE 1024
 #define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
+#define ESP_DEFAULT_TS 1510644967
 
 enum fb_esp_fcm_msg_mode
 {
@@ -516,7 +517,7 @@ struct fb_esp_cfg_int_t
     uint16_t fb_reconnect_tmo = WIFI_RECONNECT_TIMEOUT;
     bool fb_clock_rdy = false;
     float fb_gmt_offset = 0;
-    std::shared_ptr<const char> fb_caCert = nullptr;
+    const char* fb_caCert = nullptr;
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;

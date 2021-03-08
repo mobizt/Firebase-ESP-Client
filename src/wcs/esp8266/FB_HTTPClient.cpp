@@ -1,5 +1,5 @@
 /**
- * HTTP Client wrapper v1.1.6
+ * HTTP Client wrapper v1.1.7
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -44,8 +44,6 @@ FB_HTTPClient::~FB_HTTPClient()
   }
   std::string().swap(_host);
   std::string().swap(_CAFile);
-  _cacert.reset(new char);
-  _cacert = nullptr;
 }
 
 bool FB_HTTPClient::begin(const char *host, uint16_t port)
@@ -82,12 +80,11 @@ bool FB_HTTPClient::connected()
   return false;
 }
 
-
 bool FB_HTTPClient::send(const char *header)
 {
   if (!connected())
     return false;
-  return (_wcs->write((uint8_t*)header, strlen(header)) == strlen(header));
+  return (_wcs->write((uint8_t *)header, strlen(header)) == strlen(header));
 }
 
 int FB_HTTPClient::send(const char *header, const char *payload)
@@ -117,7 +114,6 @@ int FB_HTTPClient::send(const char *header, const char *payload)
   return 0;
 }
 
-
 WiFiClient *FB_HTTPClient::stream(void)
 {
   if (connected())
@@ -143,90 +139,56 @@ bool FB_HTTPClient::connect(void)
 void FB_HTTPClient::setCACert(const char *caCert)
 {
 
-#ifndef USING_AXTLS
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
-#endif
 
   if (caCert)
   {
-#ifndef USING_AXTLS
     _wcs->setTrustAnchors(new X509List(caCert));
-#else
-    _wcs->setCACert_P(caCert, strlen_P(caCert));
-#endif
     _certType = 1;
   }
   else
   {
-#ifndef USING_AXTLS
     _wcs->setInsecure();
-#endif
     _certType = 0;
   }
 
   _wcs->setNoDelay(true);
 }
 
-void FB_HTTPClient::setCACertFile(const char* caCertFile, uint8_t storageType, uint8_t sdPin)
+void FB_HTTPClient::setCACertFile(const char *caCertFile, uint8_t storageType, uint8_t sdPin)
 {
-
-#ifndef USING_AXTLS
   _sdPin = sdPin;
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
 
   if (_clockReady && strlen(caCertFile) > 0)
   {
-
+    fs::File f;
     if (storageType == 1)
     {
-      bool t = FLASH_FS.begin();
-      if (t)
-      {
-        fs::File f;
-
-        if (FLASH_FS.exists(caCertFile))
-        {
-          f = FLASH_FS.open(caCertFile, "r");
-          size_t len = f.size();
-          uint8_t *der = new uint8_t[len];
-
-          if (f.available())
-            f.read(der, len);
-
-          f.close();
-          _wcs->setTrustAnchors(new X509List(der, len));
-          delete[] der;
-        }
-      }
+      FLASH_FS.begin();
+      if (FLASH_FS.exists(caCertFile))
+        f = FLASH_FS.open(caCertFile, "r");
     }
     else if (storageType == 2)
     {
-      bool t = SD_FS.begin(_sdPin);
-      if (t)
-      {
-        File f;
-        if (SD_FS.exists(caCertFile))
-        {
-          f = SD_FS.open(caCertFile, FILE_READ);
-          size_t len = f.size();
-          uint8_t *der = new uint8_t[len];
-          if (f.available())
-            f.read(der, len);
-
-          f.close();
-          _wcs->setTrustAnchors(new X509List(der, len));
-          delete[] der;
-        }
-      }
+      SD_FS.begin(_sdPin);
+      if (SD_FS.exists(caCertFile))
+        f = SD_FS.open(caCertFile, FILE_READ);
+    }
+    if (f)
+    {
+        size_t len = f.size();
+        uint8_t *der = new uint8_t[len];
+        if (f.available())
+          f.read(der, len);
+        f.close();
+        _wcs->setTrustAnchors(new X509List(der, len));
+        delete[] der;
     }
     _certType = 2;
   }
-#endif
   _wcs->setNoDelay(true);
 }
-
-
-
 
 #endif /* ESP8266 */
 

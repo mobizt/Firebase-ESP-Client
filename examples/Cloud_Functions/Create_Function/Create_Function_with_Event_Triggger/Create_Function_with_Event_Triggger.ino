@@ -20,7 +20,7 @@
 
 /* Cloud Functions deployment requires the pay-as-you-go (Blaze) billing plan. */
 
-/** This example shows how to create (deploy) the Google Cloud Function with event trigger was set. 
+/** This example shows how to create (deploy) the Cloud Function with event trigger was set. 
  * 
  * This operation required OAUth2.0 authentication.
  * 

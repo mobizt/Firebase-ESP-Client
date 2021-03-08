@@ -20,7 +20,7 @@
 
 /* Cloud Functions deployment requires the pay-as-you-go (Blaze) billing plan. */
 
-/** This example shows how to list the Google Cloud Functions. 
+/** This example shows how to list the Cloud Functions. 
  * 
  * This operation required OAUth2.0 authentication.
 */

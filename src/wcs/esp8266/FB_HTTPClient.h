@@ -1,5 +1,5 @@
 /**
- * HTTP Client wrapper v1.1.6
+ * HTTP Client wrapper v1.1.7
  * 
  * This library provides ESP8266 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -99,7 +99,6 @@ public:
 
 private:
   std::unique_ptr<FB_ESP_SSL_CLIENT> _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
-  std::unique_ptr<char> _cacert;
   std::string _host = "";
   uint16_t _port = 0;
   unsigned long timeout = FIREBASE_DEFAULT_TCP_TIMEOUT;

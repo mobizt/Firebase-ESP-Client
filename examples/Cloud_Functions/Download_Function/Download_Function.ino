@@ -20,7 +20,7 @@
 
 /* Cloud Functions deployment requires the pay-as-you-go (Blaze) billing plan. */
 
-/** This example shows how to get the download Url of Google Cloud Function archive (zip file). 
+/** This example shows how to get the download Url of Cloud Function archive (zip file). 
  * 
  * This operation required OAUth2.0 authentication.
 */

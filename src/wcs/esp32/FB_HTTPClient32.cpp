@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload
  * 
- * v 1.0.6
+ * v 1.0.7
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -51,8 +51,6 @@ FB_HTTPClient32::~FB_HTTPClient32()
     }
     std::string().swap(_host);
     std::string().swap(_CAFile);
-    _cacert.reset(new char);
-    _cacert = nullptr;
 }
 
 bool FB_HTTPClient32::begin(const char *host, uint16_t port)
@@ -132,6 +130,24 @@ bool FB_HTTPClient32::connect(void)
     return connected();
 }
 
+void FB_HTTPClient32::setInsecure()
+{
+#ifdef CONFIG_ARDUINO_IDF_BRANCH
+    size_t len = strlen_P(esp_idf_branch_str);
+    char *tmp = new char[len + 1];
+    memset(tmp, 0, len + 1);
+    std::string s = CONFIG_ARDUINO_IDF_BRANCH;
+    size_t p1 = s.find(tmp, 0);
+    if (p1 != std::string::npos)
+    {
+        float v = atof(s.substr(p1 + len, s.length() - p1 - len).c_str());
+        if (v >= 3.3f)
+            _wcs->setInsecure();
+    }
+    delete[] tmp;
+#endif
+}
+
 void FB_HTTPClient32::setCACert(const char *caCert)
 {
     _wcs->setCACert(caCert);
@@ -139,21 +155,7 @@ void FB_HTTPClient32::setCACert(const char *caCert)
         _certType = 1;
     else
     {
-
-#ifdef CONFIG_ARDUINO_IDF_BRANCH
-        size_t len = strlen_P(esp_idf_branch_str);
-        char *tmp = new char[len + 1];
-        memset(tmp, 0, len + 1);
-        std::string s = CONFIG_ARDUINO_IDF_BRANCH;
-        size_t p1 = s.find(tmp, 0);
-        if (p1 != std::string::npos)
-        {
-            float v = atof(s.substr(p1 + len, s.length() - p1 - len).c_str());
-            if (v >= 3.3f)
-                _wcs->setInsecure();
-        }
-        delete[] tmp;
-#endif
+        setInsecure();
         _certType = 0;
     }
     //_wcs->setNoDelay(true);
@@ -164,15 +166,7 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
 
     if (strlen(caCertFile) > 0)
     {
-        bool t = false;
         _certType = 2;
-
-        if (storageType == 0)
-            t = FLASH_FS.begin(true);
-        else
-            t = SD_FS.begin();
-        if (!t)
-            return;
 
         File f;
         if (storageType == 1)
@@ -189,15 +183,8 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
         if (f)
         {
             size_t len = f.size();
-            _cacert.reset(new char);
-            _cacert = nullptr;
-            _cacert = std::unique_ptr<char>(new char[len]);
-
-            if (f.available())
-                f.readBytes(_cacert.get(), len);
-
+            _wcs->loadCACert(f, len);
             f.close();
-            _wcs->setCACert(_cacert.get());
         }
     }
     //_wcs->setNoDelay(true);

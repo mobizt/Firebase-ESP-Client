@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.4
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.5
 
 
 The default filessystem used in the library is SPIFFS for flash and SD.
@@ -3636,7 +3636,7 @@ bool listFiles(FirebaseData *fbdo, const char *bucketID, ListOptions *options = 
 
 
 
-## Google Cloud Function Functions
+## Cloud Functions for Firebase Functions
 
 
 These functions can be called directly from Functions object in the Firebase object e.g. Firebase.Functions.[Function Name]

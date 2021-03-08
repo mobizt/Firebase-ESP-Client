@@ -20,7 +20,7 @@
 
 /* Cloud Functions deployment requires the pay-as-you-go (Blaze) billing plan. */
 
-/** This example shows how to update (patch) the Google Cloud Function. 
+/** This example shows how to update (patch) the Cloud Function. 
  * 
  * This operation required OAUth2.0 authentication.
 */

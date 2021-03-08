@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.2
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -624,8 +624,14 @@ bool FirebaseData::reconnect(unsigned long dataTime)
 
 void FirebaseData::setSecure()
 {
-
+    
 #if defined(ESP8266)
+    if (time(nullptr) > ESP_DEFAULT_TS)
+    {
+        if (Signer.getCfg())
+            Signer.getCfg()->_int.fb_clock_rdy = true;
+        httpClient._clockReady = true;
+    }
     httpClient._bsslRxSize = _ss.bssl_rx_size;
     httpClient._bsslTxSize = _ss.bssl_tx_size;
 #endif
@@ -650,7 +656,7 @@ void FirebaseData::setSecure()
         if (Signer.getCAFile().length() == 0)
         {
             if (Signer.getCfg()->_int.fb_caCert)
-                httpClient.setCACert(Signer.getCfg()->_int.fb_caCert.get());
+                httpClient.setCACert(Signer.getCfg()->_int.fb_caCert);
             else
                 httpClient.setCACert(nullptr);
         }

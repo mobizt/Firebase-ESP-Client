@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.1
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 18, 2021
+ * Created March 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -63,7 +63,7 @@ bool Firebase_Signer::parseSAFile()
     {
         if (config->service_account.json.storage_type == mem_storage_type_flash)
         {
-            if (SPIFFS.exists(config->service_account.json.path.c_str()))
+            if (FLASH_FS.exists(config->service_account.json.path.c_str()))
                 config->_int.fb_file = FLASH_FS.open(config->service_account.json.path.c_str(), "r");
         }
         else

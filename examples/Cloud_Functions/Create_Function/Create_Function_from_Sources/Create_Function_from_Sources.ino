@@ -18,7 +18,7 @@
  * https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
 */
 
-/** This example shows how to create (deploy) the Google Cloud Function from your source code files stored in the Storage data bucket.
+/** This example shows how to create (deploy) the Cloud Function from your source code files stored in the Storage data bucket.
  * 
  * This operation required OAUth2.0 authentication. The example "Deploy_autozip_Function" should be run prior to use this exanple,
  * please see the details below.

@@ -18,7 +18,7 @@
  * https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
 */
 
-/** This example shows how to set the IAM Policy for the Google Cloud Function. 
+/** This example shows how to set the IAM Policy for the Cloud Function. 
  * 
  * This operation required OAUth2.0 authentication.
 */
