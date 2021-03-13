@@ -26,3 +26,6 @@
  * 
 */
 #define DEFAULT_SD_FS SD
+
+//For ESP32, format SPIFFS or FFat if mounting failed
+#define FORMAT_FLASH_IF_MOUNT_FAILED 1

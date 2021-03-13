@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.3
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -2976,7 +2976,7 @@ bool FB_RTDB::saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_me
     else if (storageType == mem_storage_type_flash)
     {
         if (!Signer.getCfg()->_int.fb_flash_rdy)
-            Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+            ut->flashTest();
         Signer.getCfg()->_int.fb_file = FLASH_FS.open(filename, "w");
     }
 
@@ -3061,7 +3061,7 @@ bool FB_RTDB::deleteStorageFile(const char *filename, fb_esp_mem_storage_type st
     else
     {
         if (!Signer.getCfg()->_int.fb_flash_rdy)
-            Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+            ut->flashTest();
         return FLASH_FS.remove(filename);
     }
 }
@@ -3080,7 +3080,7 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp
     else if (storageType == mem_storage_type_flash)
     {
         if (!Signer.getCfg()->_int.fb_flash_rdy)
-            Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+            ut->flashTest();
         Signer.getCfg()->_int.fb_file = FLASH_FS.open(filename, "r");
     }
 
@@ -3499,7 +3499,8 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         if (fbdo->_ss.rtdb.storage_type == mem_storage_type_flash)
         {
             if (!Signer.getCfg()->_int.fb_flash_rdy)
-                Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+                ut->flashTest();
+
             if (!Signer.getCfg()->_int.fb_flash_rdy)
             {
                 ut->appendP(fbdo->_ss.error, fb_esp_pgm_str_164, true);
@@ -4073,7 +4074,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                                         {
                                             tmp = ut->strP(fb_esp_pgm_str_184);
                                             if (!Signer.getCfg()->_int.fb_flash_rdy)
-                                                Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+                                                ut->flashTest();
                                             Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "w");
                                             ut->delS(tmp);
 

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.5
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 8, 2021
+ * Created March 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -106,21 +106,16 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     {
         if (_cfg->cert.file_storage == mem_storage_type_sd && !_cfg->_int.fb_sd_rdy)
             _cfg->_int.fb_sd_rdy = ut->sdTest(_cfg->_int.fb_file);
-        else if (_cfg->cert.file_storage == mem_storage_type_flash && !_cfg->_int.fb_flash_rdy)
-            _cfg->_int.fb_flash_rdy = FLASH_FS.begin();
+        else if ((_cfg->cert.file_storage == mem_storage_type_flash) && !_cfg->_int.fb_flash_rdy)
+            ut->flashTest();
     }
 
-    Signer.hanldeToken();
+    Signer.handleToken();
 }
 
 struct token_info_t Firebase_ESP_Client::authTokenInfo()
 {
-    Signer.checkToken();
-    token_info_t info;
-    info.status = _cfg->signer.tokens.status;
-    info.type = _cfg->signer.tokens.token_type;
-    info.error = _cfg->signer.tokens.error;
-    return info;
+    return Signer.tokenInfo;
 }
 
 bool Firebase_ESP_Client::signUp(FirebaseConfig *config, FirebaseAuth *auth, const char *email, const char *password)
@@ -167,6 +162,32 @@ void Firebase_ESP_Client::setDoubleDigits(uint8_t digits)
 {
     if (digits < 9)
         _cfg->_int.fb_double_digits = digits;
+}
+
+bool Firebase_ESP_Client::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
+{
+    if (Signer.getCfg())
+    {
+        Signer.getCfg()->_int.sd_config.sck = sck;
+        Signer.getCfg()->_int.sd_config.miso = miso;
+        Signer.getCfg()->_int.sd_config.mosi = mosi;
+        Signer.getCfg()->_int.sd_config.ss = ss;
+    }
+#if defined(ESP32)
+    if (ss > -1)
+    {
+        SPI.begin(sck, miso, mosi, ss);
+        return SD_FS.begin(ss, SPI);
+    }
+    else
+        return SD_FS.begin();
+#elif defined(ESP8266)
+    if (ss > -1)
+        return SD_FS.begin(ss);
+    else
+        return SD_FS.begin(SD_CS_PIN);
+#endif
+    return false;
 }
 
 Firebase_ESP_Client Firebase = Firebase_ESP_Client();

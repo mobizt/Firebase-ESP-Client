@@ -1,13 +1,13 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.6
 
 
-The default filessystem used in the library is SPIFFS for flash and SD.
+The default filessystem used in the library is flash and SD.
 
 
-To use other flash file systems other than SPIFFS e.g. LittleFS file system, change the config in **FirebaseFS.h**
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 
 
@@ -174,6 +174,27 @@ param **`digits`** The decimal places.
 
 ```cpp
 void setDoubleDigits(uint8_t digits);
+```
+
+
+
+
+
+
+#### SD card config with GPIO pins.
+
+param **`ss`** SPI Chip/Slave Select pin.
+
+param **`sck`** SPI Clock pin.
+
+param **`miso`** SPI MISO pin.
+
+param **`mosi`** SPI MOSI pin.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool sdBegin( int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 ```
 
 
@@ -712,7 +733,7 @@ bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const cha
 bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS (only for ES8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH (only for ES8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -732,7 +753,7 @@ bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const cha
 bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS (only for ES8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH (only for ES8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -1474,7 +1495,7 @@ bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char
 bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -1523,7 +1544,7 @@ bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char
 bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -2207,7 +2228,7 @@ return **`Boolean`** value, indicates the success of the operation.
 bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -2459,7 +2480,7 @@ return **`Boolean`** value, indicates the success of the operation.
 bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -2486,7 +2507,7 @@ return **`Boolean`** value, indicates the success of the operation.
 bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -2564,7 +2585,7 @@ The file systems can be changed in FirebaseFS.h.
 bool deleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType);
 ```
 
-To use LittleFS file system for flash memory instead of SPIFFS (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS
@@ -4439,7 +4460,7 @@ return **`String`** (String object) of a file name that stores on SD card/flash 
 ```cpp
 String getBackupFilename();
 ```
-To use LittleFS file system for flash memory instead of SPIFFS, add the following macro in **FirebaseFS.h**
+To use LittleFS file system for flash memory instead of FLASH, add the following macro in **FirebaseFS.h**
 
 ```cpp
 #define USE_LITTLEFS

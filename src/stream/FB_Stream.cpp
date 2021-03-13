@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.0.0
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created March 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -61,7 +61,7 @@ String FirebaseStream::streamPath()
 
 int FirebaseStream::intData()
 {
-    if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type== fb_esp_data_type::d_double))
+    if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
         return atoi(sif->data.c_str());
     else
         return 0;
@@ -186,7 +186,7 @@ File FirebaseStream::fileStream()
     if (sif->data_type == fb_esp_data_type::d_file)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_184);
-        if (FLASH_FS.begin())
+        if (ut->flashTest())
             Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
         ut->delS(tmp);
     }

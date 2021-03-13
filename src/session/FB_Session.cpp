@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.3
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 8, 2021
+ * Created March 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -396,7 +396,9 @@ fs::File FirebaseData::fileStream()
     {
         char *tmp = ut->strP(fb_esp_pgm_str_184);
 
-        if (FLASH_FS.begin())
+        ut->flashTest();
+
+        if (Signer.getCfg()->_int.fb_flash_rdy)
             Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
         ut->delS(tmp);
     }
@@ -624,7 +626,7 @@ bool FirebaseData::reconnect(unsigned long dataTime)
 
 void FirebaseData::setSecure()
 {
-    
+
 #if defined(ESP8266)
     if (time(nullptr) > ESP_DEFAULT_TS)
     {
@@ -662,7 +664,12 @@ void FirebaseData::setSecure()
         }
         else
         {
-            httpClient.setCACertFile(Signer.getCAFile().c_str(), Signer.getCAFileStorage(), SD_CS_PIN);
+
+#if defined(ESP8266)
+            if (Signer.getCfg()->_int.sd_config.ss == -1)
+                Signer.getCfg()->_int.sd_config.ss = SD_CS_PIN;
+#endif
+            httpClient.setCACertFile(Signer.getCAFile().c_str(), Signer.getCAFileStorage(), Signer.getCfg()->_int.sd_config);
         }
     }
 }

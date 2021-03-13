@@ -148,6 +148,7 @@ enum fb_esp_settings_provider_type
 enum fb_esp_auth_token_status
 {
     token_status_uninitialized,
+    token_status_on_initialize,
     token_status_on_signing,
     token_status_on_request,
     token_status_on_refresh,
@@ -451,6 +452,7 @@ struct fb_esp_token_signer_resources_t
     int step = 0;
     int attempts = 0;
     bool signup = false;
+    bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
     unsigned long preRefreshMillis = 5 * 60 * 1000;
     unsigned long reqTO = 2000;
@@ -505,6 +507,7 @@ struct fb_esp_stream_info_t
 
 struct fb_esp_cfg_int_t
 {
+    struct fb_esp_sd_config_info_t sd_config;
     bool fb_multiple_requests = false;
     bool fb_processing = false;
     uint8_t fb_stream_idx = 0;
@@ -517,7 +520,7 @@ struct fb_esp_cfg_int_t
     uint16_t fb_reconnect_tmo = WIFI_RECONNECT_TIMEOUT;
     bool fb_clock_rdy = false;
     float fb_gmt_offset = 0;
-    const char* fb_caCert = nullptr;
+    const char *fb_caCert = nullptr;
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
@@ -527,18 +530,8 @@ struct fb_esp_cfg_int_t
     TaskHandle_t resumable_upload_task_handle = NULL;
     TaskHandle_t functions_check_task_handle = NULL;
     TaskHandle_t functions_deployment_task_handle = NULL;
+    TaskHandle_t token_processing_task_handle = NULL;
 #endif
-};
-
-struct fb_esp_cfg_t
-{
-    struct fb_esp_service_account_t service_account;
-    std::string host;
-    std::string api_key;
-    float time_zone = 0;
-    struct fb_esp_auth_cert_t cert;
-    struct fb_esp_token_signer_resources_t signer;
-    struct fb_esp_cfg_int_t _int;
 };
 
 struct fb_esp_url_info_t
@@ -573,11 +566,26 @@ struct fb_esp_fcs_file_list_t
     std::vector<struct fb_esp_fcs_file_list_item_t> items = std::vector<struct fb_esp_fcs_file_list_item_t>();
 };
 
-struct token_info_t
+typedef struct token_info_t
 {
     fb_esp_auth_token_type type = token_type_undefined;
     fb_esp_auth_token_status status = token_status_uninitialized;
     struct fb_esp_auth_token_error_t error;
+} TokenInfo;
+
+typedef void (*TokenStatusCallback)(TokenInfo);
+
+struct fb_esp_cfg_t
+{
+    struct fb_esp_service_account_t service_account;
+    std::string host;
+    std::string api_key;
+    float time_zone = 0;
+    struct fb_esp_auth_cert_t cert;
+    struct fb_esp_token_signer_resources_t signer;
+    struct fb_esp_cfg_int_t _int;
+    TokenStatusCallback token_status_callback = NULL;
+    int8_t max_token_generation_retry = MAX_EXCHANGE_TOKEN_ATTEMPTS;
 };
 
 struct fb_esp_rtdb_info_t
@@ -1163,7 +1171,7 @@ static const char fb_esp_pgm_str_54[] PROGMEM = "not found";
 static const char fb_esp_pgm_str_55[] PROGMEM = "method not allow";
 static const char fb_esp_pgm_str_56[] PROGMEM = "not acceptable";
 static const char fb_esp_pgm_str_57[] PROGMEM = "proxy authentication required";
-static const char fb_esp_pgm_str_58[] PROGMEM = "request timeout";
+static const char fb_esp_pgm_str_58[] PROGMEM = "request timed out";
 static const char fb_esp_pgm_str_59[] PROGMEM = "length required";
 static const char fb_esp_pgm_str_60[] PROGMEM = "too many requests";
 static const char fb_esp_pgm_str_61[] PROGMEM = "request header fields too larg";
@@ -1316,7 +1324,7 @@ static const char fb_esp_pgm_str_207[] PROGMEM = "refreshToken";
 static const char fb_esp_pgm_str_208[] PROGMEM = "id_token";
 static const char fb_esp_pgm_str_209[] PROGMEM = "refresh_token";
 static const char fb_esp_pgm_str_210[] PROGMEM = "expires_in";
-static const char fb_esp_pgm_str_211[] PROGMEM = "waiting for token to be ready";
+static const char fb_esp_pgm_str_211[] PROGMEM = "system time was not set";
 static const char fb_esp_pgm_str_212[] PROGMEM = "iss";
 static const char fb_esp_pgm_str_213[] PROGMEM = "sub";
 static const char fb_esp_pgm_str_214[] PROGMEM = "aud";
@@ -1649,6 +1657,13 @@ static const char fb_esp_pgm_str_539[] PROGMEM = "readTime";
 static const char fb_esp_pgm_str_540[] PROGMEM = "upload timed out";
 static const char fb_esp_pgm_str_541[] PROGMEM = "upload data sent error";
 
+static const char fb_esp_pgm_str_542[] PROGMEM = "No topic provided";
+static const char fb_esp_pgm_str_543[] PROGMEM = "No device token provided";
+static const char fb_esp_pgm_str_544[] PROGMEM = "The index of recipient device registered token not found";
+
+static const char fb_esp_pgm_str_545[] PROGMEM = "create message digest";
+static const char fb_esp_pgm_str_546[] PROGMEM = "tokenProcessingTask";
+static const char fb_esp_pgm_str_547[] PROGMEM = "max token generation retry reached";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

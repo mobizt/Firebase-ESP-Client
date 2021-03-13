@@ -37,6 +37,9 @@ FirebaseAuth auth;
 /* 5. Define the FirebaseConfig data for config data */
 FirebaseConfig config;
 
+/* The calback function to print the token generation status */
+void tokenStatusCallback(TokenInfo info);
+
 /* The function to print the operating results */
 void printResult(FirebaseData &data);
 
@@ -93,6 +96,12 @@ void setup()
 
     Firebase.reconnectWiFi(true);
 
+    /** Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback;
+
+    /** Assign the maximum retry of token generation */
+    config.max_token_generation_retry = 5;
+
     /* Now we start to signin using access token */
 
     /** Initialize the library with the Firebase authen and config.
@@ -116,41 +125,55 @@ void loop()
         dataMillis = millis();
 
         /* Get the token status */
-        struct token_info_t info = Firebase.authTokenInfo();
-        Serial.println("------------------------------------");
-        if (info.status == token_status_error)
+        TokenInfo info = Firebase.authTokenInfo();
+        if (info.status == token_status_ready)
         {
-            Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-            Serial.printf("Token error: %s\n\n", getTokenError(info).c_str());
-        }
-        else
-        {
-            Serial.printf("Token info: type = %s, status = %s\n\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-        }
-
-        Serial.println("------------------------------------");
-        Serial.println("Set int test...");
-
-        String Path = path + "/int";
-
-        if (Firebase.RTDB.set(&fbdo, Path.c_str(), count++))
-        {
-            Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.println("TYPE: " + fbdo.dataType());
-            Serial.println("ETag: " + fbdo.ETag());
-            Serial.print("VALUE: ");
-            printResult(fbdo);
             Serial.println("------------------------------------");
-            Serial.println();
+            Serial.println("Set int test...");
+
+            String Path = path + "/int";
+
+            if (Firebase.RTDB.set(&fbdo, Path.c_str(), count++))
+            {
+                Serial.println("PASSED");
+                Serial.println("PATH: " + fbdo.dataPath());
+                Serial.println("TYPE: " + fbdo.dataType());
+                Serial.println("ETag: " + fbdo.ETag());
+                Serial.print("VALUE: ");
+                printResult(fbdo);
+                Serial.println("------------------------------------");
+                Serial.println();
+            }
+            else
+            {
+                Serial.println("FAILED");
+                Serial.println("REASON: " + fbdo.errorReason());
+                Serial.println("------------------------------------");
+                Serial.println();
+            }
         }
-        else
-        {
-            Serial.println("FAILED");
-            Serial.println("REASON: " + fbdo.errorReason());
-            Serial.println("------------------------------------");
-            Serial.println();
-        }
+    }
+}
+
+void tokenStatusCallback(TokenInfo info)
+{
+    /** fb_esp_auth_token_status enum
+     * token_status_uninitialized,
+     * token_status_on_initialize,
+     * token_status_on_signing,
+     * token_status_on_request,
+     * token_status_on_refresh,
+     * token_status_ready,
+     * token_status_error
+    */
+    if (info.status == token_status_error)
+    {
+        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
+        Serial.printf("Token error: %s\n", getTokenError(info).c_str());
+    }
+    else
+    {
+        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
     }
 }
 
@@ -317,6 +340,9 @@ String getTokenStatus(struct token_info_t info)
     {
     case token_status_uninitialized:
         return "uninitialized";
+
+    case token_status_on_initialize:
+        return "on initializing";
 
     case token_status_on_signing:
         return "on signing";

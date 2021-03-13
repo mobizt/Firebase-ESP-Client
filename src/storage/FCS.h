@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Storage class, FCS.h version 1.0.5
+ * Google's Firebase Storage class, FCS.h version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 13, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -30,21 +30,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef FB_CloudStorage_H
-#define FB_CloudStorage_H
+#ifndef FB_Storage_H
+#define FB_Storage_H
 
 #include <Arduino.h>
 #include "Utils.h"
 #include "session/FB_Session.h"
 
-class FB_CloudStorage
+class FB_Storage
 {
     friend class Firebase_ESP_Client;
 
 public:
     struct RequestType;
-    FB_CloudStorage();
-    ~FB_CloudStorage();
+    FB_Storage();
+    ~FB_Storage();
 
     /** Upload file to the Firebase Storage data bucket.
      * 

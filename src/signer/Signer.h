@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.0.2
+ * Google's Firebase Token Generation class, Signer.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 8, 2021
+ * Created March 13, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -39,12 +39,11 @@
 class Firebase_Signer
 {
     friend class Firebase_ESP_Client;
-    friend class FirebaseData;
     friend class FB_RTDB;
     friend class FB_CM;
+    friend class FirebaseData;
+    friend class FB_Storage;
     friend class GG_CloudStorage;
-    friend class FB_CloudStorage;
-    friend class UtilsClass;
     friend class FirebaseStream;
     friend class QueryFilter;
     friend class MultiPathStream;
@@ -65,20 +64,21 @@ private:
     FirebaseConfig *config = nullptr;
     FirebaseAuth *auth = nullptr;
     callback_function_t _cb = nullptr;
+    struct token_info_t tokenInfo;
+    bool _token_processing_task_enable = false;
+
     void begin(UtilsClass *ut, FirebaseConfig *config, FirebaseAuth *auth);
     bool parseSAFile();
     void clearSA();
     bool tokenSigninDataReady();
     void setTokenType(fb_esp_auth_token_type type);
     bool userSigninDataReady();
-    bool hanldeToken();
+    bool handleToken();
     bool refreshToken();
     void setTokenError(int code);
     bool handleSignerError(int code);
     bool handleTokenResponse();
-#if defined(ESP8266)
-    void runJWT();
-#endif
+    void tokenProcessingTask();
     bool createJWT();
     bool getIdToken(bool createUser, const char *email, const char *password);
     bool requestTokens();
@@ -86,6 +86,8 @@ private:
     bool handleEmailSending(const char *payload, fb_esp_user_email_sending_type type);
     void errorToString(int httpCode, std::string &buff);
     bool tokenReady();
+    bool reconnect(unsigned long dataTime);
+    void sendTokenStatusCB();
     std::string getToken(fb_esp_auth_token_type type);
     fb_esp_auth_token_type getTokenType();
     std::string getCAFile();

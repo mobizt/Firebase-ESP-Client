@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.5
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 8, 2021
+ * Created March 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -52,7 +52,7 @@ class Firebase_ESP_Client
 public:
     FB_RTDB RTDB;
     FB_CM FCM;
-    FB_CloudStorage Storage;
+    FB_Storage Storage;
     FB_Firestore Firestore;
     FB_Functions Functions;
     GG_CloudStorage GCStorage;
@@ -160,10 +160,17 @@ public:
     */
     void setDoubleDigits(uint8_t digits);
 
+    /** SD card config with GPIO pins.
+     * 
+     * @param ss -   SPI Chip/Slave Select pin.
+     * @param sck -  SPI Clock pin.
+     * @param miso - SPI MISO pin.
+     * @param mosi - SPI MOSI pin.
+     * @return Boolean type status indicates the success of the operation.
+    */
+    bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+
 private:
-    bool createJWT(int step);
-    bool getIdToken(bool createUser, const char *email, const char *password);
-    bool requestTokens();
     UtilsClass *ut = nullptr;
     FirebaseAuth *_auth = nullptr;
     FirebaseConfig *_cfg = nullptr;

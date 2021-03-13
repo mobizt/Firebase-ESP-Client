@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Storage class, FCS.cpp version 1.0.5
+ * Google's Firebase Storage class, FCS.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 13, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -30,24 +30,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef FB_CloudStorage_CPP
-#define FB_CloudStorage_CPP
+#ifndef FB_Storage_CPP
+#define FB_Storage_CPP
 
 #include "FCS.h"
 
-FB_CloudStorage::FB_CloudStorage()
+FB_Storage::FB_Storage()
 {
 }
-FB_CloudStorage ::~FB_CloudStorage()
+FB_Storage ::~FB_Storage()
 {
 }
 
-void FB_CloudStorage::begin(UtilsClass *u)
+void FB_Storage::begin(UtilsClass *u)
 {
     ut = u;
 }
 
-bool FB_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
+bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
 {
     if (fbdo->_ss.rtdb.pause)
         return true;
@@ -103,7 +103,7 @@ bool FB_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *r
     return fcs_sendRequest(fbdo, req);
 }
 
-bool FB_CloudStorage::upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remoteFileName, const char *mime)
+bool FB_Storage::upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remoteFileName, const char *mime)
 {
     struct fb_esp_fcs_req_t req;
     req.localFileName = localFileName;
@@ -115,7 +115,7 @@ bool FB_CloudStorage::upload(FirebaseData *fbdo, const char *bucketID, const cha
     return sendRequest(fbdo, &req);
 }
 
-bool FB_CloudStorage::upload(FirebaseData *fbdo, const char *bucketID, const uint8_t *data, size_t len, const char *remoteFileName, const char *mime)
+bool FB_Storage::upload(FirebaseData *fbdo, const char *bucketID, const uint8_t *data, size_t len, const char *remoteFileName, const char *mime)
 {
     struct fb_esp_fcs_req_t req;
     req.remoteFileName = remoteFileName;
@@ -127,7 +127,7 @@ bool FB_CloudStorage::upload(FirebaseData *fbdo, const char *bucketID, const uin
     return sendRequest(fbdo, &req);
 }
 
-bool FB_CloudStorage::download(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType)
+bool FB_Storage::download(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType)
 {
     struct fb_esp_fcs_req_t req;
     req.localFileName = localFileName;
@@ -138,7 +138,7 @@ bool FB_CloudStorage::download(FirebaseData *fbdo, const char *bucketID, const c
     return sendRequest(fbdo, &req);
 }
 
-bool FB_CloudStorage::getMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
+bool FB_Storage::getMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
     struct fb_esp_fcs_req_t req;
     req.remoteFileName = remoteFileName;
@@ -147,7 +147,7 @@ bool FB_CloudStorage::getMetadata(FirebaseData *fbdo, const char *bucketID, cons
     return sendRequest(fbdo, &req);
 }
 
-bool FB_CloudStorage::deleteFile(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
+bool FB_Storage::deleteFile(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
     struct fb_esp_fcs_req_t req;
     req.requestType = fb_esp_fcs_request_type_delete;
@@ -157,7 +157,7 @@ bool FB_CloudStorage::deleteFile(FirebaseData *fbdo, const char *bucketID, const
     return sendRequest(fbdo, &req);
 }
 
-bool FB_CloudStorage::listFiles(FirebaseData *fbdo, const char *bucketID)
+bool FB_Storage::listFiles(FirebaseData *fbdo, const char *bucketID)
 {
     struct fb_esp_fcs_req_t req;
     req.bucketID = bucketID;
@@ -166,7 +166,7 @@ bool FB_CloudStorage::listFiles(FirebaseData *fbdo, const char *bucketID)
     return sendRequest(fbdo, &req);
 }
 
-void FB_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
+void FB_Storage::rescon(FirebaseData *fbdo, const char *host)
 {
     if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_storage || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
@@ -178,7 +178,7 @@ void FB_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
     fbdo->_ss.con_mode = fb_esp_con_mode_storage;
 }
 
-bool FB_CloudStorage::fcs_connect(FirebaseData *fbdo)
+bool FB_Storage::fcs_connect(FirebaseData *fbdo)
 {
     std::string host;
     ut->appendP(host, fb_esp_pgm_str_265);
@@ -188,7 +188,7 @@ bool FB_CloudStorage::fcs_connect(FirebaseData *fbdo)
     return true;
 }
 
-bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
+bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
 {
 
     fbdo->_ss.fcs.requestType = req->requestType;
@@ -196,7 +196,7 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
     std::string token = Signer.getToken(Signer.getTokenType());
 
     if (!Signer.getCfg()->_int.fb_flash_rdy)
-        Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+        ut->flashTest();
 
     if (req->requestType == fb_esp_fcs_request_type_download)
     {
@@ -212,7 +212,8 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
         else if (req->storageType == mem_storage_type_flash)
         {
             if (!Signer.getCfg()->_int.fb_flash_rdy)
-                Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+                ut->flashTest();
+
             Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "w");
         }
     }
@@ -245,7 +246,7 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
             else if (req->storageType == mem_storage_type_flash)
             {
                 if (!Signer.getCfg()->_int.fb_flash_rdy)
-                    Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+                    ut->flashTest();
 
                 if (!Signer.getCfg()->_int.fb_flash_rdy)
                 {
@@ -407,7 +408,7 @@ bool FB_CloudStorage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_
     return false;
 }
 
-bool FB_CloudStorage::handleResponse(FirebaseData *fbdo)
+bool FB_Storage::handleResponse(FirebaseData *fbdo)
 {
     if (fbdo->_ss.rtdb.pause)
         return true;

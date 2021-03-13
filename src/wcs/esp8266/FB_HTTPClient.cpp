@@ -155,9 +155,9 @@ void FB_HTTPClient::setCACert(const char *caCert)
   _wcs->setNoDelay(true);
 }
 
-void FB_HTTPClient::setCACertFile(const char *caCertFile, uint8_t storageType, uint8_t sdPin)
+void FB_HTTPClient::setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config)
 {
-  _sdPin = sdPin;
+  _sdPin = sd_config.ss;
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
 
   if (_clockReady && strlen(caCertFile) > 0)

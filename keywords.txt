@@ -271,6 +271,7 @@ FirebaseMethod  LITERAL1
 QueueStorageType    LITERAL1
 QueueItem   LITERAL1
 token_info_t    LITERAL1
+TokenInfo   LITERAL1
 
 
 

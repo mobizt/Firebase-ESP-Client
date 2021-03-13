@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.0.2
+ * Google's Cloud Functions class, Functions.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -155,7 +155,7 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
             else if (config->_uploadArchiveStorageType == mem_storage_type_flash)
             {
                 if (!Signer.getCfg()->_int.fb_flash_rdy)
-                    Signer.getCfg()->_int.fb_flash_rdy = FLASH_FS.begin();
+                    ut->flashTest();
 
                 if (!Signer.getCfg()->_int.fb_flash_rdy || !FLASH_FS.exists(config->_uploadArchiveFile.c_str()))
                 {

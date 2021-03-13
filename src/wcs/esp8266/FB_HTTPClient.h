@@ -68,6 +68,13 @@
 
 #include "wcs/HTTPCode.h"
 
+struct fb_esp_sd_config_info_t
+{
+  int sck = -1;
+  int miso = -1;
+  int mosi = -1;
+  int ss = -1;
+};
 
 class FB_HTTPClient
 {
@@ -93,7 +100,7 @@ public:
   WiFiClient *stream(void);
 
   void setCACert(const char *caCert);
-  void setCACertFile(const char* caCertFile, uint8_t storageType, uint8_t sdPin);
+  void setCACertFile(const char* caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config);
   bool connect(void);
 
 

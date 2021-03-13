@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.5
+ * Google's Firebase Util class, Utils.h version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 8, 2021
+ * Created March 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
@@ -43,7 +43,7 @@ class UtilsClass
 
 public:
     long default_ts = ESP_DEFAULT_TS;
-    uint16_t ntpTimeout = 3000;
+    uint16_t ntpTimeout = 20;
     callback_function_t _callback_function = nullptr;
     FirebaseConfig *config = nullptr;
 
@@ -304,7 +304,7 @@ public:
     {
         char *host = newS(url.length() + 5);
         char *uri = newS(url.length() + 5);
-        char *auth = newS(url.length()+ 5);
+        char *auth = newS(url.length() + 5);
 
         int p1 = 0;
         char *tmp = strP(fb_esp_pgm_str_441);
@@ -345,7 +345,7 @@ public:
         }
 
         info.uri = uri;
-        info.host= host;
+        info.host = host;
         info.auth = auth;
         delS(uri);
         delS(host);
@@ -1264,7 +1264,7 @@ public:
                 now = time(nullptr);
                 if (now > default_ts || millis() - timeout > ntpTimeout)
                     break;
-                delay(200);
+                delay(10);
             }
 
             delS(server1);
@@ -1274,6 +1274,7 @@ public:
         config->_int.fb_clock_rdy = now > default_ts;
         if (config->_int.fb_clock_rdy)
             config->_int.fb_gmt_offset = gmtOffset;
+
         return config->_int.fb_clock_rdy;
     }
 
@@ -1382,11 +1383,50 @@ public:
         return ((len + 2) / 3 * 4) + 1;
     }
 
+    bool sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
+    {
+        if (config)
+        {
+            config->_int.sd_config.sck = sck;
+            config->_int.sd_config.miso = miso;
+            config->_int.sd_config.mosi = mosi;
+            config->_int.sd_config.ss = ss;
+        }
+#if defined(ESP32)
+        if (ss > -1)
+        {
+            SPI.begin(sck, miso, mosi, ss);
+            return SD_FS.begin(ss, SPI);
+        }
+        else
+            return SD_FS.begin();
+#elif defined(ESP8266)
+        if (ss > -1)
+            return SD_FS.begin(ss);
+        else
+            return SD_FS.begin(SD_CS_PIN);
+#endif
+    }
+
+    bool flashTest()
+    {
+#if defined(ESP32)
+        if (FORMAT_SPIFFS == 1)
+            config->_int.fb_flash_rdy = FLASH_FS.begin(true);
+        else
+            config->_int.fb_flash_rdy = FLASH_FS.begin();
+#elif defined(ESP8266)
+        config->_int.fb_flash_rdy = FLASH_FS.begin();
+#endif
+        return config->_int.fb_flash_rdy;
+    }
+
     bool sdTest(fs::File file)
     {
         std::string filepath = "/sdtest01.txt";
 
-        SD_FS.begin(SD_CS_PIN);
+        if (!sdBegin(config->_int.sd_config.ss, config->_int.sd_config.sck, config->_int.sd_config.miso, config->_int.sd_config.mosi))
+            return false;
 
         file = SD_FS.open(filepath.c_str(), FILE_WRITE);
         if (!file)

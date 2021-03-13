@@ -50,10 +50,19 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #define FLASH_FS DEFAULT_FLASH_FS
 #define SD_FS DEFAULT_SD_FS
+#define FORMAT_SPIFFS FORMAT_FLASH_IF_MOUNT_FAILED
 
 #include "wcs/HTTPCode.h"
 
 static const char esp_idf_branch_str[] PROGMEM = "release/v";
+
+struct fb_esp_sd_config_info_t
+{
+  int sck = -1;
+  int miso = -1;
+  int mosi = -1;
+  int ss = -1;
+};
 
 class FB_HTTPClient32
 {
@@ -114,7 +123,7 @@ public:
 
   bool connect(void);
   void setCACert(const char *caCert);
-  void setCACertFile(const char *caCertFile, uint8_t storageType, uint8_t sdPin);
+  void setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config);
 
 protected:
   std::unique_ptr<WiFiClientSecure> _wcs = std::unique_ptr<WiFiClientSecure>(new WiFiClientSecure());
