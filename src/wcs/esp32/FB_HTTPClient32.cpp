@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library.
  * Allow custom header and payload
  *
- * v 1.0.7
+ * v 1.0.8
  *
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -130,19 +130,10 @@ bool FB_HTTPClient32::connect(void)
 
 void FB_HTTPClient32::setInsecure()
 {
-#ifdef CONFIG_ARDUINO_IDF_BRANCH
-  size_t len = strlen_P(esp_idf_branch_str);
-  char *tmp = new char[len + 1];
-  memset(tmp, 0, len + 1);
-  std::string s = CONFIG_ARDUINO_IDF_BRANCH;
-  size_t p1 = s.find(tmp, 0);
-  if (p1 != std::string::npos)
-  {
-    float v = atof(s.substr(p1 + len, s.length() - p1 - len).c_str());
-    if (v >= 3.3f)
-      _wcs->setInsecure();
-  }
-  delete[] tmp;
+#if __has_include(<esp_idf_version.h>)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(3, 3, 0)
+  _wcs->setInsecure();
+#endif
 #endif
 }
 

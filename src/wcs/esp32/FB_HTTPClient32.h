@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload
  * 
- * v 1.0.7
+ * v 1.0.8
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -44,6 +44,10 @@
 #include <WiFiClientSecure.h>
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.
+#endif
+
+#if __has_include(<esp_idf_version.h>)
+#include <esp_idf_version.h>
 #endif
 
 #pragma GCC diagnostic push
