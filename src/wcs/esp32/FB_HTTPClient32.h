@@ -50,7 +50,7 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #define FLASH_FS DEFAULT_FLASH_FS
 #define SD_FS DEFAULT_SD_FS
-#define FORMAT_SPIFFS FORMAT_FLASH_IF_MOUNT_FAILED
+#define FORMAT_FLASH FORMAT_FLASH_IF_MOUNT_FAILED
 
 #include "wcs/HTTPCode.h"
 

@@ -3,7 +3,7 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 11, 2021
+ * Created March 13, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
@@ -1411,7 +1411,7 @@ public:
     bool flashTest()
     {
 #if defined(ESP32)
-        if (FORMAT_SPIFFS == 1)
+        if (FORMAT_FLASH == 1)
             config->_int.fb_flash_rdy = FLASH_FS.begin(true);
         else
             config->_int.fb_flash_rdy = FLASH_FS.begin();

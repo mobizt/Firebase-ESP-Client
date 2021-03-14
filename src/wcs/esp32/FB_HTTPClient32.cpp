@@ -169,7 +169,7 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
     File f;
     if (storageType == 1)
     {
-      if (FORMAT_SPIFFS == 1)
+      if (FORMAT_FLASH == 1)
         FLASH_FS.begin(true);
       else
         FLASH_FS.begin();

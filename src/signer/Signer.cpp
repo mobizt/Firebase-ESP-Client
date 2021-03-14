@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.3
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 13, 2021
+ * Created March 14, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -216,10 +216,6 @@ bool Firebase_Signer::handleToken()
                 config->signer.lastReqMillis = millis();
                 if (config->_int.fb_processing)
                     return false;
-                config->signer.tokens.status = token_status_on_refresh;
-                config->signer.tokens.error.code = 0;
-                config->signer.tokens.error.message.clear();
-                sendTokenStatusCB();
                 return refreshToken();
             }
             return false;
@@ -481,6 +477,9 @@ bool Firebase_Signer::refreshToken()
 
     config->signer.tokens.status = token_status_on_refresh;
     config->_int.fb_processing = true;
+    config->signer.tokens.error.code = 0;
+    config->signer.tokens.error.message.clear();
+    sendTokenStatusCB();
 
     config->signer.tokens.id_token.clear();
     config->signer.tokens.access_token.clear();
