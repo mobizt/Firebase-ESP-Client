@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.4
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 11, 2021
+ * Created March 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -1525,7 +1525,7 @@ private:
   void prepareHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, int payloadLength, std::string &header, bool sv);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
-  void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, char *payload);
+  void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
   bool processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool processRequestFile(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority);
@@ -1549,6 +1549,9 @@ private:
   bool handleStreamRequest(FirebaseData *fbdo, const std::string &path);
   bool connectionError(FirebaseData *fbdo);
   bool handleStreamRead(FirebaseData *fbdo);
+  void sendCB(FirebaseData *fbdo);
+  void splitStreamPayload(const char *payloads, std::vector<std::string> &payload);
+  void parseStreamPayload(FirebaseData *fbdo, const char *payload);
 #if defined(ESP32)
   void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #elif defined(ESP8266)

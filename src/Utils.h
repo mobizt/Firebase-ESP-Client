@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.6
+ * Google's Firebase Util class, Utils.h version 1.0.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 13, 2021
+ * Created March 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
@@ -1553,6 +1553,23 @@ public:
             str.replace(start_pos, from.length(), to);
             start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
         }
+    }
+
+    bool validJS(const char *c)
+    {
+        size_t ob = 0, cb = 0, os = 0, cs = 0;
+        for (size_t i = 0; i < strlen(c); i++)
+        {
+            if (c[i] == '{')
+                ob++;
+            else if (c[i] == '}')
+                cb++;
+            else if (c[i] == '[')
+                os++;
+            else if (c[i] == ']')
+                cs++;
+        }
+        return (ob == cb && os == cs);
     }
 
 private:

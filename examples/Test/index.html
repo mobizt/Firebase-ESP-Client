@@ -14,13 +14,14 @@
         <button type="button" onclick="delData()" title="Delete data">Delete</button>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-database.js"></script>
 
     <script>
 
-        var projectID = "xxxxxxxxx";
-        var apiKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+        var projectID = "xxxxxxxxxxxx";
+        var apiKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
         var config = {
             apiKey: apiKey,
@@ -32,12 +33,12 @@
         firebase.initializeApp(config);
 
         setData = function () {
-            for (var i = 0; i < 50; i++)
-                firebase.database().ref('/ESP8266_Test/Stream/String' + i).set(Math.floor(Math.random() * 1000));
+            for (var i = 0; i < 1000; i++)
+                firebase.database().ref('/Test/Stream/' + i).set(i);
         }
 
         delData = function () {
-            firebase.database().ref('/ESP8266_Test/Stream').remove();
+            firebase.database().ref('/Test/Stream').remove();
         }
 
     </script>
