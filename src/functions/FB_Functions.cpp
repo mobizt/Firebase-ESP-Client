@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.0.3
+ * Google's Cloud Functions class, Functions.cpp version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 11, 2021
+ * Created March 23, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -1417,9 +1417,8 @@ void FB_Functions::runDeployTask()
             yield();
         }
 
-        vTaskDelete(NULL);
-
         Signer.getCfg()->_int.functions_check_task_handle = NULL;
+        vTaskDelete(NULL);
     };
 
     xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Signer.getCfg()->_int.functions_check_task_handle, 1);

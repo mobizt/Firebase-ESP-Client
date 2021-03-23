@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.7
+ * Google's Firebase Util class, Utils.h version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 21, 2021
+ * Created March 23, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -1243,8 +1243,8 @@ public:
         if (time(nullptr) > default_ts && gmtOffset == config->_int.fb_gmt_offset)
             return true;
 
-        if (WiFi.status() != WL_CONNECTED)
-            WiFi.reconnect();
+        if (config->_int.fb_reconnect_wifi)
+            reconnect(0);
 
         time_t now = time(nullptr);
 
@@ -1570,6 +1570,35 @@ public:
                 cs++;
         }
         return (ob == cb && os == cs);
+    }
+
+    bool reconnect(unsigned long dataTime)
+    {
+
+        bool status = WiFi.status() == WL_CONNECTED;
+
+        if (dataTime > 0)
+        {
+            if (millis() - dataTime > 30000)
+                return false;
+        }
+
+        if (!status)
+        {
+
+            if (config->_int.fb_reconnect_wifi)
+            {
+                if (millis() - config->_int.fb_last_reconnect_millis > config->_int.fb_reconnect_tmo)
+                {
+                    WiFi.reconnect();
+                    config->_int.fb_last_reconnect_millis = millis();
+                }
+            }
+
+            status = WiFi.status() == WL_CONNECTED;
+        }
+
+        return status;
     }
 
 private:

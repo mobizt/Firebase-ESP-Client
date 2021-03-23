@@ -454,7 +454,8 @@ struct fb_esp_token_signer_resources_t
     bool signup = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
-    unsigned long preRefreshMillis = 5 * 60 * 1000;
+    unsigned long preRefreshSeconds = 60;
+    unsigned long expiredSeconds = 3600;
     unsigned long reqTO = 2000;
     std::string pk;
     size_t hashSize = 32; //SHA256 size (256 bits or 32 bytes)

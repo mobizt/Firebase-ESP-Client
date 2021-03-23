@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.9
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.10
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -195,7 +195,7 @@ The time for legacy token generation is zero as it was taken from database secre
 
 The data transmission time depends on the SSL/TLS handshaking, the size of http request header/payload and response header/payload.
 
-The time used in data transmission also depend on the size of token (string) which is the part of request header.
+The time used in data transmission also depending on the size of token (string) which is the part of request header.
 
 The legacy token size is smallest, approx 40 bytes, the lowest data trasmission time (averaged 200 - 400 ms for 1 byte of payload).
 
