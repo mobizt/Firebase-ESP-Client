@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.4
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 11, 2021
+ * Created March 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -336,30 +336,28 @@ FirebaseJsonArray *FirebaseData::jsonArrayPtr()
 
     if (_ss.rtdb.data.length() > 0 && _ss.rtdb.resp_data_type == fb_esp_data_type::d_array)
     {
-        char *tmp = ut->newS(20);
 
-        std::string().swap(_ss.arr._json._jsonData._dbuf);
-        std::string().swap(_ss.arr._json._tbuf);
+        std::string().swap(*_ss.arr.int_dbuf());
+        std::string().swap(*_ss.arr.int_tbuf());
 
-        strcpy_P(tmp, FirebaseJson_STR_21);
-        _ss.arr._json._toStdString(_ss.arr._jbuf, false);
-        _ss.arr._json._rawbuf = tmp;
-        _ss.arr._json._rawbuf += _ss.rtdb.data;
-
-        tmp = ut->newS(tmp, 20);
-        strcpy_P(tmp, FirebaseJson_STR_26);
-
-        _ss.arr._json._parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
-
-        std::string().swap(_ss.arr._json._tbuf);
-        std::string().swap(_ss.arr._jbuf);
-        _ss.arr._json.clearPathTk();
-        _ss.arr._json._tokens.reset();
-        _ss.arr._json._tokens = nullptr;
+        char *tmp = ut->strP(FirebaseJson_STR_21);
+        _ss.arr.int_json()->int_toStdString(*_ss.arr.int_jbuf());
+        *_ss.arr.int_rawbuf() = tmp;
+        *_ss.arr.int_rawbuf() += _ss.rtdb.data;
         ut->delS(tmp);
-        if (_ss.arr._json._jsonData._dbuf.length() > 2)
-            _ss.arr._json._rawbuf = _ss.arr._json._jsonData._dbuf.substr(1, _ss.arr._json._jsonData._dbuf.length() - 2);
-        _ss.arr._arrLen = _ss.arr._json._jsonData._len;
+
+        tmp = ut->strP(FirebaseJson_STR_26);
+        _ss.arr.int_json()->int_parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
+        ut->delS(tmp);
+
+        std::string().swap(*_ss.arr.int_tbuf());
+        std::string().swap(*_ss.arr.int_jbuf());
+        _ss.arr.int_json()->int_clearPathTk();
+        _ss.arr.int_json()->int_clearTokens();
+
+        if (_ss.arr.int_dbuf()->length() > 2)
+            *_ss.arr.int_rawbuf() = _ss.arr.int_dbuf()->substr(1, _ss.arr.int_dbuf()->length() - 2);
+        _ss.arr.int_set_arr_len(_ss.arr.int_json()->int_get_jsondata_len());
     }
     return &_ss.arr;
 }

@@ -1,15 +1,15 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.3
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -76,7 +76,7 @@ bool FB_Firestore::exportDocuments(FirebaseData *fbdo, const char *projectId, co
     fbdo->_ss.json.add(tmp, fbdo->_ss.arr);
     ut->delS(tmp);
 
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
 
     return sendRequest(fbdo, &req);
 }
@@ -115,7 +115,7 @@ bool FB_Firestore::importDocuments(FirebaseData *fbdo, const char *projectId, co
     fbdo->_ss.json.add(tmp, fbdo->_ss.arr);
     ut->delS(tmp);
 
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
 
     return sendRequest(fbdo, &req);
 }
@@ -213,7 +213,7 @@ bool FB_Firestore::runQuery(FirebaseData *fbdo, const char *projectId, const cha
     }
     ut->delS(tmp);
 
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
     fbdo->_ss.json.clear();
 
     return sendRequest(fbdo, &req);
@@ -262,7 +262,7 @@ bool FB_Firestore::listCollectionIds(FirebaseData *fbdo, const char *projectId, 
     fbdo->_ss.json.add(tmp, pageToken);
     ut->delS(tmp);
 
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
 
     return sendRequest(fbdo, &req);
 }

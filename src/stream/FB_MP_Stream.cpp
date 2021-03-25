@@ -1,15 +1,15 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.0
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created March 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -57,7 +57,9 @@ bool MultiPathStream::get(const String &path)
     if (sif->m_type == fb_esp_data_type::d_json)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_1);
-        if (strcmp(sif->m_path.c_str(), tmp) == 0)
+        bool r = strcmp(sif->m_path.c_str(), tmp) == 0;
+        ut->delS(tmp);
+        if (r)
         {
             FirebaseJsonData data;
             sif->m_json->get(data, path);

@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.0.1
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 11, 2021
+ * Created March 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -128,32 +128,27 @@ FirebaseJsonArray *FirebaseStream::jsonArrayPtr()
     if (sif->data.length() > 0 && sif->data_type == fb_esp_data_type::d_array)
     {
 
-        char *tmp = ut->newS(20);
+        std::string().swap(*_jsonArr->int_dbuf());
+        std::string().swap(*_jsonArr->int_tbuf());
 
-        std::string().swap(_jsonArr->_json._jsonData._dbuf);
-        std::string().swap(_jsonArr->_json._tbuf);
-
-        strcpy_P(tmp, FirebaseJson_STR_21);
-        _jsonArr->_json._toStdString(_jsonArr->_jbuf, false);
-        _jsonArr->_json._rawbuf = tmp;
-        _jsonArr->_json._rawbuf += sif->data;
+        char *tmp = ut->strP(FirebaseJson_STR_21);
+        _jsonArr->int_json()->int_toStdString(*_jsonArr->int_jbuf());
+        *_jsonArr->int_rawbuf() = tmp;
+        *_jsonArr->int_rawbuf() += sif->data;
         ut->delS(tmp);
 
-        tmp = ut->newS(tmp, 20);
-        strcpy_P(tmp, FirebaseJson_STR_26);
-
-        _jsonArr->_json._parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
+        tmp = ut->strP(FirebaseJson_STR_26);
+        _jsonArr->int_json()->int_parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
         ut->delS(tmp);
 
-        std::string().swap(_jsonArr->_json._tbuf);
-        std::string().swap(_jsonArr->_jbuf);
-        _jsonArr->_json.clearPathTk();
-        _jsonArr->_json._tokens.reset();
-        _jsonArr->_json._tokens = nullptr;
+        std::string().swap(*_jsonArr->int_tbuf());
+        std::string().swap(*_jsonArr->int_jbuf());
+        _jsonArr->int_json()->int_clearPathTk();
+        _jsonArr->int_json()->int_clearTokens();
 
-        if (_jsonArr->_json._jsonData._dbuf.length() > 2)
-            _jsonArr->_json._rawbuf = _jsonArr->_json._jsonData._dbuf.substr(1, _jsonArr->_json._jsonData._dbuf.length() - 2);
-        _jsonArr->_arrLen = _jsonArr->_json._jsonData._len;
+        if (_jsonArr->int_dbuf()->length() > 2)
+            *_jsonArr->int_rawbuf() = _jsonArr->int_dbuf()->substr(1, _jsonArr->int_dbuf()->length() - 2);
+        _jsonArr->int_set_arr_len(_jsonArr->int_json()->int_get_jsondata_len());
     }
     return _jsonArr;
 }

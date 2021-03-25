@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.5
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 23, 2021
+ * Created March 24, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -580,6 +580,11 @@ bool Firebase_Signer::refreshToken()
         }
 
         config->signer.tokens.error = error;
+        tokenInfo.status = config->signer.tokens.status;
+        tokenInfo.type = config->signer.tokens.token_type;
+        tokenInfo.error = config->signer.tokens.error;
+        if (error.code != 0)
+            sendTokenStatusCB();
 
         if (error.code == 0)
         {
@@ -970,7 +975,7 @@ bool Firebase_Signer::createJWT()
         ut->delS(tmp);
         ut->delS(tmp2);
 
-        config->signer.json->_tostr(config->signer.header);
+        config->signer.json->int_tostr(config->signer.header);
         size_t len = ut->base64EncLen(config->signer.header.length());
         char *buf = ut->newS(len);
         ut->encodeBase64Url(buf, (unsigned char *)config->signer.header.c_str(), config->signer.header.length());
@@ -1081,7 +1086,7 @@ bool Firebase_Signer::createJWT()
             ut->delS(tmp);
 
             std::string s;
-            auth->token.claims._tostr(s);
+            auth->token.claims.int_tostr(s);
             if (s.length() > 2)
             {
                 tmp = ut->strP(fb_esp_pgm_str_255);
@@ -1090,7 +1095,7 @@ bool Firebase_Signer::createJWT()
             }
         }
 
-        config->signer.json->_tostr(config->signer.payload);
+        config->signer.json->int_tostr(config->signer.payload);
         len = ut->base64EncLen(config->signer.payload.length());
         buf = ut->newS(len);
         ut->encodeBase64Url(buf, (unsigned char *)config->signer.payload.c_str(), config->signer.payload.length());
@@ -1421,6 +1426,8 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
             tokenInfo.status = config->signer.tokens.status;
             tokenInfo.type = config->signer.tokens.token_type;
             tokenInfo.error = config->signer.tokens.error;
+            if (error.code != 0)
+                sendTokenStatusCB();
         }
 
         if (error.code == 0)
@@ -1598,6 +1605,11 @@ bool Firebase_Signer::requestTokens()
         }
 
         config->signer.tokens.error = error;
+        tokenInfo.status = config->signer.tokens.status;
+        tokenInfo.type = config->signer.tokens.token_type;
+        tokenInfo.error = config->signer.tokens.error;
+        if (error.code != 0)
+            sendTokenStatusCB();
 
         if (error.code == 0)
         {

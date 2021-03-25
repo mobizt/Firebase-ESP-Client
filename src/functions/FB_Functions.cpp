@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 23, 2021
+ * Created March 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -53,7 +53,7 @@ bool FB_Functions::callFunction(FirebaseData *fbdo, const char *projectId, const
     char *tmp = ut->strP(fb_esp_pgm_str_135);
     fbdo->_ss.json.clear();
     fbdo->_ss.json.add(tmp, data);
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
     fbdo->_ss.json.clear();
     ut->delS(tmp);
     return sendRequest(fbdo, &req);
@@ -230,7 +230,7 @@ bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_upload_bucket_sources;
 
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
 
     fbdo->_ss.json.clear();
 
@@ -288,7 +288,7 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
 
     t.clear();
     std::string str;
-    fbdo->_ss.json._tostr(str);
+    fbdo->_ss.json.int_tostr(str);
 
     fbdo->_ss.json.clear();
     char *find = ut->strP(fb_esp_pgm_str_3);
@@ -325,7 +325,7 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
         std::string().swap(t);
     }
 
-    config->_funcCfg._tostr(req.payload);
+    config->_funcCfg.int_tostr(req.payload);
     config->_funcCfg.clear();
 
     return sendRequest(fbdo, &req);
@@ -377,7 +377,7 @@ bool FB_Functions::setIamPolicy(FirebaseData *fbdo, const char *projectId, const
         ut->delS(tmp);
     }
 
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
     fbdo->_ss.json.clear();
 
     return sendRequest(fbdo, &req);
@@ -497,7 +497,7 @@ bool FB_Functions::generateDownloadUrl(FirebaseData *fbdo, const char *projectId
         ut->delS(tmp);
     }
 
-    fbdo->_ss.json._tostr(req.payload);
+    fbdo->_ss.json.int_tostr(req.payload);
     fbdo->_ss.json.clear();
 
     return sendRequest(fbdo, &req);

@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.3
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -390,7 +390,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->delS(tmp);
     }
 
-    _fcmPayload._tostr(buf);
+    _fcmPayload.int_tostr(buf);
 
     std::string s;
 
@@ -522,7 +522,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         _fcmPayload.add(s.c_str(), msg->payloads.notification.color);
     }
 
-    _fcmPayload._tostr(buf);
+    _fcmPayload.int_tostr(buf);
 
     _fcmPayload.clear();
 }
@@ -553,7 +553,7 @@ void FB_CM::fcm_preparSubscriptionPayload(std::string &buf, const char *topic, c
     _fcmPayload.add(tmp, arr);
     ut->delS(tmp);
 
-    _fcmPayload._tostr(buf);
+    _fcmPayload.int_tostr(buf);
     _fcmPayload.clear();
 }
 
@@ -585,7 +585,7 @@ void FB_CM::fcm_preparAPNsRegistPayload(std::string &buf, const char *applicatio
     _fcmPayload.add(tmp, arr);
     ut->delS(tmp);
 
-    _fcmPayload._tostr(buf);
+    _fcmPayload.int_tostr(buf);
     _fcmPayload.clear();
 }
 
@@ -1155,7 +1155,7 @@ void FB_CM::fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg)
         _fcmPayload.set(s.c_str(), msg->apns.fcm_options.image);
     }
 
-    _fcmPayload._tostr(buf);
+    _fcmPayload.int_tostr(buf);
 
     _fcmPayload.clear();
 }
