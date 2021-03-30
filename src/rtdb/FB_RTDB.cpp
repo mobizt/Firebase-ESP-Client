@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.7
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created March 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -525,8 +525,8 @@ bool FB_RTDB::pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray 
 
 bool FB_RTDB::pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority)
 {
-    std::string s;
-    arr->int_toStdString(s);
+    String s;
+    arr->toString(s);
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
     req.method = m_post;
@@ -537,7 +537,6 @@ bool FB_RTDB::pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray 
         req.priority = priority;
     req.etag = "";
     bool ret = processRequest(fbdo, &req);
-    std::string().swap(s);
     return ret;
 }
 
@@ -1270,8 +1269,8 @@ bool FB_RTDB::setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *
 
 bool FB_RTDB::setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, const char *etag)
 {
-    std::string s;
-    arr->int_toStdString(s);
+    String s;
+    arr->toString(s);
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
     req.method = m_put;
@@ -1283,7 +1282,6 @@ bool FB_RTDB::setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *
     if (strlen(etag) > 0)
         req.etag = etag;
     bool ret = processRequest(fbdo, &req);
-    std::string().swap(s);
     return ret;
 }
 
@@ -4187,14 +4185,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                     }
                 }
 
-                if (ut->stringCompare(fbdo->_ss.rtdb.resp_etag.c_str(), 0, fb_esp_pgm_str_151) && response.noContent)
-                {
-                    fbdo->_ss.http_code = FIREBASE_ERROR_PATH_NOT_EXIST;
-                    fbdo->_ss.rtdb.path_not_found = true;
-                }
-                else
-                    fbdo->_ss.rtdb.path_not_found = false;
-
                 if (fbdo->_ss.rtdb.resp_data_type != fb_esp_data_type::d_null && fbdo->_ss.rtdb.req_data_type != fb_esp_data_type::d_timestamp && !response.noContent && fbdo->_ss.rtdb.req_method != fb_esp_method::m_post && fbdo->_ss.rtdb.req_method != fb_esp_method::m_get_shallow && response.httpCode < 400)
                 {
 
@@ -4215,6 +4205,14 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
 
     if (fbdo->_ss.rtdb.no_content_req || response.noContent)
     {
+        if (ut->stringCompare(fbdo->_ss.rtdb.resp_etag.c_str(), 0, fb_esp_pgm_str_151) && response.noContent)
+        {
+            fbdo->_ss.http_code = FIREBASE_ERROR_PATH_NOT_EXIST;
+            fbdo->_ss.rtdb.path_not_found = true;
+        }
+        else
+            fbdo->_ss.rtdb.path_not_found = false;
+
         if (fbdo->_ss.http_code == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
         {
             fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;

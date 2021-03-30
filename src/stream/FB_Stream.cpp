@@ -131,13 +131,13 @@ FirebaseJsonArray *FirebaseStream::jsonArrayPtr()
         std::string().swap(*_jsonArr->int_dbuf());
         std::string().swap(*_jsonArr->int_tbuf());
 
-        char *tmp = ut->strP(FirebaseJson_STR_21);
+        char *tmp = ut->strP(fb_json_str_21);
         _jsonArr->int_json()->int_toStdString(*_jsonArr->int_jbuf());
         *_jsonArr->int_rawbuf() = tmp;
         *_jsonArr->int_rawbuf() += sif->data;
         ut->delS(tmp);
 
-        tmp = ut->strP(FirebaseJson_STR_26);
+        tmp = ut->strP(fb_json_str_26);
         _jsonArr->int_json()->int_parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
         ut->delS(tmp);
 

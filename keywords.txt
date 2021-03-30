@@ -263,15 +263,16 @@ firebaseMethod  KEYWORD2
 dataPath    EYWORD2
 
 #######################################
-# Struct (LITERAL1)
+# Struct (KEYWORD3)
 #######################################
 
-FirebaseDataType    LITERAL1
-FirebaseMethod  LITERAL1
-QueueStorageType    LITERAL1
-QueueItem   LITERAL1
-token_info_t    LITERAL1
-TokenInfo   LITERAL1
+FirebaseDataType    KEYWORD3
+FirebaseMethod  KEYWORD3
+QueueStorageType    KEYWORD3
+QueueItem   KEYWORD3
+token_info_t    KEYWORD3
+TokenInfo   KEYWORD3
+fb_json_last_error_t    KEYWORD3
 
 
 
@@ -301,6 +302,8 @@ typeNum KEYWORD2
 success KEYWORD2
 getArray    KEYWORD2
 getJson KEYWORD2
+setBufferLimit  KEYWORD2
+getLastError    KEYWORD2
 
 ######################################
 # Constants (LITERAL1)
