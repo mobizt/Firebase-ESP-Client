@@ -1,6 +1,6 @@
 
 /**
- * Created February 17, 2021
+ * Created April 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1665,6 +1665,9 @@ static const char fb_esp_pgm_str_544[] PROGMEM = "The index of recipient device 
 static const char fb_esp_pgm_str_545[] PROGMEM = "create message digest";
 static const char fb_esp_pgm_str_546[] PROGMEM = "tokenProcessingTask";
 static const char fb_esp_pgm_str_547[] PROGMEM = "max token generation retry reached";
+static const char fb_esp_pgm_str_548[] PROGMEM = "0.0.0.0";
+
+
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

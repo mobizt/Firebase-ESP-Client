@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.6
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 24, 2021
+ * Created April 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -466,7 +466,7 @@ bool Firebase_Signer::refreshToken()
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
         return false;
 
     delay(0);
@@ -758,7 +758,7 @@ bool Firebase_Signer::handleTokenResponse()
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
         return false;
 
     struct server_response_data_t response;
@@ -817,7 +817,7 @@ bool Firebase_Signer::handleTokenResponse()
                 if (config->_int.fb_reconnect_wifi)
                     ut->reconnect(0);
 
-                if (WiFi.status() != WL_CONNECTED)
+                if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
                 {
                     if (stream)
                         if (stream->connected())
@@ -1278,7 +1278,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
         return false;
 
     config->signer.signup = false;
@@ -1477,7 +1477,7 @@ bool Firebase_Signer::requestTokens()
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
         return false;
 
     delay(0);
@@ -1666,7 +1666,7 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
         return false;
 
     delay(0);

@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.12
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.13
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -48,6 +48,8 @@ The library access to the Firebase server through the WiFi for the internet conn
 * **Supports Email/Password, custom and access token authentications using Service Account**
 
 * **Built-in easiest and non-recursive JSON parser and builder.**
+
+* **Supports Ethernet in ESP32 using LAN8720, TLK110 and IP101 Ethernet boards. ESP8266 Ethernet is not yet supported.**
 
 
 

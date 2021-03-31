@@ -40,6 +40,7 @@
 #include <FS.h>
 #include <SPIFFS.h>
 #include <SD.h>
+#include <ETH.h>
 #include "FirebaseFS.h"
 #include <WiFiClientSecure.h>
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)

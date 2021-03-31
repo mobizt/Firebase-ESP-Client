@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.8
+ * Google's Firebase Util class, Utils.h version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 23, 2021
+ * Created March 31, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1572,10 +1572,22 @@ public:
         return (ob == cb && os == cs);
     }
 
+    bool ethLinkUp()
+    {
+        bool ret = false;
+#if defined(ESP32)
+        char *ip = strP(fb_esp_pgm_str_548);
+        if (strcmp(ETH.localIP().toString().c_str(), ip) != 0)
+            ret = ETH.linkUp();
+        delS(ip);
+#endif
+        return ret;
+    }
+
     bool reconnect(unsigned long dataTime)
     {
 
-        bool status = WiFi.status() == WL_CONNECTED;
+        bool status = WiFi.status() == WL_CONNECTED || ethLinkUp();
 
         if (dataTime > 0)
         {
@@ -1595,7 +1607,7 @@ public:
                 }
             }
 
-            status = WiFi.status() == WL_CONNECTED;
+            status = WiFi.status() == WL_CONNECTED || ethLinkUp();
         }
 
         return status;

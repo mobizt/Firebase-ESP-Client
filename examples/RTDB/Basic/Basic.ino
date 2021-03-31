@@ -89,7 +89,7 @@ void setup()
   This option allows get and delete functions (PUT and DELETE HTTP requests) works for device connected behind the
   Firewall that allows only GET and POST requests.
   
-  Firebase.enableClassicRequest(fbdo, true);
+  Firebase.RTDB.enableClassicRequest(&fbdo, true);
   */
 
   String path = "/Test";

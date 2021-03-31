@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.5
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created April 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -113,7 +113,7 @@ void FirebaseData::setResponseSize(uint16_t len)
 
 bool FirebaseData::pauseFirebase(bool pause)
 {
-    if (WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
         return false;
 
     if (httpClient.connected() && pause != _ss.rtdb.pause)
@@ -561,7 +561,7 @@ int FirebaseData::httpCode()
 
 void FirebaseData::closeSession()
 {
-    if (WiFi.status() == WL_CONNECTED)
+    if (WiFi.status() == WL_CONNECTED || ut->ethLinkUp())
     {
         //close the socket and free the resources used by the BearSSL data
         if (_ss.connected || httpClient.stream())
@@ -585,7 +585,7 @@ void FirebaseData::closeSession()
 bool FirebaseData::reconnect(unsigned long dataTime)
 {
 
-    bool status = WiFi.status() == WL_CONNECTED;
+    bool status = WiFi.status() == WL_CONNECTED || ut->ethLinkUp();
 
     if (dataTime > 0)
     {
@@ -616,7 +616,7 @@ bool FirebaseData::reconnect(unsigned long dataTime)
             }
         }
 
-        status = WiFi.status() == WL_CONNECTED;
+        status = WiFi.status() == WL_CONNECTED || ut->ethLinkUp();
     }
 
     return status;
