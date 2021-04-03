@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.8
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 30, 2021
+ * Created April 3, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -3625,11 +3625,15 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 bool FB_RTDB::waitResponse(FirebaseData *fbdo)
 {
 #if defined(ESP32)
+
+    //if currently perform stream payload handling process, skip it.
     if (Signer.getCfg()->_int.fb_processing && fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream)
         return true;
 
+    //set the blocking flag
     Signer.getCfg()->_int.fb_processing = true;
     bool ret = handleResponse(fbdo);
+    //reset the blocking flag
     Signer.getCfg()->_int.fb_processing = false;
 
     return ret;
@@ -4343,6 +4347,9 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const char *payload)
 
 void FB_RTDB::sendCB(FirebaseData *fbdo)
 {
+    //to allow other subsequence request which can be occurred in the user stream callback
+    Signer.getCfg()->_int.fb_processing = false;
+
     if (fbdo->_dataAvailableCallback)
     {
         FirebaseStream s;

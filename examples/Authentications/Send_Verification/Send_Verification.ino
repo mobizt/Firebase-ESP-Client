@@ -36,7 +36,7 @@
 /** 3. Define the API key
  * 
  * The API key can be obtained since you created the project and set up 
- * the Authentication in Firebase conssole.
+ * the Authentication in Firebase console.
  * 
  * You may need to enable the Identity provider at https://console.cloud.google.com/customer-identity/providers 
  * Select your project, click at ENABLE IDENTITY PLATFORM button.
@@ -45,7 +45,7 @@
 */
 #define API_KEY "API_KEY"
 
-/* 4. Define the user Email and password that alreadey registerd or added in your project */
+/* 4. Define the user Email and password that already registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
