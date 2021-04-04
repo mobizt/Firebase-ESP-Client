@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.14
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.15
 
 
 The default filessystem used in the library is flash and SD.
@@ -568,8 +568,6 @@ bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue)
 bool push(FirebaseData *fbdo, const char *path, const char *stringValue);
 
 bool push(FirebaseData *fbdo, const char *path, const String &stringValue);
-
-bool push(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue);
 ```
 
 
@@ -584,8 +582,6 @@ bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue,
 bool push(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-bool push(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority);
 ```
 
 
@@ -1129,8 +1125,6 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue);
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue);
-
-bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue);
 ```
 
 
@@ -1146,8 +1140,6 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, 
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority);
 ```
 
 
@@ -1184,8 +1176,6 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, 
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
-
-bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, const char *ETag);
 ```
 
 
@@ -1200,8 +1190,6 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, 
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
-
-bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority, const char *ETag);
 ```
 
 

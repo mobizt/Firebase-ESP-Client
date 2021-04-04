@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.7
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 1, 2021
+ * Created April 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -207,7 +207,7 @@ bool Firebase_Signer::handleToken()
     if (config->host.length() == 0)
         return false;
 
-    if (config->signer.preRefreshSeconds > config->signer.tokens.expires)
+    if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
         config->signer.preRefreshSeconds = 60;
 
     if ((config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token) && ((unsigned long)time(nullptr) > config->signer.tokens.expires - config->signer.preRefreshSeconds || config->signer.tokens.expires == 0))
@@ -216,10 +216,17 @@ bool Firebase_Signer::handleToken()
         {
             if (millis() - config->signer.lastReqMillis > config->signer.reqTO || config->signer.lastReqMillis == 0)
             {
+
                 config->signer.lastReqMillis = millis();
                 if (config->_int.fb_processing)
                     return false;
+#if defined(ESP32)
                 return refreshToken();
+#elif defined(ESP8266)
+                //Due to the response payload of token refreshment request is too big for ESP8266,
+                //get the new id token instead.
+                return getIdToken(false, "", "");
+#endif
             }
             return false;
         }
@@ -495,7 +502,7 @@ bool Firebase_Signer::refreshToken()
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
     config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(512, 512);
+    config->signer.wcs->setBufferSizes(1024, 512);
 #endif
     config->signer.json = new FirebaseJson();
     config->signer.data = new FirebaseJsonData();
@@ -766,21 +773,11 @@ bool Firebase_Signer::handleTokenResponse()
     unsigned long dataTime = millis();
 
     int chunkIdx = 0;
-    int pChunkIdx = 0;
-    int payloadLen = 3200;
-    int pBufPos = 0;
-    int hBufPos = 0;
     int chunkBufSize = 0;
-    int hstate = 0;
-    int pstate = 0;
     int chunkedDataState = 0;
     int chunkedDataSize = 0;
     int chunkedDataLen = 0;
-    int defaultChunkSize = 2048;
-    char *header = nullptr;
-    char *payload = nullptr;
-    char *pChunk = nullptr;
-    char *tmp = nullptr;
+    std::string header, payload;
     bool isHeader = false;
 #if defined(ESP32)
     WiFiClient *stream = config->signer.wcs->stream();
@@ -801,7 +798,6 @@ bool Firebase_Signer::handleTokenResponse()
     }
 
     bool complete = false;
-    int readLen = 0;
     unsigned long datatime = millis();
     while (!complete)
     {
@@ -828,32 +824,23 @@ bool Firebase_Signer::handleTokenResponse()
 
                 if (chunkBufSize > 0)
                 {
-                    chunkBufSize = defaultChunkSize;
-
                     if (chunkIdx == 0)
                     {
-                        header = ut->newS(chunkBufSize);
-                        hstate = 1;
-                        int readLen = ut->readLine(stream, header, chunkBufSize);
-
+                        ut->readLine(stream, header);
                         int pos = 0;
-
-                        tmp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
-                        delay(0);
+                        char *tmp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
                         if (tmp)
                         {
                             isHeader = true;
-                            hBufPos = readLen;
                             response.httpCode = atoi(tmp);
                             ut->delS(tmp);
                         }
                     }
                     else
                     {
-                        delay(0);
                         if (isHeader)
                         {
-                            tmp = ut->newS(chunkBufSize);
+                            char *tmp = ut->newS(chunkBufSize);
                             int readLen = ut->readLine(stream, tmp, chunkBufSize);
                             bool headerEnded = false;
 
@@ -868,16 +855,11 @@ bool Firebase_Signer::handleTokenResponse()
                             if (headerEnded)
                             {
                                 isHeader = false;
-                                ut->parseRespHeader(header, response);
-                                if (hstate == 1)
-                                    ut->delS(header);
-                                hstate = 0;
+                                ut->parseRespHeader(header.c_str(), response);
+                                std::string().swap(header);
                             }
                             else
-                            {
-                                memcpy(header + hBufPos, tmp, readLen);
-                                hBufPos += readLen;
-                            }
+                                header += tmp;
 
                             ut->delS(tmp);
                         }
@@ -885,32 +867,23 @@ bool Firebase_Signer::handleTokenResponse()
                         {
                             if (!response.noContent)
                             {
-                                pChunkIdx++;
-
-                                pChunk = ut->newS(chunkBufSize + 1);
-
-                                if (!payload || pstate == 0)
-                                {
-                                    pstate = 1;
-                                    payload = ut->newS(payloadLen + 1);
-                                }
-                                readLen = 0;
                                 if (response.isChunkedEnc)
-                                    readLen = ut->readChunkedData(stream, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
+                                    complete = ut->readChunkedData(stream, payload, chunkedDataState, chunkedDataSize, chunkedDataLen) < 0;
                                 else
                                 {
+                                    chunkBufSize = 1024;
                                     if (stream->available() < chunkBufSize)
                                         chunkBufSize = stream->available();
-                                    readLen = stream->readBytes(pChunk, chunkBufSize);
+
+                                    char *tmp = ut->newS(chunkBufSize + 1);
+                                    int readLen = stream->readBytes(tmp, chunkBufSize);
+
+                                    if (readLen > 0)
+                                        payload += tmp;
+
+                                    ut->delS(tmp);
+                                    complete = stream->available() <= 0;
                                 }
-
-                                if (readLen > 0)
-                                    memcpy(payload + pBufPos, pChunk, readLen);
-
-                                ut->delS(pChunk);
-                                pBufPos += readLen;
-                                if ((response.isChunkedEnc && readLen < 0) || (!response.isChunkedEnc && stream->available() <= 0))
-                                    complete = true;
                             }
                             else
                             {
@@ -930,16 +903,13 @@ bool Firebase_Signer::handleTokenResponse()
         }
     }
 
-    if (hstate == 1)
-        ut->delS(header);
-
     if (stream->connected())
         stream->stop();
 
-    if (payload && !response.noContent)
+    if (payload.length() > 0 && !response.noContent)
     {
-        config->signer.json->setJsonData(payload);
-        ut->delS(payload);
+        config->signer.json->setJsonData(payload.c_str());
+        std::string().swap(payload);
         return true;
     }
 
@@ -1445,11 +1415,13 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
             ut->delS(tmp);
             if (config->signer.data->success)
                 config->signer.tokens.id_token = config->signer.data->stringValue.c_str();
+#if defined(ESP32)
             tmp = ut->strP(fb_esp_pgm_str_201);
             config->signer.json->get(*config->signer.data, tmp);
             ut->delS(tmp);
             if (config->signer.data->success)
                 config->signer.tokens.refresh_token = config->signer.data->stringValue.c_str();
+#endif
 
             tmp = ut->strP(fb_esp_pgm_str_202);
             config->signer.json->get(*config->signer.data, tmp);
@@ -1819,7 +1791,7 @@ void Firebase_Signer::checkToken()
     if (config->host.length() == 0)
         return;
 
-    if (config->signer.preRefreshSeconds > config->signer.tokens.expires)
+    if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
         config->signer.preRefreshSeconds = 60;
 
     if ((config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token) && ((unsigned long)time(nullptr) > config->signer.tokens.expires - config->signer.preRefreshSeconds || config->signer.tokens.expires == 0))

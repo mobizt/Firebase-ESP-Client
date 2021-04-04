@@ -3,7 +3,7 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 3, 2021
+ * Created April 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -208,22 +208,12 @@ bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const String &stringVal
     return pushString(fbdo, path, stringValue);
 }
 
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue)
-{
-    return pushString(fbdo, path, stringValue);
-}
-
 bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const char *stringValue, float priority)
 {
     return pushString(fbdo, path, stringValue, priority);
 }
 
 bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    return pushString(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority)
 {
     return pushString(fbdo, path, stringValue, priority);
 }
@@ -281,8 +271,6 @@ bool FB_RTDB::push(FirebaseData *fbdo, const char *path, T value)
         return pushString(fbdo, path, value);
     else if (std::is_same<T, const String &>::value)
         return pushString(fbdo, path, value);
-    else if (std::is_same<T, const StringSumHelper &>::value)
-        return pushString(fbdo, path, value);
     else if (std::is_same<T, FirebaseJson &>::value)
         return pushJson(fbdo, path, value);
     else if (std::is_same<T, FirebaseJsonArray &>::value)
@@ -308,8 +296,6 @@ bool FB_RTDB::push(FirebaseData *fbdo, const char *path, T value, float priority
     else if (std::is_same<T, const char *>::value)
         return pushString(fbdo, path, value, priority);
     else if (std::is_same<T, const String &>::value)
-        return pushString(fbdo, path, value, priority);
-    else if (std::is_same<T, const StringSumHelper &>::value)
         return pushString(fbdo, path, value, priority);
     else if (std::is_same<T, FirebaseJson &>::value)
         return pushJson(fbdo, path, value, priority);
@@ -714,22 +700,12 @@ bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValu
     return setString(fbdo, path, stringValue);
 }
 
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue)
-{
-    return setString(fbdo, path, stringValue);
-}
-
 bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority)
 {
     return setString(fbdo, path, stringValue, priority);
 }
 
 bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    return setString(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority)
 {
     return setString(fbdo, path, stringValue, priority);
 }
@@ -744,22 +720,12 @@ bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValu
     return setString(fbdo, path, stringValue, ETag);
 }
 
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, const char *ETag)
-{
-    return setString(fbdo, path, stringValue, ETag);
-}
-
 bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag)
 {
     return setString(fbdo, path, stringValue, priority, ETag);
 }
 
 bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag)
-{
-    return setString(fbdo, path, stringValue, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority, const char *ETag)
 {
     return setString(fbdo, path, stringValue, priority, ETag);
 }
@@ -857,8 +823,6 @@ bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value)
         return setString(fbdo, path, value);
     else if (std::is_same<T, const String &>::value)
         return setString(fbdo, path, value);
-    else if (std::is_same<T, const StringSumHelper &>::value)
-        return setString(fbdo, path, value);
     else if (std::is_same<T, FirebaseJson &>::value)
         return setJson(fbdo, path, value);
     else if (std::is_same<T, FirebaseJson *>::value)
@@ -887,8 +851,6 @@ bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, float priority)
         return setString(fbdo, path, value, priority);
     else if (std::is_same<T, const String &>::value)
         return setString(fbdo, path, value, priority);
-    else if (std::is_same<T, const StringSumHelper &>::value)
-        return setString(fbdo, path, value, priority);
     else if (std::is_same<T, FirebaseJson &>::value)
         return setJson(fbdo, path, value, priority);
     else if (std::is_same<T, FirebaseJsonArray &>::value)
@@ -915,8 +877,6 @@ bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, const char *ETa
         return setString(fbdo, path, value, ETag);
     else if (std::is_same<T, const String &>::value)
         return setString(fbdo, path, value, ETag);
-    else if (std::is_same<T, const StringSumHelper &>::value)
-        return setString(fbdo, path, value, ETag);
     else if (std::is_same<T, FirebaseJson &>::value)
         return setJson(fbdo, path, value, ETag);
     else if (std::is_same<T, FirebaseJsonArray &>::value)
@@ -942,8 +902,6 @@ bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, float priority,
     else if (std::is_same<T, const char *>::value)
         return setString(fbdo, path, value, priority, ETag);
     else if (std::is_same<T, const String &>::value)
-        return setString(fbdo, path, value, priority, ETag);
-    else if (std::is_same<T, const StringSumHelper &>::value)
         return setString(fbdo, path, value, priority, ETag);
     else if (std::is_same<T, FirebaseJson &>::value)
         return setJson(fbdo, path, value, priority, ETag);

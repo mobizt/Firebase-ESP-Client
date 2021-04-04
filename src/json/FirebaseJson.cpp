@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.12
+ * FirebaseJson, version 2.3.13
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * March 26, 2021
+ * April 4, 2021
  * 
  * Features
  * - None recursive operations
@@ -70,6 +70,7 @@ FirebaseJson::~FirebaseJson()
   _parser.reset();
   _parser = nullptr;
   _finalize();
+  delete helper;
 }
 
 void FirebaseJson::_init()
@@ -3122,6 +3123,7 @@ FirebaseJsonArray::~FirebaseJsonArray()
 {
   _finalize();
   std::string().swap(_jbuf);
+  delete helper;
 };
 
 void FirebaseJsonArray::_init()
