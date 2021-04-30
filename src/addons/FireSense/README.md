@@ -119,37 +119,24 @@ The condition checking and expression evaluation are from left to right
 
 The valid left, right operands and syntaxes are
 
-Oerand and Syntaxes                                  Usages
-
-{CHANNEL ID}                                         LED1 == false && STATUS == LED1
-
-values e.g. boolean, integer and float               HUMID1 > 70 || LAMP1 == false
-
-millis                                               millis > 200000 + VALUE1
-
-micros                                               VALUE1 < micros - 1000000
-
-time e.g. hour:min:sec                               time > 12:00:00 && time < 15:30:00
-
-date e.g. month/day/year where month start with 0    date == 5/28/2021
-
-weekday e.g. 1 for monday and 7 for sunday           weekday == 5
-
-day e.g. 1 to 31                                     day > 24
-
-month e.g. 0 to 11                                   month < 11
-
-year e.g. 2021                                       year == 2021
-
-hour e.g. 0 to 23                                    hour == 18
-
-min  e.g. 0 to 59                                    min == 30
-
-sec  e.g. 0 to 59                                    sec == 20
-
-change e.g the value of channel changed              change(VALUE1)
-
-! e.g. the opposite of expresion result              !LED1 || !(time > 15:20:06)
+| Oerand and Syntaxes  | Usages |
+| ------------- | ------------- |
+| {CHANNEL ID}  | LED1 == false && STATUS == LED1  |
+| values e.g. boolean, integer and float  | HUMID1 > 70 \|\| LAMP1 == false  |
+| millis | millis > 200000 + VALUE1 |
+| micros | VALUE1 < micros - 1000000 |
+| time e.g. hour:min:sec | time > 12:00:00 && time < 15:30:00 |
+| date e.g. month/day/year where month start with 0 | date == 5/28/2021 |
+| weekday e.g. 1 for monday and 7 for sunday | weekday == 5 |
+| day e.g. 1 to 31 | day > 24 |
+| month e.g. 0 to 11 | month < 11 |
+| year e.g. 2021 | year == 2021 |
+| hour e.g. 0 to 23 | hour == 18 |
+| min  e.g. 0 to 59 | min == 30 |
+| sec  e.g. 0 to 59 | sec == 20 |
+| change e.g the value of channel changed | change(VALUE1) |
+| ! e.g. the opposite of expresion result | !LED1 \|\| !(time > 15:20:06) |
+| year e.g. 2021 | year == 2021 |
 
 
 The format of statements (THEN and ELSE) and its expression.
@@ -160,32 +147,23 @@ The statement processing and expression evaluation are from left to right.
 
 The valid left, right operands and syntaxes are
 
-Oerand and Syntaxes                                  Usages
+| Oerand and Syntaxes  | Usages |
+| ------------- | ------------- |
+| {CHANNEL ID}  | LED1 = false, STATUS = 5 * 10  |
+| values e.g. boolean, integer and float  | HUMID1 = 70  |
+| millis | VALUE1 += millis |
+| micros | VALUE1 \*= micros |
+| delay | delay(1000), LED1 = true |
+|  | ;do non-blocking delay until timed out and set LED1 to true |
+| func  e.g. func(x,y,z) | func(0,10,'hello world') |
+| where x is the index of callback function added with FireSense.addCallbackFunction | ;send the hello world text 10 times to function with index 0 |
+| y is the number of iteration that function will be called as long as the conditions is true |  |
+| z is the message payload sent to the callback. |  |
+| The content of payload other than alphabet (A-Z, a-z and 1-9) should be in ''. |  |
+| Use {CHANNEL_ID} to insert the channel value into the text payload. |  |
 
-{CHANNEL ID}                                         LED1 = false, STATUS = 5 * 10
 
-values e.g. boolean, integer and float               HUMID1 = 70
 
-millis                                               VALUE1 += millis
-
-micros                                               VALUE1 *= micros
-
-delay                                                delay(1000), LED1 = true
-                                                     ;do non-blocking delay until timed out and set LED1 to true
-
-func  e.g. func(x,y,z)                               func(0,10,'hello world')
-where x is the index of callback function added      ;send the hello world text 10 times to function with index 0
-with FireSense.addCallbackFunction
-
-y is the number of iteration that function will be 
-called as long as the conditions is true
-
-z is the message payload sent to the callback. 
-The content of payload other than alphabet (A-Z, a-z
-and 1-9) should be in ''. 
-
-Use {CHANNEL_ID} to insert the channel value into 
-the text payload.
 
 The supported assignment operators are
 +=, -=, *=, /=, &=, |=
@@ -193,6 +171,7 @@ The supported assignment operators are
 
 The supported comparision operators are
 ==, !=, >, <, >=, <=
+
 
 ```cpp
 void addCondition(struct firesense_condition_t cond, bool addToDatabase = true);
@@ -288,7 +267,7 @@ return **`String`** The unique id String of device.
 
 The MIT License (MIT)
 
-Copyright (c) 2019, 2020, 2021 K. Suwatchai (Mobizt)
+Copyright (c) 2021 K. Suwatchai (Mobizt)
 
 
 Permission is hereby granted, free of charge, to any person returning a copy of
