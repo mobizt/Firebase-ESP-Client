@@ -102,6 +102,7 @@ backup  KEYWORD2
 restore KEYWORD2
 sdBegin KEYWORD2
 sdMMCBegin  KEYWORD2
+setSystemTime   KEYWORD2
 setMaxRetry KEYWORD2
 setMaxErrorQueue    KEYWORD2
 saveErrorQueue  KEYWORD2

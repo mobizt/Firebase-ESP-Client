@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.1.0
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.1.1
 
 
 The default filessystem used in the library is flash and SD.
@@ -231,6 +231,8 @@ bool sdBegin( int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -
 
 
 
+
+
 #### Initialize the SD_MMC card (ESP32 only).
 
 param **`mountpoint`** The mounting point.
@@ -244,6 +246,9 @@ return **`Boolean`** type status indicates the success of the operation.
 ```cpp
 bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 ```
+
+
+
 
 
 
