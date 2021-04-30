@@ -18,12 +18,15 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 #define API_KEY "API_KEY"
 
 /* 3. Define the user Email and password that alreadey registerd or added in your project */
@@ -33,12 +36,13 @@
 /* 4. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
 
-
 //Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
+
+bool taskCompleted = false;
 
 String path = "/Test";
 
@@ -62,12 +66,15 @@ void setup()
     Serial.println();
 
     /* Assign the project host and api key (required) */
-    config.host = FIREBASE_HOST;
+    config.host = FIREBASE_PROJECT_HOST;
     config.api_key = API_KEY;
 
     /* Assign the user sign in credentials */
     auth.user.email = USER_EMAIL;
     auth.user.password = USER_PASSWORD;
+
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback;
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
@@ -76,30 +83,32 @@ void setup()
     //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
-
-
-    Serial.println("------------------------------------");
-    Serial.println("List files test...");
-
-    if (Firebase.Storage.listFiles(&fbdo, STORAGE_BUCKET_ID))
-    {
-        Serial.println("PASSED");
-        FileList *files = fbdo.fileList();
-        for (size_t i = 0; i < files->items.size(); i++)
-            Serial.printf("name: %s, bucket: %s\n", files->items[i].name.c_str(), files->items[i].bucket.c_str());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
-    else
-    {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
-
 }
 
 void loop()
 {
+    if (Firebase.ready() && !taskCompleted)
+    {
+        taskCompleted = true;
+
+        Serial.println("------------------------------------");
+        Serial.println("List files test...");
+
+        if (Firebase.Storage.listFiles(&fbdo, STORAGE_BUCKET_ID))
+        {
+            Serial.println("PASSED");
+            FileList *files = fbdo.fileList();
+            for (size_t i = 0; i < files->items.size(); i++)
+                Serial.printf("name: %s, bucket: %s\n", files->items[i].name.c_str(), files->items[i].bucket.c_str());
+            Serial.println("------------------------------------");
+            Serial.println();
+        }
+        else
+        {
+            Serial.println("FAILED");
+            Serial.println("REASON: " + fbdo.errorReason());
+            Serial.println("------------------------------------");
+            Serial.println();
+        }
+    }
 }

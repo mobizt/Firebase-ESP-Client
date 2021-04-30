@@ -57,9 +57,10 @@
 #define SD_FS DEFAULT_SD_FS
 #define FORMAT_FLASH FORMAT_FLASH_IF_MOUNT_FAILED
 
+
 #include "wcs/HTTPCode.h"
 
-static const char esp_idf_branch_str[] PROGMEM = "release/v";
+    static const char esp_idf_branch_str[] PROGMEM = "release/v";
 
 struct fb_esp_sd_config_info_t
 {
@@ -67,6 +68,9 @@ struct fb_esp_sd_config_info_t
   int miso = -1;
   int mosi = -1;
   int ss = -1;
+  const char *sd_mmc_mountpoint = "";
+  bool sd_mmc_mode1bit = false;
+  bool sd_mmc_format_if_mount_failed = false;
 };
 
 class FB_HTTPClient32

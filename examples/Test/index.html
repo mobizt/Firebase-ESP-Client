@@ -1,14 +1,40 @@
 <html>
 
 <head>
-    <title>Set Data Example</title>
+    <title>Continuous Stream Event Trigger Test</title>
 </head>
 
 <body>
 
-    <div style="line-height: 1.5em">Press the Set button to set the random data to Firebase RTDB.<br />
-        Press the Delete button to delete the previous set data from Firebase RTDB.<br />
-        Don't forget to change projectID and Web API Key in the source of this html file.</div>
+    <div style="line-height: 1.5em">This html test page will store the continuous 10,000 values to the path <b>/Test_Stream/Stream</b><br/>
+        In your Arduino code, set the stream path in Firebase.beginStream to <b>/Test_Stream/Stream</b><br/><br/>
+        And the stream callback function test code.<br /><br />
+
+        void streamCallback(FirebaseStream data)<br />
+        {<br />
+        <div style="padding-left:20px;">if (data.dataType() == "int")<br />
+          {<br/>
+            <div style="padding-left:20px;">Serial.print(count);<br />
+            Serial.print(" ");<br />
+            Serial.println(data.intData());<br />
+            count++;</div>
+          }</div>
+        }<br /><br />
+
+        Tempolary set the database rules in the Firebase project console to allow full read and write.<br/>
+
+        {
+        <div style="padding-left:20px;">"rules": {
+        <div style="padding-left:20px;">".read": true,<br/>
+        ".write": true</div>
+        }</div>
+        }<br/>
+
+        Press the Set button to store the 10,000 values to the Firebase RTDB.<br />
+        Press the Delete button to delete the previous set data from the Firebase RTDB.<br />
+        Don't forget to change projectID and Web API Key in the source of this html file.
+    <br /><br />Check the values received in the stream callback function that will get all of these 10,000 values changes.
+    </div>
     <div style="margin-top:20px">
         <button type="button" onclick="setData()" title="Set random number">Set</button>
         <button type="button" onclick="delData()" title="Delete data">Delete</button>
@@ -20,8 +46,8 @@
 
     <script>
 
-        var projectID = "xxxxxxxxxxxx";
-        var apiKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+        var projectID = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+        var apiKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
         var config = {
             apiKey: apiKey,
@@ -33,12 +59,12 @@
         firebase.initializeApp(config);
 
         setData = function () {
-            for (var i = 0; i < 1000; i++)
-                firebase.database().ref('/Test/Stream/' + i).set(i);
+            for (var i = 0; i < 10000; i++)
+                firebase.database().ref('/Test_Stream/Stream/' + i).set(i);
         }
 
         delData = function () {
-            firebase.database().ref('/Test/Stream').remove();
+            firebase.database().ref('/Test_Stream/Stream').remove();
         }
 
     </script>

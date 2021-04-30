@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.9
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 4, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -97,6 +97,47 @@ public:
   */
   bool setRules(FirebaseData *fbdo, const char *rules);
 
+  /** Set the .read and .write database rules.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param path The parent path of child's node that the .read and .write rules are being set.
+   * @param var The child node key that the .read and .write rules are being set.
+   * @param readVal The child node key .read value.
+   * @param writeVal The child node key .write value.
+   * @param databaseSecret The database secret. 
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
+   * is Email/Password sign-in.
+  */
+  bool setReadWriteRules(FirebaseData *fbdo, const char *path, const char *var, const char *readVal, const char *writeVal, const char *databaseSecret);
+
+  /** Set the query index to the database rules.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param path The parent path of child's node that being query.
+   * @param node The child node key that being query.
+   * @param databaseSecret The database secret. 
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
+   * is Email/Password sign-in.
+  */
+  bool setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
+
+  /** Remove the query index from the database rules.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param path The parent path of child's node that the index is being removed.
+   * @param databaseSecret The database secret. 
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
+   * is Email/Password sign-in.
+  */
+  bool removeQueryIndex(FirebaseData *fbdo, const char *path, const char *databaseSecret);
+
+  
   /** Determine the existent of the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
@@ -1196,6 +1237,7 @@ public:
   */
   bool deleteNode(FirebaseData *fbdo, const char *path);
 
+
   /** Delete all child nodes at the defined node if defined node's ETag matched the ETag value.
    * 
    * @param fbdo The pointer to Firebase Data Object.
@@ -1207,6 +1249,20 @@ public:
    * the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
   */
   bool deleteNode(FirebaseData *fbdo, const char *path, const char *ETag);
+
+  /** Delete nodes that its timestamp node exceeded the data retaining period.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param path The parent path of children nodes that being delete.
+   * @param timestampNode The sub-child node that keep the timestamp. 
+   * @param limit The maximum number of children nodes to delete at once, 30 is maximum.
+   * @param dataRetentionPeriod The period in seconds of data in the past which will be retained.
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
+   * is Email/Password sign-in.
+  */
+  bool deleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, size_t limit, unsigned long dataRetentionPeriod);
 
   /** Subscribe to the value changes on the defined node.
    * 
@@ -1540,10 +1596,11 @@ private:
   void sendCB(FirebaseData *fbdo);
   void splitStreamPayload(const char *payloads, std::vector<std::string> &payload);
   void parseStreamPayload(FirebaseData *fbdo, const char *payload);
+  bool int_setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
 #if defined(ESP32)
-  void runStreamTask(FirebaseData *fbdo, const char *taskName);
+      void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #elif defined(ESP8266)
-  void runStreamTask();
+      void runStreamTask();
   void runErrorQueueTask();
 #endif
   uint8_t openErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType, uint8_t mode);

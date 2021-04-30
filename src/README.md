@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.0.15
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.1.0
 
 
 The default filessystem used in the library is flash and SD.
@@ -22,7 +22,7 @@ param **`config`** The pointer to FirebaseConfig data.
 
 param **`auth`** The pointer to FirebaseAuth data.
 
- note: For FirebaseConfig and FirebaseAuth data usage, see the examples.
+note: For FirebaseConfig and FirebaseAuth data usage, see the examples.
 
 ```cpp
 void begin(FirebaseConfig *config, FirebaseAuth *auth);
@@ -36,9 +36,9 @@ void begin(FirebaseConfig *config, FirebaseAuth *auth);
 
 #### Provide the details of token generation.
 
-param **`return`** token_info_t The token_info_t structured data that indicates the status.
+return **`token_info_t`** The token_info_t structured data that indicates the status.
 
-param **`note`** Use type property to get the type enum value.
+note: Use type property to get the type enum value.
 
 token_type_undefined or 0,
 
@@ -70,6 +70,37 @@ Use error.message property to get the error message string.
 ```cpp
 struct token_info_t authTokenInfo();
 ```
+
+
+
+
+
+
+#### Provide the ready status of token generation.
+
+return **`Boolean`** type status indicates the token generation is completed.
+
+```cpp
+bool ready();
+```
+
+
+
+
+
+
+
+#### Provide the grant access status for Firebase Services.
+
+return **`Boolean`** type status indicates the device can access to the services.
+
+```cpp
+bool authenticated();
+```
+
+
+
+
 
 
 
@@ -200,6 +231,39 @@ bool sdBegin( int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -
 
 
 
+#### Initialize the SD_MMC card (ESP32 only).
+
+param **`mountpoint`** The mounting point.
+
+param **`mode1bit`** Allow 1 bit data line (SPI mode).
+
+param **`format_if_mount_failed`** Format SD_MMC card if mount failed.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
+```
+
+
+
+#### Set system time with timestamp.
+
+param **`ts`** timestamp in seconds from midnight Jan 1, 1970.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+This function allows the internal time setting by timestamp i.e. timestamp from external RTC. 
+
+```cpp
+bool setSystemTime(time_t ts);
+```
+
+
+
+
+    
+
 
 ## Realtime database functions
 
@@ -225,7 +289,7 @@ void end(FirebaseData *fbdo);
 
 param **`enable`** The boolean value to enable/disable.
 
-param **`note`** The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
+note: The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
 
 ```cpp
 void allowMultipleRequests(bool enable);
@@ -293,6 +357,80 @@ return - **`Boolean`** value, indicates the success of the operation.
 ```cpp
 bool setRules(FirebaseData *fbdo, const String &rules);
 ```
+
+
+
+
+
+
+#### Set the .read and .write database rules.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`path`** The parent path of child's node that the .read and .write rules are being set.
+
+param **`var`** The child node key that the .read and .write rules are being set.
+
+param **`readVal`** The child node key .read value.
+
+param **`writeVal`** The child node key .write value.
+
+param **`databaseSecret`** The database secret.
+
+return - **`Boolean`** value, indicates the success of the operation.
+
+note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in. 
+
+```cpp
+bool setReadWriteRules(FirebaseData *fbdo, const char *path, const char *var, const char *readVal, const char *writeVal, const char *databaseSecret);
+```
+
+
+
+
+
+
+#### Set the query index to the database rules.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`path`** The parent path of child's node that being query.
+
+param **`node`** The child node key that being query.
+
+param **`databaseSecret`** The database secret.
+
+return - **`Boolean`** value, indicates the success of the operation.
+
+note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in.
+
+```cpp
+bool setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
+```
+
+
+
+
+
+
+
+
+#### Remove the query index from the database rules.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`path`** The parent path of child's node that the index is being removed.
+
+param **`databaseSecret`** The database secret.
+
+return - **`Boolean`** value, indicates the success of the operation.
+
+note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in.
+
+```cpp
+bool removeQueryIndex(FirebaseData *fbdo, const char *path, const char *databaseSecret);
+```
+
 
 
 
@@ -3162,7 +3300,7 @@ void clearErrorQueue(FirebaseData *fbdo);
 
 param **`serverKey`** Server key found on Console: Project settings > Cloud Messaging
 
-@note This server key required for sending message via legacy HTTP API.
+note: This server key required for sending message via legacy HTTP API.
 
 The API key created in the Google Cloud console, cannot be used for authorizing FCM requests. 
 

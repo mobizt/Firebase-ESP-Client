@@ -26,7 +26,7 @@
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name (required) */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 
 /** 3. Define the API key
  * 
@@ -66,7 +66,7 @@ void setup()
     Serial.println();
 
     /* Assign the project host and API key (required) */
-    config.host = FIREBASE_HOST;
+    config.host = FIREBASE_PROJECT_HOST;
     config.api_key = API_KEY;
 
     Firebase.reconnectWiFi(true);

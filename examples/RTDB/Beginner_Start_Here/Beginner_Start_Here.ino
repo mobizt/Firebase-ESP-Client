@@ -17,13 +17,15 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 #define API_KEY "API_KEY"
 
 /* 3. Define the user Email and password that alreadey registerd or added in your project */
@@ -38,6 +40,8 @@ FirebaseAuth auth;
 
 /* 6. Define the FirebaseConfig data for config data */
 FirebaseConfig config;
+
+bool taskCompleted = false;
 
 void setup()
 {
@@ -56,56 +60,65 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-
-
   /* 7. Assign the project host and api key (required) */
-  config.host = FIREBASE_HOST;
+  config.host = FIREBASE_PROJECT_HOST;
   config.api_key = API_KEY;
 
   /* 8. Assign the user sign in credentials */
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
-  
-  /* 9. Initialize the library with the autentication data */
+
+  /* 9. Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback;
+
+  /* 10. Initialize the library with the autentication data */
   Firebase.begin(&config, &auth);
 
-
-  /* 10. Enable auto reconnect the WiFi when connection lost */
+  /* 11. Enable auto reconnect the WiFi when connection lost */
   Firebase.reconnectWiFi(true);
+}
 
-  /* 11. Try to set int data to Firebase */
-  //The set function returns bool for the status of operation
-  //fbdo requires for sending the data and pass as the pointer
-  if(Firebase.RTDB.setInt(&fbdo, "/LED_Status", 1))
+void loop()
+{
+  /* 12. Check the ready state of Firebase before calling other functions that related to data transfer */
+  if (Firebase.ready() && !taskCompleted)
   {
-    //Success
-     Serial.println("Set int data success");
+    taskCompleted = true;
 
-  }else{
-    //Failed?, get the error reason from fbdo
+    /* 13. Try to set int data to Firebase */
+    //The set function returns bool for the status of operation
+    //fbdo requires for sending the data and pass as the pointer
+    if (Firebase.RTDB.setInt(&fbdo, "/LED_Status", 1))
+    {
+      //Success
+      Serial.println("Set int data success");
+    }
+    else
+    {
+      //Failed?, get the error reason from fbdo
 
-    Serial.print("Error in setInt, ");
-    Serial.println(fbdo.errorReason());
-  }
+      Serial.print("Error in setInt, ");
+      Serial.println(fbdo.errorReason());
+    }
 
+    /* 14. Try to get int data from Firebase */
+    //The get function returns bool for the status of operation
+    //fbdo requires for receiving the data
+    if (Firebase.RTDB.getInt(&fbdo, "/LED_Status"))
+    {
+      //Success
+      Serial.print("Get int data success, int = ");
+      Serial.println(fbdo.intData());
+    }
+    else
+    {
+      //Failed?, get the error reason from fbdo
 
-  /* 12. Try to get int data from Firebase */
-  //The get function returns bool for the status of operation
-  //fbdo requires for receiving the data
-  if(Firebase.RTDB.getInt(&fbdo, "/LED_Status"))
-  {
-    //Success
-    Serial.print("Get int data success, int = ");
-    Serial.println(fbdo.intData());
+      Serial.print("Error in getInt, ");
+      Serial.println(fbdo.errorReason());
+    }
 
-  }else{
-    //Failed?, get the error reason from fbdo
-
-    Serial.print("Error in getInt, ");
-    Serial.println(fbdo.errorReason());
-  }
-
-  /*
+    /*
 
   In case where you want to set other data types i.e. bool, float, double and String, you can use setBool, setFloat, setDouble and setString.
   If you want to get data which you known its type at specific node, use getInt, getBool, getFloat, getDouble, getString.
@@ -115,30 +128,34 @@ void setup()
 
   */
 
- if(Firebase.RTDB.get(&fbdo, "/LED_Status"))
-  {
-    //Success
-    Serial.print("Get variant data success, type = ");
-    Serial.println(fbdo.dataType());
+    if (Firebase.RTDB.get(&fbdo, "/LED_Status"))
+    {
+      //Success
+      Serial.print("Get variant data success, type = ");
+      Serial.println(fbdo.dataType());
 
-    if(fbdo.dataType() == "int"){
-      Serial.print("data = ");
-      Serial.println(fbdo.intData());
-    }else if(fbdo.dataType() == "bool"){
-      if(fbdo.boolData())
-        Serial.println("data = true");
-      else
-        Serial.println("data = false");
+      if (fbdo.dataType() == "int")
+      {
+        Serial.print("data = ");
+        Serial.println(fbdo.intData());
+      }
+      else if (fbdo.dataType() == "bool")
+      {
+        if (fbdo.boolData())
+          Serial.println("data = true");
+        else
+          Serial.println("data = false");
+      }
+    }
+    else
+    {
+      //Failed?, get the error reason from fbdo
+
+      Serial.print("Error in get, ");
+      Serial.println(fbdo.errorReason());
     }
 
-  }else{
-    //Failed?, get the error reason from fbdo
-
-    Serial.print("Error in get, ");
-    Serial.println(fbdo.errorReason());
-  }
-
-  /*
+    /*
 
   If you want to get the data in realtime instead of using get, see the stream examples.
   If you want to work with JSON, see the FirebaseJson, jsonObject and jsonArray examples.
@@ -146,13 +163,5 @@ void setup()
   If you have questions or found the bugs, feel free to open the issue here https://github.com/mobizt/Firebase-ESP-Client
 
   */
-
-
-
-
+  }
 }
-
-void loop()
-{
-}
-

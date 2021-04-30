@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.0
+ * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -63,9 +63,13 @@ private:
     std::string _startAt = "";
     std::string _endAt = "";
     std::string _equalTo = "";
-    UtilsClass *ut = nullptr;
 
-    void begin(UtilsClass *u);
+    char *strP(PGM_P pgm);
+    char *newS(size_t len);
+    void appendP(std::string &buf, PGM_P p, bool empty = false);
+    void delS(char *p);
+    char *floatStr(float value);
+    char *intStr(int value);
 };
 
 #endif

@@ -35,12 +35,15 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name (required) */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 
 /** 3. Define the Service Account credentials (required for token generation)
  * 
@@ -67,15 +70,6 @@ bool taskCompleted = false;
 
 unsigned long dataMillis = 0;
 
-/* The helper function to get the token status string */
-String getTokenStatus(struct token_info_t info);
-
-/* The helper function to get the token type string */
-String getTokenType(struct token_info_t info);
-
-/* The helper function to get the token error string */
-String getTokenError(struct token_info_t info);
-
 /* The function to call the Cloud Function */
 void callFunction();
 
@@ -97,12 +91,15 @@ void setup()
     Serial.println();
 
     /* Assign the project host (required) */
-    config.host = FIREBASE_HOST;
+    config.host = FIREBASE_PROJECT_HOST;
 
     /* Assign the Service Account credentials */
     config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
     config.service_account.data.project_id = FIREBASE_PROJECT_ID;
     config.service_account.data.private_key = PRIVATE_KEY;
+
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback;
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
@@ -111,99 +108,15 @@ void setup()
     //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
-   
 }
 
 void loop()
 {
-    if (taskCompleted)
-        return;
-
-    if (millis() - dataMillis > 60000 || dataMillis == 0)
+    if (Firebase.ready() && !taskCompleted)
     {
-        dataMillis = millis();
-
-        /* Get the token status */
-        struct token_info_t info = Firebase.authTokenInfo();
-        if (info.status == token_status_error)
-        {
-            Serial.println("------------------------------------");
-            Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-            Serial.printf("Token error: %s\n\n", getTokenError(info).c_str());
-        }
-        else
-        {
-            Serial.println("------------------------------------");
-            Serial.printf("Token info: type = %s, status = %s\n\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-            callFunction();
-            taskCompleted = true;
-        }
+        callFunction();
+        taskCompleted = true;
     }
-}
-
-/* The helper function to get the token type string */
-String getTokenType(struct token_info_t info)
-{
-    switch (info.type)
-    {
-    case token_type_undefined:
-        return "undefined";
-
-    case token_type_legacy_token:
-        return "legacy token";
-
-    case token_type_id_token:
-        return "id token";
-
-    case token_type_custom_token:
-        return "custom token";
-
-    case token_type_oauth2_access_token:
-        return "OAuth2.0 access token";
-
-    default:
-        break;
-    }
-    return "undefined";
-}
-
-/* The helper function to get the token status string */
-String getTokenStatus(struct token_info_t info)
-{
-    switch (info.status)
-    {
-    case token_status_uninitialized:
-        return "uninitialized";
-
-    case token_status_on_signing:
-        return "on signing";
-
-    case token_status_on_request:
-        return "on request";
-
-    case token_status_on_refresh:
-        return "on refreshing";
-
-    case token_status_ready:
-        return "ready";
-
-    case token_status_error:
-        return "error";
-
-    default:
-        break;
-    }
-    return "uninitialized";
-}
-
-/* The helper function to get the token error string */
-String getTokenError(struct token_info_t info)
-{
-    String s = "code: ";
-    s += String(info.error.code);
-    s += ", message: ";
-    s += info.error.message.c_str();
-    return s;
 }
 
 void callFunction()

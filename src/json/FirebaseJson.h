@@ -1,9 +1,9 @@
-/**
- * FirebaseJson, version 2.3.13
+/*
+ * FirebaseJson, version 2.3.14
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * April 4, 2021
+ * April 30, 2021
  * 
  * Features
  * - None recursive operations
@@ -87,6 +87,8 @@ static const char fb_json_str_28[] PROGMEM = "memory allocation error";
 static const char fb_json_str_29[] PROGMEM = "invalid character inside JSON object or array";
 static const char fb_json_str_30[] PROGMEM = "incompleted JSON object or array";
 static const char fb_json_str_31[] PROGMEM = "token array buffer is to small";
+static const char fb_json_str_32[] PROGMEM = "\":}";
+static const char fb_json_str_33[] PROGMEM = "\":,";
 
 class FirebaseJson;
 class FirebaseJsonArray;

@@ -16,12 +16,17 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 #define API_KEY "API_KEY"
 
 /* 3. Define the user Email and password that alreadey registerd or added in your project */
@@ -60,12 +65,15 @@ void setup()
   Serial.println();
 
   /* Assign the project host and api key (required) */
-  config.host = FIREBASE_HOST;
+  config.host = FIREBASE_PROJECT_HOST;
   config.api_key = API_KEY;
 
   /* Assign the user sign in credentials */
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback;
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
@@ -93,7 +101,7 @@ void setup()
 void loop()
 {
 
-  if (millis() - sendDataPrevMillis > 15000)
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
     count++;
@@ -120,163 +128,36 @@ void loop()
       Serial.println();
     }
   }
-
-  if (!Firebase.RTDB.readStream(&fbdo))
+  if (Firebase.authTokenInfo().status == token_status_ready)
   {
-    Serial.println("------------------------------------");
-    Serial.println("Can't read stream data...");
-    Serial.println("REASON: " + fbdo.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
 
-  if (fbdo.streamTimeout())
-  {
-    Serial.println("Stream timeout, resume streaming...");
-    Serial.println();
-  }
-
-  if (fbdo.streamAvailable())
-  {
-    Serial.println("------------------------------------");
-    Serial.println("Stream Data available...");
-    Serial.println("STREAM PATH: " + fbdo.streamPath());
-    Serial.println("EVENT PATH: " + fbdo.dataPath());
-    Serial.println("DATA TYPE: " + fbdo.dataType());
-    Serial.println("EVENT TYPE: " + fbdo.eventType());
-    Serial.print("VALUE: ");
-    printResult(fbdo);
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-}
-
-void printResult(FirebaseData &data)
-{
-
-  if (data.dataType() == "int")
-    Serial.println(data.intData());
-  else if (data.dataType() == "float")
-    Serial.println(data.floatData(), 5);
-  else if (data.dataType() == "double")
-    printf("%.9lf\n", data.doubleData());
-  else if (data.dataType() == "boolean")
-    Serial.println(data.boolData() == 1 ? "true" : "false");
-  else if (data.dataType() == "string")
-    Serial.println(data.stringData());
-  else if (data.dataType() == "json")
-  {
-    Serial.println();
-    FirebaseJson &json = data.jsonObject();
-    //Print all object data
-    Serial.println("Pretty printed JSON data:");
-    String jsonStr;
-    json.toString(jsonStr, true);
-    Serial.println(jsonStr);
-    Serial.println();
-    Serial.println("Iterate JSON data:");
-    Serial.println();
-    size_t len = json.iteratorBegin();
-    String key, value = "";
-    int type = 0;
-    for (size_t i = 0; i < len; i++)
+    if (!Firebase.RTDB.readStream(&fbdo))
     {
-      json.iteratorGet(i, type, key, value);
-      Serial.print(i);
-      Serial.print(", ");
-      Serial.print("Type: ");
-      Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
-      if (type == FirebaseJson::JSON_OBJECT)
-      {
-        Serial.print(", Key: ");
-        Serial.print(key);
-      }
-      Serial.print(", Value: ");
-      Serial.println(value);
+      Serial.println("------------------------------------");
+      Serial.println("Can't read stream data...");
+      Serial.println("REASON: " + fbdo.errorReason());
+      Serial.println("------------------------------------");
+      Serial.println();
     }
-    json.iteratorEnd();
-  }
-  else if (data.dataType() == "array")
-  {
-    Serial.println();
-    //get array data from FirebaseData using FirebaseJsonArray object
-    FirebaseJsonArray &arr = data.jsonArray();
-    //Print all array values
-    Serial.println("Pretty printed Array:");
-    String arrStr;
-    arr.toString(arrStr, true);
-    Serial.println(arrStr);
-    Serial.println();
-    Serial.println("Iterate array values:");
-    Serial.println();
-    for (size_t i = 0; i < arr.size(); i++)
+
+    if (fbdo.streamTimeout())
     {
-      Serial.print(i);
-      Serial.print(", Value: ");
-
-      FirebaseJsonData &jsonData = data.jsonData();
-      //Get the result data from FirebaseJsonArray object
-      arr.get(jsonData, i);
-      if (jsonData.typeNum == FirebaseJson::JSON_BOOL)
-        Serial.println(jsonData.boolValue ? "true" : "false");
-      else if (jsonData.typeNum == FirebaseJson::JSON_INT)
-        Serial.println(jsonData.intValue);
-      else if (jsonData.typeNum == FirebaseJson::JSON_FLOAT)
-        Serial.println(jsonData.floatValue);
-      else if (jsonData.typeNum == FirebaseJson::JSON_DOUBLE)
-        printf("%.9lf\n", jsonData.doubleValue);
-      else if (jsonData.typeNum == FirebaseJson::JSON_STRING ||
-               jsonData.typeNum == FirebaseJson::JSON_NULL ||
-               jsonData.typeNum == FirebaseJson::JSON_OBJECT ||
-               jsonData.typeNum == FirebaseJson::JSON_ARRAY)
-        Serial.println(jsonData.stringValue);
+      Serial.println("Stream timeout, resume streaming...");
+      Serial.println();
     }
-  }
-  else if (data.dataType() == "blob")
-  {
 
-    Serial.println();
-
-    for (int i = 0; i < data.blobData().size(); i++)
+    if (fbdo.streamAvailable())
     {
-      if (i > 0 && i % 16 == 0)
-        Serial.println();
-
-      if (i < 16)
-        Serial.print("0");
-
-      Serial.print(data.blobData()[i], HEX);
-      Serial.print(" ");
+      Serial.println("------------------------------------");
+      Serial.println("Stream Data available...");
+      Serial.println("STREAM PATH: " + fbdo.streamPath());
+      Serial.println("EVENT PATH: " + fbdo.dataPath());
+      Serial.println("DATA TYPE: " + fbdo.dataType());
+      Serial.println("EVENT TYPE: " + fbdo.eventType());
+      Serial.print("VALUE: ");
+      printResult(fbdo);
+      Serial.println("------------------------------------");
+      Serial.println();
     }
-    Serial.println();
-  }
-  else if (data.dataType() == "file")
-  {
-
-    Serial.println();
-
-    File file = data.fileStream();
-    int i = 0;
-
-    while (file.available())
-    {
-      if (i > 0 && i % 16 == 0)
-        Serial.println();
-
-      int v = file.read();
-
-      if (v < 16)
-        Serial.print("0");
-
-      Serial.print(v, HEX);
-      Serial.print(" ");
-      i++;
-    }
-    Serial.println();
-    file.close();
-  }
-  else
-  {
-    Serial.println(data.payload());
   }
 }

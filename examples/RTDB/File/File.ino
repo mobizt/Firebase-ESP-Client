@@ -18,12 +18,17 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 #define API_KEY "API_KEY"
 
 /* 3. Define the user Email and password that alreadey registerd or added in your project */
@@ -35,6 +40,8 @@ FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
+
+bool taskCompleted = false;
 
 String path = "/Test";
 
@@ -60,12 +67,15 @@ void setup()
   Serial.println();
 
   /* Assign the project host and api key (required) */
-  config.host = FIREBASE_HOST;
+  config.host = FIREBASE_PROJECT_HOST;
   config.api_key = API_KEY;
 
   /* Assign the user sign in credentials */
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback;
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
@@ -109,126 +119,63 @@ void setup()
 
   file.close();
 
-  //In case of Root CA was set, set this option to false to disable low memory for secured mode BearSSL to support large file data
-  //Firebase.lowMemBSSL(false);
+}
 
-  String Path = path + "/Binary/File/data";
-
-  //Set file (read file from SD card and set to database)
-  //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
-  if (Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file1.txt"))
+void loop()
+{
+  if (Firebase.ready() && !taskCompleted)
   {
-    Serial.println("PASSED");
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
+    taskCompleted = true;
 
-  Serial.println("------------------------------------");
-  Serial.println("Get file data test...");
+    //In case of Root CA was set, set this option to false to disable low memory for secured mode BearSSL to support large file data
+    //Firebase.lowMemBSSL(false);
 
-  //Get file (download file to SD card)
-  //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
-  if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file2.txt"))
-  {
+    String Path = path + "/Binary/File/data";
 
-    Serial.println("PASSED");
-    Serial.println("DATA");
-
-    //Readout the downloaded file
-    file = SD.open("/file2.txt", FILE_READ);
-    int i = 0;
-
-    while (file.available())
-    {
-      if (i > 0 && i % 16 == 0)
-        Serial.println();
-
-      v = file.read();
-
-      if (v < 16)
-        Serial.print("0");
-
-      Serial.print(v, HEX);
-      Serial.print(" ");
-      i++;
-    }
-    Serial.println();
-    Serial.println("------------------------------------");
-    Serial.println();
-    file.close();
-  }
-  else
-  {
-
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-
-  Serial.println("------------------------------------");
-  Serial.println("Append file data test...");
-
-  if (SD.exists("/file1.txt"))
-    SD.remove("/file1.txt");
-
-  //Write demo data to file
-  file = SD.open("/file1.txt", FILE_WRITE);
-  for (int i = 255; i >= 0; i--)
-    file.write((uint8_t)i);
-
-  file.close();
-
-  Path = path + "/Binary/File/Logs";
-
-  //Append file data to database
-  //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
-  if (Firebase.RTDB.pushFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file1.txt"))
-  {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + fbdo.dataPath());
-    Serial.println("PUSH NAME: " + fbdo.pushName());
-    Serial.println("------------------------------------");
-
-    Serial.println();
-
-    Serial.println("------------------------------------");
-    Serial.println("Get appended file data test...");
-
-    Path = path + "/Binary/File/Logs/" + fbdo.pushName();
-
-    //Get the recently appended file (download file to SD card)
+    //Set file (read file from SD card and set to database)
     //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
-    if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file3.txt"))
+    if (Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file1.txt"))
+    {
+      Serial.println("PASSED");
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.fileTransferError());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+
+    Serial.println("------------------------------------");
+    Serial.println("Get file data test...");
+
+    //Get file (download file to SD card)
+    //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+    if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file2.txt"))
     {
 
       Serial.println("PASSED");
       Serial.println("DATA");
 
       //Readout the downloaded file
-      file = SD.open("/file3.txt", FILE_READ);
+      file = SD.open("/file2.txt", FILE_READ);
       int i = 0;
-      int idx = 0;
 
       while (file.available())
       {
-        i = file.read();
-        if (i < 16)
+        if (i > 0 && i % 16 == 0)
+          Serial.println();
+
+        uint8_t v = file.read();
+
+        if (v < 16)
           Serial.print("0");
 
-        Serial.print(i, HEX);
+        Serial.print(v, HEX);
         Serial.print(" ");
-
-        if (idx > 0 && (idx + 1) % 16 == 0)
-          Serial.println();
-        idx++;
+        i++;
       }
       Serial.println();
       Serial.println("------------------------------------");
@@ -243,16 +190,84 @@ void setup()
       Serial.println("------------------------------------");
       Serial.println();
     }
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-}
 
-void loop()
-{
+    Serial.println("------------------------------------");
+    Serial.println("Append file data test...");
+
+    if (SD.exists("/file1.txt"))
+      SD.remove("/file1.txt");
+
+    //Write demo data to file
+    file = SD.open("/file1.txt", FILE_WRITE);
+    for (int i = 255; i >= 0; i--)
+      file.write((uint8_t)i);
+
+    file.close();
+
+    Path = path + "/Binary/File/Logs";
+
+    //Append file data to database
+    //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+    if (Firebase.RTDB.pushFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file1.txt"))
+    {
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("PUSH NAME: " + fbdo.pushName());
+      Serial.println("------------------------------------");
+
+      Serial.println();
+
+      Serial.println("------------------------------------");
+      Serial.println("Get appended file data test...");
+
+      Path = path + "/Binary/File/Logs/" + fbdo.pushName();
+
+      //Get the recently appended file (download file to SD card)
+      //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+      if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_sd, Path.c_str(), "/file3.txt"))
+      {
+
+        Serial.println("PASSED");
+        Serial.println("DATA");
+
+        //Readout the downloaded file
+        file = SD.open("/file3.txt", FILE_READ);
+        int i = 0;
+        int idx = 0;
+
+        while (file.available())
+        {
+          i = file.read();
+          if (i < 16)
+            Serial.print("0");
+
+          Serial.print(i, HEX);
+          Serial.print(" ");
+
+          if (idx > 0 && (idx + 1) % 16 == 0)
+            Serial.println();
+          idx++;
+        }
+        Serial.println();
+        Serial.println("------------------------------------");
+        Serial.println();
+        file.close();
+      }
+      else
+      {
+
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo.fileTransferError());
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.fileTransferError());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+  }
 }

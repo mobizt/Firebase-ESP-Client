@@ -53,6 +53,7 @@ setPriority KEYWORD2
 getPriority KEYWORD2
 getRules    KEYWORD2
 setRules    KEYWORD2
+setReadWriteRules   KEYWORD2
 pathExist   KEYWORD2
 getETag KEYWORD2
 enableClassicRequest    KEYWORD2
@@ -85,6 +86,7 @@ getJSON KEYWORD2
 getBlob KEYWORD2
 getFile KEYWORD2
 deleteNode  KEYWORD2
+deleteNodesByTimestamp  KEYWORD2
 beginStream KEYWORD2
 beginMultiPathStream    KEYWORD2
 readStream  KEYWORD2
@@ -99,6 +101,7 @@ clearErrorQueue KEYWORD2
 backup  KEYWORD2
 restore KEYWORD2
 sdBegin KEYWORD2
+sdMMCBegin  KEYWORD2
 setMaxRetry KEYWORD2
 setMaxErrorQueue    KEYWORD2
 saveErrorQueue  KEYWORD2
@@ -116,6 +119,7 @@ sendTopic   KEYWORD2
 setStreamTaskStackSize  KEYWORD2
 allowMultipleRequests    KEYWORD2
 authTokenInfo   KEYWORD2
+tokenReady  KEYWORD2
 signUp  KEYWORD2
 sendEmailVerification   KEYWORD2
 sendResetPassword   KEYWORD2
@@ -176,12 +180,17 @@ setVersion  KEYWORD2
 setETag KEYWORD2
 clearBindings   KEYWORD2
 runQuery    KEYWORD2
+setDeviceTime   KEYWORD2
+setQueryIndex   KEYWORD2
+removeQueryIndex    
+authenticated   KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
 #############################################
 
 pauseFirebase   KEYWORD2
+isPause KEYWORD2
 getWiFiClient   KEYWORD2
 dataType    KEYWORD2
 eventType   KEYWORD2
@@ -273,7 +282,10 @@ QueueItem   KEYWORD3
 token_info_t    KEYWORD3
 TokenInfo   KEYWORD3
 fb_json_last_error_t    KEYWORD3
-
+FireSense_Channel   KEYWORD3
+Firesense_Channel_Type  KEYWORD3
+FireSense_Condition KEYWORD3
+FireSense_Data_Type KEYWORD3
 
 
 ###########################################################
@@ -305,6 +317,22 @@ getJson KEYWORD2
 setBufferLimit  KEYWORD2
 getLastError    KEYWORD2
 
+#########################################
+# Methods for FireSense addons (KEYWORD2)
+#########################################
+
+loadConfig  KEYWORD2
+backupConfig    KEYWORD2
+restoreConfig   KEYWORD2
+enableController    KEYWORD2
+addChannel  KEYWORD2
+addCondition    KEYWORD2
+addCallbackFunction KEYWORD2
+clearAllCallbackFunctions   KEYWORD2
+addUserValue    KEYWORD2
+clearAllUserValues  KEYWORD2
+getDeviceId KEYWORD2
+
 ######################################
 # Constants (LITERAL1)
 #######################################
@@ -317,3 +345,10 @@ JSON_FLOAT  LITERAL1
 JSON_DOUBLE LITERAL1
 JSON_BOOL   LITERAL1
 JSON_NULL   LITERAL1
+Output  LITERAL1
+Input   LITERAL1
+Value   LITERAL1
+Byte    LITERAL1
+Boolean LITERAL1
+Integer LITERAL1
+Float   LITERAL1

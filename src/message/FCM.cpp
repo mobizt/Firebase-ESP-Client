@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.4
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -313,7 +313,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
     if (strlen(msg->targets.to) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_128);
-        _fcmPayload.add(tmp, msg->targets.to);
+        _fcmPayload.set(tmp, msg->targets.to);
         ut->delS(tmp);
     }
 
@@ -323,74 +323,73 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         arr.clear();
         arr.setJsonArrayData(msg->targets.registration_ids);
         tmp = ut->strP(fb_esp_pgm_str_130);
-        _fcmPayload.add(tmp, arr);
+        _fcmPayload.set(tmp, arr);
         ut->delS(tmp);
     }
 
     if (strlen(msg->targets.condition) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_282);
-        _fcmPayload.add(tmp, msg->targets.condition);
+        _fcmPayload.set(tmp, msg->targets.condition);
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.collapse_key) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_138);
-        _fcmPayload.add(tmp, msg->options.collapse_key);
+        _fcmPayload.set(tmp, msg->options.collapse_key);
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.priority) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_136);
-        _fcmPayload.add(tmp, msg->options.priority);
+        _fcmPayload.set(tmp, msg->options.priority);
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.content_available) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_283);
-        _fcmPayload.add(tmp, ut->boolVal(msg->options.content_available));
+        _fcmPayload.set(tmp, ut->boolVal(msg->options.content_available));
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.mutable_content) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_284);
-        _fcmPayload.add(tmp, ut->boolVal(msg->options.mutable_content));
+        _fcmPayload.set(tmp, ut->boolVal(msg->options.mutable_content));
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.time_to_live) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_137);
-        _fcmPayload.add(tmp, atoi(msg->options.time_to_live));
+        _fcmPayload.set(tmp, atoi(msg->options.time_to_live));
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.restricted_package_name) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_147);
-        _fcmPayload.add(tmp, msg->options.restricted_package_name);
+        _fcmPayload.set(tmp, msg->options.restricted_package_name);
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.dry_run) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_281);
-        _fcmPayload.add(tmp, msg->options.dry_run);
+        _fcmPayload.set(tmp, msg->options.dry_run);
         ut->delS(tmp);
     }
 
     if (strlen(msg->options.direct_boot_ok) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_323);
-        _fcmPayload.add(tmp, ut->boolVal(msg->options.direct_boot_ok));
+        _fcmPayload.set(tmp, ut->boolVal(msg->options.direct_boot_ok));
         ut->delS(tmp);
     }
 
-    _fcmPayload.int_tostr(buf);
 
     std::string s;
 
@@ -400,7 +399,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         js.clear();
         js.setJsonData(msg->payloads.data);
         tmp = ut->strP(fb_esp_pgm_str_135);
-        _fcmPayload.add(tmp, js);
+        _fcmPayload.set(tmp, js);
         ut->delS(tmp);
     }
 
@@ -409,7 +408,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_285);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.title);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.title);
     }
 
     if (strlen(msg->payloads.notification.body) > 0)
@@ -417,7 +416,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_123);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.body);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.body);
     }
 
     if (strlen(msg->payloads.notification.sound) > 0)
@@ -425,7 +424,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_126);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.sound);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.sound);
     }
 
     if (strlen(msg->payloads.notification.badge) > 0)
@@ -433,7 +432,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_286);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.badge);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.badge);
     }
 
     if (strlen(msg->payloads.notification.click_action) > 0)
@@ -441,7 +440,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_125);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.click_action);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.click_action);
     }
 
     if (strlen(msg->payloads.notification.subtitle) > 0)
@@ -449,7 +448,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_287);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.subtitle);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.subtitle);
     }
 
     if (strlen(msg->payloads.notification.body_loc_key) > 0)
@@ -457,7 +456,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_288);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.body_loc_key);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.body_loc_key);
     }
 
     if (strlen(msg->payloads.notification.body_loc_args) > 0)
@@ -468,7 +467,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         static FirebaseJsonArray arr;
         arr.clear();
         arr.setJsonArrayData(msg->payloads.notification.body_loc_args);
-        _fcmPayload.add(s.c_str(), arr);
+        _fcmPayload.set(s.c_str(), arr);
     }
 
     if (strlen(msg->payloads.notification.title_loc_key) > 0)
@@ -476,7 +475,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_290);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.title_loc_key);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.title_loc_key);
     }
 
     if (strlen(msg->payloads.notification.title_loc_args) > 0)
@@ -487,7 +486,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         static FirebaseJsonArray arr;
         arr.clear();
         arr.setJsonArrayData(msg->payloads.notification.title_loc_args);
-        _fcmPayload.add(s.c_str(), arr);
+        _fcmPayload.set(s.c_str(), arr);
     }
 
     if (strlen(msg->payloads.notification.android_channel_id) > 0)
@@ -495,7 +494,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_292);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.android_channel_id);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.android_channel_id);
     }
 
     if (strlen(msg->payloads.notification.icon) > 0)
@@ -503,7 +502,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_124);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.icon);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.icon);
     }
 
     if (strlen(msg->payloads.notification.tag) > 0)
@@ -511,7 +510,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_293);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.tag);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.tag);
     }
 
     if (strlen(msg->payloads.notification.color) > 0)
@@ -519,7 +518,7 @@ void FB_CM::fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *
         ut->appendP(s, fb_esp_pgm_str_122, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_294);
-        _fcmPayload.add(s.c_str(), msg->payloads.notification.color);
+        _fcmPayload.set(s.c_str(), msg->payloads.notification.color);
     }
 
     _fcmPayload.int_tostr(buf);
@@ -1330,6 +1329,11 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
                         if (headerEnded)
                         {
+                            if (response.httpCode == 401)
+                                Signer.authenticated = false;
+                            else if (response.httpCode < 300)
+                                Signer.authenticated = true;
+
                             //parse header string to get the header field
                             isHeader = false;
                             ut->parseRespHeader(header, response);

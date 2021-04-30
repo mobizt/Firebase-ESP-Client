@@ -1,6 +1,6 @@
 
 /**
- * Created April 4, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -64,7 +64,7 @@ class FunctionsConfig;
 #define QUEUE_TASK_STACK_SIZE 8192
 #define MAX_BLOB_PAYLOAD_SIZE 1024
 #define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
-#define ESP_DEFAULT_TS 1510644967
+#define ESP_DEFAULT_TS 1618971013
 
 enum fb_esp_fcm_msg_mode
 {
@@ -396,6 +396,7 @@ struct fb_esp_auth_token_info_t
     std::string jwt;
     std::string scope;
     unsigned long expires = 0;
+    unsigned long last_millis = 0;
     fb_esp_auth_token_type token_type = token_type_undefined;
     fb_esp_auth_token_status status = token_status_uninitialized;
     struct fb_esp_auth_token_error_t error;
@@ -954,7 +955,7 @@ struct fb_esp_session_info_t
     const uint32_t conn_timeout = 3 * 60 * 1000;
 
     uint16_t resp_size = 2048;
-    int http_code = -1000;
+    int http_code = FIREBASE_ERROR_HTTP_CODE_UNDEFINED;
     int content_length = 0;
     std::string error = "";
     struct fb_esp_rtdb_info_t rtdb;
@@ -1667,6 +1668,10 @@ static const char fb_esp_pgm_str_546[] PROGMEM = "tokenProcessingTask";
 static const char fb_esp_pgm_str_547[] PROGMEM = "max token generation retry reached";
 static const char fb_esp_pgm_str_548[] PROGMEM = "0.0.0.0";
 static const char fb_esp_pgm_str_549[] PROGMEM = "error";
+static const char fb_esp_pgm_str_550[] PROGMEM = "rules";
+static const char fb_esp_pgm_str_551[] PROGMEM = "/.indexOn";
+static const char fb_esp_pgm_str_552[] PROGMEM = ".read";
+static const char fb_esp_pgm_str_553[] PROGMEM = ".write";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.6
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 1, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -113,28 +113,31 @@ void FirebaseData::setResponseSize(uint16_t len)
 
 bool FirebaseData::pauseFirebase(bool pause)
 {
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+    if ((WiFi.status() != WL_CONNECTED && !ut->ethLinkUp()) || !httpClient.stream())
+    {
+        _ss.connected = false;
+        _ss.rtdb.pause = true;
         return false;
+    }
 
-    if (httpClient.connected() && pause != _ss.rtdb.pause)
+    if (pause == _ss.rtdb.pause)
+        return true;
+
+    _ss.rtdb.pause = pause;
+
+    if (pause)
     {
         if (httpClient.stream()->connected())
             httpClient.stream()->stop();
-
         _ss.connected = false;
+    }
 
-        if (!httpClient.connected())
-        {
-            _ss.rtdb.pause = pause;
-            return true;
-        }
-        return false;
-    }
-    else
-    {
-        _ss.rtdb.pause = pause;
-        return true;
-    }
+    return true;
+}
+
+bool FirebaseData::isPause()
+{
+    return _ss.rtdb.pause;
 }
 
 void FirebaseData::stopWiFiClient()

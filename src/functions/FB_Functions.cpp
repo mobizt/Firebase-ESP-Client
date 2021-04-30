@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.0.4
+ * Google's Cloud Functions class, Functions.cpp version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1029,6 +1029,11 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
 
                         if (headerEnded)
                         {
+                            if (response.httpCode == 401)
+                                Signer.authenticated = false;
+                            else if (response.httpCode < 300)
+                                Signer.authenticated = true;
+
                             //parse header string to get the header field
                             isHeader = false;
                             ut->parseRespHeader(header, response);

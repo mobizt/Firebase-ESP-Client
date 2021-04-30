@@ -19,12 +19,15 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 #define API_KEY "API_KEY"
 
 /* 3. Define the project ID */
@@ -61,12 +64,15 @@ void setup()
     Serial.println();
 
     /* Assign the project host and api key (required) */
-    config.host = FIREBASE_HOST;
+    config.host = FIREBASE_PROJECT_HOST;
     config.api_key = API_KEY;
 
     /* Assign the user sign in credentials */
     auth.user.email = USER_EMAIL;
     auth.user.password = USER_PASSWORD;
+
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback;
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
@@ -80,7 +86,7 @@ void setup()
 void loop()
 {
 
-    if (millis() - dataMillis > 60000 || dataMillis == 0)
+    if (Firebase.ready() && (millis() - dataMillis > 60000 || dataMillis == 0))
     {
         dataMillis = millis();
 

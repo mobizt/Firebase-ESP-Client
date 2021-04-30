@@ -18,12 +18,17 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 #define API_KEY "API_KEY"
 
 /** 3. Define the Service Account credentials (required for token generation)
@@ -42,6 +47,8 @@ FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
+
+bool taskCompleted = false;
 
 void setup()
 {
@@ -63,13 +70,16 @@ void setup()
   Serial.println();
 
   /* Assign the project host and api key (required) */
-  config.host = FIREBASE_HOST;
+  config.host = FIREBASE_PROJECT_HOST;
   config.api_key = API_KEY;
 
   /* Assign the sevice account credentials and private key (required) */
   config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
   config.service_account.data.project_id = FIREBASE_PROJECT_ID;
   config.service_account.data.private_key = PRIVATE_KEY;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback;
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
@@ -82,72 +92,77 @@ void setup()
   //Set the size of HTTP response buffers in the case where we want to work with large data.
   fbdo.setResponseSize(1024);
 
-  String rules = "";
-
-  Serial.println("------------------------------------");
-  Serial.println("Read Database Rules test...");
-
-  if (Firebase.RTDB.getRules(&fbdo))
-  {
-    Serial.println("PASSED");
-    Serial.println("DATABASE RULES: ");
-
-    FirebaseJson &json = fbdo.jsonObject();
-    json.toString(rules, true);
-    Serial.println(rules);
-
-    Serial.println();
-    Serial.println("------------------------------------");
-    Serial.println("PARSE: ");
-
-    size_t len = json.iteratorBegin();
-    String key, value = "";
-    int type = 0;
-    for (size_t i = 0; i < len; i++)
-    {
-      json.iteratorGet(i, type, key, value);
-      Serial.print(i);
-      Serial.print(", ");
-      Serial.print("Type: ");
-      Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
-      if (type == FirebaseJson::JSON_OBJECT)
-      {
-        Serial.print(", Key: ");
-        Serial.print(key);
-      }
-      Serial.print(", Value: ");
-      Serial.println(value);
-    }
-
-    json.iteratorEnd();
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-
-  Serial.println("------------------------------------");
-  Serial.println("Write Database Rules test...");
-
-  if (Firebase.RTDB.setRules(&fbdo, rules.c_str()))
-  {
-    Serial.println("PASSED");
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
 }
 
 void loop()
 {
+  if (Firebase.ready() && !taskCompleted)
+  {
+    taskCompleted = true;
+
+    String rules = "";
+
+    Serial.println("------------------------------------");
+    Serial.println("Read Database Rules test...");
+
+    if (Firebase.RTDB.getRules(&fbdo))
+    {
+      Serial.println("PASSED");
+      Serial.println("DATABASE RULES: ");
+
+      FirebaseJson &json = fbdo.jsonObject();
+      json.toString(rules, true);
+      Serial.println(rules);
+
+      Serial.println();
+      Serial.println("------------------------------------");
+      Serial.println("PARSE: ");
+
+      size_t len = json.iteratorBegin();
+      String key, value = "";
+      int type = 0;
+      for (size_t i = 0; i < len; i++)
+      {
+        json.iteratorGet(i, type, key, value);
+        Serial.print(i);
+        Serial.print(", ");
+        Serial.print("Type: ");
+        Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
+        if (type == FirebaseJson::JSON_OBJECT)
+        {
+          Serial.print(", Key: ");
+          Serial.print(key);
+        }
+        Serial.print(", Value: ");
+        Serial.println(value);
+      }
+
+      json.iteratorEnd();
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+
+    Serial.println("------------------------------------");
+    Serial.println("Write Database Rules test...");
+
+    if (Firebase.RTDB.setRules(&fbdo, rules.c_str()))
+    {
+      Serial.println("PASSED");
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+  }
 }

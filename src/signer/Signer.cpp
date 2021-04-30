@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.8
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 4, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -206,6 +206,10 @@ bool Firebase_Signer::handleToken()
 
     if (config->host.length() == 0)
         return false;
+
+    //if the time was set (changed) after token has been generated, update its expiration
+    if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && time(nullptr) > ESP_DEFAULT_TS)
+        config->signer.tokens.expires += time(nullptr) - (millis() - config->signer.tokens.last_millis) / 1000 - 60;
 
     if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
         config->signer.preRefreshSeconds = 60;
@@ -613,7 +617,7 @@ bool Firebase_Signer::refreshToken()
                 config->signer.json->get(*config->signer.data, tmp);
                 ut->delS(tmp);
                 if (config->signer.data->success)
-                    config->signer.tokens.expires = time(nullptr) + atoi(config->signer.data->stringValue.c_str());
+                    getExpiration(config->signer.data->stringValue);
 
                 tmp = ut->strP(fb_esp_pgm_str_175);
                 config->signer.json->get(*config->signer.data, tmp);
@@ -784,6 +788,10 @@ bool Firebase_Signer::handleTokenResponse()
 #elif defined(ESP8266)
     WiFiClient *stream = config->signer.wcs;
 #endif
+
+    if (!stream)
+        return false;
+
     while (stream->connected() && stream->available() == 0)
     {
         if (!ut->reconnect(dataTime))
@@ -794,6 +802,9 @@ bool Firebase_Signer::handleTokenResponse()
             return false;
         }
 
+        if (!stream)
+            return false;
+
         delay(0);
     }
 
@@ -801,6 +812,8 @@ bool Firebase_Signer::handleTokenResponse()
     unsigned long datatime = millis();
     while (!complete)
     {
+        if (!stream)
+            break;
 
         chunkBufSize = stream->available();
 
@@ -820,12 +833,18 @@ bool Firebase_Signer::handleTokenResponse()
                             stream->stop();
                     return false;
                 }
+
+                if (!stream)
+                    break;
+
                 chunkBufSize = stream->available();
 
                 if (chunkBufSize > 0)
                 {
                     if (chunkIdx == 0)
                     {
+                        if (!stream)
+                            break;
                         ut->readLine(stream, header);
                         int pos = 0;
                         char *tmp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
@@ -840,6 +859,8 @@ bool Firebase_Signer::handleTokenResponse()
                     {
                         if (isHeader)
                         {
+                            if (!stream)
+                                break;
                             char *tmp = ut->newS(chunkBufSize);
                             int readLen = ut->readLine(stream, tmp, chunkBufSize);
                             bool headerEnded = false;
@@ -867,6 +888,9 @@ bool Firebase_Signer::handleTokenResponse()
                         {
                             if (!response.noContent)
                             {
+                                if (!stream)
+                                    break;
+
                                 if (response.isChunkedEnc)
                                     complete = ut->readChunkedData(stream, payload, chunkedDataState, chunkedDataSize, chunkedDataLen) < 0;
                                 else
@@ -887,6 +911,9 @@ bool Firebase_Signer::handleTokenResponse()
                             }
                             else
                             {
+                                if (!stream)
+                                    break;
+
                                 while (stream->available() > 0)
                                     stream->read();
                                 if (stream->available() <= 0)
@@ -903,8 +930,11 @@ bool Firebase_Signer::handleTokenResponse()
         }
     }
 
-    if (stream->connected())
-        stream->stop();
+    if (stream)
+    {
+        if (stream->connected())
+            stream->stop();
+    }
 
     if (payload.length() > 0 && !response.noContent)
     {
@@ -1427,7 +1457,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
             config->signer.json->get(*config->signer.data, tmp);
             ut->delS(tmp);
             if (config->signer.data->success)
-                config->signer.tokens.expires = time(nullptr) + atoi(config->signer.data->stringValue.c_str());
+                getExpiration(config->signer.data->stringValue);
 
             tmp = ut->strP(fb_esp_pgm_str_175);
             config->signer.json->get(*config->signer.data, tmp);
@@ -1603,7 +1633,7 @@ bool Firebase_Signer::requestTokens()
                 config->signer.json->get(*config->signer.data, tmp);
                 ut->delS(tmp);
                 if (config->signer.data->success)
-                    config->signer.tokens.expires = time(nullptr) + atoi(config->signer.data->stringValue.c_str());
+                    getExpiration(config->signer.data->stringValue);
             }
             else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
             {
@@ -1623,7 +1653,7 @@ bool Firebase_Signer::requestTokens()
                 config->signer.json->get(*config->signer.data, tmp);
                 ut->delS(tmp);
                 if (config->signer.data->success)
-                    config->signer.tokens.expires = time(nullptr) + atoi(config->signer.data->stringValue.c_str());
+                    getExpiration(config->signer.data->stringValue);
             }
             return handleSignerError(0);
         }
@@ -1631,6 +1661,14 @@ bool Firebase_Signer::requestTokens()
     }
 
     return handleSignerError(3);
+}
+
+void Firebase_Signer::getExpiration(const String &exp)
+{
+    time_t ts = time(nullptr);
+    unsigned long ms = millis();
+    config->signer.tokens.expires = ts + atoi(config->signer.data->stringValue.c_str());
+    config->signer.tokens.last_millis = ms;
 }
 
 bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_sending_type type)
@@ -1790,6 +1828,10 @@ void Firebase_Signer::checkToken()
         return;
     if (config->host.length() == 0)
         return;
+
+    //if the time was set (changed) after token has been generated, update its expiration
+    if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && time(nullptr) > ESP_DEFAULT_TS)
+        config->signer.tokens.expires += time(nullptr) - (millis() - config->signer.tokens.last_millis) / 1000 - 60;
 
     if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
         config->signer.preRefreshSeconds = 60;

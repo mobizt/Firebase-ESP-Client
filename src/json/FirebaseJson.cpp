@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.13
+ * FirebaseJson, version 2.3.14
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * April 4, 2021
+ * April 30, 2021
  * 
  * Features
  * - None recursive operations
@@ -710,7 +710,7 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, const char *search
           depth = _el[i].depth;
           len = _el[i].olen;
           skip = _el[i].skip;
-          
+
           if (!_parser_info.TkRefOk && _el[i].type == JSMN_OBJECT)
             ref = _el[i].ref;
           else if (!_parser_info.TkRefOk && _el[i].type == JSMN_ARRAY && searchIndex > -1)
@@ -2561,6 +2561,42 @@ bool FirebaseJson::remove(const String &path)
     _rawbuf = _jsonData._dbuf.substr(1, _jsonData._dbuf.length() - 2);
   else
     _rawbuf.clear();
+
+  //fix for the remaining parent when all childs removed
+  if (_rawbuf.length() > 0)
+  {
+    char *temp = helper->strP(fb_json_str_32);
+    size_t p1 = _rawbuf.find(temp);
+    helper->delS(temp);
+    
+    if (p1 == std::string::npos)
+    {
+      temp = helper->strP(fb_json_str_33);
+      p1 = _rawbuf.find(temp);
+      helper->delS(temp);
+    }
+
+    if (p1 != std::string::npos)
+    {
+      int p3 = p1;
+      if (p3 > 0)
+        p3--;
+      temp = helper->strP(fb_json_str_2);
+      size_t p2 = _rawbuf.rfind(temp, p3);
+      helper->delS(temp);
+      if (p2 != std::string::npos)
+      {
+        if (p2 > 0)
+        {
+          if (_rawbuf[p2 - 1] == ',')
+            p2--;
+        }
+        p1 += 2;
+        _rawbuf.replace(p2, p1 - p2, "");
+      }
+    }
+  }
+
   clearPathTk();
   std::string().swap(_jsonData._dbuf);
   std::string().swap(_tbuf);

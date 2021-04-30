@@ -171,8 +171,13 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
     {
       if (sd_config.ss > -1)
       {
+#ifdef CARD_TYPE_SD
         SPI.begin(sd_config.sck, sd_config.miso, sd_config.mosi, sd_config.ss);
         SD_FS.begin(sd_config.ss, SPI);
+#endif
+#ifdef CARD_TYPE_SD_MMC
+        SD_FS.begin(sd_config.sd_mmc_mountpoint, sd_config.sd_mmc_mode1bit, sd_config.sd_mmc_format_if_mount_failed);
+#endif
       }
       else
         SD_FS.begin();

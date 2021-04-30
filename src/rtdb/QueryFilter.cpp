@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.0
+ * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -42,10 +42,6 @@ QueryFilter::~QueryFilter()
 {
     clear();
 }
-void QueryFilter::begin(UtilsClass *u)
-{
-    ut = u;
-}
 
 QueryFilter &QueryFilter::clear()
 {
@@ -60,74 +56,119 @@ QueryFilter &QueryFilter::clear()
 
 QueryFilter &QueryFilter::orderBy(const String &val)
 {
-    ut->appendP(_orderBy, fb_esp_pgm_str_3, true);
+    appendP(_orderBy, fb_esp_pgm_str_3, true);
     _orderBy += val.c_str();
-    ut->appendP(_orderBy, fb_esp_pgm_str_3);
+    appendP(_orderBy, fb_esp_pgm_str_3);
     return *this;
 }
 QueryFilter &QueryFilter::limitToFirst(int val)
 {
 
-    char *num = ut->intStr(val);
+    char *num = intStr(val);
     _limitToFirst = num;
-    ut->delS(num);
+    delS(num);
     return *this;
 }
 
 QueryFilter &QueryFilter::limitToLast(int val)
 {
-    char *num = ut->intStr(val);
+    char *num = intStr(val);
     _limitToLast = num;
-    ut->delS(num);
+    delS(num);
     return *this;
 }
 
 QueryFilter &QueryFilter::startAt(float val)
 {
-    char *num = ut->floatStr(val);
+    char *num = floatStr(val);
     _startAt = num;
-    ut->delS(num);
+    delS(num);
     return *this;
 }
 
 QueryFilter &QueryFilter::endAt(float val)
 {
-    char *num = ut->floatStr(val);
+    char *num = floatStr(val);
     _endAt = num;
-    ut->delS(num);
+    delS(num);
     return *this;
 }
 
 QueryFilter &QueryFilter::startAt(const String &val)
 {
-    ut->appendP(_startAt, fb_esp_pgm_str_3, true);
+    appendP(_startAt, fb_esp_pgm_str_3, true);
     _startAt += val.c_str();
-    ut->appendP(_startAt, fb_esp_pgm_str_3);
+    appendP(_startAt, fb_esp_pgm_str_3);
     return *this;
 }
 
 QueryFilter &QueryFilter::endAt(const String &val)
 {
-    ut->appendP(_endAt, fb_esp_pgm_str_3, true);
+    appendP(_endAt, fb_esp_pgm_str_3, true);
     _startAt += val.c_str();
-    ut->appendP(_endAt, fb_esp_pgm_str_3);
+    appendP(_endAt, fb_esp_pgm_str_3);
     return *this;
 }
 
 QueryFilter &QueryFilter::equalTo(int val)
 {
-    char *num = ut->intStr(val);
+    char *num = intStr(val);
     _equalTo = num;
-    ut->delS(num);
+    delS(num);
     return *this;
 }
 
 QueryFilter &QueryFilter::equalTo(const String &val)
 {
-    ut->appendP(_equalTo, fb_esp_pgm_str_3, true);
+    appendP(_equalTo, fb_esp_pgm_str_3, true);
     _equalTo += val.c_str();
-    ut->appendP(_equalTo, fb_esp_pgm_str_3);
+    appendP(_equalTo, fb_esp_pgm_str_3);
     return *this;
+}
+
+char *QueryFilter::strP(PGM_P pgm)
+{
+    size_t len = strlen_P(pgm) + 5;
+    char *buf = newS(len);
+    strcpy_P(buf, pgm);
+    buf[strlen_P(pgm)] = 0;
+    return buf;
+}
+
+char *QueryFilter::newS(size_t len)
+{
+    char *p = new char[len];
+    memset(p, 0, len);
+    return p;
+}
+
+void QueryFilter::appendP(std::string &buf, PGM_P p, bool empty)
+{
+    if (empty)
+        buf.clear();
+    char *b = strP(p);
+    buf += b;
+    delS(b);
+}
+
+void QueryFilter::delS(char *p)
+{
+    if (p != nullptr)
+        delete[] p;
+}
+
+char *QueryFilter::floatStr(float value)
+{
+    char *buf = newS(36);
+    dtostrf(value, 7, 9, buf);
+    return buf;
+}
+
+char *QueryFilter::intStr(int value)
+{
+    char *buf = newS(36);
+    itoa(value, buf, 10);
+    return buf;
 }
 
 #endif

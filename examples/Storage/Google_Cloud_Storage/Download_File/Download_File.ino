@@ -19,12 +19,15 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name (required) */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 
 /* 3. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
@@ -39,6 +42,8 @@ FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
+
+bool taskCompleted = false;
 
 String path = "/Test";
 
@@ -62,12 +67,15 @@ void setup()
     Serial.println();
 
     /* Assign the project host (required) */
-    config.host = FIREBASE_HOST;
+    config.host = FIREBASE_PROJECT_HOST;
 
     /* Assign the Service Account credentials for OAuth2.0 authen */
     config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
     config.service_account.data.project_id = FIREBASE_PROJECT_ID;
     config.service_account.data.private_key = PRIVATE_KEY;
+
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback;
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
@@ -77,27 +85,32 @@ void setup()
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
 
-    Serial.println("------------------------------------");
-    Serial.println("Download file with Google Cloud Storage JSON API test...");
-
-    //StorageGetOptions option;
-    //For query parameters description of StorageGetOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
-    //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-    if (Firebase.GCStorage.download(&fbdo, STORAGE_BUCKET_ID /* Firebase or Google Cloud Storage bucket id */, "path/to/file/filename" /* path of remote file stored in the bucket */, "/path/to/save/filename" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, nullptr /* StorageGetOptions data */))
-    {
-        Serial.println("PASSED");
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
-    else
-    {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
 }
 
 void loop()
 {
-}
+    if (Firebase.ready() && !taskCompleted)
+    {
+        taskCompleted = true;
+
+        Serial.println("------------------------------------");
+        Serial.println("Download file with Google Cloud Storage JSON API test...");
+
+        //StorageGetOptions option;
+        //For query parameters description of StorageGetOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
+        //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+        if (Firebase.GCStorage.download(&fbdo, STORAGE_BUCKET_ID /* Firebase or Google Cloud Storage bucket id */, "path/to/file/filename" /* path of remote file stored in the bucket */, "/path/to/save/filename" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, nullptr /* StorageGetOptions data */))
+        {
+            Serial.println("PASSED");
+            Serial.println("------------------------------------");
+            Serial.println();
+        }
+        else
+        {
+            Serial.println("FAILED");
+            Serial.println("REASON: " + fbdo.errorReason());
+            Serial.println("------------------------------------");
+            Serial.println();
+        }
+    }
+    }

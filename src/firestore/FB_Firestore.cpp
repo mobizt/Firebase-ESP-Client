@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.5
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created April 30, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -692,6 +692,11 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
 
                             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
                                 error.code = 0;
+
+                            if (response.httpCode == 401)
+                                Signer.authenticated = false;
+                            else if (response.httpCode < 300)
+                                Signer.authenticated = true;
 
                             if (hstate == 1)
                                 ut->delS(header);

@@ -19,12 +19,15 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
 #define API_KEY "API_KEY"
 
 /* 3. Define the project ID */
@@ -39,6 +42,8 @@ FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
+
+bool taskCompleted = false;
 
 unsigned long dataMillis = 0;
 
@@ -60,12 +65,15 @@ void setup()
     Serial.println();
 
     /* Assign the project host and api key (required) */
-    config.host = FIREBASE_HOST;
+    config.host = FIREBASE_PROJECT_HOST;
     config.api_key = API_KEY;
 
     /* Assign the user sign in credentials */
     auth.user.email = USER_EMAIL;
     auth.user.password = USER_PASSWORD;
+
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback;
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
@@ -75,50 +83,57 @@ void setup()
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
 
-    String content;
-
-    FirebaseJson js;
-
-    js.set("fields/Japan/mapValue/fields/time_zone/integerValue", "9");
-    js.set("fields/Japan/mapValue/fields/population/integerValue", "125570000");
-
-    js.set("fields/Belgium/mapValue/fields/time_zone/integerValue", "1");
-    js.set("fields/Belgium/mapValue/fields/population/integerValue", "11492641");
-
-    js.set("fields/Singapore/mapValue/fields/time_zone/integerValue", "8");
-    js.set("fields/Singapore/mapValue/fields/population/integerValue", "5703600");
-
-    js.toString(content);
-
-    //info is the collection id, countries is the document id in collection info.
-    String documentPath = "info/countries";
-
-    Serial.println("------------------------------------");
-    Serial.println("Create document...");
-
-    if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.c_str()))
-    {
-        Serial.println("PASSED");
-        Serial.println("------------------------------------");
-        Serial.println(fbdo.payload());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
-    else
-    {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
+    
 }
 
 void loop()
 {
 
-    if (millis() - dataMillis > 60000 || dataMillis == 0)
+    if (Firebase.ready() && (millis() - dataMillis > 60000 || dataMillis == 0))
     {
         dataMillis = millis();
+
+        if (!taskCompleted)
+        {
+            taskCompleted = true;
+            String content;
+
+            FirebaseJson js;
+
+            js.set("fields/Japan/mapValue/fields/time_zone/integerValue", "9");
+            js.set("fields/Japan/mapValue/fields/population/integerValue", "125570000");
+
+            js.set("fields/Belgium/mapValue/fields/time_zone/integerValue", "1");
+            js.set("fields/Belgium/mapValue/fields/population/integerValue", "11492641");
+
+            js.set("fields/Singapore/mapValue/fields/time_zone/integerValue", "8");
+            js.set("fields/Singapore/mapValue/fields/population/integerValue", "5703600");
+
+            js.toString(content);
+
+            //info is the collection id, countries is the document id in collection info.
+            String documentPath = "info/countries";
+
+            Serial.println("------------------------------------");
+            Serial.println("Create document...");
+
+            if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.c_str()))
+            {
+                Serial.println("PASSED");
+                Serial.println("------------------------------------");
+                Serial.println(fbdo.payload());
+                Serial.println("------------------------------------");
+                Serial.println();
+            }
+            else
+            {
+                Serial.println("FAILED");
+                Serial.println("REASON: " + fbdo.errorReason());
+                Serial.println("------------------------------------");
+                Serial.println();
+            }
+        }
+
 
         String documentPath = "info/countries";
         String mask = "Singapore";
