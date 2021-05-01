@@ -24,11 +24,13 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 3. Define the user Email and password that alreadey registerd or added in your project */
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
@@ -57,16 +59,18 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  /* Assign the project host and api key (required) */
-  config.host = FIREBASE_PROJECT_HOST;
+  /* Assign the api key (required) */
   config.api_key = API_KEY;
 
   /* Assign the user sign in credentials */
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
 
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback;
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
@@ -91,10 +95,10 @@ void loop()
     Serial.println("Backup test...");
 
     //Download and save data to Flash memory.
-    //{TARGET_NODE_PATH} is the full path of database to backup and restore.
-    //{FILE_NAME} is file name included path to save to Flash meory
+    //<target node> is the full path of database to backup and restore.
+    //<file name> is file name included path to save to Flash meory
     //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-    if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_flash, "/{TARGET_NODE_PATH}", "/{FILE_NAME}"))
+    if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_flash, "/<target node>", "/<file name>"))
     {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.fileTransferError());
@@ -105,7 +109,7 @@ void loop()
     {
       Serial.println("PASSED");
       Serial.println("BACKUP FILE: " + fbdo.getBackupFilename());
-      Serial.printf("FILE SIZE: %d\n" + fbdo.getBackupFileSize());
+      Serial.printf("FILE SIZE: %d\n", fbdo.getBackupFileSize());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -114,10 +118,10 @@ void loop()
     Serial.println("Restore test...");
 
     //Restore data to defined database path using backup file on Flash memory.
-    //{TARGET_NODE_PATH} is the full path of database to restore
-    //{FILE_NAME} is file name included path of backed up file.
+    //<target node> is the full path of database to restore
+    //<file name> is file name included path of backed up file.
     //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-    if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_flash, "/{TARGET_NODE_PATH}", "/{FILE_NAME}"))
+    if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_flash, "/<target node>", "/<file name>"))
     {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.fileTransferError());

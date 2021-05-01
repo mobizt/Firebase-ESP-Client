@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.9
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 30, 2021
+ * Created May 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -202,9 +202,6 @@ bool Firebase_Signer::userSigninDataReady()
 bool Firebase_Signer::handleToken()
 {
     if (!config || !auth)
-        return false;
-
-    if (config->host.length() == 0)
         return false;
 
     //if the time was set (changed) after token has been generated, update its expiration
@@ -1826,8 +1823,6 @@ void Firebase_Signer::checkToken()
 {
     if (!config || !auth)
         return;
-    if (config->host.length() == 0)
-        return;
 
     //if the time was set (changed) after token has been generated, update its expiration
     if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && time(nullptr) > ESP_DEFAULT_TS)
@@ -1844,8 +1839,7 @@ bool Firebase_Signer::tokenReady()
 {
     if (!auth || !config)
         return false;
-    if (config->host.length() == 0)
-        return false;
+
     checkToken();
     return config->signer.tokens.status == token_status_ready;
 };

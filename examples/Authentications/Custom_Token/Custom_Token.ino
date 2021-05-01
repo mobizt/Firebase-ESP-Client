@@ -38,10 +38,7 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name (required) */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
-
-/** 3. Define the API key
+/** 2. Define the API key
  * 
  * The API key can be obtained since you created the project and set up 
  * the Authentication in Firebase console.
@@ -63,6 +60,9 @@
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
 #define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
+
+/* 4. If work with RTDB, define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
 /* This is Google root CA certificate */
 /*
@@ -131,8 +131,7 @@ void setup()
     /* Assign the certificate data (optional) */
     //config.cert.data = rootCACert;
 
-    /* Assign the project host and api key (required) */
-    config.host = FIREBASE_PROJECT_HOST;
+    /* Assign the api key (required) */
     config.api_key = API_KEY;
 
     /* Assign the sevice account credentials and private key (required) */
@@ -161,6 +160,9 @@ void setup()
     auth.token.claims.add("premium_account", true);
     auth.token.claims.add("admin", true);
 
+    /* Assign the RTDB URL */
+    config.database_url = DATABASE_URL;
+
     Firebase.reconnectWiFi(true);
     fbdo.setResponseSize(4096);
 
@@ -168,7 +170,7 @@ void setup()
     String base_path = "/UsersData/";
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback;
+    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     /** Assign the maximum retry of token generation */
     config.max_token_generation_retry = 5;
@@ -240,7 +242,7 @@ void loop()
             Serial.println("TYPE: " + fbdo.dataType());
             Serial.println("ETag: " + fbdo.ETag());
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

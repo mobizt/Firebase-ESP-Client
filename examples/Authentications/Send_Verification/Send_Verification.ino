@@ -35,10 +35,7 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name (required) */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
-
-/** 3. Define the API key
+/** 2. Define the API key
  * 
  * The API key can be obtained since you created the project and set up 
  * the Authentication in Firebase console.
@@ -50,9 +47,12 @@
 */
 #define API_KEY "API_KEY"
 
-/* 4. Define the user Email and password that already registerd or added in your project */
+/* 3. Define the user Email and password that already registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
+
+/* 4. If work with RTDB, define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
 /* 5. Define the Firebase Data object */
 FirebaseData fbdo;
@@ -85,9 +85,11 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    /* Assign the project host and API key (required) */
-    config.host = FIREBASE_PROJECT_HOST;
+    /* Assign the API key (required) */
     config.api_key = API_KEY;
+
+    /* Assign the RTDB URL */
+    config.database_url = DATABASE_URL;
 
     Firebase.reconnectWiFi(true);
 
@@ -98,7 +100,7 @@ void setup()
     Firebase.reconnectWiFi(true);
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback;
+    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     String base_path = "/UsersData2/";
 
@@ -143,7 +145,7 @@ void loop()
             Serial.println("TYPE: " + fbdo.dataType());
             Serial.println("ETag: " + fbdo.ETag());
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.8
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 30, 2021
+ * Created May 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -677,7 +677,7 @@ void FirebaseData::setSecure()
 
 bool FirebaseData::validRequest(const std::string &path)
 {
-    if (path.length() == 0 || Signer.getCfg()->host.length() == 0 || (Signer.getToken(token_type_legacy_token).length() == 0 && Signer.getToken(token_type_id_token).length() == 0 && Signer.getToken(token_type_oauth2_access_token).length() == 0))
+    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || (Signer.getToken(token_type_legacy_token).length() == 0 && Signer.getToken(token_type_id_token).length() == 0 && Signer.getToken(token_type_oauth2_access_token).length() == 0))
     {
         _ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
         return false;

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.6
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 30, 2021
+ * Created May 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1501,15 +1501,6 @@ bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::
 
     if (fbdo->_ss.rtdb.pause)
         return true;
-
-    if (mode == fb_esp_fcm_msg_mode_httpv1)
-    {
-        if (Signer.config->host.length() == 0)
-        {
-            fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
-            return false;
-        }
-    }
 
     if (fbdo->_ss.long_running_task > 0)
     {

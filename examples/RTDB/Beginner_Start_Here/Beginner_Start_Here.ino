@@ -24,21 +24,23 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 3. Define the user Email and password that alreadey registerd or added in your project */
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-/* 4. Define FirebaseESP8266 data object for data sending and receiving */
+/* 5. Define FirebaseESP8266 data object for data sending and receiving */
 FirebaseData fbdo;
 
-/* 5. Define the FirebaseAuth data for authentication data */
+/* 6. Define the FirebaseAuth data for authentication data */
 FirebaseAuth auth;
 
-/* 6. Define the FirebaseConfig data for config data */
+/* 7. Define the FirebaseConfig data for config data */
 FirebaseConfig config;
 
 bool taskCompleted = false;
@@ -60,32 +62,34 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  /* 7. Assign the project host and api key (required) */
-  config.host = FIREBASE_PROJECT_HOST;
+  /* 8. Assign the api key (required) */
   config.api_key = API_KEY;
 
-  /* 8. Assign the user sign in credentials */
+  /* 9. Assign the user sign in credentials */
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
 
-  /* 9. Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback;
+  /* 10. Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
 
-  /* 10. Initialize the library with the autentication data */
+  /* 11. Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+
+  /* 12. Initialize the library with the autentication data */
   Firebase.begin(&config, &auth);
 
-  /* 11. Enable auto reconnect the WiFi when connection lost */
+  /* 13. Enable auto reconnect the WiFi when connection lost */
   Firebase.reconnectWiFi(true);
 }
 
 void loop()
 {
-  /* 12. Check the ready state of Firebase before calling other functions that related to data transfer */
+  /* 14. Check the ready state of Firebase before calling other functions that related to data transfer */
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
 
-    /* 13. Try to set int data to Firebase */
+    /* 15. Try to set int data to Firebase */
     //The set function returns bool for the status of operation
     //fbdo requires for sending the data and pass as the pointer
     if (Firebase.RTDB.setInt(&fbdo, "/LED_Status", 1))
@@ -101,7 +105,7 @@ void loop()
       Serial.println(fbdo.errorReason());
     }
 
-    /* 14. Try to get int data from Firebase */
+    /* 16. Try to get int data from Firebase */
     //The get function returns bool for the status of operation
     //fbdo requires for receiving the data
     if (Firebase.RTDB.getInt(&fbdo, "/LED_Status"))

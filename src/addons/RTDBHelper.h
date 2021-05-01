@@ -89,15 +89,15 @@ void printResult(FirebaseData &data)
 
         Serial.println();
 
-        for (size_t i = 0; i < data.blobData().size(); i++)
+        std::vector<uint8_t> blob = data.blobData();
+        Serial.println();
+        for (size_t i = 0; i < blob.size(); i++)
         {
             if (i > 0 && i % 16 == 0)
                 Serial.println();
-
-            if (i < 16)
+            if (blob[i] < 16)
                 Serial.print("0");
-
-            Serial.print(data.blobData()[i], HEX);
+            Serial.print(blob[i], HEX);
             Serial.print(" ");
         }
         Serial.println();
@@ -220,15 +220,15 @@ void printResult(FirebaseStream &data)
 
         Serial.println();
 
-        for (size_t i = 0; i < data.blobData().size(); i++)
+        std::vector<uint8_t> blob = data.blobData();
+        Serial.println();
+        for (size_t i = 0; i < blob.size(); i++)
         {
             if (i > 0 && i % 16 == 0)
                 Serial.println();
-
-            if (i < 16)
+            if (blob[i] < 16)
                 Serial.print("0");
-
-            Serial.print(data.blobData()[i], HEX);
+            Serial.print(blob[i], HEX);
             Serial.print(" ");
         }
         Serial.println();

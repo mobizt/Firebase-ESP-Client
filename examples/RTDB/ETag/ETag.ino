@@ -28,11 +28,13 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 3. Define the user Email and password that alreadey registerd or added in your project */
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
@@ -63,16 +65,18 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    /* Assign the project host and api key (required) */
-    config.host = FIREBASE_PROJECT_HOST;
+    /* Assign the api key (required) */
     config.api_key = API_KEY;
 
     /* Assign the user sign in credentials */
     auth.user.email = USER_EMAIL;
     auth.user.password = USER_PASSWORD;
 
+    /* Assign the RTDB URL (required) */
+    config.database_url = DATABASE_URL;
+
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback;
+    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
@@ -110,7 +114,7 @@ void loop()
             Serial.println("CURRENT ETag: " + fbdo.ETag());
             ETag = fbdo.ETag();
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -133,7 +137,7 @@ void loop()
             Serial.println("CURRENT ETag: " + fbdo.ETag());
             ETag = fbdo.ETag();
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -156,7 +160,7 @@ void loop()
             Serial.println("ETag: " + fbdo.ETag());
             ETag = fbdo.ETag();
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -174,7 +178,7 @@ void loop()
                 Serial.println("CURRENT ETag: " + fbdo.ETag());
                 ETag = fbdo.ETag();
                 Serial.print("CURRENT VALUE: ");
-                printResult(fbdo);
+                printResult(fbdo); //see addons/RTDBHelper.h
             }
 
             Serial.println("------------------------------------");

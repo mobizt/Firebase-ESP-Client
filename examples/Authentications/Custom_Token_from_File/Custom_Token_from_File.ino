@@ -38,10 +38,7 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name (required) */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
-
-/** 3. Define the API key
+/** 2. Define the API key
  * 
  * The API key can be obtained since you created the project and set up 
  * the Authentication in Firebase console.
@@ -52,6 +49,9 @@
  * 
 */
 #define API_KEY "API_KEY"
+
+/* 3. If work with RTDB, define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
 /** 4. Define the database secret (optional)
  * 
@@ -96,8 +96,7 @@ void setup()
     //config.cert.file = "/cert.cer";
     //config.cert.file_storage = mem_storage_type_flash;
 
-    /* Assign the project host and api key (required) */
-    config.host = FIREBASE_PROJECT_HOST;
+    /* Assign the api key (required) */
     config.api_key = API_KEY;
 
     /* The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. */
@@ -120,6 +119,9 @@ void setup()
     */
     auth.token.uid = "Node1";
 
+    /* Assign the RTDB URL */
+    config.database_url = DATABASE_URL;
+
     /** Assign the custom claims (optional)
      * This uid will be compare to the auth.token.premium_account variable
      * (for this case) in the database rules.
@@ -134,7 +136,7 @@ void setup()
     String base_path = "/UsersData/";
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback;
+    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     /** Assign the maximum retry of token generation */
     config.max_token_generation_retry = 5;
@@ -215,7 +217,7 @@ void loop()
             Serial.println("TYPE: " + fbdo.dataType());
             Serial.println("ETag: " + fbdo.ETag());
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

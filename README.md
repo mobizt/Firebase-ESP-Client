@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.1.1
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.1.2
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -1483,7 +1483,7 @@ The result of the above code
 
 The MIT License (MIT)
 
-Copyright (c) 2019, 2020, 2021 K. Suwatchai (Mobizt)
+Copyright (c) 2021 K. Suwatchai (Mobizt)
 
 
 Permission is hereby granted, free of charge, to any person returning a copy of

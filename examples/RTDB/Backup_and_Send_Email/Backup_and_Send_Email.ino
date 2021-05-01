@@ -32,26 +32,27 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 3. Define the user Email and password that alreadey registerd or added in your project */
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-
-/* 4. The smtp host name e.g. smtp.gmail.com for GMail or smtp.office365.com for Outlook */
+/* 5. The smtp host name e.g. smtp.gmail.com for GMail or smtp.office365.com for Outlook */
 #define SMTP_HOST "################"
 
-/** 5. The smtp port e.g. 
+/** 6. The smtp port e.g. 
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
 */
 #define SMTP_PORT 25
 
-/* 6. The sign in credentials */
+/* 7. The sign in credentials */
 #define AUTHOR_EMAIL "################"
 #define AUTHOR_PASSWORD "################"
 
@@ -86,16 +87,18 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  /* Assign the project host and api key (required) */
-  config.host = FIREBASE_PROJECT_HOST;
+  /* Assign the api key (required) */
   config.api_key = API_KEY;
 
   /* Assign the user sign in credentials */
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
 
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback;
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
@@ -114,7 +117,7 @@ void loop()
     Serial.println("Backup test...");
 
     //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-    if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_flash, "/PATH_TO_THE_NODE", "/PATH_TO_SAVE_FILE"))
+    if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_flash, "/<target node>", "/<file name>"))
     {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.fileTransferError());
@@ -125,7 +128,7 @@ void loop()
     {
       Serial.println("PASSED");
       Serial.println("SAVE PATH: " + fbdo.getBackupFilename());
-      Serial.println("FILE SIZE: " + String(fbdo.getBackupFileSize()));
+      Serial.printf("FILE SIZE: %d\n", fbdo.getBackupFileSize());
       Serial.println("------------------------------------");
       Serial.println();
 
@@ -158,7 +161,7 @@ void loop()
         message.sender.name = "ESP Mail";
         message.sender.email = AUTHOR_EMAIL;
         message.subject = "Firebase Database Backup File";
-        message.addRecipient("Someone", "k_suwatchai@hotmail.com");
+        message.addRecipient("Someone", "yourmail@mail.com");
 
         message.text.content = "Firebase Database Backup File\r\nSent from ESP device";
 

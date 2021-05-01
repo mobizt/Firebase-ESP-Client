@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.11
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 30, 2021
+ * Created May 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -3492,11 +3492,6 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     if (!fbdo->reconnect())
         return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
 
-    if (Signer.config->host.length() == 0)
-    {
-        fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
-        return false;
-    }
 
     if (!fbdo->tokenReady())
         return FIREBASE_ERROR_TOKEN_NOT_READY;
@@ -3512,7 +3507,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     uint8_t attempts = 0;
     uint8_t maxRetry = 5;
 
-    size_t buffSize = 32;
+    size_t buffSize = 128;
     char *tmp = nullptr;
     char *buf = nullptr;
 
@@ -3523,7 +3518,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     std::string payloadBuf = "";
     std::string header = "";
 
-    rescon(fbdo, Signer.getCfg()->host.c_str(), req);
+    rescon(fbdo, Signer.getCfg()->database_url.c_str(), req);
 
     if (req->method == fb_esp_method::m_stream)
     {
@@ -3558,7 +3553,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         return FIREBASE_ERROR_CANNOT_CONFIG_TIME;
     }
 #endif
-    fbdo->httpClient.begin(Signer.getCfg()->host.c_str(), FIREBASE_PORT);
+    fbdo->httpClient.begin(Signer.getCfg()->database_url.c_str(), FIREBASE_PORT);
 
     //Prepare for string and JSON payloads
     preparePayload(req, payloadBuf);
@@ -4145,8 +4140,16 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                                 {
                                     if (fbdo->_ss.rtdb.file_name.length() == 0)
                                     {
+                                        size_t writeLen = 0;
                                         if (Signer.getCfg()->_int.fb_file)
-                                            Signer.getCfg()->_int.fb_file.write((uint8_t *)payload.c_str(), readLen);
+                                            writeLen = Signer.getCfg()->_int.fb_file.write((uint8_t *)payload.c_str(), readLen);
+
+                                        fbdo->_ss.rtdb.backup_file_size = writeLen;
+                                        if (stream->available() == 0)
+                                        {
+                                            fbdo->closeSession();
+                                            break;
+                                        }
                                     }
                                     else
                                     {
@@ -4852,7 +4855,7 @@ void FB_RTDB::prepareHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
 
     ut->appendP(header, fb_esp_pgm_str_30);
     ut->appendP(header, fb_esp_pgm_str_31);
-    header += Signer.getCfg()->host;
+    header += Signer.getCfg()->database_url;
     ut->appendP(header, fb_esp_pgm_str_21);
     ut->appendP(header, fb_esp_pgm_str_32);
 

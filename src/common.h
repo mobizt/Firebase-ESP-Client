@@ -1,6 +1,6 @@
 
 /**
- * Created April 30, 2021
+ * Created May 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -580,7 +580,9 @@ typedef void (*TokenStatusCallback)(TokenInfo);
 struct fb_esp_cfg_t
 {
     struct fb_esp_service_account_t service_account;
+    //deprecated, use database_url instead
     std::string host;
+    std::string database_url;
     std::string api_key;
     float time_zone = 0;
     struct fb_esp_auth_cert_t cert;

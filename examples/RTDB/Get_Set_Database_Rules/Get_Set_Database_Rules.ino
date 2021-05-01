@@ -27,11 +27,13 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name and API Key */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
 #define API_KEY "API_KEY"
 
-/** 3. Define the Service Account credentials (required for token generation)
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/** 4. Define the Service Account credentials (required for token generation)
  * 
  * This information can be taken from the service account JSON file.
  * 
@@ -69,9 +71,11 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  /* Assign the project host and api key (required) */
-  config.host = FIREBASE_PROJECT_HOST;
+  /* Assign the api key (required) */
   config.api_key = API_KEY;
+
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
 
   /* Assign the sevice account credentials and private key (required) */
   config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
@@ -79,7 +83,7 @@ void setup()
   config.service_account.data.private_key = PRIVATE_KEY;
 
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback;
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);

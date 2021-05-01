@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.1.1
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.1.2
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 30, 2021
+ * Created May 1, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -78,9 +78,12 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
       _cfg->signer.tokens.token_type == token_type_id_token;
 
   if (_cfg->host.length() > 0)
+    _cfg->database_url = _cfg->host;
+
+  if (_cfg->database_url.length() > 0)
   {
-    ut->getUrlInfo(_cfg->host.c_str(), uinfo);
-    _cfg->host = uinfo.host;
+    ut->getUrlInfo(_cfg->database_url.c_str(), uinfo);
+    _cfg->database_url = uinfo.host;
   }
 
   if (strlen_P(_cfg->cert.data))

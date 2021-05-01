@@ -27,8 +27,8 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name (required) */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
+/* 2. If work with RTDB, define the RTDB URL and database secret */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 #define DATABASE_SECRET "DATABASE_SECRET"
 
 /* 3. Define the Firebase Data object */
@@ -65,8 +65,8 @@ void setup()
     //config.cert.file = "/cert.cer";
     //config.cert.file_storage = StorageType::FLASH;
 
-    /* Assign the project host and database secret(required) */
-    config.host = FIREBASE_PROJECT_HOST;
+    /* Assign the database URL and database secret(required) */
+    config.database_url = DATABASE_URL;
     config.signer.tokens.legacy_token = DATABASE_SECRET;
 
     Firebase.reconnectWiFi(true);
@@ -93,7 +93,7 @@ void loop()
             Serial.println("TYPE: " + fbdo.dataType());
             Serial.println("ETag: " + fbdo.ETag());
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

@@ -53,18 +53,13 @@
 //Provide the RTDB payload printing info and other helper functions.
 #include "addons/RTDBHelper.h"
 
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
-
-/** The database secret is obsoleted, please use other authentication methods, 
- * see examples in the Authentications folder. 
-*/
-#define FIREBASE_AUTH "DATABASE_SECRET"
-
-/* Define the Firebase project host name and API Key */
-#define FIREBASE_PROJECT_HOST "PROJECT_ID.firebaseio.com"
+/* 1. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* Define the user Email and password that alreadey registerd or added in your project */
+/* 2. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 3. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
@@ -153,16 +148,18 @@ void setupFirebase()
 
     firebaseConfigReady = true;
 
-    /* Assign the project host and api key (required) */
-    config.host = FIREBASE_PROJECT_HOST;
+    /* Assign the api key (required) */
     config.api_key = API_KEY;
 
     /* Assign the user sign in credentials */
     auth.user.email = USER_EMAIL;
     auth.user.password = USER_PASSWORD;
 
+    /* Assign the RTDB URL (required) */
+    config.database_url = DATABASE_URL;
+
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback;
+    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     config.max_token_generation_retry = 30;
 
@@ -210,7 +207,7 @@ void testFirebase()
             Serial.println("TYPE: " + fbdo.dataType());
             Serial.println("ETag: " + fbdo.ETag());
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -237,7 +234,7 @@ void testFirebase()
             Serial.println("TYPE: " + fbdo.dataType());
             Serial.println("ETag: " + fbdo.ETag());
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -324,7 +321,7 @@ void testFirebase()
             Serial.println("TYPE: " + fbdo.dataType());
             //No ETag available
             Serial.print("VALUE: ");
-            printResult(fbdo);
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

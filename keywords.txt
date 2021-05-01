@@ -185,6 +185,7 @@ setDeviceTime   KEYWORD2
 setQueryIndex   KEYWORD2
 removeQueryIndex    
 authenticated   KEYWORD2
+ready   KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
@@ -283,6 +284,7 @@ QueueItem   KEYWORD3
 token_info_t    KEYWORD3
 TokenInfo   KEYWORD3
 fb_json_last_error_t    KEYWORD3
+Firesense_Config    KEYWORD3
 FireSense_Channel   KEYWORD3
 Firesense_Channel_Type  KEYWORD3
 FireSense_Condition KEYWORD3
