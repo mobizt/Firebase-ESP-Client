@@ -121,7 +121,7 @@ The valid left, right operands and syntaxes are
 
 | Oerand and Syntaxes  | Usages |
 | ------------- | ------------- |
-| <channel id>  | LED1 == false && STATUS == LED1  |
+| \<channel id\>  | LED1 == false && STATUS == LED1  |
 | values e.g. boolean, integer and float  | HUMID1 > 70 \|\| LAMP1 == false  |
 | millis | millis > 200000 + VALUE1 |
 | micros | VALUE1 < micros - 1000000 |
@@ -149,7 +149,7 @@ The valid left, right operands and syntaxes are
 
 | Oerand and Syntaxes  | Usages |
 | ------------- | ------------- |
-| <channel id>  | LED1 = false, STATUS = 5 * 10  |
+| \<channel id\>  | LED1 = false, STATUS = 5 * 10  |
 | values e.g. boolean, integer and float  | HUMID1 = 70  |
 | millis | VALUE1 += millis |
 | micros | VALUE1 \*= micros |
