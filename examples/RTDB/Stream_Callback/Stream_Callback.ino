@@ -148,13 +148,9 @@ void loop()
     FirebaseJson json;
     json.add("data", "hello").add("num", count);
     String Path = path + "/Json";
-    if (Firebase.RTDB.setJSON(&fbdo2, Path.c_str(), &json))
+    if (Firebase.RTDB.setJSONAsync(&fbdo2, Path.c_str(), &json))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo2.dataPath());
-      Serial.println("TYPE: " + fbdo2.dataType());
-      Serial.print("VALUE: ");
-      printResult(fbdo2); //see addons/RTDBHelper.h
       Serial.println("------------------------------------");
       Serial.println();
     }

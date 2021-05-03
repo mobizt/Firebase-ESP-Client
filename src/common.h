@@ -325,6 +325,7 @@ struct fb_esp_rtdb_request_info_t
     std::string priority = "";
     std::string etag = "";
     bool queue = false;
+    bool async = false;
     std::string filename = "";
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
 };
@@ -585,6 +586,7 @@ struct fb_esp_cfg_t
     std::string database_url;
     std::string api_key;
     float time_zone = 0;
+    size_t async_close_session_max_request = 100;
     struct fb_esp_auth_cert_t cert;
     struct fb_esp_token_signer_resources_t signer;
     struct fb_esp_cfg_int_t _int;
@@ -608,6 +610,8 @@ struct fb_esp_rtdb_info_t
     bool path_not_found = false;
     bool pause = false;
     bool stream_stop = true;
+    bool async = false;
+    size_t async_count = 0;
 
     uint8_t connection_status = 0;
     uint32_t queue_ID = 0;

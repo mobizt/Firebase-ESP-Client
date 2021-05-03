@@ -138,14 +138,9 @@ void loop()
 
         String Path = path + "/int";
 
-        if (Firebase.RTDB.set(&fbdo, Path.c_str(), count++))
+        if (Firebase.RTDB.setAsync(&fbdo, Path.c_str(), count++))
         {
             Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.println("TYPE: " + fbdo.dataType());
-            Serial.println("ETag: " + fbdo.ETag());
-            Serial.print("VALUE: ");
-            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

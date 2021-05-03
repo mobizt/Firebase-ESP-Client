@@ -92,7 +92,7 @@ void loop()
     /* 15. Try to set int data to Firebase */
     //The set function returns bool for the status of operation
     //fbdo requires for sending the data and pass as the pointer
-    if (Firebase.RTDB.setInt(&fbdo, "/LED_Status", 1))
+    if (Firebase.RTDB.setIntAsync(&fbdo, "/LED_Status", 1))
     {
       //Success
       Serial.println("Set int data success");

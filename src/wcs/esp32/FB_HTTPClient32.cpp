@@ -193,7 +193,6 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
       f.close();
     }
   }
-  //_wcs->setNoDelay(true);
 }
 
 #endif /* ESP32 */

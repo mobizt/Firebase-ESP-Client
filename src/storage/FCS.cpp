@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.0.7
+ * Google's Firebase Storage class, FCS.cpp version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created May 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -49,6 +49,12 @@ void FB_Storage::begin(UtilsClass *u)
 
 bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
 {
+    if (!Signer.getCfg())
+    {
+        fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
+        return false;
+    }
+
     if (fbdo->_ss.rtdb.pause)
         return true;
 

@@ -199,13 +199,9 @@ void loop()
         Serial.println("Set Int...");
         String Path = path + "/Int";
 
-        if (Firebase.RTDB.set(fbdo2, Path.c_str(), count))
+        if (Firebase.RTDB.setAsync(fbdo2, Path.c_str(), count))
         {
             Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo2->dataPath());
-            Serial.println("TYPE: " + fbdo2->dataType());
-            Serial.print("VALUE: ");
-            printResult(*fbdo2); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

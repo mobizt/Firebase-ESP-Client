@@ -154,67 +154,31 @@ void loop()
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
-    count++;
 
     Serial.println("------------------------------------");
     Serial.println("Set JSON...");
 
     FirebaseJson json;
-    json.set("node1/data", "hello");
-    json.set("node1/num", count);
-    json.set("node2/data", "hi");
-    json.set("node2/num", count);
-    if (Firebase.RTDB.setJSON(&fbdo2, parentPath.c_str(), &json))
+
+    for (size_t i = 0; i < 10; i++)
     {
-      Serial.println("PASSED");
-      Serial.println();
-    }
-    else
-    {
-      Serial.println("FAILED");
-      Serial.println("REASON: " + fbdo2.errorReason());
-      Serial.println("------------------------------------");
-      Serial.println();
-    }
-
-    //This will trig the another stream event.
-
-    Serial.println("------------------------------------");
-    Serial.println("Set string...");
-
-    String Path = parentPath + "/node2/new/data";
-
-    if (Firebase.RTDB.setString(&fbdo2, Path.c_str(), "test"))
-    {
-      Serial.println("PASSED");
-      Serial.println();
-    }
-    else
-    {
-      Serial.println("FAILED");
-      Serial.println("REASON: " + fbdo2.errorReason());
-      Serial.println("------------------------------------");
-      Serial.println();
-    }
-
-    //This will trig the another stream event.
-
-    Serial.println("------------------------------------");
-    Serial.println("Set int...");
-
-    Path = parentPath + "/node1/new/data";
-
-    if (Firebase.RTDB.setInt(&fbdo2, Path.c_str(), count))
-    {
-      Serial.println("PASSED");
-      Serial.println();
-    }
-    else
-    {
-      Serial.println("FAILED");
-      Serial.println("REASON: " + fbdo2.errorReason());
-      Serial.println("------------------------------------");
-      Serial.println();
+      json.set("node1/data", "hello");
+      json.set("node1/num", count);
+      json.set("node2/data", "hi");
+      json.set("node2/num", count);
+      if (Firebase.RTDB.setJSONAsync(&fbdo2, parentPath.c_str(), &json))
+      {
+        Serial.println("PASSED");
+        Serial.println();
+      }
+      else
+      {
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo2.errorReason());
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+      count++;
     }
   }
 }

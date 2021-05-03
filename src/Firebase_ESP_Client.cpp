@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.1.2
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h version 2.1.3
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 1, 2021
+ * Created May 4, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)

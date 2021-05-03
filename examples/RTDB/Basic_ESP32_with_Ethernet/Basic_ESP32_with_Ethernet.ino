@@ -200,14 +200,9 @@ void testFirebase()
     {
         node = path + "/Double/Data" + String(i + 1);
         //Also can use Firebase.set instead of Firebase.setDouble
-        if (Firebase.RTDB.setDouble(&fbdo, node.c_str(), ((i + 1) * 10) + 0.123456789))
+        if (Firebase.RTDB.setDoubleAsync(&fbdo, node.c_str(), ((i + 1) * 10) + 0.123456789))
         {
             Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.println("TYPE: " + fbdo.dataType());
-            Serial.println("ETag: " + fbdo.ETag());
-            Serial.print("VALUE: ");
-            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -254,13 +249,9 @@ void testFirebase()
     {
         node = path + "/Push/Int";
         //Also can use Firebase.push instead of Firebase.pushInt
-        if (Firebase.RTDB.pushInt(&fbdo, node.c_str(), (i + 1)))
+        if (Firebase.RTDB.pushIntAsync(&fbdo, node.c_str(), (i + 1)))
         {
             Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.print("PUSH NAME: ");
-            Serial.println(fbdo.pushName());
-            Serial.println("ETag: " + fbdo.ETag());
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -285,13 +276,9 @@ void testFirebase()
 
         //Also can use Firebase.push instead of Firebase.pushJSON
         //Json string is not support in v 2.6.0 and later, only FirebaseJson object is supported.
-        if (Firebase.RTDB.pushJSON(&fbdo, node.c_str(), &json))
+        if (Firebase.RTDB.pushJSONAsync(&fbdo, node.c_str(), &json))
         {
             Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.print("PUSH NAME: ");
-            Serial.println(fbdo.pushName());
-            Serial.println("ETag: " + fbdo.ETag());
             Serial.println("------------------------------------");
             Serial.println();
         }
@@ -314,14 +301,9 @@ void testFirebase()
 
         node = path + "/float";
 
-        if (Firebase.RTDB.updateNode(&fbdo, node.c_str(), &json))
+        if (Firebase.RTDB.updateNodeAsync(&fbdo, node.c_str(), &json))
         {
             Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.println("TYPE: " + fbdo.dataType());
-            //No ETag available
-            Serial.print("VALUE: ");
-            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

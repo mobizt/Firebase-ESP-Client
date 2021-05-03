@@ -112,13 +112,9 @@ void loop()
 
     Serial.println("------------------------------------");
     Serial.println("Set string...");
-    if (Firebase.RTDB.setString(&fbdo, Path.c_str(), Value.c_str()))
+    if (Firebase.RTDB.setStringAsync(&fbdo, Path.c_str(), Value.c_str()))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo.dataPath());
-      Serial.println("TYPE: " + fbdo.dataType());
-      Serial.print("VALUE: ");
-      printResult(fbdo); //see addons/RTDBHelper.h
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -132,7 +128,6 @@ void loop()
   }
   if (Firebase.ready())
   {
-
     if (!Firebase.RTDB.readStream(&fbdo))
     {
       Serial.println("------------------------------------");

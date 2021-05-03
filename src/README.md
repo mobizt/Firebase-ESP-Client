@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.1.2
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v 2.1.3
 
 
 The default filessystem used in the library is flash and SD.
@@ -527,6 +527,8 @@ pushJSON, updateNode, and updateNodeSilent functions.
 
 ```cpp
 bool setPriority(FirebaseData *fbdo, const char *path, float priority);
+
+bool setPriorityAsync(FirebaseData *fbdo, const char *path, float priority);
 ```
 
 
@@ -570,6 +572,10 @@ call [FirebaseData object].pushName() to get the key.
 bool pushInt(FirebaseData *fbdo, const char *path, int intValue);
 
 bool push(FirebaseData *fbdo, const char *path, int intValue);
+
+bool pushIntAsync(FirebaseData *fbdo, const char *path, int intValue);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, int intValue);
 ```
 
 
@@ -580,6 +586,10 @@ bool push(FirebaseData *fbdo, const char *path, int intValue);
 bool pushInt(FirebaseData *fbdo, const char *path, int intValue, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+bool pushIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
 ```
 
 
@@ -604,6 +614,10 @@ call [FirebaseData object].pushName() to get the key.
 bool pushFloat(FirebaseData *fbdo, const char *path, float floatValue);
 
 bool push(FirebaseData *fbdo, const char *path, float floatValue);
+
+bool pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, float floatValue);
 ```
 
 
@@ -616,6 +630,10 @@ bool push(FirebaseData *fbdo, const char *path, float floatValue);
 bool pushFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+bool pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 ```
 
 
@@ -639,6 +657,10 @@ call [FirebaseData object].pushName() to get the key.
 bool pushDouble(FirebaseData *fbdo, const char *path, double doubleValue);
 
 bool push(FirebaseData *fbdo, const char *path, double doubleValue);
+
+bool pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, double doubleValue);
 ```
 
 
@@ -651,6 +673,10 @@ bool push(FirebaseData *fbdo, const char *path, double doubleValue);
 bool pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+bool pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 ```
 
 
@@ -675,6 +701,10 @@ call [FirebaseData object].pushName() to get the key.
 bool pushBool(FirebaseData *fbdo, const char *path, bool boolValue);
 
 bool push(FirebaseData *fbdo, const char *path, bool boolValue);
+
+bool pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, bool boolValue);
 ```
 
 
@@ -686,6 +716,10 @@ bool push(FirebaseData *fbdo, const char *path, bool boolValue);
 bool pushBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+bool pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 ```
 
 
@@ -711,6 +745,12 @@ bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue)
 bool push(FirebaseData *fbdo, const char *path, const char *stringValue);
 
 bool push(FirebaseData *fbdo, const char *path, const String &stringValue);
+
+bool pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
 ```
 
 
@@ -725,6 +765,12 @@ bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue,
 bool push(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+bool pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
 ```
 
 
@@ -750,6 +796,10 @@ call [FirebaseData object].pushName() to get the key.
 bool pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
 bool push(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+bool pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 ```
 
 
@@ -763,6 +813,10 @@ bool push(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 bool pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+bool pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 ```
 
 
@@ -791,6 +845,10 @@ call [FirebaseData object].pushName() to get the key.
 bool pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 
 bool push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
+bool pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 ```
 
 
@@ -804,6 +862,10 @@ bool push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 bool pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+bool pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 ```
 
 
@@ -829,6 +891,10 @@ call [FirebaseData object].pushName() to get the key.
 bool pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 
 bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
+bool pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 ```
 
 
@@ -842,6 +908,10 @@ bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 bool pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
 bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+bool pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 ```
 
 
@@ -870,13 +940,12 @@ call [FirebaseData object].pushName() to get the key.
 bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 
 bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
+bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
+bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of FLASH (only for ES8266 at this time), add the following macro in **FirebaseFS.h**
-
-```cpp
-#define USE_LITTLEFS
-```
 
 
 
@@ -890,13 +959,12 @@ To use LittleFS file system for flash memory instead of FLASH (only for ES8266 a
 bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
 bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 ```
 
-To use LittleFS file system for flash memory instead of FLASH (only for ES8266 at this time), add the following macro in **FirebaseFS.h**
-
-```cpp
-#define USE_LITTLEFS
-```
 
 
 
@@ -915,6 +983,8 @@ call [FirebaseData object].pushName() to get the key.
 
 ```cpp
 bool pushTimestamp(FirebaseData *fbdo, const char *path);
+
+bool pushTimestampAsync(FirebaseData *fbdo, const char *path);
 ```
 
 
@@ -940,6 +1010,10 @@ Call [FirebaseData object].intData to get the integer value that stored on the d
 bool setInt(FirebaseData *fbdo, const char *path, int intValue);
 
 bool set(FirebaseData *fbdo, const char *path, int intValue);
+
+bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue);
+
+bool setAsync(FirebaseData *fbdo, const char *path, int intValue);
 ```
 
 
@@ -951,6 +1025,10 @@ bool set(FirebaseData *fbdo, const char *path, int intValue);
 bool setInt(FirebaseData *fbdo, const char *path, int intValue, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
 ```
 
 
@@ -981,6 +1059,10 @@ Also call [FirebaseData object].intData to get the current integer value.
 bool setInt(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
+
+bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
 ```
 
 
@@ -994,6 +1076,10 @@ bool set(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
 bool setInt(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
+
+bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
 ```
 
 
@@ -1019,6 +1105,10 @@ Call [FirebaseData object].floatData to get the float value that stored on the d
 bool setFloat(FirebaseData *fbdo, const char *path, float floatValue);
 
 bool set(FirebaseData *fbdo, const char *path, float floatValue);
+
+bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue);
+
+bool setAsync(FirebaseData *fbdo, const char *path, float floatValue);
 ```
 
 
@@ -1030,6 +1120,10 @@ bool set(FirebaseData *fbdo, const char *path, float floatValue);
 bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 ```
 
 
@@ -1063,6 +1157,10 @@ Also call [FirebaseData object].floatData to get the current float value.
 bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
+
+bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
 ```
 
 
@@ -1074,6 +1172,10 @@ bool set(FirebaseData *fbdo, const char *path, float floatValue, const char *ETa
 bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
+
+bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
 ```
 
 
@@ -1102,6 +1204,10 @@ use printf("%.9lf\n", firebaseData.doubleData()); for print the returned double 
 bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue);
 
 bool set(FirebaseData *fbdo, const char *path, double doubleValue);
+
+bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+
+bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue);
 ```
 
 
@@ -1114,6 +1220,10 @@ bool set(FirebaseData *fbdo, const char *path, double doubleValue);
 bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 ```
 
 
@@ -1147,6 +1257,10 @@ Also call [FirebaseData object].doubeData to get the current double value.
 bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
+
+bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
 ```
 
 
@@ -1160,6 +1274,10 @@ bool set(FirebaseData *fbdo, const char *path, double doubleValue, const char *E
 bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
+
+bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
 ```
 
 
@@ -1184,6 +1302,10 @@ Call [FirebaseData object].boolData to get the integer value that stored on the 
 bool setBool(FirebaseData *fbdo, const char *path, bool boolValue);
 
 bool set(FirebaseData *fbdo, const char *path, bool boolValue);
+
+bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+
+bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue);
 ```
 
 
@@ -1196,6 +1318,10 @@ bool set(FirebaseData *fbdo, const char *path, bool boolValue);
 bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 ```
 
 
@@ -1229,6 +1355,10 @@ Also call [FirebaseData object].boolData to get the current boolean value.
 bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
+
+bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
 ```
 
 
@@ -1241,6 +1371,10 @@ bool set(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag)
 bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
+
+bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
 ```
 
 
@@ -1268,6 +1402,12 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue);
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue);
+
+bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
 ```
 
 
@@ -1283,6 +1423,12 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, 
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
 ```
 
 
@@ -1319,6 +1465,12 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, 
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
+
+bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
 ```
 
 
@@ -1333,6 +1485,12 @@ bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, 
 bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
+
+bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
 ```
 
 
@@ -1361,6 +1519,10 @@ Call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr to get
 bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
 bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 ```
 
 
@@ -1374,7 +1536,11 @@ bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 ```cpp
 bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 ```
 
 
@@ -1412,6 +1578,10 @@ Also call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr t
 bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
+
+bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
 ```
 
 
@@ -1425,6 +1595,10 @@ bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *E
 bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
+
+bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
 ```
 
 
@@ -1453,6 +1627,10 @@ FirebaseJsonArray object which contains the array.
 bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 
 bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
+bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 ```
 
 
@@ -1467,6 +1645,10 @@ bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 ```
 
 
@@ -1504,6 +1686,10 @@ Also call [FirebaseData object].jsonArray and [FirebaseData object].jsonArrayPtr
 bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
+
+bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
 ```
 
 
@@ -1516,6 +1702,10 @@ bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const cha
 bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
+
+bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
 ```
 
 
@@ -1542,6 +1732,10 @@ No payload returned from the server.
 bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 
 bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
+bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
+bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 ```
 
 
@@ -1554,6 +1748,10 @@ bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
 bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 ```
 
 
@@ -1586,6 +1784,10 @@ the operation will be failed with the http return code 412, Precondition Failed 
 bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
+
+bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
 ```
 
 
@@ -1598,6 +1800,10 @@ bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const
 bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
 
 bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
+
+bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
 ```
 
 
@@ -1624,13 +1830,13 @@ No payload returned from the server.
 bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 
 bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
+bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
+bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
-```cpp
-#define USE_LITTLEFS
-```
 
 
 
@@ -1641,6 +1847,10 @@ To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 
 bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
 bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 ```
 
 
@@ -1673,13 +1883,14 @@ the operation will be failed with the http return code 412, Precondition Failed 
 bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
 
 bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
+
+bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
+
+bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
 ```
 
-To use LittleFS file system for flash memory instead of FLASH only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
-```cpp
-#define USE_LITTLEFS
-```
+
 
 
 
@@ -1692,7 +1903,9 @@ bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char
 
 bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
 
+bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
 
+bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
 ```
 
 
@@ -1716,6 +1929,8 @@ use printf("%.0lf\n", firebaseData.doubleData());.
 
 ```cpp
 bool setTimestamp(FirebaseData *fbdo, const char *path);
+
+bool setTimestampAsync(FirebaseData *fbdo, const char *path);
 ```
 
 
@@ -1737,6 +1952,8 @@ to get the JSON data that already updated on the defined node.
 
 ```cpp
 bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+bool updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 ```
 
 
@@ -1749,6 +1966,8 @@ bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
 ```cpp
 bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+bool updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 ```
 
 
@@ -1772,6 +1991,8 @@ no payload will be returned from the server.
 
 ```cpp
 bool updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+bool updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 ```
 
 
@@ -1782,6 +2003,8 @@ bool updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
 ```cpp
 bool updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+bool updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 ```
 
 
@@ -2359,11 +2582,8 @@ return **`Boolean`** value, indicates the success of the operation.
 bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
-```cpp
-#define USE_LITTLEFS
-```
+
 
 
 
@@ -2611,11 +2831,8 @@ return **`Boolean`** value, indicates the success of the operation.
 bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
 ```
 
-To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
 
-```cpp
-#define USE_LITTLEFS
-```
+
 
 
 
@@ -2636,12 +2853,6 @@ return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
 bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
-```
-
-To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
-
-```cpp
-#define USE_LITTLEFS
 ```
 
 
@@ -2714,12 +2925,6 @@ The file systems can be changed in FirebaseFS.h.
     
 ```cpp
 bool deleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType);
-```
-
-To use LittleFS file system for flash memory instead of FLASH (only for ESP8266 at this time), add the following macro in **FirebaseFS.h**
-
-```cpp
-#define USE_LITTLEFS
 ```
 
 
@@ -4591,11 +4796,8 @@ return **`String`** (String object) of a file name that stores on SD card/flash 
 ```cpp
 String getBackupFilename();
 ```
-To use LittleFS file system for flash memory instead of FLASH, add the following macro in **FirebaseFS.h**
 
-```cpp
-#define USE_LITTLEFS
-```
+
 
 
 
