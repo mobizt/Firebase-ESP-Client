@@ -3,7 +3,7 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -34,32 +34,32 @@
 #define FIREBASE_STREAM_SESSION_CPP
 #include "FB_Stream.h"
 
-FirebaseStream::FirebaseStream()
+FIREBASE_STREAM_CLASS::FIREBASE_STREAM_CLASS()
 {
 }
 
-FirebaseStream::~FirebaseStream()
+FIREBASE_STREAM_CLASS::~FIREBASE_STREAM_CLASS()
 {
     empty();
 }
 
-void FirebaseStream::begin(UtilsClass *u, struct fb_esp_stream_info_t *s)
+void FIREBASE_STREAM_CLASS::begin(UtilsClass *u, struct fb_esp_stream_info_t *s)
 {
     ut = u;
     sif = s;
 }
 
-String FirebaseStream::dataPath()
+String FIREBASE_STREAM_CLASS::dataPath()
 {
     return sif->path.c_str();
 }
 
-String FirebaseStream::streamPath()
+String FIREBASE_STREAM_CLASS::streamPath()
 {
     return sif->stream_path.c_str();
 }
 
-int FirebaseStream::intData()
+int FIREBASE_STREAM_CLASS::intData()
 {
     if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
         return atoi(sif->data.c_str());
@@ -67,7 +67,7 @@ int FirebaseStream::intData()
         return 0;
 }
 
-float FirebaseStream::floatData()
+float FIREBASE_STREAM_CLASS::floatData()
 {
     if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
         return atof(sif->data.c_str());
@@ -75,7 +75,7 @@ float FirebaseStream::floatData()
         return 0;
 }
 
-double FirebaseStream::doubleData()
+double FIREBASE_STREAM_CLASS::doubleData()
 {
     if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
         return atof(sif->data.c_str());
@@ -83,7 +83,7 @@ double FirebaseStream::doubleData()
         return 0.0;
 }
 
-bool FirebaseStream::boolData()
+bool FIREBASE_STREAM_CLASS::boolData()
 {
     bool res = false;
     char *str = ut->boolStr(true);
@@ -93,7 +93,7 @@ bool FirebaseStream::boolData()
     return res;
 }
 
-String FirebaseStream::stringData()
+String FIREBASE_STREAM_CLASS::stringData()
 {
     if (sif->data_type == fb_esp_data_type::d_string)
         return sif->data.substr(1, sif->data.length() - 2).c_str();
@@ -101,7 +101,7 @@ String FirebaseStream::stringData()
         return std::string().c_str();
 }
 
-String FirebaseStream::jsonString()
+String FIREBASE_STREAM_CLASS::jsonString()
 {
     if (sif->data_type == fb_esp_data_type::d_json)
     {
@@ -113,17 +113,17 @@ String FirebaseStream::jsonString()
         return std::string().c_str();
 }
 
-FirebaseJson *FirebaseStream::jsonObjectPtr()
+FirebaseJson *FIREBASE_STREAM_CLASS::jsonObjectPtr()
 {
     return _json;
 }
 
-FirebaseJson &FirebaseStream::jsonObject()
+FirebaseJson &FIREBASE_STREAM_CLASS::jsonObject()
 {
     return *jsonObjectPtr();
 }
 
-FirebaseJsonArray *FirebaseStream::jsonArrayPtr()
+FirebaseJsonArray *FIREBASE_STREAM_CLASS::jsonArrayPtr()
 {
     if (sif->data.length() > 0 && sif->data_type == fb_esp_data_type::d_array)
     {
@@ -153,22 +153,22 @@ FirebaseJsonArray *FirebaseStream::jsonArrayPtr()
     return _jsonArr;
 }
 
-FirebaseJsonArray &FirebaseStream::jsonArray()
+FirebaseJsonArray &FIREBASE_STREAM_CLASS::jsonArray()
 {
     return *jsonArrayPtr();
 }
 
-FirebaseJsonData *FirebaseStream::jsonDataPtr()
+FirebaseJsonData *FIREBASE_STREAM_CLASS::jsonDataPtr()
 {
     return _jsonData;
 }
 
-FirebaseJsonData &FirebaseStream::jsonData()
+FirebaseJsonData &FIREBASE_STREAM_CLASS::jsonData()
 {
     return *_jsonData;
 }
 
-std::vector<uint8_t> FirebaseStream::blobData()
+std::vector<uint8_t> FIREBASE_STREAM_CLASS::blobData()
 {
     if (sif->blob.size() > 0 && sif->data_type == fb_esp_data_type::d_blob)
         return sif->blob;
@@ -176,7 +176,7 @@ std::vector<uint8_t> FirebaseStream::blobData()
         return std::vector<uint8_t>();
 }
 
-File FirebaseStream::fileStream()
+File FIREBASE_STREAM_CLASS::fileStream()
 {
     if (sif->data_type == fb_esp_data_type::d_file)
     {
@@ -189,17 +189,17 @@ File FirebaseStream::fileStream()
     return Signer.getCfg()->_int.fb_file;
 }
 
-String FirebaseStream::dataType()
+String FIREBASE_STREAM_CLASS::dataType()
 {
     return sif->data_type_str.c_str();
 }
 
-String FirebaseStream::eventType()
+String FIREBASE_STREAM_CLASS::eventType()
 {
     return sif->event_type_str.c_str();
 }
 
-void FirebaseStream::empty()
+void FIREBASE_STREAM_CLASS::empty()
 {
     std::string().swap(sif->stream_path);
     std::string().swap(sif->path);

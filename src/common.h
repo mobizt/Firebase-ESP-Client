@@ -1,6 +1,6 @@
 
 /**
- * Created May 1, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -49,9 +49,18 @@
 #include <FS.h>
 #include "json/FirebaseJson.h"
 
+#if defined(FIREBASE_ESP_CLIENT)
+#define FIREBASE_STREAM_CLASS FirebaseStream
+#define FIREBASE_MP_STREAM_CLASS MultiPathStream
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#define FIREBASE_STREAM_CLASS StreamData
+#define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
+#endif
+
 class FirebaseData;
 class PolicyInfo;
 class FunctionsConfig;
+class QueryFilter;
 
 #define FIREBASE_PORT 443
 #define KEEP_ALIVE_TIMEOUT 45000
@@ -66,22 +75,20 @@ class FunctionsConfig;
 #define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
 #define ESP_DEFAULT_TS 1618971013
 
-enum fb_esp_fcm_msg_mode
-{
-    fb_esp_fcm_msg_mode_legacy_http,
-    fb_esp_fcm_msg_mode_httpv1,
-    fb_esp_fcm_msg_mode_subscribe,
-    fb_esp_fcm_msg_mode_unsubscribe,
-    fb_esp_fcm_msg_mode_app_instance_info,
-    fb_esp_fcm_msg_mode_apn_token_registration
-};
-
 enum fb_esp_mem_storage_type
 {
     mem_storage_type_undefined,
     mem_storage_type_flash,
     mem_storage_type_sd
 };
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+struct StorageType
+{
+    static const int8_t UNDEFINED = 0; //add to compatible with fb_esp_mem_storage_type enum
+    static const int8_t FLASH = 1;     //now set to 1 instead of 0 in older version
+    static const int8_t SD = 2;        //now set to 2 instead of 1 in older version
+};
+#endif
 
 enum fb_esp_con_mode
 {
@@ -177,6 +184,18 @@ enum fb_esp_user_email_sending_type
 {
     fb_esp_user_email_sending_type_verify,
     fb_esp_user_email_sending_type_reset_psw
+};
+
+#if defined(FIREBASE_ESP_CLIENT)
+
+enum fb_esp_fcm_msg_mode
+{
+    fb_esp_fcm_msg_mode_legacy_http,
+    fb_esp_fcm_msg_mode_httpv1,
+    fb_esp_fcm_msg_mode_subscribe,
+    fb_esp_fcm_msg_mode_unsubscribe,
+    fb_esp_fcm_msg_mode_app_instance_info,
+    fb_esp_fcm_msg_mode_apn_token_registration
 };
 
 enum fb_esp_gcs_request_type
@@ -316,37 +335,69 @@ enum fb_esp_gcs_upload_status
     fb_esp_gcs_upload_status_complete
 };
 
+#endif
+
+struct fb_esp_rtdb_request_data_info
+{
+    fb_esp_data_type type = d_any;
+    bool isPtr = false;
+    int *intPtr = nullptr;
+    float *floatPtr = nullptr;
+    double *doublePtr = nullptr;
+    bool *boolPtr = nullptr;
+    String *stringPtr = nullptr;
+    std::vector<uint8_t> *blobPtr = nullptr;
+    FirebaseJson *jsonPtr = nullptr;
+    FirebaseJsonArray *arrPtr = nullptr;
+    QueryFilter *query = nullptr;
+#if defined(FIREBASE_ESP_CLIENT)
+    fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+    uint8_t storageType = StorageType::UNDEFINED;
+#endif
+    const char *fileName = "";
+    const char *path = "";
+};
+
 struct fb_esp_rtdb_request_info_t
 {
     std::string path = "";
     fb_esp_method method = m_get;
-    fb_esp_data_type dataType = d_any;
+    struct fb_esp_rtdb_request_data_info data;
     std::string payload = "";
     std::string priority = "";
     std::string etag = "";
     bool queue = false;
     bool async = false;
     std::string filename = "";
+#if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+    uint8_t storageType = StorageType::UNDEFINED;
+#endif
 };
 
 struct fb_esp_rtdb_queue_info_t
 {
     fb_esp_method method = m_get;
+#if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+    uint8_t storageType = StorageType::UNDEFINED;
+#endif
     fb_esp_data_type dataType;
     std::string path = "";
     std::string filename = "";
     std::string payload = "";
     bool isQuery = false;
-    int *intTarget = nullptr;
-    float *floatTarget = nullptr;
-    double *doubleTarget = nullptr;
-    bool *boolTarget = nullptr;
-    String *stringTarget = nullptr;
-    std::vector<uint8_t> *blobTarget = nullptr;
-    FirebaseJson *jsonTarget = nullptr;
-    FirebaseJsonArray *arrTarget = nullptr;
+    int *intPtr = nullptr;
+    float *floatPtr = nullptr;
+    double *doublePtr = nullptr;
+    bool *boolPtr = nullptr;
+    String *stringPtr = nullptr;
+    std::vector<uint8_t> *blobPtr = nullptr;
+    FirebaseJson *jsonPtr = nullptr;
+    FirebaseJsonArray *arrPtr = nullptr;
 };
 
 struct server_response_data_t
@@ -428,13 +479,21 @@ struct fb_esp_auth_cert_t
 {
     const char *data = "";
     std::string file;
+#if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type file_storage = mem_storage_type_flash;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+    uint8_t file_storage = StorageType::UNDEFINED;
+#endif
 };
 
 struct fb_esp_service_account_file_info_t
 {
     std::string path;
+#if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storage_type = mem_storage_type_flash;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+    uint8_t storage_type = StorageType::UNDEFINED;
+#endif
 };
 
 struct fb_esp_service_account_t
@@ -544,6 +603,8 @@ struct fb_esp_url_info_t
     std::string auth;
 };
 
+#if defined(FIREBASE_ESP_CLIENT)
+
 struct fb_esp_fcs_file_list_item_t
 {
     std::string name = "";
@@ -568,6 +629,8 @@ struct fb_esp_fcs_file_list_t
 {
     std::vector<struct fb_esp_fcs_file_list_item_t> items = std::vector<struct fb_esp_fcs_file_list_item_t>();
 };
+
+#endif
 
 typedef struct token_info_t
 {
@@ -632,7 +695,11 @@ struct fb_esp_rtdb_info_t
     std::string req_etag = "";
     std::string resp_etag = "";
     std::string priority = "";
+#if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storage_type = mem_storage_type_flash;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+    uint8_t storage_type = StorageType::UNDEFINED;
+#endif
     uint8_t redirect_count = 0;
     int redirect = 0;
 
@@ -667,6 +734,7 @@ struct fb_esp_rtdb_info_t
 #endif
 };
 
+#if defined(FIREBASE_ESP_CLIENT)
 typedef struct fb_esp_function_operation_info_t
 {
     fb_esp_functions_operation_status status = fb_esp_functions_operation_status_unknown;
@@ -945,6 +1013,8 @@ struct fb_esp_functions_info_t
     std::string payload = "";
 };
 
+#endif
+
 struct fb_esp_session_info_t
 {
     int long_running_task = 0;
@@ -965,11 +1035,13 @@ struct fb_esp_session_info_t
     int content_length = 0;
     std::string error = "";
     struct fb_esp_rtdb_info_t rtdb;
+#if defined(FIREBASE_ESP_CLIENT)
     struct fb_esp_gcs_info_t gcs;
     struct fb_esp_fcs_info_t fcs;
     struct fb_esp_fcm_info_t fcm;
     struct fb_esp_firestore_info_t cfs;
     struct fb_esp_functions_info_t cfn;
+#endif
 
 #if defined(ESP8266)
     uint16_t bssl_rx_size = 512;
@@ -977,6 +1049,7 @@ struct fb_esp_session_info_t
 #endif
 };
 
+#if defined(FIREBASE_ESP_CLIENT)
 typedef struct fb_esp_gcs_upload_options_t
 {
     const char *contentEncoding = "";
@@ -1115,10 +1188,11 @@ struct fb_esp_functions_req_t
 typedef struct fb_esp_gcs_meta_info_t FileMetaInfo;
 typedef struct fb_esp_fcs_file_list_t FileList;
 typedef struct fb_esp_fcs_file_list_item_t FileItem;
-typedef struct fb_esp_auth_signin_provider_t FirebaseAuth;
-typedef struct fb_esp_cfg_t FirebaseConfig;
 typedef struct fb_esp_fcm_legacy_http_message_info_t FCM_Legacy_HTTP_Message;
 typedef struct fb_esp_fcm_http_v1_message_info_t FCM_HTTPv1_JSON_Message;
+#endif
+typedef struct fb_esp_auth_signin_provider_t FirebaseAuth;
+typedef struct fb_esp_cfg_t FirebaseConfig;
 
 typedef std::function<void(void)> callback_function_t;
 
@@ -1569,6 +1643,7 @@ static const char fb_esp_pgm_str_443[] PROGMEM = "%[^/]/%s";
 static const char fb_esp_pgm_str_444[] PROGMEM = "%[^?]?%s";
 static const char fb_esp_pgm_str_445[] PROGMEM = "auth=";
 static const char fb_esp_pgm_str_446[] PROGMEM = "%[^&]";
+#if defined(FIREBASE_ESP_CLIENT)
 static const char fb_esp_pgm_str_447[] PROGMEM = "application/zip";
 static const char fb_esp_pgm_str_448[] PROGMEM = "x-goog-content-length-range: 0,104857600";
 static const char fb_esp_pgm_str_449[] PROGMEM = "File not found";
@@ -1664,7 +1739,7 @@ static const char fb_esp_pgm_str_538[] PROGMEM = "newTransaction";
 static const char fb_esp_pgm_str_539[] PROGMEM = "readTime";
 static const char fb_esp_pgm_str_540[] PROGMEM = "upload timed out";
 static const char fb_esp_pgm_str_541[] PROGMEM = "upload data sent error";
-
+#endif
 static const char fb_esp_pgm_str_542[] PROGMEM = "No topic provided";
 static const char fb_esp_pgm_str_543[] PROGMEM = "No device token provided";
 static const char fb_esp_pgm_str_544[] PROGMEM = "The index of recipient device registered token not found";

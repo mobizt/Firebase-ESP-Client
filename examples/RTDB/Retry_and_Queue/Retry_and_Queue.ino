@@ -140,8 +140,6 @@ void setup()
   Firebase.RTDB.beginAutoRunErrorQueue(&fbdo, callback);
 
   //Firebase.RTDB.beginAutoRunErrorQueue(&fbdo);
-
-  
 }
 
 void loop()
@@ -151,6 +149,35 @@ void loop()
     taskCompleted = true;
 
     Serial.println("------------------------------------");
+    Serial.println("Set double test...");
+
+    String node = path + "/Double/Data";
+
+    if (Firebase.RTDB.setDouble(&fbdo, node.c_str(), 340.123456789))
+    {
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
+      Serial.print("VALUE: ");
+      printResult(fbdo); //see addons/RTDBHelper.h
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+      if (Firebase.RTDB.getErrorQueueID(&fbdo) > 0)
+      {
+        Serial.println("Error Queue ID: " + String(Firebase.RTDB.getErrorQueueID(&fbdo)));
+        queueID[qIdx] = Firebase.RTDB.getErrorQueueID(&fbdo);
+        qIdx++;
+      }
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+
+    Serial.println("------------------------------------");
     Serial.println("Set BLOB data test...");
 
     //Create demo data
@@ -158,10 +185,10 @@ void loop()
     for (int i = 0; i < 256; i++)
       data[i] = i;
 
-    String Path = path + "/Binary/Blob/data";
+    node = path + "/Binary/Blob/data";
 
     //Set binary data to database
-    if (Firebase.RTDB.setBlob(&fbdo, Path.c_str(), data, sizeof(data)))
+    if (Firebase.RTDB.setBlob(&fbdo, node.c_str(), data, sizeof(data)))
     {
       Serial.println("PASSED");
       Serial.println("------------------------------------");
@@ -194,11 +221,11 @@ void loop()
     Serial.println("------------------------------------");
     Serial.println("Get BLOB data test...");
 
-    Path = path + "/Binary/Blob/data";
+    node = path + "/Binary/Blob/data";
 
     //Get binary data from database
     //Assign myblob as the target variable
-    if (Firebase.RTDB.getBlob(&fbdo, Path.c_str(), &myblob))
+    if (Firebase.RTDB.getBlob(&fbdo, node.c_str(), &myblob))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + fbdo.dataPath());
@@ -241,40 +268,11 @@ void loop()
     }
 
     Serial.println("------------------------------------");
-    Serial.println("Set double test...");
-
-    Path = path + "/Double/Data";
-
-    if (Firebase.RTDB.setDouble(&fbdo, Path.c_str(), 340.123456789))
-    {
-      Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo.dataPath());
-      Serial.println("TYPE: " + fbdo.dataType());
-      Serial.print("VALUE: ");
-      printResult(fbdo); //see addons/RTDBHelper.h
-      Serial.println("------------------------------------");
-      Serial.println();
-    }
-    else
-    {
-      Serial.println("FAILED");
-      Serial.println("REASON: " + fbdo.errorReason());
-      if (Firebase.RTDB.getErrorQueueID(&fbdo) > 0)
-      {
-        Serial.println("Error Queue ID: " + String(Firebase.RTDB.getErrorQueueID(&fbdo)));
-        queueID[qIdx] = Firebase.RTDB.getErrorQueueID(&fbdo);
-        qIdx++;
-      }
-      Serial.println("------------------------------------");
-      Serial.println();
-    }
-
-    Serial.println("------------------------------------");
     Serial.println("Get double test...");
 
-    Path = path + "/Double/Data";
+    node = path + "/Double/Data";
 
-    if (Firebase.RTDB.getDouble(&fbdo, Path.c_str(), &mydouble))
+    if (Firebase.RTDB.getDouble(&fbdo, node.c_str(), &mydouble))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + fbdo.dataPath());
@@ -315,9 +313,17 @@ void loop()
     //Firebase.RTDB.endAutoRunErrorQueue(&fbdo);
   }
 
-  
   if (!Firebase.ready())
     return;
+
+  if (mydouble > 0)
+  {
+    Serial.println("------------------------------------");
+    Serial.println("Double Data gets from Queue");
+    printf("%.9lf\n", mydouble);
+    Serial.println();
+    mydouble = 0;
+  }
 
   if (Firebase.RTDB.errorQueueCount(&fbdo) > 0)
   {

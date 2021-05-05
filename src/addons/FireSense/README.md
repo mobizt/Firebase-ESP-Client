@@ -1,6 +1,6 @@
 # FireSense for Firebase ESP Client.
 
-# The Programmable Data Logging and IO Control library v1.0.1
+# The Programmable Data Logging and IO Control library v1.0.2
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. 

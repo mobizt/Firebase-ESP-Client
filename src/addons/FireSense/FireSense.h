@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.1
+ * FireSense v1.0.2
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 4, 2021
+ * Created May 5, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -44,7 +44,20 @@
 #ifndef FireSenseClass_H
 #define FireSenseClass_H
 #include <Arduino.h>
+
+#if defined(ESP32)
+#if defined(FIREBASE_ESP32_CLIENT)
+#include <FirebaseESP32.h>
+#endif
+#elif defined(ESP8266)
+#if defined(FIREBASE_ESP8266_CLIENT)
+#include <FirebaseESP8266.h>
+#endif
+#endif
+
+#if defined(FIREBASE_ESP_CLIENT)
 #include <Firebase_ESP_Client.h>
+#endif
 
 class MillisTimer
 {

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.0.9
+ * Google's Firebase Data class, FB_Session.h version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -41,23 +41,192 @@
 
 #include "signer/Signer.h"
 
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+
+enum fb_esp_fcm_msg_type
+{
+  msg_single,
+  msg_multicast,
+  msg_topic
+};
+
+class FCMObject
+{
+
+#if defined(ESP32)
+  friend class FirebaseESP32;
+#elif defined(ESP8266)
+  friend class FirebaseESP8266;
+#endif
+  friend class FirebaseData;
+
+public:
+  FCMObject();
+  ~FCMObject();
+
+  /** Store Firebase Cloud Messaging's authentication credentials.
+   * 
+   * @param serverKey Server key found on Console: Project settings > Cloud Messaging
+   */
+  void begin(const String &serverKey);
+
+  /** Add recipient's device registration token or instant ID token.
+   * 
+   * @param deviceToken Recipient's device registration token to add that message will be sent to.
+   */
+  void addDeviceToken(const String &deviceToken);
+
+  /** Remove the recipient's device registration token or instant ID token.
+   * 
+   * @param index Index (start from zero) of the recipient's device registration token that added to FCM Data Object of Firebase Data object.
+   */
+  void removeDeviceToken(uint16_t index);
+
+  /** Clear all recipient's device registration tokens.
+  */
+  void clearDeviceToken();
+
+  /** Set the notify message type information.
+   * 
+   * @param title The title text of notification message.
+   * @param body The body text of notification message.
+   */
+  void setNotifyMessage(const String &title, const String &body);
+
+  /** Set the notify message type information.
+   * 
+   * @param title The title text of notification message.
+   * @param body The body text of notification message.
+   * @param icon The name and/or included URI/URL of the icon to show on notifying message.
+   */
+  void setNotifyMessage(const String &title, const String &body, const String &icon);
+
+  /** Set the notify message type information.
+   * 
+   * @param title The title text of notification message.
+   * @param body The body text of notification message.
+   * @param icon The name and/or included URI/URL of the icon to show on notifying message.
+   * @param click_action The URL or intent to accept click event on the notification message.
+   */
+  void setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action);
+
+  /** add the custom key/value in the notify message type information.
+   * 
+   * @param key The key field in notification message.
+   * @param value The value field in the notification message.
+  */
+  void addCustomNotifyMessage(const String &key, const String &value);
+
+  /** Clear all notify message information.
+  */
+  void clearNotifyMessage();
+
+  /** Set the custom data message type information.
+   * 
+   * @param jsonString The JSON structured data string.
+  */
+  void setDataMessage(const String &jsonString);
+
+  /** Set the custom data message type information.
+   * 
+   * @param json The FirebaseJson object.
+  */
+  void setDataMessage(FirebaseJson &json);
+
+  /** Clear custom data message type information.
+  */
+  void clearDataMessage();
+
+  /** Set the priority of the message (notification and custom data).
+   * 
+   * @param priority The priority string i.e. normal and high.
+  */
+  void setPriority(const String &priority);
+
+  /** Set the collapse key of the message (notification and custom data).
+   * 
+   * @param key String of collapse key.
+  */
+  void setCollapseKey(const String &key);
+
+  /** Set the Time To Live of the message (notification and custom data).
+   * 
+   * @param seconds Number of seconds from 0 to 2,419,200 (4 weeks).
+  */
+  void setTimeToLive(uint32_t seconds);
+
+  /** Set the topic of the message will be sent to.
+   * 
+   * @param topic Topic string.
+  */
+  void setTopic(const String &topic);
+
+  /** Get the send result.
+   * 
+   * @return String of payload returned from the server.
+  */
+  String getSendResult();
+
+private:
+  bool init();
+
+  void begin(UtilsClass *u);
+
+  bool waitResponse(FirebaseData &fbdo);
+
+  bool handleResponse(FirebaseData *fbdo);
+
+  void rescon(FirebaseData &fbdo, const char *host);
+
+  void fcm_begin(FirebaseData &fbdo);
+
+  bool fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
+
+  void fcm_prepareHeader(std::string &header, size_t payloadSize);
+
+  void fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type messageType);
+
+  void clear();
+
+  std::string _topic = "";
+  std::string _server_key = "";
+  std::string _sendResult = "";
+  FirebaseJson _fcmPayload;
+  int _ttl = -1;
+  uint16_t _index = 0;
+  uint16_t _port = FIREBASE_PORT;
+  std::vector<std::string> _deviceToken;
+  UtilsClass *_ut = nullptr;
+  FirebaseAuth _auth_;
+  FirebaseConfig _cfg_;
+};
+
+#endif
 
 class FirebaseData
 {
-  friend class FB_CM;
   friend class FB_RTDB;
+  friend class UtilsClass;
+#if defined(FIREBASE_ESP_CLIENT)
+  friend class FB_CM;
   friend class GG_CloudStorage;
   friend class FB_Storage;
-  friend class UtilsClass;
   friend class FB_Firestore;
   friend class FB_Functions;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#if defined(ESP32)
+  friend class FirebaseESP32;
+#elif defined(ESP8266)
+  friend class FirebaseESP8266;
+#endif
+  friend class FCMObject;
+#endif
 
 public:
-  typedef void (*StreamEventCallback)(FirebaseStream);
-  typedef void (*MultiPathStreamEventCallback)(MultiPathStream);
+  typedef void (*StreamEventCallback)(FIREBASE_STREAM_CLASS);
+  typedef void (*MultiPathStreamEventCallback)(FIREBASE_MP_STREAM_CLASS);
   typedef void (*StreamTimeoutCallback)(bool);
   typedef void (*QueueInfoCallback)(QueueInfo);
- 
 
   FirebaseData();
   ~FirebaseData();
@@ -145,6 +314,8 @@ public:
   */
   String dataPath();
 
+#if defined(FIREBASE_ESP_CLIENT)
+
   /** Get the metadata of a file in the Firebase storage data bucket.
    * 
    * @return The FileMetaInfo data of file.
@@ -176,6 +347,8 @@ public:
    * @return The URL to download file.
   */
   String downloadURL();
+
+#endif
 
   /** Get the error reason String from the process.
    * 
@@ -371,13 +544,18 @@ public:
 #endif
 
   QueryFilter queryFilter;
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+  FCMObject fcm;
+#endif
 
 private:
   StreamEventCallback _dataAvailableCallback = NULL;
   MultiPathStreamEventCallback _multiPathDataCallback = NULL;
   StreamTimeoutCallback _timeoutCallback = NULL;
   QueueInfoCallback _queueInfoCallback = NULL;
+#if defined(FIREBASE_ESP_CLIENT)
   FunctionsOperationCallback _functionsOperationCallback = NULL;
+#endif
 
   UtilsClass *ut = nullptr;
   QueueManager _qMan;
@@ -403,7 +581,6 @@ private:
   void addNodeList(const String *childPath, size_t size);
 
   bool init();
-
 };
 
 #endif

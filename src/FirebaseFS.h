@@ -1,6 +1,9 @@
 #ifndef FirebaseFS_H
 #define FirebaseFS_H
 #include <Arduino.h>
+
+#define FIREBASE_ESP_CLIENT 1
+
 /**
  * To use other flash file systems
  * 

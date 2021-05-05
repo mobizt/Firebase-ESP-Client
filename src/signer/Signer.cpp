@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.10
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -785,10 +785,6 @@ bool Firebase_Signer::handleTokenResponse()
 #elif defined(ESP8266)
     WiFiClient *stream = config->signer.wcs;
 #endif
-
-    if (!stream)
-        return false;
-
     while (stream->connected() && stream->available() == 0)
     {
         if (!ut->reconnect(dataTime))
@@ -799,9 +795,6 @@ bool Firebase_Signer::handleTokenResponse()
             return false;
         }
 
-        if (!stream)
-            return false;
-
         delay(0);
     }
 
@@ -809,8 +802,6 @@ bool Firebase_Signer::handleTokenResponse()
     unsigned long datatime = millis();
     while (!complete)
     {
-        if (!stream)
-            break;
 
         chunkBufSize = stream->available();
 
@@ -830,18 +821,12 @@ bool Firebase_Signer::handleTokenResponse()
                             stream->stop();
                     return false;
                 }
-
-                if (!stream)
-                    break;
-
                 chunkBufSize = stream->available();
 
                 if (chunkBufSize > 0)
                 {
                     if (chunkIdx == 0)
                     {
-                        if (!stream)
-                            break;
                         ut->readLine(stream, header);
                         int pos = 0;
                         char *tmp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
@@ -856,8 +841,6 @@ bool Firebase_Signer::handleTokenResponse()
                     {
                         if (isHeader)
                         {
-                            if (!stream)
-                                break;
                             char *tmp = ut->newS(chunkBufSize);
                             int readLen = ut->readLine(stream, tmp, chunkBufSize);
                             bool headerEnded = false;
@@ -885,9 +868,6 @@ bool Firebase_Signer::handleTokenResponse()
                         {
                             if (!response.noContent)
                             {
-                                if (!stream)
-                                    break;
-
                                 if (response.isChunkedEnc)
                                     complete = ut->readChunkedData(stream, payload, chunkedDataState, chunkedDataSize, chunkedDataLen) < 0;
                                 else
@@ -908,9 +888,6 @@ bool Firebase_Signer::handleTokenResponse()
                             }
                             else
                             {
-                                if (!stream)
-                                    break;
-
                                 while (stream->available() > 0)
                                     stream->read();
                                 if (stream->available() <= 0)
@@ -927,11 +904,8 @@ bool Firebase_Signer::handleTokenResponse()
         }
     }
 
-    if (stream)
-    {
-        if (stream->connected())
-            stream->stop();
-    }
+    if (stream->connected())
+        stream->stop();
 
     if (payload.length() > 0 && !response.noContent)
     {
@@ -1053,10 +1027,11 @@ bool Firebase_Signer::createJWT()
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_225);
-
+#if defined(FIREBASE_ESP_CLIENT)
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_451);
+#endif
 
             if (config->signer.tokens.scope.length() > 0)
             {
@@ -1988,20 +1963,12 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_FILE_IO_ERROR:
         ut->appendP(buff, fb_esp_pgm_str_192);
         return;
+#if defined(FIREBASE_ESP_CLIENT)
     case FIREBASE_ERROR_FILE_NOT_FOUND:
         ut->appendP(buff, fb_esp_pgm_str_449);
         return;
     case FIREBASE_ERROR_ARCHIVE_NOT_FOUND:
         ut->appendP(buff, fb_esp_pgm_str_450);
-        return;
-    case FIREBASE_ERROR_TOKEN_NOT_READY:
-        ut->appendP(buff, fb_esp_pgm_str_252);
-        return;
-    case FIREBASE_ERROR_UNINITIALIZED:
-        ut->appendP(buff, fb_esp_pgm_str_256);
-        return;
-    case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
-        ut->appendP(buff, fb_esp_pgm_str_328);
         return;
     case FIREBASE_ERROR_LONG_RUNNING_TASK:
         ut->appendP(buff, fb_esp_pgm_str_534);
@@ -2011,6 +1978,16 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
         return;
     case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
         ut->appendP(buff, fb_esp_pgm_str_541);
+        return;
+#endif
+    case FIREBASE_ERROR_TOKEN_NOT_READY:
+        ut->appendP(buff, fb_esp_pgm_str_252);
+        return;
+    case FIREBASE_ERROR_UNINITIALIZED:
+        ut->appendP(buff, fb_esp_pgm_str_256);
+        return;
+    case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
+        ut->appendP(buff, fb_esp_pgm_str_328);
         return;
     default:
         return;

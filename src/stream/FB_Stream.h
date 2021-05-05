@@ -3,7 +3,7 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -36,15 +36,21 @@
 #include "Utils.h"
 #include "signer/Signer.h"
 
-class FirebaseStream
+#if defined(FIREBASE_ESP_CLIENT)
+#define FIREBASE_STREAM_CLASS FirebaseStream
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#define FIREBASE_STREAM_CLASS StreamData
+#endif
+
+class FIREBASE_STREAM_CLASS
 {
 
     friend class FirebaseData;
     friend class FB_RTDB;
 
 public:
-    FirebaseStream();
-    ~FirebaseStream();
+    FIREBASE_STREAM_CLASS();
+    ~FIREBASE_STREAM_CLASS();
     String dataPath();
     String streamPath();
     int intData();
