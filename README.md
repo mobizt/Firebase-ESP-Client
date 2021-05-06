@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.1.4
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.1.5
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -181,36 +181,63 @@ fbdo.setBSSLBufferSize(1024, 1024); //minimum size is 512 bytes, maximum size is
 fbdo.setResponseSize(1024); //minimum size is 1024 bytes
 ```
 
+
+
+
 ### Authentication
 
-This library supports many authentication methods.
+This library supports many types of authentications.
 
 See [Other authentication examples](/examples/Authentications) for more authentication methods.
 
-Some authentication methods need the token generaion and exchanging process which take more time than using the legacy token.
+Some authentication methods require the token generaion and exchanging process which take more time than using the legacy token.
 
-The authentication with custom and OAuth2.0 tokens takes the time, several seconds in overall process included NTP time acquisition, JWT token generation and signing.
+The authentication with custom and OAuth2.0 tokens takes the time, several seconds in overall process which included the NTP time acquisition, JWT token generation and signing process.
 
-Set the system time prior to calling the Firebase.begin to skip the internal NTP time acquisition process.
+By setting the system time prior to calling the Firebase.begin, the internal NTP time acquisition process will be ignored.
 
 To set the system time with RTC or timestamp, use **`Firebase.setSystemTime`**.
 
-While using Email and password sign-in which use in the id token generation process takes minimum time.
-
-The time for legacy token generation is zero as it was taken from database secret (FIREBASE_AUTH in the example).
-
-The data transmission time depends on the SSL/TLS handshaking, the size of http request header/payload and response header/payload.
-
-The time used in data transmission also depending on the size of token (string) which is the part of request header.
-
-The legacy token size is smallest, approx 40 bytes, the lowest data trasmission time (averaged 200 - 400 ms for 1 byte of payload).
-
-The id token using sign-in Email and password has approx 900 bytes in its size, the maximum data trasmission time (averaged 400 - 500 ms for 1 byte of payload).
+While authenticate using Email and password will be perform faster and authenticate using the legacy token (database secret) does not have this delay time.
 
 
-The SSL/TLS handshake process may take 1-2 seconds to complete. The http session will be reused when you dont share a Firebase Data object usage among with the normal Firebase calls i.e. set, get, push, update and delete with other stream, messaging and storage operations.
 
-The system time setting is required when you use the custom and OAuth2.0 tokens or when you provide the certificate for secured transmission, and it used the time for acquiring the NTP server time data.
+#### Speed of data transfer
+
+Since the token is ready for authentication, the data transmission time will depend on the time used in SSL/TLS handshake process, the size of http header (included auth token length) and payload and the SSL client buffer size for receive and transmit data in ESP8266.
+
+
+The legacy token size is relatively small, only 40 bytes, while the size of id token generated using Email/Password is somewhat largest, approx. 900 bytes.
+
+
+There is the compromise between the speed of data transfer and free memory.
+
+
+When the SSL client RX/TX buffer is smaller than the size of header, payload and certificate data, the data need to be sent as many chunks which required more time to complete the sending/receiving data, especially in ESP8266.
+
+
+To speed up the data sending/receiving time in ESP8266, the large buffer for size for rx/tx is required, i.e. 2048 to 4096 bytes need to set as parameter to the function /<Firebase Data object/>.setBSSLBufferSize.
+
+
+The larger BearSSL buffer reserved for ESP8266, the lower free memory available during the server connected.
+
+
+Therefore the time for data transfer will be varied from 100 ms to 500 ms based on the eserved SSL client buffer size and the size of header and payload.
+
+
+In ESP8266, when the free memory and speed are concerned, use the legacy token with 1024 or 2048 bytes SSL rx/tx buffer size.
+
+
+When the session was reused by default in this library, the SSL/TLS handshake process will be ignored in the subsequence requests.
+
+
+The session was close when the host changes or the session timedd out.
+
+
+For post (push) or put (set) the data to RTDB database, use pushAsync or setAsync will improve the data sending speed as the payload response is ignored.
+
+
+The system time must be set when authenticate using the custom and OAuth2.0 tokens or when the root certificate was set for data transfer.
 
 To use Email/Password sign-in authentication as in the examples, the Email/Password Sign-in provider must be enabled.
 

@@ -1,6 +1,6 @@
 
 /**
- * Created May 5, 2021
+ * Created May 7, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -350,13 +350,6 @@ struct fb_esp_rtdb_request_data_info
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonArray *arrPtr = nullptr;
     QueryFilter *query = nullptr;
-#if defined(FIREBASE_ESP_CLIENT)
-    fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-    uint8_t storageType = StorageType::UNDEFINED;
-#endif
-    const char *fileName = "";
-    const char *path = "";
 };
 
 struct fb_esp_rtdb_request_info_t

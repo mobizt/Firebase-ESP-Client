@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.14
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.15
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 5, 2021
+ * Created May 7, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1823,7 +1823,6 @@ private:
   bool handleResponse(FirebaseData *fbdo);
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
   bool processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  bool processRequestFile(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool int_pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority, bool async);
   bool int_pushFloat(FirebaseData *fbdo, const char *path, float floatValue, bool queue, const char *priority, bool async);
   bool int_pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, bool queue, const char *priority, bool async);
@@ -1834,7 +1833,6 @@ private:
   bool int_pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, bool async);
   bool int_pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, bool async);
   bool int_pushTimestamp(FirebaseData *fbdo, const char *path, bool async);
-  bool int_get(FirebaseData *fbdo, struct fb_esp_rtdb_request_data_info *data);
   bool int_setInt(FirebaseData *rtdb, const char *path, int intValue, bool queue, const char *priority, const char *etag, bool async);
   bool int_setFloat(FirebaseData *rtdb, const char *path, float floatValue, bool queue, const char *priority, const char *etag, bool async);
   bool int_setDouble(FirebaseData *rtdb, const char *path, double doubleValue, bool queue, const char *priority, const char *etag, bool async);
