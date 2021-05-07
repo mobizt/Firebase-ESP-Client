@@ -192,52 +192,72 @@ See [Other authentication examples](/examples/Authentications) for more authenti
 
 Some authentication methods require the token generaion and exchanging process which take more time than using the legacy token.
 
-The authentication with custom and OAuth2.0 tokens takes the time, several seconds in overall process which included the NTP time acquisition, JWT token generation and signing process.
+The system time must be set before authenticate using the custom and OAuth2.0 tokens or when the root certificate was set for data transfer. 
 
-By setting the system time prior to calling the Firebase.begin, the internal NTP time acquisition process will be ignored.
+The authentication with custom and OAuth2.0 tokens takes the time, several seconds in overall process which included the NTP time acquisition (system time setup), JWT token generation and signing process.
 
-To set the system time with RTC or timestamp, use **`Firebase.setSystemTime`**.
+By setting the system time prior to calling the **`Firebase.begin`**, the internal NTP time acquisition process will be ignored.
 
-While authenticate using Email and password will be perform faster and authenticate using the legacy token (database secret) does not have this delay time.
+You can set the system time using the RTC chip or manually by calling **`Firebase.setSystemTime`**.
+
+
+While authenticate using Email and password, the process will be perform faster because no token generation and time setup required. 
+
+The authenticate using the legacy token (database secret) does not have these delay time because the token is ready to use.
 
 
 
 #### Speed of data transfer
 
-Since the token is ready for authentication, the data transmission time will depend on the time used in SSL/TLS handshake process, the size of http header (included auth token length) and payload and the SSL client buffer size for receive and transmit data in ESP8266.
+Some users may have the question why the time for sending/receiving data with this library was increased when using the different authentication methods which someone compare with other libraries and platforms.
 
 
-The legacy token size is relatively small, only 40 bytes, while the size of id token generated using Email/Password is somewhat largest, approx. 900 bytes.
+Once the token is ready for authentication, the data transmission time will depend on the time used in SSL/TLS handshake process (only for new session opening), the size of http header (included auth token size) and payload to be transmitted and the SSL client buffer reserved size especially in ESP8266.
 
 
-There is the compromise between the speed of data transfer and free memory.
+The legacy token size is relatively small, only 40 bytes, result in smallest header to send, while the size of id token generated using Email/Password is quite large, approx. 900 bytes. result in larger header to send.
 
 
-When the SSL client RX/TX buffer is smaller than the size of header, payload and certificate data, the data need to be sent as many chunks which required more time to complete the sending/receiving data, especially in ESP8266.
+There is a compromise between the speed of data transfer and the Rx/Tx buffer which then reduced the free memory available especially in ESp8266.
 
 
-To speed up the data sending/receiving time in ESP8266, the large buffer for size for rx/tx is required, i.e. 2048 to 4096 bytes need to set as parameter to the function /<Firebase Data object/>.setBSSLBufferSize.
+When the reserved SSL client Rx/Tx buffer is smaller than the size of data to be transmitted, the data need to be sent as multiple chunks which required more transmission time.
+
+This affected especially in ESP8266 which has the limited free memory.
 
 
-The larger BearSSL buffer reserved for ESP8266, the lower free memory available during the server connected.
+To speed up the data transmission in ESP8266, the larger reserved Rx/Tx buffer size is necessary.
 
 
-Therefore the time for data transfer will be varied from 100 ms to 500 ms based on the eserved SSL client buffer size and the size of header and payload.
+The reserved SSL Rx/Tx buffer size in ESP8266 can be set through the function \<Firebase Data object\>.setBSSLBufferSize, e.g. **fbdo.setBSSLBufferSize(2048, 2048);**
 
 
-In ESP8266, when the free memory and speed are concerned, use the legacy token with 1024 or 2048 bytes SSL rx/tx buffer size.
+The larger BearSSL buffer reserved for ESP8266, the lower free memory available as long as the session opened (server connection).
 
 
-When the session was reused by default in this library, the SSL/TLS handshake process will be ignored in the subsequence requests.
+Therefore the time for data transfer will be varied from approx. neary 200 ms to 500 ms based on the reserved SSL client Rx/Tx buffer size and the size of data to transmit.
 
 
-The session was close when the host changes or the session timedd out.
+In ESP8266, when the free memory and speed are concerned, the legacy token should be used instead of other authentication to reduce the header size and the lower SSL Rx/Tx buffer i.e. 1024 for Rx and 512 for Tx are enough.
 
 
-For post (push) or put (set) the data to RTDB database, use pushAsync or setAsync will improve the data sending speed as the payload response is ignored.
+When the session was reused (in this library), the SSL handshake process will be ignored in the subsequence requests.
 
 
-The system time must be set when authenticate using the custom and OAuth2.0 tokens or when the root certificate was set for data transfer.
+The session was close when the host or ip changes or server closed or the session timed out in 3 minutes. 
+
+
+When the new session need to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
+
+
+For post (push) or put (set) the request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
+
+
+With pushAsync and setAsync, the payload response will be ignored and the next data will be processed immediately.
+
+
+#### The authenication credentials and prerequisite
+
 
 To use Email/Password sign-in authentication as in the examples, the Email/Password Sign-in provider must be enabled.
 
