@@ -119,7 +119,7 @@ The condition checking and expression evaluation are from left to right
 
 The valid left, right operands and syntaxes are
 
-| Oerand and Syntaxes  | Usages |
+| Operand and Syntaxes  | Usages |
 | ------------- | ------------- |
 | \<channel id\>  | LED1 == false && STATUS == LED1  |
 | values e.g. boolean, integer and float  | HUMID1 > 70 \|\| LAMP1 == false  |
@@ -147,7 +147,7 @@ The statement processing and expression evaluation are from left to right.
 
 The valid left, right operands and syntaxes are
 
-| Oerand and Syntaxes  | Usages |
+| Operand and Syntaxes  | Usages |
 | ------------- | ------------- |
 | \<channel id\>  | LED1 = false, STATUS = 5 * 10  |
 | values e.g. boolean, integer and float  | HUMID1 = 70  |
