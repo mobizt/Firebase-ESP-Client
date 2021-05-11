@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.11
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 5, 2021
+ * Created May 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -1979,15 +1979,15 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
         ut->appendP(buff, fb_esp_pgm_str_541);
         return;
+    case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
+        ut->appendP(buff, fb_esp_pgm_str_328);
+        return;
 #endif
     case FIREBASE_ERROR_TOKEN_NOT_READY:
         ut->appendP(buff, fb_esp_pgm_str_252);
         return;
     case FIREBASE_ERROR_UNINITIALIZED:
         ut->appendP(buff, fb_esp_pgm_str_256);
-        return;
-    case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
-        ut->appendP(buff, fb_esp_pgm_str_328);
         return;
     default:
         return;

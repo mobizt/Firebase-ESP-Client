@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.8
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 4, 2021
+ * Created May 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -169,6 +169,251 @@ bool FB_Firestore::patchDocument(FirebaseData *fbdo, const char *projectId, cons
     return sendRequest(fbdo, &req);
 }
 
+bool FB_Firestore::setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms)
+{
+    std::string path;
+    bool hasTransform = false;
+    json->clear();
+
+    if (strlen(field_transforms->transform_content) > 0)
+    {
+        if (strlen(field_transforms->fieldPath) > 0)
+        {
+            ut->appendP(path, fb_esp_pgm_str_557, true);
+            json->add(path.c_str(), field_transforms->fieldPath);
+            hasTransform = true;
+        }
+
+        if (field_transforms->transform_type == fb_esp_firestore_transform_type_set_to_server_value)
+        {
+            ut->appendP(path, fb_esp_pgm_str_558, true);
+            json->add(path.c_str(), field_transforms->transform_content);
+            hasTransform = true;
+        }
+        else if (field_transforms->transform_type != fb_esp_firestore_transform_type_undefined)
+        {
+            FirebaseJson js;
+
+            if (field_transforms->transform_type == fb_esp_firestore_transform_type_increment)
+                ut->appendP(path, fb_esp_pgm_str_559, true);
+            else if (field_transforms->transform_type == fb_esp_firestore_transform_type_maaximum)
+                ut->appendP(path, fb_esp_pgm_str_560, true);
+            else if (field_transforms->transform_type == fb_esp_firestore_transform_type_minimum)
+                ut->appendP(path, fb_esp_pgm_str_561, true);
+            else if (field_transforms->transform_type == fb_esp_firestore_transform_type_append_missing_elements)
+                ut->appendP(path, fb_esp_pgm_str_562, true);
+            else if (field_transforms->transform_type == fb_esp_firestore_transform_type_remove_all_from_array)
+                ut->appendP(path, fb_esp_pgm_str_563, true);
+
+            js.clear();
+            js.setJsonData(field_transforms->transform_content);
+            json->add(path.c_str(), js);
+            js.clear();
+            hasTransform = true;
+        }
+    }
+
+    return hasTransform;
+}
+
+bool FB_Firestore::commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction)
+{
+    struct fb_esp_firestore_req_t req;
+    req.requestType = fb_esp_firestore_request_type_commit_document;
+    req.projectId = projectId;
+    req.databaseId = databaseId;
+    req.transaction = transaction;
+
+    if (writes.size() > 0)
+    {
+        std::string path, updateMaskPath, docPathBase, docPath;
+        ut->appendP(updateMaskPath, fb_esp_pgm_str_400);
+        ut->appendP(updateMaskPath, fb_esp_pgm_str_1);
+        ut->appendP(updateMaskPath, fb_esp_pgm_str_556);
+
+        char *tmp = nullptr;
+        char *tmp2 = nullptr;
+        FirebaseJson json;
+        bool hasCurDoc = false;
+
+        std::string writesArr[writes.size()];
+        fbdo->_ss.arr.clear();
+        fbdo->_ss.json.clear();
+
+        ut->appendP(docPathBase, fb_esp_pgm_str_395, true);
+
+        if (req.projectId.length() == 0)
+            docPathBase += Signer.getCfg()->service_account.data.project_id;
+        else
+            docPathBase += req.projectId;
+
+        ut->appendP(docPathBase, fb_esp_pgm_str_341);
+        if (req.databaseId.length() > 0)
+            docPathBase += req.databaseId;
+        else
+            ut->appendP(docPathBase, fb_esp_pgm_str_342);
+
+        ut->appendP(docPathBase, fb_esp_pgm_str_351);
+
+        for (size_t i = 0; i < writes.size(); i++)
+        {
+            struct fb_esp_firestore_document_write_t *write = &writes[i];
+
+            json.clear();
+
+            hasCurDoc = false;
+
+            if (strlen(write->update_masks) > 0)
+            {
+                std::vector<std::string> masks = std::vector<std::string>();
+                ut->splitTk(write->update_masks, masks, ",");
+                for (size_t j = 0; j < masks.size(); j++)
+                    fbdo->_ss.arr.add(masks[j].c_str());
+
+                fbdo->_ss.json.set(updateMaskPath.c_str(), fbdo->_ss.arr);
+                fbdo->_ss.arr.clear();
+            }
+
+            if (setFieldTransform(&json, &write->update_transforms))
+            {
+                ut->appendP(path, fb_esp_pgm_str_567, true);
+                fbdo->_ss.json.add(path.c_str(), json);
+                json.clear();
+            }
+
+            if (strlen(write->current_document.exists) > 0 || strlen(write->current_document.update_time) > 0)
+            {
+
+                if (strlen(write->current_document.exists) > 0)
+                {
+                    tmp2 = ut->strP(fb_esp_pgm_str_569);
+                    tmp = ut->strP(fb_esp_pgm_str_107);
+                    if (strcmp(write->current_document.exists, tmp) == 0)
+                    {
+                        json.add((const char *)tmp2, (const char *)tmp);
+                        hasCurDoc = true;
+                    }
+                    else
+                    {
+                        ut->delS(tmp);
+                        tmp = ut->strP(fb_esp_pgm_str_106);
+                        if (strcmp(write->current_document.exists, tmp) == 0)
+                        {
+                            json.add((const char *)tmp2, (const char *)tmp);
+                            hasCurDoc = true;
+                        }
+                    }
+                    ut->delS(tmp);
+                    ut->delS(tmp2);
+                }
+                else if (strlen(write->current_document.update_time) > 0 && !hasCurDoc)
+                {
+                    tmp = ut->strP(fb_esp_pgm_str_467);
+                    json.add((const char *)tmp, write->current_document.update_time);
+                    hasCurDoc = true;
+                }
+
+                if (hasCurDoc)
+                {
+                    ut->appendP(path, fb_esp_pgm_str_566, true);
+                    fbdo->_ss.json.add(path.c_str(), json);
+                    json.clear();
+                }
+            }
+
+            if (strlen(write->update_document_content) > 0 && strlen(write->update_document_path) > 0 && write->type == fb_esp_firestore_document_write_type_update)
+            {
+                docPath = docPathBase;
+
+                if (write->update_document_path[0] != '/')
+                    ut->appendP(docPath, fb_esp_pgm_str_1);
+
+                docPath += write->update_document_path;
+
+                ut->appendP(path, fb_esp_pgm_str_274, true);
+                json.setJsonData(write->update_document_content);
+                json.add(path.c_str(), docPath.c_str());
+
+                ut->appendP(path, fb_esp_pgm_str_118, true);
+                fbdo->_ss.json.add(path.c_str(), json);
+                json.clear();
+            }
+            else if (strlen(write->delete_document_path) > 0 && write->type == fb_esp_firestore_document_write_type_delete)
+            {
+                docPath = docPathBase;
+
+                if (write->delete_document_path[0] != '/')
+                    ut->appendP(docPath, fb_esp_pgm_str_1);
+
+                docPath += write->delete_document_path;
+
+                ut->appendP(path, fb_esp_pgm_str_119, true);
+                fbdo->_ss.json.add(path.c_str(), docPath.c_str());
+            }
+            else if (strlen(write->document_transform.transform_document_path) > 0 && write->document_transform.field_transforms.size() > 0 && write->type == fb_esp_firestore_document_write_type_transform)
+            {
+                fbdo->_ss.arr.clear();
+
+                for (size_t j = 0; j < write->document_transform.field_transforms.size(); j++)
+                {
+                    json.clear();
+                    if (setFieldTransform(&json, &write->document_transform.field_transforms[j]))
+                        fbdo->_ss.arr.add(json);
+                }
+
+                json.clear();
+
+                docPath = docPathBase;
+
+                if (write->document_transform.transform_document_path[0] != '/')
+                    ut->appendP(docPath, fb_esp_pgm_str_1);
+
+                docPath += write->document_transform.transform_document_path;
+
+                ut->appendP(path, fb_esp_pgm_str_564, true);
+                json.add(path.c_str(), docPath.c_str());
+
+                ut->appendP(path, fb_esp_pgm_str_565, true);
+                json.add(path.c_str(), fbdo->_ss.arr);
+                fbdo->_ss.arr.clear();
+
+                ut->appendP(path, fb_esp_pgm_str_568, true);
+                fbdo->_ss.json.add(path.c_str(), json);
+                json.clear();
+            }
+
+            fbdo->_ss.json.int_tostr(writesArr[i]);
+            fbdo->_ss.json.clear();
+            fbdo->_ss.arr.clear();
+        }
+
+        for (size_t i = 0; i < writes.size(); i++)
+        {
+            fbdo->_ss.json.setJsonData(writesArr[i].c_str());
+            fbdo->_ss.arr.add(fbdo->_ss.json);
+            fbdo->_ss.json.clear();
+            std::string().swap(writesArr[i]);
+        }
+
+        tmp = ut->strP(fb_esp_pgm_str_555);
+        fbdo->_ss.json.add((const char *)tmp, fbdo->_ss.arr);
+        ut->delS(tmp);
+        fbdo->_ss.arr.clear();
+
+        if (strlen(transaction))
+        {
+            tmp = ut->strP(fb_esp_pgm_str_537);
+            fbdo->_ss.json.add((const char *)tmp, transaction);
+            ut->delS(tmp);
+        }
+
+        fbdo->_ss.json.int_tostr(req.payload);
+        fbdo->_ss.json.clear();
+    }
+
+    return sendRequest(fbdo, &req);
+}
+
 bool FB_Firestore::getDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask, const char *transaction, const char *readTime)
 {
     struct fb_esp_firestore_req_t req;
@@ -314,7 +559,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     std::string header;
     if (req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_list_doc)
         ut->appendP(header, fb_esp_pgm_str_25);
-    else if (req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_export_docs || req->requestType == fb_esp_firestore_request_type_import_docs || req->requestType == fb_esp_firestore_request_type_create_doc)
+    else if (req->requestType == fb_esp_firestore_request_type_commit_document || req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_export_docs || req->requestType == fb_esp_firestore_request_type_import_docs || req->requestType == fb_esp_firestore_request_type_create_doc)
         ut->appendP(header, fb_esp_pgm_str_24);
     else if (req->requestType == fb_esp_firestore_request_type_patch_doc)
         ut->appendP(header, fb_esp_pgm_str_26);
@@ -339,7 +584,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         ut->appendP(header, fb_esp_pgm_str_344);
     else if (req->requestType == fb_esp_firestore_request_type_import_docs)
         ut->appendP(header, fb_esp_pgm_str_345);
-    else if (req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_list_doc || req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_create_doc || req->requestType == fb_esp_firestore_request_type_patch_doc || req->requestType == fb_esp_firestore_request_type_delete_doc)
+    else if (req->requestType == fb_esp_firestore_request_type_commit_document || req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_list_doc || req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_create_doc || req->requestType == fb_esp_firestore_request_type_patch_doc || req->requestType == fb_esp_firestore_request_type_delete_doc)
     {
         ut->appendP(header, fb_esp_pgm_str_351);
 
@@ -424,6 +669,10 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
                     hasParam = true;
                 }
             }
+        }
+        else if (req->requestType == fb_esp_firestore_request_type_commit_document)
+        {
+            ut->appendP(header, fb_esp_pgm_str_554);
         }
 
         if (req->mask.length() > 0)
@@ -551,7 +800,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
 
 void FB_Firestore::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout ||  fbdo->_ss.con_mode != fb_esp_con_mode_firestore || strcmp(host, fbdo->_ss.host.c_str()) != 0)
+    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_firestore || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();

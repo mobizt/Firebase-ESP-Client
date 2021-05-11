@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.1.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.1.6
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -250,7 +250,7 @@ The session was close when the host or ip changes or server closed or the sessio
 When the new session need to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
 
 
-For post (push) or put (set) the request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
+For post (push) or put (set) request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
 
 
 With pushAsync and setAsync, the payload response will be ignored and the next data will be processed immediately.

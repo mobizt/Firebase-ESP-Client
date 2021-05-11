@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.1.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.1.6
 
 
 The default filessystem used in the library is flash and SD.
@@ -3330,6 +3330,38 @@ This function requires Email/password, Custom token or OAuth2.0 authentication.
 ```cpp
 bool patchDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *updateMask, const char *mask = "", const char *exists = "", const char *updateTime = "");
 ```
+
+
+
+
+
+
+
+####  Commits a transaction, while optionally updating documents.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`writes`** The dyamic array of write object fb_esp_firestore_document_write_t.
+
+For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
+
+param **`transaction`** A base64-encoded string.vIf set, applies all writes in this transaction, and commits it.
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires Email/password, Custom token or OAuth2.0 authentication.
+
+```cpp
+bool commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction = "");
+```
+
+
 
 
 

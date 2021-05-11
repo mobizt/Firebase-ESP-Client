@@ -1,6 +1,6 @@
 
 /**
- * Created May 7, 2021
+ * Created May 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -243,7 +243,27 @@ enum fb_esp_firestore_request_type
     fb_esp_firestore_request_type_delete_doc,
     fb_esp_firestore_request_type_run_query,
     fb_esp_firestore_request_type_list_doc,
-    fb_esp_firestore_request_type_list_collection
+    fb_esp_firestore_request_type_list_collection,
+    fb_esp_firestore_request_type_commit_document
+};
+
+enum fb_esp_firestore_document_write_type
+{
+    fb_esp_firestore_document_write_type_undefined,
+    fb_esp_firestore_document_write_type_update,
+    fb_esp_firestore_document_write_type_delete,
+    fb_esp_firestore_document_write_type_transform
+};
+
+enum fb_esp_firestore_transform_type
+{
+    fb_esp_firestore_transform_type_undefined,
+    fb_esp_firestore_transform_type_set_to_server_value,
+    fb_esp_firestore_transform_type_increment,
+    fb_esp_firestore_transform_type_maaximum,
+    fb_esp_firestore_transform_type_minimum,
+    fb_esp_firestore_transform_type_append_missing_elements,
+    fb_esp_firestore_transform_type_remove_all_from_array
 };
 
 enum fb_esp_firestore_consistency_mode
@@ -1142,6 +1162,39 @@ struct fb_esp_firestore_req_t
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
 };
 
+struct fb_esp_firestore_document_write_field_transforms_t
+{
+    const char *fieldPath = ""; //string The path of the field. See Document.fields for the field path syntax reference.
+    fb_esp_firestore_transform_type transform_type = fb_esp_firestore_transform_type_undefined;
+    const char *transform_content = ""; //string of enum of ServerValue for setToServerValue, string of object of values for increment, maximum and minimum
+    //, string of array object for appendMissingElements or removeAllFromArray.
+};
+
+struct fb_esp_firestore_document_write_document_transform_t
+{
+    const char *transform_document_path = "";                                                                                                                           //The relative path of document to transform.
+    std::vector<struct fb_esp_firestore_document_write_field_transforms_t> field_transforms = std::vector<struct fb_esp_firestore_document_write_field_transforms_t>(); //array of fb_esp_firestore_document_write_field_transforms_t data.
+};
+
+struct fb_esp_firestore_document_precondition_t
+{
+    const char *exists = "";      //bool
+    const char *update_time = ""; //string of timestamp. When set, the target document must exist and have been last updated at that time.
+    //A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.Examples : "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
+};
+
+struct fb_esp_firestore_document_write_t
+{
+    const char *update_masks = ""; //string The fields to update. Use comma (,) to separate between the field names
+    struct fb_esp_firestore_document_write_field_transforms_t update_transforms;
+    struct fb_esp_firestore_document_precondition_t current_document; //An optional precondition on the document.
+    fb_esp_firestore_document_write_type type = fb_esp_firestore_document_write_type_undefined;
+    const char *update_document_content = "";                                       //A document object to write for fb_esp_firestore_document_write_type_update.
+    const char *update_document_path = "";                                          //The relative path of document to update for fb_esp_firestore_document_write_type_update.
+    const char *delete_document_path = "";                                          //The relative path of document to delete for fb_esp_firestore_document_write_type_delete.
+    struct fb_esp_firestore_document_write_document_transform_t document_transform; //for fb_esp_firestore_document_write_type_transform
+};
+
 struct fb_esp_functions_https_trigger_t
 {
     std::string url = "";
@@ -1452,6 +1505,7 @@ static const char fb_esp_pgm_str_260[] PROGMEM = "requestType";
 static const char fb_esp_pgm_str_261[] PROGMEM = "VERIFY_EMAIL";
 static const char fb_esp_pgm_str_262[] PROGMEM = "getOobConfirmationCode?key=";
 static const char fb_esp_pgm_str_263[] PROGMEM = "PASSWORD_RESET";
+#if defined(FIREBASE_ESP_CLIENT)
 static const char fb_esp_pgm_str_264[] PROGMEM = "could not open file";
 static const char fb_esp_pgm_str_265[] PROGMEM = "firebasestorage.";
 static const char fb_esp_pgm_str_266[] PROGMEM = "/v0/b/";
@@ -1473,8 +1527,9 @@ static const char fb_esp_pgm_str_281[] PROGMEM = "dry_run";
 static const char fb_esp_pgm_str_282[] PROGMEM = "condition";
 static const char fb_esp_pgm_str_283[] PROGMEM = "content_available";
 static const char fb_esp_pgm_str_284[] PROGMEM = "mutable_content";
-
+#endif
 static const char fb_esp_pgm_str_285[] PROGMEM = "title";
+#if defined(FIREBASE_ESP_CLIENT)
 static const char fb_esp_pgm_str_286[] PROGMEM = "badge";
 static const char fb_esp_pgm_str_287[] PROGMEM = "subtitle";
 static const char fb_esp_pgm_str_288[] PROGMEM = "body_loc_key";
@@ -1518,6 +1573,7 @@ static const char fb_esp_pgm_str_325[] PROGMEM = "link";
 static const char fb_esp_pgm_str_326[] PROGMEM = "/v1/projects/";
 static const char fb_esp_pgm_str_327[] PROGMEM = "/messages:send";
 static const char fb_esp_pgm_str_328[] PROGMEM = "OAuth2.0 authentication required";
+
 static const char fb_esp_pgm_str_329[] PROGMEM = "iid";
 static const char fb_esp_pgm_str_330[] PROGMEM = "/iid/v1";
 static const char fb_esp_pgm_str_331[] PROGMEM = ":batchAdd";
@@ -1600,6 +1656,7 @@ static const char fb_esp_pgm_str_407[] PROGMEM = "title";
 static const char fb_esp_pgm_str_408[] PROGMEM = "description";
 static const char fb_esp_pgm_str_409[] PROGMEM = "location";
 static const char fb_esp_pgm_str_410[] PROGMEM = "version";
+
 static const char fb_esp_pgm_str_411[] PROGMEM = "auditConfigs";
 static const char fb_esp_pgm_str_412[] PROGMEM = "etag";
 static const char fb_esp_pgm_str_413[] PROGMEM = "auditLogConfigs";
@@ -1630,6 +1687,7 @@ static const char fb_esp_pgm_str_437[] PROGMEM = "versionId";
 static const char fb_esp_pgm_str_438[] PROGMEM = ":generateDownloadUrl";
 static const char fb_esp_pgm_str_439[] PROGMEM = ":generateUploadUrl";
 static const char fb_esp_pgm_str_440[] PROGMEM = "uploadUrl";
+#endif
 static const char fb_esp_pgm_str_441[] PROGMEM = "https://%[^/]/%s";
 static const char fb_esp_pgm_str_442[] PROGMEM = "http://%[^/]/%s";
 static const char fb_esp_pgm_str_443[] PROGMEM = "%[^/]/%s";
@@ -1746,6 +1804,25 @@ static const char fb_esp_pgm_str_550[] PROGMEM = "rules";
 static const char fb_esp_pgm_str_551[] PROGMEM = "/.indexOn";
 static const char fb_esp_pgm_str_552[] PROGMEM = ".read";
 static const char fb_esp_pgm_str_553[] PROGMEM = ".write";
+
+#if defined(FIREBASE_ESP_CLIENT)
+static const char fb_esp_pgm_str_554[] PROGMEM = ":commit";
+static const char fb_esp_pgm_str_555[] PROGMEM = "writes";
+static const char fb_esp_pgm_str_556[] PROGMEM = "fieldPaths";
+static const char fb_esp_pgm_str_557[] PROGMEM = "fieldPath";
+static const char fb_esp_pgm_str_558[] PROGMEM = "setToServerValue";
+static const char fb_esp_pgm_str_559[] PROGMEM = "increment";
+static const char fb_esp_pgm_str_560[] PROGMEM = "maximum";
+static const char fb_esp_pgm_str_561[] PROGMEM = "minimum";
+static const char fb_esp_pgm_str_562[] PROGMEM = "appendMissingElements";
+static const char fb_esp_pgm_str_563[] PROGMEM = "removeAllFromArray";
+static const char fb_esp_pgm_str_564[] PROGMEM = "document";
+static const char fb_esp_pgm_str_565[] PROGMEM = "fieldTransforms";
+static const char fb_esp_pgm_str_566[] PROGMEM = "currentDocument";
+static const char fb_esp_pgm_str_567[] PROGMEM = "updateTransforms";
+static const char fb_esp_pgm_str_568[] PROGMEM = "transform";
+static const char fb_esp_pgm_str_569[] PROGMEM = "exists";
+#endif
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

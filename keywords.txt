@@ -156,6 +156,7 @@ exportDocuments KEYWORD2
 importDocuments KEYWORD2
 createDocument  KEYWORD2
 patchDocument   KEYWORD2
+commitDocument  KEYWORD2
 getDocument KEYWORD2
 deleteDocument  KEYWORD2
 listDocuments   KEYWORD2
@@ -317,6 +318,10 @@ FireSense_Channel   KEYWORD3
 Firesense_Channel_Type  KEYWORD3
 FireSense_Condition KEYWORD3
 FireSense_Data_Type KEYWORD3
+fb_esp_firestore_document_write_field_transforms_t  KEYWORD3
+fb_esp_firestore_document_write_document_transform_t    KEYWORD3
+fb_esp_firestore_document_precondition_t    KEYWORD3
+fb_esp_firestore_document_write_t   KEYWORD3
 
 
 ###########################################################

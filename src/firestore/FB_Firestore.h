@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.0.8
+ * Google's Cloud Firestore class, Forestore.h version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 4, 2021
+ * Created May 11, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -144,6 +144,26 @@ public:
     */
     bool patchDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *updateMask, const char *mask = "", const char *exists = "", const char *updateTime = "");
 
+    /** Commits a transaction, while optionally updating documents.
+     * 
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param writes The dyamic array of write object fb_esp_firestore_document_write_t.
+     * 
+     * For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
+     * 
+     * @param transaction A base64-encoded string.vIf set, applies all writes in this transaction, and commits it.
+     * 
+     * @return Boolean value, indicates the success of the operation. 
+     * 
+     * @note Use FirebaseData.payload() to get the returned payload.
+     * 
+     * This function requires Email/password, Custom token or OAuth2.0 authentication.
+     * 
+    */
+    bool commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction = "");
+
     /** Get a document at the defined path.
      * 
      * @param fbdo The pointer to Firebase Data Object.
@@ -253,6 +273,7 @@ private:
     bool sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
     bool firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
     bool handleResponse(FirebaseData *fbdo);
+    bool setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms);
 };
 
 #endif
