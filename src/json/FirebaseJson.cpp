@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.14
+ * FirebaseJson, version 2.3.15
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * April 30, 2021
+ * May 12, 2021
  * 
  * Features
  * - None recursive operations
@@ -606,7 +606,7 @@ void FirebaseJson::_fbjs_parse(bool collectTk)
   if (_parser_info.tokenCount < 0)
   {
     /** Not enough tokens were provided */
-    if (cnt == JSMN_ERROR_NOMEM)
+    if (_parser_info.tokenCount == JSMN_ERROR_NOMEM)
       helper->setLastError(-2, __FILE__, __LINE__, fb_json_str_31);
   }
 
@@ -2568,7 +2568,7 @@ bool FirebaseJson::remove(const String &path)
     char *temp = helper->strP(fb_json_str_32);
     size_t p1 = _rawbuf.find(temp);
     helper->delS(temp);
-    
+
     if (p1 == std::string::npos)
     {
       temp = helper->strP(fb_json_str_33);
@@ -2756,8 +2756,7 @@ void FirebaseJson::_setElementType()
 /**
  * Allocates a fresh unused token from the token pool.
  */
-FirebaseJson::fbjs_tok_t *FirebaseJson::fbjs_alloc_token(fbjs_parser *parser,
-                                                         FirebaseJson::fbjs_tok_t *tokens, size_t num_tokens)
+FirebaseJson::fbjs_tok_t *FirebaseJson::fbjs_alloc_token(fbjs_parser *parser, FirebaseJson::fbjs_tok_t *tokens, size_t num_tokens)
 {
   FirebaseJson::fbjs_tok_t *tok;
   if (parser->toknext >= num_tokens)
@@ -2776,8 +2775,7 @@ FirebaseJson::fbjs_tok_t *FirebaseJson::fbjs_alloc_token(fbjs_parser *parser,
 /**
  * Fills token type and boundaries.
  */
-void FirebaseJson::fbjs_fill_token(fbjs_tok_t *token, fbjs_type_t type,
-                                   int start, int end)
+void FirebaseJson::fbjs_fill_token(fbjs_tok_t *token, fbjs_type_t type, int start, int end)
 {
   token->type = type;
   token->start = start;
@@ -2788,8 +2786,7 @@ void FirebaseJson::fbjs_fill_token(fbjs_tok_t *token, fbjs_type_t type,
 /**
  * Fills next available token with JSON primitive.
  */
-int FirebaseJson::fbjs_parse_primitive(fbjs_parser *parser, const char *js,
-                                       size_t len, fbjs_tok_t *tokens, size_t num_tokens)
+int FirebaseJson::fbjs_parse_primitive(fbjs_parser *parser, const char *js, size_t len, fbjs_tok_t *tokens, size_t num_tokens)
 {
   fbjs_tok_t *token;
   int start;
@@ -2848,8 +2845,7 @@ found:
 /**
  * Fills next token with JSON string.
  */
-int FirebaseJson::fbjs_parse_string(fbjs_parser *parser, const char *js,
-                                    size_t len, fbjs_tok_t *tokens, size_t num_tokens)
+int FirebaseJson::fbjs_parse_string(fbjs_parser *parser, const char *js, size_t len, fbjs_tok_t *tokens, size_t num_tokens)
 {
   fbjs_tok_t *token;
 
@@ -2930,14 +2926,13 @@ int FirebaseJson::fbjs_parse_string(fbjs_parser *parser, const char *js,
 /**
  * Parse JSON string and fill tokens.
  */
-int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
-                             fbjs_tok_t *tokens, unsigned int num_tokens)
+int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len, fbjs_tok_t *tokens, unsigned int num_tokens)
 {
   int r;
   int i;
   fbjs_tok_t *token;
   int count = parser->toknext;
-
+  
   for (; parser->pos < len && js[parser->pos] != '\0'; parser->pos++)
   {
     char c;
@@ -2955,10 +2950,20 @@ int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
       }
       token = fbjs_alloc_token(parser, tokens, num_tokens);
       if (token == NULL)
+      {
         return JSMN_ERROR_NOMEM;
+      }
       if (parser->toksuper != -1)
       {
-        tokens[parser->toksuper].size++;
+        fbjs_tok_t *t = &tokens[parser->toksuper];
+#ifdef JSMN_STRICT
+        /* In strict mode an object or array can't become a key */
+        if (t->type == JSMN_OBJECT)
+        {
+          return JSMN_ERROR_INVAL;
+        }
+#endif
+        t->size++;
 #ifdef JSMN_PARENT_LINKS
         token->parent = parser->toksuper;
 #endif
@@ -2973,7 +2978,9 @@ int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
     case '}':
     case ']':
       if (tokens == NULL)
+      {
         break;
+      }
       type = (c == '}' ? JSMN_OBJECT : JSMN_ARRAY);
 #ifdef JSMN_PARENT_LINKS
       if (parser->toknext < 1)
@@ -3020,7 +3027,9 @@ int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
       }
       /* Error if unmatched closing bracket */
       if (i == -1)
+      {
         return JSMN_ERROR_INVAL;
+      }
       for (; i >= 0; i--)
       {
         token = &tokens[i];
@@ -3035,10 +3044,14 @@ int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
     case '\"':
       r = fbjs_parse_string(parser, js, len, tokens, num_tokens);
       if (r < 0)
+      {
         return r;
+      }
       count++;
       if (parser->toksuper != -1 && tokens != NULL)
+      {
         tokens[parser->toksuper].size++;
+      }
       break;
     case '\t':
     case '\r':
@@ -3086,11 +3099,10 @@ int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
     case 't':
     case 'f':
     case 'n':
-
       /* And they must not be keys of the object */
       if (tokens != NULL && parser->toksuper != -1)
       {
-        fbjs_tok_t *t = &tokens[parser->toksuper];
+        const fbjs_tok_t *t = &tokens[parser->toksuper];
         if (t->type == JSMN_OBJECT ||
             (t->type == JSMN_STRING && t->size != 0))
         {
@@ -3101,19 +3113,23 @@ int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
     /* In non-strict mode every unquoted value is a primitive */
     default:
 #endif
-
       r = fbjs_parse_primitive(parser, js, len, tokens, num_tokens);
       if (r < 0)
+      {
         return r;
+      }
       count++;
       if (parser->toksuper != -1 && tokens != NULL)
+      {
         tokens[parser->toksuper].size++;
+      }
       break;
 
 #ifdef JSMN_STRICT
     /* Unexpected char in strict mode */
     default:
-      return JSMN_ERROR_INVAL;
+      if (tokens != NULL)
+        return JSMN_ERROR_INVAL;
 #endif
     }
   }
