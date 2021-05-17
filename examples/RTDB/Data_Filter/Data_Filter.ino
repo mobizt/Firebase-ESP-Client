@@ -110,7 +110,7 @@ void loop()
 
       //Also can use Firebase.push instead of Firebase.pushJSON
       //JSON string does not support in v 2.6.0 and later, only FirebaseJson object is supported.
-      if (Firebase.RTDB.pushJSONAsync(&fbdo, "/Test/Int", &json))
+      if (Firebase.RTDB.pushJSON(&fbdo, "/Test/Int", &json))
       {
         Serial.println("PASSED");
         Serial.println("------------------------------------");

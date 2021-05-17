@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.1.7
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.0
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -180,6 +180,19 @@ fbdo.setBSSLBufferSize(1024, 1024); //minimum size is 512 bytes, maximum size is
 //Prevent out of memory for large payload but data may be truncated and can't determine its type.
 fbdo.setResponseSize(1024); //minimum size is 1024 bytes
 ```
+
+
+### Important Information
+
+In ESP8266 Aruino Core SDK v3.x.x
+
+The free heap is significantly reduced as much as 5-6 kB from v2.7.4.
+
+This may lead to out of memory sitation when two Firebase Data objects are used simultaneously (when sessions connected).
+
+Minimize the reserved memory for BearSSL will gain the free heap a bit but may not enough for your usage.
+
+You can stay with Core SDK v2.7.4 until this memory issue was solve in the Core SDK.
 
 
 

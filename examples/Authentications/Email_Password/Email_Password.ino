@@ -160,7 +160,7 @@ void loop()
 
         String node = path + "/int";
 
-        if (Firebase.RTDB.setAsync(&fbdo, node.c_str(), count++))
+        if (Firebase.RTDB.set(&fbdo, node.c_str(), count++))
         {
             Serial.println("PASSED");
             Serial.println("------------------------------------");

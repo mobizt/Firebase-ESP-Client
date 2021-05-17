@@ -1,5 +1,5 @@
 /**
- * HTTP Client wrapper v1.1.7
+ * HTTP Client wrapper v1.1.8
  * 
  * This library provides ESP8266 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -36,6 +36,17 @@
 #include <Arduino.h>
 #include <core_version.h>
 #include <time.h>
+
+//__GNUC__
+//__GNUC_MINOR__
+//__GNUC_PATCHLEVEL__
+
+#ifdef __GNUC__
+#if __GNUC__ > 4 || __GNUC__ == 10
+#include <string>
+#define ESP8266_CORE_SDK_V3_X_X
+#endif
+#endif
 
 #ifndef ARDUINO_ESP8266_GIT_VER
 #error Your ESP8266 Arduino Core SDK is outdated, please update. From Arduino IDE go to Boards Manager and search 'esp8266' then select the latest version.

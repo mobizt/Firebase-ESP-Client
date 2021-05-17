@@ -112,7 +112,7 @@ void loop()
 
     Serial.println("------------------------------------");
     Serial.println("Set string...");
-    if (Firebase.RTDB.setStringAsync(&fbdo, Path.c_str(), Value.c_str()))
+    if (Firebase.RTDB.setString(&fbdo, Path.c_str(), Value.c_str()))
     {
       Serial.println("PASSED");
       Serial.println("------------------------------------");
