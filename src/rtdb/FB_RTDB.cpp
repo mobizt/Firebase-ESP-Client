@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.15
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.16
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 7, 2021
+ * Created May 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -3580,7 +3580,22 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
             fbdo->setQuery(req->data.query);
     }
     else if (req->data.type == d_file)
+    {
         fbdo->_ss.rtdb.file_name = req->filename;
+
+        if (req->method == m_get)
+        {
+            if (req->storageType == mem_storage_type_flash && !Signer.getCfg()->_int.fb_flash_rdy)
+                ut->flashTest();
+            else if (req->storageType == mem_storage_type_sd && !Signer.getCfg()->_int.fb_sd_rdy)
+                ut->sdTest(Signer.getCfg()->_int.fb_file);
+
+            if (Signer.getCfg()->_int.fb_flash_rdy)
+                Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.file_name.c_str(), "w");
+            else if (Signer.getCfg()->_int.fb_sd_rdy)
+                Signer.getCfg()->_int.fb_file = SD_FS.open(fbdo->_ss.rtdb.file_name.c_str(), FILE_WRITE);
+        }
+    }
 
     fbdo->_ss.rtdb.queue_ID = 0;
 
@@ -3732,7 +3747,6 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
     if (!fbdo->reconnect() || !fbdo->tokenReady() || !fbdo->validRequest(req->path))
         return false;
 
-
     if ((req->method == m_put || req->method == m_post || req->method == m_patch || req->method == m_patch_nocontent || req->method == m_set_rules) && req->payload.length() == 0 && req->data.type != d_string && req->data.type != d_blob && req->data.type != d_file)
     {
         fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
@@ -3778,7 +3792,6 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
         }
         else if (req->method == m_download || (req->data.type == d_file && req->method == m_get))
         {
-
             if (!waitResponse(fbdo))
             {
                 fbdo->closeSession();

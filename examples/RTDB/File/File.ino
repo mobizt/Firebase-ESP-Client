@@ -93,7 +93,11 @@ void setup()
   fbdo.setResponseSize(1024);
 
   //Mount SD card
-  if (!SD.begin(15))
+#if defined(ESP32)
+  if (!Firebase.sdBegin(13, 14, 2, 15)) //SS, SCK,MISO, MOSI
+#elif defined(ESP8266)
+  if (!Firebase.sdBegin(15))  //SS
+#endif
   {
     Serial.println("SD Card mounted failed");
     return;
@@ -122,7 +126,6 @@ void setup()
   }
 
   file.close();
-
 }
 
 void loop()
@@ -162,6 +165,12 @@ void loop()
 
       Serial.println("PASSED");
       Serial.println("DATA");
+
+#if defined(ESP32)
+      Firebase.sdBegin(13, 14, 2, 15); //SS, SCK,MISO, MOSI
+#elif defined(ESP8266)
+      Firebase.sdBegin(15);   //SS
+#endif
 
       //Readout the downloaded file
       file = SD.open("/file2.txt", FILE_READ);
@@ -233,6 +242,12 @@ void loop()
 
         Serial.println("PASSED");
         Serial.println("DATA");
+
+#if defined(ESP32)
+        Firebase.sdBegin(13, 14, 2, 15); //SS, SCK,MISO, MOSI
+#elif defined(ESP8266)
+        Firebase.sdBegin(15); //SS
+#endif
 
         //Readout the downloaded file
         file = SD.open("/file3.txt", FILE_READ);

@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.0
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.1
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -184,7 +184,7 @@ fbdo.setResponseSize(1024); //minimum size is 1024 bytes
 
 ### Important Information
 
-In ESP8266 Aruino Core SDK v3.x.x
+In ESP8266 Arduino Core SDK v3.x.x
 
 The free heap is significantly reduced as much as 5-6 kB from v2.7.4.
 

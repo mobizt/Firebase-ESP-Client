@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.11
+ * Google's Firebase Util class, Utils.h version 1.0.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 4, 2021
+ * Created May 17, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1607,6 +1607,8 @@ public:
         SD_FS.remove(filepath.c_str());
 
         std::string().swap(filepath);
+
+        config->_int.fb_sd_rdy = true;
 
         return true;
     }
