@@ -88,6 +88,7 @@
 /* 5. Define the database secret in case we need to access database rules*/
 #define DATABASE_SECRET "DATABASE_SECRET"
 
+//Define Firebase Data object
 FirebaseData fbdo1;
 FirebaseData fbdo2;
 
@@ -175,6 +176,8 @@ void setup()
     Serial.print("Connected with IP: ");
     Serial.println(WiFi.localIP());
     Serial.println();
+
+    Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
     /* Assign the api key (required) */
     config.api_key = API_KEY;

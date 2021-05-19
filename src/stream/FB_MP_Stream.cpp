@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.2
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 5, 2021
+ * Created May 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -69,6 +69,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
                 char *buf = ut->strP(fb_esp_pgm_str_186);
                 if (strcmp(type.c_str(), buf) == 0)
                     type = sif->m_type_str.c_str();
+                eventType = sif->m_event_type_str.c_str();
                 value = data.stringValue;
                 dataPath = path;
                 ut->delS(buf);
@@ -87,6 +88,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             {
                 sif->m_json->toString(value, true);
                 type = sif->m_type_str.c_str();
+                eventType = sif->m_event_type_str.c_str();
                 dataPath = sif->m_path.c_str();
                 res = true;
             }
@@ -107,6 +109,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             value = sif->m_data.c_str();
             dataPath = sif->m_path.c_str();
             type = sif->m_type_str.c_str();
+            eventType = sif->m_event_type_str.c_str();
             res = true;
         }
         std::string().swap(p1);
@@ -120,6 +123,7 @@ void FIREBASE_MP_STREAM_CLASS::empty()
     std::string().swap(sif->m_data);
     std::string().swap(sif->m_path);
     std::string().swap(sif->m_type_str);
+    std::string().swap(sif->m_event_type_str);
     dataPath.clear();
     value.clear();
     type.clear();

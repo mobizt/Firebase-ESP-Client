@@ -1,6 +1,6 @@
 
 /**
- * Created May 11, 2021
+ * Created May 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -577,6 +577,7 @@ struct fb_esp_stream_info_t
     std::string m_data = "";
     std::string m_path = "";
     std::string m_type_str = "";
+    std::string m_event_type_str = "";
     FirebaseJson *m_json = nullptr;
 };
 

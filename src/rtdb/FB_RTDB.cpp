@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.16
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.17
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 17, 2021
+ * Created May 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -3060,9 +3060,6 @@ void FB_RTDB::processErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallb
                         if (item.doublePtr)
                             *item.doublePtr = fbdo->doubleData();
 
-                        Serial.println(fbdo->doubleData());
-                        Serial.println(*item.doublePtr);
-
                         fbdo->clearQueueItem(&item);
                         fbdo->_qMan.remove(i);
                     }
@@ -4857,6 +4854,7 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         mdata.sif->m_type = fbdo->_ss.rtdb.resp_data_type;
         mdata.sif->m_path = fbdo->_ss.rtdb.path;
         mdata.sif->m_type_str = fbdo->getDataType(mdata.sif->m_type);
+        mdata.sif->m_event_type_str = fbdo->_ss.rtdb.event_type;
 
         if (mdata.sif->m_type == d_json)
             mdata.sif->m_json = &fbdo->_ss.json;

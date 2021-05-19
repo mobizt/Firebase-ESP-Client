@@ -1,11 +1,20 @@
 #ifndef RTDBHelper_H
 #define RTDBHelper_H
 #include <Arduino.h>
+#include "FirebaseFS.h"
+
+#if defined(FIREBASE_ESP_CLIENT)
 #include <Firebase_ESP_Client.h>
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#if defined(ESP32)
+#include <FirebaseESP32.h>
+#elif defined(ESP8266)
+#include <FirebaseESP8266.h>
+#endif
+#endif
 
 void printResult(FirebaseData &data)
 {
-
     if (data.dataType() == "int")
         Serial.println(data.intData());
     else if (data.dataType() == "float")
@@ -18,7 +27,6 @@ void printResult(FirebaseData &data)
         Serial.println(data.stringData());
     else if (data.dataType() == "json")
     {
-        Serial.println();
         FirebaseJson &json = data.jsonObject();
         //Print all object data
         Serial.println("Pretty printed JSON data:");
@@ -50,7 +58,6 @@ void printResult(FirebaseData &data)
     }
     else if (data.dataType() == "array")
     {
-        Serial.println();
         //get array data from FirebaseData using FirebaseJsonArray object
         FirebaseJsonArray &arr = data.jsonArray();
         //Print all array values
@@ -86,11 +93,7 @@ void printResult(FirebaseData &data)
     }
     else if (data.dataType() == "blob")
     {
-
-        Serial.println();
-
         std::vector<uint8_t> blob = data.blobData();
-        Serial.println();
         for (size_t i = 0; i < blob.size(); i++)
         {
             if (i > 0 && i % 16 == 0)
@@ -104,12 +107,8 @@ void printResult(FirebaseData &data)
     }
     else if (data.dataType() == "file")
     {
-
-        Serial.println();
-
         File file = data.fileStream();
         int i = 0;
-
         while (file.available())
         {
             if (i > 0 && i % 16 == 0)
@@ -133,7 +132,7 @@ void printResult(FirebaseData &data)
     }
 }
 
-void printResult(FirebaseStream &data)
+void printResult(FIREBASE_STREAM_CLASS &data)
 {
 
     if (data.dataType() == "int")
@@ -148,7 +147,6 @@ void printResult(FirebaseStream &data)
         Serial.println(data.stringData());
     else if (data.dataType() == "json")
     {
-        Serial.println();
         FirebaseJson *json = data.jsonObjectPtr();
         //Print all object data
         Serial.println("Pretty printed JSON data:");
@@ -180,7 +178,6 @@ void printResult(FirebaseStream &data)
     }
     else if (data.dataType() == "array")
     {
-        Serial.println();
         //get array data from FirebaseData using FirebaseJsonArray object
         FirebaseJsonArray *arr = data.jsonArrayPtr();
         //Print all array values
@@ -196,7 +193,6 @@ void printResult(FirebaseStream &data)
         {
             Serial.print(i);
             Serial.print(", Value: ");
-
             FirebaseJsonData *jsonData = data.jsonDataPtr();
             //Get the result data from FirebaseJsonArray object
             arr->get(*jsonData, i);
@@ -217,11 +213,7 @@ void printResult(FirebaseStream &data)
     }
     else if (data.dataType() == "blob")
     {
-
-        Serial.println();
-
         std::vector<uint8_t> blob = data.blobData();
-        Serial.println();
         for (size_t i = 0; i < blob.size(); i++)
         {
             if (i > 0 && i % 16 == 0)
@@ -235,12 +227,8 @@ void printResult(FirebaseStream &data)
     }
     else if (data.dataType() == "file")
     {
-
-        Serial.println();
-
         File file = data.fileStream();
         int i = 0;
-
         while (file.available())
         {
             if (i > 0 && i % 16 == 0)

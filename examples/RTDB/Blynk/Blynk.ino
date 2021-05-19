@@ -40,8 +40,8 @@
 #define USER_PASSWORD "USER_PASSWORD"
 
 //Define Firebase Data object
-FirebaseData fbdo1;
-FirebaseData fbdo2;
+FirebaseData fbdo;
+FirebaseData stream;
 
 FirebaseAuth auth;
 FirebaseConfig config;
@@ -85,6 +85,8 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
+  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
   /* Assign the api key (required) */
   config.api_key = API_KEY;
 
@@ -98,114 +100,61 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
   Firebase.begin(&config, &auth);
+
   Firebase.reconnectWiFi(true);
 
-#if defined(ESP8266)
-  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
-  fbdo1.setBSSLBufferSize(1024, 1024);
-#endif
-
-  //Set the size of HTTP response buffers in the case where we want to work with large data.
-  fbdo1.setResponseSize(1024);
-
-#if defined(ESP8266)
-  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
-  fbdo2.setBSSLBufferSize(1024, 1024);
-#endif
-
-  //Set the size of HTTP response buffers in the case where we want to work with large data.
-  fbdo2.setResponseSize(1024);
-
- 
-  if (!Firebase.RTDB.beginStream(&fbdo1, path.c_str()))
-  {
-    Serial.println("------------------------------------");
-    Serial.println("Can't begin stream connection...");
-    Serial.println("REASON: " + fbdo1.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
+  if (!Firebase.RTDB.beginStream(&stream, "/test/blynk/int"))
+    Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
 
   Blynk.begin(BLYNK_AUTH, WIFI_SSID, WIFI_PASSWORD);
 }
 
 void loop()
 {
+
   Blynk.run();
 
   if (Firebase.ready())
   {
-    if (!Firebase.RTDB.readStream(&fbdo1))
-    {
-      Serial.println("------------------------------------");
-      Serial.println("Can't read stream data...");
-      Serial.println("REASON: " + fbdo1.errorReason());
-      Serial.println("------------------------------------");
-      Serial.println();
-    }
+    if (!Firebase.RTDB.readStream(&stream))
+      Serial.printf("sream read error, %s\n\n", stream.errorReason().c_str());
 
-    if (fbdo1.streamTimeout())
-    {
-      Serial.println("Stream timeout, resume streaming...");
-      Serial.println();
-    }
+    if (stream.streamTimeout())
+      Serial.println("stream timeout, resuming...\n");
 
-    if (fbdo1.streamAvailable())
+    if (stream.streamAvailable())
     {
-      Serial.println("------------------------------------");
-      Serial.println("Stream Data available...");
-      Serial.println("STREAM PATH: " + fbdo1.streamPath());
-      Serial.println("EVENT PATH: " + fbdo1.dataPath());
-      Serial.println("DATA TYPE: " + fbdo1.dataType());
-      Serial.println("EVENT TYPE: " + fbdo1.eventType());
-      Serial.print("VALUE: ");
-      if (fbdo1.dataType() == "int")
+
+      Serial.printf("sream path, %s\nevent path, %s\ndata type, %s\nevent type, %s\nvalue, %d\n\n",
+                    stream.streamPath().c_str(),
+                    stream.dataPath().c_str(),
+                    stream.dataType().c_str(),
+                    stream.eventType().c_str(),
+                    stream.intData());
+
+      if (stream.dataType() == "int")
       {
-
-        Serial.println(fbdo1.intData());
-        if (fbdo1.intData() == 0)
-        {
-          digitalWrite(BuiltIn_LED, LOW);
-          led.off();
-        }
-        else if (fbdo1.intData() == 1)
+        if (stream.intData() == 1)
         {
           digitalWrite(BuiltIn_LED, HIGH);
           led.on();
         }
+        else
+        {
+          digitalWrite(BuiltIn_LED, LOW);
+          led.off();
+        }
       }
-      Serial.println("------------------------------------");
-      Serial.println();
     }
   }
 }
 
-
-
 BLYNK_WRITE(V1)
 {
-  int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
-
-  Serial.println("------------------------------------");
-  Serial.println("Set integer...");
-  //Also can use Firebase.set instead of Firebase.setInt
-  if (Firebase.RTDB.setInt(&fbdo2, path.c_str(), pinValue))
-  {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + fbdo2.dataPath());
-    Serial.println("TYPE: " + fbdo2.dataType());
-    Serial.print("VALUE: ");
-    if (fbdo2.dataType() == "int")
-      Serial.println(fbdo2.intData());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo2.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
+  Serial.printf("Set int... %s\n\n", Firebase.RTDB.setInt(&fbdo, "/test/blynk/int", param.asInt()) ? "ok" : fbdo.errorReason().c_str());
 }
