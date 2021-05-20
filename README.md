@@ -186,6 +186,98 @@ fbdo.setResponseSize(1024); //minimum size is 1024 bytes
 
 
 
+## IDE Configuaration for ESP8266 MMU - Adjust the Ratio of ICACHE to IRAM
+
+### Arduino IDE
+
+When you update the ESP8266 Arduino Core SDK to v3.0.0, the memory can be configurable from Arduino IDE board settings.
+
+By default MMU **option 1** was selected, the free Heap can be low and may not suitable for the SSL client usage in this library.
+
+To increase the Heap, choose the MMU **option 3**, 16KB cache + 48KB IRAM and 2nd Heap (shared).
+
+![Arduino IDE config](/media/images/ArduinoIDE.png)
+
+
+More about MMU settings.
+https://arduino-esp8266.readthedocs.io/en/latest/mmu.html
+
+### PlatformIO IDE
+
+When Core SDK v3.0.0 becomes available in PlatformIO,
+
+By default the balanced ratio (32KB cache + 32KB IRAM) configuration is used.
+
+To increase the heap, **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED** build flag should be assigned in platformio.ini.
+
+At the time of writing, to update SDK to v3.0.0 you can follow these steps.
+
+1. In platformio.ini, edit the config as the following
+
+```ini
+[env:d1_mini]
+platform = https://github.com/platformio/platform-espressif8266.git
+build_flags = -D PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+board = d1_mini
+framework = arduino
+monitor_speed = 115200
+```
+
+2. Delete this folder **C:\Users\UserName\\.platformio\platforms\espressif8266@src-?????????????**
+3. Delete .pio and .vscode folders in your project.
+4. Clean and Compile the project.
+
+
+The supportedd MMU build flags in PlatformIO.
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48**
+   16KB cache + 48KB IRAM (IRAM)
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED**
+   16KB cache + 48KB IRAM and 2nd Heap (shared)
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM32_SECHEAP_NOTSHARED**
+   16KB cache + 32KB IRAM + 16KB 2nd Heap (not shared)
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_128K**
+   128K External 23LC1024
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_1024K**
+   1M External 64 MBit PSRAM
+
+- **PIO_FRAMEWORK_ARDUINO_MMU_CUSTOM**
+   Disables default configuration and expects user-specified flags
+
+### Test code for MMU
+
+```cpp
+
+#include <Arduino.h>
+#include <umm_malloc/umm_heap_select.h>
+
+void setup() 
+{
+  Serial.begin(74880);
+  HeapSelectIram ephemeral;
+  Serial.printf("IRAM free: %6d bytes\r\n", ESP.getFreeHeap());
+  {
+    HeapSelectDram ephemeral;
+    Serial.printf("DRAM free: %6d bytes\r\n", ESP.getFreeHeap());
+  }
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+}
+
+```
+
+
+
+
+
+
+
 ### Authentication
 
 This library supports many types of authentications.
