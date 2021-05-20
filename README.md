@@ -278,7 +278,7 @@ void loop() {
 
 
 
-### Authentication
+## Authentication
 
 This library supports many types of authentications.
 
