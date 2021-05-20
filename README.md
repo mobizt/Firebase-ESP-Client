@@ -231,21 +231,27 @@ monitor_speed = 115200
 The supportedd MMU build flags in PlatformIO.
 
 - **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48**
+
    16KB cache + 48KB IRAM (IRAM)
 
 - **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED**
+
    16KB cache + 48KB IRAM and 2nd Heap (shared)
 
 - **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM32_SECHEAP_NOTSHARED**
+
    16KB cache + 32KB IRAM + 16KB 2nd Heap (not shared)
 
 - **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_128K**
+
    128K External 23LC1024
 
 - **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_1024K**
+
    1M External 64 MBit PSRAM
 
 - **PIO_FRAMEWORK_ARDUINO_MMU_CUSTOM**
+
    Disables default configuration and expects user-specified flags
 
 ### Test code for MMU
