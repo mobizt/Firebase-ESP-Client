@@ -1016,6 +1016,7 @@ struct fb_esp_firestore_info_t
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
     int contentLength = 0;
     std::string payload = "";
+    bool async = false;
 };
 
 struct fb_esp_functions_info_t
@@ -1160,6 +1161,7 @@ struct fb_esp_firestore_req_t
     std::string pageToken = "";
     std::string orderBy = "";
     bool showMissing = false;
+    bool async = false;
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
 };
 

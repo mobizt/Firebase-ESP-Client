@@ -1,6 +1,6 @@
 {
   "name": "Firebase Arduino Client Library for ESP8266 and ESP32",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "keywords": "communication, REST, esp32, esp8266, arduino",
   "description": "This client library provides the functions to work with Firebase Realtime database, Firestore, Storage and Cloud messaging.",
   "repository": {

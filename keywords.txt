@@ -157,6 +157,7 @@ importDocuments KEYWORD2
 createDocument  KEYWORD2
 patchDocument   KEYWORD2
 commitDocument  KEYWORD2
+commitDocumentAsync KEYWORD2
 getDocument KEYWORD2
 deleteDocument  KEYWORD2
 listDocuments   KEYWORD2

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.9
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 11, 2021
+ * Created May 23, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -218,11 +218,22 @@ bool FB_Firestore::setFieldTransform(FirebaseJson *json, struct fb_esp_firestore
 
 bool FB_Firestore::commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction)
 {
+    return int_commitDocument(fbdo, projectId, databaseId, writes, transaction, false);
+}
+
+bool FB_Firestore::commitDocumentAsync(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction)
+{
+    return int_commitDocument(fbdo, projectId, databaseId, writes, transaction, true);
+}
+
+bool FB_Firestore::int_commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction, bool async)
+{
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_commit_document;
     req.projectId = projectId;
     req.databaseId = databaseId;
     req.transaction = transaction;
+    req.async = async;
 
     if (writes.size() > 0)
     {
@@ -546,6 +557,10 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
     Signer.getCfg()->_int.fb_processing = true;
 
     fbdo->_ss.cfs.payload.clear();
+   
+    //close session if async mode changes
+    if (fbdo->_ss.cfs.async && !req->async)
+        fbdo->_ss.last_conn_ms = 0;
 
     connect(fbdo);
 
@@ -673,6 +688,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         else if (req->requestType == fb_esp_firestore_request_type_commit_document)
         {
             ut->appendP(header, fb_esp_pgm_str_554);
+            fbdo->_ss.cfs.async = req->async;
         }
 
         if (req->mask.length() > 0)
@@ -784,7 +800,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     if (ret == 0)
     {
         fbdo->_ss.connected = true;
-        if (handleResponse(fbdo))
+        if (fbdo->_ss.cfs.async || handleResponse(fbdo))
         {
             Signer.getCfg()->_int.fb_processing = false;
             return true;

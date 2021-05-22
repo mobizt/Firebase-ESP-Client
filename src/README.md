@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.4
 
 
 The default filessystem used in the library is flash and SD.
@@ -3359,6 +3359,8 @@ This function requires Email/password, Custom token or OAuth2.0 authentication.
 
 ```cpp
 bool commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction = "");
+
+bool commitDocumentAsync(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction = "");
 ```
 
 
