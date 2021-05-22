@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.0.7
+ * Google's Cloud Functions class, Functions.cpp version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 4, 2021
+ * Created May 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -50,9 +50,16 @@ bool FB_Functions::callFunction(FirebaseData *fbdo, const char *projectId, const
     req.locationId = locationId;
     req.functionId = functionId;
 
+    std::string find;
+    ut->appendP(find, fb_esp_pgm_str_3);
+    std::string replace;
+    ut->appendP(replace, fb_esp_pgm_str_570);
+    req.payload = data;
+    ut->replaceAll(req.payload, find, replace);
+
     char *tmp = ut->strP(fb_esp_pgm_str_135);
     fbdo->_ss.json.clear();
-    fbdo->_ss.json.add(tmp, data);
+    fbdo->_ss.json.add(tmp, req.payload.c_str());
     fbdo->_ss.json.int_tostr(req.payload);
     fbdo->_ss.json.clear();
     ut->delS(tmp);

@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.2
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.3
 
 
 The default filessystem used in the library is flash and SD.
@@ -4077,11 +4077,19 @@ param **`locationId`** The project location.
 
 param **`functionId`** The name of function.
 
-param **`data`** The Input to be passed to the function.
+param **`data`** The Input to be passed to the function (JSON serialized string).
 
 return **`Boolean`** value, indicates the success of the operation. 
 
 Use FirebaseData.payload() to get the returned payload.
+
+Ex. if data is {"info":{"name":"Paul","age":30}}
+
+The values can be obtained from http trigger function request e.g. req as following.
+
+req.body.info.name
+
+req.body.info.age
 
 This function requires OAuth2.0 authentication.
 

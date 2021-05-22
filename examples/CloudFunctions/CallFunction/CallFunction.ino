@@ -104,7 +104,7 @@ void setup()
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
-    
+
     Firebase.reconnectWiFi(true);
 }
 
@@ -121,9 +121,22 @@ void callFunction()
 {
     //Assumed that the function named helloWorld is already created and deployed for project.
 
+    //In the function script file, values can be obtained from http trigger function request e.g. req as following.
+    //req.body.info.name
+    //req.body.info.age
+
+    //See the index.js in helloWorld.zip in CreateFunctionWithCallback
+
     Serial.print("Call the Cloud Function... ");
 
-    if (Firebase.Functions.callFunction(&fbdo, FIREBASE_PROJECT_ID /* project id */, PROJECT_LOCATION /* location id */, "helloWorld" /* function name */, "" /* data pass to Cloud function */))
+    FirebaseJson json;
+    json.set("info/name", "Paul");
+    json.set("info/age", 30);
+
+    String payload;
+    json.toString(payload);
+
+    if (Firebase.Functions.callFunction(&fbdo, FIREBASE_PROJECT_ID /* project id */, PROJECT_LOCATION /* location id */, "helloWorld" /* function name */, payload.c_str() /* data pass to Cloud function (serialized JSON string) */))
         Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
     else
         Serial.println(fbdo.errorReason());

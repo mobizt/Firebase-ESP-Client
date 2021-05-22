@@ -1823,6 +1823,7 @@ static const char fb_esp_pgm_str_566[] PROGMEM = "currentDocument";
 static const char fb_esp_pgm_str_567[] PROGMEM = "updateTransforms";
 static const char fb_esp_pgm_str_568[] PROGMEM = "transform";
 static const char fb_esp_pgm_str_569[] PROGMEM = "exists";
+static const char fb_esp_pgm_str_570[] PROGMEM = "\\\"";
 #endif
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

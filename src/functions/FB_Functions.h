@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.h version 1.0.7
+ * Google's Cloud Functions class, Functions.h version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 4, 2021
+ * Created May 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -54,11 +54,17 @@ public:
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param locationId The project location.
      * @param functionId The name of function.
-     * @param data The Input to be passed to the function.
-
+     * @param data The Input to be passed to the function (JSON serialized string).
+     * 
      * @return Boolean value, indicates the success of the operation. 
      * 
      * @note Use FirebaseData.payload() to get the returned payload.
+     * 
+     * Ex. if data is {"info":{"name":"Paul","age":30}}
+     * 
+     * The values can be obtained from http trigger function request e.g. req as following.
+     * req.body.info.name
+     * req.body.info.age
      * 
      * This function requires OAuth2.0 authentication.
      * 
