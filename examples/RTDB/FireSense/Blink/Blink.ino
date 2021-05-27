@@ -190,7 +190,12 @@ void setup()
     fsConfig.condition_process_interval = 0;     // check the conditions continuously without delay
     fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data within 1 day
     fsConfig.shared_fbdo = &fbdo1;               //for store/restore database values
-    //fsConfig.stream_fbdo = nullptr;              
+   
+    //This new config added to disable internal command streaming when the fsConfig.stream_fbdo was not assigned.
+    //This allows the session to be reuse for faster data sending.
+    //The seesion will not close and open for usage changed between internal stream and normal data sending.
+    fsConfig.disable_command = true;
+
     fsConfig.debug = true;
 
     //Initiate the FireSense class

@@ -137,7 +137,7 @@ void loadDefaultConfig()
     channel[0].type = Firesense_Channel_Type::Value;
     channel[0].status = true;   //to store value to the database status
     channel[0].log = true;      //to store value to the database log
-    channel[0].value_index = 0; //this the index of binded user variable which added with FireSense.addUserValue
+    channel[0].value_index = 0; //this the index of bound user variable which added with FireSense.addUserValue
     FireSense.addChannel(channel[0]);
 
     channel[1].id = "TEMP1";
@@ -146,7 +146,7 @@ void loadDefaultConfig()
     channel[1].type = Firesense_Channel_Type::Value;
     channel[1].status = true;   //to store value to the database status
     channel[1].log = true;      //to store value to the database log
-    channel[1].value_index = 1; //this the index of binded user variable which added with FireSense.addUserValue
+    channel[1].value_index = 1; //this the index of bound user variable which added with FireSense.addUserValue
     FireSense.addChannel(channel[1]);
 
     FireSense_Condition cond[2];

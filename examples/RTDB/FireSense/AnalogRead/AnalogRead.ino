@@ -143,26 +143,26 @@ void loadDefaultConfig()
     channel[1].id = "FLAG1";
     channel[1].name = "FLAG";
     channel[1].type = Firesense_Channel_Type::Value;
-    channel[1].unbinded_type = FireSense_Data_Type::Boolean; //this channel does not bind to any variable, the unbined type should be assigned
+    channel[1].unbound_type = FireSense_Data_Type::Boolean; //this channel does not bind to any variable, the unbined type should be assigned
     FireSense.addChannel(channel[1]);
 
     channel[2].id = "COUNT";
     channel[2].name = "counter of measurement";
     channel[2].type = Firesense_Channel_Type::Value;
-    channel[2].value_index = 0; //this the index of binded user variable which added with FireSense.addUserValue
+    channel[2].value_index = 0; //this the index of bound user variable which added with FireSense.addUserValue
     FireSense.addChannel(channel[2]);
 
     channel[3].id = "SUM";
     channel[3].name = "sum of measured value";
     channel[3].type = Firesense_Channel_Type::Value;
-    channel[3].value_index = 1; //this the index of binded user variable which added with FireSense.addUserValue
+    channel[3].value_index = 1; //this the index of bound user variable which added with FireSense.addUserValue
     FireSense.addChannel(channel[3]);
 
     channel[4].id = "AVG";
     channel[4].name = "average of measured value";
     channel[4].status = true; //store the changed to the database status
     channel[4].type = Firesense_Channel_Type::Value;
-    channel[4].value_index = 2; //this the index of binded user variable which added with FireSense.addUserValue
+    channel[4].value_index = 2; //this the index of bound user variable which added with FireSense.addUserValue
     FireSense.addChannel(channel[4]);
 
     FireSense_Condition cond[2];

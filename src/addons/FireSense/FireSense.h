@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.2
+ * FireSense v1.0.3
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 5, 2021
+ * Created May 27, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -167,6 +167,7 @@ public:
         FirebaseData *shared_fbdo = nullptr;
         FirebaseData *stream_fbdo = nullptr;
         bool debug = false;
+        bool disable_command = false;
         bool close_session = false;
     };
 
@@ -183,7 +184,7 @@ public:
         int value_index = -1;
         bool status = false;
         bool log = false;
-        firesense_data_type_t unbinded_type = Integer;
+        firesense_data_type_t unbound_type = Integer;
         unsigned long lastPolling = 0;
         uint32_t pollingInterval = 100;
         bool ready = false;
@@ -366,7 +367,7 @@ public:
     */
     void addUserValue(float *value);
 
-    /** Clear all user variable pointers that binded to the channels.
+    /** Clear all user variable pointers that bound to the channels.
      * 
     */
     void clearAllUserValues();
@@ -941,7 +942,7 @@ void FireSenseClass::setupStream()
             printUpdate("", 21);
     }
 
-    if (config->stream_fbdo)
+    if (config->stream_fbdo && !config->disable_command)
         Firebase.RTDB.setStreamCallback(config->stream_fbdo, FiresenseStreamCB, FiresenseStreamToCB);
 }
 
@@ -1037,8 +1038,8 @@ void FireSenseClass::setChannalValueType()
         }
         else
         {
-            //The type of unbinded variable channel
-            channel->current_value.type = (data_type_t)channel->unbinded_type;
+            //The type of unbound variable channel
+            channel->current_value.type = (data_type_t)channel->unbound_type;
             channel->last_value.type = (data_type_t)data_type_float;
         }
     }
@@ -1897,11 +1898,11 @@ void FireSenseClass::int_run()
                     testConditionsList();
                 }
 
-                if (!config->stream_fbdo)
-                    readStream(config->shared_fbdo);
-
                 sendLog();
                 sendLastSeen();
+
+                if (!config->stream_fbdo && !config->disable_command)
+                  readStream(config->shared_fbdo);
             }
         }
     }
@@ -2244,7 +2245,7 @@ void FireSenseClass::loadConfig(callback_function_t defaultDataLoadCallback)
         json->get(_jdat, firesense_token_t::type);
         channel.type = _jdat.intValue;
         json->get(_jdat, firesense_token_t::utype);
-        channel.unbinded_type = (firesense_data_type_t)_jdat.intValue;
+        channel.unbound_type = (firesense_data_type_t)_jdat.intValue;
         json->get(_jdat, firesense_token_t::vIndex);
         channel.value_index = _jdat.intValue;
         json->get(_jdat, firesense_token_t::status);
@@ -2291,6 +2292,7 @@ bool FireSenseClass::backupConfig(const String &filename, fb_esp_mem_storage_typ
     }
     return true;
 }
+
 bool FireSenseClass::restoreConfig(const String &filename, fb_esp_mem_storage_type storageType)
 {
     if (!configReady())
@@ -3085,7 +3087,7 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel)
     _json.add(firesense_token_t::uid, channel.uid);
     _json.add(firesense_token_t::gpio, channel.gpio);
     _json.add(firesense_token_t::type, channel.type);
-    _json.add(firesense_token_t::utype, (int)channel.unbinded_type);
+    _json.add(firesense_token_t::utype, (int)channel.unbound_type);
     _json.add(firesense_token_t::vIndex, channel.value_index);
     _json.add(firesense_token_t::status, channel.status);
     _json.add(firesense_token_t::log, channel.log);
