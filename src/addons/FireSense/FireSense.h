@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.3
+ * FireSense v1.0.4
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 27, 2021
+ * Created June 10, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -58,6 +58,15 @@
 #if defined(FIREBASE_ESP_CLIENT)
 #include <Firebase_ESP_Client.h>
 #endif
+
+#ifndef FIREBASE_STREAM_CLASS
+#if defined(FIREBASE_ESP_CLIENT)
+#define FIREBASE_STREAM_CLASS FirebaseStream
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#define FIREBASE_STREAM_CLASS StreamData
+#endif
+#endif
+
 
 class MillisTimer
 {
@@ -379,7 +388,7 @@ public:
     */
     String getDeviceId();
 
-    void readStream(FirebaseStream *data);
+    void readStream(FIREBASE_STREAM_CLASS *data);
     void readStream(FirebaseData *fbdo);
     bool configExisted();
 
@@ -802,7 +811,7 @@ bool FireSenseClass::configExisted()
     return config_existed;
 }
 
-static void FiresenseStreamCB(FirebaseStream data)
+static void FiresenseStreamCB(FIREBASE_STREAM_CLASS data)
 {
     FireSense.readStream(&data);
 }
@@ -2930,7 +2939,7 @@ void FireSenseClass::loadStatus()
     loadingStatus = false;
 }
 
-void FireSenseClass::readStream(FirebaseStream *data)
+void FireSenseClass::readStream(FIREBASE_STREAM_CLASS *data)
 {
     if (!configReady())
         return;

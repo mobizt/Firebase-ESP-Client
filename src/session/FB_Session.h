@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.0.10
+ * Google's Firebase Data class, FB_Session.h version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 5, 2021
+ * Created June 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -273,7 +273,7 @@ public:
   */
   void stopWiFiClient();
 
-  /** Get the data type of payload returned from the server.
+  /** Get the data type of payload returned from the server (RTDB only).
    * 
    * @return The one of these data type e.g. integer, float, double, boolean, string, JSON and blob.
   */
@@ -484,6 +484,22 @@ public:
    * and the server's returned payload is matched or not.
   */
   bool mismatchDataType();
+
+  /** Get the data type of payload returned from the server (RTDB only).
+   * 
+   * @return The enumeration value of fb_esp_rtdb_data_type.
+   * fb_esp_rtdb_data_type_null or 1,
+   * fb_esp_rtdb_data_type_integer or 2,
+   * fb_esp_rtdb_data_type_float or 3,
+   * fb_esp_rtdb_data_type_double or 4,
+   * fb_esp_rtdb_data_type_boolean or 5,
+   * fb_esp_rtdb_data_type_string or 6,
+   * fb_esp_rtdb_data_type_json or 7,
+   * fb_esp_rtdb_data_type_array or 8,
+   * fb_esp_rtdb_data_type_blob or 9,
+   * fb_esp_rtdb_data_type_file or 10
+  */
+  uint8_t dataTypeEnum();
 
   /** Get the HTTP status code return from the server.
    * 

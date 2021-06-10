@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.17
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.18
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 19, 2021
+ * Created June 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -4829,20 +4829,17 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         s._json = &fbdo->_ss.json;
         s._jsonArr = &fbdo->_ss.arr;
         s._jsonData = &fbdo->_ss.data;
-        s.sif->stream_path = fbdo->_ss.rtdb.stream_path;
-        s.sif->data = fbdo->_ss.rtdb.data;
-        s.sif->path = fbdo->_ss.rtdb.path;
+        s.sif->stream_path = fbdo->_ss.rtdb.stream_path.c_str();
+        s.sif->data = fbdo->_ss.rtdb.data.c_str();
+        s.sif->path = fbdo->_ss.rtdb.path.c_str();
 
         s.sif->data_type = fbdo->_ss.rtdb.resp_data_type;
-        s.sif->data_type_str = fbdo->getDataType(s.sif->data_type);
-        s.sif->event_type_str = fbdo->_ss.rtdb.event_type;
+        s.sif->data_type_str = fbdo->getDataType(s.sif->data_type).c_str();
+        s.sif->event_type_str = fbdo->_ss.rtdb.event_type.c_str();
 
         if (fbdo->_ss.rtdb.resp_data_type == d_blob)
-        {
-            s.sif->blob = fbdo->_ss.rtdb.blob;
-            // Free memory in case of the callback blob data was used
-            fbdo->_ss.rtdb.blob.clear();
-        }
+            s.sif->blob = &fbdo->_ss.rtdb.blob;
+            
         fbdo->_dataAvailableCallback(s);
         fbdo->_ss.rtdb.data_available = false;
         s.empty();
@@ -4852,9 +4849,9 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         FIREBASE_MP_STREAM_CLASS mdata;
         mdata.begin(ut, &fbdo->_ss.rtdb.stream);
         mdata.sif->m_type = fbdo->_ss.rtdb.resp_data_type;
-        mdata.sif->m_path = fbdo->_ss.rtdb.path;
-        mdata.sif->m_type_str = fbdo->getDataType(mdata.sif->m_type);
-        mdata.sif->m_event_type_str = fbdo->_ss.rtdb.event_type;
+        mdata.sif->m_path = fbdo->_ss.rtdb.path.c_str();
+        mdata.sif->m_type_str = fbdo->getDataType(mdata.sif->m_type).c_str();
+        mdata.sif->m_event_type_str = fbdo->_ss.rtdb.event_type.c_str();
 
         if (mdata.sif->m_type == d_json)
             mdata.sif->m_json = &fbdo->_ss.json;
@@ -4863,7 +4860,7 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
             if (mdata.sif->m_type == d_string)
                 mdata.sif->m_data = fbdo->_ss.rtdb.data.substr(1, fbdo->_ss.rtdb.data.length() - 2).c_str();
             else
-                mdata.sif->m_data = fbdo->_ss.rtdb.data;
+                mdata.sif->m_data = fbdo->_ss.rtdb.data.c_str();
         }
 
         fbdo->_multiPathDataCallback(mdata);

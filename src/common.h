@@ -1,6 +1,6 @@
 
 /**
- * Created May 19, 2021
+ * Created June 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -116,7 +116,21 @@ enum fb_esp_data_type
     d_blob,
     d_file,
     d_timestamp,
-    d_shallow,
+    d_shallow
+};
+
+enum fb_esp_rtdb_data_type
+{
+    fb_esp_rtdb_data_type_null = 1,
+    fb_esp_rtdb_data_type_integer,
+    fb_esp_rtdb_data_type_float,
+    fb_esp_rtdb_data_type_double,
+    fb_esp_rtdb_data_type_boolean,
+    fb_esp_rtdb_data_type_string,
+    fb_esp_rtdb_data_type_json,
+    fb_esp_rtdb_data_type_array,
+    fb_esp_rtdb_data_type_blob,
+    fb_esp_rtdb_data_type_file
 };
 
 enum fb_esp_method
@@ -564,20 +578,20 @@ struct fb_esp_token_signer_resources_t
 
 struct fb_esp_stream_info_t
 {
-    std::string stream_path = "";
-    std::string path = "";
-    std::string data = "";
-    std::vector<uint8_t> blob = std::vector<uint8_t>();
-    std::string data_type_str = "";
-    std::string event_type_str = "";
+    const char* stream_path = "";
+    const char* path = "";
+    const char* data = "";
+    std::vector<uint8_t> *blob = nullptr;
+    const char* data_type_str = "";
+    const char* event_type_str = "";
     uint8_t data_type = 0;
     int idx = -1;
 
     fb_esp_data_type m_type = d_any;
-    std::string m_data = "";
-    std::string m_path = "";
-    std::string m_type_str = "";
-    std::string m_event_type_str = "";
+    const char* m_data = "";
+    const char* m_path = "";
+    const char* m_type_str = "";
+    const char* m_event_type_str = "";
     FirebaseJson *m_json = nullptr;
 };
 

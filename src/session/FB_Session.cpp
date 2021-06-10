@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.10
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 5, 2021
+ * Created June 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -439,6 +439,11 @@ bool FirebaseData::streamTimeout()
 bool FirebaseData::dataAvailable()
 {
     return _ss.rtdb.data_available;
+}
+
+uint8_t FirebaseData::dataTypeEnum()
+{
+    return _ss.rtdb.data_type;
 }
 
 bool FirebaseData::streamAvailable()
