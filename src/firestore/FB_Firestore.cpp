@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.0.10
+ * Google's Cloud Firestore class, Forestore.cpp version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 23, 2021
+ * Created June 13, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -438,6 +438,57 @@ bool FB_Firestore::getDocument(FirebaseData *fbdo, const char *projectId, const 
     return sendRequest(fbdo, &req);
 }
 
+bool FB_Firestore::beginTransaction(FirebaseData *fbdo, const char *projectId, const char *databaseId, TransactionOptions *transactionOptions)
+{
+    struct fb_esp_firestore_req_t req;
+    req.requestType = fb_esp_firestore_request_type_begin_transaction;
+    req.projectId = projectId;
+    req.databaseId = databaseId;
+    
+    fbdo->_ss.json.clear();
+
+    if (transactionOptions)
+    {
+        if (strlen(transactionOptions->readOnly.readTime) > 0)
+        {
+            char *tmp = ut->strP(fb_esp_pgm_str_571);
+            fbdo->_ss.json.set((const char *)tmp, transactionOptions->readOnly.readTime);
+            ut->delS(tmp);
+        }
+        else if (strlen(transactionOptions->readWrite.retryTransaction) > 0)
+        {
+            char *tmp = ut->strP(fb_esp_pgm_str_572);
+            fbdo->_ss.json.set((const char *)tmp, transactionOptions->readWrite.retryTransaction);
+            ut->delS(tmp);
+        }
+    }
+
+    fbdo->_ss.json.int_tostr(req.payload);
+    fbdo->_ss.json.clear();
+    return sendRequest(fbdo, &req);
+}
+
+bool FB_Firestore::rollback(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *transaction)
+{
+    struct fb_esp_firestore_req_t req;
+    req.requestType = fb_esp_firestore_request_type_rollback;
+    req.projectId = projectId;
+    req.databaseId = databaseId;
+    req.async = false;
+    fbdo->_ss.json.clear();
+
+    if (strlen(transaction) > 0)
+    {
+        char *tmp = ut->strP(fb_esp_pgm_str_537);
+        fbdo->_ss.json.add((const char *)tmp, transaction);
+        ut->delS(tmp);
+    }
+
+    fbdo->_ss.json.int_tostr(req.payload);
+    fbdo->_ss.json.clear();
+    return sendRequest(fbdo, &req);
+}
+
 bool FB_Firestore::runQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode, const char *consistency)
 {
     struct fb_esp_firestore_req_t req;
@@ -557,7 +608,7 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
     Signer.getCfg()->_int.fb_processing = true;
 
     fbdo->_ss.cfs.payload.clear();
-   
+
     //close session if async mode changes
     if (fbdo->_ss.cfs.async && !req->async)
         fbdo->_ss.last_conn_ms = 0;
@@ -574,7 +625,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     std::string header;
     if (req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_list_doc)
         ut->appendP(header, fb_esp_pgm_str_25);
-    else if (req->requestType == fb_esp_firestore_request_type_commit_document || req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_export_docs || req->requestType == fb_esp_firestore_request_type_import_docs || req->requestType == fb_esp_firestore_request_type_create_doc)
+    else if (req->requestType == fb_esp_firestore_request_type_rollback || req->requestType == fb_esp_firestore_request_type_begin_transaction || req->requestType == fb_esp_firestore_request_type_commit_document || req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_export_docs || req->requestType == fb_esp_firestore_request_type_import_docs || req->requestType == fb_esp_firestore_request_type_create_doc)
         ut->appendP(header, fb_esp_pgm_str_24);
     else if (req->requestType == fb_esp_firestore_request_type_patch_doc)
         ut->appendP(header, fb_esp_pgm_str_26);
@@ -599,6 +650,16 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         ut->appendP(header, fb_esp_pgm_str_344);
     else if (req->requestType == fb_esp_firestore_request_type_import_docs)
         ut->appendP(header, fb_esp_pgm_str_345);
+    else if (req->requestType == fb_esp_firestore_request_type_begin_transaction)
+    {
+        ut->appendP(header, fb_esp_pgm_str_351);
+        ut->appendP(header, fb_esp_pgm_str_573);
+    }
+    else if (req->requestType == fb_esp_firestore_request_type_rollback)
+    {
+        ut->appendP(header, fb_esp_pgm_str_351);
+        ut->appendP(header, fb_esp_pgm_str_574);
+    }
     else if (req->requestType == fb_esp_firestore_request_type_commit_document || req->requestType == fb_esp_firestore_request_type_run_query || req->requestType == fb_esp_firestore_request_type_list_collection || req->requestType == fb_esp_firestore_request_type_list_doc || req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_create_doc || req->requestType == fb_esp_firestore_request_type_patch_doc || req->requestType == fb_esp_firestore_request_type_delete_doc)
     {
         ut->appendP(header, fb_esp_pgm_str_351);

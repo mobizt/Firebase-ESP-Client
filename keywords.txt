@@ -157,6 +157,8 @@ importDocuments KEYWORD2
 createDocument  KEYWORD2
 patchDocument   KEYWORD2
 commitDocument  KEYWORD2
+beginTransaction    KEYWORD2
+rollback    KEYWORD2
 commitDocumentAsync KEYWORD2
 getDocument KEYWORD2
 deleteDocument  KEYWORD2
@@ -324,6 +326,7 @@ fb_esp_firestore_document_write_field_transforms_t  KEYWORD3
 fb_esp_firestore_document_write_document_transform_t    KEYWORD3
 fb_esp_firestore_document_precondition_t    KEYWORD3
 fb_esp_firestore_document_write_t   KEYWORD3
+TransactionOptions  KEYWORD3
 
 
 ###########################################################

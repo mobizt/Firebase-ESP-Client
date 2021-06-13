@@ -1,6 +1,6 @@
 
 /**
- * Created June 10, 2021
+ * Created June 13, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -256,6 +256,8 @@ enum fb_esp_firestore_request_type
     fb_esp_firestore_request_type_patch_doc,
     fb_esp_firestore_request_type_delete_doc,
     fb_esp_firestore_request_type_run_query,
+    fb_esp_firestore_request_type_begin_transaction,
+    fb_esp_firestore_request_type_rollback,
     fb_esp_firestore_request_type_list_doc,
     fb_esp_firestore_request_type_list_collection,
     fb_esp_firestore_request_type_commit_document
@@ -1033,6 +1035,22 @@ struct fb_esp_firestore_info_t
     bool async = false;
 };
 
+struct fb_esp_firestore_transaction_read_only_option_t
+{
+    const char *readTime = "";
+};
+
+struct fb_esp_firestore_transaction_read_write_option_t
+{
+    const char *retryTransaction = "";
+};
+
+typedef struct fb_esp_firestore_transaction_options_t
+{
+    fb_esp_firestore_transaction_read_only_option_t readOnly;
+    fb_esp_firestore_transaction_read_write_option_t readWrite;
+}TransactionOptions;
+
 struct fb_esp_functions_info_t
 {
     fb_esp_functions_request_type requestType = fb_esp_functions_request_type_undefined;
@@ -1327,7 +1345,7 @@ static const char fb_esp_pgm_str_65[] PROGMEM = "gateway timeout";
 static const char fb_esp_pgm_str_66[] PROGMEM = "http version not support";
 static const char fb_esp_pgm_str_67[] PROGMEM = "network authentication required";
 static const char fb_esp_pgm_str_68[] PROGMEM = "data buffer overflow";
-static const char fb_esp_pgm_str_69[] PROGMEM = "read Timeout";
+static const char fb_esp_pgm_str_69[] PROGMEM = "read timed out";
 static const char fb_esp_pgm_str_70[] PROGMEM = "data type mismatch";
 static const char fb_esp_pgm_str_71[] PROGMEM = "path not exist";
 static const char fb_esp_pgm_str_72[] PROGMEM = "task";
@@ -1840,6 +1858,10 @@ static const char fb_esp_pgm_str_567[] PROGMEM = "updateTransforms";
 static const char fb_esp_pgm_str_568[] PROGMEM = "transform";
 static const char fb_esp_pgm_str_569[] PROGMEM = "exists";
 static const char fb_esp_pgm_str_570[] PROGMEM = "\\\"";
+static const char fb_esp_pgm_str_571[] PROGMEM = "options/readOnly/readTime";
+static const char fb_esp_pgm_str_572[] PROGMEM = "options/readWrite/retryTransaction";
+static const char fb_esp_pgm_str_573[] PROGMEM = ":beginTransaction";
+static const char fb_esp_pgm_str_574[] PROGMEM = ":rollback";
 #endif
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

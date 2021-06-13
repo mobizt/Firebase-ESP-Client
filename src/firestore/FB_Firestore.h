@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.0.10
+ * Google's Cloud Firestore class, Forestore.h version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 23, 2021
+ * Created June 13, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -153,7 +153,7 @@ public:
      * 
      * For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
      * 
-     * @param transaction A base64-encoded string.vIf set, applies all writes in this transaction, and commits it.
+     * @param transaction A base64-encoded string. If set, applies all writes in this transaction, and commits it.
      * 
      * @return Boolean value, indicates the success of the operation. 
      * 
@@ -187,6 +187,52 @@ public:
      * 
     */
     bool getDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask = "", const char *transaction = "", const char *readTime = "");
+
+    /** Starts a new transaction.
+     * 
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param transactionOptions Optional. The TransactionOptions type data that represents the options for creating a new transaction.
+     * 
+     * @return Boolean value, indicates the success of the operation. 
+     * 
+     * @note Use FirebaseData.payload() to get the returned payload.
+     * 
+     * This function requires OAuth2.0 authentication.
+     * 
+     * The TransactionOptions struct contains two properties i.e.
+     * readOnly and readWrite.
+     * 
+     * Use readOnly for options for a transaction that can only be used to read documents.
+     * Use readWrite for options for a transaction that can be used to read and write documents.
+     * 
+     * The readOnly property contains one property, readTime.
+     * The readTime is for reading the documents at the given time. This may not be older than 60 seconds.
+     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits. 
+     * Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z". 
+     * 
+     * The readWrite property contains one property, retryTransaction.
+     * The retryTransaction is a base64-encoded string represents a transaction that can be used to read and write documents.
+     * 
+     * See https://cloud.google.com/firestore/docs/reference/rest/v1/TransactionOptions for transaction options.
+    */
+    bool beginTransaction(FirebaseData *fbdo, const char *projectId, const char *databaseId, TransactionOptions *transactionOptions = nullptr);
+
+    /** Rolls back a transaction.
+     * 
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param transaction Required. A base64-encoded string of the transaction to roll back.
+     * 
+     * @return Boolean value, indicates the success of the operation. 
+     * 
+     * @note Use FirebaseData.payload() to get the returned payload.
+     * 
+     * This function requires OAuth2.0 authentication.
+    */
+    bool rollback(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *transaction);
 
     /** Runs a query.
      * 

@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.6
 
 
 The default filessystem used in the library is flash and SD.
@@ -3405,6 +3405,78 @@ This function requires Email/password, Custom token or OAuth2.0 authentication.
 bool getDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask = "", const char *transaction = "", const char *readTime = "");
 ```
 
+
+
+
+
+
+
+
+#### Starts a new transaction.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`transactionOptions`** Optional. The TransactionOptions type data that represents the options for creating a new transaction.
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+The TransactionOptions struct contains two properties i.e. readOnly and readWrite.
+
+Use readOnly for options for a transaction that can only be used to read documents.
+
+Use readWrite for options for a transaction that can be used to read and write documents.
+
+The readOnly property contains one property, readTime.
+
+The readTime is for reading the documents at the given time. This may not be older than 60 seconds.
+
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.
+
+Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
+
+The readWrite property contains one property, retryTransaction.
+
+The retryTransaction is a base64-encoded string represents a transaction that can be used to read and write documents.
+
+See https://cloud.google.com/firestore/docs/reference/rest/v1/TransactionOptions for transaction options.
+    
+
+```cpp
+bool beginTransaction(FirebaseData *fbdo, const char *projectId, const char *databaseId, TransactionOptions *transactionOptions = nullptr);
+```
+
+
+
+
+
+
+#### Rolls back a transaction.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`transaction`** Required. A base64-encoded string of the transaction to roll back.
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+```cpp
+bool rollback(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *transaction);
+```
 
 
 
