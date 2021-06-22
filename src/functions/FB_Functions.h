@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.h version 1.0.8
+ * Google's Cloud Functions class, Functions.h version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 22, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_FB_FUNCTIONS
 
 #ifndef _FB_FUNCTIONS_H_
 #define _FB_FUNCTIONS_H_
@@ -270,6 +274,9 @@ public:
 private:
     fb_esp_functions_status _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
     UtilsClass *ut = nullptr;
+    FirebaseJson *jsonPtr = nullptr;
+    FirebaseJsonArray *arrPtr = nullptr;
+    FirebaseJsonData *dataPtr = nullptr;
     unsigned long _lasPollMs = 0;
 #if defined(ESP32)
     TaskHandle_t function_check_task_handle = NULL;
@@ -300,3 +307,5 @@ private:
 };
 
 #endif
+
+#endif //ENABLE

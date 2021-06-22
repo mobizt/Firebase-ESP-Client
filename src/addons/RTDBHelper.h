@@ -1,3 +1,7 @@
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
+
 #ifndef RTDBHelper_H
 #define RTDBHelper_H
 #include <Arduino.h>
@@ -15,17 +19,17 @@
 
 void printResult(FirebaseData &data)
 {
-    if (data.dataType() == "int")
+    if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
         Serial.println(data.intData());
-    else if (data.dataType() == "float")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
         Serial.println(data.floatData(), 5);
-    else if (data.dataType() == "double")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
         printf("%.9lf\n", data.doubleData());
-    else if (data.dataType() == "boolean")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
         Serial.println(data.boolData() == 1 ? "true" : "false");
-    else if (data.dataType() == "string")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string)
         Serial.println(data.stringData());
-    else if (data.dataType() == "json")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
     {
         FirebaseJson &json = data.jsonObject();
         //Print all object data
@@ -56,7 +60,7 @@ void printResult(FirebaseData &data)
         }
         json.iteratorEnd();
     }
-    else if (data.dataType() == "array")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
     {
         //get array data from FirebaseData using FirebaseJsonArray object
         FirebaseJsonArray &arr = data.jsonArray();
@@ -73,7 +77,7 @@ void printResult(FirebaseData &data)
             Serial.print(i);
             Serial.print(", Value: ");
 
-            FirebaseJsonData &jsonData = data.jsonData();
+            FirebaseJsonData jsonData;
             //Get the result data from FirebaseJsonArray object
             arr.get(jsonData, i);
             if (jsonData.typeNum == FirebaseJson::JSON_BOOL)
@@ -91,7 +95,7 @@ void printResult(FirebaseData &data)
                 Serial.println(jsonData.stringValue);
         }
     }
-    else if (data.dataType() == "blob")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
     {
         std::vector<uint8_t> blob = data.blobData();
         for (size_t i = 0; i < blob.size(); i++)
@@ -105,7 +109,7 @@ void printResult(FirebaseData &data)
         }
         Serial.println();
     }
-    else if (data.dataType() == "file")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
     {
         File file = data.fileStream();
         int i = 0;
@@ -135,17 +139,17 @@ void printResult(FirebaseData &data)
 void printResult(FIREBASE_STREAM_CLASS &data)
 {
 
-    if (data.dataType() == "int")
+    if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
         Serial.println(data.intData());
-    else if (data.dataType() == "float")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
         Serial.println(data.floatData(), 5);
-    else if (data.dataType() == "double")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
         printf("%.9lf\n", data.doubleData());
-    else if (data.dataType() == "boolean")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
         Serial.println(data.boolData() == 1 ? "true" : "false");
-    else if (data.dataType() == "string" || data.dataType() == "null")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string || data.dataTypeEnum() == fb_esp_rtdb_data_type_null)
         Serial.println(data.stringData());
-    else if (data.dataType() == "json")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
     {
         FirebaseJson *json = data.jsonObjectPtr();
         //Print all object data
@@ -176,7 +180,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
         }
         json->iteratorEnd();
     }
-    else if (data.dataType() == "array")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
     {
         //get array data from FirebaseData using FirebaseJsonArray object
         FirebaseJsonArray *arr = data.jsonArrayPtr();
@@ -193,25 +197,25 @@ void printResult(FIREBASE_STREAM_CLASS &data)
         {
             Serial.print(i);
             Serial.print(", Value: ");
-            FirebaseJsonData *jsonData = data.jsonDataPtr();
+            FirebaseJsonData jsonData;
             //Get the result data from FirebaseJsonArray object
-            arr->get(*jsonData, i);
-            if (jsonData->typeNum == FirebaseJson::JSON_BOOL)
-                Serial.println(jsonData->boolValue ? "true" : "false");
-            else if (jsonData->typeNum == FirebaseJson::JSON_INT)
-                Serial.println(jsonData->intValue);
-            else if (jsonData->typeNum == FirebaseJson::JSON_FLOAT)
-                Serial.println(jsonData->floatValue);
-            else if (jsonData->typeNum == FirebaseJson::JSON_DOUBLE)
-                printf("%.9lf\n", jsonData->doubleValue);
-            else if (jsonData->typeNum == FirebaseJson::JSON_STRING ||
-                     jsonData->typeNum == FirebaseJson::JSON_NULL ||
-                     jsonData->typeNum == FirebaseJson::JSON_OBJECT ||
-                     jsonData->typeNum == FirebaseJson::JSON_ARRAY)
-                Serial.println(jsonData->stringValue);
+            arr->get(jsonData, i);
+            if (jsonData.typeNum == FirebaseJson::JSON_BOOL)
+                Serial.println(jsonData.boolValue ? "true" : "false");
+            else if (jsonData.typeNum == FirebaseJson::JSON_INT)
+                Serial.println(jsonData.intValue);
+            else if (jsonData.typeNum == FirebaseJson::JSON_FLOAT)
+                Serial.println(jsonData.floatValue);
+            else if (jsonData.typeNum == FirebaseJson::JSON_DOUBLE)
+                printf("%.9lf\n", jsonData.doubleValue);
+            else if (jsonData.typeNum == FirebaseJson::JSON_STRING ||
+                     jsonData.typeNum == FirebaseJson::JSON_NULL ||
+                     jsonData.typeNum == FirebaseJson::JSON_OBJECT ||
+                     jsonData.typeNum == FirebaseJson::JSON_ARRAY)
+                Serial.println(jsonData.stringValue);
         }
     }
-    else if (data.dataType() == "blob")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
     {
         std::vector<uint8_t> blob = data.blobData();
         for (size_t i = 0; i < blob.size(); i++)
@@ -225,7 +229,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
         }
         Serial.println();
     }
-    else if (data.dataType() == "file")
+    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
     {
         File file = data.fileStream();
         int i = 0;
@@ -249,3 +253,5 @@ void printResult(FIREBASE_STREAM_CLASS &data)
 }
 
 #endif
+
+#endif //ENABLE

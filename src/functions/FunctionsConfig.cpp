@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.0
+ * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 17, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -30,6 +30,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_FB_FUNCTIONS
+
 #ifndef _FB_FUNCTIONS_CONFIG_CPP_
 #define _FB_FUNCTIONS_CONFIG_CPP_
 
@@ -46,9 +50,9 @@ FunctionsConfig::FunctionsConfig(const char *projectId, const char *locationId, 
 
 FunctionsConfig::~FunctionsConfig()
 {
-    std::string().swap(_projectId);
-    std::string().swap(_locationId);
-    std::string().swap(_bucketId);
+    ut->clearS(_projectId);
+    ut->clearS(_locationId);
+    ut->clearS(_bucketId);
     clear();
 }
 
@@ -461,11 +465,11 @@ void FunctionsConfig::clear()
 {
     _updateMask.clear();
     _funcCfg.clear();
-    std::string().swap(_entryPoint);
-    std::string().swap(_name);
-    std::string().swap(_httpsTriggerUrl);
-    std::string().swap(_bucketSourcesPath);
-    std::string().swap(_uploadArchiveFile);
+    ut->clearS(_entryPoint);
+    ut->clearS(_name);
+    ut->clearS(_httpsTriggerUrl);
+    ut->clearS(_bucketSourcesPath);
+    ut->clearS(_uploadArchiveFile);
     _pgmArc = nullptr;
     _pgmArcLen = 0;
     _uploadArchiveStorageType = mem_storage_type_undefined;
@@ -475,3 +479,5 @@ void FunctionsConfig::clear()
 }
 
 #endif
+
+#endif //ENABLE

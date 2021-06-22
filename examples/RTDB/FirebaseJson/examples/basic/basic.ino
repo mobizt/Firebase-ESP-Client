@@ -141,10 +141,12 @@ void setup()
         Serial.print(value);
         Serial.print(", ");
         Serial.print("TYPE: ");
-        Serial.println(type == FirebaseJson::JSMN_OBJECT ? "object" : "array");
+        Serial.println(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
     }
 
     Serial.println();
+
+    json1.iteratorEnd();
 
     json1.clear();
     arr1.clear();

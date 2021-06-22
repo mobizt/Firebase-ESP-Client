@@ -30,6 +30,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
+
 #ifndef FIREBASE_QUERY_FILTER_H
 #define FIREBASE_QUERY_FILTER_H
 #include <Arduino.h>
@@ -73,3 +77,5 @@ private:
 };
 
 #endif
+
+#endif //ENABLE

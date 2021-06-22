@@ -1,9 +1,9 @@
 /**
- * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.1
+ * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 25, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_FB_FUNCTIONS
 
 #ifndef _FB_IAM_POLICY_BUILDER_H_
 #define _FB_IAM_POLICY_BUILDER_H_
@@ -229,7 +233,7 @@ private:
     FirebaseJsonArray arr;
     FirebaseJsonArray arr2;
     FirebaseJson json;
-    void _toString(std::string &s, bool prettify = false);
+    const char * raw();
 
 public:
     PolicyBuilder();
@@ -307,3 +311,5 @@ public:
 };
 
 #endif
+
+#endif //ENABLE

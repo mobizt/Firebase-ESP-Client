@@ -95,9 +95,45 @@ void loop()
         //and d? is the document id in the document collection id c0 which we will create.
         String documentPath = "a0/b0/c0/d" + String(count);
 
-        js.set("fields/count/integerValue", String(count).c_str());
-        js.set("fields/random/integerValue", String(rand()).c_str());
-        js.set("fields/status/booleanValue", count % 2 == 0);
+        //double
+        js.set("fields/myDouble/doubleValue", 123.45678);
+
+        //boolean
+        js.set("fields/myBool/booleanValue", true);
+
+        //integer
+        js.set("fields/myInteger/integerValue", "911");
+
+        //null
+        js.set("fields/myNull/nullValue"); // no value set
+
+        String doc_path = "projects/";
+        doc_path += FIREBASE_PROJECT_ID;
+        doc_path += "/databases/(default)/documents/coll_id/doc_id"; //coll_id and doc_id are your collection id and document id
+
+        //reference
+        js.set("fields/myRef/referenceValue", doc_path.c_str());
+
+        //timestamp
+        js.set("fields/myTimestamp/timestampValue", "2014-10-02T15:01:23Z"); //RFC3339 UTC "Zulu" format
+
+        //bytes
+        js.set("fields/myBytes/bytesValue", "aGVsbG8="); //base64 encoded
+
+        //array
+        js.set("fields/myArray/arrayValue/values/[0]/stringValue", "test");
+        js.set("fields/myArray/arrayValue/values/[1]/integerValue", "20");
+        js.set("fields/myArray/arrayValue/values/[2]/booleanValue", true);
+
+        //map
+        js.set("fields/myMap/mapValue/fields/name/stringValue", "wrench");
+        js.set("fields/myMap/mapValue/fields/mass/stringValue", "1.3kg");
+        js.set("fields/myMap/mapValue/fields/count/integerValue", "3");
+
+        //lat long
+        js.set("fields/myLatLng/geoPointValue/latitude", 1.486284);
+        js.set("fields/myLatLng/geoPointValue/longitude", 23.678198);
+
         js.toString(content);
 
         count++;

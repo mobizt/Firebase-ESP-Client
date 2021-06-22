@@ -41,6 +41,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
+
 #ifndef FireSenseClass_H
 #define FireSenseClass_H
 #include <Arduino.h>
@@ -4527,3 +4531,5 @@ void FireSenseClass::setLogQueryIndex()
 }
 
 #endif
+
+#endif //ENABLE

@@ -90,7 +90,7 @@ void setup()
 void loop()
 {
 
-    if (Firebase.ready() && (millis() - lastTime > 60 * 1000))
+    if (Firebase.ready() && (millis() - lastTime > 60 * 1000 || lastTime == 0))
     {
         lastTime = millis();
 

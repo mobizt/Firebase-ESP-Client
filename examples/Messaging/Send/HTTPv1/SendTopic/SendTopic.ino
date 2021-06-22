@@ -89,7 +89,7 @@ void setup()
 
 void loop()
 {
-    if (Firebase.ready() && (millis() - lastTime > 60 * 1000))
+    if (Firebase.ready() && (millis() - lastTime > 60 * 1000 || lastTime == 0))
     {
         lastTime = millis();
 
@@ -119,6 +119,8 @@ void sendMessage()
     json.toString(payload);
     msg.data = payload.c_str();
 
+    //As tested on June 22, 2021, FCM server returns error "Request contains an invalid argument" which is a bug on server side.
+    //The error descrpipttion is "Invalid registration token" which message.token is not required when message.topic was used.
     if (Firebase.FCM.send(&fbdo, &msg)) //send message to recipient
         Serial.printf("ok\n%s\n\n", Firebase.FCM.payload(&fbdo).c_str());
     else

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.0.3
+ * Google's Firebase Stream class, FB_Stream.h version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 10, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
 
 #ifndef FIREBASE_STREAM_SESSION_H
 #define FIREBASE_STREAM_SESSION_H
@@ -113,18 +117,6 @@ public:
     */
     FirebaseJsonArray &jsonArray();
 
-    /** Return the Firebase JSON Data object pointer that keeps the get(parse) result.
-     * 
-     * @return FirebaseJsonData object pointer.
-    */
-    FirebaseJsonData *jsonDataPtr();
-
-    /** Return the Firebase JSON Data object that keeps the get(parse) result.
-     * 
-     * @return FirebaseJsonData object.
-    */
-    FirebaseJsonData &jsonData();
-
     /** Return the blob data (uint8_t) array of server returned payload.
      * 
      * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
@@ -186,9 +178,8 @@ public:
     */
     void empty();
 
-    FirebaseJson *_json = nullptr;
-    FirebaseJsonArray *_jsonArr = nullptr;
-    FirebaseJsonData *_jsonData = nullptr;
+    FirebaseJson *jsonPtr = nullptr;
+    FirebaseJsonArray *arrPtr = nullptr;
 
 private:
     UtilsClass *ut = nullptr;
@@ -198,3 +189,5 @@ private:
 };
 
 #endif
+
+#endif //ENABLE

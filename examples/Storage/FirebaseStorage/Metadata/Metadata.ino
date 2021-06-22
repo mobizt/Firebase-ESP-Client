@@ -78,7 +78,7 @@ void setup()
     Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
-    //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+    //required 
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
 }
@@ -89,7 +89,7 @@ void loop()
     {
         taskCompleted = true;
 
-        Serial.printf("Get file Metadata... %s\n", Firebase.Storage.listFiles(&fbdo, STORAGE_BUCKET_ID) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Get file Metadata... %s\n", Firebase.Storage.getMetadata(&fbdo, STORAGE_BUCKET_ID, "test.dat" /* remote file */) ? "ok" : fbdo.errorReason().c_str());
 
         if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
         {

@@ -30,6 +30,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
+
 #ifndef FIREBASE_QUEUE_MANAGER_H
 #define FIREBASE_QUEUE_MANAGER_H
 #include <Arduino.h>
@@ -47,11 +51,14 @@ public:
 
     bool add(QueueItem q);
     void remove(uint8_t index);
+    size_t size();
 
 private:
     void clear();
-    std::vector<QueueItem> _queueCollection = std::vector<QueueItem>();
+    std::vector<QueueItem> *_queueCollection = nullptr;
     uint8_t _maxQueue = 10;
 };
 
 #endif
+
+#endif //ENABLE

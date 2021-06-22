@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.4
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 10, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
 
 #ifndef FIREBASE_MULTIPATH_STREAM_SESSION_CPP
 #define FIREBASE_MULTIPATH_STREAM_SESSION_CPP
@@ -92,8 +96,8 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
                 dataPath = sif->m_path;
                 res = true;
             }
-            std::string().swap(p1);
-            std::string().swap(p2);
+            ut->clearS(p1);
+            ut->clearS(p2);
         }
     }
     else
@@ -112,8 +116,8 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             eventType = sif->m_event_type_str;
             res = true;
         }
-        std::string().swap(p1);
-        std::string().swap(p2);
+        ut->clearS(p1);
+        ut->clearS(p2);
     }
     return res;
 }
@@ -127,3 +131,5 @@ void FIREBASE_MP_STREAM_CLASS::empty()
 }
 
 #endif
+
+#endif //ENABLE

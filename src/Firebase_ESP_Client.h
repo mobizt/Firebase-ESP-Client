@@ -1,13 +1,13 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.2.6"
+#define FIREBASE_CLIENT_VERSION "2.3.0"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.2.6
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.3.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 13, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -39,14 +39,27 @@
 
 #include <Arduino.h>
 #include "signer/Signer.h"
+#ifdef ENABLE_RTDB
 #include "rtdb/FB_RTDB.h"
+#endif
+#ifdef ENABLE_FCM
 #include "message/FCM.h"
+#endif
 #include "Utils.h"
+#ifdef ENABLE_FB_STORAGE
 #include "storage/FCS.h"
+#endif
+#ifdef ENABLE_GC_STORAGE
 #include "gcs/GCS.h"
+#endif
+#ifdef ENABLE_FIRESTORE
 #include "firestore/FB_Firestore.h"
+#endif
+#ifdef ENABLE_FB_FUNCTIONS
 #include "functions/FB_Functions.h"
 #include "functions/FunctionsConfig.h"
+#endif
+#include "session/FB_Session.h"
 #include <SD.h>
 
 class Firebase_ESP_Client
@@ -55,12 +68,24 @@ class Firebase_ESP_Client
   friend class FirebaseSession;
 
 public:
+#ifdef ENABLE_RTDB
   FB_RTDB RTDB;
+#endif
+#ifdef ENABLE_FCM
   FB_CM FCM;
+#endif
+#ifdef ENABLE_FB_STORAGE
   FB_Storage Storage;
+#endif
+#ifdef ENABLE_FIRESTORE
   FB_Firestore Firestore;
+#endif
+#ifdef ENABLE_FB_FUNCTIONS
   FB_Functions Functions;
+#endif
+#ifdef ENABLE_GC_STORAGE
   GG_CloudStorage GCStorage;
+#endif
 
   Firebase_ESP_Client();
   ~Firebase_ESP_Client();
@@ -187,7 +212,6 @@ public:
   */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 
-
   /** Initialize the SD_MMC card (ESP32 only).
   *
   * @param mountpoint The mounting point.
@@ -204,16 +228,12 @@ public:
   */
   bool setSystemTime(time_t ts);
 
-
 private:
   void init(FirebaseConfig *config, FirebaseAuth *auth);
-  
+
   UtilsClass *ut = nullptr;
-  FirebaseAuth *_auth = nullptr;
-  FirebaseConfig *_cfg = nullptr;
-  //internal or used by legacy data
-  FirebaseAuth _auth_;
-  FirebaseConfig _cfg_;
+  FirebaseAuth *auth = nullptr;
+  FirebaseConfig *cfg = nullptr;
 };
 
 extern Firebase_ESP_Client Firebase;

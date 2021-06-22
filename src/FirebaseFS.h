@@ -13,10 +13,10 @@
  * #define DEFAULT_FLASH_FS LittleFS //For ESP8266 LitteFS
  * 
  * 
- * FFat File system
+ * FAT File system
  * 
  * #include <FFat.h>
- * #define DEFAULT_FLASH_FS FFat  //For ESP32 FFat
+ * #define DEFAULT_FLASH_FS FFat  //For ESP32 FAT
  * 
 */
 #define DEFAULT_FLASH_FS SPIFFS
@@ -36,5 +36,24 @@
 
 //For ESP32, format SPIFFS or FFat if mounting failed
 #define FORMAT_FLASH_IF_MOUNT_FAILED 1
+
+//Comment to exclude the Firebase Realtime Database
+#define ENABLE_RTDB
+
+//Comment to exclude Cloud Firestore
+#define ENABLE_FIRESTORE
+
+//Comment to exclude Firebase Cloud Messaging
+#define ENABLE_FCM
+
+//Comment to exclude Firebase Storage
+#define ENABLE_FB_STORAGE
+
+//Comment to exclude Cloud Storage
+#define ENABLE_GC_STORAGE
+
+//Comment to exclude Cloud Function for Firebase
+#define ENABLE_FB_FUNCTIONS
+
 
 #endif

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.0.3
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 10, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
 
 #ifndef FIREBASE_STREAM_SESSION_CPP
 #define FIREBASE_STREAM_SESSION_CPP
@@ -97,26 +101,24 @@ String FIREBASE_STREAM_CLASS::stringData()
 {
     std::string s = sif->data;
     if (sif->data_type == fb_esp_data_type::d_string)
-        return s.substr(1, s.length() - 2).c_str();
-    else
-        return s.c_str();
+    {
+        s.erase(0, 1);
+        s.erase(s.length() - 1, 1);
+    }
+    return s.c_str();
 }
 
 String FIREBASE_STREAM_CLASS::jsonString()
 {
     if (sif->data_type == fb_esp_data_type::d_json)
-    {
-        String res = "";
-        _json->toString(res);
-        return res;
-    }
+        return sif->data;
     else
         return std::string().c_str();
 }
 
 FirebaseJson *FIREBASE_STREAM_CLASS::jsonObjectPtr()
 {
-    return _json;
+    return jsonPtr;
 }
 
 FirebaseJson &FIREBASE_STREAM_CLASS::jsonObject()
@@ -126,47 +128,12 @@ FirebaseJson &FIREBASE_STREAM_CLASS::jsonObject()
 
 FirebaseJsonArray *FIREBASE_STREAM_CLASS::jsonArrayPtr()
 {
-    if (strlen(sif->data) > 0 && sif->data_type == fb_esp_data_type::d_array)
-    {
-
-        std::string().swap(*_jsonArr->int_dbuf());
-        std::string().swap(*_jsonArr->int_tbuf());
-
-        char *tmp = ut->strP(fb_json_str_21);
-        _jsonArr->int_json()->int_toStdString(*_jsonArr->int_jbuf());
-        *_jsonArr->int_rawbuf() = tmp;
-        *_jsonArr->int_rawbuf() += sif->data;
-        ut->delS(tmp);
-
-        tmp = ut->strP(fb_json_str_26);
-        _jsonArr->int_json()->int_parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
-        ut->delS(tmp);
-
-        std::string().swap(*_jsonArr->int_tbuf());
-        std::string().swap(*_jsonArr->int_jbuf());
-        _jsonArr->int_json()->int_clearPathTk();
-        _jsonArr->int_json()->int_clearTokens();
-
-        if (_jsonArr->int_dbuf()->length() > 2)
-            *_jsonArr->int_rawbuf() = _jsonArr->int_dbuf()->substr(1, _jsonArr->int_dbuf()->length() - 2);
-        _jsonArr->int_set_arr_len(_jsonArr->int_json()->int_get_jsondata_len());
-    }
-    return _jsonArr;
+    return arrPtr;
 }
 
 FirebaseJsonArray &FIREBASE_STREAM_CLASS::jsonArray()
 {
     return *jsonArrayPtr();
-}
-
-FirebaseJsonData *FIREBASE_STREAM_CLASS::jsonDataPtr()
-{
-    return _jsonData;
-}
-
-FirebaseJsonData &FIREBASE_STREAM_CLASS::jsonData()
-{
-    return *_jsonData;
 }
 
 std::vector<uint8_t> FIREBASE_STREAM_CLASS::blobData()
@@ -212,12 +179,13 @@ String FIREBASE_STREAM_CLASS::eventType()
 
 void FIREBASE_STREAM_CLASS::empty()
 {
-    if (_json)
-        _json->clear();
-    if (_jsonArr)
-        _jsonArr->clear();
-    if (_jsonData)
-        _jsonData->stringValue.clear();
+    if (jsonPtr)
+        jsonPtr->clear();
+
+    if (arrPtr)
+        arrPtr->clear();
 }
 
 #endif
+
+#endif //ENABLE

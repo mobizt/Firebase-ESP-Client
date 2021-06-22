@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.0.8
+ * Google's Cloud Functions class, Functions.cpp version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 22, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_FB_FUNCTIONS
 
 #ifndef _FB_FUNCTIONS_CPP_
 #define _FB_FUNCTIONS_CPP_
@@ -58,10 +62,14 @@ bool FB_Functions::callFunction(FirebaseData *fbdo, const char *projectId, const
     ut->replaceAll(req.payload, find, replace);
 
     char *tmp = ut->strP(fb_esp_pgm_str_135);
-    fbdo->_ss.json.clear();
-    fbdo->_ss.json.add(tmp, req.payload.c_str());
-    fbdo->_ss.json.int_tostr(req.payload);
-    fbdo->_ss.json.clear();
+
+    if (!fbdo->_ss.jsonPtr)
+        fbdo->_ss.jsonPtr = new FirebaseJson();
+
+    fbdo->_ss.jsonPtr->clear();
+    fbdo->_ss.jsonPtr->add(tmp, req.payload.c_str());
+    req.payload = fbdo->_ss.jsonPtr->raw();
+    fbdo->_ss.jsonPtr->clear();
     ut->delS(tmp);
     return sendRequest(fbdo, &req);
 }
@@ -87,7 +95,7 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
     if (config->_policy)
     {
         taskInfo.setPolicy = true;
-        config->_policy->_toString(taskInfo.policy);
+        taskInfo.policy = config->_policy->raw();
     }
     _deployTasks.push_back(taskInfo);
     fbdo->_ss.long_running_task++;
@@ -198,6 +206,11 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
         sendCallback(fbdo, fbdo->_ss.cfn.cbInfo.status, "", cb, info);
         ret = deploy(fbdo, functionId, config, patch);
         fbdo->_ss.cfn.cbInfo.triggerUrl = config->_httpsTriggerUrl;
+
+        if (ret && config->_policy)
+            addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_polling_status, fb_esp_functions_creation_step_set_iam_policy, cb, info);
+        else if(ret)
+            addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_polling_status, fb_esp_functions_creation_step_idle, cb, info);
         return ret;
     }
 
@@ -206,40 +219,45 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
 
 bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
 {
+    if (!fbdo->_ss.jsonPtr)
+        fbdo->_ss.jsonPtr = new FirebaseJson();
 
-    fbdo->_ss.json.clear();
+    if (!fbdo->_ss.jsonPtr)
+        fbdo->_ss.jsonPtr = new FirebaseJson();
+
+    fbdo->_ss.jsonPtr->clear();
 
     char *tmp = nullptr;
     std::string token = Signer.getToken(token_type_oauth2_access_token);
 
     tmp = ut->strP(fb_esp_pgm_str_387);
-    fbdo->_ss.json.add(tmp, config->_projectId.c_str());
+    fbdo->_ss.jsonPtr->add(tmp, config->_projectId.c_str());
     ut->delS(tmp);
 
     tmp = ut->strP(fb_esp_pgm_str_409);
-    fbdo->_ss.json.add(tmp, config->_locationId.c_str());
+    fbdo->_ss.jsonPtr->add(tmp, config->_locationId.c_str());
     ut->delS(tmp);
 
     char *tmp2 = ut->strP(fb_esp_pgm_str_456);
     tmp = ut->strP(fb_esp_pgm_str_453);
-    fbdo->_ss.json.add(tmp, (const char *)tmp2);
+    fbdo->_ss.jsonPtr->add(tmp, (const char *)tmp2);
     ut->delS(tmp);
     ut->delS(tmp2);
 
     tmp = ut->strP(fb_esp_pgm_str_454);
-    fbdo->_ss.json.add(tmp, token.c_str());
+    fbdo->_ss.jsonPtr->add(tmp, token.c_str());
     ut->delS(tmp);
 
     tmp = ut->strP(fb_esp_pgm_str_455);
-    fbdo->_ss.json.add(tmp, config->_bucketSourcesPath.c_str());
+    fbdo->_ss.jsonPtr->add(tmp, config->_bucketSourcesPath.c_str());
     ut->delS(tmp);
 
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_upload_bucket_sources;
 
-    fbdo->_ss.json.int_tostr(req.payload);
+    req.payload = fbdo->_ss.jsonPtr->raw();
 
-    fbdo->_ss.json.clear();
+    fbdo->_ss.jsonPtr->clear();
 
     req.host += config->_locationId.c_str();
     ut->appendP(req.host, fb_esp_pgm_str_397);
@@ -271,33 +289,35 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
     std::string path;
     std::string t;
 
-    fbdo->_ss.json.clear();
+    if (!fbdo->_ss.jsonPtr)
+        fbdo->_ss.jsonPtr = new FirebaseJson();
+
+    fbdo->_ss.jsonPtr->clear();
 
     ut->appendP(path, fb_esp_pgm_str_387, true);
-    fbdo->_ss.json.add(path.c_str(), config->_projectId.c_str());
+    fbdo->_ss.jsonPtr->add(path.c_str(), config->_projectId.c_str());
 
     ut->appendP(path, fb_esp_pgm_str_388, true);
     ut->appendP(t, fb_esp_pgm_str_112);
     t += Signer.getCfg()->database_url.c_str();
-    fbdo->_ss.json.add(path.c_str(), t.c_str());
+    fbdo->_ss.jsonPtr->add(path.c_str(), t.c_str());
 
     if (config->_bucketId.length() > 0)
     {
         ut->appendP(path, fb_esp_pgm_str_389, true);
-        fbdo->_ss.json.add(path.c_str(), config->_bucketId.c_str());
+        fbdo->_ss.jsonPtr->add(path.c_str(), config->_bucketId.c_str());
     }
 
     if (config->_locationId.length() > 0)
     {
         ut->appendP(path, fb_esp_pgm_str_390, true);
-        fbdo->_ss.json.add(path.c_str(), config->_locationId.c_str());
+        fbdo->_ss.jsonPtr->add(path.c_str(), config->_locationId.c_str());
     }
 
     t.clear();
-    std::string str;
-    fbdo->_ss.json.int_tostr(str);
+    std::string str = fbdo->_ss.jsonPtr->raw();
+    fbdo->_ss.jsonPtr->clear();
 
-    fbdo->_ss.json.clear();
     char *find = ut->strP(fb_esp_pgm_str_3);
     char *replace = ut->strP(fb_esp_pgm_str_396);
     ut->replaceAll(str, find, replace);
@@ -332,7 +352,7 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
         std::string().swap(t);
     }
 
-    config->_funcCfg.int_tostr(req.payload);
+    req.payload = config->_funcCfg.raw();
     config->_funcCfg.clear();
 
     return sendRequest(fbdo, &req);
@@ -365,7 +385,11 @@ bool FB_Functions::setIamPolicy(FirebaseData *fbdo, const char *projectId, const
     req.projectId = projectId;
     req.locationId = locationId;
     req.functionId = functionId;
-    fbdo->_ss.json.clear();
+
+    if (!fbdo->_ss.jsonPtr)
+        fbdo->_ss.jsonPtr = new FirebaseJson();
+
+    fbdo->_ss.jsonPtr->clear();
 
     char *tmp = nullptr;
     if (policy)
@@ -373,19 +397,19 @@ bool FB_Functions::setIamPolicy(FirebaseData *fbdo, const char *projectId, const
         static FirebaseJson js;
         js.clear();
         tmp = ut->strP(fb_esp_pgm_str_399);
-        fbdo->_ss.json.add(tmp, policy->json);
+        fbdo->_ss.jsonPtr->add(tmp, policy->json);
         ut->delS(tmp);
     }
 
     if (strlen(updateMask) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_400);
-        fbdo->_ss.json.add(tmp, updateMask);
+        fbdo->_ss.jsonPtr->add(tmp, updateMask);
         ut->delS(tmp);
     }
 
-    fbdo->_ss.json.int_tostr(req.payload);
-    fbdo->_ss.json.clear();
+    req.payload = fbdo->_ss.jsonPtr->raw();
+    fbdo->_ss.jsonPtr->clear();
 
     return sendRequest(fbdo, &req);
 }
@@ -398,7 +422,10 @@ bool FB_Functions::getIamPolicy(FirebaseData *fbdo, const char *projectId, const
     req.locationId = locationId;
     req.functionId = functionId;
     req.policyVersion = version;
-    fbdo->_ss.json.clear();
+    if (!fbdo->_ss.jsonPtr)
+        fbdo->_ss.jsonPtr = new FirebaseJson();
+
+    fbdo->_ss.jsonPtr->clear();
 
     return sendRequest(fbdo, &req);
 }
@@ -415,37 +442,43 @@ bool FB_Functions::getFunction(FirebaseData *fbdo, const char *projectId, const 
     bool ret = sendRequest(fbdo, &req);
     if (ret)
     {
-        fbdo->_ss.json.clear();
-        fbdo->_ss.json.setJsonData(fbdo->_ss.cfn.payload.c_str());
+        if (!fbdo->_ss.jsonPtr)
+            fbdo->_ss.jsonPtr = new FirebaseJson();
+
+        if (!fbdo->_ss.dataPtr)
+            fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+        fbdo->_ss.jsonPtr->clear();
+        fbdo->_ss.jsonPtr->setJsonData(fbdo->_ss.cfn.payload.c_str());
         char *tmp = ut->strP(fb_esp_pgm_str_419);
-        fbdo->_ss.json.get(fbdo->_ss.data, (const char *)tmp);
+        fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, (const char *)tmp);
         ut->delS(tmp);
 
-        if (fbdo->_ss.data.success)
+        if (fbdo->_ss.dataPtr->success)
         {
             std::string s;
             ut->appendP(s, fb_esp_pgm_str_420, true);
-            if (strcmp_P(fbdo->_ss.data.stringValue.c_str(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->_ss.dataPtr->stringValue.c_str(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
 
             ut->appendP(s, fb_esp_pgm_str_421, true);
-            if (strcmp_P(fbdo->_ss.data.stringValue.c_str(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->_ss.dataPtr->stringValue.c_str(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_ACTIVE;
 
             ut->appendP(s, fb_esp_pgm_str_422, true);
-            if (strcmp_P(fbdo->_ss.data.stringValue.c_str(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->_ss.dataPtr->stringValue.c_str(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_OFFLINE;
 
             ut->appendP(s, fb_esp_pgm_str_423, true);
-            if (strcmp_P(fbdo->_ss.data.stringValue.c_str(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->_ss.dataPtr->stringValue.c_str(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_DEPLOY_IN_PROGRESS;
 
             ut->appendP(s, fb_esp_pgm_str_424, true);
-            if (strcmp_P(fbdo->_ss.data.stringValue.c_str(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->_ss.dataPtr->stringValue.c_str(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_DELETE_IN_PROGRESS;
 
             ut->appendP(s, fb_esp_pgm_str_425, true);
-            if (strcmp_P(fbdo->_ss.data.stringValue.c_str(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->_ss.dataPtr->stringValue.c_str(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_UNKNOWN;
             std::string().swap(s);
         }
@@ -494,18 +527,21 @@ bool FB_Functions::generateDownloadUrl(FirebaseData *fbdo, const char *projectId
     req.projectId = projectId;
     req.locationId = locationId;
     req.functionId = functionId;
-    fbdo->_ss.json.clear();
+    if (!fbdo->_ss.jsonPtr)
+        fbdo->_ss.jsonPtr = new FirebaseJson();
+
+    fbdo->_ss.jsonPtr->clear();
 
     if (strlen(versionId) > 0)
     {
         req.versionId = atoi(versionId);
         char *tmp = ut->strP(fb_esp_pgm_str_437);
-        fbdo->_ss.json.add(tmp, (int)versionId);
+        fbdo->_ss.jsonPtr->add(tmp, (int)versionId);
         ut->delS(tmp);
     }
 
-    fbdo->_ss.json.int_tostr(req.payload);
-    fbdo->_ss.json.clear();
+    req.payload = fbdo->_ss.jsonPtr->raw();
+    fbdo->_ss.jsonPtr->clear();
 
     return sendRequest(fbdo, &req);
 }
@@ -569,21 +605,17 @@ bool FB_Functions::sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t
         fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
         return false;
     }
-    
+
+#ifdef ENABLE_RTDB
     if (fbdo->_ss.rtdb.pause)
         return true;
+#endif
 
     if (!fbdo->reconnect())
         return false;
 
     if (!Signer.tokenReady())
         return false;
-
-    if (fbdo->_ss.long_running_task > 0)
-    {
-        fbdo->_ss.http_code = FIREBASE_ERROR_LONG_RUNNING_TASK;
-        return false;
-    }
 
     if (Signer.getCfg()->_int.fb_processing)
         return false;
@@ -949,11 +981,9 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
     struct fb_esp_auth_token_error_t error;
     error.code = -1;
     std::string js;
-    fbdo->_ss.fcs.files.items.clear();
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->_ss.content_length = -1;
-    fbdo->_ss.rtdb.data_mismatch = false;
     fbdo->_ss.chunked_encoding = false;
     fbdo->_ss.buffer_ovf = false;
 
@@ -1132,29 +1162,34 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
         {
             if (fbdo->_ss.cfn.payload[0] == '{')
             {
+                if (!fbdo->_ss.jsonPtr)
+                    fbdo->_ss.jsonPtr = new FirebaseJson();
 
-                fbdo->_ss.json.setJsonData(fbdo->_ss.cfn.payload.c_str());
+                if (!fbdo->_ss.dataPtr)
+                    fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+                fbdo->_ss.jsonPtr->setJsonData(fbdo->_ss.cfn.payload.c_str());
                 tmp = ut->strP(fb_esp_pgm_str_257);
-                fbdo->_ss.json.get(fbdo->_ss.data, tmp);
+                fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
                 ut->delS(tmp);
 
-                if (fbdo->_ss.data.success)
+                if (fbdo->_ss.dataPtr->success)
                 {
-                    error.code = fbdo->_ss.data.intValue;
+                    error.code = fbdo->_ss.dataPtr->intValue;
                     tmp = ut->strP(fb_esp_pgm_str_258);
-                    fbdo->_ss.json.get(fbdo->_ss.data, tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
                     ut->delS(tmp);
-                    if (fbdo->_ss.data.success)
+                    if (fbdo->_ss.dataPtr->success)
                     {
-                        fbdo->_ss.error = fbdo->_ss.data.stringValue.c_str();
+                        fbdo->_ss.error = fbdo->_ss.dataPtr->stringValue.c_str();
 
                         tmp = ut->strP(fb_esp_pgm_str_418);
-                        fbdo->_ss.json.get(fbdo->_ss.data, tmp);
+                        fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
                         ut->delS(tmp);
-                        if (fbdo->_ss.data.success)
+                        if (fbdo->_ss.dataPtr->success)
                         {
                             fbdo->_ss.error += ", ";
-                            fbdo->_ss.error += fbdo->_ss.data.stringValue.c_str();
+                            fbdo->_ss.error += fbdo->_ss.dataPtr->stringValue.c_str();
                         }
 
                         if (_deployTasks.size() > 0)
@@ -1168,13 +1203,13 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                 {
                     error.code = 0;
                 }
+
+                fbdo->_ss.jsonPtr->clear();
+                fbdo->_ss.dataPtr->clear();
             }
 
             fbdo->_ss.content_length = response.payloadLen;
         }
-
-        fbdo->_ss.json.clear();
-        fbdo->_ss.arr.clear();
     }
     else
     {
@@ -1198,7 +1233,8 @@ void FB_Functions::runDeployTask()
 
     static FB_Functions *_this = this;
 
-    TaskFunction_t taskCode = [](void *param) {
+    TaskFunction_t taskCode = [](void *param)
+    {
         while (_this->_creation_task_enable)
         {
             vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -1223,18 +1259,27 @@ void FB_Functions::runDeployTask()
 
                     if (ret)
                     {
-                        taskInfo->fbdo->_ss.json.clear();
-                        taskInfo->fbdo->_ss.json.setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
+                        if (!taskInfo->fbdo->_ss.jsonPtr)
+                            taskInfo->fbdo->_ss.jsonPtr = new FirebaseJson();
+
+                        if (!taskInfo->fbdo->_ss.arrPtr)
+                            taskInfo->fbdo->_ss.arrPtr = new FirebaseJsonArray();
+
+                        if (!taskInfo->fbdo->_ss.dataPtr)
+                            taskInfo->fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+                        taskInfo->fbdo->_ss.jsonPtr->clear();
+                        taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
                         char *tmp = _this->ut->strP(fb_esp_pgm_str_440);
-                        taskInfo->fbdo->_ss.json.get(taskInfo->fbdo->_ss.data, tmp);
+                        taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
                         _this->ut->delS(tmp);
-                        taskInfo->fbdo->_ss.json.clear();
-                        taskInfo->fbdo->_ss.arr.clear();
+                        taskInfo->fbdo->_ss.jsonPtr->clear();
+                        taskInfo->fbdo->_ss.arrPtr->clear();
                         std::string().swap(taskInfo->fbdo->_ss.cfn.payload);
-                        if (taskInfo->fbdo->_ss.data.success)
+                        if (taskInfo->fbdo->_ss.dataPtr->success)
                         {
                             _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_deploy, taskInfo->callback, taskInfo->statusInfo);
-                            _this->_deployTasks[_this->_deployIndex + 1].uploadUrl = taskInfo->fbdo->_ss.data.stringValue.c_str();
+                            _this->_deployTasks[_this->_deployIndex + 1].uploadUrl = taskInfo->fbdo->_ss.dataPtr->stringValue.c_str();
                         }
                     }
                     else
@@ -1249,22 +1294,28 @@ void FB_Functions::runDeployTask()
 
                     if (ret)
                     {
-                        taskInfo->fbdo->_ss.json.clear();
-                        taskInfo->fbdo->_ss.json.setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
+                        if (!taskInfo->fbdo->_ss.jsonPtr)
+                            taskInfo->fbdo->_ss.jsonPtr = new FirebaseJson();
+
+                        if (!taskInfo->fbdo->_ss.dataPtr)
+                            taskInfo->fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+                        taskInfo->fbdo->_ss.jsonPtr->clear();
+                        taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
 
                         char *tmp = _this->ut->strP(fb_esp_pgm_str_457);
-                        taskInfo->fbdo->_ss.json.get(taskInfo->fbdo->_ss.data, tmp);
+                        taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
                         _this->ut->delS(tmp);
 
-                        if (taskInfo->fbdo->_ss.data.success)
+                        if (taskInfo->fbdo->_ss.dataPtr->success)
                         {
                             tmp = _this->ut->strP(fb_esp_pgm_str_383);
-                            taskInfo->config->_funcCfg.add(tmp, taskInfo->fbdo->_ss.data.stringValue.c_str());
+                            taskInfo->config->_funcCfg.add(tmp, taskInfo->fbdo->_ss.dataPtr->stringValue.c_str());
                             taskInfo->config->addUpdateMasks(tmp);
                             _this->ut->delS(tmp);
                         }
 
-                        taskInfo->fbdo->_ss.json.clear();
+                        taskInfo->fbdo->_ss.jsonPtr->clear();
 
                         _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
                     }
@@ -1290,8 +1341,11 @@ void FB_Functions::runDeployTask()
                     std::string().swap(taskInfo->uploadUrl);
                     if (ret)
                     {
+                        if (!taskInfo->fbdo->_ss.dataPtr)
+                            taskInfo->fbdo->_ss.dataPtr = new FirebaseJsonData();
+
                         char *tmp = _this->ut->strP(fb_esp_pgm_str_383);
-                        taskInfo->config->_funcCfg.set(tmp, taskInfo->fbdo->_ss.data.stringValue.c_str());
+                        taskInfo->config->_funcCfg.set(tmp, taskInfo->fbdo->_ss.dataPtr->stringValue.c_str());
                         taskInfo->config->addUpdateMasks(tmp);
                         _this->ut->delS(tmp);
                         _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
@@ -1341,11 +1395,18 @@ void FB_Functions::runDeployTask()
                     {
                         taskInfo->fbdo->_ss.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
                         char *tmp = _this->ut->strP(fb_esp_pgm_str_432);
-                        taskInfo->fbdo->_ss.json.clear();
-                        taskInfo->fbdo->_ss.json.setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
-                        taskInfo->fbdo->_ss.json.get(taskInfo->fbdo->_ss.data, tmp);
+
+                        if (!taskInfo->fbdo->_ss.dataPtr)
+                            taskInfo->fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+                        if (!taskInfo->fbdo->_ss.jsonPtr)
+                            taskInfo->fbdo->_ss.jsonPtr = new FirebaseJson();
+
+                        taskInfo->fbdo->_ss.jsonPtr->clear();
+                        taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
+                        taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
                         _this->ut->delS(tmp);
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.data.stringValue.c_str(), taskInfo->callback, taskInfo->statusInfo);
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.dataPtr->stringValue.c_str(), taskInfo->callback, taskInfo->statusInfo);
                     }
 
                     ret = _this->deleteFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
@@ -1461,18 +1522,27 @@ void FB_Functions::runDeployTask()
 
                 if (ret)
                 {
-                    taskInfo->fbdo->_ss.json.clear();
-                    taskInfo->fbdo->_ss.json.setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
+                    if (!taskInfo->fbdo->_ss.dataPtr)
+                        taskInfo->fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+                    if (!taskInfo->fbdo->_ss.jsonPtr)
+                        taskInfo->fbdo->_ss.jsonPtr = new FirebaseJson();
+
+                    if (!taskInfo->fbdo->_ss.arrPtr)
+                        taskInfo->fbdo->_ss.arrPtr = new FirebaseJsonArray();
+
+                    taskInfo->fbdo->_ss.jsonPtr->clear();
+                    taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
                     char *tmp = ut->strP(fb_esp_pgm_str_440);
-                    taskInfo->fbdo->_ss.json.get(taskInfo->fbdo->_ss.data, tmp);
+                    taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
                     ut->delS(tmp);
-                    taskInfo->fbdo->_ss.json.clear();
-                    taskInfo->fbdo->_ss.arr.clear();
+                    taskInfo->fbdo->_ss.jsonPtr->clear();
+                    taskInfo->fbdo->_ss.arrPtr->clear();
                     std::string().swap(taskInfo->fbdo->_ss.cfn.payload);
-                    if (taskInfo->fbdo->_ss.data.success)
+                    if (taskInfo->fbdo->_ss.dataPtr->success)
                     {
                         addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_deploy, taskInfo->callback, taskInfo->statusInfo);
-                        _deployTasks[_deployIndex + 1].uploadUrl = taskInfo->fbdo->_ss.data.stringValue.c_str();
+                        _deployTasks[_deployIndex + 1].uploadUrl = taskInfo->fbdo->_ss.dataPtr->stringValue.c_str();
                     }
                 }
                 else
@@ -1488,22 +1558,28 @@ void FB_Functions::runDeployTask()
 
                 if (ret)
                 {
-                    taskInfo->fbdo->_ss.json.clear();
-                    taskInfo->fbdo->_ss.json.setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
+                    if (!taskInfo->fbdo->_ss.jsonPtr)
+                        taskInfo->fbdo->_ss.jsonPtr = new FirebaseJson();
+
+                    if (!taskInfo->fbdo->_ss.dataPtr)
+                        taskInfo->fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+                    taskInfo->fbdo->_ss.jsonPtr->clear();
+                    taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
 
                     char *tmp = ut->strP(fb_esp_pgm_str_457);
-                    taskInfo->fbdo->_ss.json.get(taskInfo->fbdo->_ss.data, tmp);
+                    taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
                     ut->delS(tmp);
 
-                    if (taskInfo->fbdo->_ss.data.success)
+                    if (taskInfo->fbdo->_ss.dataPtr->success)
                     {
                         tmp = ut->strP(fb_esp_pgm_str_383);
-                        taskInfo->config->_funcCfg.add(tmp, taskInfo->fbdo->_ss.data.stringValue.c_str());
+                        taskInfo->config->_funcCfg.add(tmp, taskInfo->fbdo->_ss.dataPtr->stringValue.c_str());
                         taskInfo->config->addUpdateMasks(tmp);
                         ut->delS(tmp);
                     }
 
-                    taskInfo->fbdo->_ss.json.clear();
+                    taskInfo->fbdo->_ss.jsonPtr->clear();
 
                     addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
                 }
@@ -1531,7 +1607,7 @@ void FB_Functions::runDeployTask()
                 if (ret)
                 {
                     char *tmp = ut->strP(fb_esp_pgm_str_383);
-                    taskInfo->config->_funcCfg.set(tmp, taskInfo->fbdo->_ss.data.stringValue.c_str());
+                    taskInfo->config->_funcCfg.set(tmp, taskInfo->fbdo->_ss.dataPtr->stringValue.c_str());
                     taskInfo->config->addUpdateMasks(tmp);
                     ut->delS(tmp);
                     addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
@@ -1584,11 +1660,18 @@ void FB_Functions::runDeployTask()
                 {
                     taskInfo->fbdo->_ss.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
                     char *tmp = ut->strP(fb_esp_pgm_str_432);
-                    taskInfo->fbdo->_ss.json.clear();
-                    taskInfo->fbdo->_ss.json.setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
-                    taskInfo->fbdo->_ss.json.get(taskInfo->fbdo->_ss.data, tmp);
+
+                    if (!taskInfo->fbdo->_ss.jsonPtr)
+                        taskInfo->fbdo->_ss.jsonPtr = new FirebaseJson();
+
+                    if (!taskInfo->fbdo->_ss.dataPtr)
+                        taskInfo->fbdo->_ss.dataPtr = new FirebaseJsonData();
+
+                    taskInfo->fbdo->_ss.jsonPtr->clear();
+                    taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
+                    taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
                     ut->delS(tmp);
-                    sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.data.stringValue.c_str(), taskInfo->callback, taskInfo->statusInfo);
+                    sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.dataPtr->stringValue.c_str(), taskInfo->callback, taskInfo->statusInfo);
                 }
 
                 ret = deleteFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
@@ -1677,3 +1760,5 @@ void FB_Functions::runDeployTask()
 }
 
 #endif
+
+#endif //ENABLE

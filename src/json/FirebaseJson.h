@@ -1,14 +1,15 @@
 /*
- * FirebaseJson, version 2.3.15
+ * FirebaseJson, version 2.4.0
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * May 12, 2021
+ * June 22, 2021
  * 
  * Features
- * - None recursive operations
- * - Parse and edit JSON object directly with a specified relative path. 
- * - Prettify JSON string 
+ * - Non-recursive parsing.
+ * - Unlimited nested node elements.
+ * - Using path to access node element. 
+ * - Prettify JSON serialization. 
  * 
  * 
  * The zserge's JSON object parser library used as part of this library
@@ -55,8 +56,6 @@
 #include <strings.h>
 #include <functional>
 
-#define FB_JSON_EXTRAS_BUFFER_LENGTH 1024
-
 static const char fb_json_str_1[] PROGMEM = ",";
 static const char fb_json_str_2[] PROGMEM = "\"";
 static const char fb_json_str_3[] PROGMEM = ":";
@@ -77,7 +76,7 @@ static const char fb_json_str_17[] PROGMEM = "array";
 static const char fb_json_str_18[] PROGMEM = "null";
 static const char fb_json_str_19[] PROGMEM = "undefined";
 static const char fb_json_str_20[] PROGMEM = ".";
-static const char fb_json_str_21[] PROGMEM = "\"root\":";
+static const char fb_json_str_21[] PROGMEM = "{\"root\":";
 static const char fb_json_str_22[] PROGMEM = "    ";
 static const char fb_json_str_24[] PROGMEM = "\n";
 static const char fb_json_str_25[] PROGMEM = ": ";
@@ -89,39 +88,126 @@ static const char fb_json_str_30[] PROGMEM = "incompleted JSON object or array";
 static const char fb_json_str_31[] PROGMEM = "token array buffer is to small";
 static const char fb_json_str_32[] PROGMEM = "\":}";
 static const char fb_json_str_33[] PROGMEM = "\":,";
+static const char fb_json_str_34[] PROGMEM = "{}";
+static const char fb_json_str_35[] PROGMEM = "[]";
 
 class FirebaseJson;
 class FirebaseJsonArray;
+class FirebaseJsonData;
+
+/***
+    * JSON type identifier. Basic types are:
+    * 	o Object
+    * 	o Array
+    * 	o String
+    * 	o Other primitive: number, boolean (true/false) or null
+    */
+typedef enum
+{
+  fb_json_generic_type_undefined = 0,
+  fb_json_generic_type_object = 1,
+  fb_json_generic_type_array = 2,
+  fb_json_generic_type_string = 3,
+  fb_json_generic_type_primitive = 4
+} fb_json_generic_type_t;
+
+enum fb_json_err
+{
+  /** Not enough tokens were provided */
+  fb_json_err_nomem = -1,
+  /** Invalid character inside JSON string */
+  fb_json_err_invalid = -2,
+  /** The string is not a full JSON packet, more bytes expected */
+  fb_json_err_part = -3
+};
+
+/***
+    * JSON parser. Contains an array of token blocks available. Also stores
+    * the string being parsed now and current position in that string
+    */
+typedef struct
+{
+  unsigned int pos;        /** offset in the JSON string */
+  unsigned int next_token; /** next token to allocate */
+  int super_token;         /** superior token node, e.g parent object or array */
+} fb_json_parser;
+
+/***
+    * JSON token description.
+    * type		type (object, array, string etc.)
+    * start	start position in JSON data string
+    * end		end position in JSON data string
+    */
+typedef struct
+{
+  fb_json_generic_type_t type;
+  int16_t start;
+  int16_t end;
+  int16_t size;
+#ifdef FB_JSON_PARENT_LINKS
+  int parent;
+#endif
+} fb_json_token_t;
+
+enum fb_json_str_type
+{
+  fb_json_str_type_qt,
+  fb_json_str_type_tab,
+  fb_json_str_type_brk1,
+  fb_json_str_type_brk2,
+  fb_json_str_type_brk3,
+  fb_json_str_type_brk4,
+  fb_json_str_type_cm,
+  fb_json_str_type_nl,
+  fb_json_str_type_nll,
+  fb_json_str_type_pr,
+  fb_json_str_type_pr2,
+  fb_json_str_type_pd,
+  fb_json_str_type_pf,
+  fb_json_str_type_fls,
+  fb_json_str_type_tr,
+  fb_json_str_type_string,
+  fb_json_str_type_int,
+  fb_json_str_type_dbl,
+  fb_json_str_type_bl,
+  fb_json_str_type_obj,
+  fb_json_str_type_arry,
+  fb_json_str_type_undef,
+  fb_json_str_type_dot,
+  fb_json_str_type_empty_obj,
+  fb_json_str_type_empty_arr,
+  fb_json_str_type_empty_root
+};
 
 typedef struct
 {
   int code = 0;
-  std::string function = "";
   int line = 0;
-  std::string messagge = "";
+  std::string function;
+  std::string messagge;
 } fb_json_last_error_t;
 
 typedef struct
 {
-  int nextDepth = 0;
-  int nextToken = 0;
-  int skipDepth = -1;
-  int parentIndex = -1;
-  bool TkRefOk = false;
-  int parseCompleted = -1;
-  bool arrReplaced = false;
-  bool arrInserted = false;
-  int refTkIndex = -1;
-  int remTkIndex = -1;
-  bool remFirstTk = false;
-  bool remLastTk = false;
+  int16_t ref_token = -1;
+  int16_t current_level = 0;
+  uint16_t tokens_count = 0;
+  int16_t next_level = 0;
+  int16_t next_token = 0;
+  int16_t skip_level = -1;
+  int16_t parent_index = -1;
+  int16_t parsing_completed_count = -1;
+  int16_t ref_token_index = -1;
+  int16_t removed_token_index = -1;
 
-  int refToken = -1;
-  int parseDepth = 0;
-  int tokenCount = 0;
-  bool tokenMatch = false;
-  bool collectTk = false;
-  bool paresRes = false;
+  bool to_set_ref_token = false;
+  bool to_replace_array = false;
+  bool to_insert_array = false;
+  bool to_remove_first_token = false;
+  bool to_remove_last_token = false;
+  bool is_token_matches = false;
+  bool create_item_list = false;
+  bool parsing_success = false;
 
 } fb_json_parser_info_t;
 
@@ -331,13 +417,13 @@ public:
 
   char *rstrstr(const char *haystack, const char *needle)
   {
-    size_t needle_length = strlen(needle);
-    const char *haystack_end = haystack + strlen(haystack) - needle_length;
+    size_t needle_sizegth = strlen(needle);
+    const char *haystack_end = haystack + strlen(haystack) - needle_sizegth;
     const char *p;
     size_t i;
     for (p = haystack_end; p >= haystack; --p)
     {
-      for (i = 0; i < needle_length; ++i)
+      for (i = 0; i < needle_sizegth; ++i)
       {
         if (p[i] != needle[i])
           goto next;
@@ -378,10 +464,7 @@ public:
   char *boolStr(bool value)
   {
     char *buf = nullptr;
-    if (value)
-      buf = strP(fb_json_str_7);
-    else
-      buf = strP(fb_json_str_6);
+    value ? buf = strP(fb_json_str_7) : buf = strP(fb_json_str_6);
     return buf;
   }
 
@@ -410,6 +493,141 @@ public:
       buf[i] = '\0';
   }
 
+  char *getStr(fb_json_str_type type)
+  {
+    switch (type)
+    {
+    case fb_json_str_type_qt:
+      return strP(fb_json_str_2);
+    case fb_json_str_type_tab:
+      return strP(fb_json_str_22);
+    case fb_json_str_type_brk1:
+      return strP(fb_json_str_8);
+    case fb_json_str_type_brk2:
+      return strP(fb_json_str_9);
+    case fb_json_str_type_brk3:
+      return strP(fb_json_str_10);
+    case fb_json_str_type_brk4:
+      return strP(fb_json_str_11);
+    case fb_json_str_type_cm:
+      return strP(fb_json_str_1);
+    case fb_json_str_type_pr2:
+      return strP(fb_json_str_3);
+    case fb_json_str_type_nl:
+      return strP(fb_json_str_24);
+    case fb_json_str_type_nll:
+      return strP(fb_json_str_18);
+    case fb_json_str_type_pr:
+      return strP(fb_json_str_25);
+    case fb_json_str_type_pd:
+      return strP(fb_json_str_4);
+    case fb_json_str_type_pf:
+      return strP(fb_json_str_5);
+    case fb_json_str_type_fls:
+      return strP(fb_json_str_6);
+    case fb_json_str_type_tr:
+      return strP(fb_json_str_7);
+    case fb_json_str_type_string:
+      return strP(fb_json_str_12);
+    case fb_json_str_type_int:
+      return strP(fb_json_str_13);
+    case fb_json_str_type_dbl:
+      return strP(fb_json_str_14);
+    case fb_json_str_type_bl:
+      return strP(fb_json_str_15);
+    case fb_json_str_type_obj:
+      return strP(fb_json_str_16);
+    case fb_json_str_type_arry:
+      return strP(fb_json_str_17);
+    case fb_json_str_type_undef:
+      return strP(fb_json_str_19);
+    case fb_json_str_type_dot:
+      return strP(fb_json_str_20);
+    case fb_json_str_type_empty_obj:
+      return strP(fb_json_str_34);
+    case fb_json_str_type_empty_arr:
+      return strP(fb_json_str_35);
+    case fb_json_str_type_empty_root:
+      return strP(fb_json_str_21);
+    default:
+      return nullptr;
+    }
+    return nullptr;
+  }
+
+  void appendS(std::string &s, fb_json_str_type type)
+  {
+    char *tmp = getStr(type);
+    if (tmp)
+    {
+      s += tmp;
+      delS(tmp);
+    }
+  }
+
+  void storeS(std::string &s, const char *v, bool append)
+  {
+    if (!append)
+      clearS(s);
+#if defined(ESP32)
+    s += v;
+    s.shrink_to_fit();
+#else
+    if (!append)
+      s = v;
+    else
+    {
+      std::string t = s;
+      t += v;
+      clearS(s);
+      s = t;
+      clearS(t);
+    }
+#endif
+  }
+
+  void storeS(std::string &s, char v, bool append)
+  {
+    std::string t;
+    t += v;
+    storeS(s, t.c_str(), append);
+    clearS(t);
+  }
+
+  void clearS(std::string &s)
+  {
+    s.clear();
+    std::string().swap(s);
+  }
+
+  void shrinkS(std::string &s)
+  {
+#if defined(ESP32)
+    s.shrink_to_fit();
+#else
+    std::string t = s;
+    clearS(s);
+    s = t;
+    clearS(t);
+#endif
+  }
+
+  void buildPath(std::string &json_path, const char *node, bool isArray)
+  {
+    if (isArray)
+    {
+      char *root = strP(fb_json_str_26);
+      char *slash = strP(fb_json_str_27);
+      json_path = root;
+      json_path += slash;
+      json_path += node;
+      delS(root);
+      delS(slash);
+    }
+    else
+      json_path = node;
+  }
+
 private:
   fb_json_last_error_t *last_err = nullptr;
 };
@@ -421,7 +639,6 @@ class FirebaseJsonData
 
 public:
   FirebaseJsonData();
-  FirebaseJsonData(size_t bufLimit);
   ~FirebaseJsonData();
 
   /**
@@ -434,18 +651,42 @@ public:
   bool getArray(FirebaseJsonArray &jsonArray);
 
   /**
-     * Get array data as FirebaseJson object from FirebaseJsonData object.
+     * Get array data as FirebaseJsonArray object from string.
+     * @param source - The JSON array string.
+     * @param jsonArray - The returning FirebaseJsonArray object.
+     * @return bool status for successful operation.
+     * This should call after parse or get function.
+    */
+  bool getArray(const char *source, FirebaseJsonArray &jsonArray);
+
+  /**
+     * Get JSON data as FirebaseJson object from FirebaseJsonData object.
      * 
-     * @param jsonArray - The returning FirebaseJson object.
+     * @param json - The returning FirebaseJson object.
      * @return bool status for successful operation.
      * This should call after parse or get function.
     */
   bool getJSON(FirebaseJson &json);
 
   /**
+     * Get JSON data as FirebaseJson object from string.
+     * 
+     * @param source - The JSON array string.
+     * @param json - The returning FirebaseJson object.
+     * @return bool status for successful operation.
+     * This should call after parse or get function.
+    */
+  bool getJSON(const char *source, FirebaseJson &json);
+
+  /**
+     * Clear internal buffer.
+    */
+  void clear();
+
+  /**
      * The String value of parses data.
     */
-  String stringValue = "";
+  String stringValue;
 
   /**
      * The int value of parses data.
@@ -470,7 +711,7 @@ public:
   /**
      * The type String of parses data.
     */
-  String type = "";
+  String type;
 
   /**
      * The type (number) of parses data.
@@ -483,15 +724,20 @@ public:
   bool success = false;
 
 private:
-  size_t _parser_buff_len = FB_JSON_EXTRAS_BUFFER_LENGTH;
-  int _type = 0;
-  int _k_start = 0;
-  int _start = 0;
-  int _end = 0;
-  int _tokenIndex = 0;
-  int _depth = 0;
-  int _len = 0;
-  std::string _dbuf = "";
+  int16_t type_num = 0;
+  int16_t k_start = 0;
+  int16_t start = 0;
+  int16_t end = 0;
+  int16_t token_index = 0;
+  int16_t level = 0;
+  int arr_size = 0;
+  std::string data_raw;
+
+  void setTokenInfo(fb_json_token_t *token, int16_t index, int16_t level, bool success);
+  void shrinkS(std::string &s);
+  void clearS(std::string &s);
+  char *strP(PGM_P p);
+  void delS(char *s);
 };
 
 class FirebaseJson
@@ -515,22 +761,22 @@ public:
 
   typedef enum
   {
-    PRINT_MODE_NONE = -1,
-    PRINT_MODE_PLAIN = 0,
-    PRINT_MODE_PRETTY = 1
-  } PRINT_MODE;
+    fb_json_serialize_mode_none = -1,
+    fb_json_serialize_mode_plain = 0,
+    fb_json_serialize_mode_pretty = 1
+  } fb_json_serialize_mode;
 
   typedef struct
   {
     bool matched = false;
-    std::string tk = "";
+    std::string path;
   } path_tk_t;
 
   typedef struct
   {
-    int index;
-    bool firstTk;
-    bool lastTk;
+    int16_t index;
+    bool first_token;
+    bool last_token;
     bool success;
   } single_child_parent_t;
 
@@ -538,85 +784,34 @@ public:
   {
     uint16_t index;
     uint8_t type;
-  } eltk_t;
+  } token_item_info_t;
 
   typedef struct
   {
-    uint16_t index;
-    uint8_t type;
-    uint16_t olen;
-    uint16_t oindex;
-    int depth;
-    bool omark;
-    bool ref;
-    bool skip;
-  } el_t;
+    int16_t index = -1;
+    uint8_t type = fb_json_generic_type_undefined;
+    uint16_t node_length = 0;
+    uint16_t node_index = 0;
+    int level = -1;
+    bool node_mark = false;
+    bool ref = false;
+    bool skip = false;
+  } fb_json_token_descriptor_t;
 
-  typedef struct
-  {
-    int index;
-    uint16_t oindex;
-    uint16_t olen;
-    uint8_t type;
-    int depth;
-    bool omark;
-    bool ref;
-    bool skip;
-  } tk_index_t;
-
-  /***
-    * JSON type identifier. Basic types are:
-    * 	o Object
-    * 	o Array
-    * 	o String
-    * 	o Other primitive: number, boolean (true/false) or null
-    */
   typedef enum
   {
-    JSMN_UNDEFINED = 0,
-    JSMN_OBJECT = 1,
-    JSMN_ARRAY = 2,
-    JSMN_STRING = 3,
-    JSMN_PRIMITIVE = 4
-  } fbjs_type_t;
+    fb_json_token_update_mode_parsing,
+    fb_json_token_update_mode_compile,
+    fb_json_token_update_mode_remove,
 
-  enum fbjs_err
-  {
-    /** Not enough tokens were provided */
-    JSMN_ERROR_NOMEM = -1,
-    /** Invalid character inside JSON string */
-    JSMN_ERROR_INVAL = -2,
-    /** The string is not a full JSON packet, more bytes expected */
-    JSMN_ERROR_PART = -3
-  };
+  } fb_json_token_update_mode;
 
-  /***
-    * JSON token description.
-    * type		type (object, array, string etc.)
-    * start	start position in JSON data string
-    * end		end position in JSON data string
-    */
-  typedef struct
+  typedef enum
   {
-    fbjs_type_t type;
-    int start;
-    int end;
-    int size;
-#ifdef JSMN_PARENT_LINKS
-    int parent;
-#endif
-  } fbjs_tok_t;
-
-  /***
-    * JSON parser. Contains an array of token blocks available. Also stores
-    * the string being parsed now and current position in that string
-    */
-  typedef struct
-  {
-    unsigned int pos;     /** offset in the JSON string */
-    unsigned int toknext; /** next token to allocate */
-    int toksuper;         /** superior token node, e.g parent object or array */
-  } fbjs_parser;
+    fb_json_token_descriptor_update_ref,
+    fb_json_token_descriptor_update_skip,
+    fb_json_token_descriptor_update_mark
+  } fb_json_token_descriptor_update_type;
 
   FirebaseJson();
   FirebaseJson(std::string &data);
@@ -880,11 +1075,10 @@ public:
   bool remove(const String &path);
 
   /**
-     * Set the parser internal buffer length limit
-     * 
-     * @param limit The size of internal parer buffer (32 to 8192 bytes)
-    */
-  void setBufferLimit(size_t limit);
+   * Get raw JSON
+   * @return raw JSON string
+   */
+  const char *raw();
 
   /**
      * Get last error of operation.
@@ -899,126 +1093,84 @@ public:
   template <typename T>
   bool set(const String &path, T value);
 
-  void int_parse(const char *path, PRINT_MODE printMode);
-  void int_clearPathTk();
-  void int_clearTokens();
-  size_t int_get_jsondata_len();
-  void int_tostr(std::string &s, bool prettify = false);
-  void int_toStdString(std::string &s, bool isJson = true);
-
 private:
-  size_t _parser_buff_len = FB_JSON_EXTRAS_BUFFER_LENGTH;
+  fb_json_last_error_t last_error;
 
-  fb_json_last_error_t _lastErr;
+  FirebaseJsonHelper *hp = new FirebaseJsonHelper(&last_error);
 
-  FirebaseJsonHelper *helper = new FirebaseJsonHelper(&_lastErr);
+  fb_json_generic_type_t top_level_token_type = fb_json_generic_type_object;
 
-  fbjs_type_t _topLevelTkType = JSMN_OBJECT;
+  fb_json_parser_info_t parser_info;
 
-  fb_json_parser_info_t _parser_info;
+  std::string raw_buf;
+  std::string temp_buf;
+  fb_json_token_descriptor_t last_token;
+  std::vector<path_tk_t> path_list = std::vector<path_tk_t>();
+  std::vector<token_item_info_t> token_item_info_list = std::vector<token_item_info_t>();
+  std::vector<fb_json_token_descriptor_t> fb_json_token_descriptor_list = std::vector<fb_json_token_descriptor_t>();
+  FirebaseJsonData result;
 
-  char *_qt = nullptr;
-  char *_tab = nullptr;
-  char *_brk1 = nullptr;
-  char *_brk2 = nullptr;
-  char *_brk3 = nullptr;
-  char *_brk4 = nullptr;
-  char *_cm = nullptr;
-  char *_nl = nullptr;
-  char *_nll = nullptr;
-  char *_pr = nullptr;
-  char *_pr2 = nullptr;
-  char *_pd = nullptr;
-  char *_pf = nullptr;
-  char *_fls = nullptr;
-  char *_tr = nullptr;
-  char *_string = nullptr;
-  char *_int = nullptr;
-  char *_dbl = nullptr;
-  char *_bl = nullptr;
-  char *_obj = nullptr;
-  char *_arry = nullptr;
-  char *_undef = nullptr;
-  char *_dot = nullptr;
+  std::shared_ptr<fb_json_parser> parser = std::shared_ptr<fb_json_parser>(new fb_json_parser());
+  std::shared_ptr<fb_json_token_t> tokens = nullptr;
 
-  std::string _rawbuf = "";
-  std::string _tbuf = "";
-  tk_index_t _lastTk;
-  std::vector<path_tk_t> _pathTk = std::vector<path_tk_t>();
-  std::vector<eltk_t> _eltk = std::vector<eltk_t>();
-  std::vector<el_t> _el = std::vector<el_t>();
-  FirebaseJsonData _jsonData;
+  FirebaseJson &int_setJsonData(std::string &data);
+  FirebaseJson &int_add(const char *key, const char *value, size_t klen, size_t vlen, bool isString = true, bool isJson = true);
+  FirebaseJson &int_addArrayStr(const char *value, size_t len, bool isString);
+  void int_resetParsserInfo();
+  void int_resetParseResult();
+  void int_setElementType();
+  void int_addString(const std::string &key, const std::string &value);
+  void int_addArray(const std::string &key, FirebaseJsonArray *arr);
+  void int_addInt(const std::string &key, int value);
+  void int_addFloat(const std::string &key, float value);
+  void int_addDouble(const std::string &key, double value);
+  void int_addBool(const std::string &key, bool value);
+  void int_addNull(const std::string &key);
+  void int_addJson(const std::string &key, FirebaseJson *json);
+  void int_setString(const std::string &path, const std::string &value);
+  void int_setInt(const std::string &path, int value);
+  void int_setFloat(const std::string &path, float value);
+  void int_setDouble(const std::string &path, double value);
+  void int_setBool(const std::string &path, bool value);
+  void int_setNull(const std::string &path);
+  void int_setJson(const std::string &path, FirebaseJson *json);
+  void int_setArray(const std::string &path, FirebaseJsonArray *arr);
+  void int_set(const char *path, const char *data);
+  void int_clearPathList();
+  void int_clearTokenList();
+  void int_clearTokenDescriptorList();
+  void int_parse(const char *path, fb_json_serialize_mode deserializeMode);
+  void int_parse(const char *key, int16_t level, int16_t index, fb_json_serialize_mode deserializeMode);
+  void int_compile(const char *key, int16_t level, int16_t index, const char *replace, fb_json_serialize_mode deserializeMode, int16_t refTokenIndex = -1, bool isRemove = false);
+  void int_remove(const char *key, int16_t level, int16_t index, const char *replace, int16_t refTokenIndex = -1, bool isRemove = false);
+  void int_fb_json_parseToken(bool create_item_list = false);
+  bool int_updateTokenIndex(fb_json_token_update_mode mode, uint16_t index, int16_t &level, const char *searchKey, int16_t searchIndex, const char *replace, fb_json_serialize_mode deserializeMode, bool advancedCount, std::string &buf);
+  void int_getTokenIndex(int level, fb_json_token_descriptor_t &tk);
+  void int_updateDescriptor(fb_json_token_descriptor_update_type type, int level, bool value);
+  void int_appendTab(std::string &s, int level, bool notEmpty, bool newLine = false);
+  void int_insertChilds(const char *data, fb_json_serialize_mode deserializeMode);
+  void int_addObjNodes(std::string &str, std::string &str2, int16_t index, const char *data, fb_json_serialize_mode deserializeMode);
+  void int_addArrNodes(std::string &str, std::string &str2, int16_t index, const char *data, fb_json_serialize_mode deserializeMode);
+  void int_compileToken(uint16_t &i, const char *buf, int16_t &level, const char *searchKey, int16_t searchIndex, fb_json_serialize_mode deserializeMode, const char *replace, int16_t refTokenIndex = -1, bool isRemove = false);
+  void int_parseToken(uint16_t &i, const char *buf, int16_t &level, const char *searchKey, int16_t searchIndex, fb_json_serialize_mode deserializeMode);
+  void int_removeToken(uint16_t &i, const char *buf, int16_t &level, const char *searchKey, int16_t searchIndex, fb_json_serialize_mode deserializeMode, const char *replace, int16_t refTokenIndex = -1, bool isRemove = false);
+  void int_addDescriptorList(fb_json_token_t *token, int16_t index, int16_t level, bool mark, bool ref, fb_json_token_descriptor_t *descr);
+  single_child_parent_t int_findSingleChildParent(int level);
+  bool int_isArray(int index);
+  bool int_isString(int index);
+  int int_getArrIndex(int index);
+  void int_get(const char *key, int level, int index = -1);
+  void int_ltrim(std::string &str, const std::string &chars = " ");
+  void int_rtrim(std::string &str, const std::string &chars = " ");
+  void int_trim(std::string &str, const std::string &chars = " ");
+  void int_splitTokens(const std::string &str, std::vector<path_tk_t> &tk, char delim);
 
-  std::shared_ptr<fbjs_parser> _parser = std::shared_ptr<fbjs_parser>(new fbjs_parser());
-  std::shared_ptr<fbjs_tok_t> _tokens = nullptr;
-
-  void _init();
-  void _finalize();
-  FirebaseJson &_setJsonData(std::string &data);
-  FirebaseJson &_add(const char *key, const char *value, size_t klen, size_t vlen, bool isString = true, bool isJson = true);
-  FirebaseJson &_addArrayStr(const char *value, size_t len, bool isString);
-  void _resetParsserInfo();
-  void _resetParseResult();
-  void _setElementType();
-  void _addString(const std::string &key, const std::string &value);
-  void _addArray(const std::string &key, FirebaseJsonArray *arr);
-  void _addInt(const std::string &key, int value);
-  void _addFloat(const std::string &key, float value);
-  void _addDouble(const std::string &key, double value);
-  void _addBool(const std::string &key, bool value);
-  void _addNull(const std::string &key);
-  void _addJson(const std::string &key, FirebaseJson *json);
-  void _setString(const std::string &path, const std::string &value);
-  void _setInt(const std::string &path, int value);
-  void _setFloat(const std::string &path, float value);
-  void _setDouble(const std::string &path, double value);
-  void _setBool(const std::string &path, bool value);
-  void _setNull(const std::string &path);
-  void _setJson(const std::string &path, FirebaseJson *json);
-  void _setArray(const std::string &path, FirebaseJsonArray *arr);
-  void _set(const char *path, const char *data);
-  void clearPathTk();
-  void _parse(const char *path, PRINT_MODE printMode);
-  void _parse(const char *key, int depth, int index, PRINT_MODE printMode);
-  void _compile(const char *key, int depth, int index, const char *replace, PRINT_MODE printMode, int refTokenIndex = -1, bool removeTk = false);
-  void _remove(const char *key, int depth, int index, const char *replace, int refTokenIndex = -1, bool removeTk = false);
-  void _fbjs_parse(bool collectTk = false);
-  bool _updateTkIndex(uint16_t index, int &depth, const char *searchKey, int searchIndex, const char *replace, PRINT_MODE printMode, bool advanceCount);
-  bool _updateTkIndex2(std::string &str, uint16_t index, int &depth, const char *searchKey, int searchIndex, const char *replace, PRINT_MODE printMode);
-  bool _updateTkIndex3(uint16_t index, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode);
-  void _getTkIndex(int depth, tk_index_t &tk);
-  void _setMark(int depth, bool mark);
-  void _setSkip(int depth, bool skip);
-  void _setRef(int depth, bool ref);
-  void _insertChilds(const char *data, PRINT_MODE printMode);
-  void _addObjNodes(std::string &str, std::string &str2, int index, const char *data, PRINT_MODE printMode);
-  void _addArrNodes(std::string &str, std::string &str2, int index, const char *data, PRINT_MODE printMode);
-  void _compileToken(uint16_t &i, char *buf, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode, const char *replace, int refTokenIndex = -1, bool removeTk = false);
-  void _parseToken(uint16_t &i, char *buf, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode);
-  void _removeToken(uint16_t &i, char *buf, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode, const char *replace, int refTokenIndex = -1, bool removeTk = false);
-  single_child_parent_t _findSCParent(int depth);
-  bool _isArrTk(int index);
-  bool _isStrTk(int index);
-  int _getArrIndex(int index);
-  void _get(const char *key, int depth, int index = -1);
-  void _ltrim(std::string &str, const std::string &chars = " ");
-  void _rtrim(std::string &str, const std::string &chars = " ");
-  void _trim(std::string &str, const std::string &chars = " ");
-  void _toStdString(std::string &s, bool isJson = true);
-  void _tostr(std::string &s, bool prettify = false);
-  void _strToTk(const std::string &str, std::vector<path_tk_t> &tk, char delim);
-
-  void fbjs_init(fbjs_parser *parser);
-  int fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
-                 fbjs_tok_t *tokens, unsigned int num_tokens);
-  int fbjs_parse_string(fbjs_parser *parser, const char *js,
-                        size_t len, fbjs_tok_t *tokens, size_t num_tokens);
-  int fbjs_parse_primitive(fbjs_parser *parser, const char *js,
-                           size_t len, fbjs_tok_t *tokens, size_t num_tokens);
-  void fbjs_fill_token(fbjs_tok_t *token, fbjs_type_t type,
-                       int start, int end);
-  fbjs_tok_t *fbjs_alloc_token(fbjs_parser *parser,
-                               fbjs_tok_t *tokens, size_t num_tokens);
+  void int_fb_json_init(fb_json_parser *parser);
+  int int_fb_json_parse(fb_json_parser *parser, const char *js, size_t len, fb_json_token_t *tokens, unsigned int num_tokens);
+  int int_fb_json_parse_string(fb_json_parser *parser, const char *js, size_t len, fb_json_token_t *tokens, size_t num_tokens);
+  int int_fb_json_parse_primitive(fb_json_parser *parser, const char *js, size_t len, fb_json_token_t *tokens, size_t num_tokens);
+  void int_fb_json_fill_token(fb_json_token_t *token, fb_json_generic_type_t type, int start, int end);
+  fb_json_token_t *int_fb_json_alloc_token(fb_json_parser *parser, fb_json_token_t *tokens, size_t num_tokens);
 };
 
 class FirebaseJsonArray
@@ -1029,10 +1181,8 @@ class FirebaseJsonArray
 
 public:
   FirebaseJsonArray();
-  FirebaseJsonArray(fb_json_last_error_t *lastErr, size_t bufLimit = FB_JSON_EXTRAS_BUFFER_LENGTH);
+  FirebaseJsonArray(fb_json_last_error_t *lastErr);
   ~FirebaseJsonArray();
-  void _init();
-  void _finalize();
 
   /**
      * Add null to FirebaseJsonArray object.
@@ -1149,6 +1299,12 @@ public:
      * @param prettify - Boolean flag for return the pretty format string i.e. with text indentation and newline.
     */
   void toString(String &buf, bool prettify = false);
+
+  /**
+   * Get raw JSON Array
+   * @return raw JSON Array string
+   */
+  const char *raw();
 
   /**
      * Clear all array in FirebaseJsonArray object.
@@ -1344,62 +1500,41 @@ public:
   template <typename T>
   FirebaseJsonArray &add(T value);
 
-  std::string *int_dbuf();
-  std::string *int_tbuf();
-  std::string *int_jbuf();
-  std::string *int_rawbuf();
-  FirebaseJson *int_json();
-  void int_set_arr_len(size_t len);
-  void int_toStdString(std::string &s);
-
 private:
-  fb_json_last_error_t *_lastErr = nullptr;
-  size_t _parser_buff_len = FB_JSON_EXTRAS_BUFFER_LENGTH;
-  FirebaseJsonHelper *helper = new FirebaseJsonHelper(_lastErr);
-  std::string _jbuf = "";
-  FirebaseJson _json;
-  size_t _arrLen = 0;
-  char *_pd = nullptr;
-  char *_pf = nullptr;
-  char *_fls = nullptr;
-  char *_tr = nullptr;
-  char *_brk3 = nullptr;
-  char *_brk4 = nullptr;
-  char *_nll = nullptr;
-  char *_root = nullptr;
-  char *_root2 = nullptr;
-  char *_qt = nullptr;
-  char *_slash = nullptr;
+  fb_json_last_error_t *last_error = nullptr;
+  FirebaseJsonHelper *hp = new FirebaseJsonHelper(last_error);
+  FirebaseJson js;
+  size_t arr_size = 0;
 
-  void _addString(const std::string &value);
-  void _addInt(int value);
-  void _addFloat(float value);
-  void _addDouble(double value);
-  void _addBool(bool value);
-  void _addNull();
-  void _addJson(FirebaseJson *json);
-  void _addArray(FirebaseJsonArray *arr);
-  void _setString(int index, const std::string &value);
-  void _setString(const String &path, const std::string &value);
-  void _setInt(int index, int value);
-  void _setInt(const String &path, int value);
-  void _setFloat(int index, float value);
-  void _setFloat(const String &path, float value);
-  void _setDouble(int index, double value);
-  void _setDouble(const String &path, double value);
-  void _setBool(int index, bool value);
-  void _setBool(const String &path, bool value);
-  void _setNull(int index);
-  void _setNull(const String &path);
-  void _setJson(int index, FirebaseJson *json);
-  void _setJson(const String &path, FirebaseJson *json);
-  void _setArray(int index, FirebaseJsonArray *arr);
-  void _setArray(const String &path, FirebaseJsonArray *arr);
-  void _toStdString(std::string &s);
-  void _set2(int index, const char *value, bool isStr = true);
-  void _set(const char *path, const char *value, bool isStr = true);
-  bool _get(FirebaseJsonData &jsonData, const char *path);
-  bool _remove(const char *path);
+  void int_addString(const std::string &value);
+  void int_addInt(int value);
+  void int_addFloat(float value);
+  void int_addDouble(double value);
+  void int_addBool(bool value);
+  void int_addNull();
+  void int_addJson(FirebaseJson *json);
+  void int_addArray(FirebaseJsonArray *arr);
+  void int_setString(int index, const std::string &value);
+  void int_setString(const String &path, const std::string &value);
+  void int_setInt(int index, int value);
+  void int_setInt(const String &path, int value);
+  void int_setFloat(int index, float value);
+  void int_setFloat(const String &path, float value);
+  void int_setDouble(int index, double value);
+  void int_setDouble(const String &path, double value);
+  void int_setBool(int index, bool value);
+  void int_setBool(const String &path, bool value);
+  void int_setNull(int index);
+  void int_setNull(const String &path);
+  void int_setJson(int index, FirebaseJson *json);
+  void int_setJson(const String &path, FirebaseJson *json);
+  void int_setArray(int index, FirebaseJsonArray *arr);
+  void int_setArray(const String &path, FirebaseJsonArray *arr);
+  void int_setByIndex(int index, const char *value, bool isStr = true);
+  void int_set(const char *path, const char *value, bool isStr = true);
+  bool int_get(FirebaseJsonData &jsonData, const char *path);
+  bool int_remove(const char *path);
+  const char *int_raw(FirebaseJson::fb_json_serialize_mode mode);
 };
 
 #endif

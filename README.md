@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.6
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.3.0
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -383,6 +383,28 @@ The Firebase Host and database secret for RTDB usages.
 
 
 
+## Excludes the unused classes to save memory
+
+
+The classes e.g. RTDB, Firestore, FCM, Storage, Cloud Storage, and Cloud Functions for Firebase in this library can be excluded or disabled to save memory usage through [**FirebaseFS.h**](/src/FirebaseFS.h).
+
+By comment the following macros.
+
+ENABLE_RTDB
+
+ENABLE_FIRESTORE
+
+ENABLE_FCM
+
+ENABLE_FB_STORAGE
+
+ENABLE_GC_STORAGE
+
+ENABLE_FB_FUNCTIONS
+
+
+
+
 ## Realtime Database
 
 See [RTDB examples](/examples/RTDB) for complete usages.
@@ -673,7 +695,7 @@ query.endAt(8);
 query.limitToLast(5);
 
 
-if (Firebase.getJSON(fbdo, "/test/data", &query))
+if (Firebase.RTDB.getJSON(&fbdo, "/test/data", &query))
 {
   //Success, then try to read the JSON payload value
   Serial.println(fbdo.jsonString());
@@ -806,18 +828,18 @@ void streamCallback(FirebaseStream data)
   //Print out the value
   //Stream data can be many types which can be determined from function dataType
 
-  if (data.dataType() == "int")
-    Serial.println(data.intData());
-  else if (data.dataType() == "float")
-    Serial.println(data.floatData(), 5);
-  else if (data.dataType() == "double")
-    printf("%.9lf\n", data.doubleData());
-  else if (data.dataType() == "boolean")
-    Serial.println(data.boolData() == 1 ? "true" : "false");
-  else if (data.dataType() == "string")
-    Serial.println(data.stringData());
-  else if (data.dataType() == "json")
-    Serial.println(data.jsonString());
+  if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
+      Serial.println(data.intData());
+  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
+      Serial.println(data.floatData(), 5);
+  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+      printf("%.9lf\n", data.doubleData());
+  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
+      Serial.println(data.boolData() == 1 ? "true" : "false");
+  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string)
+      Serial.println(data.stringData());
+  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
+      Serial.println(data.jsonString());
 
 }
 

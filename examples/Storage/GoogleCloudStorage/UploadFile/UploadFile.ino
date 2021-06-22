@@ -75,8 +75,13 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+#if defined(ESP8266)
+    //required
+    fbdo.setBSSLBufferSize(2048, 2048);
+#endif
+
     Firebase.begin(&config, &auth);
-    
+
     Firebase.reconnectWiFi(true);
 }
 
@@ -104,7 +109,6 @@ void gcsUploadCallback(UploadStatusInfo info)
         Serial.printf("CRC32: %s\n", meta.crc32.c_str());
         Serial.printf("Token: %s\n", meta.downloadTokens.c_str());       //only gcs_upload_type_multipart and gcs_upload_type_resumable upload types.
         Serial.printf("Download URL: %s\n", fbdo.downloadURL().c_str()); //only gcs_upload_type_multipart and gcs_upload_type_resumable upload types.
-
     }
     else if (info.status == fb_esp_gcs_upload_status_error)
     {
@@ -121,17 +125,17 @@ void loop()
         Serial.println("Upload file via Google Cloud Storage JSON API...");
 
         /**
-     * The following function uses Google Cloud Storage JSON API to upload the file (object).
-     * 
-     * The Google Cloud Storage functions required OAuth2.0 authentication.
-     * The upload types of methods can be selectable.
-     * The gcs_upload_type_simple upload type is used for small file upload in a single request without metadata.
-     * gcs_upload_type_multipart upload type is for small file upload in a single reques with metadata.
-     * gcs_upload_type_resumable upload type is for medium or large file (larger than or equal to 256 256 KiB) upload with metadata and can be resumable.
-     * 
-     * The upload with metadata supports allows the library to add the metadata internally for Firebase to request the download access token in Firebase Storage bucket.
-     * User also can add custom metadata for the uploading file (object).
-     */
+         * The following function uses Google Cloud Storage JSON API to upload the file (object).
+         * The Google Cloud Storage functions required OAuth2.0 authentication.
+         * The upload types of methods can be selectable.
+         * 
+         * The gcs_upload_type_simple upload type is used for small file upload in a single request without metadata.
+         * gcs_upload_type_multipart upload type is for small file upload in a single reques with metadata.
+         * gcs_upload_type_resumable upload type is for medium or large file (larger than or equal to 256 256 KiB) upload with metadata and can be resumable.
+         * 
+         * The upload with metadata supports allows the library to add the metadata internally for Firebase to request the download access token in Firebase Storage bucket.
+         * User also can add custom metadata for the uploading file (object).
+        */
 
         //For query parameters description of UploadOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-parameters
         //For request payload properties description of Requestproperties, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-properties

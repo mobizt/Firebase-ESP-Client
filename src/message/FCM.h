@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.7
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_FCM
 
 #ifndef FIREBASE_FCM_H
 #define FIREBASE_FCM_H
@@ -154,31 +158,27 @@ public:
 private:
   bool init(bool clearInt= false);
   void begin(UtilsClass *u);
-  bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &payload);
+  bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
   void rescon(FirebaseData *fbdo, const char *host);
   void fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode);
-  bool fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, std::string &msg);
-  void fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, std::string &payload);
-  void fcm_prepareLegacyPayload(std::string &buf, FCM_Legacy_HTTP_Message *msg);
-  void fcm_prepareV1Payload(std::string &buf, FCM_HTTPv1_JSON_Message *msg);
-  void fcm_preparSubscriptionPayload(std::string &buf, const char *topic, const char *IID[], size_t numToken);
-  void fcm_preparAPNsRegistPayload(std::string &buf, const char *application, bool sandbox, const char *APNs[], size_t numToken);
+  bool fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char*msg);
+  void fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, const char *payload);
+  void fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg);
+  void fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg);
+  void fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken);
+  void fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken);
 
   void clear();
-  FirebaseConfig *_cfg = nullptr;
-  FirebaseAuth *_auth = nullptr;
-  UtilsClass *_ut = nullptr;
-  std::string _topic = "";
-  std::string _server_key = "";
-  std::string _token = "";
-  int _ttl = -1;
-  uint16_t _index = 0;
-  uint16_t _port = FIREBASE_PORT;
-  FirebaseJson _fcmPayload;
-  std::vector<std::string> _tokens = std::vector<std::string>();
+  FirebaseConfig *cfg = nullptr;
+  FirebaseAuth *auth = nullptr;
   UtilsClass *ut = nullptr;
+  std::string server_key;
+  std::string raw;
+  uint16_t port = FIREBASE_PORT;
 };
 
 #endif
+
+#endif //ENABLE

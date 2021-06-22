@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.cpp v2.2.6
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.cpp v2.3.0
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created June 13, 2021
+ * Created June 22, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -48,23 +48,29 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
 {
   if (ut)
     delete ut;
+
+  if (auth)
+    delete auth;
+
+  if (cfg)
+    delete cfg;
 }
 
 void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
 {
   init(config, auth);
 
-  if (_cfg->service_account.json.path.length() > 0)
+  if (cfg->service_account.json.path.length() > 0)
   {
     if (!Signer.parseSAFile())
-      _cfg->signer.tokens.status = token_status_uninitialized;
+      cfg->signer.tokens.status = token_status_uninitialized;
   }
 
-  if (_cfg->signer.tokens.legacy_token.length() > 0)
+  if (cfg->signer.tokens.legacy_token.length() > 0)
     Signer.setTokenType(token_type_legacy_token);
   else if (Signer.tokenSigninDataReady())
   {
-    if (_auth->token.uid.length() == 0)
+    if (auth->token.uid.length() == 0)
       Signer.setTokenType(token_type_oauth2_access_token);
     else
       Signer.setTokenType(token_type_custom_token);
@@ -73,28 +79,28 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     Signer.setTokenType(token_type_id_token);
 
   struct fb_esp_url_info_t uinfo;
-  _cfg->_int.fb_auth_uri =
-      _cfg->signer.tokens.token_type == token_type_legacy_token ||
-      _cfg->signer.tokens.token_type == token_type_id_token;
+  cfg->_int.fb_auth_uri =
+      cfg->signer.tokens.token_type == token_type_legacy_token ||
+      cfg->signer.tokens.token_type == token_type_id_token;
 
-  if (_cfg->host.length() > 0)
-    _cfg->database_url = _cfg->host;
+  if (cfg->host.length() > 0)
+    cfg->database_url = cfg->host;
 
-  if (_cfg->database_url.length() > 0)
+  if (cfg->database_url.length() > 0)
   {
-    ut->getUrlInfo(_cfg->database_url.c_str(), uinfo);
-    _cfg->database_url = uinfo.host;
+    ut->getUrlInfo(cfg->database_url.c_str(), uinfo);
+    cfg->database_url = uinfo.host;
   }
 
-  if (strlen_P(_cfg->cert.data))
-    _cfg->_int.fb_caCert = _cfg->cert.data;
+  if (strlen_P(cfg->cert.data))
+    cfg->_int.fb_caCert = cfg->cert.data;
 
-  if (_cfg->cert.file.length() > 0)
+  if (cfg->cert.file.length() > 0)
   {
-    if (_cfg->cert.file_storage == mem_storage_type_sd && !_cfg->_int.fb_sd_rdy)
-      _cfg->_int.fb_sd_rdy = ut->sdTest(_cfg->_int.fb_file);
-    else if ((_cfg->cert.file_storage == mem_storage_type_flash) &&
-             !_cfg->_int.fb_flash_rdy)
+    if (cfg->cert.file_storage == mem_storage_type_sd && !cfg->_int.fb_sd_rdy)
+      cfg->_int.fb_sd_rdy = ut->sdTest(cfg->_int.fb_file);
+    else if ((cfg->cert.file_storage == mem_storage_type_flash) &&
+             !cfg->_int.fb_flash_rdy)
       ut->flashTest();
   }
 
@@ -118,33 +124,44 @@ bool Firebase_ESP_Client::authenticated()
 
 void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
 {
-  _auth = auth;
-  _cfg = config;
+  this->auth = auth;
+  cfg = config;
 
-  if (_cfg == nullptr)
-    _cfg = &_cfg_;
+  if (!cfg)
+    cfg = new FirebaseConfig();
 
-  if (_auth == nullptr)
-    _auth = &_auth_;
+  if (!this->auth)
+    this->auth = new FirebaseAuth();
 
   if (ut)
     delete ut;
 
   ut = new UtilsClass(config);
 
+#ifdef ENABLE_RTDB
   RTDB.begin(ut);
+#endif
+#ifdef ENABLE_FCM
   FCM.begin(ut);
+#endif
+#ifdef ENABLE_FB_STORAGE
   Storage.begin(ut);
+#endif
+#ifdef ENABLE_FIRESTORE
   Firestore.begin(ut);
+#endif
+#ifdef ENABLE_FB_FUNCTIONS
   Functions.begin(ut);
+#endif
+#ifdef ENABLE_GC_STORAGE
   GCStorage.begin(ut);
+#endif
 
-  _cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
+  cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
 
-  _cfg->signer.signup = false;
-  _cfg_.signer.signup = false;
-  Signer.begin(ut, _cfg, _auth);
-  std::string().swap(_cfg_.signer.tokens.error.message);
+  cfg->signer.signup = false;
+  Signer.begin(ut, cfg, auth);
+  ut->clearS(cfg->signer.tokens.error.message);
 }
 
 bool Firebase_ESP_Client::signUp(FirebaseConfig *config, FirebaseAuth *auth, const char *email, const char *password)
@@ -174,13 +191,13 @@ void Firebase_ESP_Client::reconnectWiFi(bool reconnect)
 void Firebase_ESP_Client::setFloatDigits(uint8_t digits)
 {
   if (digits < 7)
-    _cfg->_int.fb_float_digits = digits;
+    cfg->_int.fb_float_digits = digits;
 }
 
 void Firebase_ESP_Client::setDoubleDigits(uint8_t digits)
 {
   if (digits < 9)
-    _cfg->_int.fb_double_digits = digits;
+    cfg->_int.fb_double_digits = digits;
 }
 
 bool Firebase_ESP_Client::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)

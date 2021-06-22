@@ -35,6 +35,7 @@
 
 #include <Arduino.h>
 #include "common.h"
+#include "addons/fastcrc/FastCRC.h"
 
 class UtilsClass
 {
@@ -46,6 +47,7 @@ public:
     uint16_t ntpTimeout = 20;
     callback_function_t _callback_function = nullptr;
     FirebaseConfig *config = nullptr;
+    FastCRC16 CRC16;
 
     UtilsClass(FirebaseConfig *cfg)
     {
@@ -117,7 +119,10 @@ public:
     char *floatStr(float value)
     {
         char *buf = newS(36);
-        dtostrf(value, 7, config->_int.fb_float_digits, buf);
+        if (config)
+            dtostrf(value, 7, config->_int.fb_float_digits, buf);
+        else
+            dtostrf(value, 7, 5, buf);
         return buf;
     }
 
@@ -141,7 +146,10 @@ public:
     char *doubleStr(double value)
     {
         char *buf = newS(36);
-        dtostrf(value, 12, config->_int.fb_double_digits, buf);
+        if (config)
+            dtostrf(value, 12, config->_int.fb_double_digits, buf);
+        else
+            dtostrf(value, 12, 9, buf);
         return buf;
     }
 
@@ -235,8 +243,11 @@ public:
 
     inline std::string trim(const std::string &s)
     {
-        auto wsfront = std::find_if_not(s.begin(), s.end(), [](int c) { return std::isspace(c); });
-        return std::string(wsfront, std::find_if_not(s.rbegin(), std::string::const_reverse_iterator(wsfront), [](int c) { return std::isspace(c); }).base());
+        auto wsfront = std::find_if_not(s.begin(), s.end(), [](int c)
+                                        { return std::isspace(c); });
+        return std::string(wsfront, std::find_if_not(s.rbegin(), std::string::const_reverse_iterator(wsfront), [](int c)
+                                                     { return std::isspace(c); })
+                                        .base());
     }
 
     void delS(char *p)
@@ -1015,6 +1026,9 @@ public:
 
     void closeFileHandle(bool sd)
     {
+        if (!config)
+            return;
+
         if (config->_int.fb_file)
             config->_int.fb_file.close();
         if (sd)
@@ -1367,6 +1381,9 @@ public:
 
     bool setClock(float gmtOffset)
     {
+        if (!config)
+            return false;
+
         if (time(nullptr) > default_ts && gmtOffset == config->_int.fb_gmt_offset)
             return true;
 
@@ -1513,6 +1530,9 @@ public:
 #if defined(CARD_TYPE_SD)
     bool sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
     {
+        if (!config)
+            return false;
+
         if (config)
         {
             config->_int.sd_config.sck = sck;
@@ -1541,6 +1561,9 @@ public:
 #if defined(CARD_TYPE_SD_MMC)
     bool sdBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
     {
+        if (!config)
+            return false;
+
         if (config)
         {
             config->_int.sd_config.sd_mmc_mountpoint = mountpoint;
@@ -1554,6 +1577,8 @@ public:
 
     bool flashTest()
     {
+        if (!config)
+            return false;
 #if defined(ESP32)
         if (FORMAT_FLASH == 1)
             config->_int.fb_flash_rdy = FLASH_FS.begin(true);
@@ -1567,6 +1592,9 @@ public:
 
     bool sdTest(fs::File file)
     {
+        if (!config)
+            return false;
+
         std::string filepath = "/sdtest01.txt";
 #if defined(CARD_TYPE_SD)
         if (!sdBegin(config->_int.sd_config.ss, config->_int.sd_config.sck, config->_int.sd_config.miso, config->_int.sd_config.mosi))
@@ -1616,18 +1644,23 @@ public:
 #if defined(ESP8266)
     void set_scheduled_callback(callback_function_t callback)
     {
-        _callback_function = std::move([callback]() { schedule_function(callback); });
+        _callback_function = std::move([callback]()
+                                       { schedule_function(callback); });
         _callback_function();
     }
 #endif
 
     void setFloatDigit(uint8_t digit)
     {
+        if (!config)
+            return;
         config->_int.fb_float_digits = digit;
     }
 
     void setDoubleDigit(uint8_t digit)
     {
+        if (!config)
+            return;
         config->_int.fb_double_digits = digit;
     }
 
@@ -1660,6 +1693,9 @@ public:
 
     bool waitIdle(int &httpCode)
     {
+        if (!config)
+            return true;
+
 #if defined(ESP32)
         if (config->_int.fb_multiple_requests)
             return true;
@@ -1750,12 +1786,15 @@ public:
         if (!status)
         {
 
-            if (config->_int.fb_reconnect_wifi)
+            if (config)
             {
-                if (millis() - config->_int.fb_last_reconnect_millis > config->_int.fb_reconnect_tmo)
+                if (config->_int.fb_reconnect_wifi)
                 {
-                    WiFi.reconnect();
-                    config->_int.fb_last_reconnect_millis = millis();
+                    if (millis() - config->_int.fb_last_reconnect_millis > config->_int.fb_reconnect_tmo)
+                    {
+                        WiFi.reconnect();
+                        config->_int.fb_last_reconnect_millis = millis();
+                    }
                 }
             }
 
@@ -1769,6 +1808,51 @@ public:
     {
         struct timeval tm = {ts, 0}; // sec, us
         return settimeofday((const timeval *)&tm, 0);
+    }
+
+    void shrinkS(std::string &s)
+    {
+        //#if defined(ESP32)
+        // s.shrink_to_fit();
+        //#elif defined(ESP8266)
+        std::string t = s;
+        clearS(s);
+        s = t;
+        clearS(t);
+        //#endif
+    }
+
+    void clearS(std::string &s)
+    {
+        s.clear();
+        std::string().swap(s);
+    }
+
+    void storeS(std::string &s, const char *v, bool append)
+    {
+        if (!append)
+            clearS(s);
+
+#if defined(ESP32)
+        s += v;
+        s.shrink_to_fit();
+#else
+        if (!append)
+            s = v;
+        else
+        {
+            std::string t = s;
+            t += v;
+            clearS(s);
+            s = t;
+            clearS(t);
+        }
+#endif
+    }
+
+    uint16_t calCRC(const char *buf)
+    {
+        return CRC16.ccitt((uint8_t *)buf, strlen(buf));
     }
 
 private:

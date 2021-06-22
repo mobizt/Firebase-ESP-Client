@@ -30,6 +30,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "FirebaseFS.h"
+
+#ifdef ENABLE_RTDB
+
 #ifndef FIREBASE_QUEUE_MANAGER_CPP
 #define FIREBASE_QUEUE_MANAGER_CPP
 #include "QueueManager.h"
@@ -40,35 +44,43 @@ QueueManager::QueueManager()
 QueueManager::~QueueManager()
 {
     clear();
+    if (_queueCollection)
+        delete _queueCollection;
 }
 
 void QueueManager::clear()
 {
-    for (uint8_t i = 0; i < _queueCollection.size(); i++)
+    if (_queueCollection)
     {
-        QueueItem item = _queueCollection[i];
+        for (uint8_t i = 0; i < _queueCollection->size(); i++)
+        {
+            QueueItem item = _queueCollection->at(i);
 
-        std::string().swap(item.path);
-        std::string().swap(item.filename);
-        std::string().swap(item.payload);
+            std::string().swap(item.path);
+            std::string().swap(item.filename);
+            std::string().swap(item.payload);
 
-        item.stringPtr = nullptr;
-        item.intPtr = nullptr;
-        item.floatPtr = nullptr;
-        item.doublePtr = nullptr;
-        item.boolPtr = nullptr;
-        item.jsonPtr = nullptr;
-        item.arrPtr = nullptr;
-        item.blobPtr = nullptr;
-        item.queryFilter.clear();
+            item.stringPtr = nullptr;
+            item.intPtr = nullptr;
+            item.floatPtr = nullptr;
+            item.doublePtr = nullptr;
+            item.boolPtr = nullptr;
+            item.jsonPtr = nullptr;
+            item.arrPtr = nullptr;
+            item.blobPtr = nullptr;
+            item.queryFilter.clear();
+        }
     }
 }
 
 bool QueueManager::add(QueueItem q)
 {
-    if (_queueCollection.size() < _maxQueue)
+    if (!_queueCollection)
+        _queueCollection = new std::vector<QueueItem>();
+
+    if (_queueCollection->size() < _maxQueue)
     {
-        _queueCollection.push_back(q);
+        _queueCollection->push_back(q);
         return true;
     }
     return false;
@@ -76,7 +88,17 @@ bool QueueManager::add(QueueItem q)
 
 void QueueManager::remove(uint8_t index)
 {
-    _queueCollection.erase(_queueCollection.begin() + index);
+    if (_queueCollection)
+        _queueCollection->erase(_queueCollection->begin() + index);
+}
+
+size_t QueueManager::size()
+{
+    if (_queueCollection)
+        return _queueCollection->size();
+    return 0;
 }
 
 #endif
+
+#endif //ENABLE

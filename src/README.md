@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.2.6
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.3.0
 
 
 The default filessystem used in the library is flash and SD.
@@ -1513,8 +1513,6 @@ return **`Boolean`** value, indicates the success of the operation.
 
 Call [FirebaseData object].dataType to get the type of data that successfully stored in the database. 
 
-Call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr to get the JSON data that stored on the defined node.
-
 ```cpp
 bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
@@ -1565,14 +1563,10 @@ return **`Boolean`** value, indicates the success of the operation.
 
 Call [FirebaseData object].dataType to get the type of data that successfully stored in the database.
 
-Call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr to get the JSON data that stored on the defined node.
-
 If ETag at the defined node does not match the provided ETag parameter,
 the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
 
 If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
-
-Also call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr to get the JSON data.
 
 ```cpp
 bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
@@ -1947,9 +1941,6 @@ param **`path`** The path to the node in which child (s) nodes will be updated.
 
 param **`json`** The pointer to FirebaseJson object used for the update.
 
-rCall [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr 
-to get the JSON data that already updated on the defined node.
-
 ```cpp
 bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
@@ -2282,9 +2273,6 @@ return **`Boolean`** value, indicates the success of the operation.
 
 Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database.
 
-Call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr 
-to get the JSON data at the defined node.
-
 If the type of payload returned from server is not json,
 the function [FirebaseData object].jsonObject will contain empty object.
 
@@ -2358,9 +2346,6 @@ Use any child key to filter by that key.
 
 
 Call [FirebaseData object].dataType to determine what type of data successfully stores in the database.
-
-Call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr 
-to get the JSON data at the defined node.
 
 If the type of payload returned from server is not JSON,
 the function [FirebaseData object].jsonObject will contain empty object.
@@ -4807,30 +4792,6 @@ FirebaseJsonArray *jsonArrayPtr();
 
 
 
-#### the Firebase JSON Data object that keeps the get(parse) result.
-
-return **`FirebaseJsonData object `**.
-
-```cpp
-FirebaseJsonData &jsonData();
-```
-
-
-
-
-
-
-#### the Firebase JSON Data object pointer that keeps the get(parse) result.
-
-return **`FirebaseJsonData object `**pointer.
-
-```cpp
-FirebaseJsonData *jsonData();
-```
-
-
-
-
 
 #### Return the blob data (uint8_t) array of server returned payload
 
@@ -5639,7 +5600,6 @@ param **`index`** Index of data in FirebaseJsonArray object.
 return **`boolean`** status of the operation.
 
 ```cpp
-bool get(FirebaseJsonData &jsonObj, int index);
 bool get(FirebaseJsonData *jsonData, int index);
 ```
 

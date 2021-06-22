@@ -72,7 +72,7 @@ void setup()
 void loop()
 {
 
-    if (millis() - lastTime > 60 * 1000)
+    if (millis() - lastTime > 60 * 1000 || lastTime == 0)
     {
         lastTime = millis();
 

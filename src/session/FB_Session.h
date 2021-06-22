@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.0.11
+ * Google's Firebase Data class, FB_Session.h version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 10, 2021
+ * Created June 22, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -29,6 +29,8 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "FirebaseFS.h"
 
 #ifndef FIREBASE_SESSION_H
 #define FIREBASE_SESSION_H
@@ -168,10 +170,6 @@ public:
   String getSendResult();
 
 private:
-  bool init();
-
-  void begin(UtilsClass *u);
-
   bool waitResponse(FirebaseData &fbdo);
 
   bool handleResponse(FirebaseData *fbdo);
@@ -184,49 +182,69 @@ private:
 
   void fcm_prepareHeader(std::string &header, size_t payloadSize);
 
-  void fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type messageType);
+  void fcm_preparePayload(fb_esp_fcm_msg_type messageType);
 
   void clear();
 
-  std::string _topic = "";
-  std::string _server_key = "";
-  std::string _sendResult = "";
-  FirebaseJson _fcmPayload;
+  std::string result;
+  std::string raw;
+  std::string idTokens;
   int _ttl = -1;
   uint16_t _index = 0;
   uint16_t _port = FIREBASE_PORT;
-  std::vector<std::string> _deviceToken;
-  UtilsClass *_ut = nullptr;
-  FirebaseAuth _auth_;
-  FirebaseConfig _cfg_;
+  UtilsClass *ut = nullptr;
 };
 
 #endif
 
 class FirebaseData
 {
+
+#ifdef ENABLE_RTDB
   friend class FB_RTDB;
+#endif
   friend class UtilsClass;
+
 #if defined(FIREBASE_ESP_CLIENT)
+
+#ifdef ENABLE_FCM
   friend class FB_CM;
-  friend class GG_CloudStorage;
+#endif
+#ifdef ENABLE_FB_STORAGE
   friend class FB_Storage;
+#endif
+#ifdef ENABLE_FIRESTORE
   friend class FB_Firestore;
+#endif
+#ifdef ENABLE_FB_FUNCTIONS
   friend class FB_Functions;
+#endif
+#ifdef ENABLE_GC_STORAGE
+  friend class GG_CloudStorage;
+#endif
+
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #if defined(ESP32)
   friend class FirebaseESP32;
 #elif defined(ESP8266)
   friend class FirebaseESP8266;
 #endif
+#ifdef ENABLE_FCM
   friend class FCMObject;
+#endif
+#endif
+
+#if defined(FIREBASE_ESP_CLIENT)
+  friend class Firebase_ESP_Client;
 #endif
 
 public:
+#ifdef ENABLE_RTDB
   typedef void (*StreamEventCallback)(FIREBASE_STREAM_CLASS);
   typedef void (*MultiPathStreamEventCallback)(FIREBASE_MP_STREAM_CLASS);
   typedef void (*StreamTimeoutCallback)(bool);
   typedef void (*QueueInfoCallback)(QueueInfo);
+#endif
 
   FirebaseData();
   ~FirebaseData();
@@ -253,13 +271,17 @@ public:
    * @param pause The boolean to set/unset pause operation.
    * @return Boolean type status indicates the success of operation.
   */
+#ifdef ENABLE_RTDB
   bool pauseFirebase(bool pause);
+#endif
 
   /** Check the pause status of Firebase Data object.
    * 
    * @return Boolean type value of pause status.
   */
+#ifdef ENABLE_RTDB
   bool isPause();
+#endif
 
   /** Get a WiFi client instance.
    * 
@@ -277,7 +299,9 @@ public:
    * 
    * @return The one of these data type e.g. integer, float, double, boolean, string, JSON and blob.
   */
+#ifdef ENABLE_RTDB
   String dataType();
+#endif
 
   /** Get the event type of stream.
    * 
@@ -291,19 +315,25 @@ public:
    * 
    * The event type "auth_revoked" indicated the provided Firebase Authentication Data (Database secret) is no longer valid.
   */
+#ifdef ENABLE_RTDB
   String eventType();
+#endif
 
   /** Get the unique identifier (ETag) of current data.
    * 
    * @return String of unique identifier.
   */
+#ifdef ENABLE_RTDB
   String ETag();
+#endif
 
   /** Get the current stream path.
    * 
    * @return The database streaming path.
   */
+#ifdef ENABLE_RTDB
   String streamPath();
+#endif
 
   /** Get the current data path.
    * 
@@ -312,8 +342,9 @@ public:
    * @note The database path returned from this function in case of stream, also changed upon the child or parent's stream 
    * value changes.
   */
+#ifdef ENABLE_RTDB
   String dataPath();
-
+#endif
 #if defined(FIREBASE_ESP_CLIENT)
 
   /** Get the metadata of a file in the Firebase storage data bucket.
@@ -330,7 +361,9 @@ public:
    * crc32c - The CRC32 of file
    * downloadTokens - The download token
   */
+#if defined(ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE)
   FileMetaInfo metaData();
+#endif
 
   /** Get the files info in the Firebase storage data bucket.
    * 
@@ -340,13 +373,17 @@ public:
    * name - The file name
    * bucket - The storage bucket id
   */
+#ifdef ENABLE_FB_STORAGE
   FileList *fileList();
+#endif
 
   /** Get the download URL from the currently uploaded file in the Firebase storage data bucket.
    * 
    * @return The URL to download file.
   */
+#if defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE)
   String downloadURL();
+#endif
 
 #endif
 
@@ -360,97 +397,114 @@ public:
    * 
    * @return integer value.
   */
+#ifdef ENABLE_RTDB
   int intData();
+#endif
 
   /** Return the float data of server returned payload.
    * 
    * @return Float value.
   */
+#ifdef ENABLE_RTDB
   float floatData();
+#endif
 
   /** Return the double data of server returned payload.
    * 
    * @return double value.
   */
+#ifdef ENABLE_RTDB
   double doubleData();
+#endif
 
   /** Return the Boolean data of server returned payload.
    * 
    * @return Boolean value.
   */
+#ifdef ENABLE_RTDB
   bool boolData();
+#endif
 
   /** Return the String data of server returned payload.
    * 
    * @return String (String object).
   */
+#ifdef ENABLE_RTDB
   String stringData();
+#endif
 
   /** Return the JSON String data of server returned payload.
    * 
    * @return String (String object).
   */
+#ifdef ENABLE_RTDB
   String jsonString();
+#endif
 
   /** Return the Firebase JSON object of server returned payload.
    * 
    * @return FirebaseJson object.
   */
+#ifdef ENABLE_RTDB
   FirebaseJson &jsonObject();
+#endif
 
   /** Return the Firebase JSON object pointer of server returned payload.
    * 
    * @return FirebaseJson object pointer.
   */
+#ifdef ENABLE_RTDB
   FirebaseJson *jsonObjectPtr();
+#endif
 
   /** Return the Firebase JSON Array object of server returned payload.
    * 
    * @return FirebaseJsonArray object.
   */
+#ifdef ENABLE_RTDB
   FirebaseJsonArray &jsonArray();
+#endif
 
   /** Return the Firebase JSON Array object pointer of server returned payload.
    * 
    * @return FirebaseJsonArray object pointer.
   */
+#ifdef ENABLE_RTDB
   FirebaseJsonArray *jsonArrayPtr();
+#endif
 
-  /** Return the Firebase JSON Data object that keeps the get(parse) result.
-   * 
-   * @return FirebaseJsonData object.
-  */
-  FirebaseJsonData &jsonData();
-
-  /** Return the Firebase JSON Data object pointer that keeps the get(parse) result.
-   * 
-   * @return FirebaseJsonData object pointer.
-  */
-  FirebaseJsonData *jsonDataPtr();
 
   /** Return the blob data (uint8_t) array of server returned payload.
    * 
    * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
   */
+#ifdef ENABLE_RTDB
   std::vector<uint8_t> blobData();
+#endif
 
   /** Return the file stream of server returned payload.
    * 
    * @return the file stream.
   */
+#ifdef ENABLE_RTDB
   fs::File fileStream();
+#endif
 
   /** Return the new appended node's name or key of server returned payload when calling pushXXX function.
    * 
    * @return String (String object).
   */
+#ifdef ENABLE_RTDB
   String pushName();
+#endif
 
   /** Get the stream connection status.
    * 
    * @return Boolean type status indicates whether the Firebase Data object is working with a stream or not.
   */
+#ifdef ENABLE_RTDB
   bool isStream();
+#endif
 
   /** Get the server connection status.
    * 
@@ -463,27 +517,35 @@ public:
    * 
    * @return Boolean type status indicates whether the stream was a timeout or not.
   */
+#ifdef ENABLE_RTDB
   bool streamTimeout();
+#endif
 
   /** Get the availability of data or payload returned from the server.
    * 
    * @return Boolean type status indicates whether the server return the new payload or not.
   */
+#ifdef ENABLE_RTDB
   bool dataAvailable();
+#endif
 
   /** Get the availability of stream event-data payload returned from the server.
    * 
    * @return Boolean type status indicates whether the server returns the stream event-data 
    * payload or not.
   */
+#ifdef ENABLE_RTDB
   bool streamAvailable();
+#endif
 
   /** Get the matching between data type that intends to get from/store to database and the server's return payload data type.
    * 
    * @return Boolean type status indicates whether the type of data being get from/store to database 
    * and the server's returned payload is matched or not.
   */
+#ifdef ENABLE_RTDB
   bool mismatchDataType();
+#endif
 
   /** Get the data type of payload returned from the server (RTDB only).
    * 
@@ -499,7 +561,9 @@ public:
    * fb_esp_rtdb_data_type_blob or 9,
    * fb_esp_rtdb_data_type_file or 10
   */
+#ifdef ENABLE_RTDB
   uint8_t dataTypeEnum();
+#endif
 
   /** Get the HTTP status code return from the server.
    * 
@@ -519,13 +583,17 @@ public:
    * 
    * @return String (String object) of the file name that stores on SD card/Flash memory after backup operation.
   */
+#ifdef ENABLE_RTDB
   String getBackupFilename();
+#endif
 
   /** Get the size of the backup file.
    * 
    * @return Size of backup file in byte after backup operation.
   */
+#ifdef ENABLE_RTDB
   size_t getBackupFileSize();
+#endif
 
   /** Clear or empty data in Firebase Data object.
   */
@@ -559,22 +627,33 @@ public:
   FB_HTTPClient httpClient;
 #endif
 
+#ifdef ENABLE_RTDB
   QueryFilter queryFilter;
+#endif
+
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#ifdef ENABLE_FCM
   FCMObject fcm;
+#endif
 #endif
 
 private:
+#ifdef ENABLE_RTDB
   StreamEventCallback _dataAvailableCallback = NULL;
   MultiPathStreamEventCallback _multiPathDataCallback = NULL;
   StreamTimeoutCallback _timeoutCallback = NULL;
   QueueInfoCallback _queueInfoCallback = NULL;
+#endif
 #if defined(FIREBASE_ESP_CLIENT)
+#ifdef ENABLE_FB_FUNCTIONS
   FunctionsOperationCallback _functionsOperationCallback = NULL;
+#endif
 #endif
 
   UtilsClass *ut = nullptr;
+#ifdef ENABLE_RTDB
   QueueManager _qMan;
+#endif
   struct fb_esp_session_info_t _ss;
 
   void closeSession();
@@ -587,16 +666,15 @@ private:
   void setSecure();
   bool validRequest(const std::string &path);
   void addQueue(struct fb_esp_rtdb_queue_info_t *qinfo);
-
+#ifdef ENABLE_RTDB
   void clearQueueItem(QueueItem *item);
-
   void setQuery(QueryFilter *query);
-
   void clearNodeList();
-
   void addNodeList(const String *childPath, size_t size);
+#endif
 
   bool init();
 };
 
 #endif
+

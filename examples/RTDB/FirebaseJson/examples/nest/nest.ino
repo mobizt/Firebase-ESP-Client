@@ -75,6 +75,10 @@ void setup()
 
     json1.toString(jsonStr, true);
     Serial.println(jsonStr);
+
+    Serial.println("-------------------------");
+
+    json1.
 }
 
 void loop()

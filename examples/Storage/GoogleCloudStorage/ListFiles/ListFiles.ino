@@ -71,6 +71,11 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+#if defined(ESP8266)
+    //required
+    fbdo.setBSSLBufferSize(2048, 2048);
+#endif
+
     Firebase.begin(&config, &auth);
 
     Firebase.reconnectWiFi(true);
