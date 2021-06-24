@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.4.0
+ * FirebaseJson, version 2.4.1
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * June 22, 2021
+ * June 24, 2021
  * 
  * Features
  * - Non-recursive parsing.
