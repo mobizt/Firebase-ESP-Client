@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.0.8
+ * Google's Cloud Storage class, GCS.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created June 24, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1944,23 +1944,27 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && response.contentLen > 0 && req->requestType == fb_esp_gcs_request_type_download)
                             {
                                 size_t available = fbdo->httpClient.stream()->available();
+                                dataTime = millis();
                                 uint8_t *buf = new uint8_t[defaultChunkSize + 1];
-                                while (available > 0)
+                                while (fbdo->reconnect(dataTime) && fbdo->httpClient.stream() && payloadRead < response.contentLen)
                                 {
-                                    if (available > defaultChunkSize)
-                                        available = defaultChunkSize;
+                                    if (available)
+                                    {
+                                        dataTime = millis();
+                                        if (available > defaultChunkSize)
+                                            available = defaultChunkSize;
 
-                                    size_t read = fbdo->httpClient.stream()->read(buf, available);
-                                    if (read == available)
-                                        Signer.getCfg()->_int.fb_file.write(buf, read);
+                                        size_t read = fbdo->httpClient.stream()->read(buf, available);
+                                        if (read == available)
+                                            Signer.getCfg()->_int.fb_file.write(buf, read);
 
-                                    payloadRead += available;
-                                    if (response.contentLen == payloadRead)
-                                        available = error.code = 0;
-                                    else
+                                        payloadRead += available;
+                                    }
+                                    if (fbdo->httpClient.stream())
                                         available = fbdo->httpClient.stream()->available();
                                 }
-
+                                if (payloadRead == response.contentLen)
+                                    error.code = 0;
                                 delete[] buf;
                                 break;
                             }
@@ -2087,7 +2091,6 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                 if (!fbdo->_ss.dataPtr)
                     fbdo->_ss.dataPtr = new FirebaseJsonData();
-
 
                 fbdo->_ss.jsonPtr->setJsonData(payload.c_str());
                 ut->clearS(payload);
