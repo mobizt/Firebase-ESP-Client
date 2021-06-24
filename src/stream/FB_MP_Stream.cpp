@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.5
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created June 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -61,7 +61,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
     if (sif->m_type == fb_esp_data_type::d_json)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_1);
-        bool r = strcmp(sif->m_path, tmp) == 0;
+        bool r = strcmp(sif->m_path.c_str(), tmp) == 0;
         ut->delS(tmp);
         if (r)
         {
@@ -72,8 +72,8 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
                 type = data.type;
                 char *buf = ut->strP(fb_esp_pgm_str_186);
                 if (strcmp(type.c_str(), buf) == 0)
-                    type = sif->m_type_str;
-                eventType = sif->m_event_type_str;
+                    type = sif->m_type_str.c_str();
+                eventType = sif->m_event_type_str.c_str();
                 value = data.stringValue;
                 dataPath = path;
                 ut->delS(buf);
@@ -91,9 +91,9 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             if (strcmp(p1.c_str(), p2.c_str()) == 0)
             {
                 sif->m_json->toString(value, true);
-                type = sif->m_type_str;
-                eventType = sif->m_event_type_str;
-                dataPath = sif->m_path;
+                type = sif->m_type_str.c_str();
+                eventType = sif->m_event_type_str.c_str();
+                dataPath = sif->m_path.c_str();
                 res = true;
             }
             ut->clearS(p1);
@@ -110,10 +110,10 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             p2 = "/" + p2;
         if (strcmp(p1.c_str(), p2.c_str()) == 0)
         {
-            value = sif->m_data;
-            dataPath = sif->m_path;
-            type = sif->m_type_str;
-            eventType = sif->m_event_type_str;
+            value = sif->m_data.c_str();
+            dataPath = sif->m_path.c_str();
+            type = sif->m_type_str.c_str();
+            eventType = sif->m_event_type_str.c_str();
             res = true;
         }
         ut->clearS(p1);

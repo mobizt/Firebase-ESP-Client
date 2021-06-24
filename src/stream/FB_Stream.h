@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.0.4
+ * Google's Firebase Stream class, FB_Stream.h version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created June 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)

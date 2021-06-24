@@ -1,6 +1,6 @@
 
 /**
- * Created June 22, 2021
+ * Created June 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -597,20 +597,20 @@ struct fb_esp_token_signer_resources_t
 #ifdef ENABLE_RTDB
 struct fb_esp_stream_info_t
 {
-    const char *stream_path = "";
-    const char *path = "";
-    const char *data = "";
+    std::string stream_path;
+    std::string path;
+    std::string data;
     std::vector<uint8_t> *blob = nullptr;
-    const char *data_type_str = "";
-    const char *event_type_str = "";
+    std::string data_type_str;
+    std::string event_type_str;
     uint8_t data_type = 0;
     int idx = -1;
 
     fb_esp_data_type m_type = d_any;
-    const char *m_data = "";
-    const char *m_path = "";
-    const char *m_type_str = "";
-    const char *m_event_type_str = "";
+    std::string m_data;
+    std::string m_path;
+    std::string m_type_str;
+    std::string m_event_type_str;
     FirebaseJson *m_json = nullptr;
 };
 #endif

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.0.4
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created June 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -55,34 +55,34 @@ void FIREBASE_STREAM_CLASS::begin(UtilsClass *u, struct fb_esp_stream_info_t *s)
 
 String FIREBASE_STREAM_CLASS::dataPath()
 {
-    return sif->path;
+    return sif->path.c_str();
 }
 
 String FIREBASE_STREAM_CLASS::streamPath()
 {
-    return sif->stream_path;
+    return sif->stream_path.c_str();
 }
 
 int FIREBASE_STREAM_CLASS::intData()
 {
-    if (strlen(sif->data) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
-        return atoi(sif->data);
+    if (strlen(sif->data.c_str()) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
+        return atoi(sif->data.c_str());
     else
         return 0;
 }
 
 float FIREBASE_STREAM_CLASS::floatData()
 {
-    if (strlen(sif->data) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
-        return atof(sif->data);
+    if (strlen(sif->data.c_str()) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
+        return atof(sif->data.c_str());
     else
         return 0;
 }
 
 double FIREBASE_STREAM_CLASS::doubleData()
 {
-    if (strlen(sif->data) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
-        return atof(sif->data);
+    if (strlen(sif->data.c_str()) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
+        return atof(sif->data.c_str());
     else
         return 0.0;
 }
@@ -91,8 +91,8 @@ bool FIREBASE_STREAM_CLASS::boolData()
 {
     bool res = false;
     char *str = ut->boolStr(true);
-    if (strlen(sif->data) > 0 && sif->data_type == fb_esp_data_type::d_boolean)
-        res = strcmp(sif->data, str) == 0;
+    if (strlen(sif->data.c_str()) > 0 && sif->data_type == fb_esp_data_type::d_boolean)
+        res = strcmp(sif->data.c_str(), str) == 0;
     ut->delS(str);
     return res;
 }
@@ -111,7 +111,7 @@ String FIREBASE_STREAM_CLASS::stringData()
 String FIREBASE_STREAM_CLASS::jsonString()
 {
     if (sif->data_type == fb_esp_data_type::d_json)
-        return sif->data;
+        return sif->data.c_str();
     else
         return std::string().c_str();
 }
@@ -159,12 +159,12 @@ File FIREBASE_STREAM_CLASS::fileStream()
 
 String FIREBASE_STREAM_CLASS::payload()
 {
-    return sif->data;
+    return sif->data.c_str();
 }
 
 String FIREBASE_STREAM_CLASS::dataType()
 {
-    return sif->data_type_str;
+    return sif->data_type_str.c_str();
 }
 
 uint8_t FIREBASE_STREAM_CLASS::dataTypeEnum()
@@ -174,7 +174,7 @@ uint8_t FIREBASE_STREAM_CLASS::dataTypeEnum()
 
 String FIREBASE_STREAM_CLASS::eventType()
 {
-    return sif->event_type_str;
+    return sif->event_type_str.c_str();
 }
 
 void FIREBASE_STREAM_CLASS::empty()
