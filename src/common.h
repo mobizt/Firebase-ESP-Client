@@ -1,6 +1,6 @@
 
 /**
- * Created June 25, 2021
+ * Created June 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -718,7 +718,6 @@ struct fb_esp_rtdb_info_t
 {
     int queue_Idx = -1;
     int Idx = -1;
-    uint8_t data_type = 0;
     bool data_tmo = false;
     bool no_content_req = false;
     bool stream_data_changed = false;

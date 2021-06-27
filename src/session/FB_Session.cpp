@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.1.0
+ * Google's Firebase Data class, FB_Session.cpp version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created June 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -300,6 +300,14 @@ FirebaseJson *FirebaseData::jsonObjectPtr()
     if (!_ss.jsonPtr)
         _ss.jsonPtr = new FirebaseJson();
 
+    if (_ss.rtdb.resp_data_type == d_json)
+    {
+        _ss.jsonPtr->clear();
+        if (_ss.arrPtr)
+            _ss.arrPtr->clear();
+        _ss.jsonPtr->setJsonData(_ss.rtdb.raw.c_str());
+    }
+
     return _ss.jsonPtr;
 }
 
@@ -312,6 +320,14 @@ FirebaseJsonArray *FirebaseData::jsonArrayPtr()
 {
     if (!_ss.arrPtr)
         _ss.arrPtr = new FirebaseJsonArray();
+
+    if (_ss.rtdb.resp_data_type == d_array)
+    {
+        if (_ss.jsonPtr)
+            _ss.jsonPtr->clear();
+        _ss.arrPtr->clear();
+        _ss.arrPtr->setJsonArrayData(_ss.rtdb.raw.c_str());
+    }
 
     return _ss.arrPtr;
 }
@@ -377,7 +393,7 @@ bool FirebaseData::dataAvailable()
 
 uint8_t FirebaseData::dataTypeEnum()
 {
-    return _ss.rtdb.data_type;
+    return _ss.rtdb.resp_data_type;
 }
 
 bool FirebaseData::streamAvailable()
@@ -976,6 +992,7 @@ void FCMObject::clearNotifyMessage()
 
 void FCMObject::setDataMessage(const String &jsonString)
 {
+
     if (!ut)
         ut = new UtilsClass(nullptr);
 

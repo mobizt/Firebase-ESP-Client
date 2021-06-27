@@ -59,6 +59,7 @@ void printResult(FirebaseData &data)
             Serial.println(value);
         }
         json.iteratorEnd();
+        json.clear();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
     {
@@ -94,6 +95,7 @@ void printResult(FirebaseData &data)
                      jsonData.typeNum == FirebaseJson::JSON_ARRAY)
                 Serial.println(jsonData.stringValue);
         }
+        arr.clear();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
     {
@@ -179,6 +181,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
             Serial.println(value);
         }
         json->iteratorEnd();
+        json->clear();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
     {
@@ -214,6 +217,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
                      jsonData.typeNum == FirebaseJson::JSON_ARRAY)
                 Serial.println(jsonData.stringValue);
         }
+        arr->clear();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
     {

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.1.0
+ * Google's Firebase Data class, FB_Session.h version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created June 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -473,7 +473,6 @@ public:
   FirebaseJsonArray *jsonArrayPtr();
 #endif
 
-
   /** Return the blob data (uint8_t) array of server returned payload.
    * 
    * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
@@ -677,4 +676,3 @@ private:
 };
 
 #endif
-
