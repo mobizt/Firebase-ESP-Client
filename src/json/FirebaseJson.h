@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.4.1
+ * FirebaseJson, version 2.4.2
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * June 24, 2021
+ * July 1, 2021
  * 
  * Features
  * - Non-recursive parsing.
@@ -815,6 +815,8 @@ public:
 
   FirebaseJson();
   FirebaseJson(std::string &data);
+  FirebaseJson &operator=(FirebaseJson other);
+  FirebaseJson(FirebaseJson &other);
   ~FirebaseJson();
 
   /**
@@ -1171,6 +1173,7 @@ private:
   int int_fb_json_parse_primitive(fb_json_parser *parser, const char *js, size_t len, fb_json_token_t *tokens, size_t num_tokens);
   void int_fb_json_fill_token(fb_json_token_t *token, fb_json_generic_type_t type, int start, int end);
   fb_json_token_t *int_fb_json_alloc_token(fb_json_parser *parser, fb_json_token_t *tokens, size_t num_tokens);
+  void int_copy(FirebaseJson &other);
 };
 
 class FirebaseJsonArray
@@ -1182,6 +1185,8 @@ class FirebaseJsonArray
 public:
   FirebaseJsonArray();
   FirebaseJsonArray(fb_json_last_error_t *lastErr);
+  FirebaseJsonArray &operator=(FirebaseJsonArray other);
+  FirebaseJsonArray(FirebaseJsonArray &other);
   ~FirebaseJsonArray();
 
   /**
@@ -1535,6 +1540,7 @@ private:
   bool int_get(FirebaseJsonData &jsonData, const char *path);
   bool int_remove(const char *path);
   const char *int_raw(FirebaseJson::fb_json_serialize_mode mode);
+  void int_copy(FirebaseJsonArray &other);
 };
 
 #endif

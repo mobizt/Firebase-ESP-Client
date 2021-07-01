@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.4.1
+ * FirebaseJson, version 2.4.2
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * June 24, 2021
+ * July 1, 2021
  * 
  * Features
  * - Non-recursive parsing.
@@ -61,6 +61,36 @@ FirebaseJson::FirebaseJson()
 FirebaseJson::FirebaseJson(std::string &data)
 {
   int_setJsonData(data);
+}
+
+FirebaseJson &FirebaseJson::operator=(FirebaseJson other)
+{
+  int_copy(other);
+  return *this;
+}
+
+FirebaseJson::FirebaseJson(FirebaseJson &other)
+{
+  int_copy(other);
+}
+
+void FirebaseJson::int_copy(FirebaseJson &other)
+{
+  clear();
+  last_error = other.last_error;
+  hp = new FirebaseJsonHelper(&last_error);
+  *hp = *other.hp;
+  top_level_token_type = other.top_level_token_type;
+  parser_info = other.parser_info;
+  raw_buf = other.raw_buf;
+  temp_buf = other.temp_buf;
+  last_token = other.last_token;
+  path_list = other.path_list;
+  token_item_info_list = other.token_item_info_list;
+  fb_json_token_descriptor_list = other.fb_json_token_descriptor_list;
+  result = other.result;
+  parser = other.parser;
+  tokens = other.tokens;
 }
 
 FirebaseJson::~FirebaseJson()
@@ -401,7 +431,7 @@ size_t FirebaseJson::iteratorBegin(const char *data)
   parser_info.create_item_list = true;
   int_clearTokenList();
   for (uint16_t i = 0; i < parser_info.tokens_count; i++)
-    int_parseToken(i, (char *)raw_buf.c_str(), level, "", -2, fb_json_serialize_mode_none);
+    int_parseToken(i, raw_buf.c_str(), level, "", -2, fb_json_serialize_mode_none);
   int_clearTokenDescriptorList();
   return token_item_info_list.size();
 }
@@ -1632,7 +1662,7 @@ void FirebaseJson::int_get(const char *key, int level, int index)
         parser_info.next_token = 0;
       for (uint16_t i = parser_info.next_token; i < parser_info.tokens_count; i++)
       {
-        int_parseToken(i, raw_buf.c_str(), parser_info.next_level, (char *)key, index, fb_json_serialize_mode_none);
+        int_parseToken(i, raw_buf.c_str(), parser_info.next_level, key, index, fb_json_serialize_mode_none);
         if (parser_info.is_token_matches)
           break;
       }
@@ -1787,7 +1817,7 @@ void FirebaseJson::int_parse(const char *key, int16_t level, int16_t index, fb_j
 
       int oDepth = parser_info.next_level;
 
-      int_parseToken(i, raw_buf.c_str(), parser_info.next_level, (char *)key, index, serializeMode);
+      int_parseToken(i, raw_buf.c_str(), parser_info.next_level, key, index, serializeMode);
 
       if (index > -1 && oDepth == parser_info.next_level && parser_info.is_token_matches)
       {
@@ -1854,7 +1884,7 @@ void FirebaseJson::int_remove(const char *key, int16_t level, int16_t index, con
     if (parser_info.next_token < 0)
       parser_info.next_token = 0;
     for (uint16_t i = parser_info.next_token; i < parser_info.tokens_count; i++)
-      int_removeToken(i, raw_buf.c_str(), parser_info.next_level, (char *)key, index, fb_json_serialize_mode_plain, (char *)replace, refTokenIndex, isRemove);
+      int_removeToken(i, raw_buf.c_str(), parser_info.next_level, key, index, fb_json_serialize_mode_plain, replace, refTokenIndex, isRemove);
   }
 }
 
@@ -2814,6 +2844,25 @@ FirebaseJsonArray::~FirebaseJsonArray()
 {
   delete hp;
 };
+
+FirebaseJsonArray &FirebaseJsonArray::operator=(FirebaseJsonArray other)
+{
+  int_copy(other);
+  return *this;
+}
+
+FirebaseJsonArray::FirebaseJsonArray(FirebaseJsonArray &other)
+{
+  int_copy(other);
+}
+
+void FirebaseJsonArray::int_copy(FirebaseJsonArray &other)
+{
+  std::swap(last_error, other.last_error);
+  std::swap(hp, other.hp);
+  js = other.js;
+  arr_size = other.arr_size;
+}
 
 FirebaseJsonArray &FirebaseJsonArray::add()
 {
