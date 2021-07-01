@@ -31,7 +31,7 @@ jobs:
         - "examples/CloudFunctions/CreateFunction/CreateFunctionWithCallback/CreateFunctionWithCallback.ino"
         - "examples/CloudFunctions/CreateFunction/CreateFunctionWithEventTrigger/CreateFunctionWithEventTrigger.ino"
         - "examples/CloudFunctions/CreateFunction/CreateFunctionWithReturnStatus/CreateFunctionWithReturnStatus.ino"
-        - "examples/CloudFunctions/CreateFunction/DeployAutoZipFunction/DeployAutoZipFunction.ino"
+        #- "examples/CloudFunctions/CreateFunction/DeployAutoZipFunction/DeployAutoZipFunction.ino"
         - "examples/CloudFunctions/DeleteFunction/DeleteFunction.ino"
         - "examples/CloudFunctions/DownloadFunction/DownloadFunction.ino"
         - "examples/CloudFunctions/IAMPolicy/CreatePolicy/CreatePolicy.ino"
@@ -150,7 +150,7 @@ jobs:
         - "examples/CloudFunctions/CreateFunction/CreateFunctionWithCallback/CreateFunctionWithCallback.ino"
         - "examples/CloudFunctions/CreateFunction/CreateFunctionWithEventTrigger/CreateFunctionWithEventTrigger.ino"
         - "examples/CloudFunctions/CreateFunction/CreateFunctionWithReturnStatus/CreateFunctionWithReturnStatus.ino"
-        - "examples/CloudFunctions/CreateFunction/DeployAutoZipFunction/DeployAutoZipFunction.ino"
+        #- "examples/CloudFunctions/CreateFunction/DeployAutoZipFunction/DeployAutoZipFunction.ino"
         - "examples/CloudFunctions/DeleteFunction/DeleteFunction.ino"
         - "examples/CloudFunctions/DownloadFunction/DownloadFunction.ino"
         - "examples/CloudFunctions/IAMPolicy/CreatePolicy/CreatePolicy.ino"
@@ -246,6 +246,5 @@ jobs:
          --lib=src/addons/RTDBHelper.h \
          --lib=src/addons/TokenHelper.h \
          --lib=examples/CloudFunctions/CreateFunction/DeployAutoZipFunction/AutoZip.h
-         --project-option="board_build.partitions = huge_app.csv"
       env:
         PLATFORMIO_CI_SRC: ${{ matrix.example }}
