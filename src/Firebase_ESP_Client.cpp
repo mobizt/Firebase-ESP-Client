@@ -1,9 +1,9 @@
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.cpp v2.3.5
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.cpp v2.3.6
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created June 27, 2021
+ * Created July 1, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -79,9 +79,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     Signer.setTokenType(token_type_id_token);
 
   struct fb_esp_url_info_t uinfo;
-  cfg->_int.fb_auth_uri =
-      cfg->signer.tokens.token_type == token_type_legacy_token ||
-      cfg->signer.tokens.token_type == token_type_id_token;
+  cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
 
   if (cfg->host.length() > 0)
     cfg->database_url = cfg->host;
@@ -99,8 +97,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
   {
     if (cfg->cert.file_storage == mem_storage_type_sd && !cfg->_int.fb_sd_rdy)
       cfg->_int.fb_sd_rdy = ut->sdTest(cfg->_int.fb_file);
-    else if ((cfg->cert.file_storage == mem_storage_type_flash) &&
-             !cfg->_int.fb_flash_rdy)
+    else if ((cfg->cert.file_storage == mem_storage_type_flash) && !cfg->_int.fb_flash_rdy)
       ut->flashTest();
   }
 

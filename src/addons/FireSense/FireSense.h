@@ -708,7 +708,7 @@ private:
 #endif
 };
 
-FireSenseClass FireSense = FireSenseClass();
+FireSenseClass FireSense;
 #if defined(ESP32)
 TaskHandle_t firesense_run_task_handle = NULL;
 #endif
@@ -2104,7 +2104,8 @@ void FireSenseClass::sendLog()
                 path += t.c_str();
 
                 printUpdate("", 1);
-                if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, path.c_str(), &_json))
+                config->shared_fbdo->clear();
+                if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, path.c_str(), &_json))
                     printError(config->shared_fbdo);
 
                 if (config->close_session)
@@ -2130,7 +2131,8 @@ void FireSenseClass::sendLastSeen()
             _json.add(firesense_token_t::date, getDateTimeString().c_str());
             _json.add("ts", (int)time(nullptr));
             printUpdate("", 2);
-            if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, lastSeenPath().c_str(), &_json))
+            config->shared_fbdo->clear();
+            if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, lastSeenPath().c_str(), &_json))
                 printError(config->shared_fbdo);
 
             if (config->close_session)
@@ -2351,7 +2353,8 @@ void FireSenseClass::setClock(float time_zone, float daylight_offset_in_sec)
         _json.add("ts", (int)time(nullptr));
 
         printUpdate("", 2);
-        if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, lastSeenPath().c_str(), &_json) || !Firebase.RTDB.set(config->shared_fbdo, terminalPath().c_str(), (int)now))
+        config->shared_fbdo->clear();
+        if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, lastSeenPath().c_str(), &_json) || !Firebase.RTDB.set(config->shared_fbdo, terminalPath().c_str(), (int)now))
             printError(config->shared_fbdo);
         _json.clear();
     }
@@ -2406,7 +2409,8 @@ void FireSenseClass::addCondition(struct firesense_condition_t cond, bool addToD
         delay(0);
 
         printUpdate("", 31);
-        if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, path.c_str(), &_json))
+        config->shared_fbdo->clear();
+        if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, path.c_str(), &_json))
             printError(config->shared_fbdo);
 
         if (config->close_session)
@@ -3107,7 +3111,8 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel)
     path = channelConfigPath();
     path += firesense_token_t::slash;
     path += String(channelsList.size() - 1).c_str();
-    if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, path.c_str(), &_json))
+    config->shared_fbdo->clear();
+    if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, path.c_str(), &_json))
     {
         printError(config->shared_fbdo);
 
