@@ -91,8 +91,9 @@ void setup()
   Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
-
+#if defined(ESP8266)
   fbdo.setBSSLBufferSize(512, 2048);
+#endif
 }
 
 void loop()
