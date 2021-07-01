@@ -20,8 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         board: 
-          - "nodemcuv2"
-          - "lolin32"
+          - "d1_mini"
+          - "esp32dev"
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip

@@ -60,8 +60,8 @@ jobs:
         - "examples/Messaging/Send/LegacyAPI/SendTopic/SendTopic.ino"
         - "examples/Messaging/SubscribeTopic/SubscribeTopic.ino"
         - "examples/Messaging/UnsubscribeTopic/UnsubscribeTopic.ino"
-        - "examples/RTDB/BackupRestore/BackupRestore/Flash/Flash.ino"
-        - "examples/RTDB/BackupRestore/BackupRestore/SD/SD.ino"
+        - "examples/RTDB/BackupRestore/Flash/Flash.ino"
+        - "examples/RTDB/BackupRestore/SD/SD.ino"
         - "examples/RTDB/Basic/Basic.ino"
         - "examples/RTDB/BasicCert/BasicCert.ino"
         #- "examples/RTDB/BasicEthernetESP32/BasicEthernetESP32.ino"
@@ -77,11 +77,8 @@ jobs:
         - "examples/RTDB/FastSend/FastSend.ino"
         - "examples/RTDB/File/Flash/Flash.ino"
         - "examples/RTDB/File/SD/SD.ino"
-        - "examples/RTDB/FirebaseJson/examples/basic/basic.ino"
-        - "examples/RTDB/FirebaseJson/examples/nest/nest.ino"
         - "examples/RTDB/FireSense/AnalogRead/AnalogRead.ino"
         - "examples/RTDB/FireSense/AutomaticPlantWatering/AutomaticPlantWatering.ino"
-        - "examples/RTDB/FireSense/Blink/Blink.ino"
         - "examples/RTDB/FireSense/Sensors/Sensors.ino"
         - "examples/RTDB/Priority/Priority.ino"
         - "examples/RTDB/Queue/Queue.ino"
@@ -122,16 +119,13 @@ jobs:
       run: | 
         pio lib -g install \
         https://github.com/mobizt/Firebase-ESP-Client
-        pio lib -g install \
-        https://github.com/blynkkk/blynk-library.git
         
     - name: Run PlatformIO Examples
       run: |
-        pio ci --board=nodemcuv2 \
+        pio ci --board=d1_mini \
          --lib=src/addons/FireSense/FireSense.h \
          --lib=src/addons/RTDBHelper.h \
          --lib=src/addons/TokenHelper.h \
-         --lib=src/json/FirebaseJson.h \
          --lib=examples/CloudFunctions/CreateFunction/DeployAutoZipFunction/AutoZip.h
       env:
         PLATFORMIO_CI_SRC: ${{ matrix.example }}
@@ -185,8 +179,8 @@ jobs:
         - "examples/Messaging/Send/LegacyAPI/SendTopic/SendTopic.ino"
         - "examples/Messaging/SubscribeTopic/SubscribeTopic.ino"
         - "examples/Messaging/UnsubscribeTopic/UnsubscribeTopic.ino"
-        - "examples/RTDB/BackupRestore/BackupRestore/Flash/Flash.ino"
-        - "examples/RTDB/BackupRestore/BackupRestore/SD/SD.ino"
+        - "examples/RTDB/BackupRestore/Flash/Flash.ino"
+        - "examples/RTDB/BackupRestore/SD/SD.ino"
         - "examples/RTDB/Basic/Basic.ino"
         - "examples/RTDB/BasicCert/BasicCert.ino"
         - "examples/RTDB/BasicEthernetESP32/BasicEthernetESP32.ino"
@@ -202,11 +196,8 @@ jobs:
         - "examples/RTDB/FastSend/FastSend.ino"
         - "examples/RTDB/File/Flash/Flash.ino"
         - "examples/RTDB/File/SD/SD.ino"
-        - "examples/RTDB/FirebaseJson/examples/basic/basic.ino"
-        - "examples/RTDB/FirebaseJson/examples/nest/nest.ino"
         - "examples/RTDB/FireSense/AnalogRead/AnalogRead.ino"
         - "examples/RTDB/FireSense/AutomaticPlantWatering/AutomaticPlantWatering.ino"
-        - "examples/RTDB/FireSense/Blink/Blink.ino"
         - "examples/RTDB/FireSense/Sensors/Sensors.ino"
         - "examples/RTDB/Priority/Priority.ino"
         - "examples/RTDB/Queue/Queue.ino"
@@ -247,16 +238,14 @@ jobs:
       run: | 
         pio lib -g install \
         https://github.com/mobizt/Firebase-ESP-Client
-        pio lib -g install \
-        https://github.com/blynkkk/blynk-library.git
 
     - name: Run PlatformIO Examples
       run: |
-        pio ci --board=lolin32 \
+        pio ci --board=esp32dev \
          --lib=src/addons/FireSense/FireSense.h \
          --lib=src/addons/RTDBHelper.h \
          --lib=src/addons/TokenHelper.h \
-         --lib=src/json/FirebaseJson.h \
          --lib=examples/CloudFunctions/CreateFunction/DeployAutoZipFunction/AutoZip.h
+         --project-option="board_build.partitions = huge_app.csv"
       env:
         PLATFORMIO_CI_SRC: ${{ matrix.example }}
