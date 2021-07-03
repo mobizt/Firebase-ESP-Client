@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.0
+ * Google's Cloud Functions class, Functions.cpp version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -858,9 +858,11 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     ut->appendP(header, fb_esp_pgm_str_34);
     ut->appendP(header, fb_esp_pgm_str_21);
 
-    fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+    fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    int ret = fbdo->httpClient.send(header.c_str(), req->payload.c_str());
+    int ret = fbdo->tcpClient.send(header.c_str());
+    if (ret == 0)
+        ret = fbdo->tcpClient.send(req->payload.c_str());
     header.clear();
     req->payload.clear();
     std::string().swap(header);
@@ -880,7 +882,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 if (available > bufLen)
                     available = bufLen;
                 read = Signer.getCfg()->_int.fb_file.read(buf, available);
-                if (fbdo->httpClient.stream()->write(buf, read) != read)
+                if (fbdo->tcpClient.stream()->write(buf, read) != read)
                     break;
                 available = Signer.getCfg()->_int.fb_file.available();
             }
@@ -899,7 +901,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 if (available > bufLen)
                     available = bufLen;
                 memcpy_P(buf, req->pgmArc + pos, available);
-                if (fbdo->httpClient.stream()->write(buf, available) != (size_t)available)
+                if (fbdo->tcpClient.stream()->write(buf, available) != (size_t)available)
                     break;
                 pos += available;
                 len -= available;
@@ -939,7 +941,7 @@ bool FB_Functions::connect(FirebaseData *fbdo, const char *host)
     if (strlen(host) > 0)
     {
         rescon(fbdo, host);
-        fbdo->httpClient.begin(host, 443);
+        fbdo->tcpClient.begin(host, 443);
     }
     else
     {
@@ -947,7 +949,7 @@ bool FB_Functions::connect(FirebaseData *fbdo, const char *host)
         ut->appendP(host, fb_esp_pgm_str_363);
         ut->appendP(host, fb_esp_pgm_str_120);
         rescon(fbdo, host.c_str());
-        fbdo->httpClient.begin(host.c_str(), 443);
+        fbdo->tcpClient.begin(host.c_str(), 443);
     }
     return true;
 }
@@ -959,7 +961,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
 
     unsigned long dataTime = millis();
 
-    WiFiClient *stream = fbdo->httpClient.stream();
+    WiFiClient *stream = fbdo->tcpClient.stream();
 
     char *pChunk = nullptr;
     char *tmp = nullptr;
@@ -990,7 +992,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
     defaultChunkSize = 2048;
     bool envVarsBegin = false;
 
-    while (fbdo->httpClient.connected() && chunkBufSize <= 0)
+    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
     {
         if (!fbdo->reconnect(dataTime))
             return false;

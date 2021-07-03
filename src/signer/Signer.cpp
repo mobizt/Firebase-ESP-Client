@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.1.0
+ * Google's Firebase Token Generation class, Signer.cpp version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -499,7 +499,7 @@ bool Firebase_Signer::refreshToken()
     ut->clearS(config->signer.tokens.access_token);
 
 #if defined(ESP32)
-    config->signer.wcs = new FB_HTTPClient32();
+    config->signer.wcs = new FB_TCP_Client();
     config->signer.wcs->setCACert(nullptr);
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
@@ -558,7 +558,7 @@ bool Firebase_Signer::refreshToken()
 
     req += s.c_str();
 #if defined(ESP32)
-    int ret = config->signer.wcs->send(req.c_str(), "");
+    int ret = config->signer.wcs->send(req.c_str());
     ut->clearS(req);
     if (ret < 0)
         return handleSignerError(2);
@@ -675,10 +675,10 @@ void Firebase_Signer::setTokenError(int code)
         case FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED:
             ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_547, true);
             break;
-        case FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED:
+        case FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED:
             ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_42);
             break;
-        case FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST:
+        case FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST:
             ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_43);
             break;
         case FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT:
@@ -699,7 +699,7 @@ bool Firebase_Signer::handleSignerError(int code)
 
     case 1:
         ut->clearS(config->signer.tokens.error.message);
-        setTokenError(FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED);
+        setTokenError(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
         sendTokenStatusCB();
         break;
     case 2:
@@ -710,7 +710,7 @@ bool Firebase_Signer::handleSignerError(int code)
         config->signer.wcs->stop();
 #endif
         ut->clearS(config->signer.tokens.error.message);
-        setTokenError(FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST);
+        setTokenError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
         sendTokenStatusCB();
         break;
     case 3:
@@ -1269,7 +1269,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
     sendTokenStatusCB();
 
 #if defined(ESP32)
-    config->signer.wcs = new FB_HTTPClient32();
+    config->signer.wcs = new FB_TCP_Client();
     config->signer.wcs->setCACert(nullptr);
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
@@ -1354,7 +1354,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 
     req += config->signer.json->raw();
 #if defined(ESP32)
-    int ret = config->signer.wcs->send(req.c_str(), "");
+    int ret = config->signer.wcs->send(req.c_str());
     ut->clearS(req);
     if (ret < 0)
         return handleSignerError(2);
@@ -1468,7 +1468,7 @@ bool Firebase_Signer::requestTokens()
     sendTokenStatusCB();
 
 #if defined(ESP32)
-    config->signer.wcs = new FB_HTTPClient32();
+    config->signer.wcs = new FB_TCP_Client();
     config->signer.wcs->setCACert(nullptr);
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
@@ -1548,7 +1548,7 @@ bool Firebase_Signer::requestTokens()
     req += config->signer.json->raw();
 #if defined(ESP32)
     config->signer.wcs->setInsecure();
-    int ret = config->signer.wcs->send(req.c_str(), "");
+    int ret = config->signer.wcs->send(req.c_str());
     ut->clearS(req);
     if (ret < 0)
         return handleSignerError(2);
@@ -1664,7 +1664,7 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
     config->_int.fb_processing = true;
 
 #if defined(ESP32)
-    config->signer.wcs = new FB_HTTPClient32();
+    config->signer.wcs = new FB_TCP_Client();
     config->signer.wcs->setCACert(nullptr);
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
@@ -1752,7 +1752,7 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
     req += s.c_str();
 
 #if defined(ESP32)
-    int ret = config->signer.wcs->send(req.c_str(), "");
+    int ret = config->signer.wcs->send(req.c_str());
     ut->clearS(req);
     if (ret < 0)
         return handleSignerError(2);
@@ -1840,22 +1840,22 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
 
     switch (httpCode)
     {
-    case FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED:
+    case FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED:
         ut->appendP(buff, fb_esp_pgm_str_39);
         return;
-    case FIREBASE_ERROR_HTTPC_ERROR_SEND_HEADER_FAILED:
+    case FIREBASE_ERROR_TCP_ERROR_SEND_HEADER_FAILED:
         ut->appendP(buff, fb_esp_pgm_str_40);
         return;
-    case FIREBASE_ERROR_HTTPC_ERROR_SEND_PAYLOAD_FAILED:
+    case FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED:
         ut->appendP(buff, fb_esp_pgm_str_41);
         return;
-    case FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED:
+    case FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED:
         ut->appendP(buff, fb_esp_pgm_str_42);
         return;
-    case FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST:
+    case FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST:
         ut->appendP(buff, fb_esp_pgm_str_43);
         return;
-    case FIREBASE_ERROR_HTTPC_ERROR_NO_HTTP_SERVER:
+    case FIREBASE_ERROR_TCP_ERROR_NO_HTTP_SERVER:
         ut->appendP(buff, fb_esp_pgm_str_44);
         return;
     case FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST:
@@ -1930,7 +1930,7 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_HTTP_CODE_PRECONDITION_FAILED:
         ut->appendP(buff, fb_esp_pgm_str_152);
         return;
-    case FIREBASE_ERROR_HTTPC_ERROR_READ_TIMEOUT:
+    case FIREBASE_ERROR_TCP_ERROR_READ_TIMEOUT:
         ut->appendP(buff, fb_esp_pgm_str_69);
         return;
     case FIREBASE_ERROR_DATA_TYPE_MISMATCH:
@@ -1939,19 +1939,19 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_PATH_NOT_EXIST:
         ut->appendP(buff, fb_esp_pgm_str_71);
         return;
-    case FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_INUSED:
+    case FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED:
         ut->appendP(buff, fb_esp_pgm_str_94);
         return;
-    case FIREBASE_ERROR_HTTPC_MAX_REDIRECT_REACHED:
+    case FIREBASE_ERROR_TCP_MAX_REDIRECT_REACHED:
         ut->appendP(buff, fb_esp_pgm_str_169);
         return;
     case FIREBASE_ERROR_BUFFER_OVERFLOW:
         ut->appendP(buff, fb_esp_pgm_str_68);
         return;
-    case FIREBASE_ERROR_HTTPC_NO_FCM_REGISTRATION_ID_PROVIDED:
+    case FIREBASE_ERROR_TCP_NO_FCM_REGISTRATION_ID_PROVIDED:
         ut->appendP(buff, fb_esp_pgm_str_145);
         return;
-    case FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED:
+    case FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED:
         ut->appendP(buff, fb_esp_pgm_str_146);
         return;
     case FIREBASE_ERROR_EXPECTED_JSON_DATA:
@@ -1985,7 +1985,7 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
         ut->appendP(buff, fb_esp_pgm_str_541);
         return;
-    case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
+    case FIREBASE_ERROR_TCP_FCM_OAUTH2_REQUIRED:
         ut->appendP(buff, fb_esp_pgm_str_328);
         return;
 #endif
@@ -2007,19 +2007,19 @@ fb_esp_auth_token_type Firebase_Signer::getTokenType()
     return config->signer.tokens.token_type;
 }
 
-std::string Firebase_Signer::getToken(fb_esp_auth_token_type type)
+const char *Firebase_Signer::getToken(fb_esp_auth_token_type type)
 {
     if (!auth || !config)
         return "";
 
     if (type == token_type_id_token || type == token_type_custom_token)
-        return config->signer.tokens.id_token;
+        return config->signer.tokens.id_token.c_str();
     else if (type == token_type_oauth2_access_token)
-        return config->signer.tokens.access_token;
+        return config->signer.tokens.access_token.c_str();
     else if (type == token_type_legacy_token)
-        return config->signer.tokens.legacy_token;
+        return config->signer.tokens.legacy_token.c_str();
 
-    return config->signer.tokens.legacy_token;
+    return config->signer.tokens.legacy_token.c_str();
 }
 
 FirebaseConfig *Firebase_Signer::getCfg()

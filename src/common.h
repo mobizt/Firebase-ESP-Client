@@ -1,6 +1,6 @@
 
 /**
- * Created June 27, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -37,12 +37,12 @@
 #include <functional>
 #if defined(ESP32)
 #include <WiFi.h>
-#include "wcs/esp32/FB_HTTPClient32.h"
+#include "wcs/esp32/FB_TCP_Client.h"
 #elif defined(ESP8266)
 #include <Schedule.h>
 #include <ets_sys.h>
 #include <ESP8266WiFi.h>
-#include "wcs/esp8266/FB_HTTPClient.h"
+#include "wcs/esp8266/FB_TCP_Client.h"
 #define FS_NO_GLOBALS
 #endif
 
@@ -399,22 +399,25 @@ struct fb_esp_rtdb_request_data_info
     bool *boolPtr = nullptr;
     String *stringPtr = nullptr;
     std::vector<uint8_t> *blobPtr = nullptr;
+    uint8_t *blobPtr2 = nullptr;
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonArray *arrPtr = nullptr;
     QueryFilter *query = nullptr;
+    size_t blobSize = 0;
 };
 
 struct fb_esp_rtdb_request_info_t
 {
-    std::string path = "";
+    int fileLen = 0;
+    const char *path = "";
     fb_esp_method method = m_get;
     struct fb_esp_rtdb_request_data_info data;
-    std::string payload = "";
-    std::string priority = "";
-    std::string etag = "";
+    const char *payload = "";
+    const char *priority = "";
+    const char *etag = "";
     bool queue = false;
     bool async = false;
-    std::string filename = "";
+    const char *filename = "";
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
@@ -582,7 +585,7 @@ struct fb_esp_token_signer_resources_t
     mbedtls_pk_context *pk_ctx = nullptr;
     mbedtls_entropy_context *entropy_ctx = nullptr;
     mbedtls_ctr_drbg_context *ctr_drbg_ctx = nullptr;
-    FB_HTTPClient32 *wcs = nullptr;
+    FB_TCP_Client *wcs = nullptr;
 #elif defined(ESP8266)
     WiFiClientSecure *wcs = nullptr;
 #endif
@@ -739,7 +742,6 @@ struct fb_esp_rtdb_info_t
     fb_esp_method req_method = fb_esp_method::m_put;
     fb_esp_data_type req_data_type = fb_esp_data_type::d_any;
     fb_esp_data_type resp_data_type = fb_esp_data_type::d_any;
-
     uint16_t data_crc = 0;
     std::string path;
     std::string raw;
@@ -1511,11 +1513,11 @@ static const char fb_esp_pgm_str_153[] PROGMEM = "X-HTTP-Method-Override: ";
 static const char fb_esp_pgm_str_154[] PROGMEM = "{\".sv\": \"timestamp\"}";
 static const char fb_esp_pgm_str_155[] PROGMEM = "&shallow=true";
 static const char fb_esp_pgm_str_156[] PROGMEM = "/.priority";
-static const char fb_esp_pgm_str_157[] PROGMEM = ",\".priority\":";
+static const char fb_esp_pgm_str_157[] PROGMEM = ".priority";
 static const char fb_esp_pgm_str_158[] PROGMEM = "&timeout=";
 static const char fb_esp_pgm_str_159[] PROGMEM = "ms";
 static const char fb_esp_pgm_str_160[] PROGMEM = "&writeSizeLimit=";
-static const char fb_esp_pgm_str_161[] PROGMEM = "{\".value\":";
+static const char fb_esp_pgm_str_161[] PROGMEM = ".value";
 static const char fb_esp_pgm_str_162[] PROGMEM = "&format=export";
 static const char fb_esp_pgm_str_163[] PROGMEM = "{";
 static const char fb_esp_pgm_str_164[] PROGMEM = "Flash memory was not ready";

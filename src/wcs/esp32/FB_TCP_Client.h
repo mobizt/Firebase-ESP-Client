@@ -1,14 +1,10 @@
 /**
- * Customized version of ESP32 HTTPClient Library. 
- * Allow custom header and payload
- * 
- * v 1.0.8
+ * Firebase TCP Client v1.1.9
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
- * HTTPClient Arduino library for ESP32
- *
+ * 
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
  * Port to ESP32 by Evandro Luis Copercini (2017), 
@@ -30,8 +26,8 @@
  *
 */
 
-#ifndef FB_HTTPClient32_H
-#define FB_HTTPClient32_H
+#ifndef FB_TCP_Client_H
+#define FB_TCP_Client_H
 
 #ifdef ESP32
 
@@ -73,7 +69,7 @@ struct fb_esp_sd_config_info_t
   bool sd_mmc_format_if_mount_failed = false;
 };
 
-class FB_HTTPClient32
+class FB_TCP_Client
 {
 
   friend class FirebaseData;
@@ -82,8 +78,8 @@ class FB_HTTPClient32
   friend class UtilsClass;
 
 public:
-  FB_HTTPClient32();
-  ~FB_HTTPClient32();
+  FB_TCP_Client();
+  ~FB_TCP_Client();
 
   /**
    * Initialization of new http connection.
@@ -101,21 +97,11 @@ public:
   bool connected();
 
   /**
-   * Establish http connection if header provided and send it, send payload if provided.
-   * \param header - The header string (constant chars array).
-   * \param payload - The payload string (constant chars array), optional.
-   * \return http status code, Return zero if new http connection and header and/or payload sent
-   * with no error or no header and payload provided. If obly payload provided, no new http connection was established.
-  */
-  int send(const char *header, const char *payload);
-
-  /**
-   * Send extra header without making new http connection (if send with header has been called)
-   * \param header - The header string (constant chars array).
-   * \return True if header sending success.
-   * Need to call send with header first. 
-  */
-  bool send(const char *header);
+    * Establish TCP connection when required and send data.
+    * \param data - The data to send.
+    * \return TCP status code, Return zero if new TCP connection and data sent.
+    */
+  int send(const char *data);
 
   /**
    * Get the WiFi client pointer.
@@ -148,4 +134,4 @@ protected:
 
 #endif /* ESP32 */
 
-#endif /* FirebaseESP32HTTPClient_H_ */
+#endif /* FB_TCP_Client_H */

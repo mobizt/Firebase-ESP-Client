@@ -1,14 +1,10 @@
 /**
- * Customized version of ESP32 HTTPClient Library.
- * Allow custom header and payload
- *
- * v 1.0.8
- *
+ * Firebase TCP Client v1.1.9
+ * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- *
- * HTTPClient Arduino library for ESP32
- *
+ * 
+ * 
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
  * Port to ESP32 by Evandro Luis Copercini (2017),
@@ -30,16 +26,16 @@
  *
 */
 
-#ifndef FB_HTTPClient32_CPP
-#define FB_HTTPClient32_CPP
+#ifndef FB_TCP_Client_CPP
+#define FB_TCP_Client_CPP
 
 #ifdef ESP32
 
-#include "FB_HTTPClient32.h"
+#include "FB_TCP_Client.h"
 
-FB_HTTPClient32::FB_HTTPClient32() {}
+FB_TCP_Client::FB_TCP_Client() {}
 
-FB_HTTPClient32::~FB_HTTPClient32()
+FB_TCP_Client::~FB_TCP_Client()
 {
   if (_wcs)
   {
@@ -51,69 +47,46 @@ FB_HTTPClient32::~FB_HTTPClient32()
   std::string().swap(_CAFile);
 }
 
-bool FB_HTTPClient32::begin(const char *host, uint16_t port)
+bool FB_TCP_Client::begin(const char *host, uint16_t port)
 {
   _host = host;
   _port = port;
   return true;
 }
 
-bool FB_HTTPClient32::connected()
+bool FB_TCP_Client::connected()
 {
   if (_wcs)
     return (_wcs->connected());
   return false;
 }
 
-void FB_HTTPClient32::stop()
+void FB_TCP_Client::stop()
 {
   if (!connected())
     return;
   return _wcs->stop();
 }
 
-bool FB_HTTPClient32::send(const char *header)
+int FB_TCP_Client::send(const char *data)
 {
-  if (!connected())
-    return false;
-  return (_wcs->print(header) == strlen(header));
-}
+  if (!connect())
+    return FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED;
 
-int FB_HTTPClient32::send(const char *header, const char *payload)
-{
-  size_t size = strlen(payload);
-  if (strlen(header) > 0)
-  {
-    if (!connect())
-    {
-      return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED;
-    }
-
-    if (!send(header))
-    {
-      return FIREBASE_ERROR_HTTPC_ERROR_SEND_HEADER_FAILED;
-    }
-  }
-
-  if (size > 0)
-  {
-    if (_wcs->print(payload) != size)
-    {
-      return FIREBASE_ERROR_HTTPC_ERROR_SEND_PAYLOAD_FAILED;
-    }
-  }
+  if (_wcs->write((const uint8_t *)data, strlen(data)) != strlen(data))
+    return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
 
   return 0;
 }
 
-WiFiClient *FB_HTTPClient32::stream(void)
+WiFiClient *FB_TCP_Client::stream(void)
 {
   if (connected())
     return _wcs.get();
   return nullptr;
 }
 
-bool FB_HTTPClient32::connect(void)
+bool FB_TCP_Client::connect(void)
 {
   if (connected())
   {
@@ -128,7 +101,7 @@ bool FB_HTTPClient32::connect(void)
   return connected();
 }
 
-void FB_HTTPClient32::setInsecure()
+void FB_TCP_Client::setInsecure()
 {
 #if __has_include(<esp_idf_version.h>)
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(3, 3, 0)
@@ -137,7 +110,7 @@ void FB_HTTPClient32::setInsecure()
 #endif
 }
 
-void FB_HTTPClient32::setCACert(const char *caCert)
+void FB_TCP_Client::setCACert(const char *caCert)
 {
   _wcs->setCACert(caCert);
   if (caCert)
@@ -150,7 +123,7 @@ void FB_HTTPClient32::setCACert(const char *caCert)
   //_wcs->setNoDelay(true);
 }
 
-void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config)
+void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config)
 {
 
   if (strlen(caCertFile) > 0)

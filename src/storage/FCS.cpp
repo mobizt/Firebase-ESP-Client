@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.1
+ * Google's Firebase Storage class, FCS.cpp version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 24, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -188,7 +188,7 @@ bool FB_Storage::fcs_connect(FirebaseData *fbdo)
     ut->appendP(host, fb_esp_pgm_str_265);
     ut->appendP(host, fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
-    fbdo->httpClient.begin(host.c_str(), 443);
+    fbdo->tcpClient.begin(host.c_str(), 443);
     return true;
 }
 
@@ -346,9 +346,9 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     ut->appendP(header, fb_esp_pgm_str_34);
     ut->appendP(header, fb_esp_pgm_str_21);
 
-    fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+    fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    int ret = fbdo->httpClient.send(header.c_str(), "");
+    int ret = fbdo->tcpClient.send(header.c_str());
 
     if (ret == 0)
     {
@@ -364,7 +364,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                 if (available > bufLen)
                     available = bufLen;
                 read = Signer.getCfg()->_int.fb_file.read(buf, available);
-                if (fbdo->httpClient.stream()->write(buf, read) != read)
+                if (fbdo->tcpClient.stream()->write(buf, read) != read)
                     break;
                 available = Signer.getCfg()->_int.fb_file.available();
             }
@@ -383,7 +383,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                 if (available > bufLen)
                     available = bufLen;
                 memcpy_P(buf, req->pgmArc + pos, available);
-                if (fbdo->httpClient.stream()->write(buf, available) != (size_t)available)
+                if (fbdo->tcpClient.stream()->write(buf, available) != (size_t)available)
                     break;
                 pos += available;
                 len -= available;
@@ -423,7 +423,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
 
     unsigned long dataTime = millis();
 
-    WiFiClient *stream = fbdo->httpClient.stream();
+    WiFiClient *stream = fbdo->tcpClient.stream();
 
     char *pChunk = nullptr;
     char *tmp = nullptr;
@@ -461,7 +461,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
 
     defaultChunkSize = 2048;
 
-    while (fbdo->httpClient.connected() && chunkBufSize <= 0)
+    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
     {
         if (!fbdo->reconnect(dataTime))
             return false;
@@ -469,8 +469,8 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
         delay(0);
     }
 
-    if (!fbdo->httpClient.connected())
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+    if (!fbdo->tcpClient.connected())
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
     int availablePayload = chunkBufSize;
 
@@ -572,10 +572,10 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                         {
                             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && response.contentLen > 0 && fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download)
                             {
-                                size_t available = fbdo->httpClient.stream()->available();
+                                size_t available = fbdo->tcpClient.stream()->available();
                                 dataTime = millis();
                                 uint8_t *buf = new uint8_t[defaultChunkSize + 1];
-                                while (fbdo->reconnect(dataTime) && fbdo->httpClient.stream() && payloadRead < response.contentLen)
+                                while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {
                                     if (available)
                                     {
@@ -583,14 +583,14 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                         if (available > defaultChunkSize)
                                             available = defaultChunkSize;
 
-                                        size_t read = fbdo->httpClient.stream()->read(buf, available);
+                                        size_t read = fbdo->tcpClient.stream()->read(buf, available);
                                         if (read == available)
                                             Signer.getCfg()->_int.fb_file.write(buf, read);
 
                                         payloadRead += available;
                                     }
-                                    if (fbdo->httpClient.stream())
-                                        available = fbdo->httpClient.stream()->available();
+                                    if (fbdo->tcpClient.stream())
+                                        available = fbdo->tcpClient.stream()->available();
                                 }
                                 if (payloadRead == response.contentLen)
                                     error.code = 0;

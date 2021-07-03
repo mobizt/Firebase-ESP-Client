@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.1.1
+ * Google's Firebase Data class, FB_Session.cpp version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 27, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -105,7 +105,7 @@ void FirebaseData::addNodeList(const String childPath[], size_t size)
 
 bool FirebaseData::pauseFirebase(bool pause)
 {
-    if ((WiFi.status() != WL_CONNECTED && !ut->ethLinkUp()) || !httpClient.stream())
+    if ((WiFi.status() != WL_CONNECTED && !ut->ethLinkUp()) || !tcpClient.stream())
     {
         _ss.connected = false;
         _ss.rtdb.pause = true;
@@ -119,8 +119,8 @@ bool FirebaseData::pauseFirebase(bool pause)
 
     if (pause)
     {
-        if (httpClient.stream()->connected())
-            httpClient.stream()->stop();
+        if (tcpClient.stream()->connected())
+            tcpClient.stream()->stop();
         _ss.connected = false;
     }
 
@@ -476,17 +476,17 @@ void FirebaseData::setResponseSize(uint16_t len)
 
 void FirebaseData::stopWiFiClient()
 {
-    if (httpClient.stream())
+    if (tcpClient.stream())
     {
-        if (httpClient.stream()->connected())
-            httpClient.stream()->stop();
+        if (tcpClient.stream()->connected())
+            tcpClient.stream()->stop();
     }
     _ss.connected = false;
 }
 
 WiFiClientSecure *FirebaseData::getWiFiClient()
 {
-    return httpClient._wcs.get();
+    return tcpClient._wcs.get();
 }
 
 bool FirebaseData::httpConnected()
@@ -623,14 +623,14 @@ void FirebaseData::closeSession()
     if (WiFi.status() == WL_CONNECTED || ut->ethLinkUp())
     {
         //close the socket and free the resources used by the BearSSL data
-        if (_ss.connected || httpClient.stream())
+        if (_ss.connected || tcpClient.stream())
         {
             if (Signer.getCfg())
                 Signer.getCfg()->_int.fb_last_reconnect_millis = millis();
 
-            if (httpClient.stream())
-                if (httpClient.stream()->connected())
-                    httpClient.stream()->stop();
+            if (tcpClient.stream())
+                if (tcpClient.stream()->connected())
+                    tcpClient.stream()->stop();
         }
     }
 #ifdef ENABLE_RTDB
@@ -651,9 +651,9 @@ bool FirebaseData::reconnect(unsigned long dataTime)
 
     if (dataTime > 0)
     {
-        if (millis() - dataTime > httpClient.timeout && init())
+        if (millis() - dataTime > tcpClient.timeout && init())
         {
-            _ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_READ_TIMEOUT;
+            _ss.http_code = FIREBASE_ERROR_TCP_ERROR_READ_TIMEOUT;
             char *tmp = ut->strP(fb_esp_pgm_str_69);
             _ss.error = tmp;
             ut->delS(tmp);
@@ -667,7 +667,7 @@ bool FirebaseData::reconnect(unsigned long dataTime)
         if (_ss.connected)
             closeSession();
 
-        _ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+        _ss.http_code = FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
 
         if (Signer.getCfg()->_int.fb_reconnect_wifi)
         {
@@ -692,17 +692,17 @@ void FirebaseData::setSecure()
     {
         if (Signer.getCfg())
             Signer.getCfg()->_int.fb_clock_rdy = true;
-        httpClient._clockReady = true;
+        tcpClient._clockReady = true;
     }
-    httpClient._bsslRxSize = _ss.bssl_rx_size;
-    httpClient._bsslTxSize = _ss.bssl_tx_size;
+    tcpClient._bsslRxSize = _ss.bssl_rx_size;
+    tcpClient._bsslTxSize = _ss.bssl_tx_size;
 #endif
 
-    if (httpClient._certType == -1)
+    if (tcpClient._certType == -1)
     {
         if (!Signer.getCfg())
         {
-            httpClient.setCACert(nullptr);
+            tcpClient.setCACert(nullptr);
             return;
         }
 
@@ -711,10 +711,10 @@ void FirebaseData::setSecure()
 
 #if defined(ESP8266)
             int retry = 0;
-            while (!httpClient._clockReady && retry < 5)
+            while (!tcpClient._clockReady && retry < 5)
             {
                 ut->setClock(Signer.getCfg()->_int.fb_gmt_offset);
-                httpClient._clockReady = Signer.getCfg()->_int.fb_clock_rdy;
+                tcpClient._clockReady = Signer.getCfg()->_int.fb_clock_rdy;
                 retry++;
             }
 #endif
@@ -723,9 +723,9 @@ void FirebaseData::setSecure()
         if (Signer.getCAFile().length() == 0)
         {
             if (Signer.getCfg()->_int.fb_caCert)
-                httpClient.setCACert(Signer.getCfg()->_int.fb_caCert);
+                tcpClient.setCACert(Signer.getCfg()->_int.fb_caCert);
             else
-                httpClient.setCACert(nullptr);
+                tcpClient.setCACert(nullptr);
         }
         else
         {
@@ -734,14 +734,14 @@ void FirebaseData::setSecure()
             if (Signer.getCfg()->_int.sd_config.ss == -1)
                 Signer.getCfg()->_int.sd_config.ss = SD_CS_PIN;
 #endif
-            httpClient.setCACertFile(Signer.getCAFile().c_str(), Signer.getCAFileStorage(), Signer.getCfg()->_int.sd_config);
+            tcpClient.setCACertFile(Signer.getCAFile().c_str(), Signer.getCAFileStorage(), Signer.getCfg()->_int.sd_config);
         }
     }
 }
 
 bool FirebaseData::validRequest(const std::string &path)
 {
-    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || (Signer.getToken(token_type_legacy_token).length() == 0 && Signer.getToken(token_type_id_token).length() == 0 && Signer.getToken(token_type_oauth2_access_token).length() == 0))
+    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || (strlen(Signer.getToken(token_type_legacy_token)) == 0 && strlen(Signer.getToken(token_type_id_token)) == 0 && strlen(Signer.getToken(token_type_oauth2_access_token)) == 0))
     {
         _ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
         return false;
@@ -776,10 +776,10 @@ void FirebaseData::checkOvf(size_t len, struct server_response_data_t &resp)
 
 void FirebaseData::clear()
 {
-    if (httpClient.stream())
+    if (tcpClient.stream())
     {
-        if (httpClient.stream()->connected())
-            httpClient.stream()->stop();
+        if (tcpClient.stream()->connected())
+            tcpClient.stream()->stop();
         _ss.connected = false;
     }
 
@@ -1125,7 +1125,7 @@ void FCMObject::fcm_begin(FirebaseData &fbdo)
     ut->appendP(host, fb_esp_pgm_str_4);
     ut->appendP(host, fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
-    fbdo.httpClient.begin(host.c_str(), _port);
+    fbdo.tcpClient.begin(host.c_str(), _port);
 }
 
 void FCMObject::fcm_prepareHeader(std::string &header, size_t payloadSize)
@@ -1245,7 +1245,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
     if (!fbdo->_ss.connected)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
         return false;
     }
 
@@ -1253,7 +1253,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
     unsigned long dataTime = millis();
 
-    WiFiClient *stream = fbdo->httpClient.stream();
+    WiFiClient *stream = fbdo->tcpClient.stream();
 
     char *pChunk = nullptr;
     char *tmp = nullptr;
@@ -1286,7 +1286,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
     defaultChunkSize = 768;
 
-    while (fbdo->httpClient.connected() && chunkBufSize <= 0)
+    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
     {
         if (!fbdo->reconnect(dataTime))
             return false;
@@ -1526,7 +1526,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
     fcm_prepareHeader(header, msg.stringValue.length());
 
-    int ret = fbdo.httpClient.send(header.c_str(), msg.stringValue.c_str());
+    int ret = fbdo.tcpClient.send(header.c_str(), msg.stringValue.c_str());
     ut->clearS(header);
     json.remove(s.c_str());
     ut->clearS(s);
@@ -1535,7 +1535,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
     if (ret != 0)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+        fbdo._ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
         fbdo.closeSession();
         if (Signer.getCfg())
             Signer.getCfg()->_int.fb_processing = false;

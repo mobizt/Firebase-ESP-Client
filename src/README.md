@@ -902,23 +902,6 @@ bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
 
 
 
-#### Append (post) new blob (binary data) and the virtual child ".priority" to the defined node.
-
-```cpp
-bool pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-bool pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-```
-
-
-
-
-
-
 #### Append (post) new binary data from file stores on storage memory to the defined node.
 
 param **`fbdo`** The pointer to Firebase Data Object.
@@ -946,24 +929,6 @@ bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, cons
 bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 ```
 
-
-
-
-
-
-
-
-#### Append (post) new binary data from file and the virtual child ".priority" to the defined node.
-
-```cpp
-bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-```
 
 
 
@@ -1736,21 +1701,6 @@ bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 
 
 
-#### Set (put) the blob data and virtual child ".priority" at the defined node.
-
-```cpp
-bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-```
-
-
-
-
 
 
 #### Set blob (binary data) at the defined node if defined node's ETag matched the ETag value.
@@ -1788,20 +1738,6 @@ bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, 
 
 
 
-#### Set (put) the binary data and the virtual child ".priority" if defined ETag matches at the defined node. 
-
-```cpp
-bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
-
-bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
-
-bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
-
-bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
-```
-
-
-
 
 
 #### Set (put) the binary data from file to the defined node.
@@ -1828,23 +1764,6 @@ bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *pa
 bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 
 bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
-```
-
-
-
-
-
-
-#### Set (put) the binary data from file and virtual child ".priority" at the defined node.
-
-```cpp
-bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 ```
 
 
@@ -1883,24 +1802,6 @@ bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const
 bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
 ```
 
-
-
-
-
-
-
-
-#### Set (put) the binary data from the file and the virtual child ".priority" if defined ETag matches at the defined node. 
-
-```cpp
-bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
-
-bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
-
-bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
-
-bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
-```
 
 
 

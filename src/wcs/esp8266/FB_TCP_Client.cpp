@@ -1,5 +1,5 @@
 /**
- * HTTP Client wrapper v1.1.8
+ * Firebase TCP Client v1.1.9
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -23,18 +23,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef FB_HTTPClient_CPP
-#define FB_HTTPClient_CPP
+#ifndef FB_TCP_Client_CPP
+#define FB_TCP_Client_CPP
 
 #ifdef ESP8266
 
-#include "FB_HTTPClient.h"
+#include "FB_TCP_Client.h"
 
-FB_HTTPClient::FB_HTTPClient()
+FB_TCP_Client::FB_TCP_Client()
 {
 }
 
-FB_HTTPClient::~FB_HTTPClient()
+FB_TCP_Client::~FB_TCP_Client()
 {
   if (_wcs)
   {
@@ -46,7 +46,7 @@ FB_HTTPClient::~FB_HTTPClient()
   std::string().swap(_CAFile);
 }
 
-bool FB_HTTPClient::begin(const char *host, uint16_t port)
+bool FB_TCP_Client::begin(const char *host, uint16_t port)
 {
   if (strcmp(_host.c_str(), host) != 0)
     mflnChecked = false;
@@ -73,55 +73,32 @@ bool FB_HTTPClient::begin(const char *host, uint16_t port)
   return true;
 }
 
-bool FB_HTTPClient::connected()
+bool FB_TCP_Client::connected()
 {
   if (_wcs)
     return (_wcs->connected());
   return false;
 }
 
-bool FB_HTTPClient::send(const char *header)
+int FB_TCP_Client::send(const char *data)
 {
-  if (!connected())
-    return false;
-  return (_wcs->write((uint8_t *)header, strlen(header)) == strlen(header));
-}
+  if (!connect())
+    return FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED;
 
-int FB_HTTPClient::send(const char *header, const char *payload)
-{
-  size_t size = strlen(payload);
-  if (strlen(header) > 0)
-  {
-    if (!connect())
-    {
-      return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED;
-    }
-
-    if (!send(header))
-    {
-      return FIREBASE_ERROR_HTTPC_ERROR_SEND_HEADER_FAILED;
-    }
-  }
-
-  if (size > 0)
-  {
-    if (_wcs->write((uint8_t *)&payload[0], size) != size)
-    {
-      return FIREBASE_ERROR_HTTPC_ERROR_SEND_PAYLOAD_FAILED;
-    }
-  }
+  if (_wcs->write((const uint8_t *)data, strlen(data)) != strlen(data))
+    return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
 
   return 0;
 }
 
-WiFiClient *FB_HTTPClient::stream(void)
+WiFiClient *FB_TCP_Client::stream(void)
 {
   if (connected())
     return _wcs.get();
   return nullptr;
 }
 
-bool FB_HTTPClient::connect(void)
+bool FB_TCP_Client::connect(void)
 {
   if (connected())
   {
@@ -136,7 +113,7 @@ bool FB_HTTPClient::connect(void)
   return connected();
 }
 
-void FB_HTTPClient::setCACert(const char *caCert)
+void FB_TCP_Client::setCACert(const char *caCert)
 {
 
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
@@ -155,7 +132,7 @@ void FB_HTTPClient::setCACert(const char *caCert)
   _wcs->setNoDelay(true);
 }
 
-void FB_HTTPClient::setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config)
+void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config)
 {
   _sdPin = sd_config.ss;
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
@@ -192,4 +169,4 @@ void FB_HTTPClient::setCACertFile(const char *caCertFile, uint8_t storageType, s
 
 #endif /* ESP8266 */
 
-#endif /* FB_HTTPClient_CPP */
+#endif /* FB_TCP_Client_CPP */

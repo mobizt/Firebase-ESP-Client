@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.1.2
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 25, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -440,15 +440,6 @@ public:
 
   bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 
-  /** Append (post) new blob (binary data) and the virtual child ".priority" to the defined node.
-  */
-  bool pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-  bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-  bool pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
   /** Append (post) new binary data from file stores on storage memory to the defined node.
    * 
@@ -468,16 +459,6 @@ public:
   bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 
   bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
-
-  /** Append (post) new binary data from file and the virtual child ".priority" to the defined node.
-  */
-  bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-  bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-  bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
   /** Append (post) the new Firebase server's timestamp to the defined node.
    * 
@@ -982,15 +963,6 @@ public:
 
   bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 
-  /** Set (put) the blob data and virtual child ".priority" at the defined node.
-  */
-  bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-  bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
   /** Set blob (binary data) at the defined node if defined node's ETag matched the ETag value. 
    * The old content in defined node will be replaced.
@@ -1015,15 +987,6 @@ public:
 
   bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
 
-  /** Set (put) the binary data and the virtual child ".priority" if defined ETag matches at the defined node. 
-  */
-  bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
-
-  bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
-
-  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
 
   /** Set (put) the binary data from file to the defined node. 
    * 
@@ -1043,15 +1006,6 @@ public:
 
   bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 
-  /** Set (put) the binary data from file and virtual child ".priority" at the defined node.
-  */
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
-
-  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
   /** Set (put) the binary data from file to the defined node if defined node's ETag matched the ETag value.
    * 
@@ -1075,15 +1029,6 @@ public:
 
   bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
 
-  /** Set (put) the binary data from the file and the virtual child ".priority" if defined ETag matches at the defined node. 
-  */
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
-
-  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
-
-  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
 
   /** Set (put) the Firebase server's timestamp to the defined node.
    * 
@@ -1821,12 +1766,13 @@ private:
   void clearDataStatus(FirebaseData *fbdo);
   bool handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   int sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  void preparePayload(struct fb_esp_rtdb_request_info_t *req, std::string &buf);
-  void prepareHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, int payloadLength, std::string &header, bool sv);
+  int sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  int tcpSend(FirebaseData *fbdo, const char *data);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
   bool processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  void addJsonPriority(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool int_pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority, bool async);
   bool int_pushFloat(FirebaseData *fbdo, const char *path, float floatValue, bool queue, const char *priority, bool async);
   bool int_pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, bool queue, const char *priority, bool async);
@@ -1834,7 +1780,7 @@ private:
   bool int_pushString(FirebaseData *fbdo, const char *path, const String &stringValue, const char *priority, bool async);
   bool int_pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool async);
   bool int_pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, bool async);
-  bool int_pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, bool async);
+  bool int_pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, bool async);
   bool int_pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, bool async);
   bool int_pushTimestamp(FirebaseData *fbdo, const char *path, bool async);
   bool int_setInt(FirebaseData *rtdb, const char *path, int intValue, bool queue, const char *priority, const char *etag, bool async);
@@ -1844,8 +1790,8 @@ private:
   bool int_setString(FirebaseData *fbdo, const char *path, const char *stringValue, const char *priority, const char *etag, bool async);
   bool int_setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, const char *etag, bool async);
   bool int_setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, const char *ETag, bool async);
-  bool int_setBlob(FirebaseData *rtdb, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, const char *etag, bool async);
-  bool int_setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, const char *etag, bool async);
+  bool int_setBlob(FirebaseData *rtdb, const char *path, uint8_t *blob, size_t size, bool queue, const char *etag, bool async);
+  bool int_setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *etag, bool async);
   bool int_setPriority(FirebaseData *fbdo, const char *path, float priority, bool async);
   bool int_setTimestamp(FirebaseData *fbdo, const char *path, bool async);
   bool int_updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool silent, bool async);

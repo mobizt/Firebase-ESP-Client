@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.0
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -73,7 +73,6 @@ bool FB_Firestore::exportDocuments(FirebaseData *fbdo, const char *projectId, co
     fbdo->_ss.jsonPtr->add((const char *)tmp, outputUriPrefix.c_str());
     ut->delS(tmp);
 
-   
     if (strlen(collectionIds) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_346);
@@ -905,9 +904,12 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     ut->appendP(header, fb_esp_pgm_str_36);
     ut->appendP(header, fb_esp_pgm_str_21);
 
-    fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+    fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    int ret = fbdo->httpClient.send(header.c_str(), req->payload.c_str());
+    int ret = fbdo->tcpClient.send(header.c_str());
+    if (ret == 0)
+        ret = fbdo->tcpClient.send(req->payload.c_str());
+
     header.clear();
     req->payload.clear();
     std::string().swap(header);
@@ -949,7 +951,7 @@ bool FB_Firestore::connect(FirebaseData *fbdo)
     ut->appendP(host, fb_esp_pgm_str_340);
     ut->appendP(host, fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
-    fbdo->httpClient.begin(host.c_str(), 443);
+    fbdo->tcpClient.begin(host.c_str(), 443);
     return true;
 }
 
@@ -960,7 +962,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
 
     unsigned long dataTime = millis();
 
-    WiFiClient *stream = fbdo->httpClient.stream();
+    WiFiClient *stream = fbdo->tcpClient.stream();
 
     char *pChunk = nullptr;
     char *tmp = nullptr;
@@ -991,7 +993,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
 
     defaultChunkSize = 2048;
 
-    while (fbdo->httpClient.connected() && chunkBufSize <= 0)
+    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
     {
         if (!fbdo->reconnect(dataTime))
             return false;

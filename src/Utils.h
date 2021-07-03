@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.12
+ * Google's Firebase Util class, Utils.h version 1.0.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 27, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1459,6 +1459,101 @@ public:
         delete[] b64enc;
     }
 
+    bool sendBase64(uint8_t *data, size_t len, bool flashMem, FB_TCP_Client *client)
+    {
+        bool ret = false;
+        const unsigned char *end, *in;
+
+        end = data + len;
+        in = data;
+
+        size_t chunkSize = 256;
+        size_t byteAdded = 0;
+        size_t byteSent = 0;
+
+        unsigned char *buf = new unsigned char[chunkSize];
+        memset(buf, 0, chunkSize);
+
+        unsigned char *tmp = new unsigned char[3];
+
+        while (end - in >= 3)
+        {
+            memset(tmp, 0, 3);
+            if (flashMem)
+                memcpy_P(tmp, in, 3);
+            else
+                memcpy(tmp, in, 3);
+
+            buf[byteAdded++] = fb_esp_base64_table[tmp[0] >> 2];
+            buf[byteAdded++] = fb_esp_base64_table[((tmp[0] & 0x03) << 4) | (tmp[1] >> 4)];
+            buf[byteAdded++] = fb_esp_base64_table[((tmp[1] & 0x0f) << 2) | (tmp[2] >> 6)];
+            buf[byteAdded++] = fb_esp_base64_table[tmp[2] & 0x3f];
+
+            if (byteAdded >= chunkSize - 4)
+            {
+                byteSent += byteAdded;
+
+                if (client->send((const char *)buf) != 0)
+                    goto ex;
+                memset(buf, 0, chunkSize);
+                byteAdded = 0;
+            }
+
+            in += 3;
+        }
+
+        if (byteAdded > 0)
+        {
+            if (client->send((const char *)buf) != 0)
+                goto ex;
+        }
+
+        if (end - in)
+        {
+            memset(buf, 0, chunkSize);
+            byteAdded = 0;
+            memset(tmp, 0, 3);
+            if (flashMem)
+            {
+                if (end - in == 1)
+                    memcpy_P(tmp, in, 1);
+                else
+                    memcpy_P(tmp, in, 2);
+            }
+            else
+            {
+                if (end - in == 1)
+                    memcpy(tmp, in, 1);
+                else
+                    memcpy(tmp, in, 2);
+            }
+
+            buf[byteAdded++] = fb_esp_base64_table[tmp[0] >> 2];
+            if (end - in == 1)
+            {
+                buf[byteAdded++] = fb_esp_base64_table[(tmp[0] & 0x03) << 4];
+                buf[byteAdded++] = '=';
+            }
+            else
+            {
+                buf[byteAdded++] = fb_esp_base64_table[((tmp[0] & 0x03) << 4) | (tmp[1] >> 4)];
+                buf[byteAdded++] = fb_esp_base64_table[(tmp[1] & 0x0f) << 2];
+            }
+            buf[byteAdded++] = '=';
+
+            if (client->send((const char *)buf) != 0)
+                goto ex;
+            memset(buf, 0, chunkSize);
+        }
+
+        ret = true;
+    ex:
+       
+        delete[] tmp;
+        delete[] buf;
+        return ret;
+    }
+
     std::string encodeBase64Str(const unsigned char *src, size_t len)
     {
         return encodeBase64Str((uint8_t *)src, len);
@@ -1475,12 +1570,6 @@ public:
         size_t olen;
 
         olen = 4 * ((len + 2) / 3); /* 3-byte blocks to 4-byte */
-
-        if (olen < len)
-        {
-            delete[] b64enc;
-            return std::string();
-        }
 
         std::string outStr;
         outStr.resize(olen);
@@ -1706,7 +1795,7 @@ public:
         {
             if (millis() - wTime > 3000)
             {
-                httpCode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_INUSED;
+                httpCode = FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED;
                 return false;
             }
             delay(0);

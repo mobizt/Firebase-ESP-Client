@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.8
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -91,7 +91,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -110,7 +110,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 
     if (Signer.getTokenType() != token_type_oauth2_access_token)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_FCM_OAUTH2_REQUIRED;
         return false;
     }
 
@@ -129,7 +129,7 @@ bool FB_CM::subscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -148,7 +148,7 @@ bool FB_CM::unsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *I
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -166,7 +166,7 @@ bool FB_CM::appInstanceInfo(FirebaseData *fbdo, const char *IID)
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -185,7 +185,7 @@ bool FB_CM::regisAPNsTokens(FirebaseData *fbdo, const char *application, bool sa
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -220,7 +220,7 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
     ut->appendP(host, fb_esp_pgm_str_120);
 
     rescon(fbdo, host.c_str());
-    fbdo->httpClient.begin(host.c_str(), port);
+    fbdo->tcpClient.begin(host.c_str(), port);
 }
 
 void FB_CM::fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, const char *payload)
@@ -1166,7 +1166,9 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *m
 
     std::string header;
     fcm_prepareHeader(header, mode, msg);
-    int ret = fbdo->httpClient.send(header.c_str(), msg);
+    int ret = fbdo->tcpClient.send(header.c_str());
+    if (ret == 0)
+        ret = fbdo->tcpClient.send(msg);
     ut->clearS(header);
     ut->clearS(fbdo->_ss.fcm.payload);
     if (ret != 0)
@@ -1209,13 +1211,13 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
     if (!fbdo->_ss.connected)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
         return false;
     }
 
     unsigned long dataTime = millis();
 
-    WiFiClient *stream = fbdo->httpClient.stream();
+    WiFiClient *stream = fbdo->tcpClient.stream();
 
     char *pChunk = nullptr;
     char *tmp = nullptr;
@@ -1248,7 +1250,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
     defaultChunkSize = 768;
 
-    while (fbdo->httpClient.connected() && chunkBufSize <= 0)
+    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
     {
         if (!fbdo->reconnect(dataTime))
             return false;

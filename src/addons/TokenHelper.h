@@ -50,14 +50,14 @@ String getTokenStatus(struct token_info_t info)
         return "uninitialized";
 
     case token_status_on_initialize:
-        return "on initializing\n** NTP time acquiring **\n";
+        return "on initializing\n** NTP time acquiring **\n** If this takes too long time, set the time manually before calling Firebase.begin **\n";
 
     case token_status_on_signing:
 
 #if defined(ESP32)
         return "on signing";
 #elif defined(ESP8266)
-        return "on signing\n** wdt reset may be occurred at this stage due to the BearSSL long calculation process **\n";
+        return "on signing\n** wdt reset may be occurred at this stage due to the blocking code in the token generation process **\n";
 #endif
 
     case token_status_on_request:

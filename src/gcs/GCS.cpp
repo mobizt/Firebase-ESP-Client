@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.0.9
+ * Google's Cloud Storage class, GCS.cpp version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 24, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -206,7 +206,7 @@ bool GG_CloudStorage::gcs_connect(FirebaseData *fbdo)
     std::string host;
     ut->appendP(host, fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
-    fbdo->httpClient.begin(host.c_str(), 443);
+    fbdo->tcpClient.begin(host.c_str(), 443);
     return true;
 }
 
@@ -614,9 +614,13 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     int ret = 0;
     if (req->requestType == fb_esp_gcs_request_type_download)
-        ret = fbdo->httpClient.send(header.c_str(), "");
+        ret = fbdo->tcpClient.send(header.c_str());
     else
-        ret = fbdo->httpClient.send(header.c_str(), fbdo->_ss.jsonPtr->raw());
+    {
+        ret = fbdo->tcpClient.send(header.c_str());
+        if (ret == 0)
+            ret = fbdo->tcpClient.send(fbdo->_ss.jsonPtr->raw());
+    }
 
     ut->clearS(header);
     ut->clearS(boundary);
@@ -630,7 +634,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
             if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
             {
-                ret = fbdo->httpClient.send(multipart_header.c_str(), "");
+                ret = fbdo->tcpClient.send(multipart_header.c_str());
                 ut->clearS(multipart_header);
             }
 
@@ -647,7 +651,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 read = Signer.getCfg()->_int.fb_file.read(buf, available);
                 byteRead += read;
                 reportUpploadProgress(fbdo, req, byteRead);
-                if (fbdo->httpClient.stream()->write(buf, read) != read)
+                if (fbdo->tcpClient.stream()->write(buf, read) != read)
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_UPLOAD_DATA_ERRROR;
                     fbdo->closeSession();
@@ -663,7 +667,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
             if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
             {
-                ret = fbdo->httpClient.send(multipart_header2.c_str(), "");
+                ret = fbdo->tcpClient.send(multipart_header2.c_str());
                 ut->clearS(multipart_header2);
             }
 
@@ -694,7 +698,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 if (available > bufLen)
                     available = bufLen;
                 read = Signer.getCfg()->_int.fb_file.read(buf, available);
-                if (fbdo->httpClient.stream()->write(buf, read) != read)
+                if (fbdo->tcpClient.stream()->write(buf, read) != read)
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_UPLOAD_DATA_ERRROR;
                     fbdo->closeSession();
@@ -1702,7 +1706,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
     unsigned long dataTime = millis();
 
-    WiFiClient *stream = fbdo->httpClient.stream();
+    WiFiClient *stream = fbdo->tcpClient.stream();
 
     char *pChunk = nullptr;
     char *tmp = nullptr;
@@ -1752,7 +1756,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
     defaultChunkSize = 2048;
 
-    while (fbdo->httpClient.connected() && chunkBufSize <= 0)
+    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
     {
         if (!fbdo->reconnect(dataTime))
             return false;
@@ -1760,8 +1764,8 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
         delay(0);
     }
 
-    if (!fbdo->httpClient.connected())
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTPC_ERROR_NOT_CONNECTED;
+    if (!fbdo->tcpClient.connected())
+        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
     int availablePayload = chunkBufSize;
 
@@ -1943,10 +1947,10 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                         {
                             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && response.contentLen > 0 && req->requestType == fb_esp_gcs_request_type_download)
                             {
-                                size_t available = fbdo->httpClient.stream()->available();
+                                size_t available = fbdo->tcpClient.stream()->available();
                                 dataTime = millis();
                                 uint8_t *buf = new uint8_t[defaultChunkSize + 1];
-                                while (fbdo->reconnect(dataTime) && fbdo->httpClient.stream() && payloadRead < response.contentLen)
+                                while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {
                                     if (available)
                                     {
@@ -1954,14 +1958,14 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                         if (available > defaultChunkSize)
                                             available = defaultChunkSize;
 
-                                        size_t read = fbdo->httpClient.stream()->read(buf, available);
+                                        size_t read = fbdo->tcpClient.stream()->read(buf, available);
                                         if (read == available)
                                             Signer.getCfg()->_int.fb_file.write(buf, read);
 
                                         payloadRead += available;
                                     }
-                                    if (fbdo->httpClient.stream())
-                                        available = fbdo->httpClient.stream()->available();
+                                    if (fbdo->tcpClient.stream())
+                                        available = fbdo->tcpClient.stream()->available();
                                 }
                                 if (payloadRead == response.contentLen)
                                     error.code = 0;
