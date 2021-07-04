@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.1.1
+ * Google's Firebase Token Generation class, Signer.cpp version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -504,7 +504,7 @@ bool Firebase_Signer::refreshToken()
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
     config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(1024, 512);
+    config->signer.wcs->setBufferSizes(1024, 1024);
 #endif
     config->signer.json = new FirebaseJson();
     config->signer.data = new FirebaseJsonData();
@@ -1274,7 +1274,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
     config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(512, 512);
+    config->signer.wcs->setBufferSizes(1024, 1024);
 #endif
     config->signer.json = new FirebaseJson();
     config->signer.data = new FirebaseJsonData();
@@ -1473,7 +1473,7 @@ bool Firebase_Signer::requestTokens()
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
     config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(512, 512);
+    config->signer.wcs->setBufferSizes(1024, 1024);
 #endif
     config->signer.json = new FirebaseJson();
     config->signer.data = new FirebaseJsonData();
@@ -1669,7 +1669,7 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
 #elif defined(ESP8266)
     config->signer.wcs = new WiFiClientSecure();
     config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(512, 512);
+    config->signer.wcs->setBufferSizes(1024, 1024);
 #endif
     config->signer.json = new FirebaseJson();
     config->signer.data = new FirebaseJsonData();
