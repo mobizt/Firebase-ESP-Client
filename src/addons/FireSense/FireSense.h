@@ -71,8 +71,6 @@
 #endif
 #endif
 
-class FireSenseClass;
-
 class MillisTimer
 {
 public:
@@ -213,6 +211,7 @@ public:
 
     FireSenseClass();
     ~FireSenseClass();
+
     FireSenseClass &operator=(FireSenseClass other);
     FireSenseClass(const FireSenseClass &other);
 
@@ -605,7 +604,6 @@ private:
     std::vector<struct data_value_pointer_info_t> userValueList = std::vector<struct data_value_pointer_info_t>();
     std::vector<FireSense_Function> functionList = std::vector<FireSense_Function>();
     std::vector<struct conditions_info_t> conditionsList = std::vector<struct conditions_info_t>();
-    
 
     const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     const char *sdow[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -613,6 +611,7 @@ private:
 
     struct firesense_config_t *config;
     callback_function_t _callback_function = nullptr;
+    FirebaseJson _json;
     FirebaseJsonData _jdat;
 
     bool timeReady = false;
@@ -628,7 +627,6 @@ private:
     bool streamPause = false;
     bool controllerEnable = true;
     const char *databaseSecret = "";
-    FirebaseJsonArray channelsJson;
 
     callback_function_t defaultDataLoadCallback = NULL;
 
@@ -655,7 +653,7 @@ private:
     bool int_begin();
     void int_loadConfig();
     void setLogQueryIndex();
-    void addDBChannel(struct channel_info_t &channel, int index);
+    void addDBChannel(struct channel_info_t &channel);
     void updateDBStatus(struct channel_info_t &channel);
     void storeDBStatus();
     void parseCondition(const char *src, std::vector<struct condition_item_info_t> &conditions, int depth = 0);
@@ -713,7 +711,7 @@ private:
 #endif
 };
 
-//extern FireSenseClass FireSense;
+FireSenseClass FireSense;
 
 #if defined(ESP32)
 TaskHandle_t firesense_run_task_handle = NULL;
@@ -866,7 +864,7 @@ bool FireSenseClass::configExisted()
 
 static void FiresenseStreamCB(FIREBASE_STREAM_CLASS data)
 {
-   //FireSense.readStream(&data);
+    FireSense.readStream(&data);
 }
 
 static void FiresenseStreamToCB(bool timeout)
@@ -1004,6 +1002,8 @@ void FireSenseClass::setupStream()
             printUpdate("", 21);
     }
 
+    if (config->stream_fbdo && !config->disable_command)
+        Firebase.RTDB.setStreamCallback(config->stream_fbdo, FiresenseStreamCB, FiresenseStreamToCB);
 }
 
 void FireSenseClass::addCallbackFunction(FireSense_Function func)
@@ -2127,9 +2127,7 @@ void FireSenseClass::sendLog()
             if (config->close_session)
                 config->shared_fbdo->clear();
 
-            FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-            json->clear();
-
+            _json.clear();
             time_t ts = time(nullptr);
             String t = String(ts);
             size_t count = 0;
@@ -2140,29 +2138,28 @@ void FireSenseClass::sendLog()
                     count++;
                     struct data_value_info_t val = getChannelValue(&channelsList[i]);
                     if (val.type == data_type_float)
-                        json->add(channelsList[i].id, val.float_data);
+                        _json.add(channelsList[i].id, val.float_data);
                     else
-                        json->add(channelsList[i].id, val.int_data);
+                        _json.add(channelsList[i].id, val.int_data);
                 }
             }
 
             if (count > 0)
             {
-                json->add(firesense_token_t::time, (int)ts);
+                _json.add(firesense_token_t::time, (int)ts);
                 std::string path = logPath();
                 path += firesense_token_t::slash;
                 path += t.c_str();
 
                 printUpdate("", 1);
-                
-                if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, path.c_str(), json))
+                if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, path.c_str(), &_json))
                     printError(config->shared_fbdo);
 
                 if (config->close_session)
                     config->shared_fbdo->clear();
             }
 
-            json->clear();
+            _json.clear();
         }
         sendingLog = false;
     }
@@ -2177,14 +2174,11 @@ void FireSenseClass::sendLastSeen()
 
         if (timeReady)
         {
-            FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-            json->clear();
-
-            json->add(firesense_token_t::date, getDateTimeString().c_str());
-            json->add("ts", (int)time(nullptr));
+            _json.clear();
+            _json.add(firesense_token_t::date, getDateTimeString().c_str());
+            _json.add("ts", (int)time(nullptr));
             printUpdate("", 2);
-            
-            if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, lastSeenPath().c_str(), json))
+            if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, lastSeenPath().c_str(), &_json))
                 printError(config->shared_fbdo);
 
             if (config->close_session)
@@ -2299,8 +2293,6 @@ void FireSenseClass::loadConfig(callback_function_t defaultDataLoadCallback)
         struct channel_info_t channel;
 
         FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-        json->clear();
-
         json->get(_jdat, firesense_token_t::id);
         channel.id = _jdat.stringValue;
         json->get(_jdat, firesense_token_t::uid);
@@ -2402,17 +2394,14 @@ void FireSenseClass::setClock(float time_zone, float daylight_offset_in_sec)
 
     if (timeReady)
     {
-        FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-        json->clear();
-
-        json->add(firesense_token_t::date, getDateTimeString().c_str());
-        json->add("ts", (int)time(nullptr));
+        _json.clear();
+        _json.add(firesense_token_t::date, getDateTimeString().c_str());
+        _json.add("ts", (int)time(nullptr));
 
         printUpdate("", 2);
-        
-        if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, lastSeenPath().c_str(), json) || !Firebase.RTDB.set(config->shared_fbdo, terminalPath().c_str(), (int)now))
+        if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, lastSeenPath().c_str(), &_json) || !Firebase.RTDB.set(config->shared_fbdo, terminalPath().c_str(), (int)now))
             printError(config->shared_fbdo);
-        json->clear();
+        _json.clear();
     }
     else
     {
@@ -2436,7 +2425,6 @@ void FireSenseClass::addCondition(struct firesense_condition_t cond, bool addToD
     {
         printUpdate("", 28);
         parseCondition(cond.IF.c_str(), conds.conditions);
-        delay(0);
         printUpdate("", 29);
         parseStatement(cond.THEN.c_str(), conds.thenStatements);
     }
@@ -2453,22 +2441,20 @@ void FireSenseClass::addCondition(struct firesense_condition_t cond, bool addToD
     delay(0);
     if (addToDatabase)
     {
-        FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-        json->clear();
-
+        _json.clear();
         if (cond.IF.length() > 0)
-            json->add(firesense_token_t::s_if, cond.IF);
+            _json.add(firesense_token_t::s_if, cond.IF);
         if (cond.THEN.length() > 0)
-            json->add(firesense_token_t::s_then, cond.THEN);
+            _json.add(firesense_token_t::s_then, cond.THEN);
         if (cond.ELSE.length() > 0)
-            json->add(firesense_token_t::s_else, cond.ELSE);
+            _json.add(firesense_token_t::s_else, cond.ELSE);
         std::string path = conditionPath();
         path += firesense_token_t::slash;
         path += String(conditionsList.size() - 1).c_str();
         delay(0);
 
         printUpdate("", 31);
-        if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, path.c_str(), json))
+        if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, path.c_str(), &_json))
             printError(config->shared_fbdo);
 
         if (config->close_session)
@@ -2551,8 +2537,6 @@ void FireSenseClass::loadConditionsList()
 
         struct firesense_condition_t cond;
         FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-        json->clear();
-
         json->get(_jdat, firesense_token_t::s_if);
         cond.IF = _jdat.stringValue;
         json->get(_jdat, firesense_token_t::s_then);
@@ -2960,7 +2944,6 @@ void FireSenseClass::loadStatus()
     {
 
         FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-        json->clear();
 
         for (size_t i = 0; i < channelsList.size(); i++)
         {
@@ -3148,10 +3131,10 @@ void FireSenseClass::addChannel(struct channel_info_t &channel, bool addToDataba
 
     channelsList.push_back(channel);
     if (addToDatabase)
-        addDBChannel(channel, channelsList.size() - 1);
+        addDBChannel(channel);
 }
 
-void FireSenseClass::addDBChannel(struct channel_info_t &channel, int index)
+void FireSenseClass::addDBChannel(struct channel_info_t &channel)
 {
     if (!configReady())
         return;
@@ -3159,27 +3142,21 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel, int index)
     printUpdate("", 8);
     delay(0);
     std::string path;
-
-    FirebaseJson *json = config->shared_fbdo->jsonObjectPtr();
-    json->clear();
-
-    json->add(firesense_token_t::id, channel.id);
-    json->add(firesense_token_t::name, channel.name);
-    json->add(firesense_token_t::location, channel.location);
-    json->add(firesense_token_t::uid, channel.uid);
-    json->add(firesense_token_t::gpio, channel.gpio);
-    json->add(firesense_token_t::type, channel.type);
-    json->add(firesense_token_t::utype, (int)channel.unbound_type);
-    json->add(firesense_token_t::vIndex, channel.value_index);
-    json->add(firesense_token_t::status, channel.status);
-    json->add(firesense_token_t::log, channel.log);
+    _json.clear();
+    _json.add(firesense_token_t::id, channel.id);
+    _json.add(firesense_token_t::name, channel.name);
+    _json.add(firesense_token_t::location, channel.location);
+    _json.add(firesense_token_t::uid, channel.uid);
+    _json.add(firesense_token_t::gpio, channel.gpio);
+    _json.add(firesense_token_t::type, channel.type);
+    _json.add(firesense_token_t::utype, (int)channel.unbound_type);
+    _json.add(firesense_token_t::vIndex, channel.value_index);
+    _json.add(firesense_token_t::status, channel.status);
+    _json.add(firesense_token_t::log, channel.log);
     path = channelConfigPath();
     path += firesense_token_t::slash;
-    path += String(index).c_str();
-
-    delay(0);
-
-    if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, path.c_str(), json))
+    path += String(channelsList.size() - 1).c_str();
+    if (!Firebase.RTDB.updateNodeSilentAsync(config->shared_fbdo, path.c_str(), &_json))
     {
         printError(config->shared_fbdo);
 
@@ -3187,17 +3164,14 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel, int index)
             config->shared_fbdo->clear();
         return;
     }
-    
-    json->clear();
+    _json.clear();
+    delay(0);
 
     updateDBStatus(channel);
-
 }
 
 void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
 {
-    delay(0);
-
     if (!configReady())
         return;
 
@@ -4604,8 +4578,6 @@ void FireSenseClass::setLogQueryIndex()
     if (config->close_session)
         config->shared_fbdo->clear();
 }
-
- 
 
 #endif
 
