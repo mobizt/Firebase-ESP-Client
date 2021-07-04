@@ -87,8 +87,7 @@ void loop()
     {
         dataMillis = millis();
 
-        String content;
-        FirebaseJson js;
+        FirebaseJson content;
 
         //We will create the nested document in the parent path "a0/b0/c0
         //a0 is the collection id, b0 is the document id in collection a0 and c0 is the collection id in the document b0.
@@ -96,51 +95,49 @@ void loop()
         String documentPath = "a0/b0/c0/d" + String(count);
 
         //double
-        js.set("fields/myDouble/doubleValue", 123.45678);
+        content.set("fields/myDouble/doubleValue", 123.45678);
 
         //boolean
-        js.set("fields/myBool/booleanValue", true);
+        content.set("fields/myBool/booleanValue", true);
 
         //integer
-        js.set("fields/myInteger/integerValue", "911");
+        content.set("fields/myInteger/integerValue", "911");
 
         //null
-        js.set("fields/myNull/nullValue"); // no value set
+        content.set("fields/myNull/nullValue"); // no value set
 
         String doc_path = "projects/";
         doc_path += FIREBASE_PROJECT_ID;
         doc_path += "/databases/(default)/documents/coll_id/doc_id"; //coll_id and doc_id are your collection id and document id
 
         //reference
-        js.set("fields/myRef/referenceValue", doc_path.c_str());
+        content.set("fields/myRef/referenceValue", doc_path.c_str());
 
         //timestamp
-        js.set("fields/myTimestamp/timestampValue", "2014-10-02T15:01:23Z"); //RFC3339 UTC "Zulu" format
+        content.set("fields/myTimestamp/timestampValue", "2014-10-02T15:01:23Z"); //RFC3339 UTC "Zulu" format
 
         //bytes
-        js.set("fields/myBytes/bytesValue", "aGVsbG8="); //base64 encoded
+        content.set("fields/myBytes/bytesValue", "aGVsbG8="); //base64 encoded
 
         //array
-        js.set("fields/myArray/arrayValue/values/[0]/stringValue", "test");
-        js.set("fields/myArray/arrayValue/values/[1]/integerValue", "20");
-        js.set("fields/myArray/arrayValue/values/[2]/booleanValue", true);
+        content.set("fields/myArray/arrayValue/values/[0]/stringValue", "test");
+        content.set("fields/myArray/arrayValue/values/[1]/integerValue", "20");
+        content.set("fields/myArray/arrayValue/values/[2]/booleanValue", true);
 
         //map
-        js.set("fields/myMap/mapValue/fields/name/stringValue", "wrench");
-        js.set("fields/myMap/mapValue/fields/mass/stringValue", "1.3kg");
-        js.set("fields/myMap/mapValue/fields/count/integerValue", "3");
+        content.set("fields/myMap/mapValue/fields/name/stringValue", "wrench");
+        content.set("fields/myMap/mapValue/fields/mass/stringValue", "1.3kg");
+        content.set("fields/myMap/mapValue/fields/count/integerValue", "3");
 
         //lat long
-        js.set("fields/myLatLng/geoPointValue/latitude", 1.486284);
-        js.set("fields/myLatLng/geoPointValue/longitude", 23.678198);
-
-        js.toString(content);
+        content.set("fields/myLatLng/geoPointValue/latitude", 1.486284);
+        content.set("fields/myLatLng/geoPointValue/longitude", 23.678198);
 
         count++;
 
         Serial.print("Create a document... ");
 
-        if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.c_str()))
+        if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.raw()))
             Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
         else
             Serial.println(fbdo.errorReason());

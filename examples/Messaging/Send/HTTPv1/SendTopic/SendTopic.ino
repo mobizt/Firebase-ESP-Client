@@ -109,15 +109,13 @@ void sendMessage()
     msg.notification.body = "Notification body";
     msg.notification.title = "Notification title";
 
-    FirebaseJson json;
-    String payload;
+    FirebaseJson payload;
 
     //all data key-values should be string
-    json.add("temp", "28");
-    json.add("unit", "celsius");
-    json.add("timestamp", "1609815454");
-    json.toString(payload);
-    msg.data = payload.c_str();
+    payload.add("temp", "28");
+    payload.add("unit", "celsius");
+    payload.add("timestamp", "1609815454");
+    msg.data = payload.raw();
 
     //As tested on June 22, 2021, FCM server returns error "Request contains an invalid argument" which is a bug on server side.
     //The error descrpipttion is "Invalid registration token" which message.token is not required when message.topic was used.

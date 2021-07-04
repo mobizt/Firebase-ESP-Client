@@ -122,15 +122,12 @@ void loop()
         //fb_esp_firestore_transform_type_remove_all_from_array
         field_transforms.transform_type = fb_esp_firestore_transform_type_increment;
 
-        String values;
-        FirebaseJson js;
+        FirebaseJson values;
 
-        js.set("integerValue", "1"); //increase by 1
-
-        js.toString(values);
+        values.set("integerValue", "1"); //increase by 1
 
         //Set the values of field
-        field_transforms.transform_content = values.c_str();
+        field_transforms.transform_content = values.raw();
 
         //Add a field transformation object to a write object.
         transform_write.document_transform.field_transforms.push_back(field_transforms);

@@ -86,19 +86,17 @@ void loop()
     {
         taskCompleted = true;
 
-        String content;
-        FirebaseJson js;
+        FirebaseJson content;
 
         //aa is the collection id, bb is the document id in collection aa.
         String documentPath = "aa/bb";
 
-        js.set("fields/v1/integerValue", "12345");
-        js.set("fields/v2/doubleValue", 123.456);
-        js.toString(content);
+        content.set("fields/v1/integerValue", "12345");
+        content.set("fields/v2/doubleValue", 123.456);
 
         Serial.print("Create a document... ");
 
-        if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.c_str()))
+        if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.raw()))
             Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
         else
             Serial.println(fbdo.errorReason());

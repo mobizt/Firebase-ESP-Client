@@ -94,10 +94,8 @@ void sendMessage()
     arr.add(DEVICE_REGISTRATION_ID_TOKEN_1);
     arr.add(DEVICE_REGISTRATION_ID_TOKEN_2);
     arr.add(DEVICE_REGISTRATION_ID_TOKEN_3);
-    String s;
-    arr.toString(s);
-
-    msg.targets.registration_ids = s.c_str();
+   
+    msg.targets.registration_ids = arr.raw();
 
     msg.options.time_to_live = "1000";
     msg.options.priority = "high";
@@ -107,15 +105,13 @@ void sendMessage()
     msg.payloads.notification.icon = "myicon";
     msg.payloads.notification.click_action = "OPEN_ACTIVITY_1";
 
-    FirebaseJson json;
-    String payload;
+    FirebaseJson payload;
 
     //all data key-values should be string
-    json.add("temp", "28");
-    json.add("unit", "celsius");
-    json.add("timestamp", "1609815454");
-    json.toString(payload);
-    msg.payloads.data = payload.c_str();
+    payload.add("temp", "28");
+    payload.add("unit", "celsius");
+    payload.add("timestamp", "1609815454");
+    msg.payloads.data = payload.raw();
 
     if (Firebase.FCM.send(&fbdo, &msg)) //send message to recipient
         Serial.printf("ok\n%s\n\n", Firebase.FCM.payload(&fbdo).c_str());

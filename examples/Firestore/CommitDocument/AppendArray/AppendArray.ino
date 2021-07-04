@@ -120,17 +120,14 @@ void loop()
         //fb_esp_firestore_transform_type_remove_all_from_array
         field_transforms.transform_type = fb_esp_firestore_transform_type_append_missing_elements;
 
-        String content;
-        FirebaseJson js;
+        FirebaseJson content;
 
         String txt = "Hello World! " + String(count);
-        js.set("values/[0]/integerValue", String(rand()).c_str());
-        js.set("values/[1]/stringValue", txt);
-
-        js.toString(content);
+        content.set("values/[0]/integerValue", String(rand()).c_str());
+        content.set("values/[1]/stringValue", txt);
 
         //Set the transformation content.
-        field_transforms.transform_content = content.c_str();
+        field_transforms.transform_content = content.raw();
 
         //Add a field transformation object to a write object.
         transform_write.document_transform.field_transforms.push_back(field_transforms);

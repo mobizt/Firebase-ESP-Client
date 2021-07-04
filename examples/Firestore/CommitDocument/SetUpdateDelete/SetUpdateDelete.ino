@@ -148,18 +148,15 @@ void loop()
 
         //Set the document content to write (transform)
 
-        String content;
-        FirebaseJson js;
+        FirebaseJson content;
         String documentPath = "test_collection/d" + String(count);
 
-        js.set("fields/count/integerValue", String(count).c_str());
-        js.set("fields/random/integerValue", String(rand()).c_str());
-        js.set("fields/status/booleanValue", count % 2 == 0);
-
-        js.toString(content);
+        content.set("fields/count/integerValue", String(count).c_str());
+        content.set("fields/random/integerValue", String(rand()).c_str());
+        content.set("fields/status/booleanValue", count % 2 == 0);
         
         //Set the update document content
-        update_write.update_document_content = content.c_str();
+        update_write.update_document_content = content.raw();
 
         //Set the update document path
         update_write.update_document_path = documentPath.c_str();

@@ -129,14 +129,11 @@ void callFunction()
 
     Serial.print("Call the Cloud Function... ");
 
-    FirebaseJson json;
-    json.set("info/name", "Paul");
-    json.set("info/age", 30);
+    FirebaseJson payload;
+    payload.set("info/name", "Paul");
+    payload.set("info/age", 30);
 
-    String payload;
-    json.toString(payload);
-
-    if (Firebase.Functions.callFunction(&fbdo, FIREBASE_PROJECT_ID /* project id */, PROJECT_LOCATION /* location id */, "helloWorld" /* function name */, payload.c_str() /* data pass to Cloud function (serialized JSON string) */))
+    if (Firebase.Functions.callFunction(&fbdo, FIREBASE_PROJECT_ID /* project id */, PROJECT_LOCATION /* location id */, "helloWorld" /* function name */, payload.raw() /* data pass to Cloud function (serialized JSON string) */))
         Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
     else
         Serial.println(fbdo.errorReason());

@@ -90,27 +90,24 @@ void loop()
         if (!taskCompleted)
         {
             taskCompleted = true;
-            String content;
 
-            FirebaseJson js;
+            FirebaseJson content;
 
-            js.set("fields/Japan/mapValue/fields/time_zone/integerValue", "9");
-            js.set("fields/Japan/mapValue/fields/population/integerValue", "125570000");
+            content.set("fields/Japan/mapValue/fields/time_zone/integerValue", "9");
+            content.set("fields/Japan/mapValue/fields/population/integerValue", "125570000");
 
-            js.set("fields/Belgium/mapValue/fields/time_zone/integerValue", "1");
-            js.set("fields/Belgium/mapValue/fields/population/integerValue", "11492641");
+            content.set("fields/Belgium/mapValue/fields/time_zone/integerValue", "1");
+            content.set("fields/Belgium/mapValue/fields/population/integerValue", "11492641");
 
-            js.set("fields/Singapore/mapValue/fields/time_zone/integerValue", "8");
-            js.set("fields/Singapore/mapValue/fields/population/integerValue", "5703600");
-
-            js.toString(content);
+            content.set("fields/Singapore/mapValue/fields/time_zone/integerValue", "8");
+            content.set("fields/Singapore/mapValue/fields/population/integerValue", "5703600");
 
             //info is the collection id, countries is the document id in collection info.
             String documentPath = "info/countries";
 
             Serial.print("Create document... ");
 
-            if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.c_str()))
+            if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.raw()))
                 Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
             else
                 Serial.println(fbdo.errorReason());
