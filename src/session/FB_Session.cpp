@@ -644,6 +644,27 @@ void FirebaseData::closeSession()
     _ss.connected = false;
 }
 
+int FirebaseData::tcpSend(const char *data)
+{
+    uint8_t attempts = 0;
+    uint8_t maxRetry = 5;
+    int ret = tcpClient.send(data);
+
+    while (ret != 0)
+    {
+        attempts++;
+        if (attempts > maxRetry)
+            break;
+
+        if (!reconnect())
+            return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
+
+        ret = tcpClient.send(data);
+    }
+
+    return ret;
+}
+
 bool FirebaseData::reconnect(unsigned long dataTime)
 {
 

@@ -164,7 +164,7 @@ private:
   void rescon(FirebaseData *fbdo, const char *host);
   void fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode);
   bool fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char*msg);
-  void fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, const char *payload);
+  int fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
   void fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg);
   void fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg);
   void fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken);

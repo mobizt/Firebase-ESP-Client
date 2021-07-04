@@ -223,9 +223,11 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
     fbdo->tcpClient.begin(host.c_str(), port);
 }
 
-void FB_CM::fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, const char *payload)
+int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload)
 {
     bool msgMode = (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1);
+    int ret = -1;
+    std::string header;
 
     if (mode == fb_esp_fcm_msg_mode_app_instance_info)
         ut->appendP(header, fb_esp_pgm_str_25, true);
@@ -284,12 +286,32 @@ void FB_CM::fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, con
     {
         ut->appendP(header, fb_esp_pgm_str_237);
         ut->appendP(header, fb_esp_pgm_str_271);
-        header += Signer.getToken(Signer.getTokenType());
+
+        ret = fbdo->tcpSend(header.c_str());
+        ut->clearS(header);
+
+        if (ret < 0)
+            return ret;
+
+        ret = fbdo->tcpSend(Signer.getToken(Signer.getTokenType()));
+
+        if (ret < 0)
+            return ret;
     }
     else
     {
         ut->appendP(header, fb_esp_pgm_str_131);
-        header += server_key;
+
+        ret = fbdo->tcpSend(header.c_str());
+        ut->clearS(header);
+
+        if (ret < 0)
+            return ret;
+
+        ret = fbdo->tcpSend(server_key.c_str());
+
+        if (ret < 0)
+            return ret;
     }
 
     ut->appendP(header, fb_esp_pgm_str_21);
@@ -311,6 +333,11 @@ void FB_CM::fcm_prepareHeader(std::string &header, fb_esp_fcm_msg_mode mode, con
 
     ut->appendP(header, fb_esp_pgm_str_36);
     ut->appendP(header, fb_esp_pgm_str_21);
+
+    ret = fbdo->tcpSend(header.c_str());
+    ut->clearS(header);
+
+    return ret;
 }
 
 void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
@@ -1164,12 +1191,10 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *m
             }
     }
 
-    std::string header;
-    fcm_prepareHeader(header, mode, msg);
-    int ret = fbdo->tcpClient.send(header.c_str());
+    int ret = fcm_sendHeader(fbdo, mode, msg);
     if (ret == 0)
         ret = fbdo->tcpClient.send(msg);
-    ut->clearS(header);
+
     ut->clearS(fbdo->_ss.fcm.payload);
     if (ret != 0)
     {

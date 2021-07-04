@@ -197,8 +197,6 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
     fbdo->_ss.fcs.requestType = req->requestType;
 
-    std::string token = Signer.getToken(Signer.getTokenType());
-
     if (!Signer.getCfg()->_int.fb_flash_rdy)
         ut->flashTest();
 
@@ -272,6 +270,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     }
 
     std::string header;
+    int ret = -1;
 
     if (req->requestType == fb_esp_fcs_request_type_upload || req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
         ut->appendP(header, fb_esp_pgm_str_24);
@@ -340,7 +339,17 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     else if (type == token_type_oauth2_access_token)
         ut->appendP(header, fb_esp_pgm_str_271);
 
-    header += token;
+    ret = fbdo->tcpSend(header.c_str());
+    ut->clearS(header);
+
+    if (ret < 0)
+        return false;
+
+    ret = fbdo->tcpSend(Signer.getToken(Signer.getTokenType()));
+
+    if (ret < 0)
+        return false;
+
     ut->appendP(header, fb_esp_pgm_str_21);
     ut->appendP(header, fb_esp_pgm_str_32);
     ut->appendP(header, fb_esp_pgm_str_34);
@@ -348,7 +357,8 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
     fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    int ret = fbdo->tcpClient.send(header.c_str());
+    ret = fbdo->tcpSend(header.c_str());
+    ut->clearS(header);
 
     if (ret == 0)
     {

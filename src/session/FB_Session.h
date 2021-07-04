@@ -655,6 +655,7 @@ private:
   void closeSession();
   bool handleStreamRead();
   void checkOvf(size_t len, struct server_response_data_t &resp);
+  int tcpSend(const char *data);
   bool reconnect(unsigned long dataTime = 0);
   std::string getDataType(uint8_t type);
   std::string getMethod(uint8_t method);

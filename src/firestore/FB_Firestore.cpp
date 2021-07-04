@@ -674,8 +674,7 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
 
 bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req)
 {
-    std::string token = Signer.getToken(Signer.getTokenType());
-
+    int ret = -1;
     std::string header;
     if (req->requestType == fb_esp_firestore_request_type_get_doc || req->requestType == fb_esp_firestore_request_type_list_doc)
         ut->appendP(header, fb_esp_pgm_str_25);
@@ -897,7 +896,17 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     else if (type == token_type_oauth2_access_token)
         ut->appendP(header, fb_esp_pgm_str_271);
 
-    header += token;
+    ret = fbdo->tcpSend(header.c_str());
+    ut->clearS(header);
+
+    if (ret < 0)
+        return false;
+
+    ret = fbdo->tcpSend(Signer.getToken(Signer.getTokenType()));
+
+    if (ret < 0)
+        return false;
+
     ut->appendP(header, fb_esp_pgm_str_21);
 
     ut->appendP(header, fb_esp_pgm_str_32);
@@ -906,14 +915,12 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
 
     fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    int ret = fbdo->tcpClient.send(header.c_str());
+    ret = fbdo->tcpSend(header.c_str());
     if (ret == 0)
-        ret = fbdo->tcpClient.send(req->payload.c_str());
+        ret = fbdo->tcpSend(req->payload.c_str());
 
-    header.clear();
-    req->payload.clear();
-    std::string().swap(header);
-    std::string().swap(req->payload);
+    ut->clearS(header);
+    ut->clearS(req->payload);
 
     if (ret == 0)
     {

@@ -13,6 +13,8 @@
 /** 
  * This example shows how to read the and process IO channels programatically.
  * 
+ * This example sketch may not compatible with ESP8266 device which may crash due to stack overflow.
+ * 
  * The code will read the analog value and calculate the measured voltage and average voltage periodically.
  * 
  * This example used the FireSense, The Programmable Data Logging and IO Control library to

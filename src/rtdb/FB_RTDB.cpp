@@ -3948,9 +3948,9 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     //Send payload
     if (req->data.jsonPtr)
-        ret = tcpSend(fbdo, req->data.jsonPtr->raw());
+        ret = fbdo->tcpSend(req->data.jsonPtr->raw());
     else if (req->data.arrPtr)
-        ret = tcpSend(fbdo, req->data.arrPtr->raw());
+        ret = fbdo->tcpSend(req->data.arrPtr->raw());
     else if (strlen(req->payload) > 0)
     {
         char *tmp = nullptr;
@@ -3967,10 +3967,10 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
             if (req->data.type == d_string)
                 ut->appendP(s, fb_esp_pgm_str_3);
 
-            ret = tcpSend(fbdo, s.c_str());
+            ret = fbdo->tcpSend(s.c_str());
 
             if (ret == 0)
-                ret = tcpSend(fbdo, req->payload);
+                ret = fbdo->tcpSend(req->payload);
 
             if (ret == 0)
             {
@@ -3986,7 +3986,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
                 ut->appendP(s, fb_esp_pgm_str_7);
                 s += req->priority;
                 ut->appendP(s, fb_esp_pgm_str_127);
-                ret = tcpSend(fbdo, s.c_str());
+                ret = fbdo->tcpSend(s.c_str());
             }
         }
         else
@@ -3994,13 +3994,13 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
             tmp = ut->strP(fb_esp_pgm_str_3);
 
             if (req->data.type == d_string && ret == 0)
-                ret = tcpSend(fbdo, tmp);
+                ret = fbdo->tcpSend(tmp);
 
             if (ret == 0)
-                ret = tcpSend(fbdo, req->payload);
+                ret = fbdo->tcpSend(req->payload);
 
             if (req->data.type == d_string && ret == 0)
-                ret = tcpSend(fbdo, tmp);
+                ret = fbdo->tcpSend(tmp);
 
             ut->delS(tmp);
         }
@@ -4009,13 +4009,13 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     {
         std::string s;
         ut->appendP(s, fb_esp_pgm_str_92, true);
-        ret = tcpSend(fbdo, s.c_str());
+        ret = fbdo->tcpSend(s.c_str());
         if (ret == 0)
         {
             if (ut->sendBase64(req->data.blobPtr2, req->data.blobSize, true, &fbdo->tcpClient))
             {
                 ut->appendP(s, fb_esp_pgm_str_3, true);
-                ret = tcpSend(fbdo, s.c_str());
+                ret = fbdo->tcpSend(s.c_str());
             }
         }
     }
@@ -4029,7 +4029,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         if (req->data.type == d_file && (req->method == m_put_nocontent || req->method == m_post))
         {
             buf = ut->strP(fb_esp_pgm_str_93);
-            ret = tcpSend(fbdo, buf);
+            ret = fbdo->tcpSend(buf);
             ut->delS(buf);
             if (ret == 0)
                 ut->sendBase64Stream(fbdo->tcpClient.stream(), fbdo->_ss.rtdb.file_name, fbdo->_ss.rtdb.storage_type, Signer.getCfg()->_int.fb_file);
@@ -4039,7 +4039,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
             buf = ut->newS(2);
             buf[0] = '"';
             buf[1] = '\0';
-            ret = tcpSend(fbdo, buf);
+            ret = fbdo->tcpSend(buf);
             ut->delS(buf);
 
             if (ret != 0)
@@ -4061,7 +4061,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
                 buf[toRead] = '\0';
 
-                ret = tcpSend(fbdo, buf);
+                ret = fbdo->tcpSend(buf);
                 ut->delS(buf);
 
                 if (ret != 0)
@@ -4078,27 +4078,6 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     }
 
     fbdo->_ss.connected = ret == 0;
-    return ret;
-}
-
-int FB_RTDB::tcpSend(FirebaseData *fbdo, const char *data)
-{
-    uint8_t attempts = 0;
-    uint8_t maxRetry = 5;
-    int ret = fbdo->tcpClient.send(data);
-
-    while (ret != 0)
-    {
-        attempts++;
-        if (attempts > maxRetry)
-            break;
-
-        if (!fbdo->reconnect())
-            return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
-
-        ret = fbdo->tcpClient.send(data);
-    }
-
     return ret;
 }
 
@@ -5079,16 +5058,16 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         else
             ut->appendP(header, fb_esp_pgm_str_2);
 
-        ret = tcpSend(fbdo, header.c_str());
+        ret = fbdo->tcpSend(header.c_str());
         ut->clearS(header);
 
         if (ret < 0)
             return ret;
 
         if (Signer.getTokenType() == token_type_legacy_token)
-            ret = tcpSend(fbdo, Signer.getToken(token_type_legacy_token));
+            ret = fbdo->tcpSend(Signer.getToken(token_type_legacy_token));
         else if (Signer.getTokenType() == token_type_id_token || Signer.getTokenType() == token_type_custom_token)
-            ret = tcpSend(fbdo, Signer.getToken(token_type_id_token));
+            ret = fbdo->tcpSend(Signer.getToken(token_type_id_token));
 
         if (ret < 0)
             return ret;
@@ -5193,13 +5172,13 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         header += Signer.getCfg()->signer.tokens.auth_type;
         ut->appendP(header, fb_esp_pgm_str_6);
 
-        ret = tcpSend(fbdo, header.c_str());
+        ret = fbdo->tcpSend(header.c_str());
         ut->clearS(header);
 
         if (ret < 0)
             return ret;
 
-        ret = tcpSend(fbdo, Signer.getToken(token_type_oauth2_access_token));
+        ret = fbdo->tcpSend(Signer.getToken(token_type_oauth2_access_token));
 
         if (ret < 0)
             return ret;
@@ -5264,7 +5243,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
     ut->appendP(header, fb_esp_pgm_str_21);
     ut->appendP(header, fb_esp_pgm_str_21);
 
-    ret = tcpSend(fbdo, header.c_str());
+    ret = fbdo->tcpSend(header.c_str());
     ut->clearS(header);
     return ret;
 }

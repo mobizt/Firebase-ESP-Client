@@ -71,6 +71,8 @@
 #endif
 #endif
 
+class FireSenseClass;
+
 class MillisTimer
 {
 public:
@@ -212,7 +214,7 @@ public:
     FireSenseClass();
     ~FireSenseClass();
     FireSenseClass &operator=(FireSenseClass other);
-    FireSenseClass(FireSenseClass &other);
+    FireSenseClass(const FireSenseClass &other);
 
     /** Initiate the FireSense Class.
      * 
@@ -704,7 +706,7 @@ private:
     void printUpdate(const char *msg, int type, float value = 0);
     void pauseStream();
     void unpauseStream();
-    void copyConstructor(FireSenseClass &other);
+    void copyConstructor(const FireSenseClass &other);
 
 #if defined(ESP8266)
     void set_scheduled_callback(callback_function_t callback);
@@ -801,12 +803,12 @@ FireSenseClass &FireSenseClass::operator=(FireSenseClass other)
     return *this;
 }
 
-FireSenseClass::FireSenseClass(FireSenseClass &other)
+FireSenseClass::FireSenseClass(const FireSenseClass &other)
 {
     copyConstructor(other);
 }
 
-void FireSenseClass::copyConstructor(FireSenseClass &other)
+void FireSenseClass::copyConstructor(const FireSenseClass &other)
 {
     channelsList = other.channelsList;
     userValueList = other.userValueList;
@@ -909,9 +911,9 @@ bool FireSenseClass::begin(struct firesense_config_t *config, const char *databa
 
 #ifdef ESP8266
     if (this->config->shared_fbdo)
-        this->config->shared_fbdo->setBSSLBufferSize(1024, 512);
+        this->config->shared_fbdo->setBSSLBufferSize(1024, 1024);
     if (this->config->stream_fbdo)
-        this->config->stream_fbdo->setBSSLBufferSize(1024, 512);
+        this->config->stream_fbdo->setBSSLBufferSize(1024, 1024);
 #endif
 
     this->config->shared_fbdo->setResponseSize(1024);
@@ -3176,7 +3178,9 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel, int index)
     path = channelConfigPath();
     path += firesense_token_t::slash;
     path += String(index).c_str();
-   
+
+    delay(0);
+
     if (!Firebase.RTDB.updateNodeSilent(config->shared_fbdo, path.c_str(), json))
     {
         printError(config->shared_fbdo);
@@ -3187,7 +3191,6 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel, int index)
     }
     
     json->clear();
-    delay(0);
 
     updateDBStatus(channel);
 
@@ -3195,6 +3198,8 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel, int index)
 
 void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
 {
+    delay(0);
+    
     if (!configReady())
         return;
 
@@ -4602,7 +4607,7 @@ void FireSenseClass::setLogQueryIndex()
         config->shared_fbdo->clear();
 }
 
-FireSenseClass FireSense;
+FireSenseClass FireSense = FireSenseClass();
 
 #endif
 

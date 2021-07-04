@@ -1767,7 +1767,6 @@ private:
   bool handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   int sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   int sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  int tcpSend(FirebaseData *fbdo, const char *data);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);

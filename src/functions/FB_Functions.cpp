@@ -228,7 +228,6 @@ bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
     fbdo->_ss.jsonPtr->clear();
 
     char *tmp = nullptr;
-    std::string token = Signer.getToken(token_type_oauth2_access_token);
 
     tmp = ut->strP(fb_esp_pgm_str_387);
     fbdo->_ss.jsonPtr->add(tmp, config->_projectId.c_str());
@@ -245,7 +244,7 @@ bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
     ut->delS(tmp2);
 
     tmp = ut->strP(fb_esp_pgm_str_454);
-    fbdo->_ss.jsonPtr->add(tmp, token.c_str());
+    fbdo->_ss.jsonPtr->add(tmp, Signer.getToken(token_type_oauth2_access_token));
     ut->delS(tmp);
 
     tmp = ut->strP(fb_esp_pgm_str_455);
@@ -860,13 +859,12 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
     fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    int ret = fbdo->tcpClient.send(header.c_str());
+    int ret = fbdo->tcpSend(header.c_str());
     if (ret == 0)
-        ret = fbdo->tcpClient.send(req->payload.c_str());
-    header.clear();
-    req->payload.clear();
-    std::string().swap(header);
-    std::string().swap(req->payload);
+        ret = fbdo->tcpSend(req->payload.c_str());
+
+    ut->clearS(header);
+    ut->clearS(req->payload);
 
     if (ret == 0)
     {

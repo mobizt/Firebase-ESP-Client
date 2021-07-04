@@ -254,7 +254,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     fbdo->_ss.gcs.requestType = req->requestType;
 
-    std::string token = Signer.getToken(Signer.getTokenType());
+    int ret = -1;
 
     if (!Signer.getCfg()->_int.fb_flash_rdy)
         ut->flashTest();
@@ -469,7 +469,18 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         ut->appendP(header, fb_esp_pgm_str_237);
         if (Signer.getTokenType() == token_type_oauth2_access_token)
             ut->appendP(header, fb_esp_pgm_str_271);
-        header += token;
+
+        ret = fbdo->tcpSend(header.c_str());
+        ut->clearS(header);
+
+        if (ret < 0)
+            return false;
+
+        ret = fbdo->tcpSend(Signer.getToken(Signer.getTokenType()));
+
+        if (ret < 0)
+            return false;
+
         ut->appendP(header, fb_esp_pgm_str_21);
     }
 
@@ -612,17 +623,19 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     ut->appendP(header, fb_esp_pgm_str_21);
 
-    int ret = 0;
     if (req->requestType == fb_esp_gcs_request_type_download)
-        ret = fbdo->tcpClient.send(header.c_str());
+    {
+        ret = fbdo->tcpSend(header.c_str());
+        ut->clearS(header);
+    }
     else
     {
-        ret = fbdo->tcpClient.send(header.c_str());
+        ret = fbdo->tcpSend(header.c_str());
+        ut->clearS(header);
         if (ret == 0)
-            ret = fbdo->tcpClient.send(fbdo->_ss.jsonPtr->raw());
+            ret = fbdo->tcpSend(fbdo->_ss.jsonPtr->raw());
     }
 
-    ut->clearS(header);
     ut->clearS(boundary);
 
     if (ret == 0)
@@ -634,7 +647,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
             if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
             {
-                ret = fbdo->tcpClient.send(multipart_header.c_str());
+                ret = fbdo->tcpSend(multipart_header.c_str());
                 ut->clearS(multipart_header);
             }
 
@@ -667,7 +680,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
             if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
             {
-                ret = fbdo->tcpClient.send(multipart_header2.c_str());
+                ret = fbdo->tcpSend(multipart_header2.c_str());
                 ut->clearS(multipart_header2);
             }
 
