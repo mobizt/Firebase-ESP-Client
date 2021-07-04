@@ -633,11 +633,14 @@ bool FB_RTDB::int_pushInt(FirebaseData *fbdo, const char *path, int intValue, bo
 
 void FB_RTDB::addJsonPriority(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
-    if (req->data.jsonPtr)
+    if (req->data.jsonPtr && strlen(req->priority) > 0)
     {
         char *tmp = nullptr;
         tmp = ut->strP(fb_esp_pgm_str_157);
-        req->data.jsonPtr->add((const char *)tmp, req->priority);
+        if (ut->strposP(req->priority, fb_esp_pgm_str_4, 0) != -1)
+            req->data.jsonPtr->add((const char *)tmp, atof(req->priority));
+        else
+            req->data.jsonPtr->add((const char *)tmp, atoi(req->priority));
         ut->delS(tmp);
     }
 }
@@ -4653,7 +4656,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                     }
                 }
 
-                if (fbdo->_ss.rtdb.resp_data_type != d_null && fbdo->_ss.rtdb.req_data_type != d_timestamp && !response.noContent && fbdo->_ss.rtdb.req_method != m_post && fbdo->_ss.rtdb.req_method != m_get_shallow && response.httpCode < 400)
+                if (fbdo->_ss.rtdb.req_method != m_get_nocontent && fbdo->_ss.rtdb.req_data_type != d_timestamp && !response.noContent && fbdo->_ss.rtdb.req_method != m_post && fbdo->_ss.rtdb.req_method != m_get_shallow && response.httpCode < 400)
                 {
                     bool _reqType = fbdo->_ss.rtdb.req_data_type == d_integer || fbdo->_ss.rtdb.req_data_type == d_float || fbdo->_ss.rtdb.req_data_type == d_double;
                     bool _respType = fbdo->_ss.rtdb.resp_data_type == d_integer || fbdo->_ss.rtdb.resp_data_type == d_float || fbdo->_ss.rtdb.resp_data_type == d_double;

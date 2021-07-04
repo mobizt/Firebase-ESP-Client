@@ -1149,8 +1149,10 @@ void FCMObject::fcm_begin(FirebaseData &fbdo)
     fbdo.tcpClient.begin(host.c_str(), _port);
 }
 
-void FCMObject::fcm_prepareHeader(std::string &header, size_t payloadSize)
+int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
 {
+    int ret = -1;
+    std::string header;
     if (!ut)
         ut = new UtilsClass(nullptr);
     FirebaseJsonData server_key;
@@ -1172,7 +1174,16 @@ void FCMObject::fcm_prepareHeader(std::string &header, size_t payloadSize)
     ut->appendP(header, fb_esp_pgm_str_21);
 
     ut->appendP(header, fb_esp_pgm_str_131);
-    header += server_key.stringValue.c_str();
+
+    ret = fbdo.tcpSend(header.c_str());
+    ut->clearS(header);
+    if (ret < 0)
+        return ret;
+
+    ret = fbdo.tcpSend(server_key.stringValue.c_str());
+    if (ret < 0)
+        return ret;
+
     ut->appendP(header, fb_esp_pgm_str_21);
 
     ut->appendP(header, fb_esp_pgm_str_32);
@@ -1188,6 +1199,10 @@ void FCMObject::fcm_prepareHeader(std::string &header, size_t payloadSize)
     ut->appendP(header, fb_esp_pgm_str_21);
     ut->appendP(header, fb_esp_pgm_str_36);
     ut->appendP(header, fb_esp_pgm_str_21);
+
+    ret = fbdo.tcpSend(header.c_str());
+    ut->clearS(header);
+    return ret;
 }
 
 void FCMObject::fcm_preparePayload(fb_esp_fcm_msg_type messageType)
@@ -1534,8 +1549,6 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    std::string header;
-
     FirebaseJsonData msg;
 
     fcm_preparePayload(messageType);
@@ -1545,10 +1558,9 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
     ut->appendP(s, fb_esp_pgm_str_575);
     json.get(msg, s.c_str());
 
-    fcm_prepareHeader(header, msg.stringValue.length());
-
-    int ret = fbdo.tcpClient.send(header.c_str(), msg.stringValue.c_str());
-    ut->clearS(header);
+    int ret = fcm_sendHeader(fbdo, msg.stringValue.length());
+    if (ret == 0)
+        ret = fbdo.tcpSend(msg.stringValue.c_str());
     json.remove(s.c_str());
     ut->clearS(s);
     ut->clearS(raw);

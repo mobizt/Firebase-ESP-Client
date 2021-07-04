@@ -36,8 +36,8 @@
 #define FIREBASE_SESSION_H
 #include <Arduino.h>
 #include "Utils.h"
-#include "stream/FB_Stream.h"
-#include "stream/FB_MP_Stream.h"
+#include "rtdb/stream/FB_Stream.h"
+#include "rtdb/stream/FB_MP_Stream.h"
 #include "rtdb/QueueInfo.h"
 #include "rtdb/QueueManager.h"
 
@@ -180,7 +180,7 @@ private:
 
   bool fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
 
-  void fcm_prepareHeader(std::string &header, size_t payloadSize);
+  int fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize);
 
   void fcm_preparePayload(fb_esp_fcm_msg_type messageType);
 
