@@ -713,7 +713,7 @@ private:
 #endif
 };
 
-extern FireSenseClass FireSense;
+//extern FireSenseClass FireSense;
 
 #if defined(ESP32)
 TaskHandle_t firesense_run_task_handle = NULL;
@@ -866,7 +866,7 @@ bool FireSenseClass::configExisted()
 
 static void FiresenseStreamCB(FIREBASE_STREAM_CLASS data)
 {
-   FireSense.readStream(&data);
+   //FireSense.readStream(&data);
 }
 
 static void FiresenseStreamToCB(bool timeout)
