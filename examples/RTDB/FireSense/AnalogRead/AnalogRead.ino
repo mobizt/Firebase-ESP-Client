@@ -95,6 +95,8 @@
 /* 5. Define the database secret in case we need to access database rules*/
 #define DATABASE_SECRET "DATABASE_SECRET"
 
+FireSenseClass FireSense;
+
 //Define Firebase Data object
 FirebaseData fbdo1;
 FirebaseData fbdo2;

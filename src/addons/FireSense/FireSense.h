@@ -4605,7 +4605,7 @@ void FireSenseClass::setLogQueryIndex()
         config->shared_fbdo->clear();
 }
 
- FireSenseClass FireSense = FireSenseClass();
+ 
 
 #endif
 
