@@ -866,7 +866,7 @@ bool FireSenseClass::configExisted()
 
 static void FiresenseStreamCB(FIREBASE_STREAM_CLASS data)
 {
-    FireSense.readStream(&data);
+   FireSense.readStream(&data);
 }
 
 static void FiresenseStreamToCB(bool timeout)
@@ -1004,8 +1004,6 @@ void FireSenseClass::setupStream()
             printUpdate("", 21);
     }
 
-    if (config->stream_fbdo && !config->disable_command)
-        Firebase.RTDB.setStreamCallback(config->stream_fbdo, FiresenseStreamCB, FiresenseStreamToCB);
 }
 
 void FireSenseClass::addCallbackFunction(FireSense_Function func)
@@ -3199,7 +3197,7 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel, int index)
 void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
 {
     delay(0);
-    
+
     if (!configReady())
         return;
 
@@ -4607,7 +4605,7 @@ void FireSenseClass::setLogQueryIndex()
         config->shared_fbdo->clear();
 }
 
-FireSenseClass FireSense = FireSenseClass();
+ FireSenseClass FireSense = FireSenseClass();
 
 #endif
 
