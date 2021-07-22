@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Just ask somthing**
+**Just ask something**
 If you have questions, use [Discussions](https://github.com/mobizt/Firebase-ESP-Client/discussions) instead. 
 
 **Describe the bug**
