@@ -51,6 +51,8 @@ double mydouble = 0;
 uint32_t queueID[20];
 uint8_t qIdx = 0;
 
+int queueCnt = 0;
+
 void callback(QueueInfo queueinfo)
 {
 
@@ -124,6 +126,7 @@ void setup()
 
   //Open and retore Firebase Error Queues from file.
   //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+
   if (Firebase.RTDB.errorQueueCount(&fbdo, "/test.txt", mem_storage_type_flash) > 0)
   {
     Firebase.RTDB.restoreErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
@@ -146,6 +149,9 @@ void setup()
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
@@ -154,7 +160,7 @@ void loop()
 
     if (fbdo.httpCode() != FIREBASE_ERROR_HTTP_CODE_OK && Firebase.RTDB.getErrorQueueID(&fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.RTDB.getErrorQueueID(&fbdo)));
+      Serial.printf("Error Queue ID: %d\n", (int)Firebase.RTDB.getErrorQueueID(&fbdo));
       queueID[qIdx] = Firebase.RTDB.getErrorQueueID(&fbdo);
       qIdx++;
     }
@@ -168,7 +174,7 @@ void loop()
 
     if (fbdo.httpCode() != FIREBASE_ERROR_HTTP_CODE_OK && Firebase.RTDB.getErrorQueueID(&fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.RTDB.getErrorQueueID(&fbdo)));
+      Serial.printf("Error Queue ID: %d\n", (int)Firebase.RTDB.getErrorQueueID(&fbdo));
       queueID[qIdx] = Firebase.RTDB.getErrorQueueID(&fbdo);
       qIdx++;
     }
@@ -189,7 +195,7 @@ void loop()
     {
       if (Firebase.RTDB.getErrorQueueID(&fbdo) > 0)
       {
-        Serial.println("Error Queue ID: " + String(Firebase.RTDB.getErrorQueueID(&fbdo)));
+        Serial.printf("Error Queue ID: %d\n", (int)Firebase.RTDB.getErrorQueueID(&fbdo));
         queueID[qIdx] = Firebase.RTDB.getErrorQueueID(&fbdo);
         qIdx++;
       }
@@ -202,7 +208,7 @@ void loop()
     {
       if (Firebase.RTDB.getErrorQueueID(&fbdo) > 0)
       {
-        Serial.println("Error Queue ID: " + String(Firebase.RTDB.getErrorQueueID(&fbdo)));
+        Serial.printf("Error Queue ID: %d\n", (int)Firebase.RTDB.getErrorQueueID(&fbdo));
         queueID[qIdx] = Firebase.RTDB.getErrorQueueID(&fbdo);
         qIdx++;
       }
@@ -222,13 +228,15 @@ void loop()
 
     //Stop error queue auto run process
     //Firebase.RTDB.endAutoRunErrorQueue(&fbdo);
+
+    queueCnt = Firebase.RTDB.errorQueueCount(&fbdo);
   }
 
   /*
 
-    if Firebase.RTDB.beginAutoRunErrorQueue was not call,
-    to manaul run the Firebase Error Queues, just call
-    Firebase.RTDB.processErrorQueue in loop
+    //if Firebase.RTDB.beginAutoRunErrorQueue was not call,
+    //to manaul run the Firebase Error Queues, just call
+    //Firebase.RTDB.processErrorQueue in loop
 
 
     Firebase.RTDB.processErrorQueue(&fbdo);
@@ -256,28 +264,31 @@ void loop()
 
   */
 
-  if (mydouble > 0)
+  if (queueCnt > 0)
   {
-    Serial.println("Double Data gets from Queue");
-    printf("%.9lf\n", mydouble);
-    Serial.println();
-    mydouble = 0;
-  }
-
-  if (myblob.size() > 0)
-  {
-    Serial.println("Blob Data gets from Queue");
-    for (size_t i = 0; i < myblob.size(); i++)
+    if (mydouble > 0)
     {
-      if (i > 0 && i % 16 == 0)
-        Serial.println();
-      if (myblob[i] < 16)
-        Serial.print("0");
-      Serial.print(myblob[i], HEX);
-      Serial.print(" ");
+      Serial.println("Double Data gets from Queue");
+      printf("%.9lf\n", mydouble);
+      Serial.println();
+      mydouble = 0;
     }
-    Serial.println();
-    Serial.println();
-    myblob.clear();
+
+    if (myblob.size() > 0)
+    {
+      Serial.println("Blob Data gets from Queue");
+      for (size_t i = 0; i < myblob.size(); i++)
+      {
+        if (i > 0 && i % 16 == 0)
+          Serial.println();
+        if (myblob[i] < 16)
+          Serial.print("0");
+        Serial.print(myblob[i], HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
+      Serial.println();
+      myblob.clear();
+    }
   }
 }

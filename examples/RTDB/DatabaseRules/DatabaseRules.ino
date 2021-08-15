@@ -94,23 +94,30 @@ void setup()
   Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
+
+#if defined(ESP8266)
+  //required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+#endif
 }
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
 
-    String rules = "";
+    String rules;
 
     Serial.printf("Get RTDB rules... %s\n", Firebase.RTDB.getRules(&fbdo) ? "ok" : fbdo.errorReason().c_str());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {
-
-      FirebaseJson &json = fbdo.jsonObject();
-      json.toString(rules, true);
+      FirebaseJson *json = fbdo.to<FirebaseJson *>();
+      json->toString(rules, true);
       Serial.println(rules);
       Serial.println();
     }

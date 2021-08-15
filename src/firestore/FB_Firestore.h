@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.1.1
+ * Google's Cloud Firestore class, Forestore.h version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -327,7 +327,7 @@ private:
     bool firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
     bool handleResponse(FirebaseData *fbdo);
     bool setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms);
-    bool int_commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction = "", bool async = false);
+    bool mCommitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction = "", bool async = false);
 };
 
 #endif

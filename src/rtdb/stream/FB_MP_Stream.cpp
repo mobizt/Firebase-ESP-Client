@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.0.6
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 25, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -58,10 +58,10 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
     type.clear();
     dataPath.clear();
     bool res = false;
-    if (sif->m_type == fb_esp_data_type::d_json)
+    if (sif->data_type == fb_esp_data_type::d_json)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_1);
-        bool r = strcmp(sif->m_path.c_str(), tmp) == 0;
+        bool r = strcmp(sif->path.c_str(), tmp) == 0;
         ut->delS(tmp);
         if (r)
         {
@@ -72,9 +72,9 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
                 type = data.type;
                 char *buf = ut->strP(fb_esp_pgm_str_186);
                 if (strcmp(type.c_str(), buf) == 0)
-                    type = sif->m_type_str.c_str();
-                eventType = sif->m_event_type_str.c_str();
-                value = data.stringValue;
+                    type = sif->data_type_str.c_str();
+                eventType = sif->event_type_str.c_str();
+                value = data.to<const char*>();
                 dataPath = path;
                 ut->delS(buf);
                 res = true;
@@ -82,7 +82,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
         }
         else
         {
-            std::string p1 = sif->m_path;
+            std::string p1 = sif->path;
             if (path.length() < p1.length())
                 p1 = p1.substr(0, path.length());
             std::string p2 = path.c_str();
@@ -91,9 +91,9 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             if (strcmp(p1.c_str(), p2.c_str()) == 0)
             {
                 sif->m_json->toString(value, true);
-                type = sif->m_type_str.c_str();
-                eventType = sif->m_event_type_str.c_str();
-                dataPath = sif->m_path.c_str();
+                type = sif->data_type_str.c_str();
+                eventType = sif->event_type_str.c_str();
+                dataPath = sif->path.c_str();
                 res = true;
             }
             ut->clearS(p1);
@@ -102,7 +102,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
     }
     else
     {
-        std::string p1 = sif->m_path;
+        std::string p1 = sif->path;
         if (path.length() < p1.length())
             p1 = p1.substr(0, path.length());
         std::string p2 = path.c_str();
@@ -110,10 +110,10 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             p2 = "/" + p2;
         if (strcmp(p1.c_str(), p2.c_str()) == 0)
         {
-            value = sif->m_data.c_str();
-            dataPath = sif->m_path.c_str();
-            type = sif->m_type_str.c_str();
-            eventType = sif->m_event_type_str.c_str();
+            value = sif->data.c_str();
+            dataPath = sif->path.c_str();
+            type = sif->data_type_str.c_str();
+            eventType = sif->event_type_str.c_str();
             res = true;
         }
         ut->clearS(p1);
@@ -128,6 +128,16 @@ void FIREBASE_MP_STREAM_CLASS::empty()
     value.clear();
     type.clear();
     sif->m_json = nullptr;
+}
+
+int FIREBASE_MP_STREAM_CLASS::payloadLength()
+{
+    return sif->payload_length;
+}
+
+int FIREBASE_MP_STREAM_CLASS::maxPayloadLength()
+{
+    return sif->max_payload_length;
 }
 
 #endif

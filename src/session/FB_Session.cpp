@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.1.2
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -62,45 +62,55 @@ bool FirebaseData::init()
 
     return true;
 }
+
 #ifdef ENABLE_RTDB
+
+void FirebaseData::mSetResBool(bool value)
+{
+    if (value)
+    {
+        iVal = {1};
+        fVal.setd(1);
+    }
+    else
+    {
+        iVal = {0};
+        fVal.setd(0);
+    }
+}
+
+void FirebaseData::mSetResInt(const char *value)
+{
+    if (strlen(value) > 0)
+    {
+        char *pEnd;
+        value[0] == '-' ? iVal.int64 = strtoll(value, &pEnd, 10) : iVal.uint64 = strtoull(value, &pEnd, 10);
+    }
+    else
+        iVal = {0};
+}
+
+void FirebaseData::mSetResFloat(const char *value)
+{
+    if (strlen(value) > 0)
+    {
+        char *pEnd;
+        fVal.setd(strtod(value, &pEnd));
+    }
+    else
+        fVal.setd(0);
+}
+
 void FirebaseData::clearQueueItem(QueueItem *item)
 {
     ut->clearS(item->path);
     ut->clearS(item->filename);
     ut->clearS(item->payload);
-
-    item->stringPtr = nullptr;
-    item->intPtr = nullptr;
-    item->floatPtr = nullptr;
-    item->doublePtr = nullptr;
-    item->boolPtr = nullptr;
-    item->blobPtr = nullptr;
-    item->queryFilter.clear();
-}
-
-void FirebaseData::setQuery(QueryFilter *query)
-{
-    queryFilter._orderBy = query->_orderBy;
-    queryFilter._limitToFirst = query->_limitToFirst;
-    queryFilter._limitToLast = query->_limitToLast;
-    queryFilter._startAt = query->_startAt;
-    queryFilter._endAt = query->_endAt;
-    queryFilter._equalTo = query->_equalTo;
-}
-
-void FirebaseData::clearNodeList()
-{
-    for (size_t i = 0; i < _ss.rtdb.child_nodes.size(); i++)
-        ut->clearS(_ss.rtdb.child_nodes[i]);
-    _ss.rtdb.child_nodes.clear();
-}
-
-void FirebaseData::addNodeList(const String childPath[], size_t size)
-{
-    clearNodeList();
-    for (size_t i = 0; i < size; i++)
-        if (childPath[i].length() > 0 && childPath[i] != "/")
-            _ss.rtdb.child_nodes.push_back(childPath[i].c_str());
+    item->address.din = 0;
+    item->address.dout = 0;
+    item->blobSize = 0;
+    item->address.priority = 0;
+    item->address.query = 0;
 }
 
 bool FirebaseData::pauseFirebase(bool pause)
@@ -235,35 +245,29 @@ String FirebaseData::dataPath()
 
 int FirebaseData::intData()
 {
-    if ((_ss.rtdb.raw.length() > 0 && (_ss.rtdb.resp_data_type == fb_esp_data_type::d_integer || _ss.rtdb.resp_data_type == fb_esp_data_type::d_float || _ss.rtdb.resp_data_type == fb_esp_data_type::d_double)))
-    {
-        if (_ss.rtdb.req_data_type == fb_esp_data_type::d_timestamp)
-        {
-            double d = atof(_ss.rtdb.raw.c_str());
-            int ts = d / 1000;
-            return ts;
-        }
-        else
-            return atoi(_ss.rtdb.raw.c_str());
-    }
-    else
+    if (!init())
         return 0;
+
+    if (_ss.rtdb.req_data_type == fb_esp_data_type::d_timestamp)
+        return to<uint64_t>() / 1000;
+    else
+        return to<int>();
 }
 
 float FirebaseData::floatData()
 {
-    if (_ss.rtdb.raw.length() > 0 && (_ss.rtdb.resp_data_type == fb_esp_data_type::d_integer || _ss.rtdb.resp_data_type == fb_esp_data_type::d_float || _ss.rtdb.resp_data_type == fb_esp_data_type::d_double))
-        return atof(_ss.rtdb.raw.c_str());
-    else
-        return 0.0;
+    if (!init())
+        return 0;
+
+    return to<float>();
 }
 
 double FirebaseData::doubleData()
 {
-    if (_ss.rtdb.raw.length() > 0 && (_ss.rtdb.resp_data_type == fb_esp_data_type::d_integer || _ss.rtdb.resp_data_type == fb_esp_data_type::d_float || _ss.rtdb.resp_data_type == fb_esp_data_type::d_double))
-        return atof(_ss.rtdb.raw.c_str());
-    else
-        return 0.0;
+    if (!init())
+        return 0;
+
+    return to<double>();
 }
 
 bool FirebaseData::boolData()
@@ -271,20 +275,15 @@ bool FirebaseData::boolData()
     if (!init())
         return false;
 
-    bool res = false;
-    char *str = ut->boolStr(true);
-    if (_ss.rtdb.raw.length() > 0 && _ss.rtdb.resp_data_type == fb_esp_data_type::d_boolean)
-        res = strcmp(_ss.rtdb.raw.c_str(), str) == 0;
-    ut->delS(str);
-    return res;
+    return to<bool>();
 }
 
 String FirebaseData::stringData()
 {
-    if (_ss.rtdb.raw.length() > 0 && _ss.rtdb.resp_data_type == fb_esp_data_type::d_string)
-        return _ss.rtdb.raw.substr(1, _ss.rtdb.raw.length() - 2).c_str();
-    else
-        return std::string().c_str();
+    if (!init())
+        return String();
+
+    return to<String>();
 }
 
 String FirebaseData::jsonString()
@@ -297,69 +296,32 @@ String FirebaseData::jsonString()
 
 FirebaseJson *FirebaseData::jsonObjectPtr()
 {
-    if (!_ss.jsonPtr)
-        _ss.jsonPtr = new FirebaseJson();
-
-    if (_ss.rtdb.resp_data_type == d_json)
-    {
-        _ss.jsonPtr->clear();
-        if (_ss.arrPtr)
-            _ss.arrPtr->clear();
-        _ss.jsonPtr->setJsonData(_ss.rtdb.raw.c_str());
-    }
-
-    return _ss.jsonPtr;
+    return to<FirebaseJson *>();
 }
 
 FirebaseJson &FirebaseData::jsonObject()
 {
-    return *jsonObjectPtr();
+    return to<FirebaseJson>();
 }
 
 FirebaseJsonArray *FirebaseData::jsonArrayPtr()
 {
-    if (!_ss.arrPtr)
-        _ss.arrPtr = new FirebaseJsonArray();
-
-    if (_ss.rtdb.resp_data_type == d_array)
-    {
-        if (_ss.jsonPtr)
-            _ss.jsonPtr->clear();
-        _ss.arrPtr->clear();
-        _ss.arrPtr->setJsonArrayData(_ss.rtdb.raw.c_str());
-    }
-
-    return _ss.arrPtr;
+    return to<FirebaseJsonArray *>();
 }
 
 FirebaseJsonArray &FirebaseData::jsonArray()
 {
-    return *jsonArrayPtr();
+    return to<FirebaseJsonArray>();
 }
 
-std::vector<uint8_t> FirebaseData::blobData()
+std::vector<uint8_t> *FirebaseData::blobData()
 {
-    if (_ss.rtdb.blob.size() > 0 && _ss.rtdb.resp_data_type == fb_esp_data_type::d_blob)
-        return _ss.rtdb.blob;
-    else
-        return std::vector<uint8_t>();
+    return to<std::vector<uint8_t> *>();
 }
 
 fs::File FirebaseData::fileStream()
 {
-
-    if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_file && init())
-    {
-        char *tmp = ut->strP(fb_esp_pgm_str_184);
-
-        ut->flashTest();
-
-        if (Signer.getCfg()->_int.fb_flash_rdy)
-            Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
-        ut->delS(tmp);
-    }
-
-    return Signer.getCfg()->_int.fb_file;
+    return to<File>();
 }
 
 String FirebaseData::pushName()
@@ -430,19 +392,10 @@ void FirebaseData::addQueue(struct fb_esp_rtdb_queue_info_t *qinfo)
         item.filename = qinfo->filename;
         item.payload = qinfo->payload;
 
-        if (qinfo->isQuery)
-            item.queryFilter = queryFilter;
-        else
-            item.queryFilter.clear();
-
-        item.stringPtr = qinfo->stringPtr;
-        item.intPtr = qinfo->intPtr;
-        item.floatPtr = qinfo->floatPtr;
-        item.doublePtr = qinfo->doublePtr;
-        item.boolPtr = qinfo->boolPtr;
-        item.jsonPtr = qinfo->jsonPtr;
-        item.arrPtr = qinfo->arrPtr;
-        item.blobPtr = qinfo->blobPtr;
+        item.address.query = qinfo->address.query;
+        item.address.din = qinfo->address.din;
+        item.address.dout = qinfo->address.dout;
+        item.blobSize = qinfo->blobSize;
         item.qID = random(100000, 200000);
 #if defined(FIREBASE_ESP_CLIENT)
         item.storageType = qinfo->storageType;
@@ -501,7 +454,10 @@ bool FirebaseData::bufferOverflow()
 
 String FirebaseData::fileTransferError()
 {
-    return _ss.error.c_str();
+    if (_ss.error.length() > 0)
+        return _ss.error.c_str();
+    else
+        return errorReason();
 }
 
 String FirebaseData::payload()
@@ -525,12 +481,14 @@ String FirebaseData::payload()
 
 String FirebaseData::errorReason()
 {
-    std::string buf = "";
     if (_ss.error.length() > 0)
         return _ss.error.c_str();
     else
+    {
+        std::string buf;
         Signer.errorToString(_ss.http_code, buf);
-    return buf.c_str();
+        return buf.c_str();
+    }
 }
 
 #if defined(FIREBASE_ESP_CLIENT)
@@ -618,6 +576,28 @@ int FirebaseData::httpCode()
     return _ss.http_code;
 }
 
+int FirebaseData::payloadLength()
+{
+    return _ss.payload_length;
+}
+
+int FirebaseData::maxPayloadLength()
+{
+    return _ss.max_payload_length;
+}
+
+#ifdef ENABLE_RTDB
+void FirebaseData::sendStreamToCB(int code)
+{
+    _ss.error.clear();
+    _ss.rtdb.data_millis = 0;
+    _ss.rtdb.data_tmo = true;
+    _ss.http_code = code;
+    if (_timeoutCallback)
+        _timeoutCallback(true);
+}
+#endif
+
 void FirebaseData::closeSession()
 {
     if (WiFi.status() == WL_CONNECTED || ut->ethLinkUp())
@@ -639,6 +619,7 @@ void FirebaseData::closeSession()
         _ss.rtdb.stream_tmo_Millis = millis();
         _ss.rtdb.data_millis = millis();
         _ss.rtdb.data_tmo = false;
+        _ss.rtdb.new_stream = true;
     }
 #endif
     _ss.connected = false;
@@ -646,23 +627,42 @@ void FirebaseData::closeSession()
 
 int FirebaseData::tcpSend(const char *data)
 {
-    uint8_t attempts = 0;
-    uint8_t maxRetry = 5;
-    int ret = tcpClient.send(data);
+    size_t len = strlen(data);
 
-    while (ret != 0)
+    uint8_t attempts = 0;
+#if defined(ESP8266)
+    uint8_t maxRetry = 5 * (1 + (len / _ss.bssl_tx_size));
+#else
+    uint8_t maxRetry = 5;
+#endif
+    int index = 0;
+    int ret = tcpSendChunk(data, index, len);
+    while (ret != 0 || index < (int)len)
     {
         attempts++;
         if (attempts > maxRetry)
             break;
-
         if (!reconnect())
             return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
-
-        ret = tcpClient.send(data);
+        ret = tcpSendChunk(data, index, len);
     }
-
     return ret;
+}
+
+int FirebaseData::tcpSendChunk(const char *data, int &index, size_t len)
+{
+    ut->idle();
+    if (!reconnect())
+        return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
+#if defined(ESP8266)
+    int chunkSize = len - index > _ss.bssl_tx_size ? _ss.bssl_tx_size : len - index;
+#else
+    int chunkSize = len;
+#endif
+    if (tcpClient.send(data + index, chunkSize) != 0)
+        return -1;
+    index += chunkSize;
+    return 0;
 }
 
 bool FirebaseData::reconnect(unsigned long dataTime)
@@ -674,7 +674,7 @@ bool FirebaseData::reconnect(unsigned long dataTime)
     {
         if (millis() - dataTime > tcpClient.timeout && init())
         {
-            _ss.http_code = FIREBASE_ERROR_TCP_ERROR_READ_TIMEOUT;
+            _ss.http_code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
             char *tmp = ut->strP(fb_esp_pgm_str_69);
             _ss.error = tmp;
             ut->delS(tmp);
@@ -702,6 +702,9 @@ bool FirebaseData::reconnect(unsigned long dataTime)
         status = WiFi.status() == WL_CONNECTED || ut->ethLinkUp();
     }
 
+    if (!status && _ss.con_mode == fb_esp_con_mode_rtdb_stream)
+        _ss.rtdb.new_stream = true;
+
     return status;
 }
 
@@ -719,15 +722,16 @@ void FirebaseData::setSecure()
     tcpClient._bsslTxSize = _ss.bssl_tx_size;
 #endif
 
-    if (tcpClient._certType == -1)
+    if (tcpClient._certType == -1 || _ss.cert_updated)
     {
         if (!Signer.getCfg())
         {
-            tcpClient.setCACert(nullptr);
+            _ss.cert_updated = false;
+            tcpClient.setCACert(NULL);
             return;
         }
 
-        if (!Signer.getCfg()->_int.fb_clock_rdy && (Signer.getCAFile().length() > 0 || Signer.getCfg()->_int.fb_caCert) && init())
+        if (!Signer.getCfg()->_int.fb_clock_rdy && (Signer.getCAFile().length() > 0 || Signer.getCfg()->cert.data != NULL || _ss.cert_addr > 0) && init())
         {
 
 #if defined(ESP8266)
@@ -743,10 +747,12 @@ void FirebaseData::setSecure()
 
         if (Signer.getCAFile().length() == 0)
         {
-            if (Signer.getCfg()->_int.fb_caCert)
-                tcpClient.setCACert(Signer.getCfg()->_int.fb_caCert);
+            if (_ss.cert_addr > 0)
+                tcpClient.setCACert(reinterpret_cast<const char *>(_ss.cert_addr));
+            else if (Signer.getCfg()->cert.data != NULL)
+                tcpClient.setCACert(Signer.getCfg()->cert.data);
             else
-                tcpClient.setCACert(nullptr);
+                tcpClient.setCACert(NULL);
         }
         else
         {
@@ -757,12 +763,23 @@ void FirebaseData::setSecure()
 #endif
             tcpClient.setCACertFile(Signer.getCAFile().c_str(), Signer.getCAFileStorage(), Signer.getCfg()->_int.sd_config);
         }
+        _ss.cert_updated = false;
+    }
+}
+
+void FirebaseData::setCert(const char *ca)
+{
+    int addr = reinterpret_cast<int>(ca);
+    if (addr != _ss.cert_addr)
+    {
+        _ss.cert_updated = true;
+        _ss.cert_addr = addr;
     }
 }
 
 bool FirebaseData::validRequest(const std::string &path)
 {
-    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || (strlen(Signer.getToken(token_type_legacy_token)) == 0 && strlen(Signer.getToken(token_type_id_token)) == 0 && strlen(Signer.getToken(token_type_oauth2_access_token)) == 0))
+    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || strlen(Signer.getToken()) == 0)
     {
         _ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
         return false;
@@ -806,6 +823,7 @@ void FirebaseData::clear()
 
     if (_ss.arrPtr)
         _ss.arrPtr->clear();
+
     if (_ss.jsonPtr)
         _ss.jsonPtr->clear();
 
@@ -823,7 +841,14 @@ void FirebaseData::clear()
     ut->clearS(_ss.rtdb.event_type);
     ut->clearS(_ss.rtdb.req_etag);
     ut->clearS(_ss.rtdb.resp_etag);
-    ut->clearS(_ss.rtdb.priority);
+    _ss.rtdb.priority = 0;
+
+    if (_ss.rtdb.blob && _ss.rtdb.isBlobPtr)
+    {
+        _ss.rtdb.isBlobPtr = false;
+        delete _ss.rtdb.blob;
+    }
+
 #endif
 
 #if defined(FIREBASE_ESP_CLIENT)
@@ -870,30 +895,35 @@ FCMObject::~FCMObject()
     clear();
 }
 
-void FCMObject::begin(const String &serverKey)
+void FCMObject::mBegin(const char *serverKey)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    FirebaseJson json(raw);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
     std::string s;
     ut->appendP(s, fb_esp_pgm_str_577);
-    json.set(s.c_str(), serverKey.c_str());
+    json->set(s.c_str(), serverKey);
     ut->clearS(raw);
     ut->clearS(s);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::addDeviceToken(const String &deviceToken)
+void FCMObject::mAddDeviceToken(const char *deviceToken)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    FirebaseJsonArray arr;
-    arr.setJsonArrayData(idTokens.c_str());
-    arr.add(deviceToken.c_str());
+    FirebaseJsonArray *arr = new FirebaseJsonArray();
+    arr->setJsonArrayData(idTokens.c_str());
+    arr->add(deviceToken);
     ut->clearS(idTokens);
-    idTokens = arr.raw();
+    idTokens = arr->raw();
+    arr->clear();
+    delete arr;
 }
 
 void FCMObject::removeDeviceToken(uint16_t index)
@@ -901,12 +931,15 @@ void FCMObject::removeDeviceToken(uint16_t index)
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    FirebaseJsonArray arr;
-    arr.setJsonArrayData(idTokens.c_str());
-    arr.remove(index);
+    FirebaseJsonArray *arr = new FirebaseJsonArray();
+    arr->setJsonArrayData(idTokens.c_str());
+    arr->remove(index);
     ut->clearS(idTokens);
-    idTokens = arr.raw();
+    idTokens = arr->raw();
+    arr->clear();
+    delete arr;
 }
+
 void FCMObject::clearDeviceToken()
 {
     if (!ut)
@@ -914,85 +947,97 @@ void FCMObject::clearDeviceToken()
     ut->clearS(idTokens);
 }
 
-void FCMObject::setNotifyMessage(const String &title, const String &body)
+void FCMObject::mSetNotifyMessage(const char *title, const char *body)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    FirebaseJson json(raw);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
     std::string s;
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_122);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_285);
-    json.set(s.c_str(), title);
+    json->set(s.c_str(), title);
 
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_122);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_123);
-    json.set(s.c_str(), body);
+    json->set(s.c_str(), body);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::setNotifyMessage(const String &title, const String &body, const String &icon)
+void FCMObject::mSetNotifyMessage(const char *title, const char *body, const char *icon)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
 
     setNotifyMessage(title, body);
-    FirebaseJson json(raw);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
     std::string s;
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_122);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_124);
-    json.set(s.c_str(), icon);
+    json->set(s.c_str(), icon);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action)
+void FCMObject::mSetNotifyMessage(const char *title, const char *body, const char *icon, const char *click_action)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
 
     setNotifyMessage(title, body, icon);
-    FirebaseJson json(raw);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
     std::string s;
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_122);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_125);
-    json.set(s.c_str(), click_action);
+    json->set(s.c_str(), click_action);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::addCustomNotifyMessage(const String &key, const String &value)
+void FCMObject::mAddCustomNotifyMessage(const char *key, const char *value)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    FirebaseJson json(raw);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
     std::string s;
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_122);
     ut->appendP(s, fb_esp_pgm_str_1);
-    s += key.c_str();
-    json.set(s.c_str(), value);
+    s += key;
+    json->set(s.c_str(), value);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
 void FCMObject::clearNotifyMessage()
@@ -1004,14 +1049,17 @@ void FCMObject::clearNotifyMessage()
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_122);
-    FirebaseJson json(raw);
-    json.remove(s.c_str());
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
+    json->remove(s.c_str());
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::setDataMessage(const String &jsonString)
+void FCMObject::mSetDataMessage(const char *jsonString)
 {
 
     if (!ut)
@@ -1021,14 +1069,18 @@ void FCMObject::setDataMessage(const String &jsonString)
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_135);
-    FirebaseJson js;
-    js.setJsonData(jsonString);
-    FirebaseJson json(raw);
-    json.set(s.c_str(), js);
-    js.clear();
+    FirebaseJson *js = new FirebaseJson();
+    js->setJsonData(jsonString);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
+    json->set(s.c_str(), *js);
+    js->clear();
+    delete js;
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
 void FCMObject::setDataMessage(FirebaseJson &json)
@@ -1040,11 +1092,14 @@ void FCMObject::setDataMessage(FirebaseJson &json)
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_135);
-    FirebaseJson js(raw);
-    js.set(s.c_str(), json);
+    FirebaseJson *js = new FirebaseJson();
+    js->setJsonData(raw);
+    js->set(s.c_str(), json);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = js.raw();
+    raw = js->raw();
+    js->clear();
+    delete js;
 }
 
 void FCMObject::clearDataMessage()
@@ -1056,14 +1111,17 @@ void FCMObject::clearDataMessage()
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_135);
-    FirebaseJson json(raw);
-    json.remove(s.c_str());
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
+    json->remove(s.c_str());
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::setPriority(const String &priority)
+void FCMObject::mSetPriority(const char *priority)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
@@ -1071,14 +1129,17 @@ void FCMObject::setPriority(const String &priority)
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_136);
-    FirebaseJson json(raw);
-    json.set(s.c_str(), priority);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
+    json->set(s.c_str(), priority);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::setCollapseKey(const String &key)
+void FCMObject::mSetCollapseKey(const char *key)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
@@ -1087,11 +1148,14 @@ void FCMObject::setCollapseKey(const String &key)
     ut->appendP(s, fb_esp_pgm_str_575, true);
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_138);
-    FirebaseJson json(raw);
-    json.set(s.c_str(), key);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
+    json->set(s.c_str(), key);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
 void FCMObject::setTimeToLive(uint32_t seconds)
@@ -1108,30 +1172,36 @@ void FCMObject::setTimeToLive(uint32_t seconds)
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_137);
 
-    FirebaseJson json(raw);
-    json.set(s.c_str(), _ttl);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
+    json->set(s.c_str(), _ttl);
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-void FCMObject::setTopic(const String &topic)
+void FCMObject::mSetTopic(const char *topic)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
-    FirebaseJson json(raw);
+    FirebaseJson *json = new FirebaseJson();
+    json->setJsonData(raw);
     std::string s, v;
     ut->appendP(s, fb_esp_pgm_str_576);
     ut->appendP(v, fb_esp_pgm_str_134);
-    v += topic.c_str();
-    json.set(s.c_str(), v.c_str());
+    v += topic;
+    json->set(s.c_str(), v.c_str());
     ut->clearS(raw);
     ut->clearS(s);
     ut->clearS(v);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    delete json;
 }
 
-String FCMObject::getSendResult()
+const char *FCMObject::getSendResult()
 {
     return result.c_str();
 }
@@ -1155,12 +1225,15 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     std::string header;
     if (!ut)
         ut = new UtilsClass(nullptr);
-    FirebaseJsonData server_key;
-    FirebaseJson json(raw);
+    FirebaseJsonData *server_key = new FirebaseJsonData();
+    
+    FirebaseJson *json = fbdo.to<FirebaseJson *>();
+    json->setJsonData(raw);
     std::string s;
     ut->appendP(s, fb_esp_pgm_str_577);
-    json.get(server_key, s.c_str());
+    json->get(*server_key, s.c_str());
     ut->clearS(s);
+    json->clear();
 
     ut->appendP(header, fb_esp_pgm_str_24, true);
     ut->appendP(header, fb_esp_pgm_str_6);
@@ -1176,11 +1249,18 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     ut->appendP(header, fb_esp_pgm_str_131);
 
     ret = fbdo.tcpSend(header.c_str());
+
     ut->clearS(header);
     if (ret < 0)
+    {
+        server_key->clear();
+        delete server_key;
         return ret;
+    }
 
-    ret = fbdo.tcpSend(server_key.stringValue.c_str());
+    ret = fbdo.tcpSend(server_key->to<const char *>());
+    server_key->clear();
+    delete server_key;
     if (ret < 0)
         return ret;
 
@@ -1193,24 +1273,25 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     ut->appendP(header, fb_esp_pgm_str_21);
 
     ut->appendP(header, fb_esp_pgm_str_12);
-    char *tmp = ut->intStr(payloadSize);
-    header += tmp;
-    ut->delS(tmp);
+    header += NUM2S(payloadSize).get();
     ut->appendP(header, fb_esp_pgm_str_21);
     ut->appendP(header, fb_esp_pgm_str_36);
     ut->appendP(header, fb_esp_pgm_str_21);
 
     ret = fbdo.tcpSend(header.c_str());
     ut->clearS(header);
+    
+
     return ret;
 }
 
-void FCMObject::fcm_preparePayload(fb_esp_fcm_msg_type messageType)
+void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    FirebaseJson json(raw);
+    FirebaseJson *json = fbdo.to<FirebaseJson *>();
+    json->setJsonData(raw);
     if (messageType == fb_esp_fcm_msg_type::msg_single)
     {
         std::string s;
@@ -1218,30 +1299,32 @@ void FCMObject::fcm_preparePayload(fb_esp_fcm_msg_type messageType)
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_128);
 
-        FirebaseJsonArray arr;
-        arr.setJsonArrayData(idTokens.c_str());
-        FirebaseJsonData data;
-        arr.get(data, _index);
-        json.set(s.c_str(), data.stringValue.c_str());
+        FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
+        arr->setJsonArrayData(idTokens.c_str());
+        FirebaseJsonData *data = fbdo.to<FirebaseJsonData*>();
+        arr->get(*data, _index);
+        json->set(s.c_str(), data->to<const char *>());
         ut->clearS(s);
         ut->clearS(raw);
-        raw = json.raw();
+        raw = json->raw();
+        arr->clear();
+        data->clear();
     }
     else if (messageType == fb_esp_fcm_msg_type::msg_multicast)
     {
-        FirebaseJsonArray arr;
-        arr.setJsonArrayData(idTokens.c_str());
+        FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
+        arr->setJsonArrayData(idTokens.c_str());
 
         std::string s;
         ut->appendP(s, fb_esp_pgm_str_575, true);
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_130);
 
-        json.set(s.c_str(), arr);
+        json->set(s.c_str(), *arr);
         ut->clearS(s);
-        arr.clear();
+        arr->clear();
         ut->clearS(raw);
-        raw = json.raw();
+        raw = json->raw();
     }
     else if (messageType == fb_esp_fcm_msg_type::msg_topic)
     {
@@ -1250,16 +1333,18 @@ void FCMObject::fcm_preparePayload(fb_esp_fcm_msg_type messageType)
         ut->appendP(s, fb_esp_pgm_str_1);
         ut->appendP(s, fb_esp_pgm_str_128);
 
-        FirebaseJsonData topic;
+        FirebaseJsonData *topic = fbdo.to<FirebaseJsonData *>();
         std::string s2;
         ut->appendP(s2, fb_esp_pgm_str_576);
-        json.get(topic, s2.c_str());
+        json->get(*topic, s2.c_str());
         ut->clearS(s2);
-        json.set(s.c_str(), topic.stringValue.c_str());
+        json->set(s.c_str(), topic->to<const char *>());
         ut->clearS(s);
         ut->clearS(raw);
-        raw = json.raw();
+        raw = json->raw();
+        topic->clear();
     }
+    json->clear();
 }
 
 bool FCMObject::waitResponse(FirebaseData &fbdo)
@@ -1317,6 +1402,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->_ss.content_length = -1;
+    fbdo->_ss.payload_length = 0;
     fbdo->_ss.chunked_encoding = false;
     fbdo->_ss.buffer_ovf = false;
 
@@ -1327,7 +1413,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
         if (!fbdo->reconnect(dataTime))
             return false;
         chunkBufSize = stream->available();
-        delay(0);
+        ut->idle();
     }
 
     dataTime = millis();
@@ -1357,7 +1443,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
                     int pos = 0;
 
                     tmp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
-                    delay(0);
+                    ut->idle();
                     dataTime = millis();
                     if (tmp)
                     {
@@ -1380,7 +1466,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
                 }
                 else
                 {
-                    delay(0);
+                    ut->idle();
                     dataTime = millis();
                     //the next chunk data can be the remaining http header
                     if (isHeader)
@@ -1450,6 +1536,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
                             if (readLen > 0)
                             {
+                                fbdo->_ss.payload_length += readLen;
                                 payloadRead += readLen;
                                 fbdo->checkOvf(pBufPos + readLen, response);
 
@@ -1507,25 +1594,27 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
                 std::string t = ut->trim(payload);
                 if (t[0] == '{' && t[t.length() - 1] == '}')
                 {
-                    FirebaseJson json;
-                    FirebaseJsonData data;
-                    json.setJsonData(t.c_str());
+                    FirebaseJson *json = fbdo->to<FirebaseJson *>();
+                    FirebaseJsonData *data = fbdo->to<FirebaseJsonData *>();
+                    json->setJsonData(t.c_str());
 
                     char *tmp = ut->strP(fb_esp_pgm_str_257);
-                    json.get(data, tmp);
+                    json->get(*data, tmp);
                     ut->delS(tmp);
 
-                    if (data.success)
+                    if (data->success)
                     {
-                        error.code = data.intValue;
+                        error.code = data->to<int>();
                         tmp = ut->strP(fb_esp_pgm_str_258);
-                        json.get(data, tmp);
+                        json->get(*data, tmp);
                         ut->delS(tmp);
-                        if (data.success)
-                            fbdo->_ss.error = data.stringValue.c_str();
+                        if (data->success)
+                            fbdo->_ss.error = data->to<const char *>();
                     }
                     else
                         error.code = 0;
+                    json->clear();
+                    data->clear();
                 }
             }
         }
@@ -1549,22 +1638,30 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
     if (!ut)
         ut = new UtilsClass(nullptr);
 
-    FirebaseJsonData msg;
+    FirebaseJsonData *msg = fbdo.to<FirebaseJsonData *>();
 
-    fcm_preparePayload(messageType);
+    fcm_preparePayload(fbdo, messageType);
 
-    FirebaseJson json(raw);
+    FirebaseJson *json = fbdo.to<FirebaseJson *>();
+    json->setJsonData(raw);
     std::string s;
     ut->appendP(s, fb_esp_pgm_str_575);
-    json.get(msg, s.c_str());
+    json->get(*msg, s.c_str());
+    raw = json->raw();
+    json->clear();
 
-    int ret = fcm_sendHeader(fbdo, msg.stringValue.length());
+    int ret = fcm_sendHeader(fbdo, strlen(msg->to<const char *>()));
+
     if (ret == 0)
-        ret = fbdo.tcpSend(msg.stringValue.c_str());
-    json.remove(s.c_str());
+        ret = fbdo.tcpSend(msg->to<const char *>());
+
+    json->setJsonData(raw);
+    json->remove(s.c_str());
     ut->clearS(s);
     ut->clearS(raw);
-    raw = json.raw();
+    raw = json->raw();
+    json->clear();
+    msg->clear();
 
     if (ret != 0)
     {
@@ -1590,7 +1687,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
 void FCMObject::rescon(FirebaseData &fbdo, const char *host)
 {
-    if (!fbdo._ss.connected || millis() - fbdo._ss.last_conn_ms > fbdo._ss.conn_timeout || fbdo._ss.con_mode != fb_esp_con_mode_fcm || strcmp(host, fbdo._ss.host.c_str()) != 0)
+    if (fbdo._ss.cert_updated || !fbdo._ss.connected || millis() - fbdo._ss.last_conn_ms > fbdo._ss.conn_timeout || fbdo._ss.con_mode != fb_esp_con_mode_fcm || strcmp(host, fbdo._ss.host.c_str()) != 0)
     {
         fbdo._ss.last_conn_ms = millis();
         fbdo.closeSession();

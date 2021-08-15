@@ -74,7 +74,14 @@ void setup()
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
   /* Assign the certificate file (optional) */
-  config.cert.file = "/gsr2.pem";
+  /** From the test on July 2021, GlobalSign Root CA was missing from Google server
+   * when checking with https://www.sslchecker.com/sslchecker.
+   * The certificate chain, GTS Root R1 can be used instead.
+   * 
+   * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
+   * ESP8266 SDK supports both PEM and DER format certificates.
+  */
+  config.cert.file = "/gsr1.pem";
   config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
 
   /* The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. */
@@ -124,7 +131,7 @@ void setup()
     */
   Firebase.begin(&config, &auth);
 
-  /* The access token (C++ string) can be accessed from config.signer.tokens.access_token. */
+  /* The access token can be accessed from Firebase.getToken(). */
 }
 
 void loop()

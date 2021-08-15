@@ -1,5 +1,7 @@
 /**
- * Firebase TCP Client v1.1.9
+ * Firebase TCP Client v1.1.10
+ * 
+ * Created August 15, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -68,12 +70,18 @@ void FB_TCP_Client::stop()
   return _wcs->stop();
 }
 
-int FB_TCP_Client::send(const char *data)
+int FB_TCP_Client::send(const char *data, size_t len)
 {
   if (!connect())
     return FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED;
 
-  if (_wcs->write((const uint8_t *)data, strlen(data)) != strlen(data))
+  if (len == 0)
+    len = strlen(data);
+
+  if (len == 0)
+    return 0;
+
+  if (_wcs->write((const uint8_t *)data, len) != len)
     return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
 
   return 0;
@@ -95,7 +103,7 @@ bool FB_TCP_Client::connect(void)
     return true;
   }
 
-  if (!_wcs->connect(_host.c_str(), _port))
+  if (!_wcs->_connect(_host.c_str(), _port))
     return false;
 
   return connected();
@@ -112,11 +120,19 @@ void FB_TCP_Client::setInsecure()
 
 void FB_TCP_Client::setCACert(const char *caCert)
 {
-  _wcs->setCACert(caCert);
-  if (caCert)
+  release();
+
+  _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
+
+  if (caCert != NULL)
+  {
     _certType = 1;
+    _wcs->setCACert(caCert);
+  }
   else
   {
+    _wcs->stop();
+    _wcs->setCACert(NULL);
     setInsecure();
     _certType = 0;
   }
@@ -165,6 +181,16 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, s
       _wcs->loadCACert(f, len);
       f.close();
     }
+  }
+}
+
+void FB_TCP_Client::release()
+{
+  //if (_wcs)
+  {
+    _wcs->stop();
+    _wcs.reset(nullptr);
+    _wcs.release();
   }
 }
 

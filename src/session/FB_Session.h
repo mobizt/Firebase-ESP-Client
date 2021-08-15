@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.1.2
+ * Google's Firebase Data class, FB_Session.h version 1.2.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -55,10 +55,8 @@ enum fb_esp_fcm_msg_type
 class FCMObject
 {
 
-#if defined(ESP32)
-  friend class FirebaseESP32;
-#elif defined(ESP8266)
-  friend class FirebaseESP8266;
+#if defined(ESP32) || defined(ESP8266)
+  friend class FIREBASE_CLASS;
 #endif
   friend class FirebaseData;
 
@@ -70,13 +68,15 @@ public:
    * 
    * @param serverKey Server key found on Console: Project settings > Cloud Messaging
    */
-  void begin(const String &serverKey);
+  template <typename T>
+  void begin(T serverKey) { mBegin(toString(serverKey)); }
 
   /** Add recipient's device registration token or instant ID token.
    * 
    * @param deviceToken Recipient's device registration token to add that message will be sent to.
    */
-  void addDeviceToken(const String &deviceToken);
+  template <typename T>
+  void addDeviceToken(T deviceToken) { mAddDeviceToken(toString(deviceToken)); }
 
   /** Remove the recipient's device registration token or instant ID token.
    * 
@@ -93,7 +93,8 @@ public:
    * @param title The title text of notification message.
    * @param body The body text of notification message.
    */
-  void setNotifyMessage(const String &title, const String &body);
+  template <typename T1, typename T2>
+  void setNotifyMessage(T1 title, T2 body) { mSetNotifyMessage(toString(title), toString(body)); }
 
   /** Set the notify message type information.
    * 
@@ -101,7 +102,8 @@ public:
    * @param body The body text of notification message.
    * @param icon The name and/or included URI/URL of the icon to show on notifying message.
    */
-  void setNotifyMessage(const String &title, const String &body, const String &icon);
+  template <typename T1, typename T2, typename T3>
+  void setNotifyMessage(T1 title, T2 body, T3 icon) { mSetNotifyMessage(toString(title), toString(body), toString(icon)); }
 
   /** Set the notify message type information.
    * 
@@ -110,14 +112,16 @@ public:
    * @param icon The name and/or included URI/URL of the icon to show on notifying message.
    * @param click_action The URL or intent to accept click event on the notification message.
    */
-  void setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action);
+  template <typename T1, typename T2, typename T3, typename T4>
+  void setNotifyMessage(T1 title, T2 body, T3 icon, T4 click_action) { mSetNotifyMessage(toString(title), toString(body), toString(icon), toString(click_action)); }
 
   /** add the custom key/value in the notify message type information.
    * 
    * @param key The key field in notification message.
    * @param value The value field in the notification message.
   */
-  void addCustomNotifyMessage(const String &key, const String &value);
+  template <typename T1, typename T2>
+  void addCustomNotifyMessage(T1 key, T2 value) { mAddCustomNotifyMessage(toString(key), toString(value)); }
 
   /** Clear all notify message information.
   */
@@ -127,7 +131,8 @@ public:
    * 
    * @param jsonString The JSON structured data string.
   */
-  void setDataMessage(const String &jsonString);
+  template <typename T>
+  void setDataMessage(T jsonString) { mSetDataMessage(toString(jsonString)); }
 
   /** Set the custom data message type information.
    * 
@@ -143,13 +148,15 @@ public:
    * 
    * @param priority The priority string i.e. normal and high.
   */
-  void setPriority(const String &priority);
+  template <typename T>
+  void setPriority(T priority) { mSetPriority(toString(priority)); }
 
   /** Set the collapse key of the message (notification and custom data).
    * 
    * @param key String of collapse key.
   */
-  void setCollapseKey(const String &key);
+  template <typename T>
+  void setCollapseKey(T key) { mSetCollapseKey(toString(key)); }
 
   /** Set the Time To Live of the message (notification and custom data).
    * 
@@ -161,13 +168,14 @@ public:
    * 
    * @param topic Topic string.
   */
-  void setTopic(const String &topic);
+  template <typename T>
+  void setTopic(T topic) { mSetTopic(toString(topic)); }
 
   /** Get the send result.
    * 
-   * @return String of payload returned from the server.
+   * @return string of payload returned from the server.
   */
-  String getSendResult();
+  const char *getSendResult();
 
 private:
   bool waitResponse(FirebaseData &fbdo);
@@ -182,9 +190,29 @@ private:
 
   int fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize);
 
-  void fcm_preparePayload(fb_esp_fcm_msg_type messageType);
+  void fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
 
   void clear();
+
+  void mBegin(const char *serverKey);
+
+  void mAddDeviceToken(const char *deviceToken);
+
+  void mSetNotifyMessage(const char *title, const char *body);
+
+  void mSetNotifyMessage(const char *title, const char *body, const char *icon);
+
+  void mSetNotifyMessage(const char *title, const char *body, const char *icon, const char *click_action);
+
+  void mAddCustomNotifyMessage(const char *key, const char *value);
+
+  void mSetDataMessage(const char *jsonString);
+
+  void mSetPriority(const char *priority);
+
+  void mSetCollapseKey(const char *key);
+
+  void mSetTopic(const char *topic);
 
   std::string result;
   std::string raw;
@@ -193,6 +221,19 @@ private:
   uint16_t _index = 0;
   uint16_t _port = FIREBASE_PORT;
   UtilsClass *ut = nullptr;
+
+protected:
+  template <typename T>
+  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif
@@ -224,10 +265,8 @@ class FirebaseData
 #endif
 
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-#if defined(ESP32)
-  friend class FirebaseESP32;
-#elif defined(ESP8266)
-  friend class FirebaseESP8266;
+#if defined(ESP32) || defined(ESP8266)
+  friend class FIREBASE_CLASS;
 #endif
 #ifdef ENABLE_FCM
   friend class FCMObject;
@@ -266,6 +305,12 @@ public:
   */
   void setResponseSize(uint16_t len);
 
+  /** Set the Root certificate for a FirebaseData object.
+   * 
+   * @param ca PEM format certificate string.
+  */
+  void setCert(const char *ca);
+
   /** Pause/Unpause WiFiClient from all Firebase operations.
    * 
    * @param pause The boolean to set/unset pause operation.
@@ -275,7 +320,7 @@ public:
   bool pauseFirebase(bool pause);
 #endif
 
-  /** Check the pause status of Firebase Data object.
+  /** Check the pause status of FirebaseData object.
    * 
    * @return Boolean type value of pause status.
   */
@@ -297,13 +342,31 @@ public:
 
   /** Get the data type of payload returned from the server (RTDB only).
    * 
-   * @return The one of these data type e.g. integer, float, double, boolean, string, JSON and blob.
+   * @return The one of these data type e.g. string, boolean, int, float, double, json, array, blob, file and null.
   */
 #ifdef ENABLE_RTDB
   String dataType();
 #endif
 
-  /** Get the event type of stream.
+  /** Get the data type of payload returned from the server (RTDB only).
+   * 
+   * @return The enumeration value of fb_esp_rtdb_data_type.
+   * fb_esp_rtdb_data_type_null or 1,
+   * fb_esp_rtdb_data_type_integer or 2,
+   * fb_esp_rtdb_data_type_float or 3,
+   * fb_esp_rtdb_data_type_double or 4,
+   * fb_esp_rtdb_data_type_boolean or 5,
+   * fb_esp_rtdb_data_type_string or 6,
+   * fb_esp_rtdb_data_type_json or 7,
+   * fb_esp_rtdb_data_type_array or 8,
+   * fb_esp_rtdb_data_type_blob or 9,
+   * fb_esp_rtdb_data_type_file or 10
+  */
+#ifdef ENABLE_RTDB
+  uint8_t dataTypeEnum();
+#endif
+
+  /** Get the event type of stream. (RTDB only)
    * 
    * @return The one of these event type e.g. put, patch, cancel, and auth_revoked.
    * 
@@ -319,7 +382,7 @@ public:
   String eventType();
 #endif
 
-  /** Get the unique identifier (ETag) of current data.
+  /** Get the unique identifier (ETag) of RTDB data. (RTDB only)
    * 
    * @return String of unique identifier.
   */
@@ -327,7 +390,7 @@ public:
   String ETag();
 #endif
 
-  /** Get the current stream path.
+  /** Get the current stream path. (RTDB only)
    * 
    * @return The database streaming path.
   */
@@ -335,7 +398,7 @@ public:
   String streamPath();
 #endif
 
-  /** Get the current data path.
+  /** Get the current data path. (RTDB only)
    * 
    * @return The database path which belongs to the server's returned payload.
    * 
@@ -393,7 +456,7 @@ public:
   */
   String errorReason();
 
-  /** Return the integer data of server returned payload.
+  /** Return the integer data of server returned payload (RTDB only).
    * 
    * @return integer value.
   */
@@ -401,7 +464,7 @@ public:
   int intData();
 #endif
 
-  /** Return the float data of server returned payload.
+  /** Return the float data of server returned payload (RTDB only).
    * 
    * @return Float value.
   */
@@ -409,7 +472,7 @@ public:
   float floatData();
 #endif
 
-  /** Return the double data of server returned payload.
+  /** Return the double data of server returned payload (RTDB only).
    * 
    * @return double value.
   */
@@ -417,7 +480,7 @@ public:
   double doubleData();
 #endif
 
-  /** Return the Boolean data of server returned payload.
+  /** Return the Boolean data of server returned payload (RTDB only).
    * 
    * @return Boolean value.
   */
@@ -425,7 +488,7 @@ public:
   bool boolData();
 #endif
 
-  /** Return the String data of server returned payload.
+  /** Return the String data of server returned payload (RTDB only).
    * 
    * @return String (String object).
   */
@@ -433,7 +496,7 @@ public:
   String stringData();
 #endif
 
-  /** Return the JSON String data of server returned payload.
+  /** Return the JSON String data of server returned payload (RTDB only).
    * 
    * @return String (String object).
   */
@@ -441,7 +504,7 @@ public:
   String jsonString();
 #endif
 
-  /** Return the Firebase JSON object of server returned payload.
+  /** Return the Firebase JSON object of server returned payload (RTDB only).
    * 
    * @return FirebaseJson object.
   */
@@ -449,7 +512,7 @@ public:
   FirebaseJson &jsonObject();
 #endif
 
-  /** Return the Firebase JSON object pointer of server returned payload.
+  /** Return the Firebase JSON object pointer of server returned payload (RTDB only).
    * 
    * @return FirebaseJson object pointer.
   */
@@ -457,7 +520,7 @@ public:
   FirebaseJson *jsonObjectPtr();
 #endif
 
-  /** Return the Firebase JSON Array object of server returned payload.
+  /** Return the Firebase JSON Array object of server returned payload (RTDB only).
    * 
    * @return FirebaseJsonArray object.
   */
@@ -465,7 +528,7 @@ public:
   FirebaseJsonArray &jsonArray();
 #endif
 
-  /** Return the Firebase JSON Array object pointer of server returned payload.
+  /** Return the Firebase JSON Array object pointer of server returned payload (RTDB only).
    * 
    * @return FirebaseJsonArray object pointer.
   */
@@ -473,15 +536,15 @@ public:
   FirebaseJsonArray *jsonArrayPtr();
 #endif
 
-  /** Return the blob data (uint8_t) array of server returned payload.
+  /** Return the pointer to blob data (uint8_t) array of server returned payload (RTDB only).
    * 
    * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
   */
 #ifdef ENABLE_RTDB
-  std::vector<uint8_t> blobData();
+  std::vector<uint8_t> *blobData();
 #endif
 
-  /** Return the file stream of server returned payload.
+  /** Return the file stream of server returned payload (RTDB only).
    * 
    * @return the file stream.
   */
@@ -489,7 +552,152 @@ public:
   fs::File fileStream();
 #endif
 
-  /** Return the new appended node's name or key of server returned payload when calling pushXXX function.
+  /**
+   * Get the value by specific type from FirebaseJsonData object (RTDB only).
+   * This should call after parse or get function.
+  */
+#ifdef ENABLE_RTDB
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value || FB_JS::is_num_float<T>::value || FB_JS::is_bool<T>::value, T>::type
+  {
+
+    if (_ss.rtdb.raw.length() > 0)
+    {
+      if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_boolean)
+        mSetResBool(strcmp(_ss.rtdb.raw.c_str(), NUM2S(true).get()) == 0);
+      else if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_integer || _ss.rtdb.resp_data_type == fb_esp_data_type::d_float || _ss.rtdb.resp_data_type == fb_esp_data_type::d_double)
+      {
+        mSetResInt(_ss.rtdb.raw.c_str());
+        mSetResFloat(_ss.rtdb.raw.c_str());
+      }
+    }
+
+    if (_ss.rtdb.req_data_type == d_timestamp)
+    {
+      if (FB_JS::is_num_int32<T>::value || FB_JS::is_num_uint32<T>::value || FB_JS::is_num_int64<T>::value || FB_JS::is_num_uint64<T>::value)
+        return iVal.uint64 / 1000;
+      else
+        return 0;
+    }
+
+    if (FB_JS::is_bool<T>::value)
+      return iVal.int32 > 0;
+    else if (FB_JS::is_num_int8<T>::value)
+      return iVal.int8;
+    else if (FB_JS::is_num_uint8<T>::value)
+      return iVal.uint8;
+    else if (FB_JS::is_num_int16<T>::value)
+      return iVal.int16;
+    else if (FB_JS::is_num_uint16<T>::value)
+      return iVal.uint16;
+    else if (FB_JS::is_num_int32<T>::value)
+      return iVal.int32;
+    else if (FB_JS::is_num_uint32<T>::value)
+      return iVal.uint32;
+    else if (FB_JS::is_num_int64<T>::value)
+      return iVal.int64;
+    else if (FB_JS::is_num_uint64<T>::value)
+      return iVal.uint64;
+    else if (FB_JS::is_same<T, float>::value)
+      return fVal.f;
+    else if (FB_JS::is_same<T, double>::value)
+      return fVal.d;
+    else
+      return 0;
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value, T>::type
+  {
+    if (_ss.rtdb.raw.length() > 0 && _ss.rtdb.resp_data_type == fb_esp_data_type::d_string)
+    {
+      if (_ss.rtdb.raw[0] == '"' && _ss.rtdb.raw[_ss.rtdb.raw.length() - 1] == '"')
+      {
+        _ss.rtdb.raw.pop_back();
+        _ss.rtdb.raw.erase(0, 1);
+      }
+    }
+    return _ss.rtdb.raw.c_str();
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJson *>::value, FirebaseJson *>::type
+  {
+    if (!_ss.jsonPtr)
+      _ss.jsonPtr = new FirebaseJson();
+
+    if (_ss.rtdb.resp_data_type == d_json)
+    {
+      _ss.jsonPtr->clear();
+      if (_ss.arrPtr)
+        _ss.arrPtr->clear();
+      _ss.jsonPtr->setJsonData(_ss.rtdb.raw.c_str());
+    }
+    return _ss.jsonPtr;
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonData *>::value, FirebaseJsonData *>::type
+  {
+    if (!_ss.dataPtr)
+      _ss.dataPtr = new FirebaseJsonData();
+    return _ss.dataPtr;
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJson>::value, FirebaseJson &>::type
+  {
+    return *to<FirebaseJson *>();
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonArray *>::value, FirebaseJsonArray *>::type
+  {
+    if (!_ss.arrPtr)
+      _ss.arrPtr = new FirebaseJsonArray();
+
+    if (_ss.rtdb.resp_data_type == d_array)
+    {
+      if (_ss.jsonPtr)
+        _ss.jsonPtr->clear();
+      _ss.arrPtr->clear();
+      _ss.arrPtr->setJsonArrayData(_ss.rtdb.raw.c_str());
+    }
+
+    return _ss.arrPtr;
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonArray>::value, FirebaseJsonArray &>::type
+  {
+    return *to<FirebaseJsonArray *>();
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, std::vector<uint8_t> *>::value, std::vector<uint8_t> *>::type
+  {
+    return _ss.rtdb.blob;
+  }
+
+  template <typename T>
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, File>::value, File>::type
+  {
+    if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_file && init())
+    {
+      char *tmp = ut->strP(fb_esp_pgm_str_184);
+
+      ut->flashTest();
+
+      if (Signer.getCfg()->_int.fb_flash_rdy)
+        Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
+      ut->delS(tmp);
+    }
+
+    return Signer.getCfg()->_int.fb_file;
+  }
+#endif
+
+  /** Return the new appended node's name or key of server returned payload when calling pushXXX function (RTDB only).
    * 
    * @return String (String object).
   */
@@ -497,7 +705,7 @@ public:
   String pushName();
 #endif
 
-  /** Get the stream connection status.
+  /** Get the stream connection status (RTDB only).
    * 
    * @return Boolean type status indicates whether the Firebase Data object is working with a stream or not.
   */
@@ -511,7 +719,7 @@ public:
   */
   bool httpConnected();
 
-  /** Get the timeout event of the server's stream (30 sec is the default). 
+  /** Get the timeout event of the server's stream (30 sec is the default) (RTDB only). 
    * Nothing to do when stream connection timeout, the stream connection will be automatically resumed.
    * 
    * @return Boolean type status indicates whether the stream was a timeout or not.
@@ -520,7 +728,7 @@ public:
   bool streamTimeout();
 #endif
 
-  /** Get the availability of data or payload returned from the server.
+  /** Get the availability of data or payload returned from the server (RTDB only).
    * 
    * @return Boolean type status indicates whether the server return the new payload or not.
   */
@@ -528,7 +736,7 @@ public:
   bool dataAvailable();
 #endif
 
-  /** Get the availability of stream event-data payload returned from the server.
+  /** Get the availability of stream event-data payload returned from the server (RTDB only).
    * 
    * @return Boolean type status indicates whether the server returns the stream event-data 
    * payload or not.
@@ -537,40 +745,37 @@ public:
   bool streamAvailable();
 #endif
 
-  /** Get the matching between data type that intends to get from/store to database and the server's return payload data type.
+  /** Get the matching between data type that intends to get from/store to database and the server's return payload data type (RTDB only).
    * 
    * @return Boolean type status indicates whether the type of data being get from/store to database 
    * and the server's returned payload is matched or not.
+   * 
+   * @note Data type checking was disable by default, which can be enabled via the Firebase Config e.g.
+   * config.rtdb.data_type_stricted = true
   */
 #ifdef ENABLE_RTDB
   bool mismatchDataType();
 #endif
 
-  /** Get the data type of payload returned from the server (RTDB only).
-   * 
-   * @return The enumeration value of fb_esp_rtdb_data_type.
-   * fb_esp_rtdb_data_type_null or 1,
-   * fb_esp_rtdb_data_type_integer or 2,
-   * fb_esp_rtdb_data_type_float or 3,
-   * fb_esp_rtdb_data_type_double or 4,
-   * fb_esp_rtdb_data_type_boolean or 5,
-   * fb_esp_rtdb_data_type_string or 6,
-   * fb_esp_rtdb_data_type_json or 7,
-   * fb_esp_rtdb_data_type_array or 8,
-   * fb_esp_rtdb_data_type_blob or 9,
-   * fb_esp_rtdb_data_type_file or 10
-  */
-#ifdef ENABLE_RTDB
-  uint8_t dataTypeEnum();
-#endif
-
-  /** Get the HTTP status code return from the server.
+  /** Get the HTTP status code returned from the server.
    * 
    * @return integer number of HTTP status.
   */
   int httpCode();
 
-  /** Check the overflow of the returned payload data buffer.
+  /** Get the HTTP payload length returned from the server.
+   * 
+   * @return integer number of payload length.
+  */
+  int payloadLength();
+
+  /** Get the maximum size of HTTP payload length returned from the server.
+   * 
+   * @return integer number of max payload length.
+  */
+  int maxPayloadLength();
+
+  /** Check the overflow of the returned payload data buffer (RTDB only).
    * 
    * @return The overflow status. 
    * 
@@ -578,7 +783,7 @@ public:
   */
   bool bufferOverflow();
 
-  /** Get the name (full path) of the backup file in SD card/Flash memory.
+  /** Get the name (full path) of the backup file in SD card/Flash memory (RTDB only).
    * 
    * @return String (String object) of the file name that stores on SD card/Flash memory after backup operation.
   */
@@ -598,7 +803,7 @@ public:
   */
   void clear();
 
-  /** Get the error description for file transferring (push file, set file, backup and restore).
+  /** Get the error description for file transferring (push file, set file, backup and restore) (RTDB only).
    * 
    * @return Error description string (String object).
   */
@@ -607,25 +812,10 @@ public:
   /** Return the server's payload data.
    * 
    * @return Payload string (String object).
-   * 
-   * @note The returned String will be empty when the response data is File, BLOB, JSON and JSON Array objects.
-   * 
-   * For File data type, call fileStream to get the file stream.
-   * 
-   * For BLOB data type, call blobData to get the dynamic array of unsigned 8-bit data.
-   * 
-   * For JSON object data type, call jsonObject and jsonObjectPtr to get the object and its pointer.
-   * 
-   * For JSON Array data type, call jsonArray and jsonArrayPtr to get the object and its pointer.
   */
   String payload();
 
-
   FB_TCP_Client tcpClient;
-
-#ifdef ENABLE_RTDB
-  QueryFilter queryFilter;
-#endif
 
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #ifdef ENABLE_FCM
@@ -649,6 +839,37 @@ private:
   UtilsClass *ut = nullptr;
 #ifdef ENABLE_RTDB
   QueueManager _qMan;
+  union IVal
+  {
+    std::uint64_t uint64;
+    std::int64_t int64;
+    std::uint32_t uint32;
+    std::int32_t int32;
+    std::int16_t int16;
+    std::uint16_t uint16;
+    std::int8_t int8;
+    std::uint8_t uint8;
+  };
+
+  struct FVal
+  {
+    double d = 0;
+    float f = 0;
+    void setd(double v)
+    {
+      d = v;
+      f = static_cast<float>(v);
+    }
+
+    void setf(float v)
+    {
+      f = v;
+      d = static_cast<double>(v);
+    }
+  };
+
+  IVal iVal = {0};
+  FVal fVal;
 #endif
   struct fb_esp_session_info_t _ss;
 
@@ -656,6 +877,7 @@ private:
   bool handleStreamRead();
   void checkOvf(size_t len, struct server_response_data_t &resp);
   int tcpSend(const char *data);
+  int tcpSendChunk(const char *data, int &index, size_t len);
   bool reconnect(unsigned long dataTime = 0);
   std::string getDataType(uint8_t type);
   std::string getMethod(uint8_t method);
@@ -665,9 +887,10 @@ private:
   void addQueue(struct fb_esp_rtdb_queue_info_t *qinfo);
 #ifdef ENABLE_RTDB
   void clearQueueItem(QueueItem *item);
-  void setQuery(QueryFilter *query);
-  void clearNodeList();
-  void addNodeList(const String *childPath, size_t size);
+  void sendStreamToCB(int code);
+  void mSetResInt(const char *value);
+  void mSetResFloat(const char *value);
+  void mSetResBool(bool value);
 #endif
 
   bool init();

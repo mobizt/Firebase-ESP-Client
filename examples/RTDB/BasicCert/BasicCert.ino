@@ -37,27 +37,42 @@
 #define USER_PASSWORD "USER_PASSWORD"
 
 /* Google Root CA can be downloaded from https://pki.goog/repository/ */
+
+/** From the test on July 2021, GlobalSign Root CA was missing from Google server
+ * when checking with https://www.sslchecker.com/sslchecker.
+ * The certificate chain, GTS Root R1 can be used instead.
+*/
+
 const char rootCACert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
-                                  "MIIDujCCAqKgAwIBAgILBAAAAAABD4Ym5g0wDQYJKoZIhvcNAQEFBQAwTDEgMB4G\n"
-                                  "A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjIxEzARBgNVBAoTCkdsb2JhbFNp\n"
-                                  "Z24xEzARBgNVBAMTCkdsb2JhbFNpZ24wHhcNMDYxMjE1MDgwMDAwWhcNMjExMjE1\n"
-                                  "MDgwMDAwWjBMMSAwHgYDVQQLExdHbG9iYWxTaWduIFJvb3QgQ0EgLSBSMjETMBEG\n"
-                                  "A1UEChMKR2xvYmFsU2lnbjETMBEGA1UEAxMKR2xvYmFsU2lnbjCCASIwDQYJKoZI\n"
-                                  "hvcNAQEBBQADggEPADCCAQoCggEBAKbPJA6+Lm8omUVCxKs+IVSbC9N/hHD6ErPL\n"
-                                  "v4dfxn+G07IwXNb9rfF73OX4YJYJkhD10FPe+3t+c4isUoh7SqbKSaZeqKeMWhG8\n"
-                                  "eoLrvozps6yWJQeXSpkqBy+0Hne/ig+1AnwblrjFuTosvNYSuetZfeLQBoZfXklq\n"
-                                  "tTleiDTsvHgMCJiEbKjNS7SgfQx5TfC4LcshytVsW33hoCmEofnTlEnLJGKRILzd\n"
-                                  "C9XZzPnqJworc5HGnRusyMvo4KD0L5CLTfuwNhv2GXqF4G3yYROIXJ/gkwpRl4pa\n"
-                                  "zq+r1feqCapgvdzZX99yqWATXgAByUr6P6TqBwMhAo6CygPCm48CAwEAAaOBnDCB\n"
-                                  "mTAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUm+IH\n"
-                                  "V2ccHsBqBt5ZtJot39wZhi4wNgYDVR0fBC8wLTAroCmgJ4YlaHR0cDovL2NybC5n\n"
-                                  "bG9iYWxzaWduLm5ldC9yb290LXIyLmNybDAfBgNVHSMEGDAWgBSb4gdXZxwewGoG\n"
-                                  "3lm0mi3f3BmGLjANBgkqhkiG9w0BAQUFAAOCAQEAmYFThxxol4aR7OBKuEQLq4Gs\n"
-                                  "J0/WwbgcQ3izDJr86iw8bmEbTUsp9Z8FHSbBuOmDAGJFtqkIk7mpM0sYmsL4h4hO\n"
-                                  "291xNBrBVNpGP+DTKqttVCL1OmLNIG+6KYnX3ZHu01yiPqFbQfXf5WRDLenVOavS\n"
-                                  "ot+3i9DAgBkcRcAtjOj4LaR0VknFBbVPFd5uRHg5h6h+u/N5GJG79G+dwfCMNYxd\n"
-                                  "AfvDbbnvRG15RjF+Cv6pgsH/76tuIMRQyV+dTZsXjAzlAcmgQWpzU/qlULRuJQ/7\n"
-                                  "TBj0/VLZjmmx6BEP3ojY+x1J96relc8geMJgEtslQIxq/H5COEBkEveegeGTLg==\n"
+                                  "MIIFVzCCAz+gAwIBAgINAgPlk28xsBNJiGuiFzANBgkqhkiG9w0BAQwFADBHMQsw\n"
+                                  "CQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEU\n"
+                                  "MBIGA1UEAxMLR1RTIFJvb3QgUjEwHhcNMTYwNjIyMDAwMDAwWhcNMzYwNjIyMDAw\n"
+                                  "MDAwWjBHMQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZp\n"
+                                  "Y2VzIExMQzEUMBIGA1UEAxMLR1RTIFJvb3QgUjEwggIiMA0GCSqGSIb3DQEBAQUA\n"
+                                  "A4ICDwAwggIKAoICAQC2EQKLHuOhd5s73L+UPreVp0A8of2C+X0yBoJx9vaMf/vo\n"
+                                  "27xqLpeXo4xL+Sv2sfnOhB2x+cWX3u+58qPpvBKJXqeqUqv4IyfLpLGcY9vXmX7w\n"
+                                  "Cl7raKb0xlpHDU0QM+NOsROjyBhsS+z8CZDfnWQpJSMHobTSPS5g4M/SCYe7zUjw\n"
+                                  "TcLCeoiKu7rPWRnWr4+wB7CeMfGCwcDfLqZtbBkOtdh+JhpFAz2weaSUKK0Pfybl\n"
+                                  "qAj+lug8aJRT7oM6iCsVlgmy4HqMLnXWnOunVmSPlk9orj2XwoSPwLxAwAtcvfaH\n"
+                                  "szVsrBhQf4TgTM2S0yDpM7xSma8ytSmzJSq0SPly4cpk9+aCEI3oncKKiPo4Zor8\n"
+                                  "Y/kB+Xj9e1x3+naH+uzfsQ55lVe0vSbv1gHR6xYKu44LtcXFilWr06zqkUspzBmk\n"
+                                  "MiVOKvFlRNACzqrOSbTqn3yDsEB750Orp2yjj32JgfpMpf/VjsPOS+C12LOORc92\n"
+                                  "wO1AK/1TD7Cn1TsNsYqiA94xrcx36m97PtbfkSIS5r762DL8EGMUUXLeXdYWk70p\n"
+                                  "aDPvOmbsB4om3xPXV2V4J95eSRQAogB/mqghtqmxlbCluQ0WEdrHbEg8QOB+DVrN\n"
+                                  "VjzRlwW5y0vtOUucxD/SVRNuJLDWcfr0wbrM7Rv1/oFB2ACYPTrIrnqYNxgFlQID\n"
+                                  "AQABo0IwQDAOBgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4E\n"
+                                  "FgQU5K8rJnEaK0gnhS9SZizv8IkTcT4wDQYJKoZIhvcNAQEMBQADggIBAJ+qQibb\n"
+                                  "C5u+/x6Wki4+omVKapi6Ist9wTrYggoGxval3sBOh2Z5ofmmWJyq+bXmYOfg6LEe\n"
+                                  "QkEzCzc9zolwFcq1JKjPa7XSQCGYzyI0zzvFIoTgxQ6KfF2I5DUkzps+GlQebtuy\n"
+                                  "h6f88/qBVRRiClmpIgUxPoLW7ttXNLwzldMXG+gnoot7TiYaelpkttGsN/H9oPM4\n"
+                                  "7HLwEXWdyzRSjeZ2axfG34arJ45JK3VmgRAhpuo+9K4l/3wV3s6MJT/KYnAK9y8J\n"
+                                  "ZgfIPxz88NtFMN9iiMG1D53Dn0reWVlHxYciNuaCp+0KueIHoI17eko8cdLiA6Ef\n"
+                                  "MgfdG+RCzgwARWGAtQsgWSl4vflVy2PFPEz0tv/bal8xa5meLMFrUKTX5hgUvYU/\n"
+                                  "Z6tGn6D/Qqc6f1zLXbBwHSs09dR2CQzreExZBfMzQsNhFRAbd03OIozUhfJFfbdT\n"
+                                  "6u9AWpQKXCBfTkBdYiJ23//OYb2MI3jSNwLgjt7RETeJ9r/tSQdirpLsQBqvFAnZ\n"
+                                  "0E6yove+7u7Y/9waLd64NnHi/Hm3lCXRSHNboTXns5lndcEZOitHTtNCjv0xyBZm\n"
+                                  "2tIMPNuzjsmhDYAPexZ3FL//2wmUspO8IFgV6dtxQ/PeEMMA3KgqlbbC1j+Qa3bb\n"
+                                  "bP6MvPJwNQzcmRk13NfIRmPVNnGuV/u3gm3c\n"
                                   "-----END CERTIFICATE-----\n";
 
 //Define Firebase Data object
@@ -68,7 +83,7 @@ FirebaseConfig config;
 
 unsigned long sendDataPrevMillis = 0;
 
-int count = 0;
+unsigned long count = 0;
 
 void setup()
 {
@@ -99,29 +114,24 @@ void setup()
   /* Assign the RTDB URL (required) */
   config.database_url = DATABASE_URL;
 
-  /**
-   * In case using flash mem to keep the certificate files
-   * Upload the certificate files cert.pem and cert.der to flash memory.
-   * Use the following lines to set the certificate file.
-   * 
-   * config.cert.file = "/gsr2.der"; or
-   * config.cert.file = "/gsr2.pem";
-   * config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
-   * 
-   * Or set the certificate data string
-   * 
-   * config.cert.data = rootCACert;
-   * 
-   * ESP32 ssl_client class is alble to parse PEM certificate format.
-   * 
-   * The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. 
-  */
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   /* In case the certificate data was used  */
   config.cert.data = rootCACert;
 
-  /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  //Or custom set the root certificate for each FirebaseData object
+  fbdo.setCert(rootCACert);
+
+  /* Or assign the certificate file */
+
+  /** From the test on July 2021, GlobalSign Root CA was missing from Google server
+   * as described above, GTS Root R1 (gsr1.pem or gsr1.der) can be used instead.
+   * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
+   * ESP8266 SDK supports both PEM and DER format certificates.
+  */
+  //config.cert.file = "/gsr1.pem";
+  //config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
 
   //Or use legacy authenticate method
   //config.database_url = DATABASE_URL;
@@ -129,28 +139,65 @@ void setup()
 
   Firebase.begin(&config, &auth);
 
-  //Or use legacy authenticate method
-
+  //Comment or pass false value when WiFi reconnection will control by your code or third party library
   Firebase.reconnectWiFi(true);
+  
+
+  Firebase.setDoubleDigits(5);
 }
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
 
+    Serial.printf("Set bool... %s\n", Firebase.RTDB.setBool(&fbdo, "/test/bool", count % 2 == 0) ? "ok" : fbdo.errorReason().c_str());
+
+    Serial.printf("Get bool... %s\n", Firebase.RTDB.getBool(&fbdo, "/test/bool") ? fbdo.to<bool>() ? "true" : "false" : fbdo.errorReason().c_str());
+
+    bool bVal;
+    Serial.printf("Get bool ref... %s\n", Firebase.RTDB.getBool(&fbdo, "/test/bool", &bVal) ? bVal ? "true" : "false" : fbdo.errorReason().c_str());
+
     Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, "/test/int", count) ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.printf("Get int... %s\n", Firebase.RTDB.getInt(&fbdo, "/test/int") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str());
+    Serial.printf("Get int... %s\n", Firebase.RTDB.getInt(&fbdo, "/test/int") ? String(fbdo.to<int>()).c_str() : fbdo.errorReason().c_str());
 
-    FirebaseJson json;
-    json.add("value", count);
+    int iVal = 0;
+    Serial.printf("Get int ref... %s\n", Firebase.RTDB.getInt(&fbdo, "/test/int", &iVal) ? String(iVal).c_str() : fbdo.errorReason().c_str());
 
-    Serial.printf("Push json... %s\n", Firebase.RTDB.pushJSON(&fbdo, "/test/push", &json) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set float... %s\n", Firebase.RTDB.setFloat(&fbdo, "/test/float", count + 10.2) ? "ok" : fbdo.errorReason().c_str());
 
-    json.set("value", count + 100);
-    Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, String("/test/push/" + fbdo.pushName()).c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Get float... %s\n", Firebase.RTDB.getFloat(&fbdo, "/test/float") ? String(fbdo.to<float>()).c_str() : fbdo.errorReason().c_str());
+
+    Serial.printf("Set double... %s\n", Firebase.RTDB.setDouble(&fbdo, "/test/double", count + 35.517549723765) ? "ok" : fbdo.errorReason().c_str());
+
+    Serial.printf("Get double... %s\n", Firebase.RTDB.getDouble(&fbdo, "/test/double") ? String(fbdo.to<double>()).c_str() : fbdo.errorReason().c_str());
+
+    Serial.printf("Set string... %s\n", Firebase.RTDB.setString(&fbdo, "/test/string", "Hello World!") ? "ok" : fbdo.errorReason().c_str());
+
+    Serial.printf("Get string... %s\n", Firebase.RTDB.getString(&fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
+
+    Serial.println();
+    
+    //For generic set/get functions.
+
+    //For generic set, use Firebase.RTDB.set(&fbdo, <path>, <any variable or value>)
+
+    //For generic get, use Firebase.RTDB.get(&fbdo, <path>).
+    //And check its type with fbdo.dataType() or fbdo.dataTypeEnum() and
+    //cast the value from it e.g. fbdo.to<int>(), fbdo.to<std::string>().
+
+    //The function, fbdo.dataType() returns types String e.g. string, boolean,
+    //int, float, double, json, array, blob, file and null.
+
+    //The function, fbdo.dataTypeEnum() returns type enum (number) e.g. fb_esp_rtdb_data_type_null (1),
+    //fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double,
+    //fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json,
+    //fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
 
     count++;
   }

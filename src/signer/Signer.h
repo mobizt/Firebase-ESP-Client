@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.1.2
+ * Google's Firebase Token Generation class, Signer.h version 1.2.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -52,11 +52,14 @@ class Firebase_Signer
     friend class FunctionsConfig;
 
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+
 #if defined(ESP32)
-    friend class FirebaseESP32;
-#elif defined(ESP8266)
-    friend class FirebaseESP8266;
+#define FIREBASE_CLASS FirebaseESP32
+#elif defined(ES8266)
+#define FIREBASE_CLASS FirebaseESP8266
 #endif
+
+    friend class FIREBASE_CLASS;
     friend class FCMObject;
 #endif
     friend class FIREBASE_STREAM_CLASS;
@@ -97,12 +100,12 @@ private:
     bool getIdToken(bool createUser, const char *email, const char *password);
     bool requestTokens();
     void checkToken();
-    void getExpiration(const String &exp);
+    void getExpiration(const char *exp);
     bool handleEmailSending(const char *payload, fb_esp_user_email_sending_type type);
     void errorToString(int httpCode, std::string &buff);
     bool tokenReady();
     void sendTokenStatusCB();
-    const char *getToken(fb_esp_auth_token_type type);
+    const char *getToken();
     fb_esp_auth_token_type getTokenType();
     std::string getCAFile();
     int getCAFileStorage();

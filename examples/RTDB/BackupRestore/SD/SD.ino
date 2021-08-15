@@ -82,10 +82,18 @@ void setup()
   Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
+
+#if defined(ESP8266)
+  //required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+#endif
 }
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
@@ -94,7 +102,7 @@ void loop()
     //<target node> is the full path of database to backup and restore.
     //<file name> is file name in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
 
-    Serial.printf("Backup... %s\n", Firebase.RTDB.backup(&fbdo, mem_storage_type_sd, "/<target node>", "/<file name>") ? "ok" : fbdo.fileTransferError().c_str());
+    Serial.printf("Backup... %s\n", Firebase.RTDB.backup(&fbdo, mem_storage_type_sd, "/<target node>" /* node path to backup*/, "/<file name>" /* file name included path to save */) ? "ok" : fbdo.fileTransferError().c_str());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {
@@ -107,7 +115,7 @@ void loop()
     //<file name> is file name included path of backed up file.
     //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
 
-    Serial.printf("Restore... %s\n", Firebase.RTDB.restore(&fbdo, mem_storage_type_sd, "/<target node>", "/<file name>") ? "ok" : fbdo.fileTransferError().c_str());
+    Serial.printf("Restore... %s\n", Firebase.RTDB.restore(&fbdo, mem_storage_type_sd, "/<target node>" /* node path to restore */, "/<file name>" /* backup file to restore */) ? "ok" : fbdo.fileTransferError().c_str());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
       Serial.printf("backup file, %s\n", fbdo.getBackupFilename().c_str());

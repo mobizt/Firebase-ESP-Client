@@ -218,6 +218,7 @@ setQueryIndex   KEYWORD2
 removeQueryIndex    
 authenticated   KEYWORD2
 ready   KEYWORD2
+getToken    KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
@@ -263,6 +264,9 @@ stopWiFiClient  KEYWORD2
 fileStream  KEYWORD2
 setResponseSize KEYWORD2
 bufferOverflow  KEYWORD2
+payloadLength   KEYWORD2
+maxPayloadLength    KEYWORD2
+setCert KEYWORD2
 
 ########################################################
 # Methods for Firebase Cloud Messaging Object (KEYWORD2)
@@ -326,6 +330,12 @@ fb_esp_firestore_document_precondition_t    KEYWORD3
 fb_esp_firestore_document_write_t   KEYWORD3
 TransactionOptions  KEYWORD3
 
+#######################################
+# FirebaseJson Struct (KEYWORD3)
+#######################################
+
+SearchCriteria  KEYWORD3
+
 
 ###########################################################
 # Methods for FirebaseJSON and FirebaseJsonArray (KEYWORD2)
@@ -333,6 +343,7 @@ TransactionOptions  KEYWORD3
 
 clear   KEYWORD2
 setJsonData KEYWORD2
+setJsonArrayData    KEYWORD2
 add KEYWORD2
 toString    KEYWORD2
 get KEYWORD2
@@ -353,8 +364,15 @@ typeNum KEYWORD2
 success KEYWORD2
 getArray    KEYWORD2
 getJson KEYWORD2
-setBufferLimit  KEYWORD2
-getLastError    KEYWORD2
+to  KEYWORD2
+readFrom    KEYWORD2
+setFloatDigits  KEYWORD2
+setDoubleDigits KEYWORD2
+payloadLen  KEYWORD2
+search  KEYWORD2
+serializedBufferLength  KEYWORD2
+responseCode    KEYWORD2
+errorPosition   KEYWORD2
 
 #########################################
 # Methods for FireSense addons (KEYWORD2)

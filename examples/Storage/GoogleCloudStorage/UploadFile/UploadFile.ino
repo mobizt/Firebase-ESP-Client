@@ -76,8 +76,8 @@ void setup()
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
 #if defined(ESP8266)
-    //required
-    fbdo.setBSSLBufferSize(2048, 2048);
+    //required for large file data, increase Tx size as needed.
+    fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 2048 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
 
     Firebase.begin(&config, &auth);

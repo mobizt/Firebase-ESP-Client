@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.9
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created July 29, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -221,6 +221,7 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
 
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), port);
+    fbdo->_ss.max_payload_length = 0;
 }
 
 int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload)
@@ -293,7 +294,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
         if (ret < 0)
             return ret;
 
-        ret = fbdo->tcpSend(Signer.getToken(Signer.getTokenType()));
+        ret = fbdo->tcpSend(Signer.getToken());
 
         if (ret < 0)
             return ret;
@@ -325,9 +326,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
         ut->appendP(header, fb_esp_pgm_str_21);
 
         ut->appendP(header, fb_esp_pgm_str_12);
-        char *tmp = ut->intStr(strlen(payload));
-        header += tmp;
-        ut->delS(tmp);
+        header += NUM2S(strlen(payload)).get();
         ut->appendP(header, fb_esp_pgm_str_21);
     }
 
@@ -1270,6 +1269,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->_ss.content_length = -1;
+    fbdo->_ss.payload_length = 0;
     fbdo->_ss.chunked_encoding = false;
     fbdo->_ss.buffer_ovf = false;
 
@@ -1280,7 +1280,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
         if (!fbdo->reconnect(dataTime))
             return false;
         chunkBufSize = stream->available();
-        delay(0);
+        ut->idle();
     }
 
     dataTime = millis();
@@ -1310,7 +1310,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     int pos = 0;
 
                     tmp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
-                    delay(0);
+                    ut->idle();
                     dataTime = millis();
                     if (tmp)
                     {
@@ -1333,7 +1333,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                 }
                 else
                 {
-                    delay(0);
+                    ut->idle();
                     dataTime = millis();
                     //the next chunk data can be the remaining http header
                     if (isHeader)
@@ -1409,6 +1409,9 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
                             if (readLen > 0)
                             {
+                                fbdo->_ss.payload_length += readLen;
+                                if (fbdo->_ss.max_payload_length < fbdo->_ss.payload_length)
+                                    fbdo->_ss.max_payload_length = fbdo->_ss.payload_length;
                                 payloadRead += readLen;
                                 fbdo->checkOvf(pBufPos + readLen, response);
 
@@ -1476,12 +1479,12 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
                     if (data.success)
                     {
-                        error.code = data.intValue;
+                        error.code = data.to<int>();
                         tmp = ut->strP(fb_esp_pgm_str_258);
                         json.get(data, tmp);
                         ut->delS(tmp);
                         if (data.success)
-                            fbdo->_ss.error = data.stringValue.c_str();
+                            fbdo->_ss.error = data.to<const char *>();
                     }
                     else
                         error.code = 0;
@@ -1505,7 +1508,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
 void FB_CM::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_fcm || strcmp(host, fbdo->_ss.host.c_str()) != 0)
+    if (fbdo->_ss.cert_updated || !fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_fcm || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();

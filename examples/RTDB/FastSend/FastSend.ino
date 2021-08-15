@@ -31,9 +31,8 @@
 #define API_KEY "API_KEY"
 
 /* 3. Define the RTDB URL */
-#define DATABASE_URL                                                           \
-  "URL" //<databaseName>.firebaseio.com or
-        //<databaseName>.<region>.firebasedatabase.app
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or \
+                           //<databaseName>.<region>.firebasedatabase.app
 
 /* 4. Define the user Email and password that alreadey registerd or added in
  * your project */
@@ -98,6 +97,9 @@ void setup()
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();

@@ -74,13 +74,15 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+#if defined(ESP8266)
+    //required for large data, increase Tx size as needed.
+    fbdo.setBSSLBufferSize(1024 /* Rx buffer size in bytes from 512 - 16384 */, 4096 /* Tx buffer size in bytes from 512 - 16384 */);
+#endif
+
     Firebase.begin(&config, &auth);
 
     Firebase.reconnectWiFi(true);
 
-#if defined(ESP8266)
-    fbdo.setBSSLBufferSize(1024, 4096);
-#endif
 }
 
 void loop()

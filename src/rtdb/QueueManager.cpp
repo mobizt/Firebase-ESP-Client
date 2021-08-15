@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueueManager class, QueueManager.cpp version 1.0.0
+ * Google's Firebase QueueManager class, QueueManager.cpp version 1.0.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 12, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -59,21 +59,16 @@ void QueueManager::clear()
             std::string().swap(item.path);
             std::string().swap(item.filename);
             std::string().swap(item.payload);
-
-            item.stringPtr = nullptr;
-            item.intPtr = nullptr;
-            item.floatPtr = nullptr;
-            item.doublePtr = nullptr;
-            item.boolPtr = nullptr;
-            item.jsonPtr = nullptr;
-            item.arrPtr = nullptr;
-            item.blobPtr = nullptr;
-            item.queryFilter.clear();
+            item.address.dout = 0;
+            item.address.din = 0;
+            item.blobSize = 0;
+            item.address.priority=0;
+            item.address.query = 0;
         }
     }
 }
 
-bool QueueManager::add(QueueItem q)
+bool QueueManager::add(struct QueueItem q)
 {
     if (!_queueCollection)
         _queueCollection = new std::vector<QueueItem>();

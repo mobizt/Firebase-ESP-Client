@@ -89,6 +89,9 @@ void loop()
         //a0 is the collection id, b0 is the document id in collection a0 and c0 is the collection id id in the document b0.
         String collectionId = "a0/b0/c0";
 
+        //If the collection Id path contains space e.g. "a b/c d/e f"
+        //It should encode the space as %20 then the collection Id will be "a%20b/c%20d/e%20f"
+
         Serial.print("List the documents in a collection... ");
 
         if (Firebase.Firestore.listDocuments(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, collectionId.c_str(), 3 /* The maximum number of documents to return */, "" /* The nextPageToken value returned from a previous List request, if any. */, "" /* The order to sort results by. For example: priority desc, name. */, "count" /* the field name to mask */, false /* showMissing, iIf the list should show missing documents. A missing document is a document that does not exist but has sub-documents. */))

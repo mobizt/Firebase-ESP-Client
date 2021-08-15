@@ -1,3 +1,6 @@
+#ifndef RTDB_HElPER_H
+#define RTDB_HElPER_H
+
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_RTDB
@@ -20,100 +23,85 @@
 void printResult(FirebaseData &data)
 {
     if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
-        Serial.println(data.intData());
+        Serial.println(data.to<int>());
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
-        Serial.println(data.floatData(), 5);
+        Serial.println(data.to<float>(), 5);
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
-        printf("%.9lf\n", data.doubleData());
+        printf("%.9lf\n", data.to<double>());
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
-        Serial.println(data.boolData() == 1 ? "true" : "false");
+        Serial.println(data.to<bool>() == 1 ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string)
-        Serial.println(data.stringData());
+        Serial.println(data.to<String>());
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
     {
-        FirebaseJson &json = data.jsonObject();
+        FirebaseJson *json = data.to<FirebaseJson*>();
         //Print all object data
-        Serial.println("Pretty printed JSON data:");
-        String jsonStr;
-        json.toString(jsonStr, true);
-        Serial.println(jsonStr);
+        Serial.println((const char *)FPSTR("Pretty printed JSON data:"));
+        json->toString(Serial, true);
         Serial.println();
-        Serial.println("Iterate JSON data:");
+        Serial.println((const char *)FPSTR("Iterate JSON data:"));
         Serial.println();
-        size_t len = json.iteratorBegin();
-        String key, value = "";
-        int type = 0;
+        size_t len = json->iteratorBegin();
+        FirebaseJson::IteratorValue value;
         for (size_t i = 0; i < len; i++)
         {
-            json.iteratorGet(i, type, key, value);
-            Serial.print(i);
-            Serial.print(", ");
-            Serial.print("Type: ");
-            Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
-            if (type == FirebaseJson::JSON_OBJECT)
-            {
-                Serial.print(", Key: ");
-                Serial.print(key);
-            }
-            Serial.print(", Value: ");
-            Serial.println(value);
+            value = json->valueAt(i);
+            Serial.printf((const char *)FPSTR("%d, Type: %s, Name: %s, Value: %s\n"), i, value.type == FirebaseJson::JSON_OBJECT ? (const char *)FPSTR("object") : (const char *)FPSTR("array"), value.key.c_str(), value.value.c_str());
         }
-        json.iteratorEnd();
-        json.clear();
+        json->iteratorEnd();
+        json->clear();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
     {
         //get array data from FirebaseData using FirebaseJsonArray object
-        FirebaseJsonArray &arr = data.jsonArray();
+        FirebaseJsonArray *arr = data.to<FirebaseJsonArray*>();
         //Print all array values
-        Serial.println("Pretty printed Array:");
-        String arrStr;
-        arr.toString(arrStr, true);
-        Serial.println(arrStr);
+        Serial.println((const char *)FPSTR("Pretty printed Array:"));
+        arr->toString(Serial, true);
         Serial.println();
-        Serial.println("Iterate array values:");
+        Serial.println((const char *)FPSTR("Iterate array values:"));
         Serial.println();
-        for (size_t i = 0; i < arr.size(); i++)
+        for (size_t i = 0; i < arr->size(); i++)
         {
             Serial.print(i);
-            Serial.print(", Value: ");
+            Serial.print((const char *)FPSTR(", Value: "));
 
-            FirebaseJsonData jsonData;
+            FirebaseJsonData result;
             //Get the result data from FirebaseJsonArray object
-            arr.get(jsonData, i);
-            if (jsonData.typeNum == FirebaseJson::JSON_BOOL)
-                Serial.println(jsonData.boolValue ? "true" : "false");
-            else if (jsonData.typeNum == FirebaseJson::JSON_INT)
-                Serial.println(jsonData.intValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_FLOAT)
-                Serial.println(jsonData.floatValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_DOUBLE)
-                printf("%.9lf\n", jsonData.doubleValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_STRING ||
-                     jsonData.typeNum == FirebaseJson::JSON_NULL ||
-                     jsonData.typeNum == FirebaseJson::JSON_OBJECT ||
-                     jsonData.typeNum == FirebaseJson::JSON_ARRAY)
-                Serial.println(jsonData.stringValue);
+            arr->get(result, i);
+            if (result.typeNum == FirebaseJson::JSON_BOOL)
+                Serial.println(result.to<bool>() ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
+            else if (result.typeNum == FirebaseJson::JSON_INT)
+                Serial.println(result.to<int>());
+            else if (result.typeNum == FirebaseJson::JSON_FLOAT)
+                Serial.println(result.to<float>());
+            else if (result.typeNum == FirebaseJson::JSON_DOUBLE)
+                printf("%.9lf\n", result.to<double>());
+            else if (result.typeNum == FirebaseJson::JSON_STRING ||
+                     result.typeNum == FirebaseJson::JSON_NULL ||
+                     result.typeNum == FirebaseJson::JSON_OBJECT ||
+                     result.typeNum == FirebaseJson::JSON_ARRAY)
+                Serial.println(result.to<String>());
         }
-        arr.clear();
+        arr->clear();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
     {
-        std::vector<uint8_t> blob = data.blobData();
-        for (size_t i = 0; i < blob.size(); i++)
+        std::vector<uint8_t> *blob = data.to<std::vector<uint8_t> *>();
+        for (size_t i = 0; i < blob->size(); i++)
         {
             if (i > 0 && i % 16 == 0)
                 Serial.println();
-            if (blob[i] < 16)
-                Serial.print("0");
-            Serial.print(blob[i], HEX);
-            Serial.print(" ");
+            if ((*blob)[i] < 16)
+                Serial.print((const char *)FPSTR("0"));
+            Serial.print((*blob)[i], HEX);
+            Serial.print((const char *)FPSTR(" "));
         }
         Serial.println();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
     {
-        File file = data.fileStream();
+        File file = data.to<File>();
         int i = 0;
         while (file.available())
         {
@@ -123,10 +111,10 @@ void printResult(FirebaseData &data)
             int v = file.read();
 
             if (v < 16)
-                Serial.print("0");
+                Serial.print((const char *)FPSTR("0"));
 
             Serial.print(v, HEX);
-            Serial.print(" ");
+            Serial.print((const char *)FPSTR(" "));
             i++;
         }
         Serial.println();
@@ -142,43 +130,30 @@ void printResult(FIREBASE_STREAM_CLASS &data)
 {
 
     if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
-        Serial.println(data.intData());
+        Serial.println(data.to<int>());
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
-        Serial.println(data.floatData(), 5);
+        Serial.println(data.to<float>(), 5);
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
-        printf("%.9lf\n", data.doubleData());
+        printf((const char *)FPSTR("%.9lf\n"), data.to<double>());
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
-        Serial.println(data.boolData() == 1 ? "true" : "false");
+        Serial.println(data.to<bool>() == 1 ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string || data.dataTypeEnum() == fb_esp_rtdb_data_type_null)
-        Serial.println(data.stringData());
+        Serial.println(data.to<String>());
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
     {
-        FirebaseJson *json = data.jsonObjectPtr();
+        FirebaseJson *json = data.to<FirebaseJson *>();
         //Print all object data
-        Serial.println("Pretty printed JSON data:");
-        String jsonStr;
-        json->toString(jsonStr, true);
-        Serial.println(jsonStr);
+        Serial.println((const char *)FPSTR("Pretty printed JSON data:"));
+        json->toString(Serial, true);
         Serial.println();
-        Serial.println("Iterate JSON data:");
+        Serial.println((const char *)FPSTR("Iterate JSON data:"));
         Serial.println();
         size_t len = json->iteratorBegin();
-        String key, value = "";
-        int type = 0;
+        FirebaseJson::IteratorValue value;
         for (size_t i = 0; i < len; i++)
         {
-            json->iteratorGet(i, type, key, value);
-            Serial.print(i);
-            Serial.print(", ");
-            Serial.print("Type: ");
-            Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
-            if (type == FirebaseJson::JSON_OBJECT)
-            {
-                Serial.print(", Key: ");
-                Serial.print(key);
-            }
-            Serial.print(", Value: ");
-            Serial.println(value);
+            value = json->valueAt(i);
+            Serial.printf((const char *)FPSTR("%d, Type: %s, Name: %s, Value: %s\n"), i, value.type == FirebaseJson::JSON_OBJECT ? (const char *)FPSTR("object") : (const char *)FPSTR("array"), value.key.c_str(), value.value.c_str());
         }
         json->iteratorEnd();
         json->clear();
@@ -186,56 +161,56 @@ void printResult(FIREBASE_STREAM_CLASS &data)
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
     {
         //get array data from FirebaseData using FirebaseJsonArray object
-        FirebaseJsonArray *arr = data.jsonArrayPtr();
+        FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
         //Print all array values
-        Serial.println("Pretty printed Array:");
+        Serial.println((const char *)FPSTR("Pretty printed Array:"));
         String arrStr;
         arr->toString(arrStr, true);
         Serial.println(arrStr);
         Serial.println();
-        Serial.println("Iterate array values:");
+        Serial.println((const char *)FPSTR("Iterate array values:"));
         Serial.println();
 
         for (size_t i = 0; i < arr->size(); i++)
         {
             Serial.print(i);
-            Serial.print(", Value: ");
-            FirebaseJsonData jsonData;
+            Serial.print((const char *)FPSTR(", Value: "));
+            FirebaseJsonData result;
             //Get the result data from FirebaseJsonArray object
-            arr->get(jsonData, i);
-            if (jsonData.typeNum == FirebaseJson::JSON_BOOL)
-                Serial.println(jsonData.boolValue ? "true" : "false");
-            else if (jsonData.typeNum == FirebaseJson::JSON_INT)
-                Serial.println(jsonData.intValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_FLOAT)
-                Serial.println(jsonData.floatValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_DOUBLE)
-                printf("%.9lf\n", jsonData.doubleValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_STRING ||
-                     jsonData.typeNum == FirebaseJson::JSON_NULL ||
-                     jsonData.typeNum == FirebaseJson::JSON_OBJECT ||
-                     jsonData.typeNum == FirebaseJson::JSON_ARRAY)
-                Serial.println(jsonData.stringValue);
+            arr->get(result, i);
+            if (result.typeNum == FirebaseJson::JSON_BOOL)
+                Serial.println(result.to<bool>() ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
+            else if (result.typeNum == FirebaseJson::JSON_INT)
+                Serial.println(result.to<int>());
+            else if (result.typeNum == FirebaseJson::JSON_FLOAT)
+                Serial.println(result.to<float>());
+            else if (result.typeNum == FirebaseJson::JSON_DOUBLE)
+                printf("%.9lf\n", result.to<double>());
+            else if (result.typeNum == FirebaseJson::JSON_STRING ||
+                     result.typeNum == FirebaseJson::JSON_NULL ||
+                     result.typeNum == FirebaseJson::JSON_OBJECT ||
+                     result.typeNum == FirebaseJson::JSON_ARRAY)
+                Serial.println(result.to<String>());
         }
         arr->clear();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
     {
-        std::vector<uint8_t> blob = data.blobData();
-        for (size_t i = 0; i < blob.size(); i++)
+        std::vector<uint8_t> *blob = data.to<std::vector<uint8_t> *>();
+        for (size_t i = 0; i < blob->size(); i++)
         {
             if (i > 0 && i % 16 == 0)
                 Serial.println();
-            if (blob[i] < 16)
-                Serial.print("0");
-            Serial.print(blob[i], HEX);
-            Serial.print(" ");
+            if ((*blob)[i] < 16)
+                Serial.print((const char *)FPSTR("0"));
+            Serial.print((*blob)[i], HEX);
+            Serial.print((const char *)FPSTR(" "));
         }
         Serial.println();
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
     {
-        File file = data.fileStream();
+        File file = data.to<File>();
         int i = 0;
         while (file.available())
         {
@@ -245,10 +220,10 @@ void printResult(FIREBASE_STREAM_CLASS &data)
             int v = file.read();
 
             if (v < 16)
-                Serial.print("0");
+                Serial.print((const char *)FPSTR("0"));
 
             Serial.print(v, HEX);
-            Serial.print(" ");
+            Serial.print((const char *)FPSTR(" "));
             i++;
         }
         Serial.println();
@@ -259,3 +234,5 @@ void printResult(FIREBASE_STREAM_CLASS &data)
 #endif
 
 #endif //ENABLE
+
+#endif //RTDB_HElPER_H

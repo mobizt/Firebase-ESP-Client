@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.0.6
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 25, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -39,6 +39,7 @@
 #include <Arduino.h>
 #include "Utils.h"
 #include "signer/Signer.h"
+#include "FB_Stream.h"
 
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_MP_STREAM_CLASS MultiPathStream
@@ -50,11 +51,12 @@ class FIREBASE_MP_STREAM_CLASS
 {
     friend class FB_RTDB;
     
-
 public:
     FIREBASE_MP_STREAM_CLASS();
     ~FIREBASE_MP_STREAM_CLASS();
     bool get(const String &path);
+    int payloadLength();
+    int maxPayloadLength();
     String dataPath;
     String value;
     String type;

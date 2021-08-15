@@ -91,6 +91,9 @@ void loop()
         //aa is the collection id, bb is the document id in collection aa.
         String documentPath = "aa/bb";
 
+        //If the document path contains space e.g. "a b c/d e f"
+        //It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
+
         content.set("fields/v1/integerValue", "12345");
         content.set("fields/v2/doubleValue", 123.456);
 

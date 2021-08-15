@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.1
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -241,15 +241,15 @@ bool FB_Firestore::setFieldTransform(FirebaseJson *json, struct fb_esp_firestore
 
 bool FB_Firestore::commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction)
 {
-    return int_commitDocument(fbdo, projectId, databaseId, writes, transaction, false);
+    return mCommitDocument(fbdo, projectId, databaseId, writes, transaction, false);
 }
 
 bool FB_Firestore::commitDocumentAsync(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction)
 {
-    return int_commitDocument(fbdo, projectId, databaseId, writes, transaction, true);
+    return mCommitDocument(fbdo, projectId, databaseId, writes, transaction, true);
 }
 
-bool FB_Firestore::int_commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction, bool async)
+bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction, bool async)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_commit_document;
@@ -763,9 +763,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
             ut->appendP(header, fb_esp_pgm_str_173);
             ut->appendP(header, fb_esp_pgm_str_357);
             ut->appendP(header, fb_esp_pgm_str_361);
-            char *tmp = ut->intStr(req->pageSize);
-            header += tmp;
-            ut->delS(tmp);
+            header += NUM2S(req->pageSize).get();
             ut->appendP(header, fb_esp_pgm_str_172);
             ut->appendP(header, fb_esp_pgm_str_358);
             ut->appendP(header, fb_esp_pgm_str_361);
@@ -775,9 +773,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
             header += req->orderBy;
             ut->appendP(header, fb_esp_pgm_str_172);
             ut->appendP(header, fb_esp_pgm_str_360);
-            tmp = ut->boolStr(req->showMissing);
-            header += tmp;
-            ut->delS(tmp);
+            header += NUM2S(req->showMissing).get();
             hasParam = true;
         }
 
@@ -878,9 +874,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         ut->appendP(header, fb_esp_pgm_str_21);
 
         ut->appendP(header, fb_esp_pgm_str_12);
-        char *tmp = ut->intStr(req->payload.length());
-        header += tmp;
-        ut->delS(tmp);
+        header += NUM2S(req->payload.length()).get();
         ut->appendP(header, fb_esp_pgm_str_21);
     }
 
@@ -902,7 +896,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     if (ret < 0)
         return false;
 
-    ret = fbdo->tcpSend(Signer.getToken(Signer.getTokenType()));
+    ret = fbdo->tcpSend(Signer.getToken());
 
     if (ret < 0)
         return false;
@@ -916,7 +910,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
     ret = fbdo->tcpSend(header.c_str());
-    if (ret == 0)
+    if (ret == 0 && req->payload.length() > 0)
         ret = fbdo->tcpSend(req->payload.c_str());
 
     ut->clearS(header);
@@ -941,7 +935,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
 
 void FB_Firestore::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_firestore || strcmp(host, fbdo->_ss.host.c_str()) != 0)
+    if (fbdo->_ss.cert_updated || !fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.con_mode != fb_esp_con_mode_firestore || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
@@ -959,6 +953,7 @@ bool FB_Firestore::connect(FirebaseData *fbdo)
     ut->appendP(host, fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), 443);
+    fbdo->_ss.max_payload_length = 0;
     return true;
 }
 
@@ -995,6 +990,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->_ss.content_length = -1;
+    fbdo->_ss.payload_length = 0;
     fbdo->_ss.chunked_encoding = false;
     fbdo->_ss.buffer_ovf = false;
 
@@ -1005,7 +1001,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
         if (!fbdo->reconnect(dataTime))
             return false;
         chunkBufSize = stream->available();
-        delay(0);
+        ut->idle();
     }
 
     int availablePayload = chunkBufSize;
@@ -1037,7 +1033,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                     int pos = 0;
 
                     tmp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
-                    delay(0);
+                    ut->idle();
                     dataTime = millis();
                     if (tmp)
                     {
@@ -1051,7 +1047,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                 }
                 else
                 {
-                    delay(0);
+                    ut->idle();
                     dataTime = millis();
                     //the next chunk data can be the remaining http header
                     if (isHeader)
@@ -1122,6 +1118,9 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
 
                             if (availablePayload > 0)
                             {
+                                fbdo->_ss.payload_length += availablePayload;
+                                if (fbdo->_ss.max_payload_length < fbdo->_ss.payload_length)
+                                    fbdo->_ss.max_payload_length = fbdo->_ss.payload_length;
                                 payloadRead += availablePayload;
                                 if (payloadRead < payloadLen)
                                     fbdo->_ss.cfs.payload += pChunk;
@@ -1168,12 +1167,12 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
                 ut->delS(tmp);
                 if (fbdo->_ss.dataPtr->success)
                 {
-                    error.code = fbdo->_ss.dataPtr->intValue;
+                    error.code = fbdo->_ss.dataPtr->to<int>();
                     tmp = ut->strP(fb_esp_pgm_str_258);
                     fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
                     ut->delS(tmp);
                     if (fbdo->_ss.dataPtr->success)
-                        fbdo->_ss.error = fbdo->_ss.dataPtr->stringValue.c_str();
+                        fbdo->_ss.error = fbdo->_ss.dataPtr->to<const char *>();
                     fbdo->_ss.cfs.payload.clear();
                 }
                 else

@@ -1,5 +1,7 @@
 /**
- * Firebase TCP Client v1.1.9
+ * Firebase TCP Client v1.1.10
+ * 
+ * Created August 15, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -36,12 +38,7 @@ FB_TCP_Client::FB_TCP_Client()
 
 FB_TCP_Client::~FB_TCP_Client()
 {
-  if (_wcs)
-  {
-    _wcs->stop();
-    _wcs.reset(nullptr);
-    _wcs.release();
-  }
+  release();
   std::string().swap(_host);
   std::string().swap(_CAFile);
 }
@@ -80,12 +77,18 @@ bool FB_TCP_Client::connected()
   return false;
 }
 
-int FB_TCP_Client::send(const char *data)
+int FB_TCP_Client::send(const char *data, size_t len)
 {
   if (!connect())
     return FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED;
 
-  if (_wcs->write((const uint8_t *)data, strlen(data)) != strlen(data))
+  if (len == 0)
+    len = strlen(data);
+
+  if (len == 0)
+    return 0;
+
+  if (_wcs->write((const uint8_t *)data, len) != len)
     return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
 
   return 0;
@@ -113,14 +116,31 @@ bool FB_TCP_Client::connect(void)
   return connected();
 }
 
+void FB_TCP_Client::release()
+{
+  if (_wcs)
+  {
+    _wcs->stop();
+    _wcs.reset(nullptr);
+    _wcs.release();
+  }
+  if (x509)
+    delete x509;
+}
+
 void FB_TCP_Client::setCACert(const char *caCert)
 {
+
+  release();
+  
+  _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
 
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
 
   if (caCert)
   {
-    _wcs->setTrustAnchors(new X509List(caCert));
+    x509 = new X509List(caCert);
+    _wcs->setTrustAnchors(x509);
     _certType = 1;
   }
   else
@@ -154,13 +174,13 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, s
     }
     if (f)
     {
-        size_t len = f.size();
-        uint8_t *der = new uint8_t[len];
-        if (f.available())
-          f.read(der, len);
-        f.close();
-        _wcs->setTrustAnchors(new X509List(der, len));
-        delete[] der;
+      size_t len = f.size();
+      uint8_t *der = new uint8_t[len];
+      if (f.available())
+        f.read(der, len);
+      f.close();
+      _wcs->setTrustAnchors(new X509List(der, len));
+      delete[] der;
     }
     _certType = 2;
   }

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.0.5
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 25, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -65,47 +65,27 @@ String FIREBASE_STREAM_CLASS::streamPath()
 
 int FIREBASE_STREAM_CLASS::intData()
 {
-    if (strlen(sif->data.c_str()) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
-        return atoi(sif->data.c_str());
-    else
-        return 0;
+    return to<int>();
 }
 
 float FIREBASE_STREAM_CLASS::floatData()
 {
-    if (strlen(sif->data.c_str()) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
-        return atof(sif->data.c_str());
-    else
-        return 0;
+    return to<float>();
 }
 
 double FIREBASE_STREAM_CLASS::doubleData()
 {
-    if (strlen(sif->data.c_str()) > 0 && (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double))
-        return atof(sif->data.c_str());
-    else
-        return 0.0;
+    return to<double>();
 }
 
 bool FIREBASE_STREAM_CLASS::boolData()
 {
-    bool res = false;
-    char *str = ut->boolStr(true);
-    if (strlen(sif->data.c_str()) > 0 && sif->data_type == fb_esp_data_type::d_boolean)
-        res = strcmp(sif->data.c_str(), str) == 0;
-    ut->delS(str);
-    return res;
+    return to<bool>();
 }
 
 String FIREBASE_STREAM_CLASS::stringData()
 {
-    std::string s = sif->data;
-    if (sif->data_type == fb_esp_data_type::d_string)
-    {
-        s.erase(0, 1);
-        s.erase(s.length() - 1, 1);
-    }
-    return s.c_str();
+    return to<String>();
 }
 
 String FIREBASE_STREAM_CLASS::jsonString()
@@ -118,43 +98,32 @@ String FIREBASE_STREAM_CLASS::jsonString()
 
 FirebaseJson *FIREBASE_STREAM_CLASS::jsonObjectPtr()
 {
-    return jsonPtr;
+    return to<FirebaseJson *>();
 }
 
 FirebaseJson &FIREBASE_STREAM_CLASS::jsonObject()
 {
-    return *jsonObjectPtr();
+    return to<FirebaseJson>();
 }
 
 FirebaseJsonArray *FIREBASE_STREAM_CLASS::jsonArrayPtr()
 {
-    return arrPtr;
+    return to<FirebaseJsonArray *>();
 }
 
 FirebaseJsonArray &FIREBASE_STREAM_CLASS::jsonArray()
 {
-    return *jsonArrayPtr();
+    return to<FirebaseJsonArray>();
 }
 
-std::vector<uint8_t> FIREBASE_STREAM_CLASS::blobData()
+std::vector<uint8_t> *FIREBASE_STREAM_CLASS::blobData()
 {
-    if (sif->blob->size() > 0 && sif->data_type == fb_esp_data_type::d_blob)
-        return *sif->blob;
-    else
-        return std::vector<uint8_t>();
+    return to<std::vector<uint8_t> *>();
 }
 
 File FIREBASE_STREAM_CLASS::fileStream()
 {
-    if (sif->data_type == fb_esp_data_type::d_file)
-    {
-        char *tmp = ut->strP(fb_esp_pgm_str_184);
-        if (ut->flashTest())
-            Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
-        ut->delS(tmp);
-    }
-
-    return Signer.getCfg()->_int.fb_file;
+    return to<File>();
 }
 
 String FIREBASE_STREAM_CLASS::payload()
@@ -184,6 +153,52 @@ void FIREBASE_STREAM_CLASS::empty()
 
     if (arrPtr)
         arrPtr->clear();
+}
+
+int FIREBASE_STREAM_CLASS::payloadLength()
+{
+    return sif->payload_length;
+}
+
+int FIREBASE_STREAM_CLASS::maxPayloadLength()
+{
+    return sif->max_payload_length;
+}
+
+void FIREBASE_STREAM_CLASS::mSetResInt(const char *value)
+{
+    if (strlen(value) > 0)
+    {
+        char *pEnd;
+        value[0] == '-' ? iVal.int64 = strtoll(value, &pEnd, 10) : iVal.uint64 = strtoull(value, &pEnd, 10);
+    }
+    else
+        iVal = {0};
+}
+
+void FIREBASE_STREAM_CLASS::mSetResFloat(const char *value)
+{
+    if (strlen(value) > 0)
+    {
+        char *pEnd;
+        fVal.setd(strtod(value, &pEnd));
+    }
+    else
+        fVal.setd(0);
+}
+
+void FIREBASE_STREAM_CLASS::mSetResBool(bool value)
+{
+    if (value)
+    {
+        iVal = {1};
+        fVal.setd(1);
+    }
+    else
+    {
+        iVal = {0};
+        fVal.setd(0);
+    }
 }
 
 #endif

@@ -91,6 +91,9 @@ void setup()
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
@@ -101,15 +104,15 @@ void loop()
     {
       //Timestamp saved in millisecond, get its seconds from intData()
       Serial.print("TIMESTAMP (Seconds): ");
-      Serial.println(fbdo.intData());
+      Serial.println(fbdo.to<int>());
 
       //Or print the total milliseconds from doubleData()
       //Due to bugs in Serial.print in Arduino library, use printf to print double instead.
-      printf("TIMESTAMP (milliSeconds): %.0lf\n", fbdo.doubleData());
+      printf("TIMESTAMP (milliSeconds): %lld\n", fbdo.to<uint64_t>());
     }
 
     Serial.printf("Get timestamp... %s\n", Firebase.RTDB.getDouble(&fbdo, "/test/timestamp") ? "ok" : fbdo.errorReason().c_str());
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
-      printf("TIMESTAMP: %.0lf\n", fbdo.doubleData());
+      printf("TIMESTAMP: %lld\n", fbdo.to<uint64_t>());
   }
 }

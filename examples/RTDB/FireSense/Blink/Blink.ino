@@ -138,7 +138,7 @@ void loadDefaultConfig()
 
     FireSense_Condition cond[1];
 
-    cond[0].IF = "LED1 == true && millis < 120000";//blink until 2 minutes reached since boot
+    cond[0].IF = "LED1 == true && millis < 120000"; //blink until 2 minutes reached since boot
     cond[0].THEN = "delay(20), LED1 = false";
     cond[0].ELSE = "delay(980), LED1 = true";
     FireSense.addCondition(cond[0]);
@@ -190,7 +190,7 @@ void setup()
     fsConfig.condition_process_interval = 0;     // check the conditions continuously without delay
     fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data within 1 day
     fsConfig.shared_fbdo = &fbdo1;               //for store/restore database values
-   
+
     //This new config added to disable internal command streaming when the fsConfig.stream_fbdo was not assigned.
     //This allows the session to be reuse for faster data sending.
     //The seesion will not close and open for usage changed between internal stream and normal data sending.

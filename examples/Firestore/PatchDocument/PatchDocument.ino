@@ -92,6 +92,9 @@ void loop()
         //aa is the collection id, bb is the document id.
         String documentPath = "aa/bb";
 
+        //If the document path contains space e.g. "a b c/d e f"
+        //It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
+
         if (!taskcomplete)
         {
             taskcomplete = true;

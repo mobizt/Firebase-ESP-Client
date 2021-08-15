@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.1
+ * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -160,13 +160,11 @@ void FunctionsConfig::setTimeout(size_t seconds)
     if (ut)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_370);
-        char *tmp2 = ut->intStr((int)seconds);
-        std::string s = tmp2;
+        std::string s = NUM2S(seconds).get();
         ut->appendP(s, fb_esp_pgm_str_417);
         _funcCfg.set(tmp, s.c_str());
         addUpdateMasks(tmp);
         ut->delS(tmp);
-        ut->delS(tmp2);
     }
 }
 

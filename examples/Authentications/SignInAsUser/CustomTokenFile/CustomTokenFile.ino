@@ -127,8 +127,10 @@ void setup()
      * This uid will be compare to the auth.token.premium_account variable
      * (for this case) in the database rules.
     */
-    auth.token.claims.add("premium_account", true);
-    auth.token.claims.add("admin", true);
+    FirebaseJson claims;
+    claims.add("premium_account", true);
+    claims.add("admin", true);
+    auth.token.claims = claims.raw();
 
     Firebase.reconnectWiFi(true);
     fbdo.setResponseSize(4096);
@@ -194,7 +196,7 @@ void setup()
      * The id token was already saved to the config data (FirebaseConfig data variable) that 
      * passed to the Firebase.begin function.
      *  
-     * The id token (C++ string) can be accessed from config.signer.tokens.id_token.
+     * The id token can be accessed from Firebase.getToken().
     */
 }
 

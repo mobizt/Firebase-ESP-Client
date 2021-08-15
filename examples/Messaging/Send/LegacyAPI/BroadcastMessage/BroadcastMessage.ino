@@ -11,6 +11,19 @@
 
 //This example shows how to send JSON payload FCM to multiple recipients via legacy API (requires server key).
 
+//Library allows your ESP device to interact with FCM server through FCM Server protocols.
+//https://firebase.google.com/docs/cloud-messaging/server#choose
+
+//This means your device now is not a FCM app client and unable to get the notification messages.
+
+//The device registration tokens used in this example were taken from the FCM mobile app (Android or iOS)
+//or web app that athenticated to your project.
+
+//For FCM client app quick start
+//https://github.com/firebase/quickstart-android/tree/master/messaging
+//https://github.com/firebase/quickstart-ios
+//https://github.com/firebase/quickstart-js
+
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)

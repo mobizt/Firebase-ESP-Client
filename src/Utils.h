@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.13
+ * Google's Firebase Util class, Utils.h version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -116,43 +116,6 @@ public:
         return nullptr;
     }
 
-    char *floatStr(float value)
-    {
-        char *buf = newS(36);
-        if (config)
-            dtostrf(value, 7, config->_int.fb_float_digits, buf);
-        else
-            dtostrf(value, 7, 5, buf);
-        return buf;
-    }
-
-    char *intStr(int value)
-    {
-        char *buf = newS(36);
-        itoa(value, buf, 10);
-        return buf;
-    }
-
-    char *boolStr(bool value)
-    {
-        char *buf = nullptr;
-        if (value)
-            buf = strP(fb_esp_pgm_str_107);
-        else
-            buf = strP(fb_esp_pgm_str_106);
-        return buf;
-    }
-
-    char *doubleStr(double value)
-    {
-        char *buf = newS(36);
-        if (config)
-            dtostrf(value, 12, config->_int.fb_double_digits, buf);
-        else
-            dtostrf(value, 12, 9, buf);
-        return buf;
-    }
-
     void appendP(std::string &buf, PGM_P p, bool empty = false)
     {
         if (empty)
@@ -160,24 +123,6 @@ public:
         char *b = strP(p);
         buf += b;
         delS(b);
-    }
-
-    void trimDigits(char *buf)
-    {
-        size_t i = strlen(buf) - 1;
-        while (buf[i] == '0' && i > 0)
-        {
-            if (buf[i - 1] == '.')
-            {
-                i--;
-                break;
-            }
-            if (buf[i - 1] != '0')
-                break;
-            i--;
-        }
-        if (i < strlen(buf) - 1)
-            buf[i] = '\0';
     }
 
     void strcat_c(char *str, char c)
@@ -190,55 +135,106 @@ public:
 
     int strpos(const char *haystack, const char *needle, int offset)
     {
-        size_t len = strlen(haystack);
-        size_t len2 = strlen(needle);
-        if (len == 0 || len < len2 || len2 == 0 || offset >= (int)len)
+        if (!haystack || !needle)
             return -1;
-        char *_haystack = newS(len - offset + 1);
-        _haystack[len - offset] = 0;
-        strncpy(_haystack, haystack + offset, len - offset);
-        char *p = strstr(_haystack, needle);
-        int r = -1;
-        if (p)
-            r = p - _haystack + offset;
-        delS(_haystack);
-        return r;
+
+        int hlen = strlen(haystack);
+        int nlen = strlen(needle);
+
+        if (hlen == 0 || nlen == 0)
+            return -1;
+
+        int hidx = offset, nidx = 0;
+        while ((*(haystack + hidx) != '\0') && (*(needle + nidx) != '\0') && hidx < hlen)
+        {
+            if (*(needle + nidx) != *(haystack + hidx))
+            {
+                hidx++;
+                nidx = 0;
+            }
+            else
+            {
+                nidx++;
+                hidx++;
+                if (nidx == nlen)
+                    return hidx - nidx;
+            }
+        }
+
+        return -1;
     }
 
-    char *rstrstr(const char *haystack, const char *needle)
+    int strpos(const char *haystack, char needle, int offset)
     {
-        size_t needle_length = strlen(needle);
-        const char *haystack_end = haystack + strlen(haystack) - needle_length;
-        const char *p;
-        size_t i;
-        for (p = haystack_end; p >= haystack; --p)
+        if (!haystack || needle == 0)
+            return -1;
+
+        int hlen = strlen(haystack);
+
+        if (hlen == 0)
+            return -1;
+
+        int hidx = offset;
+        while ((*(haystack + hidx) != '\0') && hidx < hlen)
         {
-            for (i = 0; i < needle_length; ++i)
-            {
-                if (p[i] != needle[i])
-                    goto next;
-            }
-            return (char *)p;
-        next:;
+            if (needle == *(haystack + hidx))
+                return hidx;
+            hidx++;
         }
-        return 0;
+
+        return -1;
     }
 
     int rstrpos(const char *haystack, const char *needle, int offset)
     {
-        size_t len = strlen(haystack);
-        size_t len2 = strlen(needle);
-        if (len == 0 || len < len2 || len2 == 0 || offset >= (int)len)
+        if (!haystack || !needle)
             return -1;
-        char *_haystack = newS(len - offset + 1);
-        _haystack[len - offset] = 0;
-        strncpy(_haystack, haystack + offset, len - offset);
-        char *p = rstrstr(_haystack, needle);
-        int r = -1;
-        if (p)
-            r = p - _haystack + offset;
-        delS(_haystack);
-        return r;
+
+        int hlen = strlen(haystack);
+        int nlen = strlen(needle);
+
+        if (hlen == 0 || nlen == 0)
+            return -1;
+
+        int hidx = hlen - 1, nidx = nlen - 1;
+        while (offset < hidx)
+        {
+            if (*(needle + nidx) != *(haystack + hidx))
+            {
+                hidx--;
+                nidx = nlen - 1;
+            }
+            else
+            {
+                nidx--;
+                hidx--;
+                if (nidx == 0)
+                    return hidx + nidx;
+            }
+        }
+
+        return -1;
+    }
+
+    int rstrpos(const char *haystack, char needle, int offset)
+    {
+        if (!haystack || needle == 0)
+            return -1;
+
+        int hlen = strlen(haystack);
+
+        if (hlen == 0)
+            return -1;
+
+        int hidx = hlen - 1;
+        while (offset < hidx)
+        {
+            if (needle == *(haystack + hidx))
+                return hidx;
+            hidx--;
+        }
+
+        return -1;
     }
 
     inline std::string trim(const std::string &s)
@@ -263,37 +259,53 @@ public:
         memset(p, 0, len);
         return p;
     }
-
-    std::vector<std::string> splitString(int size, const char *str, const char delim)
+    void substr(std::string &str, const char *s, int offset, size_t len)
     {
-        uint16_t index = 0;
-        uint16_t len = strlen(str);
-        int buffSize = (int)(size * 1.4f);
-        char *buf = nullptr;
-        std::vector<std::string> out;
+        if (!s)
+            return;
 
-        for (uint16_t i = 0; i < len; i++)
+        int slen = strlen(s);
+
+        if (slen == 0)
+            return;
+
+        int last = offset + len;
+
+        if (offset >= slen || len == 0 || last > slen)
+            return;
+
+        for (int i = offset; i < last; i++)
+            str += s[i];
+    }
+    void splitString(const char *str, std::vector<std::string> out, const char delim)
+    {
+        int current = 0, previous = 0;
+        current = strpos(str, delim, 0);
+        std::string s;
+        while (current != -1)
         {
-            if (str[i] == delim)
-            {
-                buf = newS(buffSize);
-                strncpy(buf, (char *)str + index, i - index);
-                buf[i - index] = '\0';
-                index = i + 1;
-                out.push_back(buf);
-                delS(buf);
-            }
+            clearS(s);
+            substr(s, str, previous, current - previous);
+            trim(s);
+            if (s.length() > 0)
+                out.push_back(s);
+
+            previous = current + 1;
+            current = strpos(str, delim, previous);
+            delay(0);
         }
 
-        if (index < len + 1)
-        {
-            buf = newS(buffSize);
-            strncpy(buf, (char *)str + index, len - index);
-            buf[len - index] = '\0';
-            out.push_back(buf);
-            delS(buf);
-        }
-        return out;
+        clearS(s);
+
+        if (previous > 0 && current == -1)
+            substr(s, str, previous, strlen(str) - previous);
+        else
+            s = str;
+
+        trim(s);
+        if (s.length() > 0)
+            out.push_back(s);
+        clearS(s);
     }
 
     void getUrlInfo(const std::string url, struct fb_esp_url_info_t &info)
@@ -1548,7 +1560,7 @@ public:
 
         ret = true;
     ex:
-       
+
         delete[] tmp;
         delete[] buf;
         return ret;
@@ -1943,6 +1955,12 @@ public:
     uint16_t calCRC(const char *buf)
     {
         return CRC16.ccitt((uint8_t *)buf, strlen(buf));
+    }
+
+    void idle()
+    {
+        yield();
+        delay(0);
     }
 
 private:

@@ -143,7 +143,7 @@ void loadDefaultConfig()
     FireSense_Condition cond[2];
 
     //Multi- and multi-level conditions used more memory and may cause the low memory condition and device can be crashed.
-    
+
     //Pumps will run on Monday to Friday at 8.00 - 8.05 and 17.00 to 17.05
     cond[0].IF = "weekday < 6 && ((time >= 8:00:00 && time < 8:05:00) || (time >= 17:00:00 && time < 17:05:00))";
     cond[0].THEN = "PUMP1 = true, PUMP2 = true";
@@ -185,7 +185,7 @@ void setup()
 
     /* Assign the RTDB URL (required) */
     config.database_url = DATABASE_URL;
-    
+
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
@@ -197,13 +197,13 @@ void setup()
     fsConfig.basePath = "/PlantWatering";
     fsConfig.deviceId = "Node1";
     fsConfig.time_zone = 3; //change for your local time zone
-    fsConfig.daylight_offset_in_sec = 0; 
-    fsConfig.last_seen_interval = 60 * 1000;//for store timestamp and time string in database
-    fsConfig.log_interval = 60 * 1000; //store data to database log every 60 seconds
-    fsConfig.condition_process_interval = 20;// check the conditions every 20 mSec 
+    fsConfig.daylight_offset_in_sec = 0;
+    fsConfig.last_seen_interval = 60 * 1000;     //for store timestamp and time string in database
+    fsConfig.log_interval = 60 * 1000;           //store data to database log every 60 seconds
+    fsConfig.condition_process_interval = 20;    // check the conditions every 20 mSec
     fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data within 1 day
-    fsConfig.shared_fbdo = &fbdo1; //for store/restore database values
-    fsConfig.stream_fbdo = &fbdo2; //for stream connection object, set this stream_fbdo to nullptr for less memory usage, the stream will connected through shared Firebase Data object. 
+    fsConfig.shared_fbdo = &fbdo1;               //for store/restore database values
+    fsConfig.stream_fbdo = &fbdo2;               //for stream connection object, set this stream_fbdo to nullptr for less memory usage, the stream will connected through shared Firebase Data object.
     fsConfig.debug = true;
 
     //Initiate the FireSense class

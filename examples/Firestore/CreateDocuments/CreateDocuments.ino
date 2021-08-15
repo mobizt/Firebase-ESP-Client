@@ -94,6 +94,9 @@ void loop()
         //and d? is the document id in the document collection id c0 which we will create.
         String documentPath = "a0/b0/c0/d" + String(count);
 
+        //If the document path contains space e.g. "a b c/d e f"
+        //It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
+
         //double
         content.set("fields/myDouble/doubleValue", 123.45678);
 

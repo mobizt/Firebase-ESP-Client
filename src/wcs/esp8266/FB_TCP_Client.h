@@ -1,5 +1,7 @@
 /**
- * Firebase TCP Client v1.1.9
+ * Firebase TCP Client v1.1.10
+ * 
+ * Created August 15, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -63,10 +65,6 @@
 #include "FirebaseFS.h"
 
 
-#if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
-#error WiFi UART bridge was not supported.
-#endif
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #define FLASH_FS DEFAULT_FLASH_FS
@@ -95,12 +93,34 @@ public:
   FB_TCP_Client();
   ~FB_TCP_Client();
 
+  /**
+   * Initialization of new http connection.
+   * \param host - Host name without protocols.
+   * \param port - Server's port.
+   * \return True as default.
+   * If no certificate string provided, use (const char*)NULL to CAcert param 
+  */
   bool begin(const char *host, uint16_t port);
 
+  /**
+   *  Check the http connection status.
+   * \return True if connected.
+  */
   bool connected(void);
 
-  int send(const char *data);
+  /**
+    * Establish TCP connection when required and send data.
+    * \param data - The data to send.
+    * \param len - The length of data to send.
+    * 
+    * \return TCP status code, Return zero if new TCP connection and data sent.
+    */
+  int send(const char *data, size_t len = 0);
 
+  /**
+   * Get the WiFi client pointer.
+   * \return WiFi client pointer.
+  */
   WiFiClient *stream(void);
 
   void setCACert(const char *caCert);
@@ -124,6 +144,9 @@ private:
   bool fragmentable = false;
   int chunkSize = 1024;
   bool mflnChecked = false;
+  X509List *x509 = nullptr;
+
+  void release();
 };
 
 #endif /* ESP8266 */

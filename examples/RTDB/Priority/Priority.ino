@@ -53,73 +53,76 @@ FirebaseJson json;
 void setup()
 {
 
-    Serial.begin(115200);
-    Serial.println();
-    Serial.println();
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println();
 
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Connecting to Wi-Fi");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print(".");
-        delay(300);
-    }
-    Serial.println();
-    Serial.print("Connected with IP: ");
-    Serial.println(WiFi.localIP());
-    Serial.println();
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
 
-    Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-    /* Assign the api key (required) */
-    config.api_key = API_KEY;
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
 
-    /* Assign the user sign in credentials */
-    auth.user.email = USER_EMAIL;
-    auth.user.password = USER_PASSWORD;
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
 
-    /* Assign the RTDB URL (required) */
-    config.database_url = DATABASE_URL;
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
 
-    /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
-    //Or use legacy authenticate method
-    //config.database_url = DATABASE_URL;
-    //config.signer.tokens.legacy_token = "<database secret>";
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
 
-    Firebase.begin(&config, &auth);
+  Firebase.begin(&config, &auth);
 
-    Firebase.reconnectWiFi(true);
+  Firebase.reconnectWiFi(true);
 }
 
 void loop()
 {
-    if (Firebase.ready() && !taskCompleted)
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
+  if (Firebase.ready() && !taskCompleted)
+  {
+    taskCompleted = true;
+
+    for (int i = 0; i < 15; i++)
     {
-        taskCompleted = true;
 
-        for (int i = 0; i < 15; i++)
-        {
+      float priority = 15 - i;
+      String key = "item_" + String(i + 1);
+      String val = "value_" + String(i + 1);
+      json.clear();
+      json.set(key, val);
+      String Path = "/test/items/priority_" + String(15 - i);
 
-            float priority = 15 - i;
-            String key = "item_" + String(i + 1);
-            String val = "value_" + String(i + 1);
-            json.clear();
-            json.set(key, val);
-            String Path = "/test/items/priority_" + String(15 - i);
-
-            Serial.printf("Set json with proprity... %s\n", Firebase.RTDB.setJSONAsync(&fbdo, Path.c_str(), &json, priority) ? "ok" : fbdo.errorReason().c_str());
-        }
-
-        //Qury child nodes under "/test/items" with priority between 3.0 and 8.0
-        //Since data ordering is not supported in Firebase's REST APIs, then the query result will not sorted.
-        QueryFilter query;
-        query.orderBy("$priority").startAt(3.0).endAt(8.0);
-
-        Serial.printf("Set json with proprity... %s\n", Firebase.RTDB.getJSON(&fbdo, "/test/items", &query) ? "ok" : fbdo.errorReason().c_str());
-
-        if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
-            printResult(fbdo); //see addons/RTDBHelper.h
+      Serial.printf("Set json with proprity... %s\n", Firebase.RTDB.setJSONAsync(&fbdo, Path.c_str(), &json, priority) ? "ok" : fbdo.errorReason().c_str());
     }
+
+    //Qury child nodes under "/test/items" with priority between 3.0 and 8.0
+    //Since data ordering is not supported in Firebase's REST APIs, then the query result will not sorted.
+    QueryFilter query;
+    query.orderBy("$priority").startAt(3.0).endAt(8.0);
+
+    Serial.printf("Set json with proprity... %s\n", Firebase.RTDB.getJSON(&fbdo, "/test/items", &query) ? "ok" : fbdo.errorReason().c_str());
+
+    if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
+      printResult(fbdo); //see addons/RTDBHelper.h
+  }
 }

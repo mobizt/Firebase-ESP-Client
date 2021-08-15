@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.1.4
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -65,14 +65,13 @@ void FB_RTDB::setReadTimeout(FirebaseData *fbdo, int millisec)
         fbdo->_ss.rtdb.read_tmo = millisec;
 }
 
-void FB_RTDB::setwriteSizeLimit(FirebaseData *fbdo, const char *size)
+void FB_RTDB::mSetwriteSizeLimit(FirebaseData *fbdo, const char *size)
 {
     fbdo->_ss.rtdb.write_limit = size;
 }
 
 bool FB_RTDB::getRules(FirebaseData *fbdo)
 {
-    fbdo->queryFilter.clear();
     struct fb_esp_rtdb_request_info_t req;
     char *path = ut->strP(fb_esp_pgm_str_103);
     req.path = path;
@@ -83,9 +82,8 @@ bool FB_RTDB::getRules(FirebaseData *fbdo)
     return ret;
 }
 
-bool FB_RTDB::setRules(FirebaseData *fbdo, const char *rules)
+bool FB_RTDB::mSetRules(FirebaseData *fbdo, const char *rules)
 {
-    fbdo->queryFilter.clear();
     struct fb_esp_rtdb_request_info_t req;
     char *path = ut->strP(fb_esp_pgm_str_103);
     req.path = path;
@@ -97,17 +95,7 @@ bool FB_RTDB::setRules(FirebaseData *fbdo, const char *rules)
     return ret;
 }
 
-bool FB_RTDB::setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret)
-{
-    return int_setQueryIndex(fbdo, path, node, databaseSecret);
-}
-
-bool FB_RTDB::removeQueryIndex(FirebaseData *fbdo, const char *path, const char *databaseSecret)
-{
-    return int_setQueryIndex(fbdo, path, "", databaseSecret);
-}
-
-bool FB_RTDB::int_setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret)
+bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret)
 {
     if (fbdo->_ss.rtdb.pause)
         return true;
@@ -117,13 +105,19 @@ bool FB_RTDB::int_setQueryIndex(FirebaseData *fbdo, const char *path, const char
 
     std::string s;
     bool ret = false;
+    std::string atok;
 
     fb_esp_auth_token_type tk = Signer.getTokenType();
 
     if (strlen(databaseSecret) && tk != token_type_oauth2_access_token && tk != token_type_legacy_token)
     {
+        atok = Signer.config->_int.auth_token;
+        Signer.setTokenType(token_type_legacy_token);
         Signer.config->signer.tokens.legacy_token = databaseSecret;
-        Signer.config->signer.tokens.token_type = token_type_legacy_token;
+        ut->storeS(Signer.config->_int.auth_token, Signer.config->signer.tokens.legacy_token, false);
+        Signer.config->_int.ltok_len = strlen(databaseSecret);
+        Signer.config->_int.rtok_len = 0;
+        Signer.config->_int.atok_len = 0;
         Signer.handleToken();
     }
 
@@ -143,7 +137,7 @@ bool FB_RTDB::int_setQueryIndex(FirebaseData *fbdo, const char *path, const char
 
         json->get(data, s.c_str());
 
-        if (data.success && strcmp(data.stringValue.c_str(), node) == 0)
+        if (data.success && strcmp(data.to<const char *>(), node) == 0)
             ruleExisted = true;
 
         if (strlen(node) == 0)
@@ -163,19 +157,20 @@ bool FB_RTDB::int_setQueryIndex(FirebaseData *fbdo, const char *path, const char
 
     if (strlen(databaseSecret) && tk != token_type_oauth2_access_token && tk != token_type_legacy_token)
     {
-        if (tk != token_type_legacy_token)
-            ut->clearS(Signer.config->signer.tokens.legacy_token);
-
+        ut->storeS(Signer.config->_int.auth_token, atok.c_str(), false);
+        ut->clearS(atok);
+        Signer.config->signer.tokens.legacy_token = "";
         Signer.config->signer.tokens.token_type = tk;
+        Signer.config->_int.atok_len = Signer.config->_int.auth_token.length();
+        Signer.config->_int.ltok_len = 0;
         Signer.handleToken();
     }
 
     ut->clearS(s);
-
     return ret;
 }
 
-bool FB_RTDB::setReadWriteRules(FirebaseData *fbdo, const char *path, const char *var, const char *readVal, const char *writeVal, const char *databaseSecret)
+bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, const char *path, const char *var, const char *readVal, const char *writeVal, const char *databaseSecret)
 {
     if (fbdo->_ss.rtdb.pause)
         return true;
@@ -218,7 +213,7 @@ bool FB_RTDB::setReadWriteRules(FirebaseData *fbdo, const char *path, const char
             ut->appendP(r, fb_esp_pgm_str_552);
             json.get(data, r.c_str());
             if (data.success)
-                if (strcmp(data.stringValue.c_str(), readVal) == 0)
+                if (strcmp(data.to<const char *>(), readVal) == 0)
                     rd = false;
         }
 
@@ -230,7 +225,7 @@ bool FB_RTDB::setReadWriteRules(FirebaseData *fbdo, const char *path, const char
             ut->appendP(w, fb_esp_pgm_str_553);
             json.get(data, w.c_str());
             if (data.success)
-                if (strcmp(data.stringValue.c_str(), writeVal) == 0)
+                if (strcmp(data.to<const char *>(), writeVal) == 0)
                     wr = false;
         }
 
@@ -258,9 +253,6 @@ bool FB_RTDB::setReadWriteRules(FirebaseData *fbdo, const char *path, const char
 
     if (strlen(databaseSecret) && tk != token_type_oauth2_access_token && tk != token_type_legacy_token)
     {
-        if (tk != token_type_legacy_token)
-            ut->clearS(Signer.config->signer.tokens.legacy_token);
-
         Signer.config->signer.tokens.token_type = tk;
         Signer.handleToken();
     }
@@ -269,9 +261,8 @@ bool FB_RTDB::setReadWriteRules(FirebaseData *fbdo, const char *path, const char
     return ret;
 }
 
-bool FB_RTDB::pathExisted(FirebaseData *fbdo, const char *path)
+bool FB_RTDB::mPathExisted(FirebaseData *fbdo, const char *path)
 {
-    fbdo->queryFilter.clear();
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
     req.method = m_get_nocontent;
@@ -282,9 +273,8 @@ bool FB_RTDB::pathExisted(FirebaseData *fbdo, const char *path)
         return false;
 }
 
-String FB_RTDB::getETag(FirebaseData *fbdo, const char *path)
+String FB_RTDB::mGetETag(FirebaseData *fbdo, const char *path)
 {
-    fbdo->queryFilter.clear();
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
     req.method = m_get_nocontent;
@@ -295,7 +285,7 @@ String FB_RTDB::getETag(FirebaseData *fbdo, const char *path)
         return "";
 }
 
-bool FB_RTDB::getShallowData(FirebaseData *fbdo, const char *path)
+bool FB_RTDB::mGetShallowData(FirebaseData *fbdo, const char *path)
 {
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
@@ -309,2145 +299,124 @@ void FB_RTDB::enableClassicRequest(FirebaseData *fbdo, bool enable)
     fbdo->_ss.classic_request = enable;
 }
 
-bool FB_RTDB::setPriority(FirebaseData *fbdo, const char *path, float priority)
+bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_method method, const char *path, const char *payload, fb_esp_data_type type, int subtype, int value_addr, int query_addr, int priority_addr, const char *etag, bool async, bool queue, size_t blob_size, const char *filename, fb_esp_mem_storage_type storage_type)
 {
-    return int_setPriority(fbdo, path, priority, false);
-}
+    ut->idle();
 
-bool FB_RTDB::setPriorityAsync(FirebaseData *fbdo, const char *path, float priority)
-{
-    return int_setPriority(fbdo, path, priority, true);
-}
-
-bool FB_RTDB::int_setPriority(FirebaseData *fbdo, const char *path, float priority, bool async)
-{
-    char *num = ut->floatStr(priority);
-    ut->trimDigits(num);
     struct fb_esp_rtdb_request_info_t req;
-    std::string p;
-    p = path;
-    ut->appendP(p, fb_esp_pgm_str_156);
-    req.path = p.c_str();
-    req.method = m_set_priority;
-    req.data.type = d_float;
-    req.async = async;
-    req.payload = num;
-    req.queue = false;
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(num);
-    return ret;
-}
 
-bool FB_RTDB::getPriority(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    std::string p;
-    p = path;
-    ut->appendP(p, fb_esp_pgm_str_156);
-    req.path = p.c_str();
-    req.method = m_get_priority;
-    req.data.type = d_float;
-    req.queue = false;
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
+    std::string tpath, pre, post;
 
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return pushInt(fbdo, path, intValue);
-}
+    if (path[0] != '/')
+        tpath += '/';
 
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return pushIntAsync(fbdo, path, intValue);
-}
+    tpath += path;
 
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    return pushInt(fbdo, path, intValue, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    return pushIntAsync(fbdo, path, intValue, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return pushFloat(fbdo, path, floatValue);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return pushFloatAsync(fbdo, path, floatValue);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    return pushFloat(fbdo, path, floatValue, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    return pushFloatAsync(fbdo, path, floatValue, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return pushDouble(fbdo, path, doubleValue);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return pushDoubleAsync(fbdo, path, doubleValue);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    return pushDouble(fbdo, path, doubleValue, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    return pushDoubleAsync(fbdo, path, doubleValue, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return pushBool(fbdo, path, boolValue);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return pushBoolAsync(fbdo, path, boolValue);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    return pushBool(fbdo, path, boolValue, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    return pushBoolAsync(fbdo, path, boolValue, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const char *stringValue)
-{
-    return pushString(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue)
-{
-    return pushStringAsync(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return pushString(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return pushStringAsync(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const char *stringValue, float priority)
-{
-    return pushString(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority)
-{
-    return pushStringAsync(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    return pushString(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    return pushStringAsync(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return pushJSON(fbdo, path, json);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return pushJSONAsync(fbdo, path, json);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    return pushJSON(fbdo, path, json, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    return pushJSONAsync(fbdo, path, json, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return pushArray(fbdo, path, arr);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return pushArrayAsync(fbdo, path, arr);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    return pushArray(fbdo, path, arr, priority);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    return pushArrayAsync(fbdo, path, arr, priority);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return pushBlob(fbdo, path, blob, size);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return pushBlobAsync(fbdo, path, blob, size);
-}
-
-bool FB_RTDB::push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return pushFile(fbdo, storageType, path, fileName);
-}
-
-bool FB_RTDB::pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return pushFileAsync(fbdo, storageType, path, fileName);
-}
-
-template <typename T>
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, T value)
-{
-    if (std::is_same<T, int>::value)
-        return pushInt(fbdo, path, value);
-    else if (std::is_same<T, double>::value)
-        return pushDouble(fbdo, path, value);
-    else if (std::is_same<T, bool>::value)
-        return pushBool(fbdo, path, value);
-    else if (std::is_same<T, const char *>::value)
-        return pushString(fbdo, path, value);
-    else if (std::is_same<T, const String &>::value)
-        return pushString(fbdo, path, value);
-    else if (std::is_same<T, FirebaseJson &>::value)
-        return pushJson(fbdo, path, value);
-    else if (std::is_same<T, FirebaseJsonArray &>::value)
-        return pushArray(fbdo, path, value);
-}
-
-template <typename T>
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, T value, size_t size)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return pushBlob(fbdo, path, value, size);
-}
-
-template <typename T>
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, T value, float priority)
-{
-    if (std::is_same<T, int>::value)
-        return pushInt(fbdo, path, value, priority);
-    else if (std::is_same<T, double>::value)
-        return pushDouble(fbdo, path, value, priority);
-    else if (std::is_same<T, bool>::value)
-        return pushBool(fbdo, path, value, priority);
-    else if (std::is_same<T, const char *>::value)
-        return pushString(fbdo, path, value, priority);
-    else if (std::is_same<T, const String &>::value)
-        return pushString(fbdo, path, value, priority);
-    else if (std::is_same<T, FirebaseJson &>::value)
-        return pushJson(fbdo, path, value, priority);
-    else if (std::is_same<T, FirebaseJsonArray &>::value)
-        return pushArray(fbdo, path, value, priority);
-}
-
-template <typename T>
-bool FB_RTDB::push(FirebaseData *fbdo, const char *path, T value, size_t size, float priority)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return pushBlob(fbdo, path, value, size, priority, false);
-}
-
-bool FB_RTDB::pushInt(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return int_pushInt(fbdo, path, intValue, false, "", false);
-}
-
-bool FB_RTDB::pushIntAsync(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return int_pushInt(fbdo, path, intValue, false, "", true);
-}
-
-bool FB_RTDB::pushInt(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushInt(fbdo, path, intValue, false, "", false);
-    ut->delS(buf);
-    return ret;
-}
-bool FB_RTDB::pushIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushInt(fbdo, path, intValue, false, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority, bool async)
-{
-    char *buf = ut->intStr(intValue);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_post;
-    req.data.type = d_integer;
-    req.payload = buf;
-    req.async = async;
-    req.queue = queue;
-    if (strlen(priority) > 0)
+    if (method == m_set_priority || method == m_get_priority)
     {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
+        ut->appendP(tpath, fb_esp_pgm_str_156);
+        req.path = tpath.c_str();
     }
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-void FB_RTDB::addJsonPriority(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
-{
-    if (req->data.jsonPtr && strlen(req->priority) > 0)
+    else if (priority_addr > 0 && method != m_get && type != d_blob && type != d_file)
     {
-        char *tmp = nullptr;
-        tmp = ut->strP(fb_esp_pgm_str_157);
-        if (ut->strposP(req->priority, fb_esp_pgm_str_4, 0) != -1)
-            req->data.jsonPtr->add((const char *)tmp, atof(req->priority));
+        if (type == d_json)
+        {
+            //set priority to source json
+            FirebaseJson *json = addrTo<FirebaseJson *>(value_addr);
+            float *priority = addrTo<float *>(priority_addr);
+            if (json && priority)
+            {
+                char *t = ut->strP(fb_esp_pgm_str_157);
+                json->set((const char *)t, *priority);
+                ut->delS(t);
+            }
+            req.path = tpath.c_str();
+        }
         else
-            req->data.jsonPtr->add((const char *)tmp, atoi(req->priority));
-        ut->delS(tmp);
+        {
+            //construct json pre and post payloads for priority
+            //pre -> {".priority":priority,"subpath":
+            //pos -> }
+
+            float *priority = addrTo<float *>(priority_addr);
+            if (priority)
+            {
+                ut->appendP(pre, fb_esp_pgm_str_163);
+                ut->appendP(pre, fb_esp_pgm_str_3);
+                ut->appendP(pre, fb_esp_pgm_str_157);
+                ut->appendP(pre, fb_esp_pgm_str_3);
+                ut->appendP(pre, fb_esp_pgm_str_7);
+                pre += NUM2S(*priority).get();
+                ut->appendP(pre, fb_esp_pgm_str_132);
+                ut->appendP(pre, fb_esp_pgm_str_3);
+
+                if (type == d_string)
+                    ut->appendP(post, fb_esp_pgm_str_3);
+                ut->appendP(post, fb_esp_pgm_str_127);
+
+                int p1 = ut->rstrpos(tpath.c_str(), '/', 0), p2 = 0;
+                tpath = path;
+                if (p1 > 0)
+                {
+                    p2 = p1 + 1;
+                    req.path = tpath.substr(0, p2).c_str();
+                    //subpath
+                    pre += tpath.substr(p2, strlen(path) - 1 - p2).c_str();
+                }
+                else
+                {
+                    tpath.erase(0, 1);
+                    //subpath
+                    pre += tpath.c_str();
+                    tpath.clear();
+                    tpath += '/';
+                    req.path = tpath.c_str();
+                }
+
+                ut->appendP(pre, fb_esp_pgm_str_3);
+                ut->appendP(pre, fb_esp_pgm_str_7);
+                if (type == d_string)
+                    ut->appendP(pre, fb_esp_pgm_str_3);
+
+                req.pre_payload = pre.c_str();
+                req.post_payload = post.c_str();
+            }
+        }
     }
-}
-
-bool FB_RTDB::pushFloat(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return int_pushFloat(fbdo, path, floatValue, false, "", false);
-}
-
-bool FB_RTDB::pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return int_pushFloat(fbdo, path, floatValue, false, "", true);
-}
-
-bool FB_RTDB::pushFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushFloat(fbdo, path, floatValue, false, buf, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushFloat(fbdo, path, floatValue, false, buf, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_pushFloat(FirebaseData *fbdo, const char *path, float floatValue, bool queue, const char *priority, bool async)
-{
-    char *buf = ut->floatStr(floatValue);
-    ut->trimDigits(buf);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_post;
-    req.data.type = d_float;
-    req.async = async;
-    req.payload = buf;
-    req.queue = queue;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushDouble(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return int_pushDouble(fbdo, path, doubleValue, false, "", false);
-}
-
-bool FB_RTDB::pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return int_pushDouble(fbdo, path, doubleValue, false, "", true);
-}
-
-bool FB_RTDB::pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushDouble(fbdo, path, doubleValue, false, buf, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushDouble(fbdo, path, doubleValue, false, buf, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, bool queue, const char *priority, bool async)
-{
-    char *buf = ut->doubleStr(doubleValue);
-    ut->trimDigits(buf);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_post;
-    req.data.type = d_double;
-    req.async = async;
-    req.payload = buf;
-    req.queue = queue;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushBool(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return int_pushBool(fbdo, path, boolValue, false, "", false);
-}
-
-bool FB_RTDB::pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return int_pushBool(fbdo, path, boolValue, false, "", true);
-}
-
-bool FB_RTDB::pushBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushBool(fbdo, path, boolValue, false, buf, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushBool(fbdo, path, boolValue, false, buf, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_pushBool(FirebaseData *fbdo, const char *path, bool boolValue, bool queue, const char *priority, bool async)
-{
-    char *buf = ut->boolStr(boolValue);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_post;
-    req.data.type = d_boolean;
-    req.async = async;
-    req.payload = buf;
-    req.queue = queue;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushString(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return int_pushString(fbdo, path, stringValue, "", false);
-}
-
-bool FB_RTDB::pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return int_pushString(fbdo, path, stringValue, "", true);
-}
-
-bool FB_RTDB::pushString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushString(fbdo, path, stringValue, buf, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushString(fbdo, path, stringValue, buf, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_pushString(FirebaseData *fbdo, const char *path, const String &stringValue, const char *priority, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_post;
-    req.data.type = d_string;
-    req.async = async;
-    req.payload = stringValue.c_str();
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_pushJSON(fbdo, path, json, "", false);
-}
-
-bool FB_RTDB::pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_pushJSON(fbdo, path, json, "", true);
-}
-
-bool FB_RTDB::pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushJSON(fbdo, path, json, buf, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushJSON(fbdo, path, json, buf, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_post;
-    req.data.type = d_json;
-    req.async = async;
-    req.data.jsonPtr = json;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return int_pushArray(fbdo, path, arr, "", false);
-}
-
-bool FB_RTDB::pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return int_pushArray(fbdo, path, arr, "", true);
-}
-
-bool FB_RTDB::pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushArray(fbdo, path, arr, buf, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_pushArray(fbdo, path, arr, buf, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_post;
-    req.data.type = d_array;
-    req.async = async;
-    req.data.arrPtr = arr;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return int_pushBlob(fbdo, path, blob, size, false, false);
-}
-
-bool FB_RTDB::pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return int_pushBlob(fbdo, path, blob, size, false, true);
-}
-
-bool FB_RTDB::int_pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, bool async)
-{
-    if (fbdo->_ss.rtdb.max_blob_size < size)
-    {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_PAYLOAD_TOO_LARGE;
-        return false;
-    }
-
-    struct fb_esp_rtdb_request_info_t req;
-    req.method = m_post;
-    req.data.type = d_blob;
-    req.data.blobSize = size;
-    req.path = path;
-    req.async = async;
-    req.data.blobPtr2 = blob;
-    req.queue = false;
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return int_pushFile(fbdo, storageType, path, fileName, "", false);
-}
-
-bool FB_RTDB::pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return int_pushFile(fbdo, storageType, path, fileName, "", true);
-}
-
-bool FB_RTDB::int_pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.storageType = storageType;
-    req.method = m_post;
-    req.data.type = d_file;
-    req.path = path;
-    req.filename = fileName;
-    req.queue = false;
-    req.async = async;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::pushTimestamp(FirebaseData *fbdo, const char *path)
-{
-    return int_pushTimestamp(fbdo, path, false);
-}
-
-bool FB_RTDB::pushTimestampAsync(FirebaseData *fbdo, const char *path)
-{
-    return int_pushTimestamp(fbdo, path, true);
-}
-
-bool FB_RTDB::int_pushTimestamp(FirebaseData *fbdo, const char *path, bool async)
-{
-    char *tmp = ut->strP(fb_esp_pgm_str_154);
-    struct fb_esp_rtdb_request_info_t req;
-    req.method = m_post;
-    req.data.type = d_timestamp;
-    req.path = path;
-    req.queue = false;
-    req.async = async;
-    req.payload = tmp;
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(tmp);
-    return ret;
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return setInt(fbdo, path, intValue);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return setIntAsync(fbdo, path, intValue);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    return setInt(fbdo, path, intValue, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    return setIntAsync(fbdo, path, intValue, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, int intValue, const char *ETag)
-{
-    return setInt(fbdo, path, intValue, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag)
-{
-    return setIntAsync(fbdo, path, intValue, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag)
-{
-    return setInt(fbdo, path, intValue, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag)
-{
-    return setIntAsync(fbdo, path, intValue, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return setFloat(fbdo, path, floatValue);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return setFloatAsync(fbdo, path, floatValue);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    return setFloat(fbdo, path, floatValue, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    return setFloatAsync(fbdo, path, floatValue, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag)
-{
-    return setFloat(fbdo, path, floatValue, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag)
-{
-    return setFloatAsync(fbdo, path, floatValue, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag)
-{
-    return setFloat(fbdo, path, floatValue, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag)
-{
-    return setFloatAsync(fbdo, path, floatValue, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return setDouble(fbdo, path, doubleValue);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return setDoubleAsync(fbdo, path, doubleValue);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    return setDouble(fbdo, path, doubleValue, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    return setDoubleAsync(fbdo, path, doubleValue, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag)
-{
-    return setDouble(fbdo, path, doubleValue, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag)
-{
-    return setDoubleAsync(fbdo, path, doubleValue, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag)
-{
-    return setDouble(fbdo, path, doubleValue, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag)
-{
-    return setDoubleAsync(fbdo, path, doubleValue, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return setBool(fbdo, path, boolValue);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return setBoolAsync(fbdo, path, boolValue);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    return setBool(fbdo, path, boolValue, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    return setBoolAsync(fbdo, path, boolValue, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag)
-{
-    return setBool(fbdo, path, boolValue, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag)
-{
-    return setBoolAsync(fbdo, path, boolValue, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag)
-{
-    return setBool(fbdo, path, boolValue, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag)
-{
-    return setBoolAsync(fbdo, path, boolValue, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const char *stringValue)
-{
-    return setString(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const char *stringValue)
-{
-    return setStringAsync(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return setString(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return setStringAsync(fbdo, path, stringValue);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority)
-{
-    return setString(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority)
-{
-    return setStringAsync(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    return setString(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    return setStringAsync(fbdo, path, stringValue, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag)
-{
-    return setString(fbdo, path, stringValue, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag)
-{
-    return setStringAsync(fbdo, path, stringValue, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag)
-{
-    return setString(fbdo, path, stringValue, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag)
-{
-    return setStringAsync(fbdo, path, stringValue, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag)
-{
-    return setString(fbdo, path, stringValue, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag)
-{
-    return setStringAsync(fbdo, path, stringValue, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag)
-{
-    return setString(fbdo, path, stringValue, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag)
-{
-    return setStringAsync(fbdo, path, stringValue, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return setJSON(fbdo, path, json);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return setJSONAsync(fbdo, path, json);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return setArray(fbdo, path, arr);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return setArrayAsync(fbdo, path, arr);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    return setJSON(fbdo, path, json, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    return setJSONAsync(fbdo, path, json, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    return setArray(fbdo, path, arr, priority);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    return setArrayAsync(fbdo, path, arr, priority);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag)
-{
-    return setJSON(fbdo, path, json, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag)
-{
-    return setJSONAsync(fbdo, path, json, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag)
-{
-    return setArray(fbdo, path, arr, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag)
-{
-    return setArrayAsync(fbdo, path, arr, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag)
-{
-    return setJSON(fbdo, path, json, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag)
-{
-    return setJSONAsync(fbdo, path, json, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag)
-{
-    return setArray(fbdo, path, arr, priority, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag)
-{
-    return setArrayAsync(fbdo, path, arr, priority, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return setBlob(fbdo, path, blob, size);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return setBlobAsync(fbdo, path, blob, size);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag)
-{
-    return setBlob(fbdo, path, blob, size, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag)
-{
-    return setBlobAsync(fbdo, path, blob, size, ETag);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return setFile(fbdo, storageType, path, fileName);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return setFileAsync(fbdo, storageType, path, fileName);
-}
-
-bool FB_RTDB::set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag)
-{
-    return setFile(fbdo, storageType, path, fileName, ETag);
-}
-
-bool FB_RTDB::setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag)
-{
-    return setFileAsync(fbdo, storageType, path, fileName, ETag);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value)
-{
-    if (std::is_same<T, int>::value)
-        return setInt(fbdo, path, value);
-    else if (std::is_same<T, double>::value)
-        return setDouble(fbdo, path, value);
-    else if (std::is_same<T, bool>::value)
-        return setBool(fbdo, path, value);
-    else if (std::is_same<T, const char *>::value)
-        return setString(fbdo, path, value);
-    else if (std::is_same<T, const String &>::value)
-        return setString(fbdo, path, value);
-    else if (std::is_same<T, FirebaseJson &>::value)
-        return setJson(fbdo, path, value);
-    else if (std::is_same<T, FirebaseJson *>::value)
-        return setJson(fbdo, path, &value);
-    else if (std::is_same<T, FirebaseJsonArray &>::value)
-        return setArray(fbdo, path, value);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, size_t size)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return setBlob(fbdo, path, value, size);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, float priority)
-{
-    if (std::is_same<T, int>::value)
-        return setInt(fbdo, path, value, priority);
-    else if (std::is_same<T, double>::value)
-        return setDouble(fbdo, path, value, priority);
-    else if (std::is_same<T, bool>::value)
-        return setBool(fbdo, path, value, priority);
-    else if (std::is_same<T, const char *>::value)
-        return setString(fbdo, path, value, priority);
-    else if (std::is_same<T, const String &>::value)
-        return setString(fbdo, path, value, priority);
-    else if (std::is_same<T, FirebaseJson &>::value)
-        return setJson(fbdo, path, value, priority);
-    else if (std::is_same<T, FirebaseJsonArray &>::value)
-        return setArray(fbdo, path, value, priority);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, size_t size, float priority)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return setBlob(fbdo, path, value, size, priority);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, const char *ETag)
-{
-    if (std::is_same<T, int>::value)
-        return setInt(fbdo, path, value, ETag);
-    else if (std::is_same<T, double>::value)
-        return setDouble(fbdo, path, value, ETag);
-    else if (std::is_same<T, bool>::value)
-        return setBool(fbdo, path, value, ETag);
-    else if (std::is_same<T, const char *>::value)
-        return setString(fbdo, path, value, ETag);
-    else if (std::is_same<T, const String &>::value)
-        return setString(fbdo, path, value, ETag);
-    else if (std::is_same<T, FirebaseJson &>::value)
-        return setJson(fbdo, path, value, ETag);
-    else if (std::is_same<T, FirebaseJsonArray &>::value)
-        return setArray(fbdo, path, value, ETag);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, size_t size, const char *ETag)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return setBlob(fbdo, path, value, size, ETag);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, float priority, const char *ETag)
-{
-    if (std::is_same<T, int>::value)
-        return setInt(fbdo, path, value, priority, ETag);
-    else if (std::is_same<T, double>::value)
-        return setDouble(fbdo, path, value, priority, ETag);
-    else if (std::is_same<T, bool>::value)
-        return setBool(fbdo, path, value, priority, ETag);
-    else if (std::is_same<T, const char *>::value)
-        return setString(fbdo, path, value, priority, ETag);
-    else if (std::is_same<T, const String &>::value)
-        return setString(fbdo, path, value, priority, ETag);
-    else if (std::is_same<T, FirebaseJson &>::value)
-        return setJson(fbdo, path, value, priority, ETag);
-    else if (std::is_same<T, FirebaseJsonArray &>::value)
-        return setArray(fbdo, path, value, priority, ETag);
-}
-
-template <typename T>
-bool FB_RTDB::set(FirebaseData *fbdo, const char *path, T value, size_t size, float priority, const char *ETag)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return setBlob(fbdo, path, value, size, priority, ETag);
-}
-
-bool FB_RTDB::setInt(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return int_setInt(fbdo, path, intValue, false, "", "", false);
-}
-
-bool FB_RTDB::setIntAsync(FirebaseData *fbdo, const char *path, int intValue)
-{
-    return int_setInt(fbdo, path, intValue, false, "", "", true);
-}
-
-bool FB_RTDB::setInt(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setInt(fbdo, path, intValue, false, buf, "", false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setInt(fbdo, path, intValue, false, buf, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setInt(FirebaseData *fbdo, const char *path, int intValue, const char *ETag)
-{
-    return int_setInt(fbdo, path, intValue, false, "", ETag, false);
-}
-
-bool FB_RTDB::setIntAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag)
-{
-    return int_setInt(fbdo, path, intValue, false, "", ETag, true);
-}
-
-bool FB_RTDB::setInt(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setInt(fbdo, path, intValue, false, buf, ETag, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setInt(fbdo, path, intValue, false, buf, ETag, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_setInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority, const char *etag, bool async)
-{
-    char *buf = ut->intStr(intValue);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_integer;
-    req.async = async;
-    req.payload = buf;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setFloat(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return int_setFloat(fbdo, path, floatValue, false, "", "", false);
-}
-
-bool FB_RTDB::setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue)
-{
-    return int_setFloat(fbdo, path, floatValue, false, "", "", true);
-}
-
-bool FB_RTDB::setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setFloat(fbdo, path, floatValue, false, buf, "", false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setFloat(fbdo, path, floatValue, false, buf, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setFloat(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag)
-{
-    return int_setFloat(fbdo, path, floatValue, false, "", ETag, false);
-}
-
-bool FB_RTDB::setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag)
-{
-    return int_setFloat(fbdo, path, floatValue, false, "", ETag, true);
-}
-
-bool FB_RTDB::setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setFloat(fbdo, path, floatValue, false, buf, ETag, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setFloat(fbdo, path, floatValue, false, buf, ETag, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_setFloat(FirebaseData *fbdo, const char *path, float floatValue, bool queue, const char *priority, const char *etag, bool async)
-{
-    char *buf = ut->floatStr(floatValue);
-    ut->trimDigits(buf);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_float;
-    req.async = async;
-    req.payload = buf;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setDouble(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return int_setDouble(fbdo, path, doubleValue, false, "", "", false);
-}
-
-bool FB_RTDB::setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue)
-{
-    return int_setDouble(fbdo, path, doubleValue, false, "", "", true);
-}
-
-bool FB_RTDB::setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setDouble(fbdo, path, doubleValue, false, buf, "", false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setDouble(fbdo, path, doubleValue, false, buf, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setDouble(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag)
-{
-    return int_setDouble(fbdo, path, doubleValue, false, "", ETag, false);
-}
-
-bool FB_RTDB::setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag)
-{
-    return int_setDouble(fbdo, path, doubleValue, false, "", ETag, true);
-}
-
-bool FB_RTDB::setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setDouble(fbdo, path, doubleValue, false, buf, ETag, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setDouble(fbdo, path, doubleValue, false, buf, ETag, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_setDouble(FirebaseData *fbdo, const char *path, double doubleValue, bool queue, const char *priority, const char *etag, bool async)
-{
-    char *buf = ut->doubleStr(doubleValue);
-    ut->trimDigits(buf);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_double;
-    req.async = async;
-    req.payload = buf;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setBool(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return int_setBool(fbdo, path, boolValue, false, "", "", false);
-}
-
-bool FB_RTDB::setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue)
-{
-    return int_setBool(fbdo, path, boolValue, false, "", "", true);
-}
-
-bool FB_RTDB::setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setBool(fbdo, path, boolValue, false, buf, "", false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setBool(fbdo, path, boolValue, false, buf, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setBool(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag)
-{
-    return int_setBool(fbdo, path, boolValue, false, "", ETag, false);
-}
-
-bool FB_RTDB::setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag)
-{
-    return int_setBool(fbdo, path, boolValue, false, "", ETag, true);
-}
-
-bool FB_RTDB::setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setBool(fbdo, path, boolValue, false, buf, ETag, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setBool(fbdo, path, boolValue, false, buf, ETag, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_setBool(FirebaseData *fbdo, const char *path, bool boolValue, bool queue, const char *priority, const char *etag, bool async)
-{
-    char *buf = ut->boolStr(boolValue);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_boolean;
-    req.async = async;
-    req.payload = buf;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setString(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return int_setString(fbdo, path, stringValue.c_str(), "", "", false);
-}
-
-bool FB_RTDB::setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue)
-{
-    return int_setString(fbdo, path, stringValue.c_str(), "", "", true);
-}
-
-bool FB_RTDB::setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setString(fbdo, path, stringValue.c_str(), buf, "", false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setString(fbdo, path, stringValue.c_str(), buf, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setString(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag)
-{
-    return int_setString(fbdo, path, stringValue.c_str(), "", ETag, false);
-}
-
-bool FB_RTDB::setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag)
-{
-    return int_setString(fbdo, path, stringValue.c_str(), "", ETag, true);
-}
-
-bool FB_RTDB::setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setString(fbdo, path, stringValue.c_str(), buf, ETag, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setString(fbdo, path, stringValue.c_str(), buf, ETag, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_setString(FirebaseData *fbdo, const char *path, const char *stringValue, const char *priority, const char *etag, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_string;
-    req.async = async;
-    req.payload = stringValue;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_setJSON(fbdo, path, json, "", "", false);
-}
-
-bool FB_RTDB::setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_setJSON(fbdo, path, json, "", "", true);
-}
-
-bool FB_RTDB::setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setJSON(fbdo, path, json, buf, "", false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setJSON(fbdo, path, json, buf, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag)
-{
-    return int_setJSON(fbdo, path, json, "", ETag, false);
-}
-
-bool FB_RTDB::setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag)
-{
-    return int_setJSON(fbdo, path, json, "", ETag, true);
-}
-
-bool FB_RTDB::setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setJSON(fbdo, path, json, buf, ETag, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setJSON(fbdo, path, json, buf, ETag, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, const char *etag, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_json;
-    req.async = async;
-    req.data.jsonPtr = json;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return int_setArray(fbdo, path, arr, "", "", false);
-}
-
-bool FB_RTDB::setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr)
-{
-    return int_setArray(fbdo, path, arr, "", "", true);
-}
-
-bool FB_RTDB::setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setArray(fbdo, path, arr, buf, "", false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setArray(fbdo, path, arr, buf, "", true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag)
-{
-    return int_setArray(fbdo, path, arr, "", ETag, false);
-}
-
-bool FB_RTDB::setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag)
-{
-    return int_setArray(fbdo, path, arr, "", ETag, true);
-}
-
-bool FB_RTDB::setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setArray(fbdo, path, arr, buf, ETag, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_setArray(fbdo, path, arr, buf, ETag, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, const char *etag, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_array;
-    req.async = async;
-    req.data.arrPtr = arr;
-    req.queue = false;
-    if (strlen(priority) > 0)
-    {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
-    }
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return int_setBlob(fbdo, path, blob, size, false, "", false);
-}
-
-bool FB_RTDB::setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size)
-{
-    return int_setBlob(fbdo, path, blob, size, false, "", true);
-}
-
-bool FB_RTDB::setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag)
-{
-    return int_setBlob(fbdo, path, blob, size, false, ETag, false);
-}
-
-bool FB_RTDB::setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag)
-{
-    return int_setBlob(fbdo, path, blob, size, false, ETag, true);
-}
-
-bool FB_RTDB::int_setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, const char *etag, bool async)
-{
-    if (fbdo->_ss.rtdb.max_blob_size < size)
-    {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_PAYLOAD_TOO_LARGE;
-        return false;
-    }
-
-    struct fb_esp_rtdb_request_info_t req;
-    req.method = m_put_nocontent;
-    req.data.type = d_blob;
-    req.async = async;
-    req.path = path;
-    req.data.blobPtr2 = blob;
-    req.data.blobSize = size;
-    req.queue = false;
-    if (strlen(etag) > 0)
-        req.etag = etag;
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return int_setFile(fbdo, storageType, path, fileName, "", false);
-}
-
-bool FB_RTDB::setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName)
-{
-    return int_setFile(fbdo, storageType, path, fileName, "", true);
-}
-
-bool FB_RTDB::setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag)
-{
-    return int_setFile(fbdo, storageType, path, fileName, ETag, false);
-}
-
-bool FB_RTDB::setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag)
-{
-    return int_setFile(fbdo, storageType, path, fileName, ETag, true);
-}
-
-bool FB_RTDB::int_setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.storageType = storageType;
-    req.method = m_put_nocontent;
-    req.data.type = d_file;
-    req.path = path;
-    req.filename = fileName;
-    req.queue = false;
-    req.async = async;
-    if (strlen(ETag) > 0)
-        req.etag = ETag;
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
-
-bool FB_RTDB::setTimestamp(FirebaseData *fbdo, const char *path)
-{
-    return int_setTimestamp(fbdo, path, false);
-}
-
-bool FB_RTDB::setTimestampAsync(FirebaseData *fbdo, const char *path)
-{
-    return int_setTimestamp(fbdo, path, true);
-}
-
-bool FB_RTDB::int_setTimestamp(FirebaseData *fbdo, const char *path, bool async)
-{
-    char *tmp = ut->strP(fb_esp_pgm_str_154);
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_put;
-    req.data.type = d_timestamp;
-    req.async = async;
-    req.payload = tmp;
-    req.queue = false;
-    bool ret = processRequest(fbdo, &req);
-    ut->delS(tmp);
-    return ret;
-}
-
-bool FB_RTDB::updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_updateNode(fbdo, path, json, "", false, false);
-}
-
-bool FB_RTDB::updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_updateNode(fbdo, path, json, "", false, true);
-}
-
-bool FB_RTDB::updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_updateNode(fbdo, path, json, buf, false, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_updateNode(fbdo, path, json, buf, false, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::int_updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool silent, bool async)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    if (silent)
-        req.method = m_patch_nocontent;
     else
-        req.method = m_patch;
-    req.data.type = d_json;
-    req.data.jsonPtr = json;
-    req.queue = false;
-    if (strlen(priority) > 0)
     {
-        req.priority = priority;
-        addJsonPriority(fbdo, &req);
+        if (type == d_string)
+        {
+            ut->appendP(pre, fb_esp_pgm_str_3);
+            ut->appendP(post, fb_esp_pgm_str_3);
+            req.pre_payload = pre.c_str();
+            req.post_payload = post.c_str();
+        }
+
+        req.path = tpath.c_str();
     }
-    bool ret = processRequest(fbdo, &req);
-    return ret;
-}
 
-bool FB_RTDB::updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_updateNode(fbdo, path, json, "", true, false);
-}
+    if (method == m_get && type == d_blob)
+        setBlobRef(fbdo, value_addr);
 
-bool FB_RTDB::updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json)
-{
-    return int_updateNode(fbdo, path, json, "", true, true);
-}
+    req.method = method;
+    req.data.type = type;
+    req.async = async;
+    req.queue = queue;
+    method == m_get ? req.data.address.dout = value_addr : req.data.address.din = value_addr;
+    req.data.address.priority = priority_addr;
+    req.data.address.query = query_addr;
+    req.data.etag = etag;
+    req.data.value_subtype = subtype;
+    req.data.blobSize = blob_size;
+    req.payload = payload;
+    req.filename = filename;
+    req.storageType = storage_type;
 
-bool FB_RTDB::updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_updateNode(fbdo, path, json, buf, true, false);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority)
-{
-    char *buf = ut->floatStr(priority);
-    ut->trimDigits(buf);
-    bool ret = int_updateNode(fbdo, path, json, buf, true, true);
-    ut->delS(buf);
-    return ret;
-}
-
-bool FB_RTDB::get(FirebaseData *fbdo, const char *path)
-{
-    fbdo->queryFilter.clear();
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_get;
-    req.data.type = d_any;
-    req.storageType = mem_storage_type_undefined;
-    return handleRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getInt(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_integer;
-    req.path = path;
-    req.method = m_get;
     return processRequest(fbdo, &req);
 }
 
-bool FB_RTDB::getInt(FirebaseData *fbdo, const char *path, int *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_integer;
-    req.data.intPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getFloat(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_float;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getFloat(FirebaseData *fbdo, const char *path, float *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_float;
-    req.data.floatPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getDouble(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_double;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getDouble(FirebaseData *fbdo, const char *path, double *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_double;
-    req.data.doublePtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getBool(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_boolean;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getBool(FirebaseData *fbdo, const char *path, bool *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_boolean;
-    req.data.boolPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getString(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_string;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getString(FirebaseData *fbdo, const char *path, String *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_string;
-    req.data.stringPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getJSON(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_json;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getJSON(FirebaseData *fbdo, const char *path, FirebaseJson *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_json;
-    req.data.jsonPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getJSON(FirebaseData *fbdo, const char *path, QueryFilter *query)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_json;
-    req.data.query = query;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getJSON(FirebaseData *fbdo, const char *path, QueryFilter *query, FirebaseJson *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_json;
-    req.data.query = query;
-    req.data.jsonPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getArray(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_array;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_array;
-    req.data.arrPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getArray(FirebaseData *fbdo, const char *path, QueryFilter *query)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_array;
-    req.data.query = query;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getArray(FirebaseData *fbdo, const char *path, QueryFilter *query, FirebaseJsonArray *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_array;
-    req.data.arrPtr = target;
-    req.data.query = query;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getBlob(FirebaseData *fbdo, const char *path)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_blob;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getBlob(FirebaseData *fbdo, const char *path, std::vector<uint8_t> *target)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_blob;
-    req.data.blobPtr = target;
-    req.data.isPtr = true;
-    req.path = path;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName)
-{
-    struct fb_esp_rtdb_request_info_t req;
-    req.data.type = d_file;
-    req.storageType = storageType;
-    req.filename = fileName;
-    req.path = nodePath;
-    req.method = m_get;
-    return processRequest(fbdo, &req);
-}
-
-bool FB_RTDB::deleteNode(FirebaseData *fbdo, const char *path)
-{
-    fbdo->queryFilter.clear();
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_delete;
-    req.data.type = d_string;
-    return handleRequest(fbdo, &req);
-}
-
-bool FB_RTDB::deleteNode(FirebaseData *fbdo, const char *path, const char *ETag)
-{
-    fbdo->queryFilter.clear();
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path;
-    req.method = m_delete;
-    req.data.type = d_string;
-    req.etag = ETag;
-    return handleRequest(fbdo, &req);
-}
-
-bool FB_RTDB::deleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, size_t limit, unsigned long dataRetentionPeriod)
+bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, size_t limit, unsigned long dataRetentionPeriod)
 {
     if (fbdo->_ss.rtdb.pause)
         return true;
@@ -2478,14 +447,13 @@ bool FB_RTDB::deleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const
         {
             FirebaseJson *js = fbdo->jsonObjectPtr();
             size_t len = js->iteratorBegin();
-            String key, value;
-            int otype = 0;
+            FirebaseJson::IteratorValue value;
             std::string nodes[len];
             for (size_t i = 0; i < len; i++)
             {
-                js->iteratorGet(i, otype, key, value);
-                if (otype == FirebaseJson::JSON_OBJECT && key.length() > 1)
-                    nodes[i] = key.c_str();
+                value = js->valueAt(i);
+                if (value.type == FirebaseJson::JSON_OBJECT && value.key.length() > 1)
+                    nodes[i] = value.key.c_str();
             }
             js->iteratorEnd();
             js->clear();
@@ -2504,12 +472,7 @@ bool FB_RTDB::deleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const
     return ret;
 }
 
-bool FB_RTDB::beginStream(FirebaseData *fbdo, const char *path)
-{
-    return int_beginStream(fbdo, path);
-}
-
-bool FB_RTDB::int_beginStream(FirebaseData *fbdo, const char *path, bool clearNodeList)
+bool FB_RTDB::mBeginStream(FirebaseData *fbdo, const char *path)
 {
     if (!Signer.getCfg())
     {
@@ -2519,8 +482,7 @@ bool FB_RTDB::int_beginStream(FirebaseData *fbdo, const char *path, bool clearNo
 
     fbdo->_ss.rtdb.pause = false;
 
-    if (clearNodeList)
-        fbdo->clearNodeList();
+    fbdo->_ss.rtdb.new_stream = true;
 
     if (!fbdo->reconnect())
         return false;
@@ -2544,10 +506,9 @@ bool FB_RTDB::int_beginStream(FirebaseData *fbdo, const char *path, bool clearNo
     return waitResponse(fbdo);
 }
 
-bool FB_RTDB::beginMultiPathStream(FirebaseData *fbdo, const char *parentPath, const String *childPath, size_t size)
+bool FB_RTDB::mBeginMultiPathStream(FirebaseData *fbdo, const char *parentPath)
 {
-    fbdo->addNodeList(childPath, size);
-    return int_beginStream(fbdo, parentPath, false);
+    return mBeginStream(fbdo, parentPath);
 }
 
 bool FB_RTDB::readStream(FirebaseData *fbdo)
@@ -2589,7 +550,10 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
         reconnectStream = (fbdo->_ss.rtdb.data_tmo && !fbdo->_ss.connected) || fbdo->_ss.http_code >= 400 || fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream;
 
         if (fbdo->_ss.rtdb.data_tmo)
+        {
             fbdo->closeSession();
+            fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
+        }
         fbdo->_ss.rtdb.stream_resume_millis = millis();
     }
     else
@@ -2608,11 +572,13 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     {
         fbdo->_ss.rtdb.data_millis = millis();
         fbdo->_ss.rtdb.data_tmo = true;
-        reconnectStream = true;
+        fbdo->closeSession();
+        fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
     }
 
     if (reconnectStream)
     {
+        fbdo->_ss.rtdb.new_stream = true;
         if (!ut->waitIdle(fbdo->_ss.http_code))
             return false;
 
@@ -2635,6 +601,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
         if (!handleStreamRequest(fbdo, path))
         {
             fbdo->_ss.rtdb.data_tmo = true;
+            fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
             return ret;
         }
 
@@ -2681,10 +648,8 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
 #if defined(ESP32)
     std::string taskName;
     ut->appendP(taskName, fb_esp_pgm_str_72, true);
-    char *tmp = ut->intStr(index);
     ut->appendP(taskName, fb_esp_pgm_str_113);
-    taskName += tmp;
-    ut->delS(tmp);
+    taskName += NUM2S(index).get();
 
     if (streamTaskStackSize > STREAM_TASK_STACK_SIZE)
         fbdo->_ss.rtdb.stream_task_stack_size = streamTaskStackSize;
@@ -2743,10 +708,8 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
 #if defined(ESP32)
     std::string taskName;
     ut->appendP(taskName, fb_esp_pgm_str_72, true);
-    char *tmp = ut->intStr(index);
     ut->appendP(taskName, fb_esp_pgm_str_113);
-    taskName += tmp;
-    ut->delS(tmp);
+    taskName += NUM2S(index).get();
 
     if (streamTaskStackSize > STREAM_TASK_STACK_SIZE)
         fbdo->_ss.rtdb.stream_task_stack_size = streamTaskStackSize;
@@ -2875,7 +838,7 @@ uint32_t FB_RTDB::getErrorQueueID(FirebaseData *fbdo)
 
 void FB_RTDB::processErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback)
 {
-    delay(0);
+    ut->idle();
 
     if (!fbdo->reconnect())
         return;
@@ -2890,6 +853,13 @@ void FB_RTDB::processErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallb
 
             QueueItem item = fbdo->_qMan._queueCollection->at(i);
 
+            if (item.qID == 0)
+            {
+                fbdo->clearQueueItem(&item);
+                fbdo->_qMan.remove(i);
+                continue;
+            }
+
             if (callback)
             {
                 QueueInfo qinfo;
@@ -2903,193 +873,23 @@ void FB_RTDB::processErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallb
                 callback(qinfo);
             }
 
-            if (item.method == m_get)
+            ut->idle();
+            if (buildRequest(fbdo, item.method, item.path.c_str(), item.payload.c_str(), item.dataType, item.subType, item.method == m_get ? item.address.dout : item.address.din, item.address.query, item.address.priority, item.etag.c_str(), item.async, _NO_QUEUE, item.blobSize, item.filename.c_str(), item.storageType))
             {
-
-                switch (item.dataType)
-                {
-
-                case d_integer:
-
-                    if (getInt(fbdo, item.path.c_str()))
-                    {
-
-                        if (item.intPtr)
-                            *item.intPtr = fbdo->intData();
-
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-
-                    break;
-
-                case d_float:
-
-                    if (getFloat(fbdo, item.path.c_str()))
-                    {
-
-                        if (item.floatPtr)
-                            *item.floatPtr = fbdo->floatData();
-
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-
-                    break;
-
-                case d_double:
-                    if (getDouble(fbdo, item.path.c_str()))
-                    {
-                        if (item.doublePtr)
-                            *item.doublePtr = fbdo->doubleData();
-
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-
-                    break;
-
-                case d_boolean:
-
-                    if (getBool(fbdo, item.path.c_str()))
-                    {
-
-                        if (item.boolPtr)
-                            *item.boolPtr = fbdo->boolData();
-
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-
-                    break;
-
-                case d_string:
-
-                    if (getString(fbdo, item.path.c_str()))
-                    {
-
-                        if (item.stringPtr)
-                            *item.stringPtr = fbdo->stringData();
-
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-
-                    break;
-
-                case d_json:
-
-                    if (item.queryFilter._orderBy.length() > 0)
-                    {
-                        if (getJSON(fbdo, item.path.c_str(), &item.queryFilter))
-                        {
-
-                            if (item.jsonPtr)
-                                item.jsonPtr = fbdo->jsonObjectPtr();
-
-                            fbdo->clearQueueItem(&item);
-                            fbdo->_qMan.remove(i);
-                        }
-                    }
-                    else
-                    {
-                        if (getJSON(fbdo, item.path.c_str()))
-                        {
-
-                            if (item.jsonPtr)
-                                item.jsonPtr = fbdo->jsonObjectPtr();
-
-                            fbdo->clearQueueItem(&item);
-                            fbdo->_qMan.remove(i);
-                        }
-                    }
-
-                    break;
-                case d_array:
-
-                    if (item.queryFilter._orderBy.length() > 0)
-                    {
-                        if (getArray(fbdo, item.path.c_str(), &item.queryFilter))
-                        {
-
-                            if (item.arrPtr)
-                                item.arrPtr = fbdo->jsonArrayPtr();
-
-                            fbdo->clearQueueItem(&item);
-                            fbdo->_qMan.remove(i);
-                        }
-                    }
-                    else
-                    {
-                        if (getArray(fbdo, item.path.c_str()))
-                        {
-                            if (item.arrPtr)
-                                item.arrPtr = fbdo->jsonArrayPtr();
-
-                            fbdo->clearQueueItem(&item);
-                            fbdo->_qMan.remove(i);
-                        }
-                    }
-
-                    break;
-
-                case d_blob:
-
-                    if (getBlob(fbdo, item.path.c_str()))
-                    {
-                        if (item.blobPtr)
-                            *item.blobPtr = fbdo->blobData();
-
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-                    break;
-
-                case d_file:
-
-                    if (getFile(fbdo, item.storageType, item.path.c_str(), item.filename.c_str()))
-                    {
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-
-                    break;
-                case d_any:
-
-                    if (get(fbdo, item.path.c_str()))
-                    {
-                        fbdo->clearQueueItem(&item);
-                        fbdo->_qMan.remove(i);
-                    }
-
-                    break;
-
-                default:
-                    break;
-                }
-            }
-            else if (item.method == m_post || item.method == m_put || item.method == m_put_nocontent || item.method == m_patch || item.method == m_patch_nocontent)
-            {
-                struct fb_esp_rtdb_request_info_t req;
-                req.storageType = item.storageType;
-                req.method = item.method;
-                req.data.type = d_file;
-                req.path = item.path.c_str();
-                req.queue = true;
-
-                if (item.dataType == d_file)
-                    req.filename = item.filename.c_str();
-                else
-                    req.payload = item.payload.c_str();
-
-                if (processRequest(fbdo, &req))
-                {
-                    fbdo->clearQueueItem(&item);
-                    fbdo->_qMan.remove(i);
-                }
+                fbdo->clearQueueItem(&item);
+                fbdo->_qMan.remove(i);
             }
         }
     }
+}
+
+void FB_RTDB::setBlobRef(FirebaseData *fbdo, int addr)
+{
+    if (fbdo->_ss.rtdb.blob && fbdo->_ss.rtdb.isBlobPtr)
+        delete fbdo->_ss.rtdb.blob;
+
+    fbdo->_ss.rtdb.isBlobPtr = addr == 0;
+    addr > 0 ? fbdo->_ss.rtdb.blob = addrTo<std::vector<uint8_t> *>(addr) : fbdo->_ss.rtdb.blob = new std::vector<uint8_t>();
 }
 
 bool FB_RTDB::isErrorQueueExisted(FirebaseData *fbdo, uint32_t errorQueueID)
@@ -3146,10 +946,8 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
 
     std::string taskName;
     ut->appendP(taskName, fb_esp_pgm_str_72);
-    char *tmp = ut->intStr(index);
     ut->appendP(taskName, fb_esp_pgm_str_114);
-    taskName += tmp;
-    ut->delS(tmp);
+    taskName += NUM2S(index).get();
 
     if (queueTaskStackSize > QUEUE_TASK_STACK_SIZE)
         fbdo->_ss.rtdb.queue_task_stack_size = queueTaskStackSize;
@@ -3228,13 +1026,16 @@ void FB_RTDB::setMaxErrorQueue(FirebaseData *fbdo, uint8_t num)
     }
 }
 
-bool FB_RTDB::saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType)
+bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType)
 {
-
     if (storageType == mem_storage_type_sd)
     {
         if (!ut->sdTest(Signer.getCfg()->_int.fb_file))
             return false;
+
+        if (SD_FS.exists(filename))
+            SD_FS.remove(filename);
+
         Signer.getCfg()->_int.fb_file = SD_FS.open(filename, FILE_WRITE);
     }
     else if (storageType == mem_storage_type_flash)
@@ -3242,15 +1043,17 @@ bool FB_RTDB::saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_me
         if (!Signer.getCfg()->_int.fb_flash_rdy)
             ut->flashTest();
 
-        Signer.getCfg()->_int.fb_file = FLASH_FS.open(filename, "w");
+        if (FLASH_FS.exists(filename))
+            FLASH_FS.remove(filename);
+
+        Signer.getCfg()->_int.fb_file = FLASH_FS.open(filename, (const char *)FPSTR("w"));
     }
 
     if ((storageType == mem_storage_type_flash || storageType == mem_storage_type_sd) && !Signer.getCfg()->_int.fb_file)
         return false;
 
-    uint8_t idx = 0;
-    std::string buff;
-    char *nbuf = nullptr;
+    File file = Signer.getCfg()->_int.fb_file;
+    FirebaseJsonArray arr;
 
     for (uint8_t i = 0; i < fbdo->_qMan.size(); i++)
     {
@@ -3258,66 +1061,28 @@ bool FB_RTDB::saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_me
             continue;
 
         QueueItem item = fbdo->_qMan._queueCollection->at(i);
-
-        if (item.method != m_get)
-        {
-            if (idx > 0)
-                buff.append("\r");
-
-            nbuf = ut->intStr(item.dataType);
-            buff.append(nbuf);
-            ut->delS(nbuf);
-            buff.append("~");
-
-            nbuf = ut->intStr(item.method);
-            buff.append(nbuf);
-            ut->delS(nbuf);
-            buff.append("~");
-
-            buff += item.path.c_str();
-            buff.append("~");
-
-            buff += item.payload.c_str();
-            buff.append("~");
-
-            for (size_t j = 0; j < item.blob.size(); j++)
-            {
-                nbuf = ut->intStr(item.blob[j]);
-                ut->delS(nbuf);
-            }
-            buff.append("~");
-
-            buff += item.filename.c_str();
-
-            nbuf = ut->intStr(item.storageType);
-            buff.append(nbuf);
-            ut->delS(nbuf);
-            buff.append("~");
-
-            idx++;
-        }
+        arr.clear();
+        arr.add((uint8_t)item.dataType, (uint8_t)item.subType, (uint8_t)item.method, (uint8_t)item.storageType, (uint8_t)item.async);
+        arr.add(item.address.din, item.address.dout, item.address.query, item.address.priority, item.blobSize);
+        arr.add(item.path, item.payload, item.etag, item.filename);
+        file.write((uint8_t *)arr.raw(), strlen(arr.raw()));
     }
 
-    Signer.getCfg()->_int.fb_file.print(buff.c_str());
-    Signer.getCfg()->_int.fb_file.close();
-
-    ut->delS(nbuf);
-    ut->clearS(buff);
-
+    file.close();
     return true;
 }
 
-bool FB_RTDB::restoreErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType)
+bool FB_RTDB::mRestoreErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType)
 {
     return openErrorQueue(fbdo, filename, storageType, 1) != 0;
 }
 
-uint8_t FB_RTDB::errorQueueCount(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType)
+uint8_t FB_RTDB::mErrorQueueCount(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType)
 {
     return openErrorQueue(fbdo, filename, storageType, 0);
 }
 
-bool FB_RTDB::deleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType)
+bool FB_RTDB::mDeleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType)
 {
 
     if (storageType == mem_storage_type_sd)
@@ -3349,60 +1114,95 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp
     {
         if (!Signer.getCfg()->_int.fb_flash_rdy)
             ut->flashTest();
-        Signer.getCfg()->_int.fb_file = FLASH_FS.open(filename, "r");
+        Signer.getCfg()->_int.fb_file = FLASH_FS.open(filename, (const char *)FPSTR("r"));
     }
 
     if ((storageType == mem_storage_type_flash || storageType == mem_storage_type_sd) && !Signer.getCfg()->_int.fb_file)
         return 0;
 
-    std::string t;
-    uint8_t c = 0;
-
-    while (Signer.getCfg()->_int.fb_file.available())
+    if (!Signer.getCfg()->_int.fb_file.available() || Signer.getCfg()->_int.fb_file.size() < 4)
     {
-        c = Signer.getCfg()->_int.fb_file.read();
-        t += (char)c;
+        Signer.getCfg()->_int.fb_file.close();
+        return 0;
     }
 
-    Signer.getCfg()->_int.fb_file.close();
+    QueueItem item;
 
-    std::vector<std::string> p = ut->splitString(fbdo->_ss.rtdb.max_blob_size, t.c_str(), '\r');
+    File file = Signer.getCfg()->_int.fb_file;
 
-    for (size_t i = 0; i < p.size(); i++)
+    FirebaseJsonArray arr;
+    FirebaseJsonData result;
+
+    while (file.available())
     {
-
-        std::vector<std::string> q = ut->splitString(fbdo->_ss.rtdb.max_blob_size, p[i].c_str(), '~');
-
-        if (q.size() == 6)
+        ut->idle();
+        if (arr.readFrom(file))
         {
-            count++;
-
             if (mode == 1)
             {
-
-                //Restore Firebase Error Queues
-                QueueItem item;
-
-                item.dataType = (fb_esp_data_type)atoi(q[0].c_str());
-                item.method = (fb_esp_method)atoi(q[1].c_str());
-                item.path.append(q[2].c_str());
-                item.payload.append(q[3].c_str());
-
-                for (size_t j = 0; j < q[4].length(); j++)
-                    item.blob.push_back(atoi(q[4].c_str()));
-
-                item.filename.append(q[5].c_str());
-
-                //backwards compatibility to old APIs
-                if (q.size() == 7)
-                    item.storageType = (fb_esp_mem_storage_type)atoi(q[6].c_str());
+                for (size_t i = 0; i < arr.size(); i++)
+                {
+                    ut->idle();
+                    arr.get(result, i);
+                    if (result.success)
+                    {
+                        switch (i)
+                        {
+                        case 0:
+                            item.dataType = (fb_esp_data_type)result.to<int>();
+                            break;
+                        case 1:
+                            item.subType = result.to<int>();
+                            break;
+                        case 2:
+                            item.method = (fb_esp_method)result.to<int>();
+                            break;
+                        case 3:
+                            item.storageType = (fb_esp_mem_storage_type)result.to<int>();
+                            break;
+                        case 4:
+                            item.async = (bool)result.to<int>();
+                            break;
+                        case 5:
+                            item.address.din = result.to<int>();
+                            break;
+                        case 6:
+                            item.address.dout = result.to<int>();
+                            break;
+                        case 7:
+                            item.address.query = result.to<int>();
+                            break;
+                        case 8:
+                            item.address.priority = result.to<int>();
+                            break;
+                        case 9:
+                            item.blobSize = result.to<int>();
+                            break;
+                        case 10:
+                            item.path = result.to<std::string>();
+                            break;
+                        case 11:
+                            item.payload = result.to<std::string>();
+                            break;
+                        case 12:
+                            item.etag = result.to<std::string>();
+                            break;
+                        case 13:
+                            item.filename = result.to<std::string>();
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+                if (!fbdo->_qMan._queueCollection)
+                    fbdo->_qMan._queueCollection = new std::vector<struct QueueItem>();
 
                 fbdo->_qMan._queueCollection->push_back(item);
             }
+            count++;
         }
     }
-    ut->clearS(t);
-
     return count;
 }
 
@@ -3418,7 +1218,7 @@ uint8_t FB_RTDB::errorQueueCount(FirebaseData *fbdo)
     return fbdo->_qMan.size();
 }
 
-bool FB_RTDB::backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName)
+bool FB_RTDB::mBackup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName)
 {
     ut->clearS(fbdo->_ss.rtdb.backup_dir);
     fbdo->_ss.rtdb.backup_node_path = nodePath;
@@ -3432,7 +1232,7 @@ bool FB_RTDB::backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, co
     return handleRequest(fbdo, &req);
 }
 
-bool FB_RTDB::restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName)
+bool FB_RTDB::mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName)
 {
     ut->clearS(fbdo->_ss.rtdb.backup_dir);
     fbdo->_ss.rtdb.backup_node_path = nodePath;
@@ -3447,8 +1247,91 @@ bool FB_RTDB::restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, c
     return ret;
 }
 
+void FB_RTDB::setRefValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+{
+    if (req->data.address.dout > 0 && req->method == m_get)
+    {
+
+        if (req->data.type != d_file)
+        {
+            if (req->data.type == d_boolean)
+            {
+                bool *ptr = addrTo<bool *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<bool>();
+            }
+            else if (req->data.type == d_integer)
+            {
+                int *ptr = addrTo<int *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<int>();
+            }
+            else if (req->data.type == d_float)
+            {
+                float *ptr = addrTo<float *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<float>();
+            }
+            else if (req->data.type == d_double)
+            {
+                double *ptr = addrTo<double *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<double>();
+            }
+            else if (req->data.type == d_string)
+            {
+                String *ptr = addrTo<String *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<String>();
+            }
+            else if (req->data.type == d_std_string)
+            {
+                std::string *ptr = addrTo<std::string *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<std::string>();
+            }
+            else if (req->data.type == d_json)
+            {
+                FirebaseJson *ptr = addrTo<FirebaseJson *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<FirebaseJson>();
+            }
+            else if (req->data.type == d_array)
+            {
+                FirebaseJsonArray *ptr = addrTo<FirebaseJsonArray *>(req->data.address.dout);
+                if (ptr)
+                    *ptr = fbdo->to<FirebaseJsonArray>();
+            }
+        }
+    }
+}
+
+void FB_RTDB::addQueueData(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+{
+    if (req->method == m_get || (!req->queue && (req->method == m_put || req->method == m_put_nocontent || req->method == m_post || req->method == m_patch || req->method == m_patch_nocontent)))
+    {
+
+        struct fb_esp_rtdb_queue_info_t qinfo;
+
+        qinfo.method = req->method;
+        qinfo.storageType = req->storageType;
+        qinfo.dataType = req->data.type;
+        qinfo.subType = req->data.value_subtype;
+        qinfo.path = req->path;
+        qinfo.address = req->data.address;
+        qinfo.filename = req->filename;
+        qinfo.payload = req->payload;
+        qinfo.etag = req->data.etag;
+        qinfo.async = req->async;
+        qinfo.blobSize = req->data.blobSize;
+
+        fbdo->addQueue(&qinfo);
+    }
+}
+
 bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
+    ut->idle();
     if (!Signer.getCfg())
     {
         fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
@@ -3458,21 +1341,18 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     if (req->method != m_get)
     {
         if (!fbdo->reconnect())
+        {
+            addQueueData(fbdo, req);
             return false;
+        }
     }
 
     if (!fbdo->tokenReady())
         return false;
 
     bool ret = false;
-    fbdo->queryFilter.clear();
 
-    if (req->data.query && (req->data.type == d_json || req->data.type == d_array))
-    {
-        if (req->data.query->_orderBy.length() > 0)
-            fbdo->setQuery(req->data.query);
-    }
-    else if (req->data.type == d_file)
+    if (req->data.type == d_file)
     {
         fbdo->_ss.rtdb.file_name = req->filename;
 
@@ -3484,7 +1364,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
                 ut->sdTest(Signer.getCfg()->_int.fb_file);
 
             if (Signer.getCfg()->_int.fb_flash_rdy)
-                Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.file_name.c_str(), "w");
+                Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.file_name.c_str(), (const char *)FPSTR("w"));
             else if (Signer.getCfg()->_int.fb_sd_rdy)
                 Signer.getCfg()->_int.fb_file = SD_FS.open(fbdo->_ss.rtdb.file_name.c_str(), FILE_WRITE);
         }
@@ -3500,28 +1380,8 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     for (int i = 0; i < maxRetry; i++)
     {
         ret = handleRequest(fbdo, req);
-        if (req->data.isPtr)
-        {
-            if (req->data.type != d_file)
-            {
-                if (req->data.type == d_boolean)
-                    *req->data.boolPtr = fbdo->boolData();
-                else if (req->data.type == d_integer)
-                    *req->data.intPtr = fbdo->intData();
-                else if (req->data.type == d_float)
-                    *req->data.floatPtr = fbdo->floatData();
-                else if (req->data.type == d_double)
-                    *req->data.doublePtr = fbdo->doubleData();
-                else if (req->data.type == d_string)
-                    *req->data.stringPtr = fbdo->stringData();
-                else if (req->data.type == d_json)
-                    req->data.jsonPtr = fbdo->jsonObjectPtr();
-                else if (req->data.type == d_array)
-                    req->data.arrPtr = fbdo->jsonArrayPtr();
-                else if (req->data.type == d_blob)
-                    *req->data.blobPtr = fbdo->blobData();
-            }
-        }
+
+        setRefValue(fbdo, req);
 
         if (ret)
             break;
@@ -3533,51 +1393,14 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 
     if (!ret && errCount == maxRetry && fbdo->_qMan._maxQueue > 0)
     {
-        if (req->method == m_get || (!req->queue && (req->method == m_put || req->method == m_put_nocontent || req->method == m_post || req->method == m_patch || req->method == m_patch_nocontent)))
-        {
-
-            struct fb_esp_rtdb_queue_info_t qinfo;
-
-            qinfo.method = req->method;
-            qinfo.storageType = req->storageType;
-            qinfo.dataType = req->data.type;
-            qinfo.path = req->path;
-            if (strlen(req->filename) > 0)
-                qinfo.filename = req->filename;
-            if (strlen(req->payload) > 0)
-                qinfo.payload = req->payload;
-
-            if (req->data.isPtr)
-            {
-
-                if (req->data.type == d_boolean)
-                    qinfo.boolPtr = req->data.boolPtr;
-                else if (req->data.type == d_integer)
-                    qinfo.intPtr = req->data.intPtr;
-                else if (req->data.type == d_float)
-                    qinfo.floatPtr = req->data.floatPtr;
-                else if (req->data.type == d_double)
-                    qinfo.doublePtr = req->data.doublePtr;
-                else if (req->data.type == d_string)
-                    qinfo.stringPtr = req->data.stringPtr;
-                else if (req->data.type == d_json)
-                    qinfo.jsonPtr = req->data.jsonPtr;
-                else if (req->data.type == d_array)
-                    qinfo.arrPtr = req->data.arrPtr;
-                else if (req->data.type == d_blob)
-                    qinfo.blobPtr = req->data.blobPtr;
-            }
-
-            fbdo->addQueue(&qinfo);
-        }
-
+        addQueueData(fbdo, req);
         if (!req->queue && req->method != m_get)
             return ret;
     }
 
     if (ret)
     {
-        if (req->method == m_get)
+        if (req->method == m_get && req->data.type != d_any)
         {
             if (req->data.type == d_integer || req->data.type == d_float || req->data.type == d_double)
                 ret = fbdo->_ss.rtdb.resp_data_type == d_integer || fbdo->_ss.rtdb.resp_data_type == d_float || fbdo->_ss.rtdb.resp_data_type == d_double;
@@ -3589,7 +1412,6 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
                 ret = fbdo->_ss.rtdb.resp_data_type == req->data.type;
         }
     }
-
     return ret;
 }
 
@@ -3610,7 +1432,7 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
             fbdo->_ss.rtdb.stream_path_changed = false;
     }
 
-    if (!fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.rtdb.stream_path_changed || (req->method == m_stream && fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream) || (req->method != m_stream && fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream) || strcmp(host, fbdo->_ss.host.c_str()) != 0)
+    if (fbdo->_ss.cert_updated || !fbdo->_ss.connected || millis() - fbdo->_ss.last_conn_ms > fbdo->_ss.conn_timeout || fbdo->_ss.rtdb.stream_path_changed || (req->method == m_stream && fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream) || (req->method != m_stream && fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream) || strcmp(host, fbdo->_ss.host.c_str()) != 0)
     {
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
@@ -3629,6 +1451,7 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
 
 bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
+    ut->idle();
     if (!Signer.getCfg())
     {
         fbdo->_ss.http_code = FIREBASE_ERROR_UNINITIALIZED;
@@ -3643,7 +1466,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
     if (!fbdo->reconnect() || !fbdo->tokenReady() || !fbdo->validRequest(req->path))
         return false;
 
-    if ((req->method == m_put || req->method == m_post || req->method == m_patch || req->method == m_patch_nocontent || req->method == m_set_rules) && strlen(req->payload) == 0 && req->data.type != d_string && req->data.type != d_json && req->data.type != d_blob && req->data.type != d_file)
+    if ((req->method == m_put || req->method == m_post || req->method == m_patch || req->method == m_patch_nocontent || req->method == m_set_rules) && strlen(req->payload) == 0 && req->data.type != d_string && req->data.type != d_json && req->data.type != d_array && req->data.type != d_blob && req->data.type != d_file)
     {
         fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
         return false;
@@ -3662,8 +1485,14 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
     }
 
     fbdo->_ss.rtdb.queue_ID = 0;
-    fbdo->_ss.rtdb.req_etag = req->etag;
-    fbdo->_ss.rtdb.priority = req->priority;
+    if (strlen(req->data.etag) > 0)
+        fbdo->_ss.rtdb.req_etag = req->data.etag;
+    if (req->data.address.priority > 0)
+    {
+        float *pri = addrTo<float *>(req->data.address.priority);
+        fbdo->_ss.rtdb.priority = *pri;
+    }
+
     fbdo->_ss.rtdb.storage_type = req->storageType;
 
     ut->clearS(fbdo->_ss.rtdb.redirect_url);
@@ -3710,7 +1539,9 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
                 fbdo->closeSession();
                 return false;
             }
-            fbdo->_ss.rtdb.data_available = fbdo->_ss.rtdb.raw.length() > 0 || fbdo->_ss.rtdb.blob.size() > 0;
+            fbdo->_ss.rtdb.data_available = fbdo->_ss.rtdb.raw.length() > 0;
+            if (fbdo->_ss.rtdb.blob)
+                fbdo->_ss.rtdb.data_available |= fbdo->_ss.rtdb.blob->size() > 0;
         }
     }
     else
@@ -3752,6 +1583,8 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     size_t toRead = 0;
     int ret = -1;
 
+    ut->idle();
+
     rescon(fbdo, Signer.getCfg()->database_url.c_str(), req);
 
     if (req->method == m_stream)
@@ -3780,13 +1613,9 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
         fbdo->_ss.rtdb.data_tmo = false;
     }
-#if defined(ESP8266)
-    if (fbdo->tcpClient._certType > 0 && !Signer.getCfg()->_int.fb_clock_rdy)
-    {
-        fbdo->_ss.http_code = FIREBASE_ERROR_CANNOT_CONFIG_TIME;
-        return FIREBASE_ERROR_CANNOT_CONFIG_TIME;
-    }
-#endif
+
+    fbdo->_ss.max_payload_length = 0;
+
     fbdo->tcpClient.begin(Signer.getCfg()->database_url.c_str(), FIREBASE_PORT);
 
     //Prepare request header
@@ -3834,7 +1663,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
                 if (fbdo->_ss.rtdb.storage_type == mem_storage_type_flash)
                 {
                     FLASH_FS.remove(fbdo->_ss.rtdb.backup_filename.c_str());
-                    Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.backup_filename.c_str(), "w");
+                    Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.backup_filename.c_str(), (const char *)FPSTR("w"));
                 }
                 else if (fbdo->_ss.rtdb.storage_type == mem_storage_type_sd)
                 {
@@ -3846,7 +1675,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
             {
 
                 if (fbdo->_ss.rtdb.storage_type == mem_storage_type_flash && FLASH_FS.exists(fbdo->_ss.rtdb.backup_filename.c_str()))
-                    Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.backup_filename.c_str(), "r");
+                    Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.backup_filename.c_str(), (const char *)FPSTR("r"));
                 else if (fbdo->_ss.rtdb.storage_type == mem_storage_type_sd && SD_FS.exists(fbdo->_ss.rtdb.backup_filename.c_str()))
                     Signer.getCfg()->_int.fb_file = SD_FS.open(fbdo->_ss.rtdb.backup_filename.c_str(), FILE_READ);
                 else
@@ -3868,7 +1697,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
                 if (fbdo->_ss.rtdb.storage_type == mem_storage_type_flash)
                 {
                     if (FLASH_FS.exists(fbdo->_ss.rtdb.file_name.c_str()))
-                        Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.file_name.c_str(), "r");
+                        Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.file_name.c_str(), (const char *)FPSTR("r"));
                     else
                     {
                         ut->appendP(fbdo->_ss.error, fb_esp_pgm_str_83, true);
@@ -3892,14 +1721,14 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
                 tmp = ut->strP(fb_esp_pgm_str_1);
                 size_t p1 = fbdo->_ss.rtdb.file_name.find_last_of(tmp);
                 ut->delS(tmp);
-                std::string folder = "/";
+                std::string folder = (const char *)FPSTR("/");
 
                 if (p1 != std::string::npos && p1 != 0)
                     folder = fbdo->_ss.rtdb.file_name.substr(p1 - 1);
 
                 if (fbdo->_ss.rtdb.storage_type == mem_storage_type_flash)
                 {
-                    Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.file_name.c_str(), "w");
+                    Signer.getCfg()->_int.fb_file = FLASH_FS.open(fbdo->_ss.rtdb.file_name.c_str(), (const char *)FPSTR("w"));
                 }
                 else if (fbdo->_ss.rtdb.storage_type == mem_storage_type_sd)
                 {
@@ -3928,107 +1757,84 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
         req->fileLen = len;
 
-        if (req->data.type == d_file)
-            ret = sendHeader(fbdo, req);
-        else
-        {
-            struct fb_esp_rtdb_request_info_t _req;
-            _req.data.type = req->data.type;
-            _req.method = req->method;
-            _req.path = fbdo->_ss.rtdb.backup_node_path.c_str();
-            ret = sendHeader(fbdo, &_req);
-        }
+        if (req->data.type != d_file)
+            req->path = fbdo->_ss.rtdb.backup_node_path.c_str();
+        ret = sendHeader(fbdo, req);
     }
 
     if (req->method == m_get_nocontent || req->method == m_patch_nocontent || (req->method == m_put_nocontent && req->data.type == d_blob))
         fbdo->_ss.rtdb.no_content_req = true;
 
     if (req->data.type == d_blob)
-        std::vector<uint8_t>().swap(fbdo->_ss.rtdb.blob);
+    {
+        if (fbdo->_ss.rtdb.blob)
+            std::vector<uint8_t>().swap(*fbdo->_ss.rtdb.blob);
+        else
+        {
+            fbdo->_ss.rtdb.isBlobPtr = true;
+            fbdo->_ss.rtdb.blob = new std::vector<uint8_t>();
+        }
+    }
 
     if (!fbdo->reconnect() || ret != 0)
         return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
 
     //Send payload
-    if (req->data.jsonPtr)
-        ret = fbdo->tcpSend(req->data.jsonPtr->raw());
-    else if (req->data.arrPtr)
-        ret = fbdo->tcpSend(req->data.arrPtr->raw());
-    else if (strlen(req->payload) > 0)
+    if (req->data.address.din > 0 && req->data.type == d_json)
     {
-        char *tmp = nullptr;
+        FirebaseJson *json = addrTo<FirebaseJson *>(req->data.address.din);
+        if (json)
+            ret = fbdo->tcpSend(json->raw());
+    }
+    else if (strlen(req->payload) > 0 || (req->data.type == d_array && req->data.address.din > 0))
+    {
+        if (strlen(req->pre_payload) > 0)
+        {
+            ret = fbdo->tcpSend(req->pre_payload);
+            if (ret != 0)
+                return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
+        }
 
-        if (strlen(req->priority) > 0)
+        if (req->data.type == d_array && req->data.address.din > 0)
+        {
+            FirebaseJsonArray *arr = addrTo<FirebaseJsonArray *>(req->data.address.din);
+            if (arr)
+                ret = fbdo->tcpSend(arr->raw());
+            if (ret != 0)
+                return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
+        }
+        else if (strlen(req->payload) > 0)
+        {
+            ret = fbdo->tcpSend(req->payload);
+            if (ret != 0)
+                return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
+        }
+
+        if (strlen(req->post_payload) > 0)
+            ret = fbdo->tcpSend(req->post_payload);
+    }
+    else if (req->data.address.din > 0 && req->data.blobSize > 0)
+    {
+        //input blob data is uint8_t array
+        uint8_t *blob = addrTo<uint8_t *>(req->data.address.din);
+        if (blob)
         {
             std::string s;
-
-            ut->appendP(s, fb_esp_pgm_str_163);
-            ut->appendP(s, fb_esp_pgm_str_3);
-            ut->appendP(s, fb_esp_pgm_str_161);
-            ut->appendP(s, fb_esp_pgm_str_3);
-            ut->appendP(s, fb_esp_pgm_str_7);
-            if (req->data.type == d_string)
-                ut->appendP(s, fb_esp_pgm_str_3);
-
+            ut->appendP(s, fb_esp_pgm_str_92, true);
             ret = fbdo->tcpSend(s.c_str());
-
-            if (ret == 0)
-                ret = fbdo->tcpSend(req->payload);
-
             if (ret == 0)
             {
-                ut->clearS(s);
-
-                if (req->data.type == d_string)
-                    ut->appendP(s, fb_esp_pgm_str_3);
-
-                ut->appendP(s, fb_esp_pgm_str_132);
-                ut->appendP(s, fb_esp_pgm_str_3);
-                ut->appendP(s, fb_esp_pgm_str_157);
-                ut->appendP(s, fb_esp_pgm_str_3);
-                ut->appendP(s, fb_esp_pgm_str_7);
-                s += req->priority;
-                ut->appendP(s, fb_esp_pgm_str_127);
-                ret = fbdo->tcpSend(s.c_str());
-            }
-        }
-        else
-        {
-            tmp = ut->strP(fb_esp_pgm_str_3);
-
-            if (req->data.type == d_string && ret == 0)
-                ret = fbdo->tcpSend(tmp);
-
-            if (ret == 0)
-                ret = fbdo->tcpSend(req->payload);
-
-            if (req->data.type == d_string && ret == 0)
-                ret = fbdo->tcpSend(tmp);
-
-            ut->delS(tmp);
-        }
-    }
-    else if (req->data.blobSize > 0)
-    {
-        std::string s;
-        ut->appendP(s, fb_esp_pgm_str_92, true);
-        ret = fbdo->tcpSend(s.c_str());
-        if (ret == 0)
-        {
-            if (ut->sendBase64(req->data.blobPtr2, req->data.blobSize, true, &fbdo->tcpClient))
-            {
-                ut->appendP(s, fb_esp_pgm_str_3, true);
-                ret = fbdo->tcpSend(s.c_str());
+                if (ut->sendBase64(blob, req->data.blobSize, true, &fbdo->tcpClient))
+                {
+                    ut->appendP(s, fb_esp_pgm_str_3, true);
+                    ret = fbdo->tcpSend(s.c_str());
+                }
             }
         }
     }
-
-    if (ret != 0)
-        return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
-
-    //handle send file data
-    if (req->method == m_restore || (req->data.type == d_file && (req->method == m_put_nocontent || req->method == m_post)))
+    else if (req->method == m_restore || (req->data.type == d_file && (req->method == m_put_nocontent || req->method == m_post)))
     {
+
         if (req->data.type == d_file && (req->method == m_put_nocontent || req->method == m_post))
         {
             buf = ut->strP(fb_esp_pgm_str_93);
@@ -4080,6 +1886,9 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         ut->closeFileHandle(fbdo->_ss.rtdb.storage_type == mem_storage_type_sd);
     }
 
+    if (ret != 0)
+        return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
+
     fbdo->_ss.connected = ret == 0;
     return ret;
 }
@@ -4106,6 +1915,7 @@ bool FB_RTDB::waitResponse(FirebaseData *fbdo)
 
 bool FB_RTDB::handleResponse(FirebaseData *fbdo)
 {
+    ut->idle();
 
     if (fbdo->_ss.rtdb.pause)
         return true;
@@ -4118,6 +1928,10 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
     if (!fbdo->_ss.connected || stream == nullptr)
     {
         fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
+
+        if (fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream)
+            fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
+
         return false;
     }
 
@@ -4145,6 +1959,8 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
     if (fbdo->_ss.http_code == FIREBASE_ERROR_HTTP_CODE_UNDEFINED)
         fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->_ss.content_length = -1;
+    fbdo->_ss.payload_length = 0;
+
     ut->clearS(fbdo->_ss.rtdb.push_name);
     fbdo->_ss.rtdb.data_mismatch = false;
     fbdo->_ss.chunked_encoding = false;
@@ -4173,13 +1989,14 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
         {
             while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
             {
-                if (!fbdo->reconnect(dataTime) || stream == nullptr)
+                if (!fbdo->reconnect(dataTime) || stream == nullptr || !fbdo->tcpClient.connected())
                 {
-                    fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
+                    fbdo->_ss.error.clear();
+                    fbdo->_ss.http_code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
                     return false;
                 }
                 chunkBufSize = stream->available();
-                delay(0);
+                ut->idle();
             }
         }
     }
@@ -4188,9 +2005,15 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
 
     while (chunkBufSize > 0)
     {
+        ut->idle();
+
         if (!fbdo->reconnect(dataTime) || stream == nullptr)
         {
             fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
+
+            if (fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream)
+                fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
+
             return false;
         }
 
@@ -4224,7 +2047,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                 response.noEvent = fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream;
 
                 tmp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
-                delay(0);
+                ut->idle();
                 dataTime = millis();
                 if (tmp)
                 {
@@ -4238,11 +2061,14 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                 {
                     //stream payload data
                     payload = header;
+                    fbdo->_ss.payload_length = header.length();
+                    if (fbdo->_ss.max_payload_length < fbdo->_ss.payload_length)
+                        fbdo->_ss.max_payload_length = fbdo->_ss.payload_length;
                 }
             }
             else
             {
-                delay(0);
+                ut->idle();
                 dataTime = millis();
                 //the next chunk data can be the remaining http header
                 if (isHeader)
@@ -4278,6 +2104,32 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                         ut->parseRespHeader(header.c_str(), response);
                         fbdo->_ss.rtdb.resp_etag = response.etag;
 
+                        if (ut->strposP(response.contentType.c_str(), fb_esp_pgm_str_9, 0) > -1)
+                        {
+                            chunkBufSize = stream->available();
+
+                            if (chunkBufSize == 0)
+                            {
+                                if (tmp)
+                                    ut->delS(tmp);
+                                ut->clearS(header);
+                                while (chunkBufSize == 0)
+                                {
+                                    ut->idle();
+                                    if (!fbdo->reconnect(dataTime) || stream == nullptr)
+                                    {
+                                        fbdo->closeSession();
+                                        fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT);
+                                        break;
+                                    }
+                                    chunkBufSize = stream->available();
+                                }
+                                fbdo->_ss.rtdb.new_stream = false;
+                                fbdo->_ss.http_code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
+                                return false;
+                            }
+                        }
+
                         ut->clearS(header);
 
                         if (response.httpCode == 401)
@@ -4298,7 +2150,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                                     stream->readBytes(buf, len);
                                     while (stream->available())
                                     {
-                                        delay(0);
+                                        ut->idle();
                                         stream->read();
                                     }
                                     if (tmp)
@@ -4349,7 +2201,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                 }
                 else
                 {
-
                     //the next chuunk data is the payload
                     if (!response.noContent && !fbdo->_ss.buffer_ovf)
                     {
@@ -4381,6 +2232,9 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
 
                         if (readLen > 0)
                         {
+                            fbdo->_ss.payload_length += readLen;
+                            if (fbdo->_ss.max_payload_length < fbdo->_ss.payload_length)
+                                fbdo->_ss.max_payload_length = fbdo->_ss.payload_length;
                             fbdo->checkOvf(payload.length() + readLen, response);
 
                             if (!fbdo->_ss.buffer_ovf)
@@ -4392,10 +2246,8 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                             //try to parse the payload
                             if (response.dataType == 0 && !response.isEvent && !response.noContent)
                             {
-                                if (fbdo->_ss.rtdb.req_data_type == d_blob || fbdo->_ss.rtdb.req_method == m_download || (fbdo->_ss.rtdb.req_data_type == d_file && fbdo->_ss.rtdb.req_method == m_get))
-                                    ut->parseRespPayload(payload.c_str(), response, true);
-                                else
-                                    ut->parseRespPayload(payload.c_str(), response, false);
+                                bool getOfs = fbdo->_ss.rtdb.req_data_type == d_blob || fbdo->_ss.rtdb.req_method == m_download || ((fbdo->_ss.rtdb.req_data_type == d_file || fbdo->_ss.rtdb.req_data_type == d_any) && fbdo->_ss.rtdb.req_method == m_get);
+                                ut->parseRespPayload(payload.c_str(), response, getOfs);
 
                                 fbdo->_ss.error = response.fbError;
                                 if (fbdo->_ss.rtdb.req_method == m_download || fbdo->_ss.rtdb.req_method == m_restore)
@@ -4422,51 +2274,64 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                             //in case of the payload data type is file, decode and write stream to temp file
                             if (response.dataType == d_file || (fbdo->_ss.rtdb.req_method == m_download || (fbdo->_ss.rtdb.req_data_type == d_file && fbdo->_ss.rtdb.req_method == m_get)))
                             {
+                                fbdo->_ss.rtdb.resp_data_type = response.dataType;
+                                fbdo->_ss.content_length = response.payloadLen;
+
                                 int ofs = 0;
                                 int len = readLen;
 
                                 if (fbdo->_ss.rtdb.req_method == m_download || (fbdo->_ss.rtdb.req_data_type == d_file && fbdo->_ss.rtdb.req_method == m_get))
                                 {
-                                    if (fbdo->_ss.rtdb.file_name.length() == 0)
+                                    if (ut->stringCompare(fbdo->_ss.rtdb.resp_etag.c_str(), 0, fb_esp_pgm_str_151))
                                     {
-                                        size_t writeLen = 0;
-                                        if (Signer.getCfg()->_int.fb_file)
-                                            writeLen = Signer.getCfg()->_int.fb_file.write((uint8_t *)payload.c_str(), readLen);
-
-                                        fbdo->_ss.rtdb.backup_file_size = writeLen;
-                                        if (stream->available() == 0)
-                                        {
-                                            fbdo->closeSession();
-                                            break;
-                                        }
+                                        fbdo->_ss.http_code = FIREBASE_ERROR_PATH_NOT_EXIST;
+                                        fbdo->_ss.rtdb.path_not_found = true;
                                     }
-                                    else
+
+                                    if (!fbdo->_ss.rtdb.path_not_found)
                                     {
-                                        if (pChunkIdx == 1)
+                                        if (fbdo->_ss.rtdb.file_name.length() == 0)
                                         {
-                                            len = payloadLen - response.payloadOfs;
-                                            ofs = response.payloadOfs;
+                                            size_t writeLen = 0;
+                                            if (Signer.getCfg()->_int.fb_file)
+                                                writeLen = Signer.getCfg()->_int.fb_file.write((uint8_t *)payload.c_str(), readLen);
+
+                                            fbdo->_ss.rtdb.backup_file_size = writeLen;
+                                            if (stream->available() == 0)
+                                            {
+                                                fbdo->closeSession();
+                                                break;
+                                            }
                                         }
+                                        else
+                                        {
+                                            if (pChunkIdx == 1)
+                                            {
+                                                len = payloadLen - response.payloadOfs;
+                                                ofs = response.payloadOfs;
+                                            }
 
-                                        if (payload[len - 1] == '"')
-                                            payload[len - 1] = 0;
+                                            if (payload[len - 1] == '"')
+                                                payload[len - 1] = 0;
 
-                                        if (fbdo->_ss.rtdb.storage_type == mem_storage_type_flash)
-                                            ut->decodeBase64Flash(payload.c_str() + ofs, len, Signer.getCfg()->_int.fb_file);
-                                        else if (fbdo->_ss.rtdb.storage_type == mem_storage_type_sd)
-                                            ut->decodeBase64Stream(payload.c_str() + ofs, len, Signer.getCfg()->_int.fb_file);
+                                            if (fbdo->_ss.rtdb.storage_type == mem_storage_type_flash)
+                                                ut->decodeBase64Flash(payload.c_str() + ofs, len, Signer.getCfg()->_int.fb_file);
+                                            else if (fbdo->_ss.rtdb.storage_type == mem_storage_type_sd)
+                                                ut->decodeBase64Stream(payload.c_str() + ofs, len, Signer.getCfg()->_int.fb_file);
+                                        }
                                     }
                                 }
                                 else
                                 {
                                     if (!Signer.getCfg()->_int.fb_file)
                                     {
+                                        fbdo->_ss.rtdb.storage_type = mem_storage_type_flash;
                                         tmp = ut->strP(fb_esp_pgm_str_184);
                                         if (!Signer.getCfg()->_int.fb_flash_rdy)
                                             ut->flashTest();
                                         if (tmp)
                                         {
-                                            Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "w");
+                                            Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, (const char *)FPSTR("w"));
                                             ut->delS(tmp);
                                         }
                                         readLen = payloadLen - response.payloadOfs;
@@ -4533,7 +2398,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
         {
             if (response.isEvent)
             {
-
                 int pos = 0, ofs = 0, num = 0;
                 bool valid = false;
 
@@ -4590,6 +2454,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
             }
             else
             {
+
                 //the payload ever parsed?
                 if (response.dataType == 0 && !response.noContent)
                 {
@@ -4606,9 +2471,15 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
 
                 if (fbdo->_ss.rtdb.resp_data_type == d_blob)
                 {
-                    std::vector<uint8_t>().swap(fbdo->_ss.rtdb.blob);
+                    if (!fbdo->_ss.rtdb.blob)
+                    {
+                        fbdo->_ss.rtdb.isBlobPtr = true;
+                        fbdo->_ss.rtdb.blob = new std::vector<uint8_t>();
+                    }
+                    else
+                        std::vector<uint8_t>().swap(*fbdo->_ss.rtdb.blob);
                     ut->clearS(fbdo->_ss.rtdb.raw);
-                    ut->decodeBase64Str((const char *)payload.c_str() + response.payloadOfs, fbdo->_ss.rtdb.blob);
+                    ut->decodeBase64Str((const char *)payload.c_str() + response.payloadOfs, *fbdo->_ss.rtdb.blob);
                 }
                 else if (fbdo->_ss.rtdb.resp_data_type == d_file || Signer.getCfg()->_int.fb_file)
                 {
@@ -4656,12 +2527,12 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                     }
                 }
 
-                if (fbdo->_ss.rtdb.req_method != m_get_nocontent && fbdo->_ss.rtdb.req_data_type != d_timestamp && !response.noContent && fbdo->_ss.rtdb.req_method != m_post && fbdo->_ss.rtdb.req_method != m_get_shallow && response.httpCode < 400)
+                if (Signer.getCfg()->rtdb.data_type_stricted && fbdo->_ss.rtdb.req_method == m_get && fbdo->_ss.rtdb.req_data_type != d_timestamp && !response.noContent && response.httpCode < 400)
                 {
                     bool _reqType = fbdo->_ss.rtdb.req_data_type == d_integer || fbdo->_ss.rtdb.req_data_type == d_float || fbdo->_ss.rtdb.req_data_type == d_double;
                     bool _respType = fbdo->_ss.rtdb.resp_data_type == d_integer || fbdo->_ss.rtdb.resp_data_type == d_float || fbdo->_ss.rtdb.resp_data_type == d_double;
 
-                    if (fbdo->_ss.rtdb.req_data_type == fbdo->_ss.rtdb.resp_data_type || (_reqType && _respType) || (fbdo->_ss.rtdb.priority.length() > 0 && fbdo->_ss.rtdb.resp_data_type == d_json))
+                    if (fbdo->_ss.rtdb.req_data_type == fbdo->_ss.rtdb.resp_data_type || (_reqType && _respType) || (fbdo->_ss.rtdb.priority > 0 && fbdo->_ss.rtdb.resp_data_type == d_json))
                         fbdo->_ss.rtdb.data_mismatch = false;
                     else if (fbdo->_ss.rtdb.req_data_type != d_any)
                     {
@@ -4720,7 +2591,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
             struct fb_esp_rtdb_request_info_t _req;
             _req.method = fbdo->_ss.rtdb.req_method;
             _req.data.type = fbdo->_ss.rtdb.req_data_type;
-            _req.priority = fbdo->_ss.rtdb.priority.c_str();
+            _req.data.address.priority = toAddr(fbdo->_ss.rtdb.priority);
             _req.path = uinfo.uri.c_str();
             if (sendRequest(fbdo, &_req) == 0)
                 return waitResponse(fbdo);
@@ -4773,6 +2644,8 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         s.sif->stream_path = fbdo->_ss.rtdb.stream_path.c_str();
         s.sif->data = fbdo->_ss.rtdb.raw.c_str();
         s.sif->path = fbdo->_ss.rtdb.path.c_str();
+        s.sif->payload_length = fbdo->_ss.payload_length;
+        s.sif->max_payload_length = fbdo->_ss.max_payload_length;
 
         s.sif->data_type = fbdo->_ss.rtdb.resp_data_type;
         fbdo->_ss.rtdb.data_type_str = fbdo->getDataType(s.sif->data_type);
@@ -4780,7 +2653,14 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         s.sif->event_type_str = fbdo->_ss.rtdb.event_type.c_str();
 
         if (fbdo->_ss.rtdb.resp_data_type == d_blob)
-            s.sif->blob = &fbdo->_ss.rtdb.blob;
+        {
+            if (!fbdo->_ss.rtdb.blob)
+            {
+                fbdo->_ss.rtdb.isBlobPtr = true;
+                fbdo->_ss.rtdb.blob = new std::vector<uint8_t>();
+            }
+            s.sif->blob = fbdo->_ss.rtdb.blob;
+        }
 
         fbdo->_dataAvailableCallback(s);
         fbdo->_ss.rtdb.data_available = false;
@@ -4789,12 +2669,14 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
     }
     else if (fbdo->_multiPathDataCallback)
     {
-        FIREBASE_MP_STREAM_CLASS mdata;
-        mdata.begin(ut, &fbdo->_ss.rtdb.stream);
-        mdata.sif->m_type = fbdo->_ss.rtdb.resp_data_type;
-        mdata.sif->m_path = fbdo->_ss.rtdb.path;
-        mdata.sif->m_type_str = fbdo->getDataType(mdata.sif->m_type);
-        mdata.sif->m_event_type_str = fbdo->_ss.rtdb.event_type;
+        FIREBASE_MP_STREAM_CLASS s;
+        s.begin(ut, &fbdo->_ss.rtdb.stream);
+        s.sif->data_type = fbdo->_ss.rtdb.resp_data_type;
+        s.sif->path = fbdo->_ss.rtdb.path;
+        s.sif->data_type_str = fbdo->getDataType(s.sif->data_type);
+        s.sif->event_type_str = fbdo->_ss.rtdb.event_type;
+        s.sif->payload_length = fbdo->_ss.payload_length;
+        s.sif->max_payload_length = fbdo->_ss.max_payload_length;
 
         if (!fbdo->_ss.jsonPtr)
             fbdo->_ss.jsonPtr = new FirebaseJson();
@@ -4802,20 +2684,20 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         if (fbdo->_ss.rtdb.resp_data_type == d_json)
             fbdo->_ss.jsonPtr->setJsonData(fbdo->_ss.rtdb.raw.c_str());
 
-        if (mdata.sif->m_type == d_json)
-            mdata.sif->m_json = fbdo->_ss.jsonPtr;
+        if (s.sif->data_type == d_json)
+            s.sif->m_json = fbdo->_ss.jsonPtr;
         else
         {
             fbdo->_ss.jsonPtr->clear();
-            if (mdata.sif->m_type == d_string)
-                mdata.sif->m_data = fbdo->_ss.rtdb.raw.substr(1, fbdo->_ss.rtdb.raw.length() - 2).c_str();
+            if (s.sif->data_type == d_string)
+                s.sif->data = fbdo->_ss.rtdb.raw.substr(1, fbdo->_ss.rtdb.raw.length() - 2).c_str();
             else
-                mdata.sif->m_data = fbdo->_ss.rtdb.raw.c_str();
+                s.sif->data = fbdo->_ss.rtdb.raw.c_str();
         }
 
-        fbdo->_multiPathDataCallback(mdata);
+        fbdo->_multiPathDataCallback(s);
         fbdo->_ss.rtdb.data_available = false;
-        mdata.empty();
+        s.empty();
     }
 }
 
@@ -4871,9 +2753,16 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const char *payload)
 
     if (fbdo->_ss.rtdb.resp_data_type == d_blob)
     {
-        std::vector<uint8_t>().swap(fbdo->_ss.rtdb.blob);
+        if (fbdo->_ss.rtdb.blob)
+            std::vector<uint8_t>().swap(*fbdo->_ss.rtdb.blob);
+        else
+        {
+            fbdo->_ss.rtdb.isBlobPtr = true;
+            fbdo->_ss.rtdb.blob = new std::vector<uint8_t>();
+        }
+
         ut->clearS(fbdo->_ss.rtdb.raw);
-        ut->decodeBase64Str((const char *)payload + response.payloadOfs, fbdo->_ss.rtdb.blob);
+        ut->decodeBase64Str((const char *)payload + response.payloadOfs, *fbdo->_ss.rtdb.blob);
     }
     else if (fbdo->_ss.rtdb.resp_data_type == d_file || Signer.getCfg()->_int.fb_file)
     {
@@ -4952,6 +2841,36 @@ void FB_RTDB::handlePayload(FirebaseData *fbdo, struct server_response_data_t &r
     }
 }
 
+size_t FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
+{
+    size_t len = 0;
+    if (req->method != m_get)
+    {
+        if (req->data.address.din > 0)
+        {
+            if (req->data.type == d_blob && req->data.address.priority == 0)
+                len = (4 * ceil(req->data.blobSize / 3.0)) + strlen_P(fb_esp_pgm_str_92) + 1;
+            else if (req->data.type == d_json)
+            {
+                FirebaseJson *json = addrTo<FirebaseJson *>(req->data.address.din);
+                len = strlen(json->raw());
+            }
+            else if (req->data.type == d_array)
+            {
+                FirebaseJsonArray *arr = addrTo<FirebaseJsonArray *>(req->data.address.din);
+                len = strlen(req->pre_payload) + strlen(arr->raw()) + strlen(req->post_payload);
+            }
+        }
+        else if (strlen(req->payload) > 0)
+            len = strlen(req->pre_payload) + strlen(req->payload) + strlen(req->post_payload);
+        else if (req->fileLen > 0 && req->data.address.priority == 0)
+            len = req->fileLen;
+        else if (req->method == m_restore)
+            len = req->fileLen;
+    }
+    return len;
+}
+
 int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
     fb_esp_method http_method = m_put;
@@ -4959,38 +2878,19 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
     fbdo->_ss.rtdb.shallow_flag = false;
     fbdo->_ss.rtdb.priority_val_flag = false;
 
-    int payloadLength = 0;
     bool hasServerValue = false;
 
     if (req->data.type == d_json)
     {
         tmp = ut->strP(fb_esp_pgm_str_166);
-        if (req->data.jsonPtr)
-            hasServerValue = ut->strpos(req->data.jsonPtr->raw(), tmp, 0) != -1;
+        if (req->data.address.din > 0 && req->data.type == d_json)
+        {
+            FirebaseJson *json = addrTo<FirebaseJson *>(req->data.address.din);
+            hasServerValue = ut->strpos(json->raw(), tmp, 0) != -1;
+        }
         else
             hasServerValue = ut->strpos(req->payload, tmp, 0) != -1;
         ut->delS(tmp);
-    }
-
-    if (req->data.jsonPtr)
-        payloadLength = strlen(req->data.jsonPtr->raw());
-    else if (req->data.arrPtr)
-        payloadLength = strlen(req->data.arrPtr->raw());
-    else if (req->data.blobSize > 0)
-        payloadLength = (4 * ceil(req->data.blobSize / 3.0)) + strlen_P(fb_esp_pgm_str_92) + 1;
-    else if (req->fileLen > 0)
-        payloadLength = req->fileLen;
-    else
-    {
-
-        if (strlen(req->priority) > 0)
-        {
-            payloadLength = 24 + strlen(req->priority) + strlen(req->payload);
-            if (req->data.type == d_string)
-                payloadLength += 2;
-        }
-        else
-            payloadLength = req->data.type == d_string ? strlen(req->payload) + 2 : strlen(req->payload);
     }
 
     std::string header;
@@ -5067,10 +2967,8 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         if (ret < 0)
             return ret;
 
-        if (Signer.getTokenType() == token_type_legacy_token)
-            ret = fbdo->tcpSend(Signer.getToken(token_type_legacy_token));
-        else if (Signer.getTokenType() == token_type_id_token || Signer.getTokenType() == token_type_custom_token)
-            ret = fbdo->tcpSend(Signer.getToken(token_type_id_token));
+        if (Signer.getTokenType() != token_type_oauth2_access_token)
+            ret = fbdo->tcpSend(Signer.getCfg()->_int.auth_token.c_str());
 
         if (ret < 0)
             return ret;
@@ -5079,9 +2977,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
     if (fbdo->_ss.rtdb.read_tmo > 0)
     {
         ut->appendP(header, fb_esp_pgm_str_158);
-        tmp = ut->intStr(fbdo->_ss.rtdb.read_tmo);
-        header += tmp;
-        ut->delS(tmp);
+        header += NUM2S(fbdo->_ss.rtdb.read_tmo).get();
         ut->appendP(header, fb_esp_pgm_str_159);
     }
 
@@ -5097,41 +2993,49 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         fbdo->_ss.rtdb.shallow_flag = true;
     }
 
-    if (req->method == m_get && fbdo->queryFilter._orderBy.length() > 0)
+    QueryFilter *query = req->data.address.query > 0 ? addrTo<QueryFilter *>(req->data.address.query) : nullptr;
+
+    bool hasQuery = false;
+
+    if (req->method == m_get && query)
     {
-        ut->appendP(header, fb_esp_pgm_str_96);
-        header += fbdo->queryFilter._orderBy;
-
-        if (req->method == m_get)
+        if (query->_orderBy.length() > 0)
         {
-            if (fbdo->queryFilter._limitToFirst.length() > 0)
-            {
-                ut->appendP(header, fb_esp_pgm_str_97);
-                header += fbdo->queryFilter._limitToFirst;
-            }
+            hasQuery = true;
+            ut->appendP(header, fb_esp_pgm_str_96);
+            header += query->_orderBy;
 
-            if (fbdo->queryFilter._limitToLast.length() > 0)
+            if (req->method == m_get)
             {
-                ut->appendP(header, fb_esp_pgm_str_98);
-                header += fbdo->queryFilter._limitToLast;
-            }
+                if (query->_limitToFirst.length() > 0)
+                {
+                    ut->appendP(header, fb_esp_pgm_str_97);
+                    header += query->_limitToFirst;
+                }
 
-            if (fbdo->queryFilter._startAt.length() > 0)
-            {
-                ut->appendP(header, fb_esp_pgm_str_99);
-                header += fbdo->queryFilter._startAt;
-            }
+                if (query->_limitToLast.length() > 0)
+                {
+                    ut->appendP(header, fb_esp_pgm_str_98);
+                    header += query->_limitToLast;
+                }
 
-            if (fbdo->queryFilter._endAt.length() > 0)
-            {
-                ut->appendP(header, fb_esp_pgm_str_100);
-                header += fbdo->queryFilter._endAt;
-            }
+                if (query->_startAt.length() > 0)
+                {
+                    ut->appendP(header, fb_esp_pgm_str_99);
+                    header += query->_startAt;
+                }
 
-            if (fbdo->queryFilter._equalTo.length() > 0)
-            {
-                ut->appendP(header, fb_esp_pgm_str_101);
-                header += fbdo->queryFilter._equalTo;
+                if (query->_endAt.length() > 0)
+                {
+                    ut->appendP(header, fb_esp_pgm_str_100);
+                    header += query->_endAt;
+                }
+
+                if (query->_equalTo.length() > 0)
+                {
+                    ut->appendP(header, fb_esp_pgm_str_101);
+                    header += query->_equalTo;
+                }
             }
         }
     }
@@ -5181,7 +3085,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         if (ret < 0)
             return ret;
 
-        ret = fbdo->tcpSend(Signer.getToken(token_type_oauth2_access_token));
+        ret = fbdo->tcpSend(Signer.getCfg()->_int.auth_token.c_str());
 
         if (ret < 0)
             return ret;
@@ -5190,7 +3094,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
     }
 
     //Timestamp cannot use with ETag header, otherwise cases internal server error
-    if (!hasServerValue && fbdo->queryFilter._orderBy.length() == 0 && req->data.type != d_timestamp && (req->method == m_delete || req->method == m_get || req->method == m_get_nocontent || req->method == m_put || req->method == m_put_nocontent || req->method == m_post))
+    if (!hasServerValue && !hasQuery && req->data.type != d_timestamp && (req->method == m_delete || req->method == m_get || req->method == m_get_nocontent || req->method == m_put || req->method == m_put_nocontent || req->method == m_post))
         ut->appendP(header, fb_esp_pgm_str_148);
 
     if (fbdo->_ss.rtdb.req_etag.length() > 0 && (req->method == m_put || req->method == m_put_nocontent || req->method == m_delete))
@@ -5239,9 +3143,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
     if (req->method == m_put || req->method == m_put_nocontent || req->method == m_post || req->method == m_patch || req->method == m_patch_nocontent || req->method == m_restore || req->method == m_set_rules || req->method == m_set_priority)
     {
         ut->appendP(header, fb_esp_pgm_str_12);
-        tmp = ut->intStr(payloadLength);
-        header += tmp;
-        ut->delS(tmp);
+        header += NUM2S(getPayloadLen(req)).get();
     }
     ut->appendP(header, fb_esp_pgm_str_21);
     ut->appendP(header, fb_esp_pgm_str_21);
@@ -5310,7 +3212,7 @@ bool FB_RTDB::connectionError(FirebaseData *fbdo)
 {
     return fbdo->_ss.http_code == FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED || fbdo->_ss.http_code == FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST ||
            fbdo->_ss.http_code == FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED || fbdo->_ss.http_code == FIREBASE_ERROR_TCP_ERROR_SEND_HEADER_FAILED ||
-           fbdo->_ss.http_code == FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED || fbdo->_ss.http_code == FIREBASE_ERROR_TCP_ERROR_READ_TIMEOUT;
+           fbdo->_ss.http_code == FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED || fbdo->_ss.http_code == FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
 }
 
 bool FB_RTDB::handleStreamRequest(FirebaseData *fbdo, const std::string &path)

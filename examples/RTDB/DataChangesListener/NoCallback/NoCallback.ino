@@ -93,6 +93,9 @@ void setup()
 void loop()
 {
 
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (!Firebase.ready())
     return;
 
@@ -100,7 +103,12 @@ void loop()
     Serial.printf("sream read error, %s\n\n", stream.errorReason().c_str());
 
   if (stream.streamTimeout())
+  {
     Serial.println("stream timeout, resuming...\n");
+
+    if (!stream.httpConnected())
+      Serial.printf("error code: %d, reason: %s\n\n", stream.httpCode(), stream.errorReason().c_str());
+  }
 
   if (stream.streamAvailable())
   {
@@ -111,6 +119,13 @@ void loop()
                   stream.eventType().c_str());
     printResult(stream); //see addons/RTDBHelper.h
     Serial.println();
+
+    //This is the size of stream payload received (current and max value)
+    //Max payload size is the payload size under the stream path since the stream connected
+    //and read once and will not update until stream reconnection takes place.
+    //This max value will be zero as no payload received in case of ESP8266 which
+    //BearSSL reserved Rx buffer size is less than the actual stream payload.
+    Serial.printf("Received stream payload size: %d (Max. %d)\n\n", stream.payloadLength(), stream.maxPayloadLength());
   }
 
   if (millis() - sendDataPrevMillis1 > 15000)

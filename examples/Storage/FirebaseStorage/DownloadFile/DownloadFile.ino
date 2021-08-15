@@ -75,8 +75,8 @@ void setup()
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
 #if defined(ESP8266)
-    //required
-    fbdo.setBSSLBufferSize(1024, 1024);
+    //required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(1024 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
 
     Firebase.begin(&config, &auth);
@@ -97,7 +97,5 @@ void loop()
 #endif
         //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
         Serial.printf("Download file... %s\n", Firebase.Storage.download(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "path/to/file/filename" /* path of remote file stored in the bucket */, "/path/to/save/filename" /* path to local file */, mem_storage_type_sd /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */) ? "ok" : fbdo.errorReason().c_str());
-        
-    
-    }
+        }
 }

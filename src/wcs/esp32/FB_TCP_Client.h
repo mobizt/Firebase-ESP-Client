@@ -1,5 +1,7 @@
 /**
- * Firebase TCP Client v1.1.9
+ * Firebase TCP Client v1.1.10
+ * 
+ * Created August 15, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -39,9 +41,6 @@
 #include <ETH.h>
 #include "FirebaseFS.h"
 #include <WiFiClientSecure.h>
-#if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
-#error WiFi UART bridge was not supported.
-#endif
 
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>
@@ -53,10 +52,9 @@
 #define SD_FS DEFAULT_SD_FS
 #define FORMAT_FLASH FORMAT_FLASH_IF_MOUNT_FAILED
 
-
 #include "wcs/HTTPCode.h"
 
-    static const char esp_idf_branch_str[] PROGMEM = "release/v";
+static const char esp_idf_branch_str[] PROGMEM = "release/v";
 
 struct fb_esp_sd_config_info_t
 {
@@ -67,6 +65,36 @@ struct fb_esp_sd_config_info_t
   const char *sd_mmc_mountpoint = "";
   bool sd_mmc_mode1bit = false;
   bool sd_mmc_format_if_mount_failed = false;
+};
+
+//The derived class to fix the memory leaks issue
+//https://github.com/espressif/arduino-esp32/issues/5480
+class FB_WCS : public WiFiClientSecure
+{
+public:
+
+  FB_WCS(){};
+  ~FB_WCS(){};
+
+  int _connect(const char *host, uint16_t port)
+  {
+    if (_timeout > 0)
+    {
+      sslclient->handshake_timeout = _timeout;
+    }
+    int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL, _use_insecure);
+    _lastError = ret;
+    if (ret < 0)
+    {
+      log_e("start_ssl_client: %d", ret);
+      stop();
+      if (_CA_cert != NULL)
+        mbedtls_x509_crt_free(&sslclient->ca_cert);
+      return 0;
+    }
+    _connected = true;
+    return 1;
+  }
 };
 
 class FB_TCP_Client
@@ -99,9 +127,11 @@ public:
   /**
     * Establish TCP connection when required and send data.
     * \param data - The data to send.
+    * \param len - The length of data to send.
+    * 
     * \return TCP status code, Return zero if new TCP connection and data sent.
     */
-  int send(const char *data);
+  int send(const char *data, size_t len = 0);
 
   /**
    * Get the WiFi client pointer.
@@ -120,8 +150,8 @@ public:
   void setCACert(const char *caCert);
   void setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config);
 
-protected:
-  std::unique_ptr<WiFiClientSecure> _wcs = std::unique_ptr<WiFiClientSecure>(new WiFiClientSecure());
+private:
+  std::unique_ptr<FB_WCS> _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
   std::string _host = "";
   uint16_t _port = 0;
   unsigned long timeout = FIREBASE_DEFAULT_TCP_TIMEOUT;
@@ -130,6 +160,7 @@ protected:
   uint8_t _CAFileStoreageType = 0;
   int _certType = -1;
   bool _clockReady = false;
+  void release();
 };
 
 #endif /* ESP32 */

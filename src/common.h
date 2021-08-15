@@ -1,6 +1,6 @@
 
 /**
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -77,12 +77,24 @@ class QueryFilter;
 #define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
 #define ESP_DEFAULT_TS 1618971013
 
-enum fb_esp_mem_storage_type
+#define _NO_REF 0
+#define _NO_QUERY 0
+#define _NO_SUB_TYPE 0
+#define _NO_BLOB_SIZE 0
+#define _NO_PRIORITY 0
+#define _NO_PAYLOAD ""
+#define _NO_ETAG ""
+#define _IS_ASYNC true
+#define _NO_ASYNC false
+#define _NO_QUEUE false
+
+typedef enum
 {
     mem_storage_type_undefined,
     mem_storage_type_flash,
     mem_storage_type_sd
-};
+} fb_esp_mem_storage_type;
+
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 struct StorageType
 {
@@ -118,7 +130,27 @@ enum fb_esp_data_type
     d_blob,
     d_file,
     d_timestamp,
-    d_shallow
+    d_shallow,
+    d_std_string,
+    d_char_array
+};
+
+enum fb_esp_ref_sub_type
+{
+    fb_esp_ref_sub_type_none,
+    fb_esp_ref_sub_type_int8,
+    fb_esp_ref_sub_type_uint8,
+    fb_esp_ref_sub_type_int16,
+    fb_esp_ref_sub_type_uint16,
+    fb_esp_ref_sub_type_int32,
+    fb_esp_ref_sub_type_uint32,
+    fb_esp_ref_sub_type_int64,
+    fb_esp_ref_sub_type_uint64,
+    fb_esp_ref_sub_type_arduino_string,
+    fb_esp_ref_sub_type_std_string,
+    fb_esp_ref_sub_type_const_char,
+    fb_esp_ref_sub_type_flash_string,
+    fb_esp_ref_sub_type_update_node_silent,
 };
 
 enum fb_esp_rtdb_data_type
@@ -137,6 +169,7 @@ enum fb_esp_rtdb_data_type
 
 enum fb_esp_method
 {
+    m_undefined,
     m_put,
     m_put_nocontent,
     m_post,
@@ -185,7 +218,8 @@ enum fb_esp_auth_token_type
     token_type_legacy_token,
     token_type_id_token,
     token_type_custom_token,
-    token_type_oauth2_access_token
+    token_type_oauth2_access_token,
+    token_type_refresh_token
 };
 
 enum fb_esp_jwt_generation_step
@@ -201,6 +235,22 @@ enum fb_esp_user_email_sending_type
     fb_esp_user_email_sending_type_verify,
     fb_esp_user_email_sending_type_reset_psw
 };
+
+#ifdef ENABLE_RTDB
+enum fb_esp_rtdb_value_type
+{
+    fb_esp_rtdb_value_type_any = 0,
+    fb_esp_rtdb_value_type_std_string,
+    fb_esp_rtdb_value_type_arduino_string,
+    fb_esp_rtdb_value_type_char_array,
+    fb_esp_rtdb_value_type_int,
+    fb_esp_rtdb_value_type_float,
+    fb_esp_rtdb_value_type_double,
+    fb_esp_rtdb_value_type_json,
+    fb_esp_rtdb_value_type_array,
+    fb_esp_rtdb_value_type_blob
+};
+#endif
 
 #if defined(FIREBASE_ESP_CLIENT)
 
@@ -389,20 +439,21 @@ enum fb_esp_functions_operation_status
 #endif
 
 #ifdef ENABLE_RTDB
+
+struct fb_esp_rtdb_address_t
+{
+    int dout = 0;
+    int din = 0;
+    int priority = 0;
+    int query = 0;
+};
+
 struct fb_esp_rtdb_request_data_info
 {
     fb_esp_data_type type = d_any;
-    bool isPtr = false;
-    int *intPtr = nullptr;
-    float *floatPtr = nullptr;
-    double *doublePtr = nullptr;
-    bool *boolPtr = nullptr;
-    String *stringPtr = nullptr;
-    std::vector<uint8_t> *blobPtr = nullptr;
-    uint8_t *blobPtr2 = nullptr;
-    FirebaseJson *jsonPtr = nullptr;
-    FirebaseJsonArray *arrPtr = nullptr;
-    QueryFilter *query = nullptr;
+    struct fb_esp_rtdb_address_t address;
+    int value_subtype = 0;
+    const char *etag = "";
     size_t blobSize = 0;
 };
 
@@ -410,14 +461,14 @@ struct fb_esp_rtdb_request_info_t
 {
     int fileLen = 0;
     const char *path = "";
+    const char *pre_payload = "";
+    const char *post_payload = "";
+    const char *payload = "";
+    const char *filename = "";
     fb_esp_method method = m_get;
     struct fb_esp_rtdb_request_data_info data;
-    const char *payload = "";
-    const char *priority = "";
-    const char *etag = "";
     bool queue = false;
     bool async = false;
-    const char *filename = "";
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
@@ -433,19 +484,15 @@ struct fb_esp_rtdb_queue_info_t
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
     uint8_t storageType = StorageType::UNDEFINED;
 #endif
-    fb_esp_data_type dataType;
-    std::string path = "";
-    std::string filename = "";
-    std::string payload = "";
-    bool isQuery = false;
-    int *intPtr = nullptr;
-    float *floatPtr = nullptr;
-    double *doublePtr = nullptr;
-    bool *boolPtr = nullptr;
-    String *stringPtr = nullptr;
-    std::vector<uint8_t> *blobPtr = nullptr;
-    FirebaseJson *jsonPtr = nullptr;
-    FirebaseJsonArray *arrPtr = nullptr;
+    fb_esp_data_type dataType = fb_esp_data_type::d_any;
+    int subType = 0;
+    std::string path;
+    std::string filename;
+    std::string payload;
+    std::string etag;
+    struct fb_esp_rtdb_address_t address;
+    int blobSize = 0;
+    bool async = false;
 };
 
 #endif
@@ -470,16 +517,16 @@ struct server_response_data_t
     bool noContent = false;
     bool eventPathChanged = false;
     bool dataChanged = false;
-    std::string location = "";
-    std::string contentType = "";
-    std::string connection = "";
-    std::string eventPath = "";
-    std::string eventType = "";
-    std::string eventData = "";
-    std::string etag = "";
-    std::string pushName = "";
-    std::string fbError = "";
-    std::string transferEnc = "";
+    std::string location;
+    std::string contentType;
+    std::string connection;
+    std::string eventPath;
+    std::string eventType;
+    std::string eventData;
+    std::string etag;
+    std::string pushName;
+    std::string fbError;
+    std::string transferEnc;
 };
 
 struct fb_esp_auth_token_error_t
@@ -490,10 +537,7 @@ struct fb_esp_auth_token_error_t
 
 struct fb_esp_auth_token_info_t
 {
-    std::string id_token;
-    std::string refresh_token;
-    std::string access_token;
-    std::string legacy_token;
+    const char *legacy_token = "";
     std::string auth_type;
     std::string jwt;
     std::string scope;
@@ -507,7 +551,7 @@ struct fb_esp_auth_token_info_t
 struct fb_esp_auth_signin_token_t
 {
     std::string uid;
-    FirebaseJson claims;
+    std::string claims;
 };
 
 struct fb_esp_service_account_data_info_t
@@ -527,7 +571,7 @@ struct fb_esp_auth_signin_user_t
 
 struct fb_esp_auth_cert_t
 {
-    const char *data = "";
+    const char *data = NULL;
     std::string file;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type file_storage = mem_storage_type_flash;
@@ -590,7 +634,7 @@ struct fb_esp_token_signer_resources_t
     WiFiClientSecure *wcs = nullptr;
 #endif
     FirebaseJson *json = nullptr;
-    FirebaseJsonData *data = nullptr;
+    FirebaseJsonData *result = nullptr;
     struct fb_esp_auth_token_info_t tokens;
     struct fb_esp_auth_token_error_t verificationError;
     struct fb_esp_auth_token_error_t resetPswError;
@@ -608,13 +652,16 @@ struct fb_esp_stream_info_t
     std::string event_type_str;
     uint8_t data_type = 0;
     int idx = -1;
-
+    /*
     fb_esp_data_type m_type = d_any;
     std::string m_data;
     std::string m_path;
     std::string m_type_str;
     std::string m_event_type_str;
+    */
     FirebaseJson *m_json = nullptr;
+    size_t payload_length = 0;
+    size_t max_payload_length = 0;
 };
 #endif
 
@@ -633,11 +680,15 @@ struct fb_esp_cfg_int_t
     uint16_t fb_reconnect_tmo = WIFI_RECONNECT_TIMEOUT;
     bool fb_clock_rdy = false;
     float fb_gmt_offset = 0;
-    const char *fb_caCert = nullptr;
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
     std::vector<std::reference_wrapper<FirebaseData>> fb_sdo;
+    std::string auth_token;
+    std::string refresh_token;
+    uint16_t rtok_len = 0;
+    uint16_t atok_len = 0;
+    uint16_t ltok_len = 0;
 
 #if defined(ESP32)
     TaskHandle_t resumable_upload_task_handle = NULL;
@@ -645,6 +696,11 @@ struct fb_esp_cfg_int_t
     TaskHandle_t functions_deployment_task_handle = NULL;
     TaskHandle_t token_processing_task_handle = NULL;
 #endif
+};
+
+struct fb_esp_rtdb_config_t
+{
+    bool data_type_stricted = false;
 };
 
 struct fb_esp_url_info_t
@@ -715,6 +771,7 @@ struct fb_esp_cfg_t
     struct fb_esp_cfg_int_t _int;
     TokenStatusCallback token_status_callback = NULL;
     int8_t max_token_generation_retry = MAX_EXCHANGE_TOKEN_ATTEMPTS;
+    struct fb_esp_rtdb_config_t rtdb;
 };
 #ifdef ENABLE_RTDB
 struct fb_esp_rtdb_info_t
@@ -733,6 +790,7 @@ struct fb_esp_rtdb_info_t
     bool pause = false;
     bool stream_stop = true;
     bool async = false;
+    bool new_stream = false;
     size_t async_count = 0;
 
     uint8_t connection_status = 0;
@@ -753,7 +811,7 @@ struct fb_esp_rtdb_info_t
     std::string data_type_str;
     std::string req_etag;
     std::string resp_etag;
-    std::string priority;
+    float priority;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storage_type = mem_storage_type_flash;
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
@@ -768,8 +826,8 @@ struct fb_esp_rtdb_info_t
     unsigned long stream_resume_millis = 0;
     unsigned long data_millis = 0;
 
-    std::vector<uint8_t> blob = std::vector<uint8_t>();
-    std::vector<std::string> child_nodes = std::vector<std::string>();
+    std::vector<uint8_t> *blob = nullptr;
+    int isBlobPtr = false;
 
     bool priority_val_flag = false;
     bool priority_json_flag = false;
@@ -1292,6 +1350,8 @@ struct fb_esp_session_info_t
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonArray *arrPtr = nullptr;
     FirebaseJsonData *dataPtr = nullptr;
+    int jsonAddr = 0;
+    int arrAddr = 0;
     fb_esp_con_mode con_mode = fb_esp_con_mode_undefined;
     bool buffer_ovf = false;
     bool chunked_encoding = false;
@@ -1299,11 +1359,15 @@ struct fb_esp_session_info_t
     bool classic_request = false;
     std::string host = "";
     unsigned long last_conn_ms = 0;
+    int cert_addr = 0;
+    bool cert_updated = false;
     const uint32_t conn_timeout = 3 * 60 * 1000;
 
     uint16_t resp_size = 2048;
     int http_code = FIREBASE_ERROR_HTTP_CODE_UNDEFINED;
     int content_length = 0;
+    size_t payload_length = 0;
+    size_t max_payload_length = 0;
     std::string error = "";
 #ifdef ENABLE_RTDB
     struct fb_esp_rtdb_info_t rtdb;
@@ -1425,7 +1489,11 @@ static const char fb_esp_pgm_str_65[] PROGMEM = "gateway timeout";
 static const char fb_esp_pgm_str_66[] PROGMEM = "http version not support";
 static const char fb_esp_pgm_str_67[] PROGMEM = "network authentication required";
 static const char fb_esp_pgm_str_68[] PROGMEM = "data buffer overflow";
-static const char fb_esp_pgm_str_69[] PROGMEM = "read timed out";
+#if defined(ESP32)
+static const char fb_esp_pgm_str_69[] PROGMEM = "response payload read timed out due to too large data\n** RECOMMENDATION, Update the ESP32 Arduino Core SDK, try to reduce the data at the node that data is being read **";
+#elif defined(ESP8266)
+static const char fb_esp_pgm_str_69[] PROGMEM = "response payload read timed out due to too large data\n** WARNING!, in stream connection, unknown length payload can cause device crashed (wdt reset) **\n** RECOMMENDATION, increase the Rx buffer in setBSSLBufferSize Firebase Data object's function **\n** Or reduce the data at the node that data is being read **";
+#endif
 static const char fb_esp_pgm_str_70[] PROGMEM = "data type mismatch";
 static const char fb_esp_pgm_str_71[] PROGMEM = "path not exist";
 static const char fb_esp_pgm_str_72[] PROGMEM = "task";

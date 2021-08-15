@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.0.5
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 25, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -51,6 +51,7 @@ class FIREBASE_STREAM_CLASS
 
     friend class FirebaseData;
     friend class FB_RTDB;
+    friend class FIREBASE_MP_STREAM_CLASS;
 
 public:
     FIREBASE_STREAM_CLASS();
@@ -117,11 +118,11 @@ public:
     */
     FirebaseJsonArray &jsonArray();
 
-    /** Return the blob data (uint8_t) array of server returned payload.
+    /** Return the pointer to blob data (uint8_t) array of server returned payload.
      * 
      * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
     */
-    std::vector<uint8_t> blobData();
+    std::vector<uint8_t> *blobData();
 
     /** Return the file stream of server returned payload.
      * 
@@ -174,9 +175,140 @@ public:
     */
     String payload();
 
+    /** Get the HTTP payload length returned from the server.
+     * @return integer number of payload length.
+    */
+    int payloadLength();
+
+    /** Get the maximum size of HTTP payload length returned from the server.
+     * 
+     * @return integer number of payload length.
+    */
+    int maxPayloadLength();
+
     /** Clear or empty data in FirebaseStream or StreamData object.
     */
     void empty();
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value || FB_JS::is_num_float<T>::value || FB_JS::is_bool<T>::value, T>::type
+    {
+        if (sif->data.length() > 0)
+        {
+            if (sif->data_type == fb_esp_data_type::d_boolean)
+                mSetResBool(strcmp(sif->data.c_str(), NUM2S(true).get()) == 0);
+            else if (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double)
+            {
+                mSetResInt(sif->data.c_str());
+                mSetResFloat(sif->data.c_str());
+            }
+        }
+
+        if (FB_JS::is_bool<T>::value)
+            return iVal.uint32 > 0;
+        else if (FB_JS::is_num_int8<T>::value)
+            return iVal.int8;
+        else if (FB_JS::is_num_uint8<T>::value)
+            return iVal.uint8;
+        else if (FB_JS::is_num_int16<T>::value)
+            return iVal.int16;
+        else if (FB_JS::is_num_uint16<T>::value)
+            return iVal.uint16;
+        else if (FB_JS::is_num_int32<T>::value)
+            return iVal.int32;
+        else if (FB_JS::is_num_uint32<T>::value)
+            return iVal.uint32;
+        else if (FB_JS::is_num_int64<T>::value)
+            return iVal.int64;
+        else if (FB_JS::is_num_uint64<T>::value)
+            return iVal.uint64;
+        else if (FB_JS::is_same<T, float>::value)
+            return fVal.f;
+        else if (FB_JS::is_same<T, double>::value)
+            return fVal.d;
+        else
+            return 0;
+    }
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value, T>::type
+    {
+
+        if (sif->data.length() > 0 && sif->data_type == fb_esp_data_type::d_string)
+            return sif->data.substr(1, sif->data.length() - 2).c_str();
+
+        return std::string().c_str();
+    }
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJson *>::value, FirebaseJson *>::type
+    {
+        if (!jsonPtr)
+            jsonPtr = new FirebaseJson();
+
+        if (sif->data_type == d_json)
+        {
+            ut->idle();
+            jsonPtr->clear();
+            if (arrPtr)
+                arrPtr->clear();
+            jsonPtr->setJsonData(sif->data.c_str());
+        }
+
+        return jsonPtr;
+    }
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJson>::value, FirebaseJson &>::type
+    {
+        return *to<FirebaseJson *>();
+    }
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonArray *>::value, FirebaseJsonArray *>::type
+    {
+        if (!arrPtr)
+            arrPtr = new FirebaseJsonArray();
+
+        if (sif->data_type == d_array)
+        {
+            if (jsonPtr)
+                jsonPtr->clear();
+            arrPtr->clear();
+            arrPtr->setJsonArrayData(sif->data.c_str());
+        }
+
+        return arrPtr;
+    }
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonArray>::value, FirebaseJsonArray &>::type
+    {
+        return *to<FirebaseJsonArray *>();
+    }
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, std::vector<uint8_t> *>::value, std::vector<uint8_t> *>::type
+    {
+        return sif->blob;
+    }
+
+    template <typename T>
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, File>::value, File>::type
+    {
+        if (sif->data_type == fb_esp_data_type::d_file && Signer.getCfg())
+        {
+            char *tmp = ut->strP(fb_esp_pgm_str_184);
+
+            ut->flashTest();
+
+            if (Signer.getCfg()->_int.fb_flash_rdy)
+                Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
+            ut->delS(tmp);
+        }
+
+        return Signer.getCfg()->_int.fb_file;
+    }
 
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonArray *arrPtr = nullptr;
@@ -185,7 +317,42 @@ private:
     UtilsClass *ut = nullptr;
     struct fb_esp_stream_info_t *sif = nullptr;
 
+    union IVal
+    {
+        std::uint64_t uint64;
+        std::int64_t int64;
+        std::uint32_t uint32;
+        std::int32_t int32;
+        std::int16_t int16;
+        std::uint16_t uint16;
+        std::int8_t int8;
+        std::uint8_t uint8;
+    };
+
+    struct FVal
+    {
+        double d = 0;
+        float f = 0;
+        void setd(double v)
+        {
+            d = v;
+            f = static_cast<float>(v);
+        }
+
+        void setf(float v)
+        {
+            f = v;
+            d = static_cast<double>(v);
+        }
+    };
+
+    IVal iVal = {0};
+    FVal fVal;
+
     void begin(UtilsClass *u, struct fb_esp_stream_info_t *s);
+    void mSetResInt(const char *value);
+    void mSetResFloat(const char *value);
+    void mSetResBool(bool value);
 };
 
 #endif

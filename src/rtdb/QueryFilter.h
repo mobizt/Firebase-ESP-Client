@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.1
+ * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 30, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -49,24 +49,50 @@ class QueryFilter
 public:
     QueryFilter();
     ~QueryFilter();
-    QueryFilter &orderBy(const String &);
-    QueryFilter &limitToFirst(int);
-    QueryFilter &limitToLast(int);
-    QueryFilter &startAt(float);
-    QueryFilter &endAt(float);
-    QueryFilter &startAt(const String &);
-    QueryFilter &endAt(const String &);
-    QueryFilter &equalTo(int);
-    QueryFilter &equalTo(const String &);
+
+    template <typename T>
+    QueryFilter &orderBy(T val) { return mOrderBy(toString(val)); }
+
+    template <typename T>
+    QueryFilter &limitToFirst(T val) { return mLimitToFirst(NUM2S(val).get()); }
+
+    template <typename T>
+    QueryFilter &limitToLast(T val) { return mLimitToLast(NUM2S(val).get()); }
+
+    template <typename T>
+    auto startAt(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, float>::value || FB_JS::is_same<T, double>::value || FB_JS::is_num_int<T>::value, QueryFilter &>::type { return mStartAt(NUM2S(val).get(), false); }
+
+    template <typename T>
+    auto endAt(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, float>::value || FB_JS::is_same<T, double>::value || FB_JS::is_num_int<T>::value, QueryFilter &>::type { return mEndAt(NUM2S(val).get(), false); }
+
+    template <typename T>
+    auto startAt(T val) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, QueryFilter &>::type { return mStartAt(toString(val), true); }
+
+    template <typename T>
+    auto endAt(T val) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, QueryFilter &>::type { return mEndAt(toString(val), true); }
+
+    template <typename T>
+    auto equalTo(T val) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, QueryFilter &>::type { return mEqualTo(NUM2S(val).get(), false); }
+
+    template <typename T>
+    auto equalTo(T val) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, QueryFilter &>::type { return mEqualTo(toString(val), true); }
+
     QueryFilter &clear();
 
 private:
-    std::string _orderBy = "";
-    std::string _limitToFirst = "";
-    std::string _limitToLast = "";
-    std::string _startAt = "";
-    std::string _endAt = "";
-    std::string _equalTo = "";
+    std::string _orderBy;
+    std::string _limitToFirst;
+    std::string _limitToLast;
+    std::string _startAt;
+    std::string _endAt;
+    std::string _equalTo;
+
+    QueryFilter &mOrderBy(const char *val);
+    QueryFilter &mLimitToFirst(const char *val);
+    QueryFilter &mLimitToLast(const char *val);
+    QueryFilter &mStartAt(const char *val, bool isString);
+    QueryFilter &mEndAt(const char *val, bool isString);
+    QueryFilter &mEqualTo(const char *val, bool isString);
 
     char *strP(PGM_P pgm);
     char *newS(size_t len);
@@ -74,6 +100,19 @@ private:
     void delS(char *p);
     char *floatStr(float value);
     char *intStr(int value);
+
+protected:
+    template <typename T>
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value, const char *>::type { return val.c_str(); }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

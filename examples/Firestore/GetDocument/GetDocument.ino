@@ -117,6 +117,9 @@ void loop()
         String documentPath = "info/countries";
         String mask = "Singapore";
 
+        //If the document path contains space e.g. "a b c/d e f"
+        //It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
+
         Serial.print("Get a document... ");
 
         if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), mask.c_str()))

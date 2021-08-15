@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueueInfo class, QueueInfo.h version 1.0.1
+ * Google's Firebase QueueInfo class, QueueInfo.h version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -40,9 +40,11 @@
 #include "Utils.h"
 #include "QueryFilter.h"
 
-typedef struct fb_esp_rtdb_queue_item_info_t
+
+struct QueueItem
 {
     fb_esp_data_type dataType = fb_esp_data_type::d_any;
+    int subType = 0;
     fb_esp_method method = fb_esp_method::m_put;
     uint32_t qID = 0;
     uint32_t timestamp = 0;
@@ -51,18 +53,12 @@ typedef struct fb_esp_rtdb_queue_item_info_t
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
     std::string path;
     std::string payload;
-    std::vector<uint8_t> blob = std::vector<uint8_t>();
     std::string filename;
-    QueryFilter queryFilter;
-    int *intPtr = nullptr;
-    float *floatPtr = nullptr;
-    double *doublePtr = nullptr;
-    bool *boolPtr = nullptr;
-    String *stringPtr = nullptr;
-    FirebaseJson *jsonPtr = nullptr;
-    FirebaseJsonArray *arrPtr = nullptr;
-    std::vector<uint8_t> *blobPtr = nullptr;
-} QueueItem;
+    std::string etag;
+    struct fb_esp_rtdb_address_t address;
+    int blobSize = 0;
+    bool async = false;
+};
 
 class QueueInfo
 {

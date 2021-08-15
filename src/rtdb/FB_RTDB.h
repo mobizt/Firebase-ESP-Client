@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.1.4
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.0
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 4, 2021
+ * Created August 15, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -45,17 +45,10 @@
 
 class FB_RTDB
 {
-#if defined(ESP32)
-#if defined(FIREBASE_ESP32_CLIENT)
-  friend class FirebaseESP32;
-#endif
-#elif defined(ESP8266)
-#if defined(FIREBASE_ESP8266_CLIENT)
-  friend class FirebaseESP8266;
-#endif
-#endif
 
-#if defined(FIREBASE_ESP_CLIENT)
+#if defined(FIREBASE_ESP8266_CLIENT) || defined(FIREBASE_ESP32_CLIENT)
+  friend class FIREBASE_CLASS;
+#elif defined(FIREBASE_ESP_CLIENT)
   friend class Firebase_ESP_Client;
 #endif
 
@@ -93,7 +86,8 @@ public:
    * 
    * @note Size string and its write timeout in seconds e.g. tiny (1s), small (10s), medium (30s) and large (60s).
   */
-  void setwriteSizeLimit(FirebaseData *fbdo, const char *size);
+  template <typename T>
+  void setwriteSizeLimit(FirebaseData *fbdo, T size) { return mSetwriteSizeLimit(fbdo, toString(size)); }
 
   /** Read the database rules.
    * 
@@ -111,7 +105,8 @@ public:
    * @param rules The JSON serialized string of the rules.
    * @return Boolean value, indicates the success of the operation.
   */
-  bool setRules(FirebaseData *fbdo, const char *rules);
+  template <typename T>
+  bool setRules(FirebaseData *fbdo, T rules) { return mSetRules(fbdo, toString(rules)); }
 
   /** Set the .read and .write database rules.
    * 
@@ -126,7 +121,8 @@ public:
    * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
    * is Email/Password sign-in.
   */
-  bool setReadWriteRules(FirebaseData *fbdo, const char *path, const char *var, const char *readVal, const char *writeVal, const char *databaseSecret);
+  template <typename T1, typename T2, typename T3, typename T4, typename T5>
+  bool setReadWriteRules(FirebaseData *fbdo, T1 path, T2 var, T3 readVal, T4 writeVal, T5 databaseSecret) { return mSetReadWriteRules(fbdo, toString(path), toString(var), toString(readVal), toString(writeVal), toString(databaseSecret)); }
 
   /** Set the query index to the database rules.
    * 
@@ -139,7 +135,8 @@ public:
    * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
    * is Email/Password sign-in.
   */
-  bool setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
+  template <typename T1, typename T2, typename T3>
+  bool setQueryIndex(FirebaseData *fbdo, T1 path, T2 node, T3 databaseSecret) { return mSetQueryIndex(fbdo, toString(path), toString(node), toString(databaseSecret)); }
 
   /** Remove the query index from the database rules.
    * 
@@ -151,7 +148,8 @@ public:
    * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
    * is Email/Password sign-in.
   */
-  bool removeQueryIndex(FirebaseData *fbdo, const char *path, const char *databaseSecret);
+  template <typename T1, typename T2>
+  bool removeQueryIndex(FirebaseData *fbdo, T1 path, T2 databaseSecret) { return mSetQueryIndex(fbdo, toString(path), "", toString(databaseSecret)); }
 
   /** Determine the existent of the defined node.
    * 
@@ -159,7 +157,8 @@ public:
    * @param path The path to the node.
    * @return Boolean value, true if the defined node was found.
    */
-  bool pathExisted(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool pathExisted(FirebaseData *fbdo, T path) { return mPathExisted(fbdo, toString(path)); }
 
   /** Determine the unique identifier (ETag) of current data at the defined node.
    * 
@@ -167,7 +166,8 @@ public:
    * @param path The path to the node.
    * @return String of unique identifier.
   */
-  String getETag(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  String getETag(FirebaseData *fbdo, T path) { return mGetETag(fbdo, toString(path)); }
 
   /** Get the shallowed data at a defined node.
    * 
@@ -178,7 +178,8 @@ public:
    * @note Return the child data with the value or JSON object (the value will be truncated to true). 
    * Call [FirebaseData object].stringData() to get shallowed string (number, string and JSON object).
   */
-  bool getShallowData(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getShallowData(FirebaseData *fbdo, T path) { return mGetShallowData(fbdo, toString(path)); }
 
   /** Enable the library to use only classic HTTP GET and POST methods.
    * 
@@ -201,9 +202,11 @@ public:
    * @note This allows us to set priority to any node other than a priority that set through setJSON, 
    * pushJSON, updateNode, and updateNodeSilent functions. 
    */
-  bool setPriority(FirebaseData *fbdo, const char *path, float priority);
+  template <typename T>
+  bool setPriority(FirebaseData *fbdo, T path, float &priority) { return buildRequest(fbdo, m_set_priority, toString(path), _NO_PAYLOAD, d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool setPriorityAsync(FirebaseData *fbdo, const char *path, float priority);
+  template <typename T>
+  bool setPriorityAsync(FirebaseData *fbdo, T path, float &priority) { return buildRequest(fbdo, m_set_priority, toString(path), _NO_PAYLOAD, d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Read the virtual child node ".priority" value at the defined node.
    * 
@@ -212,156 +215,129 @@ public:
    * @return Boolean value, indicates the success of the operation.
    * 
    */
-  bool getPriority(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getPriority(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get_priority, toString(path), _NO_PAYLOAD, d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Append (post)  new integer value to the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node.
-   * @param intValue The appended value.
+   * @param value The appended value.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushInt(FirebaseData *fbdo, const char *path, int intValue);
+  template <typename T1, typename T2>
+  bool pushInt(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, int intValue);
-
-  bool pushIntAsync(FirebaseData *fbdo, const char *path, int intValue);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, int intValue);
+  template <typename T1, typename T2>
+  bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new integer value and the virtual child ".priority" to the defined node.
   */
-  bool pushInt(FirebaseData *fbdo, const char *path, int intValue, float priority);
+  template <typename T1, typename T2>
+  bool pushInt(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, int intValue, float priority);
-
-  bool pushIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
+  template <typename T1, typename T2>
+  bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new float value to the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which float value will be appended.
-   * @param floatValue The appended value.
+   * @param value The appended value.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushFloat(FirebaseData *fbdo, const char *path, float floatValue);
+  template <typename T>
+  bool pushFloat(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, float floatValue);
-
-  bool pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, float floatValue);
+  template <typename T>
+  bool pushFloatAsync(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new float value and the virtual child ".priority" to the defined node.
   */
-  bool pushFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+  template <typename T>
+  bool pushFloat(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, float floatValue, float priority);
-
-  bool pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+  template <typename T>
+  bool pushFloatAsync(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new double value (8 bytes) to the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which float value will be appended.
-   * @param doubleValue The appended value.
+   * @param value The appended value.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushDouble(FirebaseData *fbdo, const char *path, double doubleValue);
+  template <typename T>
+  bool pushDouble(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, double doubleValue);
-
-  bool pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+  template <typename T>
+  bool pushDoubleAsync(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new double value (8 bytes) and the virtual child ".priority" to the defined node.
   */
-  bool pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+  template <typename T>
+  bool pushDouble(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
-
-  bool pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+  template <typename T>
+  bool pushDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new Boolean value to the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which Boolean value will be appended.
-   * @param boolValue The appended value.
+   * @param value The appended value.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
 
   */
-  bool pushBool(FirebaseData *fbdo, const char *path, bool boolValue);
+  template <typename T>
+  bool pushBool(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, bool boolValue);
-
-  bool pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+  template <typename T>
+  bool pushBoolAsync(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) the new Boolean value and the virtual child ".priority" to the defined node.
   */
-  bool pushBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+  template <typename T>
+  bool pushBool(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
-
-  bool pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+  template <typename T>
+  bool pushBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) a new string (text) to the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which string will be appended.
-   * @param StringValue The appended value.
+   * @param value The appended value.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue);
+  template <typename T1, typename T2>
+  bool pushString(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, const char *stringValue);
-
-  bool push(FirebaseData *fbdo, const char *path, const String &stringValue);
-
-  bool pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+  template <typename T1, typename T2>
+  bool pushStringAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new string and the virtual child ".priority" to the defined node.
   */
-  bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+  template <typename T1, typename T2>
+  bool pushString(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
-
-  bool push(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-  bool pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+  template <typename T1, typename T2>
+  bool pushStringAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new child (s) to the defined node.
    * 
@@ -373,23 +349,19 @@ public:
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool pushJSON(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, FirebaseJson *json);
-
-  bool pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool pushJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new child (s) and the virtual child ".priority" to the defined node.
   */
-  bool pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+  template <typename T>
+  bool pushJSON(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
-
-  bool pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+  template <typename T>
+  bool pushJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) array to the defined node. 
    * The old content in defined node will be replaced.
@@ -402,24 +374,19 @@ public:
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+  template <typename T>
+  bool pushArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
-
-  bool pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+  template <typename T>
+  bool pushArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) array and virtual child ".priority" at the defined node.
   */
+  template <typename T>
+  bool pushArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
-
-  bool push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
-
-  bool pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+  template <typename T>
+  bool pushArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new blob (binary data) to the defined node.
    * 
@@ -432,14 +399,11 @@ public:
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+  template <typename T>
+  bool pushBlob(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE, size); }
 
-  bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
-
-  bool pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
-
-  bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
-
+  template <typename T>
+  bool pushBlobAsync(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE, size); }
 
   /** Append (post) new binary data from file stores on storage memory to the defined node.
    * 
@@ -452,13 +416,11 @@ public:
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
   */
-  bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+  template <typename T1, typename T2>
+  bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
-  bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
-
-  bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
-
-  bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+  template <typename T1, typename T2>
+  bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
   /** Append (post) the new Firebase server's timestamp to the defined node.
    * 
@@ -469,43 +431,41 @@ public:
    * @note The key or name of new created node will be stored in Firebase Data object, 
    * call [FirebaseData object].pushName() to get the key.
    */
-  bool pushTimestamp(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool pushTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool pushTimestampAsync(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool pushTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the integer value at the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node which integer value will be set.
-   * @param intValue Integer value to set.
+   * @param value Integer value to set.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note Call [FirebaseData object].dataType to get the type of data that successfully stored in the database. 
    * Call [FirebaseData object].intData to get the integer value that stored on the defined node.
   */
-  bool setInt(FirebaseData *fbdo, const char *path, int intValue);
+  template <typename T1, typename T2>
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, int intValue);
-
-  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, int intValue);
+  template <typename T1, typename T2>
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the integer value and virtual child ".priority" at the defined node.
   */
-  bool setInt(FirebaseData *fbdo, const char *path, int intValue, float priority);
+  template <typename T1, typename T2>
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, int intValue, float priority);
-
-  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
+  template <typename T1, typename T2>
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the integer value at the defined node if defined node's ETag matched the defined ETag value.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which integer value will be set.
-   * @param intValue Integer value to set.
+   * @param value Integer value to set.
    * @param ETag Known unique identifier string (ETag) of the defined node.
    * @return Boolean value, indicates the success of the operation.
    * 
@@ -518,57 +478,49 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].intData to get the current integer value.
   */
-  bool setInt(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
-
-  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) integer value and the virtual child ".priority" if defined ETag matches at the defined node 
   */
-  bool setInt(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
-
-  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value at the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which float value will be set.
-   * @param floatValue Float value to set.
+   * @param value Float value to set.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note Call [FirebaseData object].dataType to get the type of data that successfully stored in the database. 
    * Call [FirebaseData object].floatData to get the float value that stored on the defined node.
   */
-  bool setFloat(FirebaseData *fbdo, const char *path, float floatValue);
+  template <typename T>
+  bool setFloat(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, float floatValue);
-
-  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue);
+  template <typename T>
+  bool setFloatAsync(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value and virtual child ".priority" at the defined node.
   */
-  bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+  template <typename T>
+  bool setFloat(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, float floatValue, float priority);
-
-  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+  template <typename T>
+  bool setFloatAsync(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value at the defined node if defined node's ETag matched the ETag value.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which float data will be set.
-   * @param floatValue Float value to set.
+   * @param value Float value to set.
    * @param ETag Known unique identifier string (ETag) of defined node.
    * @return Boolean value, indicates the success of the operation.
    * 
@@ -581,29 +533,25 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].floatData to get the current float value.
    */
-  bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
+  template <typename T1, typename T2>
+  bool setFloat(FirebaseData *fbdo, T1 path, float value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
-
-  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
+  template <typename T1, typename T2>
+  bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
-  bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setFloat(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
-
-  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value at the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which float data will be set.
-   * @param doubleValue Double value to set.
+   * @param value Double value to set.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note Call [FirebaseData object].dataType to get the type of data that successfully stored in the database. 
@@ -612,29 +560,25 @@ public:
    * Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
    * use printf("%.9lf\n", firebaseData.doubleData()); for print the returned double value up to 9 decimal places.
   */
-  bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue);
+  template <typename T>
+  bool setDouble(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, double doubleValue);
-
-  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+  template <typename T>
+  bool setDoubleAsync(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value and virtual child ".priority" at the defined node.
   */
-  bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+  template <typename T>
+  bool setDouble(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
-
-  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+  template <typename T>
+  bool setDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value at the defined node if defined node's ETag matched the ETag value.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which float data will be set.
-   * @param doubleValue Double value to set.
+   * @param value Double value to set.
    * @param ETag Known unique identifier string (ETag) of defined node.
    * @return Boolean value, indicates the success of the operation.
    * 
@@ -647,57 +591,49 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].doubeData to get the current double value.
   */
-  bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
+  template <typename T1, typename T2>
+  bool setDouble(FirebaseData *fbdo, T1 path, double value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
-
-  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
+  template <typename T1, typename T2>
+  bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
-  bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setDouble(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
-
-  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value at the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which Boolean data will be set.
-   * @param boolValue Boolean value to set.
+   * @param value Boolean value to set.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note Call [FirebaseData object].dataType to get the type of data that successfully stored in the database. 
    * Call [FirebaseData object].boolData to get the integer value that stored on the defined node.
   */
-  bool setBool(FirebaseData *fbdo, const char *path, bool boolValue);
+  template <typename T>
+  bool setBool(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, bool boolValue);
-
-  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+  template <typename T>
+  bool setBoolAsync(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value and virtual child ".priority" at the defined node.
   */
-  bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+  template <typename T>
+  bool setBool(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
-
-  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+  template <typename T>
+  bool setBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value at the defined node if defined node's ETag matched the ETag value.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which Boolean data will be set.
-   * @param boolValue Boolean value to set.
+   * @param value Boolean value to set.
    * @param ETag Known unique identifier string (ETag) of defined node.
    * @return Boolean value, indicates the success of the operation.
    * 
@@ -710,65 +646,49 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].boolData to get the current boolean value.
   */
-  bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
+  template <typename T1, typename T2>
+  bool setBool(FirebaseData *fbdo, T1 path, bool value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
-
-  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
+  template <typename T1, typename T2>
+  bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
-  bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setBool(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
-
-  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) string at the defined node. 
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which string data will be set.
-   * @param stringValue String or text to set.
+   * @param value String or text to set.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note Call [FirebaseData object].dataType to get the type of data that successfully stored in the database. 
    * Call [FirebaseData object].stringData to get the string value that stored on the defined node.
   */
-  bool setString(FirebaseData *fbdo, const char *path, const String &stringValue);
+  template <typename T1, typename T2>
+  bool setString(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, const char *stringValue);
-
-  bool set(FirebaseData *fbdo, const char *path, const String &stringValue);
-
-  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+  template <typename T1, typename T2>
+  bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) string value and virtual child ".priority" at the defined node.
   */
-  bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+  template <typename T1, typename T2>
+  bool setString(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
-
-  bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+  template <typename T1, typename T2>
+  bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) string at the defined node if defined node's ETag matched the ETag value.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param path The path to the node in which string data will be set.
-   * @param stringValue String or text to set.
+   * @param value String or text to set.
    * @param ETag Known unique identifier string (ETag) of defined node.
    * @return Boolean value, indicates the success of the operation.
    * 
@@ -781,31 +701,19 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
    * Also, call [FirebaseData object].stringData to get the current string value.
    */
-  bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setString(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag);
-
-  bool set(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
-
-  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set string data and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
-  bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setString(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
-
-  bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
-
-  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the child (s) nodes to the defined node. 
    * The old content in defined node will be replaced.
@@ -819,24 +727,19 @@ public:
    * 
    * Call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr to get the JSON data that stored on the defined node.
   */
-  bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool setJSON(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json);
-
-  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool setJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the child (s) nodes and virtual child ".priority" at the defined node.
   */
+  template <typename T>
+  bool setJSON(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
-
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
-
-  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+  template <typename T>
+  bool setJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the child (s) nodes to the defined node, if defined node's ETag matched the ETag value. 
    * The old content in defined node will be replaced.
@@ -857,23 +760,19 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr to get the JSON data.
   */
-  bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
+  template <typename T1, typename T2>
+  bool setJSON(FirebaseData *fbdo, T1 path, FirebaseJson *json, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
-
-  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
+  template <typename T1, typename T2>
+  bool setJSONAsync(FirebaseData *fbdo, T1 path, FirebaseJson *json, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the child (s) nodes and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
-  bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setJSON(FirebaseData *fbdo, T1 path, FirebaseJson *json, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
-
-  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setJSONAsync(FirebaseData *fbdo, T1 path, FirebaseJson *json, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the array to the defined node. 
    * The old content in defined node will be replaced.
@@ -888,23 +787,19 @@ public:
    * Call [FirebaseData object].jsonArray and [FirebaseData object].jsonArrayPtr will return object and pointer to 
    * FirebaseJsonArray object which contains the array.
   */
-  bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+  template <typename T>
+  bool setArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
-
-  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+  template <typename T>
+  bool setArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) array and virtual child ".priority" at the defined node.
   */
-  bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+  template <typename T>
+  bool setArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
-
-  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+  template <typename T>
+  bool setArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the array to the defined node if defined node's ETag matched the ETag value. 
    * The old content in defined node will be replaced.
@@ -926,23 +821,19 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].jsonArray and [FirebaseData object].jsonArrayPtr to get the array.
   */
-  bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
+  template <typename T1, typename T2>
+  bool setArray(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
-
-  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
+  template <typename T1, typename T2>
+  bool setArrayAsync(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) array and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
-  bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setArray(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
-  bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
-
-  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
+  template <typename T1, typename T2>
+  bool setArrayAsync(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the blob (binary data) at the defined node. 
    * The old content in defined node will be replaced.
@@ -955,14 +846,11 @@ public:
    * 
    * @note No payload returned from the server.
   */
-  bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+  template <typename T>
+  bool setBlob(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE, size); }
 
-  bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
-
-  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
-
+  template <typename T>
+  bool setBlobAsync(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE, size); }
 
   /** Set blob (binary data) at the defined node if defined node's ETag matched the ETag value. 
    * The old content in defined node will be replaced.
@@ -979,14 +867,11 @@ public:
    * If ETag at the defined node does not match the provided ETag parameter,
    * the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
   */
-  bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
+  template <typename T1, typename T2>
+  bool setBlob(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE, size); }
 
-  bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
-
-  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
-
+  template <typename T1, typename T2>
+  bool setBlobAsync(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE, size); }
 
   /** Set (put) the binary data from file to the defined node. 
    * 
@@ -998,14 +883,11 @@ public:
    * 
    * @note No payload returned from the server.
   */
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+  template <typename T1, typename T2>
+  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
-  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
-
-  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
-
-  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
-
+  template <typename T1, typename T2>
+  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
   /** Set (put) the binary data from file to the defined node if defined node's ETag matched the ETag value.
    * 
@@ -1021,14 +903,11 @@ public:
    * If ETag at the defined node does not match the provided ETag parameter,
    * the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
   */
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
-  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
-
-  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
-
-  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
-
+  template <typename T1, typename T2, typename T3>
+  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
   /** Set (put) the Firebase server's timestamp to the defined node.
    * 
@@ -1042,9 +921,11 @@ public:
    * Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
    * use printf("%.0lf\n", firebaseData.doubleData());.
   */
-  bool setTimestamp(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool setTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool setTimestampAsync(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool setTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Update (patch) the child (s) nodes to the defined node.
    * 
@@ -1058,15 +939,19 @@ public:
    * Call [FirebaseData object].jsonData and [FirebaseData object].jsonDataPtr 
    * to get the JSON data that already updated on the defined node.
   */
-  bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool updateNode(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_patch, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool updateNodeAsync(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_patch, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Update (patch) the child (s) nodess and virtual child ".priority" to the defined node.
   */
-  bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+  template <typename T>
+  bool updateNode(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_patch, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+  template <typename T>
+  bool updateNodeAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_patch, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Update (patch) the child (s) nodes to the defined node.
    * 
@@ -1078,15 +963,19 @@ public:
    * @note Owing to the objective of this function to reduce network data usage, 
    * no payload will be returned from the server.
   */
-  bool updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool updateNodeSilent(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_patch_nocontent, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+  template <typename T>
+  bool updateNodeSilentAsync(FirebaseData *fbdo, T path, FirebaseJson *json) { return buildRequest(fbdo, m_patch_nocontent, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Update (patch) the child (s) nodes and virtual child ".priority" to the defined node.
   */
-  bool updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+  template <typename T>
+  bool updateNodeSilent(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_patch_nocontent, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
-  bool updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+  template <typename T>
+  bool updateNodeSilentAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority) { return buildRequest(fbdo, m_patch_nocontent, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Read any type of value at the defined node.
    * 
@@ -1102,7 +991,8 @@ public:
    * [FirebaseData object].jsonArrayPtr (pointer) and [FirebaseData object].blobData corresponded to 
    * its type that get from [FirebaseData object].dataType.
   */
-  bool get(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool get(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_any, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the integer value at the defined node.
    * 
@@ -1120,7 +1010,8 @@ public:
     the function [FirebaseData object].intData will return zero (0).
 
   */
-  bool getInt(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getInt(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the integer value at the defined node.
    * 
@@ -1132,7 +1023,8 @@ public:
    * @note If the type of payload returned from the server is not an integer, float and double, 
    * the target variable's value will be zero (0).
   */
-  bool getInt(FirebaseData *fbdo, const char *path, int *target);
+  template <typename T1, typename T2>
+  bool getInt(FirebaseData *fbdo, T1 path, T2 target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_integer, getIntType(*target), toAddr(*target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the float value at the defined node.
    * 
@@ -1147,7 +1039,8 @@ public:
    * If the payload returned from server is not integer, float and double, 
    * the function [FirebaseData object].floatData will return zero (0).
   */
-  bool getFloat(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getFloat(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the float value at the defined node.
    * 
@@ -1159,7 +1052,8 @@ public:
    * @note If the type of payload returned from the server is not an integer, float and double, 
    * the target variable's value will be zero (0).
   */
-  bool getFloat(FirebaseData *fbdo, const char *path, float *target);
+  template <typename T1, typename T2>
+  bool getFloat(FirebaseData *fbdo, T1 path, T2 target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_float, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the double value at the defined node.
    * 
@@ -1177,7 +1071,8 @@ public:
    * Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
    * use printf("%.9lf\n", firebaseData.doubleData()); for print value up to 9 decimal places.
   */
-  bool getDouble(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getDouble(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the double value at the defined node.
    * 
@@ -1189,7 +1084,8 @@ public:
    * @note If the type of payload returned from the server is not an integer, float and double, 
    * the target variable's value will be zero (0).
   */
-  bool getDouble(FirebaseData *fbdo, const char *path, double *target);
+  template <typename T1, typename T2>
+  bool getDouble(FirebaseData *fbdo, T1 path, T2 target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_double, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the Boolean value at the defined node.
    * 
@@ -1204,7 +1100,8 @@ public:
    * If the type of payload returned from the server is not Boolean, 
    * the function [FirebaseData object].boolData will return false.
   */
-  bool getBool(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getBool(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the Boolean value at the defined node.
    * 
@@ -1216,7 +1113,8 @@ public:
    * @note If the type of payload returned from the server is not Boolean, 
    * the target variable's value will be false.
   */
-  bool getBool(FirebaseData *fbdo, const char *path, bool *target);
+  template <typename T1, typename T2>
+  bool getBool(FirebaseData *fbdo, T1 path, T2 target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_boolean, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the string at the defined node.
    * 
@@ -1232,7 +1130,8 @@ public:
    * If the type of payload returned from the server is not a string,
    * the function [FirebaseData object].stringData will return empty string.
   */
-  bool getString(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getString(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the string at the defined node.
    * 
@@ -1244,7 +1143,8 @@ public:
    * @note If the type of payload returned from the server is not a string,
    * the target String object's value will be empty.
   */
-  bool getString(FirebaseData *fbdo, const char *path, String *target);
+  template <typename T1, typename T2>
+  bool getString(FirebaseData *fbdo, T1 path, T2 target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_string, toStringType(*target), toAddr(*target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the child (s) nodes at the defined node.
    * 
@@ -1260,7 +1160,8 @@ public:
    * If the type of payload returned from server is not json,
    * the function [FirebaseData object].jsonObject will contain empty object.
   */
-  bool getJSON(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getJSON(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the JSON string at the defined node. 
    * The returned the pointer to FirebaseJson that contains JSON payload represents the child nodes and their value.
@@ -1273,7 +1174,8 @@ public:
    * @note If the type of payload returned from the server is not JSON,
    * the target FirebaseJson object will contain an empty object.
   */
-  bool getJSON(FirebaseData *fbdo, const char *path, FirebaseJson *target);
+  template <typename T>
+  bool getJSON(FirebaseData *fbdo, T path, FirebaseJson *target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the JSON string at the defined node. 
    * 
@@ -1304,7 +1206,8 @@ public:
    * If the type of payload returned from server is not JSON,
    * the function [FirebaseData object].jsonObject will contain empty object.
   */
-  bool getJSON(FirebaseData *fbdo, const char *path, QueryFilter *query);
+  template <typename T>
+  bool getJSON(FirebaseData *fbdo, T path, QueryFilter *query) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, _NO_REF, toAddr(query), _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the JSON string at the defined node.
    * 
@@ -1316,7 +1219,8 @@ public:
    * If the type of payload returned from the server is not JSON,
    * the target FirebaseJson object will contain an empty object.
   */
-  bool getJSON(FirebaseData *fbdo, const char *path, QueryFilter *query, FirebaseJson *target);
+  template <typename T>
+  bool getJSON(FirebaseData *fbdo, T path, QueryFilter *query, FirebaseJson *target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(target), toAddr(query), _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the array at the defined node.
    * 
@@ -1333,7 +1237,8 @@ public:
    * If the type of payload returned from the server is not an array,
    * the array element in [FirebaseData object].jsonArray will be empty.
   */
-  bool getArray(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getArray(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the array at the defined node.
    * 
@@ -1345,7 +1250,8 @@ public:
    * @note If the type of payload returned from the server is not an array, 
    * the target FirebaseJsonArray object will contain an empty array.
   */
-  bool getArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *target);
+  template <typename T>
+  bool getArray(FirebaseData *fbdo, T path, FirebaseJsonArray *target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the array data at the defined node.
    * 
@@ -1377,7 +1283,8 @@ public:
    * If the type of payload returned from the server is not an array,
    * the function [FirebaseData object].jsonArray will contain empty array.
   */
-  bool getArray(FirebaseData *fbdo, const char *path, QueryFilter *query);
+  template <typename T>
+  bool getArray(FirebaseData *fbdo, T path, QueryFilter *query) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, _NO_REF, toAddr(query), _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the array data at the defined node.
    * 
@@ -1389,7 +1296,8 @@ public:
    * @note If the type of payload returned from the server is not an array,
    * the target FirebaseJsonArray object will contain an empty array.
   */
-  bool getArray(FirebaseData *fbdo, const char *path, QueryFilter *query, FirebaseJsonArray *target);
+  template <typename T>
+  bool getArray(FirebaseData *fbdo, T path, QueryFilter *query, FirebaseJsonArray *target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(target), toAddr(query), _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the blob (binary data) at the defined node.
    * 
@@ -1404,7 +1312,8 @@ public:
    * If the type of payload returned from the server is not a blob,
    * the function [FirebaseData object].blobData will return empty array.
   */
-  bool getBlob(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool getBlob(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Read (get) the blob (binary data) at the defined node.
    * 
@@ -1416,7 +1325,8 @@ public:
    * @note If the type of payload returned from the server is not a blob, 
    * the target variable value will be an empty array.
   */
-  bool getBlob(FirebaseData *fbdo, const char *path, std::vector<uint8_t> *target);
+  template <typename T>
+  bool getBlob(FirebaseData *fbdo, T path, std::vector<uint8_t> *target) { return buildRequest(fbdo, m_get, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(target), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Download file data at the defined node and save to storage memory.
    *  
@@ -1429,7 +1339,8 @@ public:
    * @param fileName  The file path includes its name.
    * @return Boolean value, indicates the success of the operation.
   */
-  bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
+  template <typename T1, typename T2>
+  bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath, T2 fileName) { return buildRequest(fbdo, m_get, toString(nodePath), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
   /** Delete all child nodes at the defined node.
    * 
@@ -1437,7 +1348,8 @@ public:
    * @param path The path to the node to be deleted.
    * @return Boolean value, indicates the success of the operation.
   */
-  bool deleteNode(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool deleteNode(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_delete, toString(path), _NO_PAYLOAD, d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   /** Delete all child nodes at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -1449,7 +1361,8 @@ public:
    * @note If ETag at the defined node does not match the provided ETag parameter,
    * the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
   */
-  bool deleteNode(FirebaseData *fbdo, const char *path, const char *ETag);
+  template <typename T1, typename T2>
+  bool deleteNode(FirebaseData *fbdo, T1 path, T2 ETag) { return buildRequest(fbdo, m_delete, toString(path), _NO_PAYLOAD, d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   /** Delete nodes that its timestamp node exceeded the data retaining period.
    * 
@@ -1463,7 +1376,8 @@ public:
    * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
    * is Email/Password sign-in.
   */
-  bool deleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, size_t limit, unsigned long dataRetentionPeriod);
+  template <typename T1, typename T2>
+  bool deleteNodesByTimestamp(FirebaseData *fbdo, T1 path, T2 timestampNode, size_t limit, unsigned long dataRetentionPeriod) { return mDeleteNodesByTimestamp(fbdo, toString(path), toString(timestampNode), limit, dataRetentionPeriod); }
 
   /** Subscribe to the value changes on the defined node.
    * 
@@ -1471,17 +1385,17 @@ public:
    * @param path The path to the node to subscribe.
    * @return Boolean value, indicates the success of the operation.
   */
-  bool beginStream(FirebaseData *fbdo, const char *path);
+  template <typename T>
+  bool beginStream(FirebaseData *fbdo, T path) { return mBeginStream(fbdo, toString(path)); }
 
   /** Subscribe to the value changes on the children of the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param parentPath The path to the parent node to subscribe.
-   * @param childPath The string array of the path to child nodes.
-   * @param size The size of string array of the path to the child nodes.
    * @return Boolean value, indicates the success of the operation.
   */
-  bool beginMultiPathStream(FirebaseData *fbdo, const char *parentPath, const String *childPath, size_t size);
+  template <typename T>
+  bool beginMultiPathStream(FirebaseData *fbdo, T parentPath) { return mBeginMultiPathStream(fbdo, toString(parentPath));}
 
   /** Read the stream event data at the defined node. 
    * 
@@ -1508,7 +1422,7 @@ public:
   */
   bool endStream(FirebaseData *fbdo);
 
-  /** Set the stream callback functions.
+/** Set the stream callback functions.
    * 
    * @param fbdo The pointer to Firebase Data Object.
    * @param dataAvailableCallback The Callback function that accepts StreamData parameter.
@@ -1580,7 +1494,8 @@ public:
    * 
    * @note Only 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension) can be saved to SD card/Flash memory.
   */
-  bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
+  template <typename T1, typename T2>
+  bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath, T2 fileName) { return mBackup(fbdo, storageType, toString(nodePath), toString(fileName)); }
 
   /** Restore the database at a defined path using backup file saved on SD card/Flash memory.
    * 
@@ -1590,7 +1505,8 @@ public:
    * @param fileName File name to read.
    * @return Boolean value, indicates the success of the operation.
   */
-  bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
+  template <typename T1, typename T2>
+  bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath, T2 fileName) { return mRestore(fbdo, storageType, toString(nodePath), toString(fileName)); }
 
   /** Set maximum Firebase read/store retry operation (0 - 255) 
    * in case of network problems and buffer overflow.
@@ -1618,14 +1534,16 @@ public:
    * @param filename Filename to be saved.
    * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
   */
-  bool saveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
+  template <typename T>
+  bool saveErrorQueue(FirebaseData *fbdo, T filename, fb_esp_mem_storage_type storageType) { return mSaveErrorQueue(fbdo, toString(filename), storageType); }
 
   /** Delete file in storage memory.
    * 
    * @param filename File name to delete.
    * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
   */
-  bool deleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType);
+  template <typename T>
+  bool deleteStorageFile(T filename, fb_esp_mem_storage_type storageType) { return mDeleteStorageFile(toString(filename), storageType); }
 
   /** Restore the Firebase Error Queues from the queue file (flash memory).
    * 
@@ -1633,7 +1551,8 @@ public:
    * @param filename Filename to be read and restore queues.
    * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
   */
-  bool restoreErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
+  template <typename T>
+  bool restoreErrorQueue(FirebaseData *fbdo, T filename, fb_esp_mem_storage_type storageType) { return mRestoreErrorQueue(fbdo, toString(filename), storageType); }
 
   /** Determine the number of Firebase Error Queues stored in a defined file (flash memory).
    * 
@@ -1642,7 +1561,8 @@ public:
    * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    * @return Number (0-255) of queues store in defined queue file.
   */
-  uint8_t errorQueueCount(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
+  template <typename T>
+  uint8_t errorQueueCount(FirebaseData *fbdo, T filename, fb_esp_mem_storage_type storageType) { return mErrorQueueCount(fbdo, toString(filename), storageType); }
 
   /** Determine number of queues in Firebase Data object's Error Queues collection.
    * 
@@ -1723,85 +1643,126 @@ public:
   */
   void clearErrorQueue(FirebaseData *fbdo);
 
-  template <typename T>
-  bool push(FirebaseData *fbdo, const char *path, T value);
+  template <typename T1, typename T2>
+  bool push(FirebaseData *fbdo, T1 path, T2 value) { return dataPushHandler(fbdo, path, value, _NO_PRIORITY, false); }
+
+  template <typename T1, typename T2>
+  bool push(FirebaseData *fbdo, T1 path, T2 value, float priority) { return dataPushHandler(fbdo, path, value, priority, false); }
+
+  template <typename T1, typename T2>
+  bool pushAsync(FirebaseData *fbdo, T1 path, T2 value) { return dataPushHandler(fbdo, path, value, _NO_PRIORITY, true); }
+
+  template <typename T1, typename T2>
+  bool pushAsync(FirebaseData *fbdo, T1 path, T2 value, float priority) { return dataPushHandler(fbdo, path, value, priority, true); }
 
   template <typename T>
-  bool push(FirebaseData *fbdo, const char *path, T value, size_t size);
+  bool push(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return dataPushHandler(fbdo, path, blob, size, false); }
 
   template <typename T>
-  bool push(FirebaseData *fbdo, const char *path, T value, float priority);
+  bool pushAsync(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return dataPushHandler(fbdo, path, blob, size, true); }
+
+  template <typename T1, typename T2>
+  bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return dataPushHandler(fbdo, path, fileName, storageType, false); }
+
+  template <typename T1, typename T2>
+  bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return dataPushHandler(fbdo, path, fileName, storageType, true); }
+
+  template <typename T1, typename T2>
+  bool set(FirebaseData *fbdo, T1 path, T2 value) { return dataSetHandler(fbdo, path, value, _NO_PRIORITY, _NO_ETAG, false); }
+
+  template <typename T1, typename T2>
+  bool setAsync(FirebaseData *fbdo, T1 path, T2 value) { return dataSetHandler(fbdo, path, value, _NO_PRIORITY, _NO_ETAG, true); }
+
+  template <typename T1, typename T2>
+  bool set(FirebaseData *fbdo, T1 path, T2 value, float priority) { return dataSetHandler(fbdo, path, value, priority, _NO_ETAG, false); }
+
+  template <typename T1, typename T2>
+  bool setAsync(FirebaseData *fbdo, T1 path, T2 value, float priority) { return dataSetHandler(fbdo, path, value, priority, _NO_ETAG, true); }
+
+  template <typename T1, typename T2, typename T3>
+  bool set(FirebaseData *fbdo, T1 path, T2 value, T3 etag) { return dataSetHandler(fbdo, path, value, _NO_PRIORITY, etag, false); }
+
+  template <typename T1, typename T2, typename T3>
+  bool setAsync(FirebaseData *fbdo, T1 path, T2 value, T3 etag) { return dataSetHandler(fbdo, path, value, _NO_PRIORITY, etag, true); }
+
+  template <typename T1, typename T2, typename T3>
+  bool set(FirebaseData *fbdo, T1 path, T2 value, float priority, T3 etag) { return dataSetHandler(fbdo, path, value, priority, etag, false); }
+
+  template <typename T1, typename T2, typename T3>
+  bool setAsync(FirebaseData *fbdo, T1 path, T2 value, float priority, T3 etag) { return dataSetHandler(fbdo, path, value, priority, etag, true); }
 
   template <typename T>
-  bool push(FirebaseData *fbdo, const char *path, T value, size_t size, float priority);
+  bool set(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return dataSetHandler(fbdo, path, blob, size, _NO_PRIORITY, false); }
 
   template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value);
+  bool setAsync(FirebaseData *fbdo, T path, uint8_t *blob, size_t size) { return dataSetHandler(fbdo, path, blob, size, _NO_PRIORITY, true); }
 
-  template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value, size_t size);
+  template <typename T1, typename T2>
+  bool set(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 etag) { return dataSetHandler(fbdo, path, blob, size, etag, false); }
 
-  template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value, float priority);
+  template <typename T1, typename T2>
+  bool setAsync(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 etag) { return dataSetHandler(fbdo, path, blob, size, etag, true); }
 
-  template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value, size_t size, float priority);
+  template <typename T1, typename T2>
+  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return dataSetHandler(fbdo, path, fileName, storageType, _NO_PRIORITY, false); }
 
-  template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value, const char *ETag);
+  template <typename T1, typename T2>
+  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName) { return dataSetHandler(fbdo, path, fileName, storageType, _NO_PRIORITY, true); }
 
-  template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value, size_t size, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 etag) { return dataSetHandler(fbdo, path, fileName, storageType, etag, false); }
 
-  template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value, float priority, const char *ETag);
-
-  template <typename T>
-  bool set(FirebaseData *fbdo, const char *path, T value, size_t size, float priority, const char *ETag);
+  template <typename T1, typename T2, typename T3>
+  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 etag) { return dataSetHandler(fbdo, path, fileName, storageType, etag, true); }
 
 private:
   UtilsClass *ut = nullptr;
   void begin(UtilsClass *u);
   void rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_info_t *req);
   void clearDataStatus(FirebaseData *fbdo);
+
+  //request without queue and data out pointer
   bool handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+
+  //send managed request data
   int sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+
+  //send header
   int sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  size_t getPayloadLen(fb_esp_rtdb_request_info_t *req);
   bool waitResponse(FirebaseData *fbdo);
+  //handle managed response data
   bool handleResponse(FirebaseData *fbdo);
+  //store response payload
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
+  //request with queue and data out pointer
   bool processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  void addJsonPriority(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  bool int_pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority, bool async);
-  bool int_pushFloat(FirebaseData *fbdo, const char *path, float floatValue, bool queue, const char *priority, bool async);
-  bool int_pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, bool queue, const char *priority, bool async);
-  bool int_pushBool(FirebaseData *fbdo, const char *path, bool boolValue, bool queue, const char *priority, bool async);
-  bool int_pushString(FirebaseData *fbdo, const char *path, const String &stringValue, const char *priority, bool async);
-  bool int_pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool async);
-  bool int_pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, bool async);
-  bool int_pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, bool async);
-  bool int_pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, bool async);
-  bool int_pushTimestamp(FirebaseData *fbdo, const char *path, bool async);
-  bool int_setInt(FirebaseData *rtdb, const char *path, int intValue, bool queue, const char *priority, const char *etag, bool async);
-  bool int_setFloat(FirebaseData *rtdb, const char *path, float floatValue, bool queue, const char *priority, const char *etag, bool async);
-  bool int_setDouble(FirebaseData *rtdb, const char *path, double doubleValue, bool queue, const char *priority, const char *etag, bool async);
-  bool int_setBool(FirebaseData *rtdb, const char *path, bool boolValue, bool queue, const char *priority, const char *etag, bool async);
-  bool int_setString(FirebaseData *fbdo, const char *path, const char *stringValue, const char *priority, const char *etag, bool async);
-  bool int_setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, const char *etag, bool async);
-  bool int_setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, const char *ETag, bool async);
-  bool int_setBlob(FirebaseData *rtdb, const char *path, uint8_t *blob, size_t size, bool queue, const char *etag, bool async);
-  bool int_setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *etag, bool async);
-  bool int_setPriority(FirebaseData *fbdo, const char *path, float priority, bool async);
-  bool int_setTimestamp(FirebaseData *fbdo, const char *path, bool async);
-  bool int_updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool silent, bool async);
+  void setRefValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  void addQueueData(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  bool buildRequest(FirebaseData *fbdo, fb_esp_method method, const char *path, const char *payload, fb_esp_data_type type, int subtype, int value_addr, int query_addr, int priority_addr, const char *etag, bool async, bool queue, size_t blob_size = 0, const char *filename = "", fb_esp_mem_storage_type storage_type = mem_storage_type_undefined);
+  bool mSetRules(FirebaseData *fbdo, const char *rules);
+  bool mSetReadWriteRules(FirebaseData *fbdo, const char *path, const char *var, const char *readVal, const char *writeVal, const char *databaseSecret);
+  bool mPathExisted(FirebaseData *fbdo, const char *path);
+  String mGetETag(FirebaseData *fbdo, const char *path);
+  bool mGetShallowData(FirebaseData *fbdo, const char *path);
+  bool mDeleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, size_t limit, unsigned long dataRetentionPeriod);
+  bool mBeginMultiPathStream(FirebaseData *fbdo, const char *parentPath);
+  bool mBackup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
+  bool mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
+  uint8_t mErrorQueueCount(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
+  bool mRestoreErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
+  bool mDeleteStorageFile(const char *filename, fb_esp_mem_storage_type storageType);
+  bool mSaveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
+  void setBlobRef(FirebaseData *fbdo, int addr);
+  void mSetwriteSizeLimit(FirebaseData *fbdo, const char *size);
   bool handleStreamRequest(FirebaseData *fbdo, const std::string &path);
   bool connectionError(FirebaseData *fbdo);
   bool handleStreamRead(FirebaseData *fbdo);
   void sendCB(FirebaseData *fbdo);
   void splitStreamPayload(const char *payloads, std::vector<std::string> &payload);
   void parseStreamPayload(FirebaseData *fbdo, const char *payload);
-  bool int_setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
-  bool int_beginStream(FirebaseData *fbdo, const char *path, bool clearNodeList = true);
+  bool mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
+  bool mBeginStream(FirebaseData *fbdo, const char *path);
 #if defined(ESP32)
   void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #elif defined(ESP8266)
@@ -1809,6 +1770,204 @@ private:
   void runErrorQueueTask();
 #endif
   uint8_t openErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType, uint8_t mode);
+
+protected:
+  int getPrec(bool dbl)
+  {
+    if (Signer.getCfg())
+    {
+      if(dbl)
+        return Signer.getCfg()->_int.fb_double_digits;
+      else
+        return Signer.getCfg()->_int.fb_float_digits;
+    }
+    else
+    {
+      if (dbl)
+        return 9;
+      else
+        return 5;
+    }
+  }
+
+  int toAddr(float &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(double &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(bool &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(unsigned char &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(signed char &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(unsigned short &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(signed short &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(unsigned int &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(int &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(unsigned long long &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(signed long long &v) { return reinterpret_cast<int>(&v); }
+
+  int toAddr(unsigned char *v) { return reinterpret_cast<int>(v); }
+  int toAddr(QueryFilter *v) { return reinterpret_cast<int>(v); }
+  int toAddr(FirebaseJson *v) { return reinterpret_cast<int>(v); }
+  int toAddr(FirebaseJsonArray *v) { return reinterpret_cast<int>(v); }
+  int toAddr(std::vector<uint8_t> *v) { return reinterpret_cast<int>(v); }
+  int toAddr(String &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(std::string &v) { return reinterpret_cast<int>(&v); }
+
+  template <typename T>
+  auto addrTo(int address) -> typename FB_JS::enable_if<!FB_JS::is_same<T, nullptr_t>::value, T>::type { return reinterpret_cast<T>(address); }
+
+  template <typename T>
+  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+
+  template <typename T>
+  auto toStringType(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_std_string; }
+
+  template <typename T>
+  auto toStringType(const T &val) -> typename FB_JS::enable_if<FB_JS::is_arduino_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_arduino_string; }
+
+  template <typename T>
+  auto toStringType(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_const_char; }
+
+  template <typename T>
+  auto toStringType(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_flash_string; }
+
+  template <typename T>
+  auto toStringType(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_none; }
+
+  template <typename T>
+  auto getIntType(T val) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, fb_esp_ref_sub_type>::type
+  {
+
+    if (FB_JS::is_num_uint64<T>::value)
+      return fb_esp_ref_sub_type_uint64;
+    else if (FB_JS::is_num_int64<T>::value)
+      return fb_esp_ref_sub_type_int64;
+    else if (FB_JS::is_num_uint32<T>::value)
+      return fb_esp_ref_sub_type_uint32;
+    else if (FB_JS::is_num_int32<T>::value)
+      return fb_esp_ref_sub_type_int32;
+    else if (FB_JS::is_num_uint16<T>::value)
+      return fb_esp_ref_sub_type_uint16;
+    else if (FB_JS::is_num_int16<T>::value)
+      return fb_esp_ref_sub_type_int16;
+    else if (FB_JS::is_num_uint8<T>::value)
+      return fb_esp_ref_sub_type_uint8;
+    return fb_esp_ref_sub_type_int8;
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value, bool>::type
+  {
+    return bbuildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJson *>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray *>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 blob, size_t size, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, uint8_t *>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, async, _NO_QUEUE, size);
+  }
+
+  template <typename T1, typename T2>
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, async, _NO_QUEUE, _NO_BLOB_SIZE, toString(filename), storageType);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJson *>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray *>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(etag), async, _NO_QUEUE);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  {
+    return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(etag), async, _NO_QUEUE, _NO_BLOB_SIZE, toString(filename), storageType);
+  }
 };
 
 #endif
