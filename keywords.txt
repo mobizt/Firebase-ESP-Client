@@ -373,6 +373,8 @@ search  KEYWORD2
 serializedBufferLength  KEYWORD2
 responseCode    KEYWORD2
 errorPosition   KEYWORD2
+getPath KEYWORD2
+isMember    KEYWORD2
 
 #########################################
 # Methods for FireSense addons (KEYWORD2)

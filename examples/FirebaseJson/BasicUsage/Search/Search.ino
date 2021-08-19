@@ -133,6 +133,20 @@ void setup()
     }
     else
         Serial.println(" not found");
+
+    //Get the fullpath for element
+    String path = json.getPath("*/[4]/*/value" /* key or path with wildcard */, false /* get all accurrences */);
+    Serial.println("\n\n===============================");
+    Serial.print("Get full path for */[4]/*/value, ");
+    Serial.println(path);
+
+    //check for a member in json
+    Serial.println("\n\n===============================");
+    Serial.print("Is \"rows/[3]/elements/[0]/distance/text\" the json member? ");
+    if (json.isMember("rows/[3]/elements/[0]/distance/text" /* key or path without wildcard */))
+        Serial.println("yes");
+    else
+        Serial.println("no");
 }
 
 void loop()

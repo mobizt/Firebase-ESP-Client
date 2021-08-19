@@ -237,7 +237,7 @@ public:
         if (sif->data.length() > 0 && sif->data_type == fb_esp_data_type::d_string)
             return sif->data.substr(1, sif->data.length() - 2).c_str();
 
-        return std::string().c_str();
+        return sif->data.c_str();
     }
 
     template <typename T>

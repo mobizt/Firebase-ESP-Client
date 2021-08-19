@@ -1,29 +1,19 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.4.0"
+#define FIREBASE_CLIENT_VERSION "2.4.1"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.4.0
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.4.1
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created August 15, 2021
+ * Created August 19, 2021
  * 
 *   Updates:
  * 
- * - Code optimization and refactoring.
- * - Bugs fixed e.g. prevent zero length data sent in TCP client.
- * - Major updates with features added and improvement in FirebaseJson, RTDB and Session classes.
- * - Reduce memory usage.
- * - Features added e.g. FirebaseData object's setCert() for locally Root CA verification, to<type>() for any value casting.
- * - RTDB Data type checking is now optional.
- * - Fixed queue management code and file structure.
- * - Rewrite and update examples.
- * - MultipathStream begin and callback functions updated.
- * - FireSense class and example updates. The loadConfig function with default config callback function as argument is set to deprecate.
- * - Searchable Json object and array supported.
- * - FirebaseJsonData casting to any value type is now supported.
- * - FirebaseJson object and array serialize to writable object and deserialize from readable stream and client are supported.
+ * - Fix mising stringData in stream issue.
+ * - Fix issue that data type mismatch checking should not activated by default.
+ * - Add FirebaseJson features and fix for child of searching path existed in the search result.
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)

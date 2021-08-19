@@ -1,10 +1,9 @@
-
 /*
- * FirebaseJson, version 2.5.0
+ * FirebaseJson, version 2.5.1
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * August 15, 2021
+ * August 16, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -57,7 +56,50 @@
 #include <stdio.h>
 #include <strings.h>
 #include <functional>
+
+#ifdef Serial_Printf
+#undef Serial_Printf
+#endif
+
+#if defined(ESP8266) || defined(ESP32)
 #include <FS.h>
+#define FLASH_MCR FPSTR
+#define FILE_SYSTEM fs::File
+#define FBJS_ENABLE_FS
+#define Serial_Printf Serial.printf
+
+#elif defined(ARDUINO_ARCH_SAMD)
+#include <algorithm>
+#include <SPI.h>
+#include "extras/SD/SD.h"
+#define FLASH_MCR PSTR
+#define FILE_SYSTEM File
+#define FBJS_ENABLE_FS
+#define HardwareSerial Serial_
+
+#elif defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
+#define FLASH_MCR(s) (s)
+
+#elif defined(TEENSYDUINO)
+#define FILE_SYSTEM File
+#define FLASH_MCR(s) (s)
+#define HardwareSerial usb_serial_class
+#define Serial_Printf Serial.printf
+
+#endif
+
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
+#include "extras/print/printf.h"
+
+extern "C" __attribute__((weak)) void _putchar(char c)
+{
+    Serial.print(c);
+}
+
+#define Serial_Printf printf
+
+#endif
+
 #include <Client.h>
 
 #ifdef __cplusplus
@@ -553,26 +595,26 @@ private:
     char *intStr(int value)
     {
         char *t = newS(36);
-        sprintf(t, (const char *)FPSTR("%d"), value);
+        sprintf(t, (const char *)FLASH_MCR("%d"), value);
         return t;
     }
 
     void int64Str(signed long long value)
     {
         init(64);
-        sprintf(buf, (const char *)FPSTR("%lld"), value);
+        sprintf(buf, (const char *)FLASH_MCR("%lld"), value);
     }
 
     void uint64Str(unsigned long long value)
     {
         init(64);
-        sprintf(buf, (const char *)FPSTR("%llu"), value);
+        sprintf(buf, (const char *)FLASH_MCR("%llu"), value);
     }
 
     void boolStr(bool value)
     {
         init(8);
-        value ? strcpy(buf, (const char *)FPSTR("true")) : strcpy(buf, (const char *)FPSTR("false"));
+        value ? strcpy(buf, (const char *)FLASH_MCR("true")) : strcpy(buf, (const char *)FLASH_MCR("false"));
     }
 
     void floatStr(float value, int precision)
@@ -592,7 +634,7 @@ private:
     void nullStr()
     {
         init(6);
-        strcpy(buf, (const char *)FPSTR("null"));
+        strcpy(buf, (const char *)FLASH_MCR("null"));
     }
 
     void trim()
@@ -901,8 +943,7 @@ private:
     };
 
     FirebaseJsonBase &mClear();
-    void mIteratorEnd();
-
+    void mIteratorEnd(bool clearBuf = true);
     bool setRaw(const char *raw);
     void prepareRoot();
     cJSON *parse(const char *raw);
@@ -918,7 +959,7 @@ private:
     void replaceItem(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *value);
     void replace(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *item);
     size_t mIteratorBegin(cJSON *parent);
-    size_t mIteratorBegin(cJSON *parent, std::vector<std::string> &keys, struct fb_js_search_criteria_t &criteria);
+    size_t mIteratorBegin(cJSON *parent, std::vector<std::string> *keys, struct fb_js_search_criteria_t *criteria);
     void collectResult(cJSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria);
     void removeDepthPath();
     void mCollectIterator(cJSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria);
@@ -936,14 +977,16 @@ private:
     void mSetFloatDigits(uint8_t digits);
     void mSetDoubleDigits(uint8_t digits);
     int mResponseCode();
-    bool mGet(FirebaseJsonData &result, const char *path, bool prettify);
-    void mSetResInt(FirebaseJsonData &data, const char *value);
-    void mSetResFloat(FirebaseJsonData &data, const char *value);
-    void mSetElementType(FirebaseJsonData &result);
+    bool mGet(cJSON *parent, FirebaseJsonData *result, const char *path, bool prettify = false);
+    void mSetResInt(FirebaseJsonData *data, const char *value);
+    void mSetResFloat(FirebaseJsonData *data, const char *value);
+    void mSetElementType(FirebaseJsonData *result);
     void mSet(const char *path, cJSON *value);
     void mCopy(FirebaseJsonBase &other);
-    size_t mSearch(cJSON *parent, struct fb_js_search_criteria_t &criteria);
-    size_t mSearch(cJSON *parent, FirebaseJsonData &result, struct fb_js_search_criteria_t &criteria, bool prettify = false);
+    size_t mSearch(cJSON *parent, struct fb_js_search_criteria_t *criteria);
+    size_t mSearch(cJSON *parent, FirebaseJsonData *result, struct fb_js_search_criteria_t *criteria, bool prettify = false);
+    size_t mSearch(cJSON *parent, const char *path, bool searchAll = false);
+    const char *mGetElementFullPath(cJSON *parent, const char *path, bool searchAll = false);
 
 public:
     enum fb_json_root_type
@@ -1023,7 +1066,7 @@ protected:
     template <typename T>
     auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, bool>::type
     {
-        if (!root || !out)
+        if (!root)
             return false;
 
         char *p = prettify ? cJSON_Print(root) : cJSON_PrintUnformatted(root);
@@ -1068,11 +1111,13 @@ protected:
     }
 #endif
 
+#if defined(FBJS_ENABLE_FS)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, fs::File>::value || FB_JS::is_same<T, File>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, FILE_SYSTEM>::value || FB_JS::is_same<T, File>::value, bool>::type
     {
         return writeHelper(out, prettify);
     }
+#endif
 
     template <typename T>
     auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, Client>::value, bool>::type
@@ -1109,7 +1154,7 @@ protected:
     {
         bool ret = false;
 
-        if (!root || !out)
+        if (!root)
             return false;
 
         if (out)
@@ -1511,7 +1556,7 @@ protected:
             if (tmp)
             {
                 response.transferEnc = tmp;
-                if (strcmp(tmp, (const char *)FPSTR("chunked")) == 0)
+                if (strcmp(tmp, (const char *)FLASH_MCR("chunked")) == 0)
                     response.isChunkedEnc = true;
                 delS(tmp);
             }
@@ -2033,11 +2078,12 @@ protected:
         return reinterpret_cast<Stream *>(ser);
     }
 #endif
-
+#if defined(FBJS_ENABLE_FS)
     Stream *toStream(File *file)
     {
         return reinterpret_cast<Stream *>(file);
     }
+#endif
 
 #ifdef FB_JS_INCLUDE_WIFI_CLIENT
     Client *toClient(WiFiClient *client)
@@ -2158,7 +2204,7 @@ public:
      * @param value The value to add.
      * @return instance of an object.
      * 
-     * The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR),
+     * The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR/PSTR),
      * String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, 
      * boolean, FirebaseJson object and array.
     */
@@ -2241,13 +2287,15 @@ public:
     }
 #endif
 
+#if defined(FBJS_ENABLE_FS)
     /**
      * Set JSON array data (File object) to FirebaseJsonArray object.
      * 
      * @param file The File object.
      * @return boolean status of the operation.
     */
-    bool readFrom(fs::File &file) { return mReadStream(toStream(&file), -1); }
+    bool readFrom(FILE_SYSTEM &file) { return mReadStream(toStream(&file), -1); }
+#endif
 
     /**
      * Get the array value at the specified index or path from the FirebaseJsonArray object.
@@ -2280,9 +2328,41 @@ public:
      * searchAll - The boolean option to search all occurrences of elements.
      *  
     */
-    size_t search(SearchCriteria &criteria) { return mSearch(root, criteria); }
+    size_t search(SearchCriteria &criteria) { return mSearch(root, &criteria); }
 
-    size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, result, criteria, prettify); }
+    size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, &result, &criteria, prettify); }
+
+    /**
+     * Search element by key or path in FirebaseJsonArray object.
+     * 
+     * @param path The key or path to search.
+     * @param searchAll Search all occurrences.
+     * @return number of elements found from search.
+     *  
+    */
+    template <typename T>
+    size_t search(T path, bool searchAll = false) { return mSearch(root, getStr(path), searchAll); }
+
+    /**
+     * Get the full path to any element in FirebaseJson object.
+     * 
+     * @param path The key or path to search in to.
+     * @param searchAll Search all occurrences.
+     * @return full path string in case of found.
+     *  
+    */
+    template <typename T>
+    String getPath(T path, bool searchAll = false) { return mGetElementFullPath(root, getStr(path), searchAll); }
+
+    /**
+     * Check whether key or path to the child element existed in FirebaseJsonArray or not.
+     * 
+     * @param path The key or path of child element check.
+     * @return boolean status indicated the existence of element.
+     *  
+    */
+    template <typename T>
+    bool isMember(T path) { return mGet(root, NULL, getStr(path)); }
 
     /**
      * Parse and collect all node/array elements in FirebaseJsonArray object.
@@ -2418,7 +2498,7 @@ public:
 private:
     FirebaseJsonArray &nAdd(cJSON *value);
     bool mSetIdx(int index, cJSON *value);
-    bool mGetIdx(FirebaseJsonData &result, int index, bool prettify);
+    bool mGetIdx(FirebaseJsonData *result, int index, bool prettify);
     bool mRemoveIdx(int index);
 
     template <typename T>
@@ -2430,7 +2510,7 @@ private:
     template <typename T>
     auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, bool>::type
     {
-        return mGetIdx(result, arg, prettify);
+        return mGetIdx(&result, arg, prettify);
     }
 
     template <typename T>
@@ -2679,13 +2759,15 @@ public:
     }
 #endif
 
+#if defined(FBJS_ENABLE_FS)
     /**
      * Set JSON array data (File object) to FirebaseJson object.
      * 
      * @param file The File object.
      * @return boolean status of the operation.
     */
-    bool readFrom(fs::File &file) { return mReadStream(toStream(&file), -1); }
+    bool readFrom(FILE_SYSTEM &file) { return mReadStream(toStream(&file), -1); }
+#endif
 
     /**
      * Add null to FirebaseJson object.
@@ -2722,7 +2804,7 @@ public:
     bool toString(T &out, bool prettify = false) { return toStringHandler(out, prettify); }
 
     template <typename T1, typename T2>
-    bool toString(T1 &out, T2 topic) { return toStringHandler(out, getStr(topic)); }
+    auto toString(T1 &out, T2 topic) -> typename FB_JS::enable_if<FB_JS::is_string<T2>::value, bool>::type { return toStringHandler(out, getStr(topic)); }
 
     template <typename T>
     bool toString(T *ptr, bool prettify = false) { return toStringPtrHandler(ptr, prettify); }
@@ -2760,7 +2842,7 @@ public:
      * FirebaseJson::NULL = 8
     */
     template <typename T>
-    bool get(FirebaseJsonData &result, T path, bool prettify = false) { return mGet(result, getStr(path), prettify); }
+    bool get(FirebaseJsonData &result, T path, bool prettify = false) { return mGet(root, &result, getStr(path), prettify); }
 
     /**
      * Search element by key or path in FirebaseJsonArray object.
@@ -2779,9 +2861,41 @@ public:
      * searchAll - The boolean option to search all occurrences of elements.
      *  
     */
-    size_t search(SearchCriteria &criteria) { return mSearch(root, criteria); }
+    size_t search(SearchCriteria &criteria) { return mSearch(root, &criteria); }
 
-    size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, result, criteria, prettify); }
+    size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, &result, &criteria, prettify); }
+
+    /**
+     * Search element by key or path in FirebaseJson object.
+     * 
+     * @param path The key or path to search.
+     * @param searchAll Search all occurrences.
+     * @return number of elements found from search.
+     *  
+    */
+    template <typename T>
+    size_t search(T path, bool searchAll = false) { return mSearch(root, getStr(path), searchAll); }
+
+    /**
+     * Get the full path to any element in FirebaseJson object.
+     * 
+     * @param path The key or path to search in to.
+     * @param searchAll Search all occurrences.
+     * @return full path string in case of found.
+     *  
+    */
+    template <typename T>
+    String getPath(T path, bool searchAll = false) { return mGetElementFullPath(root, getStr(path), searchAll); }
+
+    /**
+     * Check whether key or path to the child element existed in FirebaseJson object or not.
+     * 
+     * @param path The key or path of child element check.
+     * @return boolean status indicated the existence of element.
+     *  
+    */
+    template <typename T>
+    bool isMember(T path) { return mGet(root, NULL, getStr(path)); }
 
     /**
      * Parse and collect all node/array elements in FirebaseJson object.
@@ -2840,7 +2954,7 @@ public:
      * The relative path can be mixed with array index (number placed inside square brackets) and node names
      * e.g. /myRoot/[2]/Sensor1/myData/[3].
      * 
-     * The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR), 
+     * The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR/PSTR), 
      * String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers,
      * boolean, FirebaseJson object and array.
     */

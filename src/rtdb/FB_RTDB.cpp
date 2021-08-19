@@ -1400,7 +1400,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 
     if (ret)
     {
-        if (req->method == m_get && req->data.type != d_any)
+        if (Signer.getCfg()->rtdb.data_type_stricted && req->method == m_get && req->data.type != d_any)
         {
             if (req->data.type == d_integer || req->data.type == d_float || req->data.type == d_double)
                 ret = fbdo->_ss.rtdb.resp_data_type == d_integer || fbdo->_ss.rtdb.resp_data_type == d_float || fbdo->_ss.rtdb.resp_data_type == d_double;
