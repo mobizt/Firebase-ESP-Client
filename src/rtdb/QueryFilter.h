@@ -50,31 +50,31 @@ public:
     QueryFilter();
     ~QueryFilter();
 
-    template <typename T>
+    template <typename T = const char *>
     QueryFilter &orderBy(T val) { return mOrderBy(toString(val)); }
 
-    template <typename T>
+    template <typename T = int>
     QueryFilter &limitToFirst(T val) { return mLimitToFirst(NUM2S(val).get()); }
 
-    template <typename T>
+    template <typename T= int>
     QueryFilter &limitToLast(T val) { return mLimitToLast(NUM2S(val).get()); }
 
-    template <typename T>
+    template <typename T = int>
     auto startAt(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, float>::value || FB_JS::is_same<T, double>::value || FB_JS::is_num_int<T>::value, QueryFilter &>::type { return mStartAt(NUM2S(val).get(), false); }
 
-    template <typename T>
+    template <typename T = int>
     auto endAt(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, float>::value || FB_JS::is_same<T, double>::value || FB_JS::is_num_int<T>::value, QueryFilter &>::type { return mEndAt(NUM2S(val).get(), false); }
 
-    template <typename T>
+    template <typename T = const char *>
     auto startAt(T val) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, QueryFilter &>::type { return mStartAt(toString(val), true); }
 
-    template <typename T>
+    template <typename T = const char *>
     auto endAt(T val) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, QueryFilter &>::type { return mEndAt(toString(val), true); }
 
-    template <typename T>
+    template <typename T = int>
     auto equalTo(T val) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, QueryFilter &>::type { return mEqualTo(NUM2S(val).get(), false); }
 
-    template <typename T>
+    template <typename T = const char *>
     auto equalTo(T val) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, QueryFilter &>::type { return mEqualTo(toString(val), true); }
 
     QueryFilter &clear();

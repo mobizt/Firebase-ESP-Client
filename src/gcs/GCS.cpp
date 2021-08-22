@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.0
+ * Google's Cloud Storage class, GCS.cpp version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -50,7 +50,7 @@ void GG_CloudStorage::begin(UtilsClass *u)
     ut = u;
 }
 
-bool GG_CloudStorage::upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, const char *remoteFileName, const char *mime, UploadOptions *uploadOptions, RequestProperties *requestProps, UploadStatusInfo *status, ProgressCallback callback)
+bool GG_CloudStorage::mUpload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, const char *remoteFileName, const char *mime, UploadOptions *uploadOptions, RequestProperties *requestProps, UploadStatusInfo *status, ProgressCallback callback)
 {
     struct fb_esp_gcs_req_t req;
     req.bucketID = bucketID;
@@ -160,7 +160,7 @@ bool GG_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *r
     return ret;
 }
 
-bool GG_CloudStorage::download(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options)
+bool GG_CloudStorage::mDownload(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options)
 {
     struct fb_esp_gcs_req_t req;
     req.bucketID = bucketID;
@@ -172,7 +172,7 @@ bool GG_CloudStorage::download(FirebaseData *fbdo, const char *bucketID, const c
     return sendRequest(fbdo, &req);
 }
 
-bool GG_CloudStorage::deleteFile(FirebaseData *fbdo, const char *bucketID, const char *fileName, DeleteOptions *options)
+bool GG_CloudStorage::mDeleteFile(FirebaseData *fbdo, const char *bucketID, const char *fileName, DeleteOptions *options)
 {
     struct fb_esp_gcs_req_t req;
     req.requestType = fb_esp_gcs_request_type_delete;
@@ -182,7 +182,7 @@ bool GG_CloudStorage::deleteFile(FirebaseData *fbdo, const char *bucketID, const
     return sendRequest(fbdo, &req);
 }
 
-bool GG_CloudStorage::listFiles(FirebaseData *fbdo, const char *bucketID, ListOptions *options)
+bool GG_CloudStorage::mListFiles(FirebaseData *fbdo, const char *bucketID, ListOptions *options)
 {
     struct fb_esp_gcs_req_t req;
     req.bucketID = bucketID;
@@ -191,7 +191,7 @@ bool GG_CloudStorage::listFiles(FirebaseData *fbdo, const char *bucketID, ListOp
     return sendRequest(fbdo, &req);
 }
 
-bool GG_CloudStorage::getMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, StorageGetOptions *options)
+bool GG_CloudStorage::mGetMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, StorageGetOptions *options)
 {
     struct fb_esp_gcs_req_t req;
     req.bucketID = bucketID;

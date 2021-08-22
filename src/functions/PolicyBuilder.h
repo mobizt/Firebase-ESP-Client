@@ -1,9 +1,9 @@
 /**
- * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.2
+ * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -53,6 +53,9 @@ private:
     FirebaseJson json;
     FirebaseJsonArray arr;
 
+    void mSetLogType(const char *logType);
+    void mAddexemptedMembers(const char *member);
+
 public:
     AuditLogConfig();
     ~AuditLogConfig();
@@ -68,7 +71,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#LogType
      * 
     */
-    void setLogType(const char *logType);
+   template <typename T = const char*>
+    void setLogType(T logType) { mSetLogType(toString(logType)); }
 
     /**
      * Add the identities that do not cause logging for this type of permission. 
@@ -78,17 +82,31 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#Binding.FIELDS.members
      * 
     */
-    void addexemptedMembers(const char *member);
+   template <typename T = const char *>
+   void addexemptedMembers(T member) { mAddexemptedMembers(toString(member)); }
 
-    /**
+   /**
      * Clear all exempted members. 
     */
-    void clearExemptedMembers();
+   void clearExemptedMembers();
 
-    /**
+   /**
      * Clear all AuditLogConfig data. 
     */
-    void clear();
+   void clear();
+
+   protected:
+   template <typename T>
+   auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+   template <typename T>
+   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+   template <typename T>
+   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+   template <typename T>
+   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 /** The class that provides the audit configuration for a service. 
@@ -112,6 +130,8 @@ private:
     FirebaseJson json;
     FirebaseJsonArray arr;
 
+    void mSetService(const char *service);
+
 public:
     AuditConfig();
     ~AuditConfig();
@@ -124,7 +144,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#Binding.FIELDS.members
      * 
     */
-    void setService(const char *service);
+    template <typename T = const char *>
+    void setService(const char *service) { mSetService(toString(service)); }
 
     /** Add AuditLogConfig object 
      * @param config The pointer to the AuditLogConfig class data.
@@ -141,6 +162,19 @@ public:
      * Clear all AuditConfig data. 
     */
     void clear();
+
+protected:
+    template <typename T>
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 /**
@@ -156,6 +190,10 @@ private:
     FirebaseJsonArray arr;
     FirebaseJson json;
 
+    void mAddMember(const char *member);
+    void mSetRole(const char *role);
+    void mSetCondition(const char *expression = "", const char *title = "", const char *description = "", const char *location = "");
+
 public:
     Binding();
     ~Binding();
@@ -167,7 +205,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#Binding.FIELDS.members
      * 
     */
-    void addMember(const char *member);
+    template <typename T = const char *>
+    void addMember(const char *member) { mAddMember(toString(member)); }
 
     /**
      * Specifies role that is assigned to members. For example, roles/viewer, roles/editor, or roles/owner.
@@ -176,7 +215,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#Binding.FIELDS.role
      * 
     */
-    void setRole(const char *role);
+    template <typename T = const char *>
+    void setRole(const char *role) { mSetRole(toString(role)); }
 
     /**
      * Specifies the condition that is associated with this binding.
@@ -195,7 +235,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#Expr
      * 
     */
-    void setCondition(const char *expression = "", const char *title = "", const char *description = "", const char *location = "");
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    void setCondition(T1 expression = "", T2 title = "", T3 description = "", T4 location = "") { mSetCondition(toString(expression), toString(title), toString(description), toString(location)); }
 
     /**
      * Clear all members that were added. 
@@ -206,6 +247,19 @@ public:
      * Clear all Binding data. 
     */
     void clear();
+
+protected:
+    template <typename T>
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 /** The class that provides the Policy which is an Identity and Access Management (IAM) policy, 
@@ -234,6 +288,8 @@ private:
     FirebaseJsonArray arr2;
     FirebaseJson json;
     const char * raw();
+    void mSetVersion(const char* v);
+    void mSetETag(const char *etag);
 
 public:
     PolicyBuilder();
@@ -270,7 +326,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#FIELDS.version
      * 
     */
-    void setVersion(int v);
+    template <typename T = int>
+    void setVersion(T v) { mSetVersion(NUM2S(v).get()); }
 
     /**
      * Set the ETag.
@@ -286,7 +343,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#FIELDS.etag
      * 
     */
-    void setETag(const char *etag);
+    template <typename T = const char *>
+    void setETag(T etag) { mSetETag(toStr(etag)); }
 
     /**
      * Clear all Bindings in the collection.
@@ -308,6 +366,19 @@ public:
      * 
     */
     void toString(String &s, bool prettify = false);
+
+protected:
+    template <typename T>
+    auto toStr(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+    template <typename T>
+    auto toStr(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+    template <typename T>
+    auto toStr(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+    template <typename T>
+    auto toStr(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

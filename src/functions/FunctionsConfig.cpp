@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.2
+ * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -39,15 +39,6 @@
 
 #include "FunctionsConfig.h"
 
-FunctionsConfig::FunctionsConfig(const char *projectId, const char *locationId, const char *bucketId)
-{
-    _projectId = projectId;
-    _locationId = locationId;
-    _bucketId = bucketId;
-    _triggerType = fb_esp_functions_trigger_type_https;
-    _updateMask.clear();
-}
-
 FunctionsConfig::~FunctionsConfig()
 {
     ut->clearS(_projectId);
@@ -56,15 +47,15 @@ FunctionsConfig::~FunctionsConfig()
     clear();
 }
 
-void FunctionsConfig::setProjectId(const char *projectId)
+void FunctionsConfig::mSetProjectId(const char *projectId)
 {
     _projectId = projectId;
 }
-void FunctionsConfig::setLocationId(const char *locationId)
+void FunctionsConfig::mSetLocationId(const char *locationId)
 {
     _locationId = locationId;
 }
-void FunctionsConfig::setBucketId(const char *bucketId)
+void FunctionsConfig::mSetBucketId(const char *bucketId)
 {
     _bucketId = bucketId;
 }
@@ -79,6 +70,14 @@ void FunctionsConfig::addUpdateMasks(const char *key)
     }
     _updateMask.push_back(key);
 }
+void FunctionsConfig::mFunctionsConfig(const char *projectId, const char *locationId, const char *bucketId)
+{
+    _projectId = projectId;
+    _locationId = locationId;
+    _bucketId = bucketId;
+    _triggerType = fb_esp_functions_trigger_type_https;
+    _updateMask.clear();
+}
 
 void FunctionsConfig::removeUpdateMasks(const char *key)
 {
@@ -92,7 +91,7 @@ void FunctionsConfig::removeUpdateMasks(const char *key)
     }
 }
 
-void FunctionsConfig::setName(const char *name)
+void FunctionsConfig::mSetName(const char *name)
 {
     if (!ut)
         ut = Signer.ut;
@@ -113,7 +112,7 @@ void FunctionsConfig::setName(const char *name)
     }
 }
 
-void FunctionsConfig::setDescription(const char *description)
+void FunctionsConfig::mSetDescription(const char *description)
 {
     if (!ut)
         ut = Signer.ut;
@@ -126,7 +125,7 @@ void FunctionsConfig::setDescription(const char *description)
     }
 }
 
-void FunctionsConfig::setEntryPoint(const char *entry)
+void FunctionsConfig::mSetEntryPoint(const char *entry)
 {
     if (!ut)
         ut = Signer.ut;
@@ -140,7 +139,7 @@ void FunctionsConfig::setEntryPoint(const char *entry)
     _entryPoint = entry;
 }
 
-void FunctionsConfig::setRuntime(const char *runtime)
+void FunctionsConfig::mSetRuntime(const char *runtime)
 {
     if (!ut)
         ut = Signer.ut;
@@ -153,14 +152,14 @@ void FunctionsConfig::setRuntime(const char *runtime)
     }
 }
 
-void FunctionsConfig::setTimeout(size_t seconds)
+void FunctionsConfig::mSetTimeout(const char* seconds)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_370);
-        std::string s = NUM2S(seconds).get();
+        std::string s = seconds;
         ut->appendP(s, fb_esp_pgm_str_417);
         _funcCfg.set(tmp, s.c_str());
         addUpdateMasks(tmp);
@@ -168,48 +167,51 @@ void FunctionsConfig::setTimeout(size_t seconds)
     }
 }
 
-void FunctionsConfig::setAvailableMemoryMb(size_t mb)
+void FunctionsConfig::mSetAvailableMemoryMb(const char* mb)
 {
+    int _mb = atoi(mb);
+
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        if (mb > 4096)
-            mb = 4096;
-        else if (mb > 2048 && mb <= 4096)
-            mb = 4096;
-        else if (mb > 1024 && mb <= 2048)
-            mb = 2048;
-        else if (mb > 512 && mb <= 1024)
-            mb = 1024;
-        else if (mb > 256 && mb <= 512)
-            mb = 512;
-        else if (mb > 128 && mb <= 256)
-            mb = 256;
+        if (_mb > 4096)
+            _mb = 4096;
+        else if (_mb > 2048 && _mb <= 4096)
+            _mb = 4096;
+        else if (_mb > 1024 && _mb <= 2048)
+            _mb = 2048;
+        else if (_mb > 512 && _mb <= 1024)
+            _mb = 1024;
+        else if (_mb > 256 && _mb <= 512)
+            _mb = 512;
+        else if (_mb > 128 && _mb <= 256)
+            _mb = 256;
         else
-            mb = 128;
+            _mb = 128;
 
         char *tmp = ut->strP(fb_esp_pgm_str_371);
-        _funcCfg.set(tmp, (int)mb);
+        _funcCfg.set(tmp, _mb);
         addUpdateMasks(tmp);
         ut->delS(tmp);
     }
 }
 
-void FunctionsConfig::setMaxInstances(size_t maxInstances)
+void FunctionsConfig::mSetMaxInstances(const char* maxInstances)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
+        int m = atoi(maxInstances);
         char *tmp = ut->strP(fb_esp_pgm_str_377);
-        _funcCfg.set(tmp, (int)maxInstances);
+        _funcCfg.set(tmp, m);
         addUpdateMasks(tmp);
         ut->delS(tmp);
     }
 }
 
-void FunctionsConfig::setSource(const char *path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType)
+void FunctionsConfig::mSetSource(const char *path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType)
 {
     if (!ut)
         ut = Signer.ut;
@@ -266,7 +268,7 @@ void FunctionsConfig::setSource(const uint8_t *pgmArchiveData, size_t len)
     _sourceType = functions_sources_type_flash_data;
 }
 
-void FunctionsConfig::setIngressSettings(const char *settings)
+void FunctionsConfig::mSetIngressSettings(const char *settings)
 {
     if (!ut)
         ut = Signer.ut;
@@ -279,7 +281,7 @@ void FunctionsConfig::setIngressSettings(const char *settings)
     }
 }
 
-void FunctionsConfig::addLabel(const char *key, const char *value)
+void FunctionsConfig::mAddLabel(const char *key, const char *value)
 {
     if (!ut)
         ut = Signer.ut;
@@ -305,7 +307,7 @@ void FunctionsConfig::clearLabels()
         ut->delS(tmp);
     }
 }
-void FunctionsConfig::addEnvironmentVariable(const char *key, const char *value)
+void FunctionsConfig::mAddEnvironmentVariable(const char *key, const char *value)
 {
     if (!ut)
         ut = Signer.ut;
@@ -331,7 +333,7 @@ void FunctionsConfig::clearEnvironmentVariables()
         ut->delS(tmp);
     }
 }
-void FunctionsConfig::addBuildEnvironmentVariable(const char *key, const char *value)
+void FunctionsConfig::mAddBuildEnvironmentVariable(const char *key, const char *value)
 {
     if (!ut)
         ut = Signer.ut;
@@ -358,7 +360,7 @@ void FunctionsConfig::clearBuildEnvironmentVariables()
         ut->delS(tmp);
     }
 }
-void FunctionsConfig::setNetwork(const char *network)
+void FunctionsConfig::mSetNetwork(const char *network)
 {
     if (!ut)
         ut = Signer.ut;
@@ -370,7 +372,7 @@ void FunctionsConfig::setNetwork(const char *network)
         ut->delS(tmp);
     }
 }
-void FunctionsConfig::setVpcConnector(const char *vpcConnector)
+void FunctionsConfig::mSetVpcConnector(const char *vpcConnector)
 {
     if (!ut)
         ut = Signer.ut;
@@ -382,7 +384,7 @@ void FunctionsConfig::setVpcConnector(const char *vpcConnector)
         ut->delS(tmp);
     }
 }
-void FunctionsConfig::setVpcConnectorEgressSettings(const char *e)
+void FunctionsConfig::mSetVpcConnectorEgressSettings(const char *e)
 {
     if (!ut)
         ut = Signer.ut;
@@ -395,7 +397,7 @@ void FunctionsConfig::setVpcConnectorEgressSettings(const char *e)
     }
 }
 
-void FunctionsConfig::setEventTrigger(const char *eventType, const char *resource, const char *service, const char *failurePolicy)
+void FunctionsConfig::mSetEventTrigger(const char *eventType, const char *resource, const char *service, const char *failurePolicy)
 {
     if (!ut)
         ut = Signer.ut;

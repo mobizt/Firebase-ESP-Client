@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.10
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 29, 2021
+ * Created Auf=ggust 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -71,7 +71,7 @@ void FB_CM::begin(UtilsClass *u)
     ut = u;
 }
 
-void FB_CM::setServerKey(const char *serverKey)
+void FB_CM::mSetServerKey(const char *serverKey)
 {
     this->server_key = serverKey;
 }
@@ -120,7 +120,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
     return ret;
 }
 
-bool FB_CM::subscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], size_t numToken)
+bool FB_CM::mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken)
 {
     if (!init())
         return false;
@@ -133,13 +133,13 @@ bool FB_CM::subscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID
         return false;
     }
 
-    fcm_preparSubscriptionPayload(topic, IID, numToken);
+    fcm_preparSubscriptionPayload(topic, IID, atoi(numToken));
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_subscribe, raw.c_str());
     ut->clearS(raw);
     return ret;
 }
 
-bool FB_CM::unsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], size_t numToken)
+bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char* numToken)
 {
     if (!init())
         return false;
@@ -152,14 +152,14 @@ bool FB_CM::unsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *I
         return false;
     }
 
-    fcm_preparSubscriptionPayload(topic, IID, numToken);
+    fcm_preparSubscriptionPayload(topic, IID, atoi(numToken));
 
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_unsubscribe, raw.c_str());
     ut->clearS(raw);
     return ret;
 }
 
-bool FB_CM::appInstanceInfo(FirebaseData *fbdo, const char *IID)
+bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 {
     if (!init())
         return false;
@@ -176,7 +176,7 @@ bool FB_CM::appInstanceInfo(FirebaseData *fbdo, const char *IID)
     return ret;
 }
 
-bool FB_CM::regisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], size_t numToken)
+bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char* numToken)
 {
     if (!init())
         return false;
@@ -189,7 +189,7 @@ bool FB_CM::regisAPNsTokens(FirebaseData *fbdo, const char *application, bool sa
         return false;
     }
 
-    fcm_preparAPNsRegistPayload(application, sandbox, APNs, numToken);
+    fcm_preparAPNsRegistPayload(application, sandbox, APNs, atoi(numToken));
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_apn_token_registration, raw.c_str());
     ut->clearS(raw);
     return ret;

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.2
+ * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -62,6 +62,26 @@ private:
 
     void addUpdateMasks(const char *key);
     void removeUpdateMasks(const char *key);
+    void mFunctionsConfig(const char* projectId, const char* locationId, const char *bucketId);
+    void mSetProjectId(const char *projectId);
+    void mSetLocationId(const char *locationId);
+    void mSetBucketId(const char *bucketId);
+    void mSetName(const char *name);
+    void mSetDescription(const char *description);
+    void mSetEntryPoint(const char *entry);
+    void mSetRuntime(const char *runtime);
+    void mSetTimeout(const char* seconds);
+    void mSetAvailableMemoryMb(const char* mb);
+    void mSetMaxInstances(const char* maxInstances);
+    void mSetSource(const char *path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
+    void mAddLabel(const char *key, const char *value);
+    void mAddEnvironmentVariable(const char *key, const char *value);
+    void mAddBuildEnvironmentVariable(const char *key, const char *value);
+    void mSetNetwork(const char *network);
+    void mSetVpcConnector(const char *vpcConnector);
+    void mSetVpcConnectorEgressSettings(const char *e);
+    void mSetIngressSettings(const char *settings);
+    void mSetEventTrigger(const char *eventType, const char *resource, const char *service = "", const char *failurePolicy = "");
 
 public:
     /**
@@ -72,7 +92,8 @@ public:
      * @param locationId The project location.
      * @param bucketId The Firebase storage bucket ID in the project.
     */
-    FunctionsConfig(const char *projectId, const char *locationId, const char *bucketId);
+    template <typename T1 = const char*, typename T2= const char*, typename T3= const char*>
+    FunctionsConfig(T1 projectId, T2 locationId, T3 bucketId){mFunctionsConfig(toString(projectId), toString(locationId), toString(bucketId));}
 
     ~FunctionsConfig();
 
@@ -81,21 +102,24 @@ public:
      * 
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
     */
-    void setProjectId(const char *projectId);
+    template <typename T = const char *>
+    void setProjectId(T projectId) { mSetProjectId(toString(projectId)); }
 
     /**
      * Set the location of project.
      * 
      * @param locationId The project location.
     */
-    void setLocationId(const char *locationId);
+    template <typename T = const char *>
+    void setLocationId(T locationId) { mSetLocationId(toString(locationId)); }
 
     /**
      * Set the Storage data bucket.
      * 
      * @param bucketId The Firebase storage bucket ID in the project.
     */
-    void setBucketId(const char *bucketId);
+    template <typename T = const char *>
+    void setBucketId(T bucketId) { mSetBucketId(toString(bucketId)); }
 
     /**
      * Set a user-defined name of the function. Function names must be unique globally.
@@ -103,14 +127,16 @@ public:
      * 
      * @param name The string of function name.
     */
-    void setName(const char *name);
+    template <typename T = const char *>
+    void setName(T name) { mSetName(name); }
 
     /**
      * Set User-provided description of a function.
      * 
      * @param description The string of function description.
     */
-    void setDescription(const char *description);
+    template <typename T = const char *>
+    void setDescription(T description) { mSetDescription(toString(description)); }
 
     /**
      * Set the name of the function (as defined in source code) that will be executed. 
@@ -120,7 +146,8 @@ public:
      * 
      * @param entry The string of function entry.
     */
-    void setEntryPoint(const char *entry);
+    template <typename T = const char *>
+    void setEntryPoint(T entry) { mSetEntryPoint(toString(entry)); }
 
     /**
      * Set the runtime in which to run the function. 
@@ -130,7 +157,8 @@ public:
      * 
      * @param runtime The string of function runtime.
     */
-    void setRuntime(const char *runtime);
+    template <typename T = const char *>
+    void setRuntime(const char *runtime) { mSetRuntime(toString(runtime)); }
 
     /**
      * Set the function execution timeout. 
@@ -141,7 +169,8 @@ public:
      * 
      * @param seconds The number of seconds for timeout.
     */
-    void setTimeout(size_t seconds);
+    template <typename T = size_t>
+    void setTimeout(T seconds) { mSetTimeout(NUM2S(seconds).get()); }
 
     /**
      * Set the amount of memory in MB available for a function.
@@ -150,7 +179,8 @@ public:
      * 
      * @param mb The number of MB.
     */
-    void setAvailableMemoryMb(size_t mb);
+    template <typename T = size_t>
+    void setAvailableMemoryMb(T mb) { mSetAvailableMemoryMb(NUM2S(mb).get()); }
 
     /**
      * Set the limit on the maximum number of function instances that may coexist at a given time.
@@ -161,7 +191,8 @@ public:
      * 
      * @param maxInstances The number of instances.
     */
-    void setMaxInstances(size_t maxInstances);
+    template <typename T = size_t>
+    void setMaxInstances(T maxInstances) { mSetMaxInstances(NUM2S(maxInstances).get()); }
 
     /**
      * Set the location of the function source code.
@@ -180,7 +211,8 @@ public:
      * mem_storage_type_flash
      * mem_storage_type_sd
     */
-    void setSource(const char *path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
+    template <typename T = const char*>
+    void setSource(T path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined) { mSetSource(path, sourceType, storageType); }
 
     /**
      * Set the location of the function source code to the flash zip archive data.
@@ -196,7 +228,8 @@ public:
      * @param key The string of label key.
      * @param value The string of label value.
     */
-    void addLabel(const char *key, const char *value);
+    template <typename T1 = const char *, typename T2 = const char *>
+    void addLabel(T1 key, T2 value) { mAddLabel(toString(key), toString(value)); }
 
     /**
      * Clear the Labels
@@ -210,7 +243,8 @@ public:
      * @param value The string of var value.
      * 
     */
-    void addEnvironmentVariable(const char *key, const char *value);
+    template <typename T1 = const char *, typename T2 = const char *>
+    void addEnvironmentVariable(T1 key, T2 value) { mAddEnvironmentVariable(toString(key), toString(value)); }
 
     /**
      * Clear the Envireonmebt variables.
@@ -223,7 +257,8 @@ public:
     * @param key The string of var key.
     * @param value The string of var value.
    */
-    void addBuildEnvironmentVariable(const char *key, const char *value);
+    template <typename T1 = const char *, typename T2 = const char *>
+    void addBuildEnvironmentVariable(T1 key, T2 value) { mAddBuildEnvironmentVariable(toString(key), toString(value)); }
 
     /**
      * Clear the Build envireonmebt variables.
@@ -240,7 +275,8 @@ public:
      * 
      * @param network The string of network.
     */
-    void setNetwork(const char *network);
+    template <typename T = const char *>
+    void setNetwork(T network) { mSetNetwork(toString(network)); }
 
     /**
      * The VPC Network Connector that this cloud function can connect to. 
@@ -253,7 +289,8 @@ public:
      * 
      * @param vpcConnector The string of vpcConnector.
     */
-    void setVpcConnector(const char *vpcConnector);
+    template <typename T = const char *>
+    void setVpcConnector(T vpcConnector) { mSetVpcConnector(toString(vpcConnector)); }
 
     /**
      * The egress settings for the connector, controlling what traffic is diverted through it.
@@ -263,7 +300,8 @@ public:
      * PRIVATE_RANGES_ONLY
      * ALL_TRAFFIC
     */
-    void setVpcConnectorEgressSettings(const char *e);
+    template <typename T = const char *>
+    void setVpcConnectorEgressSettings(T e) { mSetVpcConnectorEgressSettings(toString(e)); }
 
     /**
      * The ingress settings for the function, controlling what traffic can reach it.
@@ -274,7 +312,8 @@ public:
      * ALLOW_INTERNAL_ONLY
      * ALLOW_INTERNAL_AND_GCLB
     */
-    void setIngressSettings(const char *settings);
+    template <typename T = const char *>
+    void setIngressSettings(T settings) { mSetIngressSettings(toString(settings)); }
 
     /**
      * Set a source that fires events in response to a condition in another service.
@@ -296,7 +335,8 @@ public:
      * For example, storage.googleapis.com is the default for all event types in the google.storage namespace.
      * @param failurePolicy Specifies policy for failed executions.
     */
-    void setEventTrigger(const char *eventType, const char *resource, const char *service = "", const char *failurePolicy = "");
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    void setEventTrigger(T1 eventType, T2 resource, T3 service = "", T4 failurePolicy = "") { mSetEventTrigger(toString(eventType), toString(resource), toString(service), toString(failurePolicy)); }
 
     /**
      * Set the IAM policy.
@@ -315,6 +355,19 @@ public:
      * Clear the FunctionsConfig class data.
     */
     void clear();
+
+protected:
+    template <typename T>
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

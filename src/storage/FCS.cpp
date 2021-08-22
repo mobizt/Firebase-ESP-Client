@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.3
+ * Google's Firebase Storage class, FCS.cpp version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -107,7 +107,7 @@ bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
     return fcs_sendRequest(fbdo, req);
 }
 
-bool FB_Storage::upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remoteFileName, const char *mime)
+bool FB_Storage::mUpload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remoteFileName, const char *mime)
 {
     struct fb_esp_fcs_req_t req;
     req.localFileName = localFileName;
@@ -119,7 +119,7 @@ bool FB_Storage::upload(FirebaseData *fbdo, const char *bucketID, const char *lo
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Storage::upload(FirebaseData *fbdo, const char *bucketID, const uint8_t *data, size_t len, const char *remoteFileName, const char *mime)
+bool FB_Storage::mUpload(FirebaseData *fbdo, const char *bucketID, const uint8_t *data, size_t len, const char *remoteFileName, const char *mime)
 {
     struct fb_esp_fcs_req_t req;
     req.remoteFileName = remoteFileName;
@@ -131,7 +131,7 @@ bool FB_Storage::upload(FirebaseData *fbdo, const char *bucketID, const uint8_t 
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Storage::download(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType)
+bool FB_Storage::mDownload(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType)
 {
     struct fb_esp_fcs_req_t req;
     req.localFileName = localFileName;
@@ -142,7 +142,7 @@ bool FB_Storage::download(FirebaseData *fbdo, const char *bucketID, const char *
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Storage::getMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
+bool FB_Storage::mGetMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
     struct fb_esp_fcs_req_t req;
     req.remoteFileName = remoteFileName;
@@ -151,7 +151,7 @@ bool FB_Storage::getMetadata(FirebaseData *fbdo, const char *bucketID, const cha
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Storage::deleteFile(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
+bool FB_Storage::mDeleteFile(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
     struct fb_esp_fcs_req_t req;
     req.requestType = fb_esp_fcs_request_type_delete;
@@ -161,7 +161,7 @@ bool FB_Storage::deleteFile(FirebaseData *fbdo, const char *bucketID, const char
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Storage::listFiles(FirebaseData *fbdo, const char *bucketID)
+bool FB_Storage::mListFiles(FirebaseData *fbdo, const char *bucketID)
 {
     struct fb_esp_fcs_req_t req;
     req.bucketID = bucketID;

@@ -105,7 +105,7 @@ void setup()
     /* Initialize the library with the Firebase authen and config */
     Firebase.begin(&config, &auth);
 
-    Serial.printf("Send Email verification... %s\n", Firebase.sendEmailVerification(&config, "" /* id token of user that alreaddy signed in (optional) */) ? "ok" : config.signer.verificationError.message.c_str());
+    Serial.printf("Send Email verification... %s\n", Firebase.sendEmailVerification(&config) ? "ok" : config.signer.verificationError.message.c_str());
 }
 
 void loop()

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.0
+ * Google's Firebase Data class, FB_Session.h version 1.2.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -68,14 +68,14 @@ public:
    * 
    * @param serverKey Server key found on Console: Project settings > Cloud Messaging
    */
-  template <typename T>
+  template <typename T = const char *>
   void begin(T serverKey) { mBegin(toString(serverKey)); }
 
   /** Add recipient's device registration token or instant ID token.
    * 
    * @param deviceToken Recipient's device registration token to add that message will be sent to.
    */
-  template <typename T>
+  template <typename T = const char *>
   void addDeviceToken(T deviceToken) { mAddDeviceToken(toString(deviceToken)); }
 
   /** Remove the recipient's device registration token or instant ID token.
@@ -93,7 +93,7 @@ public:
    * @param title The title text of notification message.
    * @param body The body text of notification message.
    */
-  template <typename T1, typename T2>
+  template <typename T1 = const char *, typename T2 = const char *>
   void setNotifyMessage(T1 title, T2 body) { mSetNotifyMessage(toString(title), toString(body)); }
 
   /** Set the notify message type information.
@@ -102,7 +102,7 @@ public:
    * @param body The body text of notification message.
    * @param icon The name and/or included URI/URL of the icon to show on notifying message.
    */
-  template <typename T1, typename T2, typename T3>
+  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
   void setNotifyMessage(T1 title, T2 body, T3 icon) { mSetNotifyMessage(toString(title), toString(body), toString(icon)); }
 
   /** Set the notify message type information.
@@ -112,7 +112,7 @@ public:
    * @param icon The name and/or included URI/URL of the icon to show on notifying message.
    * @param click_action The URL or intent to accept click event on the notification message.
    */
-  template <typename T1, typename T2, typename T3, typename T4>
+  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
   void setNotifyMessage(T1 title, T2 body, T3 icon, T4 click_action) { mSetNotifyMessage(toString(title), toString(body), toString(icon), toString(click_action)); }
 
   /** add the custom key/value in the notify message type information.
@@ -120,7 +120,7 @@ public:
    * @param key The key field in notification message.
    * @param value The value field in the notification message.
   */
-  template <typename T1, typename T2>
+  template <typename T1 = const char *, typename T2 = const char *>
   void addCustomNotifyMessage(T1 key, T2 value) { mAddCustomNotifyMessage(toString(key), toString(value)); }
 
   /** Clear all notify message information.
@@ -131,7 +131,7 @@ public:
    * 
    * @param jsonString The JSON structured data string.
   */
-  template <typename T>
+  template <typename T = const char *>
   void setDataMessage(T jsonString) { mSetDataMessage(toString(jsonString)); }
 
   /** Set the custom data message type information.
@@ -148,14 +148,14 @@ public:
    * 
    * @param priority The priority string i.e. normal and high.
   */
-  template <typename T>
+  template <typename T = const char *>
   void setPriority(T priority) { mSetPriority(toString(priority)); }
 
   /** Set the collapse key of the message (notification and custom data).
    * 
    * @param key String of collapse key.
   */
-  template <typename T>
+  template <typename T = const char *>
   void setCollapseKey(T key) { mSetCollapseKey(toString(key)); }
 
   /** Set the Time To Live of the message (notification and custom data).
@@ -168,7 +168,7 @@ public:
    * 
    * @param topic Topic string.
   */
-  template <typename T>
+  template <typename T = const char *>
   void setTopic(T topic) { mSetTopic(toString(topic)); }
 
   /** Get the send result.

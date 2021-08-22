@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.2
+ * Google's Cloud Functions class, Functions.cpp version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -46,7 +46,7 @@ FB_Functions::~FB_Functions()
 {
 }
 
-bool FB_Functions::callFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *data)
+bool FB_Functions::mCallFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *data)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_call;
@@ -125,7 +125,7 @@ bool FB_Functions::createFunction(FirebaseData *fbdo, FunctionsConfig *config, F
     return createFunctionInt(fbdo, config->_name.c_str(), config, false, callback, nullptr);
 }
 
-bool FB_Functions::patchFunction(FirebaseData *fbdo, const char *functionId, FunctionsConfig *patchData)
+bool FB_Functions::mPatchFunction(FirebaseData *fbdo, const char *functionId, FunctionsConfig *patchData)
 {
     return createFunctionInt(fbdo, functionId, patchData, true, NULL, nullptr);
 }
@@ -377,7 +377,7 @@ void FB_Functions::sendCallback(FirebaseData *fbdo, fb_esp_functions_operation_s
     }
 }
 
-bool FB_Functions::setIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, PolicyBuilder *policy, const char *updateMask)
+bool FB_Functions::mSetIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, PolicyBuilder *policy, const char *updateMask)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_set_iam_policy;
@@ -413,7 +413,7 @@ bool FB_Functions::setIamPolicy(FirebaseData *fbdo, const char *projectId, const
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::getIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *version)
+bool FB_Functions::mGetIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *version)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_get_iam_policy;
@@ -429,7 +429,7 @@ bool FB_Functions::getIamPolicy(FirebaseData *fbdo, const char *projectId, const
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::getFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId)
+bool FB_Functions::mGetFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_get;
@@ -486,29 +486,29 @@ bool FB_Functions::getFunction(FirebaseData *fbdo, const char *projectId, const 
     return ret;
 }
 
-bool FB_Functions::listFunctions(FirebaseData *fbdo, const char *projectId, const char *locationId, size_t pageSize, const char *pageToken)
+bool FB_Functions::mListFunctions(FirebaseData *fbdo, const char *projectId, const char *locationId, const char* pageSize, const char *pageToken)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_list;
     req.projectId = projectId;
     req.locationId = locationId;
-    req.pageSize = pageSize;
+    req.pageSize = atoi(pageSize);
     req.pageToken = pageToken;
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::listOperations(FirebaseData *fbdo, const char *filter, int pageSize, const char *pageToken)
+bool FB_Functions::mListOperations(FirebaseData *fbdo, const char *filter, const char* pageSize, const char *pageToken)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_list_operations;
     req.filter = filter;
-    req.pageSize = pageSize;
+    req.pageSize = atoi(pageSize);
     req.pageToken = pageToken;
 
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::deleteFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId)
+bool FB_Functions::mDeleteFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_delete;
@@ -519,7 +519,7 @@ bool FB_Functions::deleteFunction(FirebaseData *fbdo, const char *projectId, con
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::generateDownloadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *versionId)
+bool FB_Functions::mGenerateDownloadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *versionId)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_gen_download_url;
@@ -545,7 +545,7 @@ bool FB_Functions::generateDownloadUrl(FirebaseData *fbdo, const char *projectId
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::generateUploadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId)
+bool FB_Functions::mGenerateUploadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_gen_upload_url;
@@ -1250,7 +1250,7 @@ void FB_Functions::runDeployTask()
                 {
                     taskInfo->done = true;
                     _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_generate_upload_url, "", taskInfo->callback, taskInfo->statusInfo);
-                    bool ret = _this->generateUploadUrl(taskInfo->fbdo, taskInfo->config->_projectId.c_str(), taskInfo->config->_locationId.c_str());
+                    bool ret = _this->mGenerateUploadUrl(taskInfo->fbdo, taskInfo->config->_projectId.c_str(), taskInfo->config->_locationId.c_str());
 
                     if (ret)
                     {
@@ -1368,7 +1368,7 @@ void FB_Functions::runDeployTask()
                     bool ret = false;
                     static PolicyBuilder pol;
                     pol.json.setJsonData(taskInfo->policy.c_str());
-                    ret = _this->setIamPolicy(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str(), &pol);
+                    ret = _this->mSetIamPolicy(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str(), &pol);
                     if (ret)
                     {
                         taskInfo->fbdo->_ss.cfn.cbInfo.status = fb_esp_functions_operation_status_finished;
@@ -1385,7 +1385,7 @@ void FB_Functions::runDeployTask()
                     _this->ut->appendP(t, fb_esp_pgm_str_428);
                     t += taskInfo->projectId;
                     _this->ut->appendP(t, fb_esp_pgm_str_431);
-                    ret = _this->listOperations(taskInfo->fbdo, t.c_str(), 1, "");
+                    ret = _this->mListOperations(taskInfo->fbdo, t.c_str(), "1", "");
                     if (ret)
                     {
                         taskInfo->fbdo->_ss.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
@@ -1404,7 +1404,7 @@ void FB_Functions::runDeployTask()
                         _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.dataPtr->to<const char *>(), taskInfo->callback, taskInfo->statusInfo);
                     }
 
-                    ret = _this->deleteFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
+                    ret = _this->mDeleteFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
                 }
                 else if (taskInfo->step == fb_esp_functions_creation_step_polling_status)
                 {
@@ -1415,7 +1415,7 @@ void FB_Functions::runDeployTask()
                         if (!taskInfo->_delete && !taskInfo->active)
                         {
 
-                            bool ret = _this->getFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
+                            bool ret = _this->mGetFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
 
                             if (ret)
                             {
@@ -1513,7 +1513,7 @@ void FB_Functions::runDeployTask()
             {
                 taskInfo->done = true;
                 sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_generate_upload_url, "", taskInfo->callback, taskInfo->statusInfo);
-                bool ret = generateUploadUrl(taskInfo->fbdo, taskInfo->config->_projectId.c_str(), taskInfo->config->_locationId.c_str());
+                bool ret = mGenerateUploadUrl(taskInfo->fbdo, taskInfo->config->_projectId.c_str(), taskInfo->config->_locationId.c_str());
 
                 if (ret)
                 {
@@ -1632,7 +1632,7 @@ void FB_Functions::runDeployTask()
                 bool ret = false;
                 static PolicyBuilder pol;
                 pol.json.setJsonData(taskInfo->policy.c_str());
-                ret = setIamPolicy(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str(), &pol);
+                ret = mSetIamPolicy(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str(), &pol);
                 if (ret)
                 {
                     taskInfo->fbdo->_ss.cfn.cbInfo.status = fb_esp_functions_operation_status_finished;
@@ -1650,7 +1650,7 @@ void FB_Functions::runDeployTask()
                 ut->appendP(t, fb_esp_pgm_str_428);
                 t += taskInfo->projectId;
                 ut->appendP(t, fb_esp_pgm_str_431);
-                ret = listOperations(taskInfo->fbdo, t.c_str(), 1, "");
+                ret = mListOperations(taskInfo->fbdo, t.c_str(), "1", "");
                 if (ret)
                 {
                     taskInfo->fbdo->_ss.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
@@ -1669,7 +1669,7 @@ void FB_Functions::runDeployTask()
                     sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.dataPtr->to<const char *>(), taskInfo->callback, taskInfo->statusInfo);
                 }
 
-                ret = deleteFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
+                ret = mDeleteFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
             }
 
             if (taskInfo->step == fb_esp_functions_creation_step_polling_status)
@@ -1681,7 +1681,7 @@ void FB_Functions::runDeployTask()
                     if (!taskInfo->_delete && !taskInfo->active)
                     {
 
-                        bool ret = getFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
+                        bool ret = mGetFunction(taskInfo->fbdo, taskInfo->projectId.c_str(), taskInfo->locationId.c_str(), taskInfo->functionId.c_str());
 
                         if (ret)
                         {

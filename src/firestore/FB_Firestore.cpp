@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.2
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -46,7 +46,7 @@ FB_Firestore::~FB_Firestore()
 {
 }
 
-bool FB_Firestore::exportDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *bucketID, const char *storagePath, const char *collectionIds)
+bool FB_Firestore::mExportDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *bucketID, const char *storagePath, const char *collectionIds)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_export_docs;
@@ -95,7 +95,7 @@ bool FB_Firestore::exportDocuments(FirebaseData *fbdo, const char *projectId, co
     return ret;
 }
 
-bool FB_Firestore::importDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *bucketID, const char *storagePath, const char *collectionIds)
+bool FB_Firestore::mImportDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *bucketID, const char *storagePath, const char *collectionIds)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_import_docs;
@@ -143,7 +143,7 @@ bool FB_Firestore::importDocuments(FirebaseData *fbdo, const char *projectId, co
     return ret;
 }
 
-bool FB_Firestore::createDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *mask)
+bool FB_Firestore::mCreateDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *mask)
 {
     size_t count = 0;
     std::string collectionId, documentId;
@@ -164,7 +164,7 @@ bool FB_Firestore::createDocument(FirebaseData *fbdo, const char *projectId, con
     return createDocument(fbdo, projectId, databaseId, collectionId.c_str(), documentId.c_str(), content, mask);
 }
 
-bool FB_Firestore::createDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char *documentId, const char *content, const char *mask)
+bool FB_Firestore::mCreateDocument2(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char *documentId, const char *content, const char *mask)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_create_doc;
@@ -177,7 +177,7 @@ bool FB_Firestore::createDocument(FirebaseData *fbdo, const char *projectId, con
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Firestore::patchDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *updateMask, const char *mask, const char *exists, const char *updateTime)
+bool FB_Firestore::mPatchDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *updateMask, const char *mask, const char *exists, const char *updateTime)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_patch_doc;
@@ -237,16 +237,6 @@ bool FB_Firestore::setFieldTransform(FirebaseJson *json, struct fb_esp_firestore
     }
 
     return hasTransform;
-}
-
-bool FB_Firestore::commitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction)
-{
-    return mCommitDocument(fbdo, projectId, databaseId, writes, transaction, false);
-}
-
-bool FB_Firestore::commitDocumentAsync(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction)
-{
-    return mCommitDocument(fbdo, projectId, databaseId, writes, transaction, true);
 }
 
 bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction, bool async)
@@ -457,7 +447,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, const char *projectId, co
     return ret;
 }
 
-bool FB_Firestore::getDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask, const char *transaction, const char *readTime)
+bool FB_Firestore::mGetDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask, const char *transaction, const char *readTime)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_get_doc;
@@ -470,7 +460,7 @@ bool FB_Firestore::getDocument(FirebaseData *fbdo, const char *projectId, const 
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Firestore::beginTransaction(FirebaseData *fbdo, const char *projectId, const char *databaseId, TransactionOptions *transactionOptions)
+bool FB_Firestore::mBeginTransaction(FirebaseData *fbdo, const char *projectId, const char *databaseId, TransactionOptions *transactionOptions)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_begin_transaction;
@@ -505,7 +495,7 @@ bool FB_Firestore::beginTransaction(FirebaseData *fbdo, const char *projectId, c
     return ret;
 }
 
-bool FB_Firestore::rollback(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *transaction)
+bool FB_Firestore::mRollback(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *transaction)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_rollback;
@@ -531,7 +521,7 @@ bool FB_Firestore::rollback(FirebaseData *fbdo, const char *projectId, const cha
     return ret;
 }
 
-bool FB_Firestore::runQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode, const char *consistency)
+bool FB_Firestore::mRunQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode, const char *consistency)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_run_query;
@@ -573,7 +563,7 @@ bool FB_Firestore::runQuery(FirebaseData *fbdo, const char *projectId, const cha
     return ret;
 }
 
-bool FB_Firestore::deleteDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *exists, const char *updateTime)
+bool FB_Firestore::mDeleteDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *exists, const char *updateTime)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_delete_doc;
@@ -585,14 +575,14 @@ bool FB_Firestore::deleteDocument(FirebaseData *fbdo, const char *projectId, con
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Firestore::listDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, int pageSize, const char *pageToken, const char *orderBy, const char *mask, bool showMissing)
+bool FB_Firestore::mListDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char* pageSize, const char *pageToken, const char *orderBy, const char *mask, bool showMissing)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_list_doc;
     req.projectId = projectId;
     req.databaseId = databaseId;
     req.collectionId = collectionId;
-    req.pageSize = pageSize;
+    req.pageSize = atoi(pageSize);
     req.pageToken = pageToken;
     req.orderBy = orderBy;
     req.mask = mask;
@@ -600,7 +590,7 @@ bool FB_Firestore::listDocuments(FirebaseData *fbdo, const char *projectId, cons
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Firestore::listCollectionIds(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, int pageSize, const char *pageToken)
+bool FB_Firestore::mListCollectionIds(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char* pageSize, const char *pageToken)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_list_collection;
@@ -613,7 +603,7 @@ bool FB_Firestore::listCollectionIds(FirebaseData *fbdo, const char *projectId, 
 
     fbdo->_ss.jsonPtr->clear();
     char *tmp = ut->strP(fb_esp_pgm_str_357);
-    fbdo->_ss.jsonPtr->add(tmp, pageSize);
+    fbdo->_ss.jsonPtr->add(tmp, atoi(pageSize));
     ut->delS(tmp);
     tmp = ut->strP(fb_esp_pgm_str_358);
     fbdo->_ss.jsonPtr->add(tmp, pageToken);

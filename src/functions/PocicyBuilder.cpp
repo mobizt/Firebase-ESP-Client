@@ -1,9 +1,9 @@
 /**
- * Google's IAM Policy Builder class, PolicyBuilder.cpp version 1.0.2
+ * Google's IAM Policy Builder class, PolicyBuilder.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 22, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -46,7 +46,7 @@ AuditLogConfig::~AuditLogConfig()
 {
 }
 
-void AuditLogConfig::setLogType(const char *logType)
+void AuditLogConfig::mSetLogType(const char *logType)
 {
     if (!ut)
         ut = Signer.ut;
@@ -58,7 +58,7 @@ void AuditLogConfig::setLogType(const char *logType)
     }
 }
 
-void AuditLogConfig::addexemptedMembers(const char *member)
+void AuditLogConfig::mAddexemptedMembers(const char *member)
 {
     if (!ut)
         ut = Signer.ut;
@@ -142,7 +142,7 @@ void AuditConfig::clear()
     }
 }
 
-void AuditConfig::setService(const char *service)
+void AuditConfig::mSetService(const char *service)
 {
     if (!ut)
         ut = Signer.ut;
@@ -161,7 +161,7 @@ Binding::~Binding()
 {
 }
 
-void Binding::addMember(const char *member)
+void Binding::mAddMember(const char *member)
 {
     if (!ut)
         ut = Signer.ut;
@@ -174,7 +174,7 @@ void Binding::addMember(const char *member)
     }
 }
 
-void Binding::setRole(const char *role)
+void Binding::mSetRole(const char *role)
 {
     if (!ut)
         ut = Signer.ut;
@@ -185,7 +185,7 @@ void Binding::setRole(const char *role)
         ut->delS(tmp);
     }
 }
-void Binding::setCondition(const char *expression, const char *title, const char *description, const char *location)
+void Binding::mSetCondition(const char *expression, const char *title, const char *description, const char *location)
 {
     if (!ut)
         ut = Signer.ut;
@@ -297,18 +297,18 @@ void PolicyBuilder::addBinding(Binding *binding, bool clear)
     }
 }
 
-void PolicyBuilder::setVersion(int v)
+void PolicyBuilder::mSetVersion(const char* v)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_410);
-        json.set(tmp, v);
+        json.set(tmp, atoi(v));
         ut->delS(tmp);
     }
 }
-void PolicyBuilder::setETag(const char *etag)
+void PolicyBuilder::mSetETag(const char *etag)
 {
     if (!ut)
         ut = Signer.ut;

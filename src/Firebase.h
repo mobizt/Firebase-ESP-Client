@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.0
+ * The Firebase class, Firebase.h v1.0.1
  * 
- *  Created August 15, 2021
+ *  Created August 21, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -187,8 +187,8 @@ public:
    * See the Templates of Email address verification in the Firebase console
    * , Authentication.
   */
-  template <typename T>
-  bool sendEmailVerification(FirebaseConfig *config, T idToken)
+  template <typename T = const char *>
+  bool sendEmailVerification(FirebaseConfig *config, T idToken = "")
   {
     init(config, nullptr);
     return Signer.handleEmailSending(toString(idToken), fb_esp_user_email_sending_type_verify);
@@ -517,7 +517,8 @@ public:
    * @param fbdo Firebase Data Object to hold data and instance.
    * @param millisec The milliseconds to limit the request (0 900,000 ms or 15 min).
   */
-  void setReadTimeout(FirebaseData &fbdo, int millisec) { RTDB.setReadTimeout(&fbdo, millisec); }
+  template <typename T = int>
+  void setReadTimeout(FirebaseData &fbdo, T millisec) { RTDB.setReadTimeout(&fbdo, millisec); }
 
   /** Set the size limit of payload data that will write to the database for each request.
    * 

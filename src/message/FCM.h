@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.10
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created July 29, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -56,7 +56,8 @@ public:
    * 
    * The API key created in the Google Cloud console, cannot be used for authorizing FCM requests. 
    */
-  void setServerKey(const char *serverKey);
+  template <typename T = const char *>
+  void setServerKey(T serverKey) { mSetServerKey(toString(serverKey)); }
 
   /** Send Firebase Cloud Messaging to the devices with JSON payload using the FCM legacy API.
    * 
@@ -114,7 +115,8 @@ public:
    * @return Boolean type status indicates the success of the operation.
    * 
   */
-  bool subscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], size_t numToken);
+  template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
+  bool subscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscibeTopic(fbdo, topic, IID, NUM2S(numToken).get()); }
 
   /** Unsubscribe the devices from the topic.
    * 
@@ -125,7 +127,8 @@ public:
    * @return Boolean type status indicates the success of the operation.
    * 
   */
-  bool unsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], size_t numToken);
+  template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
+  bool unsubscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscibeTopic(fbdo, topic, IID, NUM2S(numToken).get()); }
 
   /** Get the app instance info.
    * 
@@ -134,7 +137,8 @@ public:
    * @return Boolean type status indicates the success of the operation.
    * 
   */
-  bool appInstanceInfo(FirebaseData *fbdo, const char *IID);
+  template <typename T = const char *>
+  bool appInstanceInfo(FirebaseData *fbdo, T IID) { return mAppInstanceInfo(toString(IID)); }
 
   /** Create registration tokens for APNs tokens.
    * 
@@ -146,7 +150,8 @@ public:
    * @return Boolean type status indicates the success of the operation.
    * 
   */
-  bool regisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], size_t numToken);
+  template <typename T1 = const char *, typename T2 = const char **, typename T3 = size_t>
+  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3  numToken) { return mRegisAPNsTokens(fbdo, application, sandbox, APNs, NUM2S(numToken).get()); }
 
   /** Get the server payload.
    * 
@@ -156,19 +161,25 @@ public:
   String payload(FirebaseData *fbdo);
 
 private:
-  bool init(bool clearInt= false);
+  bool init(bool clearInt = false);
   void begin(UtilsClass *u);
   bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
   void rescon(FirebaseData *fbdo, const char *host);
   void fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode);
-  bool fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char*msg);
+  bool fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *msg);
   int fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
   void fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg);
   void fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg);
   void fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken);
   void fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken);
+
+  void mSetServerKey(const char *serverKey);
+  bool mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken);
+  bool mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken);
+  bool mAppInstanceInfo(FirebaseData *fbdo, const char *IID);
+  bool mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char *numToken);
 
   void clear();
   FirebaseConfig *cfg = nullptr;
@@ -177,6 +188,19 @@ private:
   std::string server_key;
   std::string raw;
   uint16_t port = FIREBASE_PORT;
+
+protected:
+  template <typename T>
+  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+  template <typename T>
+  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

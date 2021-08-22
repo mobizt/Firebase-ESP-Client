@@ -1,19 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.4.1"
+#define FIREBASE_CLIENT_VERSION "2.4.2"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.4.1
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.4.2
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created August 19, 2021
+ * Created August 21, 2021
  * 
 *   Updates:
  * 
- * - Fix mising stringData in stream issue.
- * - Fix issue that data type mismatch checking should not activated by default.
- * - Add FirebaseJson features and fix for child of searching path existed in the search result.
+ * - Add supports generic string and number.
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)

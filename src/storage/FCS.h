@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.h version 1.1.3
+ * Google's Firebase Storage class, FCS.h version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -64,7 +64,8 @@ public:
      * @note Use FirebaseData.downloadURL() to get the download link.
      * 
     */
-    bool upload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remotetFileName, const char *mime);
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType, T3 remotetFileName, T4 mime) { return mUpload(fbdo, toString(bucketID), toString(localFileName), storageType, toString(remotetFileName), toString(mime)); }
 
     /** Upload byte array to the Firebase Storage data bucket.
      * 
@@ -80,7 +81,8 @@ public:
      * @note Use FirebaseData.downloadURL() to get the download link.
      * 
     */
-    bool upload(FirebaseData *fbdo, const char *bucketID, const uint8_t *data, size_t len, const char *remoteFileName, const char *mime);
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+    bool upload(FirebaseData *fbdo, T1 bucketID, const uint8_t *data, size_t len, T2 remoteFileName, T3 mime) { return mUpload(fbdo, toString(bucketID), data, len, toString(remoteFileName), toString(mime)); }
 
     /** Download file from the Firebase Storage data bucket.
      * 
@@ -93,7 +95,8 @@ public:
      * @return Boolean value, indicates the success of the operation. 
      * 
     */
-    bool download(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType);
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+    bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName, fb_esp_mem_storage_type storageType) { return mDownload(fbdo, toString(bucketID), toString(remoteFileName), toString(localFileName), storageType); }
 
     /** Get the meta data of file in Firebase Storage data bucket
      * 
@@ -107,7 +110,8 @@ public:
      * generation, etag, crc32, downloadTokens properties from file.
      * 
     */
-    bool getMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName);
+    template <typename T1 = const char *, typename T2 = const char *>
+    bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName) { return mGetMetadata(fbdo, toString(bucketID), toString(remoteFileName)); }
 
     /** Delete file from Firebase Storage data bucket
      * 
@@ -118,7 +122,8 @@ public:
      * @return Boolean value, indicates the success of the operation. 
      * 
     */
-    bool deleteFile(FirebaseData *fbdo, const char *bucketID, const char *fileName);
+    template <typename T1 = const char *, typename T2 = const char *>
+    bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName) { return mDeleteFile(fbdo, toString(bucketID), toString(fileName)); }
 
     /** List all files in the Firebase Storage data bucket.
      * 
@@ -130,10 +135,10 @@ public:
      * @note Use the FileList type data to get name and bucket properties for each item.
      * 
     */
-    bool listFiles(FirebaseData *fbdo, const char *bucketID);
+    template <typename T = const char *>
+    bool listFiles(FirebaseData *fbdo, T bucketID) { return mListFiles(fbdo, toString(bucketID)); }
 
 private:
-    
     UtilsClass *ut = nullptr;
     void begin(UtilsClass *u);
     bool sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req);
@@ -141,6 +146,25 @@ private:
     bool fcs_connect(FirebaseData *fbdo);
     bool fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req);
     bool handleResponse(FirebaseData *fbdo);
+    bool mUpload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, const char *remotetFileName, const char *mime);
+    bool mUpload(FirebaseData *fbdo, const char *bucketID, const uint8_t *data, size_t len, const char *remoteFileName, const char *mime);
+    bool mDownload(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType);
+    bool mGetMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName);
+    bool mDeleteFile(FirebaseData *fbdo, const char *bucketID, const char *fileName);
+    bool mListFiles(FirebaseData *fbdo, const char *bucketID);
+
+protected:
+    template <typename T>
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

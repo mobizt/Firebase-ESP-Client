@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.h version 1.1.2
+ * Google's Cloud Functions class, Functions.h version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created August 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -73,7 +73,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool callFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *data);
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    bool callFunction(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 functionId, T4 data) { return mCallFunction(fbdo, toString(projectId), toString(locationId), toString(functionId), toString(data)); }
 
     /** Creates a new function. 
      * If a function with the given name already exists in the specified project, 
@@ -122,7 +123,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool patchFunction(FirebaseData *fbdo, const char *functionId, FunctionsConfig *patchData);
+    template <typename T = const char *>
+    bool patchFunction(FirebaseData *fbdo, T functionId, FunctionsConfig *patchData) { return mPatchFunction(fbdo, toString(functionId), patchData); }
 
     /** Sets the IAM access control policy on the specified function. Replaces any existing policy.
      * 
@@ -143,7 +145,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool setIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, PolicyBuilder *policy, const char *updateMask = "");
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    bool setIamPolicy(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 functionId, PolicyBuilder *policy, T4 updateMask = "") { return mSetIamPolicy(fbdo, toString(projectId), toString(locationId), toString(functionId), policy, toString(updateMask)); }
 
     /** Gets the IAM access control policy for a function. 
      * Returns an empty policy if the function exists and does not have a policy set.
@@ -162,7 +165,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool getIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *version = "");
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    bool getIamPolicy(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 functionId, T4 version = "") { return mGetIamPolicy(fbdo, toString(projectId), toString(locationId), toString(functionId), toString(version)); }
 
     /** Returns a function with the given name from the requested project.
      * 
@@ -178,7 +182,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool getFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId);
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+    bool getFunction(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 functionId) { return mGetFunction(fbdo, toString(projectId), toString(locationId), toString(functionId)); }
 
     /** Deletes a function with the given name from the specified project. 
      * If the given function is used by some trigger, the trigger will be updated to remove this function.
@@ -195,7 +200,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool deleteFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId);
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+    bool deleteFunction(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 functionId) { return mDeleteFunction(fbdo, toString(projectId), toString(locationId), toString(functionId)); }
 
     /** Returns a signed URL for downloading deployed function source code. 
      * The URL is only valid for a limited period and should be used within minutes after generation. 
@@ -213,7 +219,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool generateDownloadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *versionId = "");
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    bool generateDownloadUrl(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 functionId, T4 versionId = "") { return mGenerateDownloadUrl(fbdo, toString(projectId), toString(locationId), toString(functionId), toString(versionId)); }
 
     /** Returns a signed URL for uploading a function source code.  
      * 
@@ -228,7 +235,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool generateUploadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId);
+    template <typename T1 = const char *, typename T2 = const char *>
+    bool generateUploadUrl(FirebaseData *fbdo, T1 projectId, T2 locationId) { return mGenerateUploadUrl(fbdo, toString(projectId), toString(locationId)); }
 
     /** Returns a list of functions that belong to the requested project.
      * 
@@ -246,7 +254,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool listFunctions(FirebaseData *fbdo, const char *projectId, const char *locationId, size_t pageSize, const char *pageToken = "");
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t, typename T4 = const char *>
+    bool listFunctions(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 pageSize, T4 pageToken = "") { return mListFunctions(fbdo, toString(projectId), toString(locationId), NUM2S(pageSize).get(), toString(pageToken)); }
 
     /** Returns a function with the given name from the requested project.
      * 
@@ -269,7 +278,8 @@ public:
      * This function requires OAuth2.0 authentication.
      * 
     */
-    bool listOperations(FirebaseData *fbdo, const char *filter, int pageSize, const char *pageToken);
+    template <typename T1 = const char *, typename T2 = size_t, typename T3 = const char *>
+    bool listOperations(FirebaseData *fbdo, T1 filter, T2 pageSize, T3 pageToken) { return mListOperations(fbdo, toString(filter), NUM2S(pageSize).get(), toString(pageToken)); }
 
 private:
     fb_esp_functions_status _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
@@ -298,12 +308,35 @@ private:
     bool uploadFile(FirebaseData *fbdo, const char *uploadUrl, const char *filePath, fb_esp_mem_storage_type storageType);
     bool uploadPGMArchive(FirebaseData *fbdo, const char *uploadUrl, const uint8_t *pgmArc, size_t pgmArcLen);
     void sendCallback(FirebaseData *fbdo, fb_esp_functions_operation_status status, const char *message, FunctionsOperationCallback cb, FunctionsOperationStatusInfo *info);
+    bool mCallFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *data);
+    bool mPatchFunction(FirebaseData *fbdo, const char *functionId, FunctionsConfig *patchData);
+    bool mSetIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, PolicyBuilder *policy, const char *updateMask = "");
+    bool mGetIamPolicy(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *version = "");
+    bool mGetFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId);
+    bool mDeleteFunction(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId);
+    bool mGenerateDownloadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *functionId, const char *versionId = "");
+    bool mGenerateUploadUrl(FirebaseData *fbdo, const char *projectId, const char *locationId);
+    bool mListFunctions(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *pageSize, const char *pageToken = "");
+    bool mListOperations(FirebaseData *fbdo, const char *filter, const char *pageSize, const char *pageToken);
 
 #if defined(ESP32)
     void runDeployTask(const char *taskName);
 #elif defined(ESP8266)
     void runDeployTask();
 #endif
+
+protected:
+    template <typename T>
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+
+    template <typename T>
+    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif
