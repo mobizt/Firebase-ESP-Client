@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.11
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created August 31, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -138,7 +138,7 @@ public:
    * 
   */
   template <typename T = const char *>
-  bool appInstanceInfo(FirebaseData *fbdo, T IID) { return mAppInstanceInfo(toString(IID)); }
+  bool appInstanceInfo(FirebaseData *fbdo, T IID) { return mAppInstanceInfo(fbdo, toString(IID)); }
 
   /** Create registration tokens for APNs tokens.
    * 
