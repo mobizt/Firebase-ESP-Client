@@ -102,26 +102,26 @@ void loop()
         json.setDoubleDigits(3);
         json.add("value", count);
 
-        Serial.printf("Set json... %s\n", Firebase.setJSON(fbdo, "/test/json", json) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, "/test/json", &json) ? "ok" : fbdo.errorReason().c_str());
 
-        Serial.printf("Get json... %s\n", Firebase.getJSON(fbdo, "/test/json") ? fbdo.to<FirebaseJson>().raw() : fbdo.errorReason().c_str());
+        Serial.printf("Get json... %s\n", Firebase.RTDB.getJSON(&fbdo, "/test/json") ? fbdo.to<FirebaseJson>().raw() : fbdo.errorReason().c_str());
 
         FirebaseJson jVal;
-        Serial.printf("Get json ref... %s\n", Firebase.getJSON(fbdo, "/test/json", &jVal) ? jVal.raw() : fbdo.errorReason().c_str());
+        Serial.printf("Get json ref... %s\n", Firebase.RTDB.getJSON(&fbdo, "/test/json", &jVal) ? jVal.raw() : fbdo.errorReason().c_str());
 
         FirebaseJsonArray arr;
         arr.setFloatDigits(2);
         arr.setDoubleDigits(4);
         arr.add("a", "b", "c", true, 45, (float)6.1432, 123.45692789);
 
-        Serial.printf("Set array... %s\n", Firebase.setArray(fbdo, "/test/array", arr) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/array", &arr) ? "ok" : fbdo.errorReason().c_str());
 
-        Serial.printf("Get array... %s\n", Firebase.getArray(fbdo, "/test/array") ? fbdo.to<FirebaseJsonArray>().raw() : fbdo.errorReason().c_str());
+        Serial.printf("Get array... %s\n", Firebase.RTDB.getArray(&fbdo, "/test/array") ? fbdo.to<FirebaseJsonArray>().raw() : fbdo.errorReason().c_str());
 
-        Serial.printf("Push json... %s\n", Firebase.pushJSON(fbdo, "/test/push", json) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Push json... %s\n", Firebase.RTDB.pushJSON(&fbdo, "/test/push", &json) ? "ok" : fbdo.errorReason().c_str());
 
         json.set("value", count + 0.29745);
-        Serial.printf("Update json... %s\n\n", Firebase.updateNode(fbdo, "/test/push/" + fbdo.pushName(), json) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/test/push/" + fbdo.pushName(), &json) ? "ok" : fbdo.errorReason().c_str());
 
         count++;
     }

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.1
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created August 31, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -59,7 +59,7 @@ void FB_RTDB::end(FirebaseData *fbdo)
     fbdo->clear();
 }
 
-void FB_RTDB::mSetReadTimeout(FirebaseData *fbdo, const char* millisec)
+void FB_RTDB::mSetReadTimeout(FirebaseData *fbdo, const char *millisec)
 {
     if ((int)millisec <= 900000)
         fbdo->_ss.rtdb.read_tmo = (int)millisec;
@@ -416,7 +416,7 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_method method, const char 
     return processRequest(fbdo, &req);
 }
 
-bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, const char* limit, const char* dataRetentionPeriod)
+bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, const char *limit, const char *dataRetentionPeriod)
 {
     if (fbdo->_ss.rtdb.pause)
         return true;
@@ -435,7 +435,7 @@ bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, const char *path, cons
 
     if (_limit > 30)
         _limit = 30;
-        
+
     char *pEnd;
     uint32_t pr = strtoull(dataRetentionPeriod, &pEnd, 10);
 

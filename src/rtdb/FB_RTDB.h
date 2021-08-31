@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.1
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created August 31, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -433,10 +433,10 @@ public:
    * call [FirebaseData object].pushName() to get the key.
    */
   template <typename T = const char *>
-  bool pushTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the integer value at the defined node.
    * 
@@ -1749,7 +1749,7 @@ private:
   bool mPathExisted(FirebaseData *fbdo, const char *path);
   String mGetETag(FirebaseData *fbdo, const char *path);
   bool mGetShallowData(FirebaseData *fbdo, const char *path);
-  bool mDeleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, const char* limit, const char* dataRetentionPeriod);
+  bool mDeleteNodesByTimestamp(FirebaseData *fbdo, const char *path, const char *timestampNode, const char *limit, const char *dataRetentionPeriod);
   bool mBeginMultiPathStream(FirebaseData *fbdo, const char *parentPath);
   bool mBackup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
   bool mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *nodePath, const char *fileName);
@@ -1769,9 +1769,9 @@ private:
   bool mBeginStream(FirebaseData *fbdo, const char *path);
   void mSetReadTimeout(FirebaseData *fbdo, const char *millisec);
 #if defined(ESP32)
-      void runStreamTask(FirebaseData *fbdo, const char *taskName);
+  void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #elif defined(ESP8266)
-      void runStreamTask();
+  void runStreamTask();
   void runErrorQueueTask();
 #endif
   uint8_t openErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType, uint8_t mode);

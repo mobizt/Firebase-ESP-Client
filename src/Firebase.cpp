@@ -390,7 +390,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
 
     FirebaseJsonData data;
 
-    FirebaseJson *json= fbdo.to<FirebaseJson*>();
+    FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
     std::string s;
@@ -410,7 +410,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
         return false;
     }
 
-    FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray*>();
+    FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
     arr->setJsonArrayData(fbdo.fcm.idTokens.c_str());
 
     if (messageType == fb_esp_fcm_msg_type::msg_single && fbdo.fcm.idTokens.length() > 0 && fbdo.fcm._index > arr->size() - 1)

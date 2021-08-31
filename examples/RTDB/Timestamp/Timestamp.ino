@@ -91,7 +91,7 @@ void setup()
 
 void loop()
 {
-  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //Flash string (PROGMEM and  (FPSTR), String, String C/C++ string, const char, char array, string literal are supported
   //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
   if (Firebase.ready() && !taskCompleted)
@@ -114,5 +114,21 @@ void loop()
     Serial.printf("Get timestamp... %s\n", Firebase.RTDB.getDouble(&fbdo, "/test/timestamp") ? "ok" : fbdo.errorReason().c_str());
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
       printf("TIMESTAMP: %lld\n", fbdo.to<uint64_t>());
+
+    //To set and push data with timestamp, requires the JSON data with .sv placeholder
+    FirebaseJson json;
+
+    json.set("Data", "Hello");
+    //now we will set the timestamp value at Ts
+    json.set("Ts/.sv", "timestamp"); // .sv is the required place holder for sever value which currently supports only string "timestamp" as a value
+
+    //Set data with timestamp
+    Serial.printf("Set data with timestamp... %s\n", Firebase.RTDB.setJSON(&fbdo, "/test/set/data", &json) ? fbdo.to<FirebaseJson>().raw() : fbdo.errorReason().c_str());
+
+    //Push data with timestamp
+    Serial.printf("Push data with timestamp... %s\n", Firebase.RTDB.pushJSON(&fbdo, "/test/push/data", &json) ? "ok" : fbdo.errorReason().c_str());
+
+    //Get previous pushed data
+    Serial.printf("Get previous pushed data... %s\n", Firebase.RTDB.getJSON(&fbdo, "/test/push/data/" + fbdo.pushName()) ? fbdo.to<FirebaseJson>().raw() : fbdo.errorReason().c_str());
   }
 }
