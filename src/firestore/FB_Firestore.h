@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.1.3
+ * Google's Cloud Firestore class, Forestore.h version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created September 3, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -199,7 +199,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *, typename T6 = const char *>
-    bool getDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 mask = "", T5 transaction = "", T6 readTime = "") { return getDocument(fbdo, toString(projectId), toString(databaseId), toString(documentPath), toString(mask), toString(transaction), toString(readTime)); }
+    bool getDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 mask = "", T5 transaction = "", T6 readTime = "") { return mGetDocument(fbdo, toString(projectId), toString(databaseId), toString(documentPath), toString(mask), toString(transaction), toString(readTime)); }
 
     /** Starts a new transaction.
      * 

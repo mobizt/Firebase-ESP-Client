@@ -1,19 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.4.4"
+#define FIREBASE_CLIENT_VERSION "2.4.5"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.4.4
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.4.5
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created August 31, 2021
+ * Created September 3, 2021
  *
  *   Updates:
- * - Fix RTDB pushTimestamp bad request issue.
- * - Fix FCM appInstanceInfo.
- * - Update RTDB timestamp example.
- * - Update FirbaseJson RTDB client example.
+ * - Fix Firestore getDocument hang bugs #122, and also #112 due to accidently recursive calling the function itself.
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
