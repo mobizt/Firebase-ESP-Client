@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.4.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.4.6
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -324,7 +324,7 @@ Once the auth token is importance and when it was created and ready for authenti
 The legacy token size is relatively small, only 40 bytes, result in smallest header to send, while the size of id token generated using Email/Password is quite large, approx. 900 bytes. result in larger header to send.
 
 
-There is a compromise between the speed of data transfer and the Rx/Tx buffer which then reduced the free memory available especially in ESp8266.
+There is a compromise between the speed of data transfer and the Rx/Tx buffer which then reduced the free memory available especially in ESP8266.
 
 
 When the reserved SSL client Rx/Tx buffer is smaller than the size of data to be transmitted, the data need to be sent as multiple chunks which required more transmission time.
@@ -440,7 +440,37 @@ The String of type returns from `fbdo.dataType()` can be string, boolean, int, f
 The enum value type, fb_esp_rtdb_data_type returns from `fbdo.dataTypeEnum()` can be fb_esp_rtdb_data_type_null (1), fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double, fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json, fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
 
 
-The database data's payload (response) can be read or access through the following FirebaseData object's functions.
+The database data's payload (response) can be read or access through the casting value from FirebaseData object with to<type>() functions (since v2.4.0).
+
+* `String s = fbdo.to<String>();`
+
+* `std::string _s = fbdo.to<std::string>();`
+
+* `const char *str = fbdo.to<const char *>();`
+
+* `bool b = fbdo.to<bool>();`
+
+* `int16_t _i = fbdo.to<int16_t>();`
+
+* `int i = fbdo.to<int>();`
+
+* `double d = fbdo.to<double>();`
+
+* `float f = fbdo.to<float>();`
+
+* `FirebaseJson *json = fbdo.to<FirebaseJson *>();` or
+
+* `FirebaseJson json = fbdo.to<FirebaseJson>();`
+
+* `FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();` or
+
+* `FirebaseJsonArray arr = fbdo.to<FirebaseJsonArray>();`
+
+* `std::vector<uint8_t> *blob = fbdo.to<std::vector<uint8_t> *>();`
+
+* `File file = fbdo.to<File>();`
+
+Or through the legacy methods
 
 * `int i = fbdo.intData();`
 
@@ -465,36 +495,6 @@ The database data's payload (response) can be read or access through the followi
 * `std::vector<uint8_t> blob = fbdo.blobData();`
 
  * `File file = fbdo.fileStream();`
-
-Or cast to the variables or objects (since v 2.4.0)
-
-* `String s = fbdo.to<String>();`
-
-* `std::string _s = fbdo.to<std::string>();`
-
-* `const char *str = fbdo.to<const char *>();`
-
-* `bool b = fbdo.to<bool>();`
-
-* `int16_t _i = fbdo.to<int16_t>();`
-
-* `int i = fbdo.to<int>();`
-
-* `double d = fbdo.to<double>();`
-
-* `float f = fbdo.to<float>();`
-
-* `FirebaseJson *json = fbdo.to<FirebaseJson *>(); //recommend to cast to pointer to object.` or
-
-* `FirebaseJson json = fbdo.to<FirebaseJson>();`
-
-* `FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>(); //recommend to cast to pointer to object.` or
-
-* `FirebaseJsonArray arr = fbdo.to<FirebaseJsonArray>();`
-
-* `std::vector<uint8_t> *blob = fbdo.to<std::vector<uint8_t> *>();`
-
-* `File file = fbdo.to<File>();`
 
 
 Read the data which its type does not match the data type in the database from above functions will return empty (string, object or array).
@@ -557,7 +557,7 @@ ETag at any node can be read through `Firebase.RTDB.getETag`.  ETag value change
 
 The server's **Timestamp** can be stored in the database through `Firebase.RTDB.setTimestamp`. 
 
-The returned **Timestamp** value can get from `fbdo.intData()`. 
+The returned **Timestamp** value can get from `fbdo.fbdo.to<int>()`. 
 
 The file systems for flash and sd memory can be changed in [**FirebaseFS.h**](/src/FirebaseFS.h).
 

@@ -99,6 +99,8 @@ void loop()
   if (!Firebase.ready())
     return;
 
+  //Please avoid to use delay or any third party libraries that use delay internally to wait for hardware to be ready in this loop.
+
   if (!Firebase.RTDB.readStream(&stream))
     Serial.printf("sream read error, %s\n\n", stream.errorReason().c_str());
 

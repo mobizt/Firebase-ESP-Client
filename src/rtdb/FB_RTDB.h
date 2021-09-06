@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.2
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 31, 2021
+ * Created September 6, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -925,7 +925,7 @@ public:
   bool setTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Update (patch) the child (s) nodes to the defined node.
    * 

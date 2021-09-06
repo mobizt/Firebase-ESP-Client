@@ -202,3 +202,37 @@ void loop()
     count++;
   }
 }
+
+/// PLEASE AVOID THIS ////
+
+//Please avoid the following inappropriate and inefficient use cases
+/**
+ * 
+ * 1. Call get repeatedly inside the loop without the appropriate timing for execution provided e.g. millis() or conditional checking,
+ * where delay should be avoided.
+ * 
+ * Every time get was called, the request header need to be sent to server which its size depends on the authentication method used, 
+ * and costs your data usage.
+ * 
+ * Please use stream function instead for this use case.
+ * 
+ * 2. Using the single FirebaseData object to call different type functions as above example without the appropriate 
+ * timing for execution provided in the loop i.e., repeatedly switching call between get and set functions.
+ * 
+ * In addition to costs the data usage, the delay will be involved as the session needs to be closed and opened too often
+ * due to the HTTP method (GET, PUT, POST, PATCH and DELETE) was changed in the incoming request. 
+ * 
+ * 
+ * Please reduce the use of swithing calls by store the multiple values to the JSON object and store it once on the database.
+ * 
+ * Or calling continuously "set" or "setAsync" functions without "get" called in between, and calling get continuously without set 
+ * called in between.
+ * 
+ * If you needed to call arbitrary "get" and "set" based on condition or event, use another FirebaseData object to avoid the session 
+ * closing and reopening.
+ * 
+ * 3. Use of delay or hidden delay or blocking operation to wait for hardware ready in the third party sensor libraries, together with stream functions e.g. Firebase.RTDB.readStream and fbdo.streamAvailable in the loop.
+ * 
+ * Please use non-blocking mode of sensor libraries (if available) or use millis instead of delay in your code.
+ * 
+ */
