@@ -460,11 +460,11 @@ The database data's payload (response) can be read or access through the casting
 
 * `FirebaseJson *json = fbdo.to<FirebaseJson *>();` or
 
-* `FirebaseJson json = fbdo.to<FirebaseJson>();`
+* `FirebaseJson &json = fbdo.to<FirebaseJson>();`
 
 * `FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();` or
 
-* `FirebaseJsonArray arr = fbdo.to<FirebaseJsonArray>();`
+* `FirebaseJsonArray &arr = fbdo.to<FirebaseJsonArray>();`
 
 * `std::vector<uint8_t> *blob = fbdo.to<std::vector<uint8_t> *>();`
 
@@ -1654,11 +1654,11 @@ if(result.success)
   //Type of parsed data
   Serial.println(result.type);
   //Its value
-  Serial.println(result.stringValue);
-  //Serial.println(result.intValue);
-  //Serial.println(result.boolValue);
-  //Serial.println(result.floatValue);
-  //Serial.println(result.doubleValue);
+  Serial.println(result.to<String>());
+  //Serial.println(result.to<int>());
+  //Serial.println(result.to<bool>());
+  //Serial.println(result.to<float>());
+  //Serial.println(result.to<double>());
 
 }
 
