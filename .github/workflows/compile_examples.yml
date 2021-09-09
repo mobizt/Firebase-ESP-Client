@@ -118,8 +118,12 @@ jobs:
         pip install --upgrade platformio
     - name: Install 3rd party dependecies
       run: | 
-        pio lib install \
+        pio lib -g install \
         https://github.com/mobizt/Firebase-ESP-Client
+
+    - name: update library
+      run: |
+         platformio lib --global update
         
     - name: Run PlatformIO Examples
       run: |
@@ -238,8 +242,12 @@ jobs:
 
     - name: Install 3rd party dependecies
       run: | 
-        pio lib install \
+        pio lib -g install \
         https://github.com/mobizt/Firebase-ESP-Client
+
+     - name: update library
+      run: |
+         platformio lib --global update
 
     - name: Run PlatformIO Examples
       run: |
