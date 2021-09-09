@@ -120,11 +120,11 @@ jobs:
       run: | 
         pio lib -g install \
         https://github.com/mobizt/Firebase-ESP-Client
-
+        
     - name: update library
       run: |
-         platformio lib --global update
-        
+        pio lib --global update
+
     - name: Run PlatformIO Examples
       run: |
         pio ci --board=d1_mini \
@@ -244,10 +244,10 @@ jobs:
       run: | 
         pio lib -g install \
         https://github.com/mobizt/Firebase-ESP-Client
-
-     - name: update library
+        
+    - name: update library
       run: |
-         platformio lib --global update
+        pio lib --global update
 
     - name: Run PlatformIO Examples
       run: |
