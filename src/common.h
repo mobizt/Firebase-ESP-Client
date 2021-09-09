@@ -1,6 +1,6 @@
 
 /**
- * Created August 15, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -497,6 +497,21 @@ struct fb_esp_rtdb_queue_info_t
 
 #endif
 
+typedef struct fb_esp_spi_ethernet_module_t
+{
+#if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
+#ifdef INC_ENC28J60_LWIP
+    ENC28J60lwIP *enc28j60;
+#endif
+#ifdef INC_W5100_LWIP
+    Wiznet5100lwIP *w5100;
+#endif
+#ifdef INC_W5500_LWIP
+    Wiznet5500lwIP *w5500;
+#endif
+#endif
+} SPI_ETH_Module;
+
 struct server_response_data_t
 {
     int httpCode = -1;
@@ -772,6 +787,7 @@ struct fb_esp_cfg_t
     TokenStatusCallback token_status_callback = NULL;
     int8_t max_token_generation_retry = MAX_EXCHANGE_TOKEN_ATTEMPTS;
     struct fb_esp_rtdb_config_t rtdb;
+    SPI_ETH_Module spi_ethernet_module;
 };
 #ifdef ENABLE_RTDB
 struct fb_esp_rtdb_info_t
@@ -1489,11 +1505,7 @@ static const char fb_esp_pgm_str_65[] PROGMEM = "gateway timeout";
 static const char fb_esp_pgm_str_66[] PROGMEM = "http version not support";
 static const char fb_esp_pgm_str_67[] PROGMEM = "network authentication required";
 static const char fb_esp_pgm_str_68[] PROGMEM = "data buffer overflow";
-#if defined(ESP32)
-static const char fb_esp_pgm_str_69[] PROGMEM = "response payload read timed out due to too large data\n** RECOMMENDATION, Update the ESP32 Arduino Core SDK, try to reduce the data at the node that data is being read **";
-#elif defined(ESP8266)
-static const char fb_esp_pgm_str_69[] PROGMEM = "response payload read timed out due to too large data\n** WARNING!, in stream connection, unknown length payload can cause device crashed (wdt reset) **\n** RECOMMENDATION, increase the Rx buffer in setBSSLBufferSize Firebase Data object's function **\n** Or reduce the data at the node that data is being read **";
-#endif
+static const char fb_esp_pgm_str_69[] PROGMEM = "response payload read timed out due to network issue or too large data size";
 static const char fb_esp_pgm_str_70[] PROGMEM = "data type mismatch";
 static const char fb_esp_pgm_str_71[] PROGMEM = "path not exist";
 static const char fb_esp_pgm_str_72[] PROGMEM = "task";
@@ -1569,7 +1581,7 @@ static const char fb_esp_pgm_str_141[] PROGMEM = "\"failure\":";
 static const char fb_esp_pgm_str_142[] PROGMEM = "\"canonical_ids\":";
 static const char fb_esp_pgm_str_143[] PROGMEM = "\"results\":";
 static const char fb_esp_pgm_str_144[] PROGMEM = "registration_id";
-static const char fb_esp_pgm_str_145[] PROGMEM = "No device registration ID provided";
+static const char fb_esp_pgm_str_145[] PROGMEM = "No ID token or registration token provided";
 static const char fb_esp_pgm_str_146[] PROGMEM = "No server key provided";
 static const char fb_esp_pgm_str_147[] PROGMEM = "restricted_package_name";
 static const char fb_esp_pgm_str_148[] PROGMEM = "X-Firebase-ETag: true\r\n";
@@ -1975,8 +1987,7 @@ static const char fb_esp_pgm_str_540[] PROGMEM = "upload timed out";
 static const char fb_esp_pgm_str_541[] PROGMEM = "upload data sent error";
 #endif
 static const char fb_esp_pgm_str_542[] PROGMEM = "No topic provided";
-static const char fb_esp_pgm_str_543[] PROGMEM = "No device token provided";
-static const char fb_esp_pgm_str_544[] PROGMEM = "The index of recipient device registered token not found";
+static const char fb_esp_pgm_str_543[] PROGMEM = "The ID token or registration token was not not found at index";
 
 static const char fb_esp_pgm_str_545[] PROGMEM = "create message digest";
 static const char fb_esp_pgm_str_546[] PROGMEM = "tokenProcessingTask";
@@ -2012,10 +2023,17 @@ static const char fb_esp_pgm_str_573[] PROGMEM = ":beginTransaction";
 static const char fb_esp_pgm_str_574[] PROGMEM = ":rollback";
 #endif
 
+
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 static const char fb_esp_pgm_str_575[] PROGMEM = "msg";
 static const char fb_esp_pgm_str_576[] PROGMEM = "topic";
 static const char fb_esp_pgm_str_577[] PROGMEM = "server_key";
+#endif
+
+#if defined(ESP32)
+static const char fb_esp_pgm_str_578[] PROGMEM = "\n** RECOMMENDATION, Update the ESP32 Arduino Core SDK, try to reduce the data at the node that data is being read **";
+#elif defined(ESP8266)
+static const char fb_esp_pgm_str_578[] PROGMEM = "\n** WARNING!, in stream connection, unknown length payload can cause device crashed (wdt reset) **\n** RECOMMENDATION, increase the Rx buffer in setBSSLBufferSize Firebase Data object's function **\n** Or reduce the data at the node that data is being read **";
 #endif
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.1
+ * The Firebase class, Firebase.cpp v1.0.2
  * 
- *  Created August 21, 2021
+ *  Created September 9, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -379,6 +379,8 @@ void FIREBASE_CLASS::setDoubleDigits(uint8_t digits)
 #ifdef ENABLE_FCM
 bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
+    fbdo._spi_ethernet_module = fbdo.fcm._spi_ethernet_module;
+
     if (!fbdo.reconnect())
         return false;
 
@@ -390,7 +392,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
 
     FirebaseJsonData data;
 
-    FirebaseJson *json = fbdo.to<FirebaseJson *>();
+    FirebaseJson *json= fbdo.to<FirebaseJson*>();
     json->setJsonData(fbdo.fcm.raw);
 
     std::string s;
@@ -400,22 +402,22 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
 
     if (data.stringValue.length() == 0)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
     if (fbdo.fcm.idTokens.length() == 0 && messageType == fb_esp_fcm_msg_type::msg_single)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_DEVICE_TOKEN_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED;
         return false;
     }
 
-    FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
+    FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray*>();
     arr->setJsonArrayData(fbdo.fcm.idTokens.c_str());
 
     if (messageType == fb_esp_fcm_msg_type::msg_single && fbdo.fcm.idTokens.length() > 0 && fbdo.fcm._index > arr->size() - 1)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_FCM_ID_TOKEN_AT_INDEX_NOT_FOUND;
         return false;
     }
 
@@ -425,7 +427,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
 
     if (messageType == fb_esp_fcm_msg_type::msg_topic && data.stringValue.length() == 0)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_TOPIC_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_NO_FCM_TOPIC_PROVIDED;
         return false;
     }
 

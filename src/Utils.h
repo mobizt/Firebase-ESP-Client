@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.0
+ * Google's Firebase Util class, Utils.h version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1862,7 +1862,7 @@ public:
         return (ob == cb && os == cs);
     }
 
-    bool ethLinkUp()
+    bool ethLinkUp(SPI_ETH_Module *spi_ethernet_module = NULL)
     {
         bool ret = false;
 #if defined(ESP32)
@@ -1870,14 +1870,63 @@ public:
         if (strcmp(ETH.localIP().toString().c_str(), ip) != 0)
             ret = ETH.linkUp();
         delS(ip);
+#elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
+
+        if (!spi_ethernet_module)
+            return ret;
+
+#if defined(INC_ENC28J60_LWIP)
+        if (spi_ethernet_module->enc28j60)
+            return spi_ethernet_module->enc28j60->status() == WL_CONNECTED;
+#endif
+#if defined(INC_W5100_LWIP)
+        if (spi_ethernet_module->w5100)
+            return spi_ethernet_module->w5100->status() == WL_CONNECTED;
+#endif
+#if defined(INC_W5100_LWIP)
+        if (spi_ethernet_module->w5500)
+            return spi_ethernet_module->w5500->status() == WL_CONNECTED;
+#endif
+
 #endif
         return ret;
+    }
+
+    void ethDNSWorkAround(SPI_ETH_Module *spi_ethernet_module, const char *host, int port)
+    {
+#if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
+
+        if (!spi_ethernet_module)
+            goto ex;
+
+#if defined(INC_ENC28J60_LWIP)
+        if (spi_ethernet_module->enc28j60)
+            goto ex;
+#endif
+#if defined(INC_W5100_LWIP)
+        if (spi_ethernet_module->w5100)
+            goto ex;
+#endif
+#if defined(INC_W5100_LWIP)
+        if (spi_ethernet_module->w5500)
+            goto ex;
+#endif
+        return;
+    ex:
+        WiFiClient client;
+        client.connect(host, port);
+        client.stop();
+
+#endif
     }
 
     bool reconnect(unsigned long dataTime)
     {
 
-        bool status = WiFi.status() == WL_CONNECTED || ethLinkUp();
+        bool status = WiFi.status() == WL_CONNECTED;
+
+        if (config)
+            status |= ethLinkUp(&config->spi_ethernet_module);
 
         if (dataTime > 0)
         {
@@ -1900,7 +1949,10 @@ public:
                 }
             }
 
-            status = WiFi.status() == WL_CONNECTED || ethLinkUp();
+            status = WiFi.status() == WL_CONNECTED;
+
+            if (config)
+                status |= ethLinkUp(&config->spi_ethernet_module);
         }
 
         return status;
@@ -1959,7 +2011,6 @@ public:
 
     void idle()
     {
-        yield();
         delay(0);
     }
 

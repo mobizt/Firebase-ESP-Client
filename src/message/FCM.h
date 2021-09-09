@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.12
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 31, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -51,13 +51,32 @@ public:
   /** Set the server key.
    * 
    * @param serverKey Server key found on Console: Project settings > Cloud Messaging
+   * @param spi_ethernet_module SPI_ETH_Module struct data, optional for ESP8266 use with Ethernet module. 
    * 
    * @note This server key required for sending message via legacy HTTP API.
    * 
+   * SPI_ETH_Module struct data is for ESP8266 Ethernet supported module lwip interface.
+   * The usage example for Ethernet.
+   * 
+   * ////////////////////
+   * #include <ENC28J60lwIP.h>
+   * 
+   * #define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
+   * 
+   * ENC28J60lwIP eth(ETH_CS_PIN);
+   * 
+   * FirebaseData fbdo;
+   * 
+   * SPI_ETH_Module spi_ethernet_module;
+   * 
+   * spi_ethernet_module.enc28j60 = &eth;
+   * fbdoFirebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
+   * 
+   * ////////////////////
    * The API key created in the Google Cloud console, cannot be used for authorizing FCM requests. 
    */
   template <typename T = const char *>
-  void setServerKey(T serverKey) { mSetServerKey(toString(serverKey)); }
+  void setServerKey(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mSetServerKey(toString(serverKey), spi_ethernet_module); }
 
   /** Send Firebase Cloud Messaging to the devices with JSON payload using the FCM legacy API.
    * 
@@ -175,19 +194,20 @@ private:
   void fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken);
   void fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken);
 
-  void mSetServerKey(const char *serverKey);
+  void mSetServerKey(const char *serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
   bool mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken);
   bool mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken);
   bool mAppInstanceInfo(FirebaseData *fbdo, const char *IID);
   bool mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char *numToken);
-
   void clear();
+  
   FirebaseConfig *cfg = nullptr;
   FirebaseAuth *auth = nullptr;
   UtilsClass *ut = nullptr;
   std::string server_key;
   std::string raw;
   uint16_t port = FIREBASE_PORT;
+  SPI_ETH_Module *_spi_ethernet_module = NULL;
 
 protected:
   template <typename T>

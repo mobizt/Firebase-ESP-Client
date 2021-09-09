@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.1
+ * Google's Firebase Data class, FB_Session.h version 1.2.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -67,9 +67,27 @@ public:
   /** Store Firebase Cloud Messaging's authentication credentials.
    * 
    * @param serverKey Server key found on Console: Project settings > Cloud Messaging
+   * @param spi_ethernet_module SPI_ETH_Module struct data, optional for ESP8266 use with Ethernet module. 
+   * 
+   * SPI_ETH_Module struct data is for ESP8266 Ethernet supported module lwip interface.
+   * The usage example for Ethernet.
+   * 
+   * #include <ENC28J60lwIP.h>
+   * 
+   * #define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
+   * 
+   * ENC28J60lwIP eth(ETH_CS_PIN);
+   * 
+   * FirebaseData fbdo;
+   * 
+   * SPI_ETH_Module spi_ethernet_module;
+   * spi_ethernet_module.enc28j60 = &eth;
+   * 
+   * fbdo.fcm.begin(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
+   * 
    */
   template <typename T = const char *>
-  void begin(T serverKey) { mBegin(toString(serverKey)); }
+  void begin(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mBegin(toString(serverKey), spi_ethernet_module); }
 
   /** Add recipient's device registration token or instant ID token.
    * 
@@ -194,7 +212,7 @@ private:
 
   void clear();
 
-  void mBegin(const char *serverKey);
+  void mBegin(const char *serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
 
   void mAddDeviceToken(const char *deviceToken);
 
@@ -221,10 +239,15 @@ private:
   uint16_t _index = 0;
   uint16_t _port = FIREBASE_PORT;
   UtilsClass *ut = nullptr;
+  SPI_ETH_Module *_spi_ethernet_module = NULL;
 
 protected:
   template <typename T>
-  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+  auto
+  toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
+  {
+    return val.c_str();
+  }
 
   template <typename T>
   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
@@ -837,6 +860,13 @@ private:
 #endif
 
   UtilsClass *ut = nullptr;
+
+  unsigned long last_reconnect_millis = 0;
+
+  uint16_t reconnect_tmo = WIFI_RECONNECT_TIMEOUT;
+
+  SPI_ETH_Module *_spi_ethernet_module = NULL;
+
 #ifdef ENABLE_RTDB
   QueueManager _qMan;
   union IVal
@@ -872,7 +902,9 @@ private:
   FVal fVal;
 #endif
   struct fb_esp_session_info_t _ss;
-
+  
+  void ethDNSWorkAround(SPI_ETH_Module *spi_ethernet_module, const char *host, int port);
+  bool ethLinkUp(SPI_ETH_Module *spi_ethernet_module = NULL);
   void closeSession();
   bool handleStreamRead();
   void checkOvf(size_t len, struct server_response_data_t &resp);

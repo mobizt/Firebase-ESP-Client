@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.4
+ * Google's Firebase Storage class, FCS.cpp version 1.1.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -177,7 +177,9 @@ void FB_Storage::rescon(FirebaseData *fbdo, const char *host)
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
+        fbdo->ethDNSWorkAround(&ut->config->spi_ethernet_module, host, 443);
     }
+
     fbdo->_ss.host = host;
     fbdo->_ss.con_mode = fb_esp_con_mode_storage;
 }

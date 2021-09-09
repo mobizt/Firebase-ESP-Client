@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.1
+ * The Firebase class, Firebase.h v1.0.2
  * 
- *  Created August 21, 2021
+ *  Created September 9, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -200,7 +200,7 @@ public:
    * @param email The user Email to send the password resset link.
    * @return Boolean type status indicates the success of the operation.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool sendResetPassword(FirebaseConfig *config, T email)
   {
     init(config, nullptr);
@@ -367,7 +367,7 @@ public:
     begin(cfg, auth);
   }
 
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char*>
   void begin(T1 databaseURL, T2 databaseSecret, T3 caCert, float GMTOffset = 0.0)
   {
     pre_begin(databaseURL, databaseSecret);
@@ -384,7 +384,7 @@ public:
     begin(cfg, auth);
   }
 
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char*>
   void begin(T1 databaseURL, T2 databaseSecret, T3 caCertFile, uint8_t storageType, float GMTOffset = 0.0)
   {
     pre_begin(databaseURL, databaseSecret);
@@ -545,7 +545,7 @@ public:
    * @param rules Database rules in JSON String format.
    * @return Boolean type status indicates the success of the operation.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setRules(FirebaseData &fbdo, T rules) { return RTDB.setRules(&fbdo, rules); }
 
   /** Set the .read and .write database rules.
@@ -793,18 +793,18 @@ public:
    * @note The new appended node key will be stored in Firebase Data object, 
    * which its value can be accessed via function [FirebaseData object].pushName().
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushJSON(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.pushJSON(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushJSONAsync(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.pushJSONAsync(&fbdo, path, &json); }
 
   /** Append new child node key and value (FirebaseJson object) and the virtual child ".priority" to the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushJSON(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.pushJSON(&fbdo, path, &json, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushJSONAsync(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.pushJSONAsync(&fbdo, path, &json, priority); }
 
   /** Append child node array (using FirebaseJsonArray object) to the defined database path. 
@@ -818,18 +818,18 @@ public:
    * @note The new appended node's key will be stored in Firebase Data object, 
    * which its value can be accessed via function [FirebaseData object].pushName().
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushArray(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.pushArray(&fbdo, path, &arr); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushArrayAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.pushArrayAsync(&fbdo, path, &arr); }
 
   /** Append FirebaseJsonArray object and virtual child ".priority" at the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushArray(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.pushArray(&fbdo, path, &arr, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushArrayAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.pushArrayAsync(&fbdo, path, &arr, priority); }
 
   /** Append new blob (binary data) to the defined database path.
@@ -843,10 +843,10 @@ public:
    * @note The new appended node's key will be stored in Firebase Data object, 
    * which its value can be accessed via function [FirebaseData object].pushName().
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushBlob(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.pushBlob(&fbdo, path, blob, size); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushBlobAsync(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.pushBlobAsync(&fbdo, path, blob, size); }
 
   /** Append new binary data from the file stores on SD card/Flash memory to the defined database path.
@@ -877,10 +877,10 @@ public:
    * @note The new appended node's key will be stored in Firebase Data object, 
    * which its value can be accessed via function [FirebaseData object].pushName().
    */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushTimestamp(FirebaseData &fbdo, T path) { return RTDB.pushTimestamp(&fbdo, path); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushTimestampAsync(FirebaseData &fbdo, T path) { return RTDB.pushTimestampAsync(&fbdo, path); }
 
   /** Set integer data at the defined database path.
@@ -923,18 +923,18 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].intData to get the current integer value.
   */
-  template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
+  template <typename T1 = const char *,typename T2 = int, typename T3 = const char*>
   bool setInt(FirebaseData &fbdo, T1 path, T2 value, T3 ETag) { return RTDB.setInt(&fbdo, path, value, ETag); }
 
-  template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = int, typename T3 = const char*>
   bool setIntAsync(FirebaseData &fbdo, T1 path, T2 value, T3 ETag) { return RTDB.setIntAsync(&fbdo, path, value, ETag); }
 
   /** Set integer data and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
-  template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = int, typename T3 = const char*>
   bool setInt(FirebaseData &fbdo, T1 path, T2 value, float priority, T3 ETag) { return RTDB.setInt(&fbdo, path, value, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = int, typename T3 = const char*>
   bool setIntAsync(FirebaseData &fbdo, T1 path, T2 value, float priority, T3 ETag) { return RTDB.setIntAsync(&fbdo, path, value, priority, ETag); }
 
   /** Set float data at the defined database path.
@@ -948,18 +948,18 @@ public:
    * Call [FirebaseData object].floatData will return the float value of 
    * payload returned from server.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setFloat(FirebaseData &fbdo, T path, float value) { return RTDB.setFloat(&fbdo, path, value); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setFloatAsync(FirebaseData &fbdo, T path, float value) { return RTDB.setFloatAsync(&fbdo, path, value); }
 
   /** Set float data and virtual child ".priority" at the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setFloat(FirebaseData &fbdo, T path, float value, float priority) { return RTDB.setFloat(&fbdo, path, value, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setFloatAsync(FirebaseData &fbdo, T path, float value, float priority) { return RTDB.setFloatAsync(&fbdo, path, value, priority); }
 
   /** Set float data at the defined database path if defined database path's ETag matched the ETag value.
@@ -979,18 +979,18 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].floatData to get the current float value.
    */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setFloat(FirebaseData &fbdo, T1 path, float value, T2 ETag) { return RTDB.setFloat(&fbdo, path, value, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setFloatAsync(FirebaseData &fbdo, T1 path, float value, T2 ETag) { return RTDB.setFloatAsync(&fbdo, path, value, ETag); }
 
   /** Set float data and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setFloat(FirebaseData &fbdo, T1 path, float value, float priority, T2 ETag) { return RTDB.setFloat(&fbdo, path, value, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setFloatAsync(FirebaseData &fbdo, T1 path, float value, float priority, T2 ETag) { return RTDB.setFloatAsync(&fbdo, path, value, priority, ETag); }
 
   /** Set double data at the defined database path.
@@ -1006,18 +1006,18 @@ public:
    * Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
    * use printf("%.9lf\n", firebaseData.doubleData()); for print the returned double value up to 9 decimal places.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setDouble(FirebaseData &fbdo, T path, double value) { return RTDB.setDouble(&fbdo, path, value); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setDoubleAsync(FirebaseData &fbdo, T path, double value) { return RTDB.setDoubleAsync(&fbdo, path, value); }
 
   /** Set double data and virtual child ".priority" at the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setDouble(FirebaseData &fbdo, T path, double value, float priority) { return RTDB.setDouble(&fbdo, path, value, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setDoubleAsync(FirebaseData &fbdo, T path, double value, float priority) { return RTDB.setDoubleAsync(&fbdo, path, value, priority); }
 
   /** Set double data at the defined database path if defined database path's ETag matched the ETag value.
@@ -1037,18 +1037,18 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].doubeData to get the current double value.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setDouble(FirebaseData &fbdo, T1 path, double value, T2 ETag) { return RTDB.setDouble(&fbdo, path, value, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setDoubleAsync(FirebaseData &fbdo, T1 path, double value, T2 ETag) { return RTDB.setDoubleAsync(&fbdo, path, value, ETag); }
 
   /** Set double data and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setDouble(FirebaseData &fbdo, T1 path, double value, float priority, T2 ETag) { return RTDB.setDouble(&fbdo, path, value, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setDoubleAsync(FirebaseData &fbdo, T1 path, double value, float priority, T2 ETag) { return RTDB.setDoubleAsync(&fbdo, path, value, priority, ETag); }
 
   /** Set Boolean data at the defined database path.
@@ -1062,18 +1062,18 @@ public:
    * Call [FirebaseData object].boolData will return the Boolean value of 
    * the payload returned from the server.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setBool(FirebaseData &fbdo, T path, bool value) { return RTDB.setBool(&fbdo, path, value); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setBoolAsync(FirebaseData &fbdo, T path, bool value) { return RTDB.setBoolAsync(&fbdo, path, value); }
 
   /** Set boolean data and virtual child ".priority" at the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setBool(FirebaseData &fbdo, T path, bool value, float priority) { return RTDB.setBool(&fbdo, path, value, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setBoolAsync(FirebaseData &fbdo, T path, bool value, float priority) { return RTDB.setBoolAsync(&fbdo, path, value, priority); }
 
   /** Set Boolean data at the defined database path if defined database path's ETag matched the ETag value.
@@ -1094,18 +1094,18 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].doubeData to get the current boolean value.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setBool(FirebaseData &fbdo, T1 path, bool value, T2 ETag) { return RTDB.setBool(&fbdo, path, value, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setBoolAsync(FirebaseData &fbdo, T1 path, bool value, T2 ETag) { return RTDB.setBoolAsync(&fbdo, path, value, ETag); }
 
   /** Set boolean data and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setBool(FirebaseData &fbdo, T1 path, bool value, float priority, T2 ETag) { return RTDB.setBool(&fbdo, path, value, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setBoolAsync(FirebaseData &fbdo, T1 path, bool value, float priority, T2 ETag) { return RTDB.setBoolAsync(&fbdo, path, value, priority, ETag); }
 
   /** Set string (text) at the defined database path. 
@@ -1121,18 +1121,18 @@ public:
    * Call [FirebaseData object].stringData will return the string value of 
    * the payload returned from the server.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setString(FirebaseData &fbdo, T1 path, T2 value) { return RTDB.setString(&fbdo, path, value); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setStringAsync(FirebaseData &fbdo, T1 path, T2 value) { return RTDB.setStringAsync(&fbdo, path, value); }
 
   /** Set string data and virtual child ".priority" at the defined database path.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setString(FirebaseData &fbdo, T1 path, T2 value, float priority) { return RTDB.setString(&fbdo, path, value, priority); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setStringAsync(FirebaseData &fbdo, T1 path, T2 value, float priority) { return RTDB.setStringAsync(&fbdo, path, value, priority); }
 
   /** Set string (text) at the defined database path if defined database path's ETag matched the ETag value.
@@ -1154,18 +1154,18 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
    * Also, call [FirebaseData object].stringData to get the current string value.
    */
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*, typename T3 = const char*>
   bool setString(FirebaseData &fbdo, T1 path, T2 value, T3 ETag) { return RTDB.setString(&fbdo, path, value, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*, typename T3 = const char*>
   bool setStringAsync(FirebaseData &fbdo, T1 path, T2 value, T3 ETag) { return RTDB.setStringAsync(&fbdo, path, value, ETag); }
 
   /** Set string data and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*, typename T3 = const char*>
   bool setString(FirebaseData &fbdo, T1 path, T2 value, float priority, T3 ETag) { return RTDB.setString(&fbdo, path, value, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*, typename T3 = const char*>
   bool setStringAsync(FirebaseData &fbdo, T1 path, T2 value, float priority, T3 ETag) { return RTDB.setStringAsync(&fbdo, path, value, priority, ETag); }
 
   /** Set the child node key and value (using FirebaseJson object) to the defined database path. 
@@ -1181,18 +1181,18 @@ public:
    * 
    * Call [FirebaseData object].jsonData will return the JSON string value of payload returned from server.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setJSON(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.setJSON(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setJSONAsync(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.setJSONAsync(&fbdo, path, &json); }
 
   /** Set JSON data or FirebaseJson object and virtual child ".priority" at the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setJSON(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.setJSON(&fbdo, path, &json, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setJSONAsync(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.setJSONAsync(&fbdo, path, &json, priority); }
 
   /** Set child node key and value (using JSON data or FirebaseJson object) to the defined database path 
@@ -1216,18 +1216,18 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].jsonData to get the current JSON string value.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setJSON(FirebaseData &fbdo, T1 path, FirebaseJson &json, T2 ETag) { return RTDB.setJSON(&fbdo, path, &json, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setJSONAsync(FirebaseData &fbdo, T1 path, FirebaseJson &json, T2 ETag) { return RTDB.setJSONAsync(&fbdo, path, &json, ETag); }
 
   /** Set JSON data or FirebaseJson object and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setJSON(FirebaseData &fbdo, T1 path, FirebaseJson &json, float priority, T2 ETag) { return RTDB.setJSON(&fbdo, path, &json, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setJSONAsync(FirebaseData &fbdo, T1 path, FirebaseJson &json, float priority, T2 ETag) { return RTDB.setJSONAsync(&fbdo, path, &json, priority, ETag); }
 
   /** Set child node array (using FirebaseJsonArray object) to the defined database path. 
@@ -1243,18 +1243,18 @@ public:
    * Call [FirebaseData object].jsonArray will return pointer to FirebaseJsonArray object contains array 
    * payload returned from server, get the array payload using FirebaseJsonArray *arr = firebaseData.jsonArray();
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setArray(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.setArray(&fbdo, path, &arr); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setArrayAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.setArrayAsync(&fbdo, path, &arr); }
 
   /** Set FirebaseJsonArray object and virtual child ".priority" at the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setArray(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.setArray(&fbdo, path, &arr, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setArrayAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.setArrayAsync(&fbdo, path, &arr, priority); }
 
   /** Set array (using JSON data or FirebaseJson object) to the defined database path if defined database path's ETag matched the ETag value. 
@@ -1277,18 +1277,18 @@ public:
    * If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value. 
    * Also call [FirebaseData object].jsonArray to get the pointer to FirebaseJsonArray object of current array value.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setArray(FirebaseData &fbdo, T1 path, FirebaseJsonArray &arr, T2 ETag) { return RTDB.setArray(&fbdo, path, &arr, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setArrayAsync(FirebaseData &fbdo, T1 path, FirebaseJsonArray &arr, T2 ETag) { return RTDB.setArrayAsync(&fbdo, path, &arr, ETag); }
 
   /** Set FirebaseJsonArray object and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setArray(FirebaseData &fbdo, T1 path, FirebaseJsonArray &arr, float priority, T2 ETag) { return RTDB.setArray(&fbdo, path, &arr, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setArrayAsync(FirebaseData &fbdo, T1 path, FirebaseJsonArray &arr, float priority, T2 ETag) { return RTDB.setArrayAsync(&fbdo, path, &arr, priority, ETag); }
 
   /** Set blob (binary data) at the defined database path. 
@@ -1302,10 +1302,10 @@ public:
    * 
    * @note No payload returned from the server.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setBlob(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.setBlob(&fbdo, path, blob, size); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setBlobAsync(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.setBlobAsync(&fbdo, path, blob, size); }
 
   /** Set blob (binary data) at the defined database path if defined database path's ETag matched the ETag value. 
@@ -1322,10 +1322,10 @@ public:
    * If ETag at the defined database path does not match the provided ETag parameter, 
    * the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setBlob(FirebaseData &fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return RTDB.setBlob(&fbdo, path, blob, size, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setBlobAsync(FirebaseData &fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return RTDB.setBlobAsync(&fbdo, path, blob, size, ETag); }
 
   /** Set binary data from the file store on SD card/Flash memory to the defined database path. 
@@ -1340,10 +1340,10 @@ public:
    * 
    * @note No payload returned from the server.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.setFile(&fbdo, getMemStorageType(storageType), path, fileName); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName); }
 
   /** Set binary data from file stored on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value.
@@ -1362,10 +1362,10 @@ public:
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*, typename T3 = const char*>
   bool setFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag) { return RTDB.setFile(&fbdo, getMemStorageType(storageType), path, fileName, ETag); }
 
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*, typename T3 = const char*>
   bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName, ETag); }
 
   /** Set Firebase server's timestamp to the defined database path.
@@ -1380,10 +1380,10 @@ public:
    * Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
    * use printf("%.0lf\n", firebaseData.doubleData());.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setTimestamp(FirebaseData &fbdo, T path) { return RTDB.setTimestamp(&fbdo, path); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setTimestampAsync(FirebaseData &fbdo, T path) { return RTDB.setTimestampAsync(&fbdo, path); }
 
   /** Update the child node key or existing key's value (using FirebaseJson object) under the defined database path.
@@ -1398,18 +1398,18 @@ public:
    * Call [FirebaseData object].jsonData will return the json string value of payload returned from server. 
    * To reduce network data usage, use updateNodeSilent instead.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNode(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.updateNode(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNodeAsync(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.updateNodeAsync(&fbdo, path, &json); }
 
   /** Update child node key or existing key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNode(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.updateNode(&fbdo, path, &json, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNodeAsync(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.updateNodeAsync(&fbdo, path, &json, priority); }
 
   /** Update the child node key or existing key's value (using FirebaseJson object) under the defined database path.
@@ -1422,18 +1422,18 @@ public:
    * @note Owing to the objective of this function to reduce network data usage, 
    * no payload will be returned from the server.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNodeSilent(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.updateNodeSilent(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNodeSilentAsync(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.updateNodeSilentAsync(&fbdo, path, &json); }
 
   /** Update child node key or existing key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNodeSilent(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.updateNodeSilent(&fbdo, path, &json, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool updateNodeSilentAsync(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.updateNodeSilentAsync(&fbdo, path, &json, priority); }
 
   /** Read any type of value at the defined database path.
@@ -1448,7 +1448,7 @@ public:
    * [FirebaseData object].to<bool>(), [FirebaseData object].to<String>(), [FirebaseData object].to<FirebaseJson *> (pointer),
    * [FirebaseData object].to<FirebaseJsonArray *> (pointer) corresponded to its type from [FirebaseData object].dataType().
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool get(FirebaseData &fbdo, T path) { return RTDB.get(&fbdo, path); }
 
   /** Read the integer value at the defined database path.
@@ -1467,7 +1467,7 @@ public:
     the function [FirebaseData object].intData will return zero (0).
 
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getInt(FirebaseData &fbdo, T path) { return RTDB.getInt(&fbdo, path); }
 
   /** Read the integer value at the defined database path.
@@ -1497,7 +1497,7 @@ public:
    * If the payload returned from server is not integer, float and double, 
    * the function [FirebaseData object].floatData will return zero (0).
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getFloat(FirebaseData &fbdo, T path) { return RTDB.getFloat(&fbdo, path); }
 
   /** Read the float value at the defined database path.
@@ -1530,7 +1530,7 @@ public:
    * Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
    * use printf("%.9lf\n", firebaseData.doubleData()); for print value up to 9 decimal places.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getDouble(FirebaseData &fbdo, T path) { return RTDB.getDouble(&fbdo, path); }
 
   /** Read the float value at the defined database path.
@@ -1560,7 +1560,7 @@ public:
    * If the type of payload returned from the server is not Boolean, 
    * the function [FirebaseData object].boolData will return false.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getBool(FirebaseData &fbdo, T path) { return RTDB.getBool(&fbdo, path); }
 
   /** Read the Boolean value at the defined database path.
@@ -1591,7 +1591,7 @@ public:
    * If the type of payload returned from the server is not a string,
    * the function [FirebaseData object].stringData will return empty string (String object).
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getString(FirebaseData &fbdo, T path) { return RTDB.getString(&fbdo, path); }
 
   /** Read the string at the defined database path.
@@ -1622,7 +1622,7 @@ public:
    * If the type of payload returned from server is not json,
    * the function [FirebaseData object].jsonObject will contain empty object.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getJSON(FirebaseData &fbdo, T path) { return RTDB.getJSON(&fbdo, path); }
 
   /** Read the JSON string at the defined database path. 
@@ -1636,7 +1636,7 @@ public:
    * @note If the type of payload returned from the server is not JSON,
    * the target FirebaseJson object will contain an empty object.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getJSON(FirebaseData &fbdo, T path, FirebaseJson *target) { return RTDB.getJSON(&fbdo, path, target); }
 
   /** Read the JSON string at the defined database path. 
@@ -1669,7 +1669,7 @@ public:
    * If the type of payload returned from server is not json,
    * the function [FirebaseData object].jsonObject will contain empty object.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getJSON(FirebaseData &fbdo, T path, QueryFilter &query) { return RTDB.getJSON(&fbdo, path, &query); }
 
   /** Read the JSON string at the defined database path as above
@@ -1682,7 +1682,7 @@ public:
    * If the type of payload returned from the server is not JSON,
    * the target FirebaseJson object will contain an empty object.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getJSON(FirebaseData &fbdo, T path, QueryFilter &query, FirebaseJson *target) { return RTDB.getJSON(&fbdo, path, &query, target); }
 
   /** Read the array data at the defined database path.
@@ -1700,7 +1700,7 @@ public:
    * If the type of payload returned from the server is not an array,
    * the array element in [FirebaseData object].jsonArray will be empty.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getArray(FirebaseData &fbdo, T path) { return RTDB.getArray(&fbdo, path); }
 
   /** Read the array data at the defined database path, and assign data to the target.
@@ -1713,7 +1713,7 @@ public:
    * @note If the type of payload returned from the server is not an array, 
    * the target FirebaseJsonArray object will contain an empty array.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getArray(FirebaseData &fbdo, T path, FirebaseJsonArray *target) { return RTDB.getArray(&fbdo, path, target); }
 
   /** Read the array data at the defined database path.
@@ -1746,7 +1746,7 @@ public:
    * If the type of payload returned from the server is not an array,
    * the function [FirebaseData object].jsonArray will contain empty array.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getArray(FirebaseData &fbdo, T path, QueryFilter &query) { return RTDB.getArray(&fbdo, path, &query); }
 
   /** Read the array data at the defined database path as above
@@ -1759,7 +1759,7 @@ public:
    * @note If the type of payload returned from the server is not an array,
    * the target FirebaseJsonArray object will contain an empty array.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getArray(FirebaseData &fbdo, T path, QueryFilter &query, FirebaseJsonArray *target) { return RTDB.getArray(&fbdo, path, &query, target); }
 
   /** Read the blob (binary data) at the defined database path.
@@ -1776,7 +1776,7 @@ public:
    * If the type of payload returned from the server is not a blob,
    * the function [FirebaseData object].blobData will return empty array.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getBlob(FirebaseData &fbdo, T path) { return RTDB.getBlob(&fbdo, path); }
 
   /** Read the blob (binary data) at the defined database path.
@@ -1789,7 +1789,7 @@ public:
    * @note If the type of payload returned from the server is not a blob, 
    * the target variable value will be an empty array.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool getBlob(FirebaseData &fbdo, T path, std::vector<uint8_t> &target) { return RTDB.getBlob(&fbdo, path, &target); }
 
   /** Download file data in a database at the defined database path and save it to SD card/Flash memory. 
@@ -1803,7 +1803,7 @@ public:
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool getFile(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName) { return RTDB.getFile(&fbdo, getMemStorageType(storageType), nodePath, fileName); }
 
   /** Delete all child nodes at the defined database path.
@@ -1812,7 +1812,7 @@ public:
    * @param path Database path to be deleted.
    * @return Boolean type status indicates the success of the operation.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool deleteNode(FirebaseData &fbdo, T path) { return RTDB.deleteNode(&fbdo, path); }
 
   /** Delete all child nodes at the defined database path if defined database path's ETag matched the ETag value.
@@ -1825,7 +1825,7 @@ public:
    * @note If ETag at the defined database path does not match the provided ETag parameter,
    * he operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool deleteNode(FirebaseData &fbdo, T1 path, T2 ETag) { return RTDB.deleteNode(&fbdo, path, ETag); }
 
   /** Delete nodes that its timestamp node exceeded the data retaining period.
@@ -1840,7 +1840,7 @@ public:
    * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
    * is Email/Password sign-in.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool deleteNodesByTimestamp(FirebaseData &fbdo, T1 path, T2 timestampNode, size_t limit, unsigned long dataRetentionPeriod) { return RTDB.deleteNodesByTimestamp(&fbdo, path, timestampNode, limit, dataRetentionPeriod); }
 
   /** Start subscribe to the value changes at the defined path and its children.
@@ -1849,7 +1849,7 @@ public:
    * @param path Database path to subscribe.
    * @return Boolean type status indicates the success of the operation.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool beginStream(FirebaseData &fbdo, T path) { return RTDB.beginStream(&fbdo, path); }
 
   /** Start subscribe to the value changes at the defined parent node path with multiple nodes paths parsing.
@@ -1860,11 +1860,11 @@ public:
    * @param size The (deprecated) size of string array of child nodes paths for parsing.
    * @return Boolean type status indicates the success of the operation.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool beginMultiPathStream(FirebaseData &fbdo, T parentPath) { return RTDB.beginMultiPathStream(&fbdo, parentPath); }
 
   /** Deprecated */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool beginMultiPathStream(FirebaseData &fbdo, T parentPath, const String *childPath, size_t size) { return mBeginMultiPathStream(fbdo, toString(parentPath)); }
 
   /** Read the stream event data at the defined database path. 
@@ -1974,7 +1974,7 @@ public:
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool backup(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName) { return RTDB.backup(&fbdo, getMemStorageType(storageType), nodePath, fileName); }
 
   /** Restore database at a defined path using backup file saved on SD card/Flash memory.
@@ -1987,7 +1987,7 @@ public:
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool restore(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName) { return RTDB.restore(&fbdo, getMemStorageType(storageType), nodePath, fileName); }
 
   /** Set maximum Firebase read/store retry operation (0 255) in case of network problems and buffer overflow.
@@ -2010,7 +2010,7 @@ public:
    * @param filename Filename to be saved.
    * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool saveErrorQueue(FirebaseData &fbdo, T filename, uint8_t storageType) { return RTDB.saveErrorQueue(&fbdo, filename, getMemStorageType(storageType)); }
 
   /** Delete file in Flash (SPIFFS) or SD card.
@@ -2028,7 +2028,7 @@ public:
    * @param filename Filename to be read and restore queues.
    * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool restoreErrorQueue(FirebaseData &fbdo, T filename, uint8_t storageType) { return RTDB.restoreErrorQueue(&fbdo, filename, getMemStorageType(storageType)); }
 
   /** Determine the number of Firebase Error Queues stored in a defined SPIFFS file.
@@ -2040,7 +2040,7 @@ public:
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
-  template <typename T = const char *>
+  template <typename T = const char*>
   uint8_t errorQueueCount(FirebaseData &fbdo, T filename, uint8_t storageType) { return RTDB.errorQueueCount(&fbdo, filename, getMemStorageType(storageType)); }
 
   /** Determine number of queues in Firebase Data object Firebase Error Queues collection.
@@ -2199,28 +2199,28 @@ public:
   template <typename T1 = const char *, typename T2>
   bool setAsync(FirebaseData &fbdo, T1 path, T2 value, float priority) { return RTDB.setAsync(&fbdo, path, value, priority); }
 
-  template <typename T1 = const char *, typename T2, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2, typename T3 = const char*>
   bool set(FirebaseData &fbdo, T1 path, T2 value, T3 ETag) { return RTDB.set(&fbdo, path, value, ETag); }
 
-  template <typename T1 = const char *, typename T2, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2, typename T3 = const char*>
   bool setAsync(FirebaseData &fbdo, T1 path, T2 value, T3 ETag) { return RTDB.setAsync(&fbdo, path, value, ETag); }
 
-  template <typename T1 = const char *, typename T2, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2, typename T3 = const char*>
   bool set(FirebaseData &fbdo, T1 path, T2 value, float priority, T3 ETag) { return RTDB.set(&fbdo, path, value, priority, ETag); }
 
-  template <typename T1 = const char *, typename T2, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2, typename T3 = const char*>
   bool setAsync(FirebaseData &fbdo, T1 path, T2 value, float priority, T3 ETag) { return RTDB.setAsync(&fbdo, path, value, priority, ETag); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool set(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.setJSON(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setAsync(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.setJSONAsync(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool set(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.setJSON(&fbdo, path, &json, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setAsync(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.setJSONAsync(&fbdo, path, &json, priority); }
 
   template <typename T1 = const char *, typename T2>
@@ -2235,16 +2235,16 @@ public:
   template <typename T1 = const char *, typename T2>
   bool setAsync(FirebaseData &fbdo, T1 path, FirebaseJson &json, float priority, T2 ETag) { return RTDB.setJSONAsync(&fbdo, path, &json, priority, ETag); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool set(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.setArray(&fbdo, path, &arr); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.setArrayAsync(&fbdo, path, &arr); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool set(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.setArray(&fbdo, path, &arr, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.setArrayAsync(&fbdo, path, &arr, priority); }
 
   template <typename T1 = const char *, typename T2>
@@ -2259,10 +2259,10 @@ public:
   template <typename T1 = const char *, typename T2>
   bool setAsync(FirebaseData &fbdo, T1 path, FirebaseJsonArray &arr, float priority, T2 ETag) { return RTDB.setArrayAsync(&fbdo, path, &arr, priority, ETag); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool set(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.setBlob(&fbdo, path, blob, size); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool setAsync(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.setBlobAsync(&fbdo, path, blob, size); }
 
   template <typename T1 = const char *, typename T2>
@@ -2277,10 +2277,10 @@ public:
   template <typename T1 = const char *, typename T2>
   bool setAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName); }
 
-  template <typename T1 = const char *, typename T2, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2, typename T3 = const char*>
   bool set(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag) { return RTDB.setFile(&fbdo, getMemStorageType(storageType), path, fileName, ETag); }
 
-  template <typename T1 = const char *, typename T2, typename T3 = const char *>
+  template <typename T1 = const char *, typename T2, typename T3 = const char*>
   bool setAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName, ETag); }
 
   template <typename T1 = const char *, typename T2>
@@ -2295,40 +2295,40 @@ public:
   template <typename T1 = const char *, typename T2>
   bool pushAsync(FirebaseData &fbdo, T1 path, T2 value, float priority) { return RTDB.pushAsync(&fbdo, path, value, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool push(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.pushJSON(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushAsync(FirebaseData &fbdo, T path, FirebaseJson &json) { return RTDB.pushJSONAsync(&fbdo, path, &json); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool push(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.pushJSON(&fbdo, path, &json, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushAsync(FirebaseData &fbdo, T path, FirebaseJson &json, float priority) { return RTDB.pushJSONAsync(&fbdo, path, &json, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool push(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.pushArray(&fbdo, path, &arr); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr) { return RTDB.pushArrayAsync(&fbdo, path, &arr); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool push(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.pushArray(&fbdo, path, &arr, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushAsync(FirebaseData &fbdo, T path, FirebaseJsonArray &arr, float priority) { return RTDB.pushArrayAsync(&fbdo, path, &arr, priority); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool push(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.pushBlob(&fbdo, path, blob, size); }
 
-  template <typename T = const char *>
+  template <typename T = const char*>
   bool pushAsync(FirebaseData &fbdo, T path, uint8_t *blob, size_t size) { return RTDB.pushBlobAsync(&fbdo, path, blob, size); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool push(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.pushFile(&fbdo, getMemStorageType(storageType), path, fileName); }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   bool pushAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path, fileName); }
 
 private:
@@ -2356,7 +2356,7 @@ protected:
   template <typename T>
   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 
-  template <typename T1 = const char *, typename T2 = const char *>
+  template <typename T1 = const char *, typename T2 = const char*>
   void pre_begin(T1 databaseURL, T2 databaseSecret)
   {
     if (!cfg)

@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.4.6
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.5.0
 
 
 The default filessystem used in the library is flash and SD.
@@ -3528,12 +3528,37 @@ void clearErrorQueue(FirebaseData *fbdo);
 
 param **`serverKey`** Server key found on Console: Project settings > Cloud Messaging
 
+param **`spi_ethernet_module`** SPI_ETH_Module struct data, optional for ESP8266 use with Ethernet module.
+
 note: This server key required for sending message via legacy HTTP API.
+
+SPI_ETH_Module struct data is for ESP8266 Ethernet supported module lwip interface.
+
+The usage example for Ethernet.
+
+```cpp
+#include <ENC28J60lwIP.h>
+
+#define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
+ 
+ENC28J60lwIP eth(ETH_CS_PIN);
+
+FirebaseData fbdo;
+
+SPI_ETH_Module spi_ethernet_module;
+
+//in setup()
+
+spi_ethernet_module.enc28j60 = &eth;
+
+Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
+
+```
 
 The API key created in the Google Cloud console, cannot be used for authorizing FCM requests. 
 
 ```cpp
-void setServerKey(<string> serverKey);
+void setServerKey(<string> serverKey, SPI_ETH_Module *spi_ethernet_module = NUL);
 ```
 
 
@@ -4908,7 +4933,7 @@ return **`bool`** value represents the successful operation.
 
 Call FirebaseJson.errorPosition to get the error.
 
-```C++
+```cpp
 bool setJsonData(<string> data);
 ```
 
@@ -4922,7 +4947,7 @@ bool setJsonData(<string> data);
     
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJson &clear();
 ```
 
@@ -4937,7 +4962,7 @@ param **`client`** The pointer to or instance of Client object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(Client *client);
 
 bool readFrom(Client &client);
@@ -4956,7 +4981,7 @@ param **`client`** The pointer to or instance of WiFiClient object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClient *client);
 
 bool readFrom(WiFiClient &client);
@@ -4974,7 +4999,7 @@ param **`client`** The pointer to or instance of WiFiClientSecure object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClientSecure *client);
 
 bool readFrom(WiFiClientSecure &client);
@@ -4995,7 +5020,7 @@ param **`timeoutMS`** The timeout in millisecond to wait for Serial data to be c
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(HardwareSerial &ser, uint32_t timeoutMS = 5000);
 
 bool readFrom(SoftwareSerial &ser, uint32_t timeoutMS = 5000);
@@ -5013,7 +5038,7 @@ param **`file`** The File object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(fs::File &file);
 ```
 
@@ -5029,7 +5054,7 @@ param **`key`** The new key string that null to be added.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJson &add(<string> key);
 ```
 
@@ -5048,7 +5073,7 @@ return **`instance of an object.`**
 
 The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR), String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, boolean, FirebaseJson object and array.
 
-```C++
+```cpp
 FirebaseJson &add(<string> key, <type> value);
 ```
 
@@ -5067,7 +5092,7 @@ param **`topic`** The MQTT topic (LWMQTT).
 
 param **`prettify`** Boolean flag for return the pretty format string i.e. with text indentation and newline. 
 
-```C++
+```cpp
 void toString(<type> out, bool prettify = false);
 
 void toString(<type> out, <string> topic, bool prettify = false);
@@ -5127,7 +5152,7 @@ FirebaseJson::BOOL = 7 and
 
 FirebaseJson::NULL = 8
  
- ```C++
+ ```cpp
  bool get(FirebaseJsonData &result, <string> path, bool prettify = false);
  ```
 
@@ -5161,7 +5186,7 @@ Path can be wildcard with * in search path and * should use as key in part and d
 
 **`searchAll`** - The boolean option to search all occurrences of elements.
 
-```C++
+```cpp
 size_t search(SearchCriteria &criteria);
 
 size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false);
@@ -5179,7 +5204,7 @@ param **`searchAll`** Search all occurrences.
 
 return **`full path string`** in case of found.
 
-```C++
+```cpp
 String getPath(<string> path, bool searchAll = false);
 ```
 
@@ -5195,7 +5220,7 @@ param **`path`** The key or path of child element check.
 
 return **`boolean`** status indicated the existence of element.
 
-```C++
+```cpp
 bool isMember(<string> path);
 ```
 
@@ -5209,7 +5234,7 @@ bool isMember(<string> path);
 
 return **`number`** of child/array elements in FirebaseJson object.
 
- ```C++
+ ```cpp
  size_t iteratorBegin();
  ```
 
@@ -5228,7 +5253,7 @@ param **`key`** The string which holds the key/name of the object, can return em
 
 param **`value`** The string which holds the value for the element key or array.   
 
- ```C++
+ ```cpp
  void iteratorGet(size_t index, int &type, String &key, String &value);
  ```
 
@@ -5252,7 +5277,7 @@ int type
 String key
 String value
 
- ```C++
+ ```cpp
  IteratorValue valueAt(size_t index);
  ```
 
@@ -5264,7 +5289,7 @@ String value
 
 #### Clear all iterator buffer (should be called since iteratorBegin was called).
 
- ```C++
+ ```cpp
  void iteratorEnd();
  ```
 
@@ -5280,7 +5305,7 @@ param **`path`** The relative path that null to be set.
 The relative path can be mixed with array index (number placed inside square brackets) and node names e.g. /myRoot/[2]/Sensor1/myData/[3].
 
 
-```C++
+```cpp
 void set(<string> path);
 ```
 
@@ -5300,7 +5325,7 @@ e.g. /myRoot/[2]/Sensor1/myData/[3].
 
 The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR), String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, boolean, FirebaseJson object and array.
 
-```C++
+```cpp
 void set(<string> path, <type> value);
 ```
 
@@ -5316,7 +5341,7 @@ param **`path`** The relative path to remove its contents/children.
 
 return **`bool`** value represents the successful operation.
 
-```C++
+```cpp
 bool remove(<string> path);
 ```
 
@@ -5330,7 +5355,7 @@ bool remove(<string> path);
 
 return **`raw JSON string`**
 
-```C++
+```cpp
 <string> raw();
 ```
 
@@ -5344,7 +5369,7 @@ return **`the position of error in JSON object literal`**
 
 Return -1 when for no parsing error.
 
-```C++
+```cpp
 int errorPosition();
 ```
 
@@ -5360,7 +5385,7 @@ param **`prettify`** The text indentation and new line serialization option.
 
 return **`size in byte of buffer`**
 
-```C++
+```cpp
 size_t serializedBufferLength(bool prettify = false);
 ```
 
@@ -5374,7 +5399,7 @@ size_t serializedBufferLength(bool prettify = false);
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setFloatDigits(uint8_t digits);
 ```
 
@@ -5387,7 +5412,7 @@ void setFloatDigits(uint8_t digits);
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setDoubleDigits(uint8_t digits);
 ```
 
@@ -5400,7 +5425,7 @@ void setDoubleDigits(uint8_t digits);
 
 return **`the response code`** of reading JSON data from WiFi/Ethernet Client 
 
-```C++
+```cpp
 int responseCode();
 ```
 
@@ -5422,7 +5447,7 @@ return **`bool`** value represents the successful operation.
 
 Call FirebaseJsonArray.errorPosition to get the error.
 
-```C++
+```cpp
 bool setJsonArrayData(<string> data);
 ```
 
@@ -5436,7 +5461,7 @@ bool setJsonArrayData(<string> data);
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJsonArray &add();
 ```
 
@@ -5454,7 +5479,7 @@ return **`instance of an object.`**
 The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR), String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, boolean, FirebaseJson object and array.
 
 
-```C++
+```cpp
 FirebaseJsonArray &add(<type> value);
 ```
 
@@ -5473,7 +5498,7 @@ return **`instance of an object.`**
 
 e.g. add("a","b",1,2)
 
-```C++
+```cpp
 FirebaseJsonArray &add(First v, Next... n);
 ```
 
@@ -5489,7 +5514,7 @@ param **`client`** The pointer to or instance of Client object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(Client *client);
 
 bool readFrom(Client &client);
@@ -5508,7 +5533,7 @@ param **`client`** The pointer to or instance of WiFiClient object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClient *client);
 
 bool readFrom(WiFiClient &client);
@@ -5526,7 +5551,7 @@ param **`client`** The pointer to or instance of WiFiClientSecure object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClientSecure *client);
 
 bool readFrom(WiFiClientSecure &client);
@@ -5547,7 +5572,7 @@ param **`timeoutMS`** The timeout in millisecond to wait for Serial data to be c
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(HardwareSerial &ser, uint32_t timeoutMS = 5000);
 
 bool readFrom(SoftwareSerial &ser, uint32_t timeoutMS = 5000);
@@ -5565,7 +5590,7 @@ param **`file`** The File object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(fs::File &file);
 ```
 
@@ -5586,7 +5611,7 @@ return **`boolean`** status of the operation.
 The relative path must begin with array index (number placed inside square brackets) followed by
 other array indexes or node names e.g. /[2]/myData would get the data from myData key inside the array indexes 2
 
-```C++
+```cpp
 bool get(FirebaseJsonData &result, <int or string> index_or_path);
 ```
 
@@ -5620,7 +5645,7 @@ Path can be wildcard with * in search path and * should use as key in part and d
 
 **`searchAll`** - The boolean option to search all occurrences of elements.
 
-```C++
+```cpp
 size_t search(SearchCriteria &criteria);
 
 size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false);
@@ -5639,7 +5664,7 @@ param **`searchAll`** Search all occurrences.
 
 return **`full path string`** in case of found.
 
-```C++
+```cpp
 String getPath(<string> path, bool searchAll = false);
 ```
 
@@ -5655,7 +5680,7 @@ param **`path`** The key or path of child element check.
 
 return **`boolean`** status indicated the existence of element.
 
-```C++
+```cpp
 bool isMember(<string> path);
 ```
 
@@ -5669,7 +5694,7 @@ bool isMember(<string> path);
 
 return **`number`** of child/array elements in FirebaseJsonArray object.
 
- ```C++
+ ```cpp
  size_t iteratorBegin();
  ```
 
@@ -5688,7 +5713,7 @@ param **`key`** The string which holds the key/name of the object, can return em
 
 param **`value`** The string which holds the value for the element key or array.   
 
- ```C++
+ ```cpp
  void iteratorGet(size_t index, int &type, String &key, String &value);
  ```
 
@@ -5712,7 +5737,7 @@ int type
 String key
 String value
 
- ```C++
+ ```cpp
  IteratorValue valueAt(size_t index);
  ```
 
@@ -5724,7 +5749,7 @@ String value
 
 #### Clear all iterator buffer (should be called since iteratorBegin was called).
 
- ```C++
+ ```cpp
  void iteratorEnd();
  ```
 
@@ -5737,7 +5762,7 @@ String value
 
 return **`length of the array.`**
 
-```C++
+```cpp
 size_t size();
 ```
 
@@ -5754,7 +5779,7 @@ param **`out`** The writable object e.g. String, std::string, char array, Stream
 
 param **`prettify`** Boolean flag for return the pretty format string i.e. with text indentation and newline. 
 
-```C++
+```cpp
 void toString(<type> out, bool prettify = false);
 ```
 
@@ -5765,7 +5790,7 @@ void toString(<type> out, bool prettify = false);
 
 return **`raw JSON Array string`**
 
-```C++
+```cpp
 <string> raw();
 ```
 
@@ -5781,7 +5806,7 @@ param **`prettify`** The text indentation and new line serialization option.
 
 return **`size in byte of buffer`**
 
-```C++
+```cpp
 size_t serializedBufferLength(bool prettify = false);
 ```
 
@@ -5794,7 +5819,7 @@ size_t serializedBufferLength(bool prettify = false);
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJsonArray &clear();
 ```
 
@@ -5808,7 +5833,7 @@ FirebaseJsonArray &clear();
     
 param **`index_or_path`** The array index or path that null to be set.
 
-```C++
+```cpp
 void set(<int or string> index_or_path);
 ```
 
@@ -5825,7 +5850,7 @@ param **`index_or_path`** The array index or path that value to be set.
 param **`value`** The value to set.
 
 
-```C++
+```cpp
 void set(<int or string> index_or_path, <type> value);
 ```
 
@@ -5839,7 +5864,7 @@ param **`index_or_path`** The array index or relative path to array to be remove
 
 return **`bool`** value represents the successful operation.
 
-```C++
+```cpp
 bool remove(<int or string> index_or_path);
 ```
 
@@ -5855,7 +5880,7 @@ return **`the position of error in JSON array literal`**
 
 Return -1 when for no parsing error.
 
-```C++
+```cpp
 int errorPosition();
 ```
 
@@ -5868,7 +5893,7 @@ int errorPosition();
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setFloatDigits(uint8_t digits);
 ```
 
@@ -5881,7 +5906,7 @@ void setFloatDigits(uint8_t digits);
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setDoubleDigits(uint8_t digits);
 ```
 
@@ -5899,7 +5924,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getArray(FirebaseJsonArray &jsonArray);
 ```
 
@@ -5919,7 +5944,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getArray(<string> source, FirebaseJsonArray &jsonArray);
 ```
 
@@ -5937,7 +5962,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getJSON(FirebaseJson &json);
 ```
 
@@ -5956,7 +5981,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getJSON(<string> source, FirebaseJson &json);
 ```
 
@@ -5970,7 +5995,7 @@ bool getJSON(<string> source, FirebaseJson &json);
 
  return the **`The object or primitive type variable`**.
 
- ```C++
+ ```cpp
 to<type>();
 
 e.g. to<String>(), to<int>(), to<bool>()

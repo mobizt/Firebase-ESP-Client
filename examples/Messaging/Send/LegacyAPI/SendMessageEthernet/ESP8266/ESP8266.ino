@@ -11,6 +11,23 @@
 
 //This example shows how to send JSON payload FCM to a recipient via legacy API (requires server key).
 
+//This example is for ESP8266 and ENC28J60 Ethernet module.
+
+/**
+ * 
+ * The ENC28J60 Ethernet module and ESP8266 board, SPI port wiring connection.
+ * 
+ * ESP8266 (Wemos D1 Mini or NodeMCU)        ENC28J60         
+ * 
+ * GPIO12 (D6) - MISO                        SO
+ * GPIO13 (D7) - MOSI                        SI
+ * GPIO14 (D5) - SCK                         SCK
+ * GPIO16 (D0) - CS                          CS
+ * GND                                       GND
+ * 3V3                                       VCC
+ * 
+*/
+
 //Library allows your ESP device to interact with FCM server through FCM Server protocols.
 //https://firebase.google.com/docs/cloud-messaging/server#choose
 
@@ -31,26 +48,11 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
-//If use with ENC28J60 Ethernet module
-
-/*
 #include <ENC28J60lwIP.h>
+//#include <W5100lwIP.h>
+//#include <W5500lwIP.h>
 
-#define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
-
-ENC28J60lwIP eth(ETH_CS_PIN);
-
-SPI_ETH_Module spi_ethernet_module;
-
-spi_ethernet_module.enc28j60 = &eth;
-*/
-
-
-/* 1. Define the WiFi credentials */
-#define WIFI_SSID "WIFI_AP"
-#define WIFI_PASSWORD "WIFI_PASSWORD"
-
-/** 2 Define the Firebase project Server Key which must be taken from
+/** 1 Define the Firebase project Server Key which must be taken from
  * https://console.firebase.google.com/u/0/project/_/settings/cloudmessaging
  * 
  * The API, Android, iOS, and browser keys are rejected by FCM
@@ -58,16 +60,21 @@ spi_ethernet_module.enc28j60 = &eth;
  */
 #define FIREBASE_FCM_SERVER_KEY "FIREBASE_PROJECT_CLOUD_MESSAGING_SERVER_KEY"
 
-/* 3. Define the ID token for client or device to send the message */
+/* 2. Define the ID token for client or device to send the message */
 #define DEVICE_REGISTRATION_ID_TOKEN "DEVICE_TOKEN"
 
+#define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
+
+ENC28J60lwIP eth(ETH_CS_PIN);
+//Wiznet5100lwIP eth(ETH_CS_PIN);
+//Wiznet5500lwIP eth(ETH_CS_PIN);
+
+SPI_ETH_Module spi_ethernet_module;
 
 //Define Firebase Data object
 FirebaseData fbdo;
 
 unsigned long lastTime = 0;
-
-int count = 0;
 
 void sendMessage();
 
@@ -76,27 +83,39 @@ void setup()
 
     Serial.begin(115200);
 
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Connecting to Wi-Fi");
-    while (WiFi.status() != WL_CONNECTED)
+    SPI.begin();
+    SPI.setClockDivider(SPI_CLOCK_DIV4); // 4 MHz?
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setDataMode(SPI_MODE0);
+    eth.setDefault(); // use ethernet for default route
+    if (!eth.begin())
     {
-        Serial.print(".");
-        delay(300);
+        Serial.println("ethernet hardware not found ... sleeping");
+        while (1)
+        {
+            delay(1000);
+        }
+    }
+    else
+    {
+        Serial.print("connecting ethernet");
+        while (!eth.connected())
+        {
+            Serial.print(".");
+            delay(1000);
+        }
     }
     Serial.println();
-    Serial.print("Connected with IP: ");
-    Serial.println(WiFi.localIP());
-    Serial.println();
+    Serial.print("ethernet IP address: ");
+    Serial.println(eth.localIP());
 
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
     Firebase.reconnectWiFi(true);
 
     //required for legacy HTTP API
-    Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY);
-
-    //or to use ESP8266 Ethernet module
-    //Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
+    spi_ethernet_module.enc28j60 = &eth;
+    Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
 
     sendMessage();
 }
@@ -107,7 +126,6 @@ void loop()
     if (millis() - lastTime > 60 * 1000 || lastTime == 0)
     {
         lastTime = millis();
-
         sendMessage();
     }
 }
@@ -143,5 +161,4 @@ void sendMessage()
     else
         Serial.println(fbdo.errorReason());
 
-    count++;
 }

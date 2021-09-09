@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.1
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -113,9 +113,77 @@ void FirebaseData::clearQueueItem(QueueItem *item)
     item->address.query = 0;
 }
 
+void FirebaseData::ethDNSWorkAround(SPI_ETH_Module *spi_ethernet_module, const char *host, int port)
+{
+#if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
+
+    if (!spi_ethernet_module)
+        goto ex;
+
+#if defined(INC_ENC28J60_LWIP)
+    if (spi_ethernet_module->enc28j60)
+        goto ex;
+#endif
+#if defined(INC_W5100_LWIP)
+    if (spi_ethernet_module->w5100)
+        goto ex;
+#endif
+#if defined(INC_W5100_LWIP)
+    if (spi_ethernet_module->w5500)
+        goto ex;
+#endif
+    return;
+ex:
+    WiFiClient client;
+    client.connect(host, port);
+    client.stop();
+
+#endif
+}
+
+bool FirebaseData::ethLinkUp(SPI_ETH_Module *spi_ethernet_module)
+{
+    bool ret = false;
+#if defined(ESP32)
+    if (strcmp(ETH.localIP().toString().c_str(), "0.0.0.0") != 0)
+        ret = ETH.linkUp();
+#elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
+
+    if (!spi_ethernet_module)
+        return ret;
+
+#if defined(INC_ENC28J60_LWIP)
+    if (spi_ethernet_module->enc28j60)
+        return spi_ethernet_module->enc28j60->status() == WL_CONNECTED;
+#endif
+#if defined(INC_W5100_LWIP)
+    if (spi_ethernet_module->w5100)
+        return spi_ethernet_module->w5100->status() == WL_CONNECTED;
+#endif
+#if defined(INC_W5100_LWIP)
+    if (spi_ethernet_module->w5500)
+        return spi_ethernet_module->w5500->status() == WL_CONNECTED;
+#endif
+
+#endif
+    return ret;
+}
+
 bool FirebaseData::pauseFirebase(bool pause)
 {
-    if ((WiFi.status() != WL_CONNECTED && !ut->ethLinkUp()) || !tcpClient.stream())
+    bool status = WiFi.status() == WL_CONNECTED;
+
+    if (init())
+    {
+        if (_spi_ethernet_module)
+            status |= ethLinkUp(_spi_ethernet_module);
+        else
+            status |= ethLinkUp(&(Signer.getCfg()->spi_ethernet_module));
+    }
+    else
+        status |= ethLinkUp(_spi_ethernet_module);
+
+    if (!status || !tcpClient.stream())
     {
         _ss.connected = false;
         _ss.rtdb.pause = true;
@@ -600,7 +668,19 @@ void FirebaseData::sendStreamToCB(int code)
 
 void FirebaseData::closeSession()
 {
-    if (WiFi.status() == WL_CONNECTED || ut->ethLinkUp())
+    bool status = WiFi.status() == WL_CONNECTED;
+
+    if (init())
+    {
+        if (_spi_ethernet_module)
+            status |= ethLinkUp(_spi_ethernet_module);
+        else
+            status |= ethLinkUp(&(Signer.getCfg()->spi_ethernet_module));
+    }
+    else
+        status |= ethLinkUp(_spi_ethernet_module);
+
+    if (status)
     {
         //close the socket and free the resources used by the BearSSL data
         if (_ss.connected || tcpClient.stream())
@@ -628,7 +708,6 @@ void FirebaseData::closeSession()
 int FirebaseData::tcpSend(const char *data)
 {
     size_t len = strlen(data);
-
     uint8_t attempts = 0;
 #if defined(ESP8266)
     uint8_t maxRetry = 5 * (1 + (len / _ss.bssl_tx_size));
@@ -668,16 +747,33 @@ int FirebaseData::tcpSendChunk(const char *data, int &index, size_t len)
 bool FirebaseData::reconnect(unsigned long dataTime)
 {
 
-    bool status = WiFi.status() == WL_CONNECTED || ut->ethLinkUp();
+    bool status = WiFi.status() == WL_CONNECTED;
+
+    status |= (init()) ? ((_spi_ethernet_module) ? ethLinkUp(_spi_ethernet_module) : ethLinkUp(&(Signer.getCfg()->spi_ethernet_module))) : ethLinkUp(_spi_ethernet_module);
 
     if (dataTime > 0)
     {
-        if (millis() - dataTime > tcpClient.timeout && init())
+        if (millis() - dataTime > tcpClient.timeout)
         {
             _ss.http_code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
-            char *tmp = ut->strP(fb_esp_pgm_str_69);
-            _ss.error = tmp;
-            ut->delS(tmp);
+
+            size_t len = strlen_P(fb_esp_pgm_str_69) + 5;
+
+            if (_ss.con_mode == fb_esp_con_mode_rtdb_stream)
+                len += strlen_P(fb_esp_pgm_str_578);
+
+            char *buf = new char[len];
+            memset(buf, 0, len);
+            strcpy_P(buf, fb_esp_pgm_str_69);
+
+            if (_ss.con_mode == fb_esp_con_mode_rtdb_stream)
+                strcat_P(buf, fb_esp_pgm_str_578);
+
+            std::string().swap(_ss.error);
+            _ss.error.reserve(len);
+            _ss.error = buf;
+            delete[] buf;
+
             closeSession();
             return false;
         }
@@ -690,16 +786,31 @@ bool FirebaseData::reconnect(unsigned long dataTime)
 
         _ss.http_code = FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
 
-        if (Signer.getCfg()->_int.fb_reconnect_wifi)
+        if (init())
         {
-            if (millis() - Signer.getCfg()->_int.fb_last_reconnect_millis > Signer.getCfg()->_int.fb_reconnect_tmo && !_ss.connected)
+            if (Signer.getCfg()->_int.fb_reconnect_wifi)
             {
-                WiFi.reconnect();
-                Signer.getCfg()->_int.fb_last_reconnect_millis = millis();
+                if (millis() - Signer.getCfg()->_int.fb_last_reconnect_millis > Signer.getCfg()->_int.fb_reconnect_tmo && !_ss.connected)
+                {
+                    WiFi.reconnect();
+                    Signer.getCfg()->_int.fb_last_reconnect_millis = millis();
+                }
+            }
+        }
+        else
+        {
+            if (WiFi.getAutoReconnect())
+            {
+                if (millis() - last_reconnect_millis > reconnect_tmo && !_ss.connected)
+                {
+                    WiFi.reconnect();
+                    last_reconnect_millis = millis();
+                }
             }
         }
 
-        status = WiFi.status() == WL_CONNECTED || ut->ethLinkUp();
+        status = WiFi.status() == WL_CONNECTED;
+        status |= (init()) ? ((_spi_ethernet_module) ? ethLinkUp(_spi_ethernet_module) : ethLinkUp(&(Signer.getCfg()->spi_ethernet_module))) : ethLinkUp(_spi_ethernet_module);
     }
 
     if (!status && _ss.con_mode == fb_esp_con_mode_rtdb_stream)
@@ -895,10 +1006,12 @@ FCMObject::~FCMObject()
     clear();
 }
 
-void FCMObject::mBegin(const char *serverKey)
+void FCMObject::mBegin(const char *serverKey, SPI_ETH_Module *spi_ethernet_module)
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
+
+    _spi_ethernet_module = spi_ethernet_module;
 
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
@@ -1211,6 +1324,8 @@ void FCMObject::fcm_begin(FirebaseData &fbdo)
     if (!ut)
         ut = new UtilsClass(nullptr);
 
+    fbdo._spi_ethernet_module = _spi_ethernet_module;
+
     std::string host;
     ut->appendP(host, fb_esp_pgm_str_249);
     ut->appendP(host, fb_esp_pgm_str_4);
@@ -1226,7 +1341,7 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     if (!ut)
         ut = new UtilsClass(nullptr);
     FirebaseJsonData *server_key = new FirebaseJsonData();
-    
+
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(raw);
     std::string s;
@@ -1280,7 +1395,6 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
 
     ret = fbdo.tcpSend(header.c_str());
     ut->clearS(header);
-    
 
     return ret;
 }
@@ -1301,7 +1415,7 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
 
         FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
         arr->setJsonArrayData(idTokens.c_str());
-        FirebaseJsonData *data = fbdo.to<FirebaseJsonData*>();
+        FirebaseJsonData *data = fbdo.to<FirebaseJsonData *>();
         arr->get(*data, _index);
         json->set(s.c_str(), data->to<const char *>());
         ut->clearS(s);
@@ -1692,6 +1806,7 @@ void FCMObject::rescon(FirebaseData &fbdo, const char *host)
         fbdo._ss.last_conn_ms = millis();
         fbdo.closeSession();
         fbdo.setSecure();
+        fbdo.ethDNSWorkAround(_spi_ethernet_module, host, 443);
     }
     fbdo._ss.host = host;
     fbdo._ss.con_mode = fb_esp_con_mode_fcm;

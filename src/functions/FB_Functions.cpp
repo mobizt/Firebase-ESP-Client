@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.3
+ * Google's Cloud Functions class, Functions.cpp version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -486,7 +486,7 @@ bool FB_Functions::mGetFunction(FirebaseData *fbdo, const char *projectId, const
     return ret;
 }
 
-bool FB_Functions::mListFunctions(FirebaseData *fbdo, const char *projectId, const char *locationId, const char* pageSize, const char *pageToken)
+bool FB_Functions::mListFunctions(FirebaseData *fbdo, const char *projectId, const char *locationId, const char *pageSize, const char *pageToken)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_list;
@@ -497,7 +497,7 @@ bool FB_Functions::mListFunctions(FirebaseData *fbdo, const char *projectId, con
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::mListOperations(FirebaseData *fbdo, const char *filter, const char* pageSize, const char *pageToken)
+bool FB_Functions::mListOperations(FirebaseData *fbdo, const char *filter, const char *pageSize, const char *pageToken)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_list_operations;
@@ -920,6 +920,7 @@ void FB_Functions::rescon(FirebaseData *fbdo, const char *host)
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
+        fbdo->ethDNSWorkAround(&ut->config->spi_ethernet_module, host, 443);
     }
     fbdo->_ss.host = host;
     fbdo->_ss.con_mode = fb_esp_con_mode_functions;

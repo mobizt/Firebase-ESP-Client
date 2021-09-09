@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.4
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 3, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -575,7 +575,7 @@ bool FB_Firestore::mDeleteDocument(FirebaseData *fbdo, const char *projectId, co
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Firestore::mListDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char* pageSize, const char *pageToken, const char *orderBy, const char *mask, bool showMissing)
+bool FB_Firestore::mListDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char *pageSize, const char *pageToken, const char *orderBy, const char *mask, bool showMissing)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_list_doc;
@@ -590,7 +590,7 @@ bool FB_Firestore::mListDocuments(FirebaseData *fbdo, const char *projectId, con
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Firestore::mListCollectionIds(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char* pageSize, const char *pageToken)
+bool FB_Firestore::mListCollectionIds(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *pageSize, const char *pageToken)
 {
     struct fb_esp_firestore_req_t req;
     req.requestType = fb_esp_firestore_request_type_list_collection;
@@ -930,6 +930,7 @@ void FB_Firestore::rescon(FirebaseData *fbdo, const char *host)
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
+        fbdo->ethDNSWorkAround(&ut->config->spi_ethernet_module, host, 443);
     }
 
     fbdo->_ss.host = host;

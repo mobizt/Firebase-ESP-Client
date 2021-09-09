@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.4.6
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.5.0
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -49,7 +49,7 @@ The library access to the Firebase server through the WiFi for the internet conn
 
 * **Built-in JSON parser and builder.**
 
-* **Supports Ethernet in ESP32 using LAN8720, TLK110 and IP101 Ethernet boards. ESP8266 Ethernet is not yet supported.**
+* **Supports Ethernet in ESP32 using LAN8720, TLK110 and IP101 Ethernet modules and ESP8266 using ENC28J60, W5100 and W5500 Ethernet modules.**
 
 
 
@@ -119,7 +119,7 @@ See [this](/src/README.md) for all functions details.
 ### Initialization
 
 
-```C++
+```cpp
 
 
 //Include WiFi library
@@ -507,7 +507,7 @@ The encoded base64 string will be prefixed with some header string ("file,base64
 The following example showed how to read integer value from node "/test/int".
 
 
-```C++
+```cpp
   if (Firebase.RTDB.getInt(&fbdo, "/test/int")) {
 
     if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_integer) {
@@ -566,7 +566,7 @@ The following example showed how to store file data to flash memory at node "/te
 
 
 
-```C++
+```cpp
 
 if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_flash, "/test/file_data", "/test.txt"))
 {
@@ -611,7 +611,7 @@ The unique key of Timestamp can be determined after Timestamp was appended.
 The following example showed how to append new data (using FirebaseJson object) to node "/test/append.
 
 
-```C++
+```cpp
 
 FirebaseJson json;
 FirebaseJson json2;
@@ -653,7 +653,7 @@ Return of large JSON payload will cost the network data, alternative function `u
 The following example showed how to patch data at "/test".
 
 
-```C++
+```cpp
 
 FirebaseJson updateData;
 FirebaseJson json;
@@ -683,7 +683,7 @@ if (Firebase.RTDB.updateNode(&fbdo, "/test/update", &updateData)) {
 
 The following example showed how to delete data and its children at node "/test/append"
 
-```C++
+```cpp
 Firebase.RTDB.deleteNode(&fbdo, "/test/append");
 ```
 
@@ -725,7 +725,7 @@ The above `orderBy` parameter can be combined with the following parameters for 
 
 The following example showed how to use queries parameter in QueryFilter class to filter the data at node "/test/data"
 
-```C++
+```cpp
 //Assume that children that have key "sensor" are under "/test/data"
 
 //Instantiate the QueryFilter class
@@ -811,7 +811,7 @@ Keep in mind that `FirebaseData` object will create the SSL client inside of HTT
 
 The following example showed how to subscribe to the data changes at node "/test/data" with a callback function.
 
-```C++
+```cpp
 
 //In setup(), set the stream callback function to handle data
 //streamCallback is the function that called when database data changes or updates occurred
@@ -884,7 +884,7 @@ For multiple paths streaming, see the MultiPath example.
 
 The following example showed how to subscribe to the data changes at "/test/data" and polling the stream manually.
 
-```C++
+```cpp
 //In setup(), set the streaming path to "/test/data" and begin stream connection
 if (!Firebase.RTDB.beginStream(&fbdo, "/test/data"))
 {
@@ -949,7 +949,7 @@ Any failed operation will not affect the database (no updates or changes).
 
 The following example showed how to backup all database data at "/" and restore.
 
-```C++
+```cpp
  String backupFileName;
 
  if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_sd, "/", "/backup.txt"))
@@ -982,7 +982,7 @@ When read store, append and update operations were failed due to buffer overflow
 
 These operations can retry and queued after the retry amount was reached the maximum retry set in function `setMaxRetry`.
 
-```C++
+```cpp
 //set maximum retry amount to 3
  Firebase.RTDB.setMaxRetry(&fbdo, 3);
 ```
@@ -992,7 +992,7 @@ The function `setMaxErrorQueue` limits the maximum queues in Error Queue collect
 The full of queue collection can be checked through function `isErrorQueueFull`.
 
 
-```C++
+```cpp
  //set maximum queues to 10
  Firebase.RTDB.setMaxErrorQueue(&fbdo, 10);
 
@@ -1023,7 +1023,7 @@ If Error Queue ID does not exist in Error Queues collection, that queue is alrea
 
 The following example showed how to run Error Queues automatically and track the status with the callback function.
 
-```C++
+```cpp
 
 //In setup()
 
@@ -1067,7 +1067,7 @@ void errorQueueCallback (QueueInfo queueinfo){
 
 The following example showed how to run Error Queues and track its status manually.
 
-```C++
+```cpp
 //In setup()
 
 //Set the maximum Firebase Error Queues in collection (0 - 255).
@@ -1116,7 +1116,7 @@ Two types of storage can be assigned with these functions, `mem_storage_type_fla
 
 The following example showed how to restore and save Error Queues in /test.txt file.
 
-```C++
+```cpp
 //To restore Error Queues
 
 if (Firebase.RTDB.errorQueueCount(&fbdo, "/test.txt", mem_storage_type_flash) > 0)
@@ -1162,7 +1162,7 @@ The HTTPv1 APIs requires OAUth2.0 authentication using the Service Account crede
 
 The following example showed how to send FCM message.
 
-```C++
+```cpp
 //Provide your Firebase project's server key to send messsage using the legacy protocols
 Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY);
 
@@ -1402,7 +1402,7 @@ Function `FirebaseJsonArray.setDoubleDigits` is for double number precision when
 
 The following example shows how to use FirebaseJson.
 
-```C++
+```cpp
 //Declare FirebaseJson object (global or local)
 FirebaseJson json;
 
@@ -1570,7 +1570,7 @@ Array index: 6, type: int, value: 25
 
 The following example shows how to use FirebaseJsonArray.
 
-```C++
+```cpp
 //Declare FirebaseJsonArray object (global or local)
 FirebaseJsonArray arr;
 

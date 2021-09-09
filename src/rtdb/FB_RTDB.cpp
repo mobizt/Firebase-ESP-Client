@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.3
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 6, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1442,6 +1442,7 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
+        fbdo->ethDNSWorkAround(&ut->config->spi_ethernet_module, host, 443);
     }
 
     fbdo->_ss.host = host;

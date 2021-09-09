@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.0
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -498,7 +498,7 @@ bool Firebase_Signer::refreshToken()
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
         return false;
 
     ut->idle();
@@ -537,6 +537,8 @@ bool Firebase_Signer::refreshToken()
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
 #elif defined(ESP8266)
+
+    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
     int ret = config->signer.wcs->connect(host.c_str(), 443);
     if (ret == 0)
         return handleSignerError(1);
@@ -795,7 +797,7 @@ bool Firebase_Signer::handleTokenResponse()
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
         return false;
 
     struct server_response_data_t response;
@@ -843,7 +845,7 @@ bool Firebase_Signer::handleTokenResponse()
                 if (config->_int.fb_reconnect_wifi)
                     ut->reconnect(0);
 
-                if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+                if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
                 {
                     if (stream)
                         if (stream->connected())
@@ -1273,7 +1275,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
         return false;
 
     config->signer.signup = false;
@@ -1313,6 +1315,8 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
 #elif defined(ESP8266)
+
+    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
     int ret = config->signer.wcs->connect(host.c_str(), 443);
     if (ret == 0)
         return handleSignerError(1);
@@ -1478,7 +1482,7 @@ bool Firebase_Signer::requestTokens()
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
         return false;
 
     ut->idle();
@@ -1512,6 +1516,8 @@ bool Firebase_Signer::requestTokens()
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
 #elif defined(ESP8266)
+
+    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
     int ret = config->signer.wcs->connect(host.c_str(), 443);
     if (ret == 0)
         return handleSignerError(1);
@@ -1684,7 +1690,7 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
 
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
         return false;
 
     ut->idle();
@@ -1713,6 +1719,8 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
 #elif defined(ESP8266)
+
+    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
     int ret = config->signer.wcs->connect(host.c_str(), 443);
     if (ret == 0)
         return handleSignerError(1);
@@ -1978,11 +1986,17 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_BUFFER_OVERFLOW:
         ut->appendP(buff, fb_esp_pgm_str_68);
         return;
-    case FIREBASE_ERROR_TCP_NO_FCM_REGISTRATION_ID_PROVIDED:
+    case FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED:
         ut->appendP(buff, fb_esp_pgm_str_145);
         return;
-    case FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED:
+    case FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED:
         ut->appendP(buff, fb_esp_pgm_str_146);
+        return;
+    case FIREBASE_ERROR_NO_FCM_TOPIC_PROVIDED:
+        ut->appendP(buff, fb_esp_pgm_str_542);
+        return;
+    case FIREBASE_ERROR_FCM_ID_TOKEN_AT_INDEX_NOT_FOUND:
+        ut->appendP(buff, fb_esp_pgm_str_543);
         return;
     case FIREBASE_ERROR_EXPECTED_JSON_DATA:
         ut->appendP(buff, fb_esp_pgm_str_185);
@@ -2015,7 +2029,7 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
         ut->appendP(buff, fb_esp_pgm_str_541);
         return;
-    case FIREBASE_ERROR_TCP_FCM_OAUTH2_REQUIRED:
+    case FIREBASE_ERROR_OAUTH2_REQUIRED:
         ut->appendP(buff, fb_esp_pgm_str_328);
         return;
 #endif

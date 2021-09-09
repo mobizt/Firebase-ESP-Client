@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.12
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 31, 2021
+ * Created September 8, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -71,9 +71,10 @@ void FB_CM::begin(UtilsClass *u)
     ut = u;
 }
 
-void FB_CM::mSetServerKey(const char *serverKey)
+void FB_CM::mSetServerKey(const char *serverKey, SPI_ETH_Module *spi_ethernet_module)
 {
     this->server_key = serverKey;
+    this->_spi_ethernet_module = spi_ethernet_module;
 }
 
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
@@ -91,7 +92,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -110,7 +111,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 
     if (Signer.getTokenType() != token_type_oauth2_access_token)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_FCM_OAUTH2_REQUIRED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_OAUTH2_REQUIRED;
         return false;
     }
 
@@ -129,7 +130,7 @@ bool FB_CM::mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *II
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -139,7 +140,7 @@ bool FB_CM::mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *II
     return ret;
 }
 
-bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char* numToken)
+bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken)
 {
     if (!init())
         return false;
@@ -148,12 +149,11 @@ bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
     fcm_preparSubscriptionPayload(topic, IID, atoi(numToken));
-
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_unsubscribe, raw.c_str());
     ut->clearS(raw);
     return ret;
@@ -166,7 +166,7 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -176,7 +176,7 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
     return ret;
 }
 
-bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char* numToken)
+bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char *numToken)
 {
     if (!init())
         return false;
@@ -185,7 +185,7 @@ bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool s
 
     if (server_key.length() == 0)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo->_ss.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
@@ -202,6 +202,8 @@ String FB_CM::payload(FirebaseData *fbdo)
 
 void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
 {
+    fbdo->_spi_ethernet_module = _spi_ethernet_module;
+
     if (Signer.getCfg())
     {
         if (Signer.getTokenType() != token_type_undefined)
@@ -1513,13 +1515,25 @@ void FB_CM::rescon(FirebaseData *fbdo, const char *host)
         fbdo->_ss.last_conn_ms = millis();
         fbdo->closeSession();
         fbdo->setSecure();
+
+        if (Signer.getCfg())
+        {
+            if (_spi_ethernet_module)
+                fbdo->ethDNSWorkAround(_spi_ethernet_module, host, 443);
+            else
+                fbdo->ethDNSWorkAround(&Signer.getCfg()->spi_ethernet_module, host, 443);
+        }
+        else
+            fbdo->ethDNSWorkAround(_spi_ethernet_module, host, 443);
     }
+
     fbdo->_ss.host = host;
     fbdo->_ss.con_mode = fb_esp_con_mode_fcm;
 }
 
 bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload)
 {
+    fbdo->_spi_ethernet_module = _spi_ethernet_module;
 
     if (!fbdo->reconnect())
         return false;

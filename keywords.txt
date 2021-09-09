@@ -329,6 +329,7 @@ fb_esp_firestore_document_write_document_transform_t    KEYWORD3
 fb_esp_firestore_document_precondition_t    KEYWORD3
 fb_esp_firestore_document_write_t   KEYWORD3
 TransactionOptions  KEYWORD3
+SPI_ETH_Module  KEYWORD3
 
 #######################################
 # FirebaseJson Struct (KEYWORD3)

@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.10
+ * Firebase TCP Client v1.1.11
  * 
- * Created August 15, 2021
+ * Created September 8, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -64,6 +64,28 @@
 #include <LittleFS.h>
 #include "FirebaseFS.h"
 
+#if defined __has_include
+
+#if __has_include(<LwipIntfDev.h>)
+#include <LwipIntfDev.h>
+#endif
+
+#if __has_include(<ENC28J60lwIP.h>)
+#define INC_ENC28J60_LWIP
+#include <ENC28J60lwIP.h>
+#endif
+
+#if __has_include(<W5100lwIP.h>)
+#define INC_W5100_LWIP
+#include <W5100lwIP.h>
+#endif
+
+#if __has_include(<W5500lwIP.h>)
+#define INC_W5500_LWIP
+#include <W5500lwIP.h>
+#endif
+
+#endif
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
