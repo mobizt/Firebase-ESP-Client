@@ -115,6 +115,8 @@ void setup()
 
     //required for legacy HTTP API
     spi_ethernet_module.enc28j60 = &eth;
+    //spi_ethernet_module.w5100 = &eth;
+    //spi_ethernet_module.w5500 = &eth;
     Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
 
     sendMessage();

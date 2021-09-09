@@ -93,6 +93,8 @@ void setupFirebase()
 
     /* Assign the pointer to Ethernet module lwip interface */
     config.spi_ethernet_module.enc28j60 = &eth;
+    //config.spi_ethernet_module.w5100 = &eth;
+    //config.spi_ethernet_module.w5500 = &eth;
 
     //Or use legacy authenticate method
     //config.database_url = DATABASE_URL;
