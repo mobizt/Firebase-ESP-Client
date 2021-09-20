@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.3
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -757,10 +757,15 @@ bool FirebaseData::reconnect(unsigned long dataTime)
 
     if (dataTime > 0)
     {
-        if (Signer.getCfg()->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT || Signer.getCfg()->timeout.serverResponse > MIN_SERVER_RESPONSE_TIMEOUT)
-            Signer.getCfg()->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+        unsigned long tmo = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+        if (init())
+        {
+            if (Signer.getCfg()->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT || Signer.getCfg()->timeout.serverResponse > MIN_SERVER_RESPONSE_TIMEOUT)
+                Signer.getCfg()->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+            tmo = Signer.getCfg()->timeout.serverResponse;
+        }
 
-        if (millis() - dataTime > Signer.getCfg()->timeout.serverResponse)
+        if (millis() - dataTime > tmo)
         {
             _ss.http_code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
 
