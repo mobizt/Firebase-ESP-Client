@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.1
+ * Google's Firebase Util class, Utils.h version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1930,8 +1930,19 @@ public:
 
         if (dataTime > 0)
         {
-            if (millis() - dataTime > 30000)
-                return false;
+            if (config)
+            {
+                if (config->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT || config->timeout.serverResponse > MIN_SERVER_RESPONSE_TIMEOUT)
+                    config->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+
+                if (millis() - dataTime > config->timeout.serverResponse)
+                    return false;
+            }
+            else
+            {
+                if (millis() - dataTime > 10 * 1000)
+                    return false;
+            }
         }
 
         if (!status)
@@ -1941,7 +1952,9 @@ public:
             {
                 if (config->_int.fb_reconnect_wifi)
                 {
-                    if (millis() - config->_int.fb_last_reconnect_millis > config->_int.fb_reconnect_tmo)
+                    if (config->timeout.wifiReconnect < MIN_WIFI_RECONNECT_TIMEOUT || config->timeout.wifiReconnect > MAX_WIFI_RECONNECT_TIMEOUT)
+                        config->timeout.wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
+                    if (millis() - config->_int.fb_last_reconnect_millis > config->timeout.wifiReconnect)
                     {
                         WiFi.reconnect();
                         config->_int.fb_last_reconnect_millis = millis();

@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.2
+ * The Firebase class, Firebase.cpp v1.0.3
  * 
- *  Created September 9, 2021
+ *  Created September 20, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -50,6 +50,7 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
 
 void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
 {
+
     init(config, auth);
 
     if (cfg->service_account.json.path.length() > 0)
@@ -125,10 +126,8 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
     if (!this->auth)
         this->auth = new FirebaseAuth();
 
-    if (ut)
-        delete ut;
-
-    ut = new UtilsClass(config);
+    if (!ut)
+        ut = new UtilsClass(config);
 
 #ifdef ENABLE_RTDB
     RTDB.begin(ut);
@@ -168,13 +167,13 @@ const char *Firebase_ESP_Client::getToken()
 
 void Firebase_ESP_Client::setFloatDigits(uint8_t digits)
 {
-    if (digits < 7)
+    if (digits < 7 && Signer.getCfg())
         cfg->_int.fb_float_digits = digits;
 }
 
 void Firebase_ESP_Client::setDoubleDigits(uint8_t digits)
 {
-    if (digits < 9)
+    if (digits < 9 && Signer.getCfg())
         cfg->_int.fb_double_digits = digits;
 }
 
@@ -392,7 +391,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
 
     FirebaseJsonData data;
 
-    FirebaseJson *json= fbdo.to<FirebaseJson*>();
+    FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
     std::string s;
@@ -412,7 +411,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
         return false;
     }
 
-    FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray*>();
+    FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
     arr->setJsonArrayData(fbdo.fcm.idTokens.c_str());
 
     if (messageType == fb_esp_fcm_msg_type::msg_single && fbdo.fcm.idTokens.length() > 0 && fbdo.fcm._index > arr->size() - 1)

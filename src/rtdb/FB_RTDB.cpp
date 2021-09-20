@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.4
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -550,7 +550,10 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     bool reconnectStream = false;
 
     //trying to reconnect the stream when required at some interval as running in the loop
-    if (millis() - STREAM_RECONNECT_INTERVAL > fbdo->_ss.rtdb.stream_resume_millis)
+    if (Signer.getCfg()->timeout.rtdbStreamReconnect < MIN_RTDB_STREAM_RECONNECT_INTERVAL || Signer.getCfg()->timeout.rtdbStreamReconnect > MAX_RTDB_STREAM_RECONNECT_INTERVAL)
+        Signer.getCfg()->timeout.rtdbStreamReconnect = MIN_RTDB_STREAM_RECONNECT_INTERVAL;
+        
+    if (millis() - Signer.getCfg()->timeout.rtdbStreamReconnect > fbdo->_ss.rtdb.stream_resume_millis)
     {
         reconnectStream = (fbdo->_ss.rtdb.data_tmo && !fbdo->_ss.connected) || fbdo->_ss.http_code >= 400 || fbdo->_ss.con_mode != fb_esp_con_mode_rtdb_stream;
 
@@ -560,9 +563,9 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
             fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
         }
         fbdo->_ss.rtdb.stream_resume_millis = millis();
-    }
-    else
-        ret = true;
+        }
+        else
+            ret = true;
 
     if (fbdo->tcpClient.stream())
     {
@@ -572,8 +575,12 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     else
         reconnectStream = true;
 
-    //Stream timeout
-    if (millis() - fbdo->_ss.rtdb.data_millis > KEEP_ALIVE_TIMEOUT)
+    //Stream timed out
+
+    if(Signer.getCfg()->timeout.rtdbKeepAlive < MIN_RTDB_KEEP_ALIVE_TIMEOUT || Signer.getCfg()->timeout.rtdbKeepAlive > MAX_RTDB_KEEP_ALIVE_TIMEOUT)
+        Signer.getCfg()->timeout.rtdbKeepAlive = DEFAULT_RTDB_KEEP_ALIVE_TIMEOUT;
+
+    if (millis() - fbdo->_ss.rtdb.data_millis > Signer.getCfg()->timeout.rtdbKeepAlive)
     {
         fbdo->_ss.rtdb.data_millis = millis();
         fbdo->_ss.rtdb.data_tmo = true;
@@ -1474,7 +1481,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
 
     if ((req->method == m_put || req->method == m_post || req->method == m_patch || req->method == m_patch_nocontent || req->method == m_set_rules) && strlen(req->payload) == 0 && req->data.type != d_string && req->data.type != d_json && req->data.type != d_array && req->data.type != d_blob && req->data.type != d_file)
     {
-        fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
+        fbdo->_ss.http_code = FIREBASE_ERROR_MISSING_DATA;
         return false;
     }
 
@@ -1576,7 +1583,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         return FIREBASE_ERROR_TOKEN_NOT_READY;
 
     if (!fbdo->validRequest(req->path))
-        return FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
+        return FIREBASE_ERROR_MISSING_CREDENTIALS;
 
     if (fbdo->_ss.long_running_task > 0)
         return FIREBASE_ERROR_LONG_RUNNING_TASK;

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.2
+ * Google's Firebase Data class, FB_Session.h version 1.2.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -863,7 +863,7 @@ private:
 
   unsigned long last_reconnect_millis = 0;
 
-  uint16_t reconnect_tmo = WIFI_RECONNECT_TIMEOUT;
+  uint16_t reconnect_tmo = 10 * 1000;
 
   SPI_ETH_Module *_spi_ethernet_module = NULL;
 
@@ -902,7 +902,7 @@ private:
   FVal fVal;
 #endif
   struct fb_esp_session_info_t _ss;
-  
+
   void ethDNSWorkAround(SPI_ETH_Module *spi_ethernet_module, const char *host, int port);
   bool ethLinkUp(SPI_ETH_Module *spi_ethernet_module = NULL);
   void closeSession();
@@ -914,6 +914,7 @@ private:
   std::string getDataType(uint8_t type);
   std::string getMethod(uint8_t method);
   bool tokenReady();
+  void setTimeout();
   void setSecure();
   bool validRequest(const std::string &path);
   void addQueue(struct fb_esp_rtdb_queue_info_t *qinfo);

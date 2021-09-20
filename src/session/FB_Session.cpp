@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.2
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -406,7 +406,11 @@ bool FirebaseData::streamTimeout()
 {
     if (_ss.rtdb.stream_stop)
         return false;
-    if (millis() - STREAM_ERROR_NOTIFIED_INTERVAL > _ss.rtdb.stream_tmo_Millis || _ss.rtdb.stream_tmo_Millis == 0)
+        
+    if (Signer.getCfg()->timeout.rtdbStreamError < MIN_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL || Signer.getCfg()->timeout.rtdbStreamError > MAX_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL)
+        Signer.getCfg()->timeout.rtdbStreamError = MIN_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL;
+
+    if (millis() - Signer.getCfg()->timeout.rtdbStreamError > _ss.rtdb.stream_tmo_Millis || _ss.rtdb.stream_tmo_Millis == 0)
     {
         _ss.rtdb.stream_tmo_Millis = millis();
         if (_ss.rtdb.data_tmo)
@@ -753,7 +757,10 @@ bool FirebaseData::reconnect(unsigned long dataTime)
 
     if (dataTime > 0)
     {
-        if (millis() - dataTime > tcpClient.timeout)
+        if (Signer.getCfg()->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT || Signer.getCfg()->timeout.serverResponse > MIN_SERVER_RESPONSE_TIMEOUT)
+            Signer.getCfg()->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+
+        if (millis() - dataTime > Signer.getCfg()->timeout.serverResponse)
         {
             _ss.http_code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
 
@@ -790,7 +797,10 @@ bool FirebaseData::reconnect(unsigned long dataTime)
         {
             if (Signer.getCfg()->_int.fb_reconnect_wifi)
             {
-                if (millis() - Signer.getCfg()->_int.fb_last_reconnect_millis > Signer.getCfg()->_int.fb_reconnect_tmo && !_ss.connected)
+                if (Signer.getCfg()->timeout.wifiReconnect < MIN_WIFI_RECONNECT_TIMEOUT || Signer.getCfg()->timeout.wifiReconnect > MAX_WIFI_RECONNECT_TIMEOUT)
+                    Signer.getCfg()->timeout.wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
+
+                if (millis() - Signer.getCfg()->_int.fb_last_reconnect_millis > Signer.getCfg()->timeout.wifiReconnect && !_ss.connected)
                 {
                     WiFi.reconnect();
                     Signer.getCfg()->_int.fb_last_reconnect_millis = millis();
@@ -819,8 +829,25 @@ bool FirebaseData::reconnect(unsigned long dataTime)
     return status;
 }
 
+void FirebaseData::setTimeout()
+{
+    if (Signer.getCfg())
+    {
+        if (Signer.getCfg()->timeout.socketConnection < MIN_SOCKET_CONN_TIMEOUT || Signer.getCfg()->timeout.socketConnection > MAX_SOCKET_CONN_TIMEOUT)
+            Signer.getCfg()->timeout.socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
+
+        if (Signer.getCfg()->timeout.sslHandshake < MIN_SSL_HANDSHAKE_TIMEOUT || Signer.getCfg()->timeout.sslHandshake > MAX_SSL_HANDSHAKE_TIMEOUT)
+            Signer.getCfg()->timeout.sslHandshake = MIN_SSL_HANDSHAKE_TIMEOUT;
+
+        tcpClient.socketConnectionTO = Signer.getCfg()->timeout.socketConnection;
+
+        tcpClient.sslHandshakeTO = Signer.getCfg()->timeout.sslHandshake;
+    }
+}
+
 void FirebaseData::setSecure()
 {
+    setTimeout();
 
 #if defined(ESP8266)
     if (time(nullptr) > ESP_DEFAULT_TS)
@@ -892,7 +919,7 @@ bool FirebaseData::validRequest(const std::string &path)
 {
     if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || strlen(Signer.getToken()) == 0)
     {
-        _ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
+        _ss.http_code = FIREBASE_ERROR_MISSING_CREDENTIALS;
         return false;
     }
     return true;

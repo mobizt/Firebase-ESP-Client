@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.13
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -44,30 +44,19 @@ FB_CM::~FB_CM()
     clear();
 }
 
-bool FB_CM::init(bool clearInt)
+bool FB_CM::init()
 {
-    if (clearInt)
-    {
-        if (ut)
-            delete ut;
-        if (cfg)
-            delete cfg;
-        if (auth)
-            delete auth;
-
-        ut = nullptr;
-        cfg = nullptr;
-        auth = nullptr;
-    }
     if (!ut)
+    {
+        intCfg = true;
         ut = new UtilsClass(Signer.getCfg());
+    }
 
-    return true;
+    return ut != nullptr;
 }
 
 void FB_CM::begin(UtilsClass *u)
 {
-    init(true);
     ut = u;
 }
 
@@ -80,12 +69,7 @@ void FB_CM::mSetServerKey(const char *serverKey, SPI_ETH_Module *spi_ethernet_mo
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 {
     if (!Signer.getCfg())
-    {
-        cfg = new FirebaseConfig();
-        auth = new FirebaseAuth();
-        ut = new UtilsClass(cfg);
-        Signer.begin(ut, cfg, auth);
-    }
+        return false;
 
     if (!init())
         return false;
@@ -1570,12 +1554,8 @@ void FB_CM::clear()
 {
     ut->clearS(raw);
     ut->clearS(server_key);
-    if (ut)
+    if (ut && intCfg)
         delete ut;
-    if (cfg)
-        delete cfg;
-    if (auth)
-        delete auth;
 }
 
 #endif

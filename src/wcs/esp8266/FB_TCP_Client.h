@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.11
+ * Firebase TCP Client v1.1.12
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -154,7 +154,15 @@ private:
   std::unique_ptr<FB_ESP_SSL_CLIENT> _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
   std::string _host = "";
   uint16_t _port = 0;
-  unsigned long timeout = FIREBASE_DEFAULT_TCP_TIMEOUT;
+
+  //Actually Arduino base Stream (char read) timeout.
+  //This will override internally by WiFiClientSecureCtx::_connectSSL 
+  //to 5000 after SSL handshake was done with success.
+  unsigned long socketConnectionTO = 30 * 1000;
+
+  //Unused as no override function or no available option 
+  //in BearSSL::WiFiClientSecure class.
+  unsigned long sslHandshakeTO = 2 * 60 * 1000;
 
   std::string _CAFile = "";
   uint8_t _CAFileStoreageType = 0;

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.13
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -180,7 +180,7 @@ public:
   String payload(FirebaseData *fbdo);
 
 private:
-  bool init(bool clearInt = false);
+  bool init();
   void begin(UtilsClass *u);
   bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
   bool waitResponse(FirebaseData *fbdo);
@@ -201,12 +201,11 @@ private:
   bool mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char *numToken);
   void clear();
   
-  FirebaseConfig *cfg = nullptr;
-  FirebaseAuth *auth = nullptr;
   UtilsClass *ut = nullptr;
   std::string server_key;
   std::string raw;
   uint16_t port = FIREBASE_PORT;
+  bool intCfg = false;
   SPI_ETH_Module *_spi_ethernet_module = NULL;
 
 protected:

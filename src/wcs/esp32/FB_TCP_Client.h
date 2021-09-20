@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.10
+ * Firebase TCP Client v1.1.11
  * 
- * Created August 15, 2001
+ * Created September 20, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -76,12 +76,12 @@ public:
   FB_WCS(){};
   ~FB_WCS(){};
 
-  int _connect(const char *host, uint16_t port)
+  int _connect(const char *host, uint16_t port, unsigned long socketTO, unsigned long handshakeTO)
   {
-    if (_timeout > 0)
-    {
-      sslclient->handshake_timeout = _timeout;
-    }
+    _timeout = socketTO;
+
+    sslclient->handshake_timeout = handshakeTO;
+
     int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL, _use_insecure);
     _lastError = ret;
     if (ret < 0)
@@ -154,7 +154,12 @@ private:
   std::unique_ptr<FB_WCS> _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
   std::string _host = "";
   uint16_t _port = 0;
-  unsigned long timeout = FIREBASE_DEFAULT_TCP_TIMEOUT;
+
+  //lwIP socket connection timeout
+  unsigned long socketConnectionTO = 30 * 1000;
+  
+  //mbedTLS SSL handshake timeout
+  unsigned long sslHandshakeTO = 2 * 60 * 1000;
 
   std::string _CAFile = "";
   uint8_t _CAFileStoreageType = 0;

@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.10
+ * Firebase TCP Client v1.1.11
  * 
- * Created August 15, 2001
+ * Created September 20, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -103,7 +103,7 @@ bool FB_TCP_Client::connect(void)
     return true;
   }
 
-  if (!_wcs->_connect(_host.c_str(), _port))
+  if (!_wcs->_connect(_host.c_str(), _port, socketConnectionTO, sslHandshakeTO))
     return false;
 
   return connected();
@@ -186,7 +186,7 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, s
 
 void FB_TCP_Client::release()
 {
-  //if (_wcs)
+  if (_wcs)
   {
     _wcs->stop();
     _wcs.reset(nullptr);

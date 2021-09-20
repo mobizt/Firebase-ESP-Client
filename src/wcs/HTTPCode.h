@@ -1,5 +1,5 @@
 /**
- * Created August 15, 2021
+ * Created Septemmber 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021, K. Suwatchai (Mobizt)
@@ -29,7 +29,6 @@
 #ifndef FB_HTTP_CODE_H_
 #define FB_HTTP_CODE_H_
 
-#define FIREBASE_DEFAULT_TCP_TIMEOUT 10000 //10 seconds
 
 /// HTTP client errors
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED (-1)
@@ -72,6 +71,10 @@
 
 #define FIREBASE_ERROR_NO_FCM_TOPIC_PROVIDED -37
 #define FIREBASE_ERROR_FCM_ID_TOKEN_AT_INDEX_NOT_FOUND -38
+
+#define FIREBASE_ERROR_MISSING_DATA -39
+
+#define FIREBASE_ERROR_MISSING_CREDENTIALS -40
 
 #define FIREBASE_ERROR_HTTP_CODE_UNDEFINED -1000
 

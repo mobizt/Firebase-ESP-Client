@@ -88,6 +88,32 @@ void setup()
 
   if (!Firebase.RTDB.beginStream(&stream, "/test/stream/data"))
     Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
+
+  /** Timeout options, below is default config.
+
+  //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
+  config.timeout.wifiReconnect = 10 * 1000;
+
+  //Socket begin connection timeout (ESP32) or data transfer timeout (ESP8266) in ms (1 sec - 1 min).
+  config.timeout.socketConnection = 30 * 1000;
+
+  //ESP32 SSL handshake in ms (1 sec - 2 min). This option doesn't allow in ESP8266 core library.
+  config.timeout.sslHandshake = 2 * 60 * 1000;
+
+  //Server response read timeout in ms (1 sec - 1 min).
+  config.timeout.serverResponse = 10 * 1000;
+
+  //RTDB Stream keep-alive timeout in ms (20 sec - 2 min) when no server's keep-alive event data received.
+  config.timeout.rtdbKeepAlive = 45 * 1000;
+
+  //RTDB Stream reconnect timeout (interval) in ms (1 sec - 1 min) when RTDB Stream closed and want to resume.
+  config.timeout.rtdbStreamReconnect = 1 * 1000;
+
+  //RTDB Stream error notification timeout (interval) in ms (3 sec - 30 sec). It determines how often the readStream
+  //will return false (error) when it called repeatedly in loop.
+  config.timeout.rtdbStreamError = 3 * 1000;
+
+  */
 }
 
 void loop()

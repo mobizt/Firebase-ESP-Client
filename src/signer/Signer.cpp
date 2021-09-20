@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.1
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -593,7 +593,8 @@ bool Firebase_Signer::refreshToken()
 
     struct fb_esp_auth_token_error_t error;
 
-    if (handleTokenResponse())
+    int httpCode = 0;
+    if (handleTokenResponse(httpCode))
     {
         tmp = ut->strP(fb_esp_pgm_str_257);
         config->signer.json->get(*config->signer.result, tmp);
@@ -659,7 +660,7 @@ bool Firebase_Signer::refreshToken()
         return handleSignerError(4);
     }
 
-    return handleSignerError(3);
+    return handleSignerError(3, httpCode);
 }
 
 void Firebase_Signer::setTokenError(int code)
@@ -716,7 +717,7 @@ void Firebase_Signer::setTokenError(int code)
     }
 }
 
-bool Firebase_Signer::handleSignerError(int code)
+bool Firebase_Signer::handleSignerError(int code, int httpCode)
 {
 
     switch (code)
@@ -746,7 +747,14 @@ bool Firebase_Signer::handleSignerError(int code)
         config->signer.wcs->stop();
 #endif
         ut->clearS(config->signer.tokens.error.message);
-        setTokenError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT);
+        if (httpCode == 0)
+            setTokenError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT);
+        else
+        {
+            errorToString(httpCode, config->signer.tokens.error.message);
+            setTokenError(httpCode);
+        }
+
         sendTokenStatusCB();
         break;
 
@@ -792,7 +800,7 @@ void Firebase_Signer::sendTokenStatusCB()
         config->token_status_callback(tokenInfo);
 }
 
-bool Firebase_Signer::handleTokenResponse()
+bool Firebase_Signer::handleTokenResponse(int &httpCode)
 {
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
@@ -938,7 +946,9 @@ bool Firebase_Signer::handleTokenResponse()
     if (stream->connected())
         stream->stop();
 
-    if (payload.length() > 0 && !response.noContent)
+    httpCode = response.httpCode;
+
+    if (payload.length() > 0 && !response.noContent && response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
     {
         config->signer.json->setJsonData(payload.c_str());
         ut->clearS(payload);
@@ -977,12 +987,15 @@ bool Firebase_Signer::createJWT()
         ut->delS(tmp);
         ut->delS(tmp2);
 
-        size_t len = ut->base64EncLen(strlen(config->signer.json->raw()));
+        std::string hdr;
+        config->signer.json->toString(hdr);
+        size_t len = ut->base64EncLen(hdr.length());
         char *buf = ut->newS(len);
-        ut->encodeBase64Url(buf, (unsigned char *)config->signer.json->raw(), strlen(config->signer.json->raw()));
+        ut->encodeBase64Url(buf, (unsigned char *)hdr.c_str(), hdr.length());
         config->signer.encHeader = buf;
         ut->delS(buf);
         config->signer.encHeadPayload = config->signer.encHeader;
+        ut->clearS(hdr);
 
         //payload
         config->signer.json->clear();
@@ -1094,11 +1107,14 @@ bool Firebase_Signer::createJWT()
             }
         }
 
-        len = ut->base64EncLen(strlen(config->signer.json->raw()));
+        std::string payload;
+        config->signer.json->toString(payload);
+        len = ut->base64EncLen(payload.length());
         buf = ut->newS(len);
-        ut->encodeBase64Url(buf, (unsigned char *)config->signer.json->raw(), strlen(config->signer.json->raw()));
+        ut->encodeBase64Url(buf, (unsigned char *)payload.c_str(), payload.length());
         config->signer.encPayload = buf;
         ut->delS(buf);
+        ut->clearS(payload);
 
         ut->appendP(config->signer.encHeadPayload, fb_esp_pgm_str_4);
         config->signer.encHeadPayload += config->signer.encPayload;
@@ -1393,7 +1409,8 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 
     config->signer.json->clear();
 
-    if (handleTokenResponse())
+    int httpCode = 0;
+    if (handleTokenResponse(httpCode))
     {
         struct fb_esp_auth_token_error_t error;
 
@@ -1474,7 +1491,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
         return handleSignerError(4);
     }
 
-    return handleSignerError(3);
+    return handleSignerError(3, httpCode);
 }
 
 bool Firebase_Signer::requestTokens()
@@ -1591,7 +1608,8 @@ bool Firebase_Signer::requestTokens()
 
     struct fb_esp_auth_token_error_t error;
 
-    if (handleTokenResponse())
+    int httpCode = 0;
+    if (handleTokenResponse(httpCode))
     {
         ut->clearS(config->signer.tokens.jwt);
         char *tmp = ut->strP(fb_esp_pgm_str_257);
@@ -1674,7 +1692,7 @@ bool Firebase_Signer::requestTokens()
         return handleSignerError(4);
     }
 
-    return handleSignerError(3);
+    return handleSignerError(3, httpCode);
 }
 
 void Firebase_Signer::getExpiration(const char *exp)
@@ -1804,7 +1822,8 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
 
     config->signer.json->clear();
 
-    if (handleTokenResponse())
+    int httpCode = 0;
+    if (handleTokenResponse(httpCode))
     {
         struct fb_esp_auth_token_error_t error;
 
@@ -1835,7 +1854,7 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
         return handleSignerError(4);
     }
 
-    return handleSignerError(3);
+    return handleSignerError(3, httpCode);
 }
 
 void Firebase_Signer::checkToken()
@@ -2038,6 +2057,12 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
         return;
     case FIREBASE_ERROR_UNINITIALIZED:
         ut->appendP(buff, fb_esp_pgm_str_256);
+        return;
+    case FIREBASE_ERROR_MISSING_DATA:
+        ut->appendP(buff, fb_esp_pgm_str_579);
+        return;
+    case FIREBASE_ERROR_MISSING_CREDENTIALS:
+        ut->appendP(buff, fb_esp_pgm_str_580);
         return;
     default:
         return;

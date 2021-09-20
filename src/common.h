@@ -1,6 +1,6 @@
 
 /**
- * Created September 8, 2021
+ * Created September 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -65,12 +65,35 @@ class FunctionsConfig;
 class QueryFilter;
 
 #define FIREBASE_PORT 443
-#define KEEP_ALIVE_TIMEOUT 45000
-#define STREAM_ERROR_NOTIFIED_INTERVAL 3000
-#define STREAM_RECONNECT_INTERVAL 1000
-#define SD_CS_PIN 15
+
 #define MAX_REDIRECT 5
-#define WIFI_RECONNECT_TIMEOUT 10000
+
+#define MIN_WIFI_RECONNECT_TIMEOUT 10 * 1000
+#define MAX_WIFI_RECONNECT_TIMEOUT 5 * 60 * 1000
+
+#define MIN_SOCKET_CONN_TIMEOUT 1 * 1000
+#define DEFAULT_SOCKET_CONN_TIMEOUT 30 * 1000
+#define MAX_SOCKET_CONN_TIMEOUT 60 * 1000
+
+#define MIN_SSL_HANDSHAKE_TIMEOUT 1 * 1000
+#define MAX_SSL_HANDSHAKE_TIMEOUT 2 * 60 * 1000
+
+#define MIN_SERVER_RESPONSE_TIMEOUT 1 * 1000
+#define DEFAULT_SERVER_RESPONSE_TIMEOUT 10 * 1000
+#define MAX_SERVER_RESPONSE_TIMEOUT 60 * 1000
+
+#define MIN_RTDB_KEEP_ALIVE_TIMEOUT 20 * 1000
+#define DEFAULT_RTDB_KEEP_ALIVE_TIMEOUT 45 * 1000
+#define MAX_RTDB_KEEP_ALIVE_TIMEOUT 2 * 60 * 1000
+
+#define MIN_RTDB_STREAM_RECONNECT_INTERVAL 1000
+#define MAX_RTDB_STREAM_RECONNECT_INTERVAL 60 * 1000
+
+#define MIN_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL 3 * 1000
+#define MAX_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL 30 * 1000
+
+#define SD_CS_PIN 15
+
 #define STREAM_TASK_STACK_SIZE 8192
 #define QUEUE_TASK_STACK_SIZE 8192
 #define MAX_BLOB_PAYLOAD_SIZE 1024
@@ -692,7 +715,6 @@ struct fb_esp_cfg_int_t
     bool fb_sd_used = false;
     bool fb_reconnect_wifi = false;
     unsigned long fb_last_reconnect_millis = 0;
-    uint16_t fb_reconnect_tmo = WIFI_RECONNECT_TIMEOUT;
     bool fb_clock_rdy = false;
     float fb_gmt_offset = 0;
     uint8_t fb_float_digits = 5;
@@ -772,6 +794,31 @@ typedef struct token_info_t
 
 typedef void (*TokenStatusCallback)(TokenInfo);
 
+struct fb_esp_client_timeout_t
+{
+    //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
+    uint16_t wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
+
+    //Socket begin connection timeout (ESP32) or data transfer timeout (ESP8266) in ms (1 sec - 1 min).
+    unsigned long socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
+
+    //ESP32 SSL handshake in ms (1 sec - 2 min). This option doesn't allow in ESP8266 core library.
+    unsigned long sslHandshake = MAX_SSL_HANDSHAKE_TIMEOUT;
+
+    //Server response read timeout in ms (1 sec - 1 min).
+    unsigned long serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+
+    //RTDB Stream keep-alive timeout in ms (20 sec - 2 min) when no server's keep-alive event data received.
+    unsigned long rtdbKeepAlive = DEFAULT_RTDB_KEEP_ALIVE_TIMEOUT;
+
+    //RTDB Stream reconnect timeout (interval) in ms (1 sec - 1 min) when RTDB Stream closed and want to resume.
+    uint16_t rtdbStreamReconnect = MIN_RTDB_STREAM_RECONNECT_INTERVAL;
+
+    //RTDB Stream error notification timeout (interval) in ms (3 sec - 30 sec). It determines how often the readStream
+    //will return false (error) when it called repeatedly in loop.
+    uint16_t rtdbStreamError = MIN_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL;
+};
+
 struct fb_esp_cfg_t
 {
     struct fb_esp_service_account_t service_account;
@@ -788,6 +835,7 @@ struct fb_esp_cfg_t
     int8_t max_token_generation_retry = MAX_EXCHANGE_TOKEN_ATTEMPTS;
     struct fb_esp_rtdb_config_t rtdb;
     SPI_ETH_Module spi_ethernet_module;
+    struct fb_esp_client_timeout_t timeout;
 };
 #ifdef ENABLE_RTDB
 struct fb_esp_rtdb_info_t
@@ -2023,7 +2071,6 @@ static const char fb_esp_pgm_str_573[] PROGMEM = ":beginTransaction";
 static const char fb_esp_pgm_str_574[] PROGMEM = ":rollback";
 #endif
 
-
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 static const char fb_esp_pgm_str_575[] PROGMEM = "msg";
 static const char fb_esp_pgm_str_576[] PROGMEM = "topic";
@@ -2035,6 +2082,9 @@ static const char fb_esp_pgm_str_578[] PROGMEM = "\n** RECOMMENDATION, Update th
 #elif defined(ESP8266)
 static const char fb_esp_pgm_str_578[] PROGMEM = "\n** WARNING!, in stream connection, unknown length payload can cause device crashed (wdt reset) **\n** RECOMMENDATION, increase the Rx buffer in setBSSLBufferSize Firebase Data object's function **\n** Or reduce the data at the node that data is being read **";
 #endif
+
+static const char fb_esp_pgm_str_579[] PROGMEM = "Missing data.";
+static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e.g. path, config.database_url and auth token.";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
