@@ -1,19 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.5.1"
+#define FIREBASE_CLIENT_VERSION "2.5.2"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.5.1
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.5.2
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created September 20, 2021
+ * Created September 26, 2021
  *
  *   Updates:
- * - Fix OAuth2.0 token generation issues since v2.4.0.
- * - Fix FCM internal class initializing issue when Firebase.begin was call more than once.
- * - Fix possible crash when Firebase.setFloatDigits and Firebase.setDoubleDigits called before Firebase.begin.
- * - Add config.timeout for timeout configuration.
+ * - Fix #139 compilation error in ESP32 Core SDK v1.0.4 and earlier.
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)

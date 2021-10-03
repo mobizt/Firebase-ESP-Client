@@ -47,7 +47,7 @@
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
-#include "addons/TokenHelper.h"
+#include <addons/TokenHelper.h>
 
 #include "AutoZip.h"
 

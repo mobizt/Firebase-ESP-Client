@@ -135,7 +135,7 @@ void setup()
         Serial.println(" not found");
 
     //Get the fullpath for element
-    String path = json.getPath("*/[4]/*/value" /* key or path with wildcard */, false /* get all accurrences */);
+    String path = json.getPath("*/[4]/*/value" /* key or path with wildcard */, false /* get all occurrences */);
     Serial.println("\n\n===============================");
     Serial.print("Get full path for */[4]/*/value, ");
     Serial.println(path);

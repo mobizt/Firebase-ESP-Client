@@ -20,7 +20,7 @@ void setup()
     Serial.println();
 
     //Create, parsing and modify JSON object and JSON array
-    //FirebaseJSON support Arduino String, PROGMEM, flash string, std::string, char array, string literal, sum of arduino String.
+    //FirebaseJSON supports Arduino String, PROGMEM, flash string, std::string, char array, string literal, and sum of arduino String.
 
     //All functions supported FPSTR, String, std::string, const char* and char array as parameters.
 

@@ -42,6 +42,8 @@ void setup()
     //Write demo data to file
     File file = DEFAULT_FLASH_FS.open("/test.txt", "w");
 
+    //Print the demo data to file.
+    //No matter what the separation between each JSON object or array is, it can be space, new line or nothing
     file.print("{\"a\":123}{\"b\":456}{\"c\":789}");
 
     file.close();
@@ -59,12 +61,17 @@ void loop()
             json.toString(Serial, true);
             Serial.println();
 
-            //Append json data to another file
-            File file2 = DEFAULT_FLASH_FS.open("/test2.txt", "a");
-            json.toString(file2);
             Serial.println();
             Serial.println("Appended data to file...");
             Serial.println();
+
+            //Append json data to another file
+            File file2 = DEFAULT_FLASH_FS.open("/test2.txt", "a");
+            json.toString(file2);
+
+            //if you want to append new line to separate each JSON data (not necessary)
+            //file2.println();
+
             file2.close();
         }
     }

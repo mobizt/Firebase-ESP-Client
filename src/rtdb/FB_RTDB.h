@@ -128,8 +128,8 @@ public:
   /** Set the query index to the database rules.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param path The parent path of child's node that being query.
-   * @param node The child node key that being query.
+   * @param path The parent path of child's node that is being queried.
+   * @param node The child node key that is being queried.
    * @param databaseSecret The database secret. 
    * @return Boolean value, indicates the success of the operation.
    * 
@@ -1371,7 +1371,7 @@ public:
   /** Delete nodes that its timestamp node exceeded the data retaining period.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param path The parent path of children nodes that being delete.
+   * @param path The parent path of children nodes that is being deleted.
    * @param timestampNode The sub-child node that keep the timestamp. 
    * @param limit The maximum number of children nodes to delete at once, 30 is maximum.
    * @param dataRetentionPeriod The period in seconds of data in the past which will be retained.
@@ -1619,15 +1619,15 @@ public:
    * 
    * queueInfo.totalQueues(), get the total Error Queues in Error Queue Collection.
    * 
-   * queueInfo.currentQueueID(), get current Error Queue ID that being process.
+   * queueInfo.currentQueueID(), get current Error Queue ID that is being processed.
    * 
    * queueInfo.isQueueFull(), determine whether Error Queue Collection is full or not.
    * 
-   * queueInfo.dataType(), get a string of the Firebase call data type that being process of current Error Queue.
+   * queueInfo.dataType(), get a string of the Firebase call data type that is being processed of current Error Queue.
    * 
-   * queueInfo.method(), get a string of the Firebase call method that being process of current Error Queue.
+   * queueInfo.method(), get a string of the Firebase call method that is being processed of current Error Queue.
    * 
-   * queueInfo.path(), get a string of the Firebase call path that being process of current Error Queue.
+   * queueInfo.path(), get a string of the Firebase call path that is being processed of current Error Queue.
   */
 #if defined(ESP32)
   void beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback = NULL, size_t queueTaskStackSize = 8192);

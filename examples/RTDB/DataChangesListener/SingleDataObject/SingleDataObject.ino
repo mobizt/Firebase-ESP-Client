@@ -17,9 +17,10 @@
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
-#include "addons/TokenHelper.h"
+#include <addons/TokenHelper.h>
+
 //Provide the RTDB payload printing info and other helper functions.
-#include "addons/RTDBHelper.h"
+#include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
@@ -112,7 +113,7 @@ void loop()
 
     if (fbdo.streamTimeout())
     {
-      Serial.println("stream timeout, resuming...\n");
+      Serial.println("stream timed out, resuming...\n");
 
       if (!fbdo.httpConnected())
         Serial.printf("error code: %d, reason: %s\n\n", fbdo.httpCode(), fbdo.errorReason().c_str());

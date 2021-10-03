@@ -1,5 +1,8 @@
 # FireSense for Firebase ESP Client.
 
+
+<br/>
+
 # The Programmable Data Logging and IO Control library v1.0.7
 
 
@@ -8,7 +11,7 @@ This library supports ESP8266 and ESP32 MCU from Espressif.
 
 ## Functions and Usages
 
-
+<br/>
 
 #### Initiate the FireSense Class.
 
@@ -26,9 +29,7 @@ The database secret can be empty string if the sign-in sign-in method is OAuth2.
 bool begin(struct firesense_config_t *config, const char *databaseSecret);
 ```
 
-
-
-
+<br/>
 
 #### Load the device configurations.
 
@@ -40,10 +41,7 @@ note: The callback function should add the channals or conditions manually or lo
 void loadConfig(callback_function_t defaultDataLoadCallback);
 ```
 
-
-
-
-
+<br/>
 
 #### Save the current config to the device storage.
 
@@ -57,10 +55,7 @@ return **`Boolean`** value, indicates the success of the operation.
 bool backupConfig(const String &filename, fb_esp_mem_storage_type storageType);
 ```
 
-
-
-
-
+<br/>
 
 #### Read the config from the device storage.
 
@@ -74,10 +69,7 @@ return **`Boolean`** value, indicates the success of the operation.
 bool restoreConfig(const String &filename, fb_esp_mem_storage_type storageType);
 ```
 
-
-
-
-
+<br/>
 
 #### Enable (run) or disable (stop) the conditions checking tasks.
 
@@ -87,9 +79,7 @@ param **`enable`** The boolean value to enable/disable.
 void enableController(bool enable);
 ```
 
-
-
-
+<br/>
 
 #### Add a channel to device config.
 
@@ -101,15 +91,16 @@ param **`addToDatabase`** The boolean option, set to true to add the data to dat
 void addChannel(struct channel_info_t &channel, bool addToDatabase = true);
 ```
 
-
-
-
+<br/>
 
 #### Add a condition to device config.
 
 param **`cond`** The FireSense_Condition data to add.
 
 param **`addToDatabase`** The boolean option, set to true to add the data to database.
+
+
+<br/>
 
 The format of conditions (IF) and its expression.
 
@@ -139,6 +130,8 @@ The valid left, right operands and syntaxes are
 | year e.g. 2021 | year == 2021 |
 
 
+<br/>
+
 The format of statements (THEN and ELSE) and its expression.
 
 STATEMENT1 + COMMA + STATEMENT2 +...
@@ -163,7 +156,7 @@ The valid left, right operands and syntaxes are
 | Use {CHANNEL_ID} to insert the channel value into the text payload. |  |
 
 
-
+<br/>
 
 The supported assignment operators are
 +=, -=, *=, /=, &=, |=
@@ -177,7 +170,7 @@ The supported comparision operators are
 void addCondition(struct firesense_condition_t cond, bool addToDatabase = true);
 ```
 
-
+<br/>
 
 #### Add a callback function used with func syntax in the conditions.
 
@@ -187,8 +180,7 @@ param **`func`** The FireSense_Function callback.
 void addCallbackFunction(FireSense_Function func);
 ```
 
-
-
+<br/>
 
 #### Clear all callback functions used with func syntax in the conditions.
 
@@ -196,8 +188,7 @@ void addCallbackFunction(FireSense_Function func);
 void clearAllCallbackFunctions();
 ```
 
-
-
+<br/>
 
 #### Add a pointer of uint8_t (byte) variable that bind to the channels.
 
@@ -207,8 +198,7 @@ param **`value`** The uint8_t variable.
 void addUserValue(uint8_t *value);
 ```
 
-
-
+<br/>
 
 #### Add a pointer of bool variable that bind to the channels.
 
@@ -218,8 +208,7 @@ param **`value`** The bool variable.
 void addUserValue(bool *value);
 ```
 
-
-
+<br/>
 
 #### Add a pointer of int variable that bind to the channels.
 
@@ -229,8 +218,7 @@ param **`value`** The int variable.
 void addUserValue(int *value);
 ```
 
-
-
+<br/>
 
 #### Add a pointer of float variable that bind to the channels.
 
@@ -240,8 +228,7 @@ param **`value`** The float variable.
 void addUserValue(float *value);
 ```
 
-
-
+<br/>
 
 #### Clear all user variable pointers that bound to the channels.
 
@@ -249,8 +236,7 @@ void addUserValue(float *value);
 void clearAllUserValues();
 ```
 
-
-
+<br/>
 
 #### Get the devivce id string.
 
@@ -260,8 +246,7 @@ return **`String`** The unique id String of device.
  String getDeviceId();
 ```
 
-
-
+<br/><br/>
 
 ## License
 

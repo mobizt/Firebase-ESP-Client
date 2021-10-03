@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.11
+ * Firebase TCP Client v1.1.12
  * 
- * Created September 20, 2001
+ * Created October 3, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
