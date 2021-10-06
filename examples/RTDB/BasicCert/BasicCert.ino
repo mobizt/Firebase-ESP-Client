@@ -39,7 +39,7 @@
 
 /* Google Root CA can be downloaded from https://pki.goog/repository/ */
 
-/** From the test on July 2021, GlobalSign Root CA was missing from Google server
+/** From the test as of July 2021, GlobalSign Root CA was missing from Google server
  * when checking with https://www.sslchecker.com/sslchecker.
  * The certificate chain, GTS Root R1 can be used instead.
 */

@@ -83,6 +83,11 @@ void setup()
   //config.database_url = DATABASE_URL;
   //config.signer.tokens.legacy_token = "<database secret>";
 
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  //Please make sure the device free Heap is not lower than 80 k for ESP32 and 10 k for ESP8266, 
+  //otherwise the SSL connection will fail.
+  //////////////////////////////////////////////////////////////////////////////////////////////
+
   Firebase.begin(&config, &auth);
 
   //Comment or pass false value when WiFi reconnection will control by your code or third party library
@@ -153,7 +158,7 @@ void loop()
     Serial.printf("Get string... %s\n", Firebase.RTDB.getString(&fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
 
     Serial.println();
-    
+
     //For generic set/get functions.
 
     //For generic set, use Firebase.RTDB.set(&fbdo, <path>, <any variable or value>)
@@ -170,12 +175,9 @@ void loop()
     //fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json,
     //fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
 
-
     count++;
   }
 }
-
-
 
 /// PLEASE AVOID THIS ////
 

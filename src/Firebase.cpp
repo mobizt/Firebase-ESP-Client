@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.4
+ * The Firebase class, Firebase.cpp v1.0.5
  * 
- *  Created September 26, 2021
+ *  Created October 6, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -149,6 +149,10 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
 #endif
 
     cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
+
+    cfg->signer.lastReqMillis = 0;
+    cfg->signer.tokens.expires = 0;
+    ut->clearS(cfg->_int.auth_token);
 
     cfg->signer.signup = false;
     Signer.begin(ut, cfg, auth);
@@ -346,6 +350,10 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
     RTDB.begin(ut);
 #endif
     cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
+
+    cfg->signer.lastReqMillis = 0;
+    cfg->signer.tokens.expires = 0;
+    ut->clearS(cfg->_int.auth_token);
 
     cfg->signer.signup = false;
     cfg->signer.signup = false;

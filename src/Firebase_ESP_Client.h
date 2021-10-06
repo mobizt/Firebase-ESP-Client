@@ -1,16 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.5.2"
+#define FIREBASE_CLIENT_VERSION "2.5.3"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.5.2
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.5.3
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created September 26, 2021
+ * Created October 6, 2021
  *
  *   Updates:
- * - Fix #139 compilation error in ESP32 Core SDK v1.0.4 and earlier.
+ * - Add support user re-authentication.
+ * - Add re-authenticate example.
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
