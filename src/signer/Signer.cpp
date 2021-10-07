@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.2
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 20, 2021
+ * Created October 7, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -307,102 +307,94 @@ bool Firebase_Signer::handleToken()
 
 void Firebase_Signer::tokenProcessingTask()
 {
+
 #if defined(ESP32)
 
     if (config->signer.tokenTaskRunning)
         return;
 
-    static Firebase_Signer *_this = this;
+    bool ret = false;
 
-    TaskFunction_t taskCode = [](void *param)
+    config->signer.tokenTaskRunning = true;
+
+    while (!ret)
     {
-        _this->config->signer.tokenTaskRunning = true;
-
-        while (_this->_token_processing_task_enable)
+        delay(0);
+        
+        if (config->signer.tokens.token_type == token_type_id_token)
         {
-            vTaskDelay(20 / portTICK_PERIOD_MS);
+            config->signer.lastReqMillis = millis();
 
-            if (_this->config->signer.tokens.token_type == token_type_id_token)
+            if (getIdToken(false, "", ""))
             {
-                _this->config->signer.lastReqMillis = millis();
-                if (_this->getIdToken(false, "", ""))
-                {
-                    _this->_token_processing_task_enable = false;
-                    _this->config->signer.attempts = 0;
-                    break;
-                }
-                else
-                {
-                    if (_this->config->signer.attempts < _this->config->max_token_generation_retry)
-                        _this->config->signer.attempts++;
-                    else
-                    {
-                        _this->ut->clearS(_this->config->signer.tokens.error.message);
-                        _this->setTokenError(FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED);
-                        _this->sendTokenStatusCB();
-                        _this->_token_processing_task_enable = false;
-                        _this->config->signer.attempts = 0;
-                        break;
-                    }
-                }
+                _token_processing_task_enable = false;
+                config->signer.attempts = 0;
+                ret = true;
             }
             else
             {
-                if (_this->config->signer.step == fb_esp_jwt_generation_step_begin)
+                if (config->signer.attempts < config->max_token_generation_retry)
+                    config->signer.attempts++;
+                else
                 {
-                    _this->ut->setClock(_this->config->time_zone);
-                    time_t now = time(nullptr);
-                    _this->config->_int.fb_clock_rdy = now > _this->ut->default_ts;
+                    ut->clearS(config->signer.tokens.error.message);
+                    setTokenError(FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED);
+                    sendTokenStatusCB();
+                    _token_processing_task_enable = false;
+                    config->signer.attempts = 0;
+                    ret = true;
+                }
+            }
+        }
+        else
+        {
+            if (config->signer.step == fb_esp_jwt_generation_step_begin)
+            {
+                ut->setClock(config->time_zone);
+                time_t now = time(nullptr);
+                config->_int.fb_clock_rdy = now > ut->default_ts;
 
-                    if (_this->config->_int.fb_clock_rdy)
-                        _this->config->signer.step = fb_esp_jwt_generation_step_encode_header_payload;
-                }
-                else if (_this->config->signer.step == fb_esp_jwt_generation_step_encode_header_payload)
+                if (config->_int.fb_clock_rdy)
+                    config->signer.step = fb_esp_jwt_generation_step_encode_header_payload;
+            }
+            else if (config->signer.step == fb_esp_jwt_generation_step_encode_header_payload)
+            {
+                if (createJWT())
+                    config->signer.step = fb_esp_jwt_generation_step_sign;
+            }
+            else if (config->signer.step == fb_esp_jwt_generation_step_sign)
+            {
+                if (createJWT())
+                    config->signer.step = fb_esp_jwt_generation_step_exchange;
+            }
+            else if (config->signer.step == fb_esp_jwt_generation_step_exchange)
+            {
+                if (requestTokens())
                 {
-                    if (_this->createJWT())
-                        _this->config->signer.step = fb_esp_jwt_generation_step_sign;
+                    config->signer.attempts = 0;
+                    _token_processing_task_enable = false;
+                    config->signer.step = fb_esp_jwt_generation_step_begin;
+                    ret = true;
                 }
-                else if (_this->config->signer.step == fb_esp_jwt_generation_step_sign)
+                else
                 {
-                    if (_this->createJWT())
-                        _this->config->signer.step = fb_esp_jwt_generation_step_exchange;
-                }
-                else if (_this->config->signer.step == fb_esp_jwt_generation_step_exchange)
-                {
-                    if (_this->requestTokens())
-                    {
-                        _this->config->signer.attempts = 0;
-                        _this->_token_processing_task_enable = false;
-                        _this->config->signer.step = fb_esp_jwt_generation_step_begin;
-                        break;
-                    }
+                    if (config->signer.attempts < config->max_token_generation_retry)
+                        config->signer.attempts++;
                     else
                     {
-                        if (_this->config->signer.attempts < _this->config->max_token_generation_retry)
-                            _this->config->signer.attempts++;
-                        else
-                        {
-                            _this->ut->clearS(_this->config->signer.tokens.error.message);
-                            _this->setTokenError(FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED);
-                            _this->sendTokenStatusCB();
-                            _this->config->signer.attempts = 0;
-                            _this->config->signer.step = fb_esp_jwt_generation_step_begin;
-                            break;
-                        }
+                        ut->clearS(config->signer.tokens.error.message);
+                        setTokenError(FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED);
+                        sendTokenStatusCB();
+                        config->signer.attempts = 0;
+                        config->signer.step = fb_esp_jwt_generation_step_begin;
+                        ret = true;
                     }
                 }
             }
-
-            yield();
         }
-        _this->config->_int.token_processing_task_handle = NULL;
-        _this->config->signer.tokenTaskRunning = false;
-        vTaskDelete(NULL);
-    };
+    }
 
-    char *taskname = ut->strP(fb_esp_pgm_str_546);
-    xTaskCreatePinnedToCore(taskCode, taskname, 12000, NULL, 3, &config->_int.token_processing_task_handle, 1);
-    ut->delS(taskname);
+    config->signer.tokenTaskRunning = false;
 
 #elif defined(ESP8266)
 

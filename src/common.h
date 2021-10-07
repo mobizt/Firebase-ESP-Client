@@ -1,6 +1,6 @@
 
 /**
- * Created September 20, 2021
+ * Created October 7, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -731,7 +731,6 @@ struct fb_esp_cfg_int_t
     TaskHandle_t resumable_upload_task_handle = NULL;
     TaskHandle_t functions_check_task_handle = NULL;
     TaskHandle_t functions_deployment_task_handle = NULL;
-    TaskHandle_t token_processing_task_handle = NULL;
 #endif
 };
 
