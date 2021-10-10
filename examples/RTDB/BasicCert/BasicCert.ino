@@ -238,7 +238,7 @@ void loop()
  * 1. Call get repeatedly inside the loop without the appropriate timing for execution provided e.g. millis() or conditional checking,
  * where delay should be avoided.
  * 
- * Every time get was called, the request header need to be sent to server which its size depends on the authentication method used, 
+ * Everytime get was called, the request header need to be sent to server which its size depends on the authentication method used, 
  * and costs your data usage.
  * 
  * Please use stream function instead for this use case.
