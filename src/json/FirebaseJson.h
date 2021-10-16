@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.5.1
+ * FirebaseJson, version 2.5.2
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * August 16, 2021
+ * October 16, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -2504,7 +2504,7 @@ private:
     template <typename T>
     auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, bool>::type
     {
-        return mGet(result, getStr(arg), prettify);
+        return mGet(root, &result, getStr(arg), prettify);
     }
 
     template <typename T>

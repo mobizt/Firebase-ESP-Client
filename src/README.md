@@ -76,6 +76,8 @@ struct token_info_t authTokenInfo();
 
 return **`Boolean`** type status indicates the token generation is completed.
 
+This returns false if ready() returns false (token generation is not ready).
+
 ```cpp
 bool ready();
 ```

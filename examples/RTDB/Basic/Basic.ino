@@ -27,6 +27,8 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
+//For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+
 /* 2. Define the API Key */
 #define API_KEY "API_KEY"
 
@@ -210,5 +212,14 @@ void loop()
  * 3. Use of delay or hidden delay or blocking operation to wait for hardware ready in the third party sensor libraries, together with stream functions e.g. Firebase.RTDB.readStream and fbdo.streamAvailable in the loop.
  * 
  * Please use non-blocking mode of sensor libraries (if available) or use millis instead of delay in your code.
+ * 
+ * 4. Blocking the token generation process.
+ * 
+ * Let the authentication token generation to run without blocking, the following code MUST BE AVOIDED.
+ * 
+ * while (!Firebase.ready()) <---- Don't do this in while loop
+ * {
+ *     delay(1000);
+ * }
  * 
  */

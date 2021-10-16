@@ -78,6 +78,8 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
+//For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+
 /* 2. Define the API Key */
 #define API_KEY "API_KEY"
 

@@ -76,6 +76,8 @@ void setup()
 
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
+  //For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+
   /* Assign the api key (required) */
   config.api_key = API_KEY;
 

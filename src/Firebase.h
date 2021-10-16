@@ -141,6 +141,8 @@ public:
   /** Provide the grant access status for Firebase Services.
    * 
    * @return Boolean type status indicates the device can access to the services
+   * 
+   * This returns false if ready() returns false (token generation is not ready).
   */
   bool authenticated();
 
@@ -342,6 +344,8 @@ public:
   /** Provide the grant access status for Firebase Services.
    *
    * @return Boolean type status indicates the device can access to the services
+   * 
+   * This returns false if ready() returns false (token generation is not ready).
   */
   bool authenticated();
 
