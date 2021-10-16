@@ -1338,7 +1338,7 @@ service cloud.firestore {
 
 The Firebase Storage bucket file upload, download, read its meta data and listing are supported. 
 
-See the [Firebase Storage examples](/examples/Storage/Firebase_Storage) for the usages.
+See the [Firebase Storage examples](/examples/Storage/FirebaseStorage) for the usages.
 
 
 
@@ -1349,7 +1349,7 @@ The Firebase or Google Cloud Storage bucket file upload, download, read its meta
 This Google Cloud Storage supported allows large files upload which upload the large file via the Firebase Storage functions is not allowable.
 
 
-See the [Google Cloud Storage examples](/examples/Storage/Google_Cloud_Storage) for the usages.
+See the [Google Cloud Storage examples](/examples/Storage/GoogleCloudStorage) for the usages.
 
 
 
@@ -1359,7 +1359,7 @@ The Cloud Functions create/deployment, update, call, delete and list are support
 
 The library also support the source code deployment which you can edit the functions and deploy it using the embedded device.
 
-See [Cloud Functions examples](/examples/Cloud_Functions) for complete usages.
+See [Cloud Functions examples](/examples/CloudFunctions) for complete usages.
 
 
 
