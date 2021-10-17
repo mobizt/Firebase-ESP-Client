@@ -617,7 +617,7 @@ The function included `set`, `setInt`, `setFloat`, `setDouble`, `setBool`, `setS
 
 For faster sending data, non-waits or async mode functions are available e.g. `setAsync`, `setIntAsync`, `setFloatAsync`, `setDoubleAsync`, `setBoolAsync`, `setStringAsync`, `setJSONAsync`, `setArrayAsync`, `setBlobAsync` and `setFileAsync`. 
 
-For generic set, use Firebase.RTDB.set(&fbdo, <path>, <any variable or value>).
+For generic set, use Firebase.RTDB.set(&fbdo, \<path\>, \<any variable or value\>).
 
 These async functions will ignore the server responses.
 
