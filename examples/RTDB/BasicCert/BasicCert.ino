@@ -210,6 +210,21 @@ void loop()
 
     Serial.printf("Get string... %s\n", Firebase.RTDB.getString(&fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
 
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+    FirebaseJson json;
+
+    if (count == 0)
+    {
+      json.set("value/round/" + String(count), "cool!");
+      json.set("vaue/ts/.sv", "timestamp");
+      Serial.printf("Set json... %s\n", Firebase.RTDB.set(&fbdo, "/test/json", &json) ? "ok" : fbdo.errorReason().c_str());
+    }
+    else
+    {
+      json.add(String(count), "smart!");
+      Serial.printf("Update node... %s\n", Firebase.RTDB.updateNode(&fbdo, "/test/json/value/round", &json) ? "ok" : fbdo.errorReason().c_str());
+    }
+    
     Serial.println();
     
     //For generic set/get functions.

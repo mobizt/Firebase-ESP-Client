@@ -124,6 +124,7 @@ void sendMessage()
     msg.notification.body = "Notification body";
     msg.notification.title = "Notification title";
 
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
     FirebaseJson payload;
 
     //all data key-values should be string

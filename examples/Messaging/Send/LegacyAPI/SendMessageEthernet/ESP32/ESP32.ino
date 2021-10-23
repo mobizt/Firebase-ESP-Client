@@ -187,6 +187,7 @@ void sendMessage()
     msg.payloads.notification.icon = "myicon";
     msg.payloads.notification.click_action = "OPEN_ACTIVITY_1";
 
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
     FirebaseJson payload;
 
     //all data key-values should be string

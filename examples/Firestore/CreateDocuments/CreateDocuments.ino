@@ -87,6 +87,7 @@ void loop()
     {
         dataMillis = millis();
 
+        //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
         FirebaseJson content;
 
         //We will create the nested document in the parent path "a0/b0/c0

@@ -124,6 +124,7 @@ void loop()
         //fb_esp_firestore_transform_type_remove_all_from_array
         field_transforms.transform_type = fb_esp_firestore_transform_type_increment;
 
+        //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
         FirebaseJson values;
 
         values.set("integerValue", "1"); //increase by 1

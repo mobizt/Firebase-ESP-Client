@@ -86,7 +86,7 @@ void setup()
   //config.signer.tokens.legacy_token = "<database secret>";
 
   //////////////////////////////////////////////////////////////////////////////////////////////
-  //Please make sure the device free Heap is not lower than 80 k for ESP32 and 10 k for ESP8266, 
+  //Please make sure the device free Heap is not lower than 80 k for ESP32 and 10 k for ESP8266,
   //otherwise the SSL connection will fail.
   //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -158,6 +158,21 @@ void loop()
     Serial.printf("Set string... %s\n", Firebase.RTDB.setString(&fbdo, "/test/string", "Hello World!") ? "ok" : fbdo.errorReason().c_str());
 
     Serial.printf("Get string... %s\n", Firebase.RTDB.getString(&fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
+
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+    FirebaseJson json;
+
+    if (count == 0)
+    {
+      json.set("value/round/" + String(count), "cool!");
+      json.set("vaue/ts/.sv", "timestamp");
+      Serial.printf("Set json... %s\n", Firebase.RTDB.set(&fbdo, "/test/json", &json) ? "ok" : fbdo.errorReason().c_str());
+    }
+    else
+    {
+      json.add(String(count), "smart!");
+      Serial.printf("Update node... %s\n", Firebase.RTDB.updateNode(&fbdo, "/test/json/value/round", &json) ? "ok" : fbdo.errorReason().c_str());
+    }
 
     Serial.println();
 

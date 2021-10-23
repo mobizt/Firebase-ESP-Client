@@ -129,6 +129,7 @@ void callFunction()
 
     Serial.print("Call the Cloud Function... ");
 
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
     FirebaseJson payload;
     payload.set("info/name", "Paul");
     payload.set("info/age", 30);

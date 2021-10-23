@@ -91,6 +91,7 @@ void loop()
         {
             taskCompleted = true;
 
+            //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
             FirebaseJson content;
 
             content.set("fields/Japan/mapValue/fields/time_zone/integerValue", "9");

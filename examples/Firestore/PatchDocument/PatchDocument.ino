@@ -87,6 +87,8 @@ void loop()
     if (Firebase.ready() && (millis() - dataMillis > 60000 || dataMillis == 0))
     {
         dataMillis = millis();
+
+        //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
         FirebaseJson content;
 
         //aa is the collection id, bb is the document id.
