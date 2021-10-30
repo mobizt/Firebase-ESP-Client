@@ -429,6 +429,18 @@ Edit the default database rules as following
 }
 ```
 
+The same configuration for rules version 2:
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
 To get the database URL and secret (legacy token).
 
 ![Firebase Host](/media/images/RTDB_URL.png)
