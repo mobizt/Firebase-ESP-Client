@@ -74,7 +74,7 @@ This library required **ESP8266 or ESP32 Core SDK**.
 
 For Arduino IDE, ESP8266 Core SDK can be installed through **Boards Manager**. 
 
-For PlatfoemIO IDE, ESP8266 Core SDK can be installed through **PIO Home** > **Platforms** > **Espressif 8266 or Espressif 32**.
+For PlatformIO IDE, ESP8266 Core SDK can be installed through **PIO Home** > **Platforms** > **Espressif 8266 or Espressif 32**.
 
 
 
@@ -425,6 +425,18 @@ Edit the default database rules as following
   "rules": {
     ".read": "auth != null", 
     ".write": "auth != null", 
+  }
+}
+```
+
+The same configuration for rules version 2:
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
 ```
