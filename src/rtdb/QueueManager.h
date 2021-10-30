@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueueManager class, QueueManager.h version 1.0.1
+ * Google's Firebase QueueManager class, QueueManager.h version 1.0.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)

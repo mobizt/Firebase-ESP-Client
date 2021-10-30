@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.2
+ * Google's Firebase Util class, Utils.h version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 20, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -59,7 +59,7 @@ public:
     char *strP(PGM_P pgm)
     {
         size_t len = strlen_P(pgm) + 5;
-        char *buf = newS(len);
+        char *buf = (char *)newP(len);
         strcpy_P(buf, pgm);
         buf[strlen_P(pgm)] = 0;
         return buf;
@@ -69,7 +69,7 @@ public:
     {
         char *tmp = strP(beginH);
         int p = strpos(buf, tmp, ofs);
-        delS(tmp);
+        delP(&tmp);
         return p;
     }
 
@@ -84,12 +84,12 @@ public:
             ofs = p;
         }
         tmp = strP(beginH);
-        char *tmp2 = newS(strlen_P(beginH) + 1);
+        char *tmp2 = (char *)newP(strlen_P(beginH) + 1);
         memcpy(tmp2, &buf[ofs], strlen_P(beginH));
         tmp2[strlen_P(beginH)] = 0;
         bool ret = (strcasecmp(tmp, tmp2) == 0);
-        delS(tmp);
-        delS(tmp2);
+        delP(&tmp);
+        delP(&tmp2);
         return ret;
     }
 
@@ -108,7 +108,7 @@ public:
                 p2 = strlen(buf);
 
             int len = p2 - p1 - strlen_P(beginH);
-            tmp = newS(len + 1);
+            tmp = (char *)newP(len + 1);
             memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
             return tmp;
         }
@@ -116,13 +116,13 @@ public:
         return nullptr;
     }
 
-    void appendP(std::string &buf, PGM_P p, bool empty = false)
+    void appendP(MBSTRING &buf, PGM_P p, bool empty = false)
     {
         if (empty)
             buf.clear();
         char *b = strP(p);
         buf += b;
-        delS(b);
+        delP(&b);
     }
 
     void strcat_c(char *str, char c)
@@ -185,7 +185,7 @@ public:
         return -1;
     }
 
-    int rstrpos(const char *haystack, const char *needle, int offset)
+    int rstrpos(const char *haystack, const char *needle, int offset /* start search from this offset to the left string */)
     {
         if (!haystack || !needle)
             return -1;
@@ -196,8 +196,14 @@ public:
         if (hlen == 0 || nlen == 0)
             return -1;
 
-        int hidx = hlen - 1, nidx = nlen - 1;
-        while (offset < hidx)
+        int hidx = offset;
+
+        if (hidx >= hlen || offset == -1)
+            hidx = hlen - 1;
+
+        int nidx = nlen - 1;
+
+        while (hidx >= 0)
         {
             if (*(needle + nidx) != *(haystack + hidx))
             {
@@ -206,17 +212,17 @@ public:
             }
             else
             {
-                nidx--;
-                hidx--;
                 if (nidx == 0)
                     return hidx + nidx;
+                nidx--;
+                hidx--;
             }
         }
 
         return -1;
     }
 
-    int rstrpos(const char *haystack, char needle, int offset)
+    int rstrpos(const char *haystack, char needle, int offset /* start search from this offset to the left char */)
     {
         if (!haystack || needle == 0)
             return -1;
@@ -226,8 +232,12 @@ public:
         if (hlen == 0)
             return -1;
 
-        int hidx = hlen - 1;
-        while (offset < hidx)
+        int hidx = offset;
+
+        if (hidx >= hlen || offset == -1)
+            hidx = hlen - 1;
+
+        while (hidx >= 0)
         {
             if (needle == *(haystack + hidx))
                 return hidx;
@@ -237,29 +247,71 @@ public:
         return -1;
     }
 
-    inline std::string trim(const std::string &s)
+    void ltrim(MBSTRING &str, const MBSTRING &chars = " ")
     {
-        auto wsfront = std::find_if_not(s.begin(), s.end(), [](int c)
-                                        { return std::isspace(c); });
-        return std::string(wsfront, std::find_if_not(s.rbegin(), std::string::const_reverse_iterator(wsfront), [](int c)
-                                                     { return std::isspace(c); })
-                                        .base());
+        size_t pos = str.find_first_not_of(chars);
+        if (pos != MBSTRING::npos)
+            str.erase(0, pos);
     }
 
-    void delS(char *p)
+    void rtrim(MBSTRING &str, const MBSTRING &chars = " ")
     {
-        if (p != nullptr)
-            delete[] p;
-        p = nullptr;
+        size_t pos = str.find_last_not_of(chars);
+        if (pos != MBSTRING::npos)
+            str.erase(pos + 1);
     }
 
-    char *newS(size_t len)
+    inline MBSTRING trim(const MBSTRING &s)
     {
-        char *p = new char[len];
-        memset(p, 0, len);
+        MBSTRING chars = " ";
+        MBSTRING str = s;
+        ltrim(str, chars);
+        rtrim(str, chars);
+        return str;
+    }
+
+    void delP(void *ptr)
+    {
+        void **p = (void **)ptr;
+        if (*p)
+        {
+            free(*p);
+            *p = 0;
+        }
+    }
+
+    size_t getReservedLen(size_t len)
+    {
+        int blen = len + 1;
+
+        int newlen = (blen / 4) * 4;
+
+        if (newlen < blen)
+            newlen += 4;
+
+        return (size_t)newlen;
+    }
+
+    void *newP(size_t len)
+    {
+        void *p;
+        size_t newLen = getReservedLen(len);
+#if defined(BOARD_HAS_PSRAM) && defined(FIREBASE_USE_PSRAM)
+
+        if ((p = (void *)ps_malloc(newLen)) == 0)
+            return NULL;
+
+#else
+
+        if ((p = (void *)malloc(newLen)) == 0)
+            return NULL;
+
+#endif
+        memset(p, 0, newLen);
         return p;
     }
-    void substr(std::string &str, const char *s, int offset, size_t len)
+
+    void substr(MBSTRING &str, const char *s, int offset, size_t len)
     {
         if (!s)
             return;
@@ -277,11 +329,11 @@ public:
         for (int i = offset; i < last; i++)
             str += s[i];
     }
-    void splitString(const char *str, std::vector<std::string> out, const char delim)
+    void splitString(const char *str, std::vector<MBSTRING> out, const char delim)
     {
         int current = 0, previous = 0;
         current = strpos(str, delim, 0);
-        std::string s;
+        MBSTRING s;
         while (current != -1)
         {
             clearS(s);
@@ -308,34 +360,34 @@ public:
         clearS(s);
     }
 
-    void getUrlInfo(const std::string url, struct fb_esp_url_info_t &info)
+    void getUrlInfo(const MBSTRING &url, struct fb_esp_url_info_t &info)
     {
-        char *host = newS(url.length() + 5);
-        char *uri = newS(url.length() + 5);
-        char *auth = newS(url.length() + 5);
+        char *host = (char *)newP(url.length() + 5);
+        char *uri = (char *)newP(url.length() + 5);
+        char *auth = (char *)newP(url.length() + 5);
 
         int p1 = 0;
         char *tmp = strP(fb_esp_pgm_str_441);
         int x = sscanf(url.c_str(), tmp, host, uri);
-        delS(tmp);
+        delP(&tmp);
         tmp = strP(fb_esp_pgm_str_442);
         x ? p1 = 8 : x = sscanf(url.c_str(), tmp, host, uri);
-        delS(tmp);
+        delP(&tmp);
         tmp = strP(fb_esp_pgm_str_443);
         x ? p1 = 7 : x = sscanf(url.c_str(), tmp, host, uri);
-        delS(tmp);
+        delP(&tmp);
 
         int p2 = 0;
         if (x > 0)
         {
             tmp = strP(fb_esp_pgm_str_173);
             p2 = strpos(host, tmp, 0);
-            delS(tmp);
+            delP(&tmp);
             if (p2 > -1)
             {
                 tmp = strP(fb_esp_pgm_str_444);
                 x = sscanf(url.c_str() + p1, tmp, host, uri);
-                delS(tmp);
+                delP(&tmp);
             }
         }
 
@@ -343,21 +395,21 @@ public:
         {
             tmp = strP(fb_esp_pgm_str_445);
             p2 = strpos(uri, tmp, 0);
-            delS(tmp);
+            delP(&tmp);
             if (p2 > -1)
             {
                 tmp = strP(fb_esp_pgm_str_446);
                 x = sscanf(uri + p2 + 5, tmp, auth);
-                delS(tmp);
+                delP(&tmp);
             }
         }
 
         info.uri = uri;
         info.host = host;
         info.auth = auth;
-        delS(uri);
-        delS(host);
-        delS(auth);
+        delP(&uri);
+        delP(&host);
+        delP(&auth);
     }
 
     int url_decode(const char *s, char *dec)
@@ -383,7 +435,7 @@ public:
         return o - dec;
     }
 
-    std::string url_encode(const std::string &s)
+    MBSTRING url_encode(const MBSTRING &s)
     {
         const char *str = s.c_str();
         std::vector<char> v(s.size());
@@ -413,7 +465,8 @@ public:
             }
         }
 
-        return std::string(v.cbegin(), v.cend());
+        MBSTRING ret = std::string(v.cbegin(), v.cend()).c_str();
+        return ret;
     }
 
     inline int ishex(int x)
@@ -470,7 +523,7 @@ public:
             if (tmp)
             {
                 response.connection = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
             if (pmax < beginPos)
                 pmax = beginPos;
@@ -479,7 +532,7 @@ public:
             if (tmp)
             {
                 response.contentType = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -489,7 +542,7 @@ public:
             if (tmp)
             {
                 response.contentLen = atoi(tmp);
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -501,7 +554,7 @@ public:
                 response.transferEnc = tmp;
                 if (stringCompare(tmp, 0, fb_esp_pgm_str_168))
                     response.isChunkedEnc = true;
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -511,7 +564,7 @@ public:
             if (tmp)
             {
                 response.etag = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -521,7 +574,7 @@ public:
             if (tmp)
             {
                 response.connection = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -532,7 +585,7 @@ public:
             {
 
                 response.payloadLen = atoi(tmp);
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK || response.httpCode == FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
@@ -544,7 +597,7 @@ public:
                 if (tmp)
                 {
                     response.location = tmp;
-                    delS(tmp);
+                    delP(&tmp);
                 }
             }
 
@@ -577,7 +630,7 @@ public:
         return idx;
     }
 
-    int readLine(WiFiClient *stream, std::string &buf)
+    int readLine(WiFiClient *stream, MBSTRING &buf)
     {
         int res = -1;
         char c = 0;
@@ -614,26 +667,26 @@ public:
             chunkState = 1;
             chunkedSize = -1;
             dataLen = 0;
-            buf = newS(bufLen);
+            buf = (char *)newP(bufLen);
             int readLen = readLine(stream, buf, bufLen);
             if (readLen)
             {
                 tmp = strP(fb_esp_pgm_str_79);
                 p1 = strpos(buf, tmp, 0);
-                delS(tmp);
+                delP(&tmp);
                 if (p1 == -1)
                 {
                     tmp = strP(fb_esp_pgm_str_21);
                     p1 = strpos(buf, tmp, 0);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 if (p1 != -1)
                 {
-                    tmp = newS(p1 + 1);
+                    tmp = (char *)newP(p1 + 1);
                     memcpy(tmp, buf, p1);
                     chunkedSize = hex2int(tmp);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 //last chunk
@@ -643,14 +696,14 @@ public:
             else
                 chunkState = 0;
 
-            delS(buf);
+            delP(&buf);
         }
         else
         {
 
             if (chunkedSize > -1)
             {
-                buf = newS(bufLen);
+                buf = (char *)newP(bufLen);
                 int readLen = readLine(stream, buf, bufLen);
 
                 if (readLen > 0)
@@ -676,14 +729,14 @@ public:
                     olen = -1;
                 }
 
-                delS(buf);
+                delP(&buf);
             }
         }
 
         return olen;
     }
 
-    int readChunkedData(WiFiClient *stream, std::string &out, int &chunkState, int &chunkedSize, int &dataLen)
+    int readChunkedData(WiFiClient *stream, MBSTRING &out, int &chunkState, int &chunkedSize, int &dataLen)
     {
 
         char *tmp = nullptr;
@@ -695,26 +748,26 @@ public:
             chunkState = 1;
             chunkedSize = -1;
             dataLen = 0;
-            std::string s;
+            MBSTRING s;
             int readLen = readLine(stream, s);
             if (readLen)
             {
                 tmp = strP(fb_esp_pgm_str_79);
                 p1 = strpos(s.c_str(), tmp, 0);
-                delS(tmp);
+                delP(&tmp);
                 if (p1 == -1)
                 {
                     tmp = strP(fb_esp_pgm_str_21);
                     p1 = strpos(s.c_str(), tmp, 0);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 if (p1 != -1)
                 {
-                    tmp = newS(p1 + 1);
+                    tmp = (char *)newP(p1 + 1);
                     memcpy(tmp, s.c_str(), p1);
                     chunkedSize = hex2int(tmp);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 //last chunk
@@ -729,7 +782,7 @@ public:
 
             if (chunkedSize > -1)
             {
-                std::string s;
+                MBSTRING s;
                 int readLen = readLine(stream, s);
 
                 if (readLen > 0)
@@ -766,7 +819,7 @@ public:
         char *tmp = strP(beginH);
         int p1 = strpos(buf, tmp, beginPos);
         int ofs = 0;
-        delS(tmp);
+        delP(&tmp);
         if (p1 != -1)
         {
             tmp = strP(endH);
@@ -786,13 +839,13 @@ public:
             if (p2 == -1)
                 p2 = strlen(buf);
 
-            delS(tmp);
+            delP(&tmp);
 
             if (p2 != -1)
             {
                 beginPos = p2 + ofs;
                 int len = p2 - p1 - strlen_P(beginH);
-                tmp = newS(len + 1);
+                tmp = (char *)newP(len + 1);
                 memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
                 return tmp;
             }
@@ -801,13 +854,14 @@ public:
         return nullptr;
     }
 
-    void getHeaderStr(const std::string &in, std::string &out, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
+    void getHeaderStr(const MBSTRING &in, MBSTRING &out, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
     {
+        MBSTRING _in = in;
 
         char *tmp = strP(beginH);
         int p1 = strpos(in.c_str(), tmp, beginPos);
         int ofs = 0;
-        delS(tmp);
+        delP(&tmp);
         if (p1 != -1)
         {
             tmp = strP(endH);
@@ -827,13 +881,13 @@ public:
             if (p2 == -1)
                 p2 = in.length();
 
-            delS(tmp);
+            delP(&tmp);
 
             if (p2 != -1)
             {
                 beginPos = p2 + ofs;
                 int len = p2 - p1 - strlen_P(beginH);
-                out = in.substr(p1 + strlen_P(beginH), len);
+                out = _in.substr(p1 + strlen_P(beginH), len);
             }
         }
     }
@@ -853,7 +907,7 @@ public:
             {
                 response.isEvent = true;
                 response.eventType = tmp;
-                delS(tmp);
+                delP(&tmp);
 
                 payloadOfs = payloadPos;
 
@@ -864,7 +918,7 @@ public:
                     payloadPos = payloadOfs;
                     response.hasEventData = true;
 
-                    delS(tmp);
+                    delP(&tmp);
 
                     tmp = getHeader(buf, fb_esp_pgm_str_17, fb_esp_pgm_str_3, payloadPos, 0);
 
@@ -872,7 +926,7 @@ public:
                     {
                         payloadOfs = payloadPos;
                         response.eventPath = tmp;
-                        delS(tmp);
+                        delP(&tmp);
                         tmp = getHeader(buf, fb_esp_pgm_str_18, fb_esp_pgm_str_180, payloadPos, 0);
 
                         if (tmp)
@@ -882,7 +936,7 @@ public:
                             response.eventData = tmp;
                             payloadOfs += strlen_P(fb_esp_pgm_str_18) + 1;
                             response.payloadOfs = payloadOfs;
-                            delS(tmp);
+                            delP(&tmp);
                         }
                     }
                 }
@@ -898,19 +952,19 @@ public:
             if (tmp)
             {
                 response.pushName = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
 
             tmp = getHeader(buf, fb_esp_pgm_str_102, fb_esp_pgm_str_3, payloadPos, 0);
             if (tmp)
             {
-                delS(tmp);
+                delP(&tmp);
                 FirebaseJson js;
                 FirebaseJsonData d;
                 js.setJsonData(buf);
                 tmp = strP(fb_esp_pgm_str_176);
                 js.get(d, tmp);
-                delS(tmp);
+                delP(&tmp);
                 if (d.success)
                     response.fbError = d.stringValue.c_str();
             }
@@ -962,7 +1016,7 @@ public:
             {
                 tmp = strP(fb_esp_pgm_str_4);
                 int p1 = strpos(buf, tmp, payloadOfs);
-                delS(tmp);
+                delP(&tmp);
                 setNumDataType(buf, payloadOfs, response, p1 != -1);
             }
         }
@@ -973,15 +1027,14 @@ public:
 
         if (response.payloadLen > 0 && response.payloadLen <= (int)strlen(buf) && ofs < (int)strlen(buf) && ofs + response.payloadLen <= (int)strlen(buf))
         {
-            char *tmp = newS(response.payloadLen + 1);
+            char *tmp = (char *)newP(response.payloadLen + 1);
             memcpy(tmp, &buf[ofs], response.payloadLen);
             tmp[response.payloadLen] = 0;
             double d = atof(tmp);
-            delS(tmp);
+            delP(&tmp);
 
             if (dec)
             {
-
                 if (response.payloadLen <= 7)
                 {
                     response.floatData = d;
@@ -1009,9 +1062,9 @@ public:
         }
     }
 
-    void createDirs(std::string dirs, fb_esp_mem_storage_type storageType)
+    void createDirs(MBSTRING dirs, fb_esp_mem_storage_type storageType)
     {
-        std::string dir = "";
+        MBSTRING dir;
         size_t count = 0;
         for (size_t i = 0; i < dirs.length(); i++)
         {
@@ -1033,7 +1086,7 @@ public:
             if (storageType == mem_storage_type_sd)
                 SD_FS.mkdir(dir.c_str());
         }
-        std::string().swap(dir);
+        MBSTRING().swap(dir);
     }
 
     void closeFileHandle(bool sd)
@@ -1051,15 +1104,15 @@ public:
         }
     }
 
-    bool decodeBase64Str(const std::string src, std::vector<uint8_t> &out)
+    bool decodeBase64Str(const MBSTRING &src, std::vector<uint8_t> &out)
     {
-        unsigned char *dtable = new unsigned char[256];
+        unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
         for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
             dtable[fb_esp_base64_table[i]] = (unsigned char)i;
         dtable['='] = 0;
 
-        unsigned char *block = new unsigned char[4];
+        unsigned char *block = (unsigned char *)newP(4);
         unsigned char tmp;
         size_t i, count;
         int pad = 0;
@@ -1120,26 +1173,26 @@ public:
             }
         }
 
-        delete[] block;
-        delete[] dtable;
+        delP(&block);
+        delP(&dtable);
 
         return true;
 
     exit:
-        delete[] block;
-        delete[] dtable;
+        delP(&block);
+        delP(&dtable);
         return false;
     }
 
     bool decodeBase64Flash(const char *src, size_t len, fs::File &file)
     {
-        unsigned char *dtable = new unsigned char[256];
+        unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
         for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
             dtable[fb_esp_base64_table[i]] = (unsigned char)i;
         dtable['='] = 0;
 
-        unsigned char *block = new unsigned char[4];
+        unsigned char *block = (unsigned char *)newP(4);
         unsigned char tmp;
         size_t i, count;
         int pad = 0;
@@ -1195,19 +1248,19 @@ public:
             }
         }
 
-        delete[] block;
-        delete[] dtable;
+        delP(&block);
+        delP(&dtable);
 
         return true;
 
     exit:
-        delete[] block;
-        delete[] dtable;
+        delP(&block);
+        delP(&dtable);
 
         return false;
     }
 
-    void sendBase64Stream(WiFiClient *client, const std::string &filePath, uint8_t storageType, fs::File &file)
+    void sendBase64Stream(WiFiClient *client, const MBSTRING &filePath, uint8_t storageType, fs::File &file)
     {
 
         if (storageType == mem_storage_type_flash)
@@ -1223,12 +1276,12 @@ public:
         size_t byteAdd = 0;
         size_t byteSent = 0;
 
-        unsigned char *buff = new unsigned char[chunkSize];
+        unsigned char *buff = (unsigned char *)newP(chunkSize);
         memset(buff, 0, chunkSize);
 
         size_t len = file.size();
         size_t fbuffIndex = 0;
-        unsigned char *fbuff = new unsigned char[3];
+        unsigned char *fbuff = (unsigned char *)newP(3);
 
         while (file.available())
         {
@@ -1296,19 +1349,19 @@ public:
             client->write(buff, byteAdd);
         }
 
-        delete[] buff;
-        delete[] fbuff;
+        delP(&buff);
+        delP(&fbuff);
     }
 
     bool decodeBase64Stream(const char *src, size_t len, fs::File &file)
     {
-        unsigned char *dtable = new unsigned char[256];
+        unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
         for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
             dtable[fb_esp_base64_table[i]] = (unsigned char)i;
         dtable['='] = 0;
 
-        unsigned char *block = new unsigned char[4];
+        unsigned char *block = (unsigned char *)newP(4);
         unsigned char tmp;
         size_t i, count;
         int pad = 0;
@@ -1366,15 +1419,15 @@ public:
             }
         }
 
-        delete[] block;
-        delete[] dtable;
+        delP(&block);
+        delP(&dtable);
 
         return true;
 
     exit:
 
-        delete[] block;
-        delete[] dtable;
+        delP(&block);
+        delP(&dtable);
 
         return false;
     }
@@ -1382,12 +1435,12 @@ public:
     bool stringCompare(const char *buf, int ofs, PGM_P beginH)
     {
         char *tmp = strP(beginH);
-        char *tmp2 = newS(strlen_P(beginH) + 1);
+        char *tmp2 = (char *)newP(strlen_P(beginH) + 1);
         memcpy(tmp2, &buf[ofs], strlen_P(beginH));
         tmp2[strlen_P(beginH)] = 0;
         bool ret = (strcmp(tmp, tmp2) == 0);
-        delS(tmp);
-        delS(tmp2);
+        delP(&tmp);
+        delP(&tmp2);
         return ret;
     }
 
@@ -1423,8 +1476,8 @@ public:
                 delay(10);
             }
 
-            delS(server1);
-            delS(server2);
+            delP(&server1);
+            delP(&server2);
         }
 
         config->_int.fb_clock_rdy = now > default_ts;
@@ -1439,7 +1492,7 @@ public:
         size_t i;
         char *p = encoded;
 
-        unsigned char *b64enc = new unsigned char[65];
+        unsigned char *b64enc = (unsigned char *)newP(65);
         strcpy_P((char *)b64enc, (char *)fb_esp_base64_table);
         b64enc[62] = '-';
         b64enc[63] = '_';
@@ -1468,7 +1521,7 @@ public:
 
         *p++ = '\0';
 
-        delete[] b64enc;
+        delP(&b64enc);
     }
 
     bool sendBase64(uint8_t *data, size_t len, bool flashMem, FB_TCP_Client *client)
@@ -1483,10 +1536,10 @@ public:
         size_t byteAdded = 0;
         size_t byteSent = 0;
 
-        unsigned char *buf = new unsigned char[chunkSize];
+        unsigned char *buf = (unsigned char *)newP(chunkSize);
         memset(buf, 0, chunkSize);
 
-        unsigned char *tmp = new unsigned char[3];
+        unsigned char *tmp = (unsigned char *)newP(3);
 
         while (end - in >= 3)
         {
@@ -1561,29 +1614,29 @@ public:
         ret = true;
     ex:
 
-        delete[] tmp;
-        delete[] buf;
+        delP(&tmp);
+        delP(&buf);
         return ret;
     }
 
-    std::string encodeBase64Str(const unsigned char *src, size_t len)
+    MBSTRING encodeBase64Str(const unsigned char *src, size_t len)
     {
         return encodeBase64Str((uint8_t *)src, len);
     }
 
-    std::string encodeBase64Str(uint8_t *src, size_t len)
+    MBSTRING encodeBase64Str(uint8_t *src, size_t len)
     {
         unsigned char *out, *pos;
         const unsigned char *end, *in;
 
-        unsigned char *b64enc = new unsigned char[65];
+        unsigned char *b64enc = (unsigned char *)newP(65);
         strcpy_P((char *)b64enc, (char *)fb_esp_base64_table);
 
         size_t olen;
 
         olen = 4 * ((len + 2) / 3); /* 3-byte blocks to 4-byte */
 
-        std::string outStr;
+        MBSTRING outStr;
         outStr.resize(olen);
         out = (unsigned char *)&outStr[0];
 
@@ -1620,7 +1673,7 @@ public:
             *pos++ = '=';
         }
 
-        delete[] b64enc;
+        delP(&b64enc);
         return outStr;
     }
 
@@ -1697,7 +1750,7 @@ public:
         if (!config)
             return false;
 
-        std::string filepath = "/sdtest01.txt";
+        MBSTRING filepath = "/sdtest01.txt";
 #if defined(CARD_TYPE_SD)
         if (!sdBegin(config->_int.sd_config.ss, config->_int.sd_config.sck, config->_int.sd_config.miso, config->_int.sd_config.mosi))
             return false;
@@ -1736,7 +1789,7 @@ public:
 
         SD_FS.remove(filepath.c_str());
 
-        std::string().swap(filepath);
+        MBSTRING().swap(filepath);
 
         config->_int.fb_sd_rdy = true;
 
@@ -1766,10 +1819,10 @@ public:
         config->_int.fb_double_digits = digit;
     }
 
-    std::string getBoundary(size_t len)
+    MBSTRING getBoundary(size_t len)
     {
         char *tmp = strP(fb_esp_boundary_table);
-        char *buf = newS(len);
+        char *buf = (char *)newP(len);
         if (len)
         {
             --len;
@@ -1782,9 +1835,9 @@ public:
             }
             buf[len] = '\0';
         }
-        std::string s = buf;
-        delS(buf);
-        delS(tmp);
+        MBSTRING s = buf;
+        delP(&buf);
+        delP(&tmp);
         return s;
     }
 
@@ -1816,29 +1869,30 @@ public:
         return true;
     }
 
-    void splitTk(const std::string &str, std::vector<std::string> &tk, const char *delim)
+    void splitTk(const MBSTRING &str, std::vector<MBSTRING> &tk, const char *delim)
     {
         std::size_t current, previous = 0;
         current = str.find(delim, previous);
-        std::string s;
-        while (current != std::string::npos)
+        MBSTRING s;
+        MBSTRING _str = str;
+        while (current != MBSTRING::npos)
         {
-            s = str.substr(previous, current - previous);
+            s = _str.substr(previous, current - previous);
             tk.push_back(s);
             previous = current + strlen(delim);
             current = str.find(delim, previous);
         }
-        s = str.substr(previous, current - previous);
+        s = _str.substr(previous, current - previous);
         tk.push_back(s);
-        std::string().swap(s);
+        MBSTRING().swap(s);
     }
 
-    void replaceAll(std::string &str, const std::string &from, const std::string &to)
+    void replaceAll(MBSTRING &str, const MBSTRING &from, const MBSTRING &to)
     {
         if (from.empty())
             return;
         size_t start_pos = 0;
-        while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+        while ((start_pos = str.find(from, start_pos)) != MBSTRING::npos)
         {
             str.replace(start_pos, from.length(), to);
             start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
@@ -1868,8 +1922,11 @@ public:
 #if defined(ESP32)
         char *ip = strP(fb_esp_pgm_str_548);
         if (strcmp(ETH.localIP().toString().c_str(), ip) != 0)
-            ret = ETH.linkUp();
-        delS(ip);
+        {
+            ret = true;
+            ETH.linkUp();
+        }
+        delP(&ip);
 #elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
 
         if (!spi_ethernet_module)
@@ -1977,25 +2034,25 @@ public:
         return settimeofday((const timeval *)&tm, 0);
     }
 
-    void shrinkS(std::string &s)
+    void shrinkS(MBSTRING &s)
     {
         //#if defined(ESP32)
         //s.shrink_to_fit();
         //#elif defined(ESP8266)
-        std::string t = s;
+        MBSTRING t = s;
         clearS(s);
         s = t;
         clearS(t);
         //#endif
     }
 
-    void clearS(std::string &s)
+    void clearS(MBSTRING &s)
     {
         s.clear();
-        std::string().swap(s);
+        MBSTRING().swap(s);
     }
 
-    void storeS(std::string &s, const char *v, bool append)
+    void storeS(MBSTRING &s, const char *v, bool append)
     {
         if (!append)
             clearS(s);
@@ -2008,7 +2065,7 @@ public:
             s = v;
         else
         {
-            std::string t = s;
+            MBSTRING t = s;
             t += v;
             clearS(s);
             s = t;

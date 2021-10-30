@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.1.2
+ * Google's Cloud Storage class, GCS.h version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -155,10 +155,10 @@ private:
 
     void begin(UtilsClass *u);
     void rescon(FirebaseData *fbdo, const char *host);
-    void setGetOptions(struct fb_esp_gcs_req_t *req, std::string &header, bool hasParams);
-    void setListOptions(struct fb_esp_gcs_req_t *req, std::string &header, bool hasParams);
-    void setUploadOptions(struct fb_esp_gcs_req_t *req, std::string &header, bool hasParams);
-    void setDeleteOptions(struct fb_esp_gcs_req_t *req, std::string &header, bool hasParams);
+    void setGetOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams);
+    void setListOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams);
+    void setUploadOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams);
+    void setDeleteOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams);
     void reportUpploadProgress(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req, size_t readBytes);
     void setRequestproperties(struct fb_esp_gcs_req_t *req, FirebaseJson *json, bool &hasProps);
     void sendCallback(FirebaseData *fbdo, UploadStatusInfo &in, ProgressCallback cb, UploadStatusInfo *out);
@@ -180,7 +180,7 @@ private:
 
 protected:
     template <typename T>
-    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
     template <typename T>
     auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueueInfo class, QueueInfo.cpp version 1.0.2
+ * Google's Firebase QueueInfo class, QueueInfo.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -78,9 +78,9 @@ String QueueInfo::dataPath()
 
 void QueueInfo::clear()
 {
-    std::string().swap(_dataType);
-    std::string().swap(_method);
-    std::string().swap(_path);
+    MBSTRING().swap(_dataType);
+    MBSTRING().swap(_method);
+    MBSTRING().swap(_path);
 }
 
 #endif

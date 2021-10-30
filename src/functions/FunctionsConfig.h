@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.3
+ * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 21, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -48,11 +48,11 @@ class FunctionsConfig
 
 private:
     FirebaseJson _funcCfg;
-    std::string _projectId, _locationId, _bucketId, _entryPoint, _name, _httpsTriggerUrl;
-    std::vector<std::string> _updateMask = std::vector<std::string>();
+    MBSTRING _projectId, _locationId, _bucketId, _entryPoint, _name, _httpsTriggerUrl;
+    std::vector<MBSTRING> _updateMask = std::vector<MBSTRING>();
     UtilsClass *ut = nullptr;
-    std::string _bucketSourcesPath = "";
-    std::string _uploadArchiveFile = "";
+    MBSTRING _bucketSourcesPath = "";
+    MBSTRING _uploadArchiveFile = "";
     const uint8_t *_pgmArc = nullptr;
     size_t _pgmArcLen = 0;
     fb_esp_mem_storage_type _uploadArchiveStorageType = mem_storage_type_undefined;
@@ -358,7 +358,7 @@ public:
 
 protected:
     template <typename T>
-    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
     template <typename T>
     auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }

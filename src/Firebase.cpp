@@ -86,7 +86,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     if (cfg->database_url.length() > 0)
     {
         ut->getUrlInfo(cfg->database_url.c_str(), uinfo);
-        cfg->database_url = uinfo.host;
+        cfg->database_url = uinfo.host.c_str();
     }
 
     if (cfg->cert.file.length() > 0)
@@ -402,7 +402,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
-    std::string s;
+    MBSTRING s;
     ut->appendP(s, fb_esp_pgm_str_577, true);
 
     json->get(data, s.c_str());
@@ -485,6 +485,35 @@ bool FIREBASE_CLASS::sdBegin(int8_t ss)
 #ifdef ESP32
 
 bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
+{
+    if (Signer.getCfg())
+    {
+        Signer.getCfg()->_int.sd_config.sck = sck;
+        Signer.getCfg()->_int.sd_config.miso = miso;
+        Signer.getCfg()->_int.sd_config.mosi = mosi;
+        Signer.getCfg()->_int.sd_config.ss = ss;
+    }
+#if defined(ESP32)
+    if (ss > -1)
+    {
+        SPI.begin(sck, miso, mosi, ss);
+#if defined(CARD_TYPE_SD)
+        return SD_FS.begin(ss, SPI);
+#endif
+        return false;
+    }
+    else
+        return SD_FS.begin();
+#elif defined(ESP8266)
+    if (ss > -1)
+        return SD_FS.begin(ss);
+    else
+        return SD_FS.begin(SD_CS_PIN);
+#endif
+    return false;
+}
+
+bool FIREBASE_CLASS::sdBegin(int8_t ss, SPIClass spi)
 {
     if (Signer.getCfg())
     {

@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.12
+ * Firebase TCP Client v1.1.13
  * 
- * Created September 20, 2021
+ * Created October 25, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -63,6 +63,7 @@
 #include <SD.h>
 #include <LittleFS.h>
 #include "FirebaseFS.h"
+#include "./json/FirebaseJson.h"
 
 #if defined __has_include
 
@@ -152,7 +153,7 @@ public:
 
 private:
   std::unique_ptr<FB_ESP_SSL_CLIENT> _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
-  std::string _host = "";
+  MBSTRING _host;
   uint16_t _port = 0;
 
   //Actually Arduino base Stream (char read) timeout.
@@ -164,7 +165,7 @@ private:
   //in BearSSL::WiFiClientSecure class.
   unsigned long sslHandshakeTO = 2 * 60 * 1000;
 
-  std::string _CAFile = "";
+  MBSTRING _CAFile;
   uint8_t _CAFileStoreageType = 0;
   int _certType = -1;
   uint8_t _sdPin = 15;

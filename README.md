@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.5.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.6.0
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -295,6 +295,34 @@ void loop() {
 ```
 
 
+### Use PSRAM on ESP32
+
+
+To enable PSRAM in ESP32 module with on-board PSRAM chip, in Arduino IDE
+
+![Enable PSRAM in ESP32](/media/images/ESP32-PSRAM.png)
+
+
+In PlatformIO in VSCode IDE, add the following build_flags in your project's platformio.ini file
+
+```ini
+build_flags = -DBOARD_HAS_PSRAM -mfix-esp32-psram-cache-issue
+```
+
+*When config the IDE or add the build flags to use PSRAM in the ESP32 dev boards that do not have on-board PSRAM chip, your device will be crashed (reset).
+
+
+Since v2.5.6, this library supports PSRAM for internal memory allocation which you can config to use it via [**FirebaseFS.h**](src/FirebaseFS.h) with this macro.
+
+```cpp
+#define FIREBASE_USE_PSRAM
+```
+
+And [**src/json/Config.h**](src/json/Config.h) with this macro.
+
+```cpp
+#define FIREBASEJSON_USE_PSRAM
+```
 
 ## Authentication
 
@@ -373,7 +401,7 @@ With pushAsync and setAsync, the payload response will be ignored and the next d
 
 
 
-### The authenication credentials and prerequisite
+### The authenication credentials and prerequisites
 
 
 To use Email/Password sign-in authentication as in the examples, the Email/Password Sign-in provider must be enabled.
@@ -424,10 +452,15 @@ Edit the default database rules as following
 {
   "rules": {
     ".read": "auth != null", 
-    ".write": "auth != null", 
+    ".write": "auth != null"
   }
 }
 ```
+
+[This document](https://firebase.google.com/docs/database/security) provides the RTDB security rules details.
+
+The Firebase RTDB security rules are JSON-based rules which it should valid to used with this library RTDB functions that involved the security rules modification and reading, otherwise the rules wont be changed or read by these functions.
+
 
 To get the database URL and secret (legacy token).
 
@@ -1332,7 +1365,7 @@ service cloud.firestore {
   }
 }
 ```
-
+This [Google document](https://firebase.google.com/docs/firestore/security/get-started) provides the Firestore security rules details.
 
 ## Firebase Storage
 

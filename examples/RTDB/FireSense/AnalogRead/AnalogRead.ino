@@ -170,8 +170,8 @@ void loadDefaultConfig()
     FireSense_Condition cond[2];
 
     cond[0].IF = "FLAG1 == true";
-    cond[0].THEN = "func(0,1,'\\n[FUNC0] The measured voltage is {AVG} V.\\n'),delay(2000), FLAG1 = false";
-    cond[0].ELSE = "func(0,1,'\\n[FUNC1] The total measures is {COUNT}.\\n'),delay(2000), FLAG1 = true";
+    cond[0].THEN = "func(0,1,'[FUNC0] The measured voltage is {AVG} V.'),delay(2000), FLAG1 = false";
+    cond[0].ELSE = "func(0,1,'[FUNC1] The total measures is {COUNT}.'),delay(2000), FLAG1 = true";
     FireSense.addCondition(cond[0]);
 
     cond[1].IF = "change(FLAG1) && FLAG1 == true";

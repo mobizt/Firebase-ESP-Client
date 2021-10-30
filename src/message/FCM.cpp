@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.14
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.15
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 20, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -154,7 +154,7 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
         return false;
     }
 
-    std::string payload = IID;
+    MBSTRING payload = IID;
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_app_instance_info, payload.c_str());
     ut->clearS(payload);
     return ret;
@@ -197,7 +197,7 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
         }
     }
 
-    std::string host;
+    MBSTRING host;
     if (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1)
         ut->appendP(host, fb_esp_pgm_str_249);
     else
@@ -214,7 +214,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
 {
     bool msgMode = (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1);
     int ret = -1;
-    std::string header;
+    MBSTRING header;
 
     if (mode == fb_esp_fcm_msg_mode_app_instance_info)
         ut->appendP(header, fb_esp_pgm_str_25, true);
@@ -328,7 +328,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
 void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 {
 
-    std::string s;
+    MBSTRING s;
 
     ut->clearS(raw);
 
@@ -533,7 +533,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
 void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken)
 {
-    std::string base, s;
+    MBSTRING base, s;
 
     ut->clearS(raw);
     FirebaseJson json;
@@ -568,7 +568,7 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
 
 void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken)
 {
-    std::string base, s;
+    MBSTRING base, s;
 
     ut->clearS(raw);
     FirebaseJson json;
@@ -602,7 +602,7 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
 void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 {
 
-    std::string base, _base, s;
+    MBSTRING base, _base, s;
 
     FirebaseJson json;
     ut->clearS(raw);
@@ -1290,7 +1290,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                 if (chunkIdx == 0)
                 {
                     //the first chunk can be http response header
-                    header = ut->newS(chunkBufSize);
+                    header = (char*)ut->newP(chunkBufSize);
                     hstate = 1;
                     int readLen = ut->readLine(stream, header, chunkBufSize);
                     int pos = 0;
@@ -1305,15 +1305,15 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                         hBufPos = readLen;
                         response.httpCode = atoi(tmp);
                         fbdo->_ss.http_code = response.httpCode;
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                     }
                     else
                     {
-                        payload = ut->newS(payloadLen);
+                        payload = (char*)ut->newP(payloadLen);
                         pstate = 1;
                         memcpy(payload, header, readLen);
                         pBufPos = readLen;
-                        ut->delS(header);
+                        ut->delP(&header);
                         hstate = 0;
                     }
                 }
@@ -1325,7 +1325,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     if (isHeader)
                     {
                         //read one line of next header field until the empty header has found
-                        tmp = ut->newS(chunkBufSize);
+                        tmp = (char*)ut->newP(chunkBufSize);
                         int readLen = ut->readLine(stream, tmp, chunkBufSize);
                         bool headerEnded = false;
 
@@ -1351,7 +1351,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                             ut->parseRespHeader(header, response);
 
                             if (hstate == 1)
-                                ut->delS(header);
+                                ut->delP(&header);
                             hstate = 0;
 
                             fbdo->_ss.chunked_encoding = response.isChunkedEnc;
@@ -1363,7 +1363,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                             hBufPos += readLen;
                         }
 
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                     }
                     else
                     {
@@ -1372,12 +1372,12 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                         {
                             pChunkIdx++;
 
-                            pChunk = ut->newS(chunkBufSize + 1);
+                            pChunk = (char*)ut->newP(chunkBufSize + 1);
 
                             if (!payload || pstate == 0)
                             {
                                 pstate = 1;
-                                payload = ut->newS(payloadLen + 1);
+                                payload = (char*)ut->newP(payloadLen + 1);
                             }
 
                             //read the avilable data
@@ -1410,21 +1410,21 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                                         //in case of the accumulated payload size is bigger than the char array
                                         //reallocate the char array
 
-                                        char *buf = ut->newS(pBufPos + readLen + 1);
+                                        char *buf = (char*)ut->newP(pBufPos + readLen + 1);
                                         memcpy(buf, payload, pBufPos);
 
                                         memcpy(buf + pBufPos, pChunk, readLen);
 
                                         payloadLen = pBufPos + readLen;
-                                        ut->delS(payload);
-                                        payload = ut->newS(payloadLen + 1);
+                                        ut->delP(&payload);
+                                        payload = (char*)ut->newP(payloadLen + 1);
                                         memcpy(payload, buf, payloadLen);
-                                        ut->delS(buf);
+                                        ut->delP(&buf);
                                     }
                                 }
                             }
 
-                            ut->delS(pChunk);
+                            ut->delP(&pChunk);
                             if (readLen < 0 && payloadRead >= response.contentLen)
                                 break;
                             if (readLen > 0)
@@ -1444,7 +1444,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
         }
 
         if (hstate == 1)
-            ut->delS(header);
+            ut->delP(&header);
 
         if (payload)
         {
@@ -1452,7 +1452,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                 fbdo->_ss.fcm.payload = payload;
             else
             {
-                std::string t = ut->trim(payload);
+                MBSTRING t = ut->trim(payload);
                 if (t[0] == '{' && t[t.length() - 1] == '}')
                 {
                     FirebaseJson json;
@@ -1461,14 +1461,14 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
                     char *tmp = ut->strP(fb_esp_pgm_str_257);
                     json.get(data, tmp);
-                    ut->delS(tmp);
+                    ut->delP(&tmp);
 
                     if (data.success)
                     {
                         error.code = data.to<int>();
                         tmp = ut->strP(fb_esp_pgm_str_258);
                         json.get(data, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (data.success)
                             fbdo->_ss.error = data.to<const char *>();
                     }
@@ -1479,7 +1479,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
         }
 
         if (pstate == 1)
-            ut->delS(payload);
+            ut->delP(&payload);
 
         return error.code == 0 || response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK;
     }

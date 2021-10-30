@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.4
+ * Google's Firebase Data class, FB_Session.h version 1.2.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 20, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -232,9 +232,9 @@ private:
 
   void mSetTopic(const char *topic);
 
-  std::string result;
-  std::string raw;
-  std::string idTokens;
+  MBSTRING result;
+  MBSTRING raw;
+  MBSTRING idTokens;
   int _ttl = -1;
   uint16_t _index = 0;
   uint16_t _port = FIREBASE_PORT;
@@ -244,7 +244,7 @@ private:
 protected:
   template <typename T>
   auto
-  toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
+  toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
   {
     return val.c_str();
   }
@@ -630,9 +630,9 @@ public:
   }
 
   template <typename T>
-  auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value, T>::type
+  auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value, T>::type
   {
-    if (_ss.rtdb.raw.length() > 0 && _ss.rtdb.resp_data_type == fb_esp_data_type::d_string)
+    if (_ss.rtdb.raw.length() > 0 && (_ss.rtdb.resp_data_type == fb_esp_data_type::d_string || _ss.rtdb.resp_data_type == fb_esp_data_type::d_std_string || _ss.rtdb.resp_data_type == fb_esp_data_type::d_mb_string))
     {
       if (_ss.rtdb.raw[0] == '"' && _ss.rtdb.raw[_ss.rtdb.raw.length() - 1] == '"')
       {
@@ -713,7 +713,7 @@ public:
 
       if (Signer.getCfg()->_int.fb_flash_rdy)
         Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
-      ut->delS(tmp);
+      ut->delP(&tmp);
     }
 
     return Signer.getCfg()->_int.fb_file;
@@ -911,12 +911,12 @@ private:
   int tcpSend(const char *data);
   int tcpSendChunk(const char *data, int &index, size_t len);
   bool reconnect(unsigned long dataTime = 0);
-  std::string getDataType(uint8_t type);
-  std::string getMethod(uint8_t method);
+  MBSTRING getDataType(uint8_t type);
+  MBSTRING getMethod(uint8_t method);
   bool tokenReady();
   void setTimeout();
   void setSecure();
-  bool validRequest(const std::string &path);
+  bool validRequest(const MBSTRING &path);
   void addQueue(struct fb_esp_rtdb_queue_info_t *qinfo);
 #ifdef ENABLE_RTDB
   void clearQueueItem(QueueItem *item);

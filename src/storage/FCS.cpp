@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.5
+ * Google's Firebase Storage class, FCS.cpp version 1.1.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -186,7 +186,7 @@ void FB_Storage::rescon(FirebaseData *fbdo, const char *host)
 
 bool FB_Storage::fcs_connect(FirebaseData *fbdo)
 {
-    std::string host;
+    MBSTRING host;
     ut->appendP(host, fb_esp_pgm_str_265);
     ut->appendP(host, fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
@@ -272,7 +272,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         }
     }
 
-    std::string header;
+    MBSTRING header;
     int ret = -1;
 
     if (req->requestType == fb_esp_fcs_request_type_upload || req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
@@ -367,7 +367,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         {
             int available = Signer.getCfg()->_int.fb_file.available();
             int bufLen = 512;
-            uint8_t *buf = new uint8_t[bufLen + 1];
+            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             size_t read = 0;
             while (available)
             {
@@ -378,7 +378,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                     break;
                 available = Signer.getCfg()->_int.fb_file.available();
             }
-            delete[] buf;
+            ut->delP(&buf);
             Signer.getCfg()->_int.fb_file.close();
         }
         else if (req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
@@ -386,7 +386,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             int len = req->pgmArcLen;
             int available = len;
             int bufLen = 512;
-            uint8_t *buf = new uint8_t[bufLen + 1];
+            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             size_t pos = 0;
             while (available)
             {
@@ -399,7 +399,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                 len -= available;
                 available = len;
             }
-            delete[] buf;
+            ut->delP(&buf);
         }
 
         ret = handleResponse(fbdo);
@@ -455,13 +455,13 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
     size_t defaultChunkSize = fbdo->_ss.resp_size;
     struct fb_esp_auth_token_error_t error;
     error.code = -1;
-    std::string part1, part2;
+    MBSTRING part1, part2;
     size_t p1 = 0;
     size_t p2 = 0;
     char *tmp1 = ut->strP(fb_esp_pgm_str_476);
     char *tmp2 = ut->strP(fb_esp_pgm_str_477);
     char *tmp3 = ut->strP(fb_esp_pgm_str_3);
-    std::string payload;
+    MBSTRING payload;
     fbdo->_ss.fcs.files.items.clear();
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
@@ -509,7 +509,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                 if (chunkIdx == 0)
                 {
                     //the first chunk can be http response header
-                    header = ut->newS(chunkBufSize);
+                    header = (char*)ut->newP(chunkBufSize);
                     hstate = 1;
                     int readLen = ut->readLine(stream, header, chunkBufSize);
                     int pos = 0;
@@ -524,7 +524,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                         hBufPos = readLen;
                         response.httpCode = atoi(tmp);
                         fbdo->_ss.http_code = response.httpCode;
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                     }
                 }
                 else
@@ -535,7 +535,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                     if (isHeader)
                     {
                         //read one line of next header field until the empty header has found
-                        tmp = ut->newS(chunkBufSize);
+                        tmp = (char*)ut->newP(chunkBufSize);
                         int readLen = ut->readLine(stream, tmp, chunkBufSize);
                         bool headerEnded = false;
 
@@ -559,12 +559,12 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                 error.code = 0;
 
                             if (hstate == 1)
-                                ut->delS(header);
+                                ut->delP(&header);
                             hstate = 0;
 
                             if (response.contentLen == 0)
                             {
-                                ut->delS(tmp);
+                                ut->delP(&tmp);
                                 break;
                             }
                         }
@@ -574,7 +574,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                             memcpy(header + hBufPos, tmp, readLen);
                             hBufPos += readLen;
                         }
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                     }
                     else
                     {
@@ -585,7 +585,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                             {
                                 size_t available = fbdo->tcpClient.stream()->available();
                                 dataTime = millis();
-                                uint8_t *buf = new uint8_t[defaultChunkSize + 1];
+                                uint8_t *buf = (uint8_t *)ut->newP(defaultChunkSize + 1);
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {
                                     if (available)
@@ -608,13 +608,13 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                 }
                                 if (payloadRead == response.contentLen)
                                     error.code = 0;
-                                delete[] buf;
+                                ut->delP(&buf);
                                 break;
                             }
                             else
                             {
                                 pChunkIdx++;
-                                pChunk = ut->newS(chunkBufSize + 1);
+                                pChunk = (char*)ut->newP(chunkBufSize + 1);
 
                                 if (response.isChunkedEnc)
                                     delay(10);
@@ -637,19 +637,19 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                         delay(10);
                                         part1 = pChunk;
                                         p1 = part1.find(tmp1);
-                                        if (p1 != std::string::npos)
+                                        if (p1 != MBSTRING::npos)
                                         {
                                             p2 = part1.find(tmp3, p1 + strlen(tmp1));
-                                            if (p2 != std::string::npos)
+                                            if (p2 != MBSTRING::npos)
                                                 part2 = part1.substr(p1 + strlen(tmp1), p2 - p1 - strlen(tmp1));
                                         }
                                         else
                                         {
                                             p1 = part1.find(tmp2);
-                                            if (p1 != std::string::npos)
+                                            if (p1 != MBSTRING::npos)
                                             {
                                                 p2 = part1.find(tmp3, p1 + strlen(tmp2));
-                                                if (p2 != std::string::npos)
+                                                if (p2 != MBSTRING::npos)
                                                 {
                                                     fb_esp_fcs_file_list_item_t itm;
                                                     itm.name = part2;
@@ -666,7 +666,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                         payload += pChunk;
                                 }
 
-                                ut->delS(pChunk);
+                                ut->delP(&pChunk);
 
                                 if (availablePayload < 0 || (payloadRead >= response.contentLen && !response.isChunkedEnc))
                                 {
@@ -689,12 +689,12 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
             }
         }
 
-        ut->delS(tmp1);
-        ut->delS(tmp2);
-        ut->delS(tmp3);
+        ut->delP(&tmp1);
+        ut->delP(&tmp2);
+        ut->delP(&tmp3);
 
         if (hstate == 1)
-            ut->delS(header);
+            ut->delP(&header);
 
         //parse the payload
         if (payload.length() > 0)
@@ -712,14 +712,14 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
 
                 char *tmp = ut->strP(fb_esp_pgm_str_257);
                 fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                ut->delS(tmp);
+                ut->delP(&tmp);
 
                 if (fbdo->_ss.dataPtr->success)
                 {
                     error.code = fbdo->_ss.dataPtr->to<int>();
                     tmp = ut->strP(fb_esp_pgm_str_258);
                     fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delS(tmp);
+                    ut->delP(&tmp);
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.error = fbdo->_ss.dataPtr->to<const char *>();
                 }
@@ -730,49 +730,49 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                     {
                         tmp = ut->strP(fb_esp_pgm_str_274);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.name = fbdo->_ss.dataPtr->to<const char *>();
 
                         tmp = ut->strP(fb_esp_pgm_str_275);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.bucket = fbdo->_ss.dataPtr->to<const char *>();
 
                         tmp = ut->strP(fb_esp_pgm_str_276);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.generation = atof(fbdo->_ss.dataPtr->to<const char *>());
 
                         tmp = ut->strP(fb_esp_pgm_str_277);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.contentType = fbdo->_ss.dataPtr->to<const char *>();
 
                         tmp = ut->strP(fb_esp_pgm_str_278);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.size = atoi(fbdo->_ss.dataPtr->to<const char *>());
 
                         tmp = ut->strP(fb_esp_pgm_str_279);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.etag = fbdo->_ss.dataPtr->to<const char *>();
 
                         tmp = ut->strP(fb_esp_pgm_str_280);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.crc32 = fbdo->_ss.dataPtr->to<const char *>();
 
                         tmp = ut->strP(fb_esp_pgm_str_272);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                             fbdo->_ss.fcs.meta.downloadTokens = fbdo->_ss.dataPtr->to<const char *>();
                     }

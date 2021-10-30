@@ -93,7 +93,7 @@ void setup()
 
 void loop()
 {
-  //Flash string (PROGMEM and  (FPSTR), String,, String C/C++ string, const char, char array, string literal are supported
+  //Flash string (PROGMEM and FPSTR), Arduino String, C++ string, const char, char array, string literal are supported
   //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
   if (Firebase.ready() && !taskCompleted)

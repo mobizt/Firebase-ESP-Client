@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created August 15, 2021
+ * Created October 30, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -558,7 +558,7 @@ private:
     {
         FireSense_Function *ptr = nullptr;
         int numArg = 0;
-        std::string payload;
+        MBSTRING payload;
         int iteration_max = 1;
         int iteration_count = 0;
     };
@@ -588,7 +588,7 @@ private:
 
     struct condition_item_info_t
     {
-        //std::string raw;
+        //MBSTRING raw;
         struct cond_item_data_t data;
         bool is_nested = false;
         int depth = 0;
@@ -644,26 +644,26 @@ private:
 
     callback_function_t defaultDataLoadCallback = NULL;
 
-    std::string streamCmd;
+    MBSTRING streamCmd;
     unsigned long lastSeenMillis = 0;
     unsigned long logMillis = 0;
     unsigned long conditionMillis = 0;
     unsigned long authen_check_millis = 0;
     time_t minTs = ESP_DEFAULT_TS;
     uint64_t maxTs = 32503654800;
-    std::string deviceId;
+    MBSTRING deviceId;
 
-    std::string controlPath();
-    std::string channelControlPath();
-    std::string configPath();
-    std::string conditionPath();
-    std::string channelConfigPath();
-    std::string streamCmdPath();
-    std::string statusPath();
-    std::string terminalPath();
-    std::string channelStatusPath();
-    std::string lastSeenPath();
-    std::string logPath();
+    MBSTRING controlPath();
+    MBSTRING channelControlPath();
+    MBSTRING configPath();
+    MBSTRING conditionPath();
+    MBSTRING channelConfigPath();
+    MBSTRING streamCmdPath();
+    MBSTRING statusPath();
+    MBSTRING terminalPath();
+    MBSTRING channelStatusPath();
+    MBSTRING lastSeenPath();
+    MBSTRING logPath();
     bool mBegin();
     void setLogQueryIndex();
     void addDBChannel(struct channel_info_t &channel);
@@ -702,14 +702,14 @@ private:
     void getExpression(const char *s, struct expr_item_data_t &data);
     void getStatement(const char *src, struct stm_item_t &data);
     void parseDateTime(const char *str, int type, struct tm &out);
-    void getConditionItem(struct cond_item_data_t &data, std::string &left, std::string &right);
-    void replaceAll(std::string &str, const char *find, const char *replace);
-    void replaceChannelsValues(std::string &str);
-    void trim(const char *s, std::string &d, bool isExpression, const char beginTrim = '(', const char endTrim = ')');
-    void split(std::vector<std::string> &out, const char *str, const char delim, const char beginEsc = 0, const char endEsc = 0);
+    void getConditionItem(struct cond_item_data_t &data, MBSTRING &left, MBSTRING &right);
+    void replaceAll(MBSTRING &str, const char *find, const char *replace);
+    void replaceChannelsValues(MBSTRING &str);
+    void trim(const char *s, MBSTRING &d, bool isExpression, const char beginTrim = '(', const char endTrim = ')');
+    void split(std::vector<MBSTRING> &out, const char *str, const char delim, const char beginEsc = 0, const char endEsc = 0);
     void getChipId(String &s);
     void randomUid(uint8_t length, String &s);
-    void getDateTimeString(std::string &s);
+    void getDateTimeString(MBSTRING &s);
     void setupStream();
     void run();
     void mRun();
@@ -1242,7 +1242,7 @@ void FireSenseClass::executeStatement(struct conditions_info_t *conditionsListIt
             if (statement->data.left.function.ptr || statement->data.left.function.numArg > 0)
             {
                 statement->done = true;
-                std::string s = statement->data.left.function.payload;
+                MBSTRING s = statement->data.left.function.payload;
                 replaceChannelsValues(s);
                 replaceAll(s, (const char *)FPSTR("\\n"), (const char *)FPSTR("\n"));
 
@@ -1285,7 +1285,7 @@ void FireSenseClass::executeStatement(struct conditions_info_t *conditionsListIt
 
                     if (statement->data.left.channel->status)
                     {
-                        std::string path = channelStatusPath();
+                        MBSTRING path = channelStatusPath();
                         path += (const char *)FPSTR("/");
                         path += statement->data.left.channel->id.c_str();
 
@@ -2041,7 +2041,7 @@ void FireSenseClass::checkCommand()
     //get NTP time
     if (streamCmd == (const char *)FPSTR("time"))
         setClock(config->time_zone, config->daylight_offset_in_sec);
-    else if (streamCmd.find("time ") != std::string::npos)
+    else if (streamCmd.find("time ") != MBSTRING::npos)
     {
         //set system time with timestamp
         int t = atoi(streamCmd.substr(9).c_str());
@@ -2078,7 +2078,7 @@ void FireSenseClass::checkCommand()
     else if (streamCmd == (const char *)FPSTR("ping"))
     {
         //ping back
-        std::string s = (const char *)FPSTR("reply");
+        MBSTRING s = (const char *)FPSTR("reply");
         s += NUM2S((uint64_t)time(nullptr)).get();
         Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), s.c_str());
         if (config->close_session)
@@ -2167,7 +2167,7 @@ void FireSenseClass::sendLog()
             if (count > 0)
             {
                 _json.add((const char *)FPSTR("time"), (int)ts);
-                std::string path = logPath();
+                MBSTRING path = logPath();
                 path += (const char *)FPSTR("/");
                 path += t.c_str();
 
@@ -2195,7 +2195,7 @@ void FireSenseClass::sendLastSeen()
         if (timeReady)
         {
             _json.clear();
-            std::string s;
+            MBSTRING s;
             getDateTimeString(s);
             _json.add((const char *)FPSTR("date"), s.c_str());
             _json.add((const char *)FPSTR("ts"), (uint64_t)time(nullptr));
@@ -2319,7 +2319,7 @@ bool FireSenseClass::loadConfig()
 
     for (size_t i = 0; i < channelIdxs.size(); i++)
     {
-        std::string path = channelConfigPath();
+        MBSTRING path = channelConfigPath();
         path += (const char *)FPSTR("/");
         path += channelIdxs[i].c_str();
         printUpdate("", 27);
@@ -2440,7 +2440,7 @@ void FireSenseClass::setClock(float time_zone, float daylight_offset_in_sec)
     if (timeReady)
     {
         _json.clear();
-        std::string s;
+        MBSTRING s;
         getDateTimeString(s);
         _json.add((const char *)FPSTR("date"), s.c_str());
         _json.add((const char *)FPSTR("ts"), (uint64_t)time(nullptr));
@@ -2495,7 +2495,7 @@ void FireSenseClass::addCondition(struct firesense_condition_t cond, bool addToD
             _json.add((const char *)FPSTR("then"), cond.THEN);
         if (cond.ELSE.length() > 0)
             _json.add((const char *)FPSTR("else"), cond.ELSE);
-        std::string path = conditionPath();
+        MBSTRING path = conditionPath();
         path += (const char *)FPSTR("/");
         path += String(conditionsList.size() - 1).c_str();
         delay(0);
@@ -2566,7 +2566,7 @@ void FireSenseClass::loadConditionsList()
 
     for (size_t i = 0; i < conditionIds.size(); i++)
     {
-        std::string path = conditionPath();
+        MBSTRING path = conditionPath();
         path += (const char *)FPSTR("/");
         path += conditionIds[i].c_str();
 
@@ -2813,7 +2813,7 @@ void FireSenseClass::setChannelValue(struct channel_info_t &channel, struct data
             channel.lastPolling = millis();
         }
 
-        std::string path = channelStatusPath();
+        MBSTRING path = channelStatusPath();
         path += (const char *)FPSTR("/");
         path += channel.id.c_str();
 
@@ -2953,7 +2953,7 @@ void FireSenseClass::setUserValue(struct channel_info_t *channel, bool fromUserV
 
         if (channel->status)
         {
-            std::string path = channelStatusPath();
+            MBSTRING path = channelStatusPath();
             path += (const char *)FPSTR("/");
             path += channel->id.c_str();
             printUpdate(channel->id.c_str(), 0);
@@ -3190,7 +3190,7 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel)
 
     printUpdate("", 8);
     delay(0);
-    std::string path;
+    MBSTRING path;
     _json.clear();
     _json.add((const char *)FPSTR("id"), channel.id);
     _json.add((const char *)FPSTR("name"), channel.name);
@@ -3226,7 +3226,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
 
     printUpdate("", 11);
 
-    std::string path;
+    MBSTRING path;
 
     if (channel.type == channel_type_t::Output)
     {
@@ -3410,94 +3410,94 @@ void FireSenseClass::storeDBStatus()
         updateDBStatus(channelsList[i]);
 }
 
-std::string FireSenseClass::controlPath()
+MBSTRING FireSenseClass::controlPath()
 {
     if (!configReady())
         return "";
 
-    std::string s = config->basePath.c_str();
+    MBSTRING s = config->basePath.c_str();
     s += (const char *)FPSTR("/controls/");
     s += deviceId;
     return s;
 }
 
-std::string FireSenseClass::channelControlPath()
+MBSTRING FireSenseClass::channelControlPath()
 {
-    std::string s = controlPath();
+    MBSTRING s = controlPath();
     s += (const char *)FPSTR("/channels");
     return s;
 }
 
-std::string FireSenseClass::configPath()
+MBSTRING FireSenseClass::configPath()
 {
     if (!configReady())
         return "";
 
-    std::string s = config->basePath.c_str();
+    MBSTRING s = config->basePath.c_str();
     s += (const char *)FPSTR("/config/devices/");
     s += deviceId;
     return s;
 }
 
-std::string FireSenseClass::conditionPath()
+MBSTRING FireSenseClass::conditionPath()
 {
-    std::string s = configPath();
+    MBSTRING s = configPath();
     s += (const char *)FPSTR("/conditions");
     return s;
 }
 
-std::string FireSenseClass::channelConfigPath()
+MBSTRING FireSenseClass::channelConfigPath()
 {
-    std::string s = configPath();
+    MBSTRING s = configPath();
     s += (const char *)FPSTR("/channels");
     return s;
 }
 
-std::string FireSenseClass::streamCmdPath()
+MBSTRING FireSenseClass::streamCmdPath()
 {
-    std::string s = controlPath();
+    MBSTRING s = controlPath();
     s += (const char *)FPSTR("/cmd");
     return s;
 }
 
-std::string FireSenseClass::statusPath()
+MBSTRING FireSenseClass::statusPath()
 {
     if (!configReady())
         return "";
 
-    std::string s = config->basePath.c_str();
+    MBSTRING s = config->basePath.c_str();
     s += (const char *)FPSTR("/status/");
     s += deviceId;
     return s;
 }
 
-std::string FireSenseClass::terminalPath()
+MBSTRING FireSenseClass::terminalPath()
 {
-    std::string s = statusPath();
+    MBSTRING s = statusPath();
     s += (const char *)FPSTR("/terminal");
     return s;
 }
 
-std::string FireSenseClass::channelStatusPath()
+MBSTRING FireSenseClass::channelStatusPath()
 {
-    std::string s = statusPath();
+    MBSTRING s = statusPath();
     s += (const char *)FPSTR("/channels");
     return s;
 }
 
-std::string FireSenseClass::lastSeenPath()
+MBSTRING FireSenseClass::lastSeenPath()
 {
-    std::string s = statusPath();
+    MBSTRING s = statusPath();
     s += (const char *)FPSTR("/lastSeen");
     return s;
 }
 
-std::string FireSenseClass::logPath()
+MBSTRING FireSenseClass::logPath()
 {
     if (!configReady())
         return "";
 
-    std::string s = config->basePath.c_str();
+    MBSTRING s = config->basePath.c_str();
     s += (const char *)FPSTR("/log/");
     s += deviceId;
     return s;
@@ -3532,7 +3532,7 @@ void FireSenseClass::randomUid(uint8_t length, String &s)
         s += (char)random(97, 122);
 }
 
-void FireSenseClass::getDateTimeString(std::string &s)
+void FireSenseClass::getDateTimeString(MBSTRING &s)
 {
     if (!configReady())
         return;
@@ -3583,10 +3583,10 @@ void FireSenseClass::getDateTimeString(std::string &s)
     s += NUM2S((int)dif).get();
 }
 
-void FireSenseClass::replaceAll(std::string &str, const char *find, const char *replace)
+void FireSenseClass::replaceAll(MBSTRING &str, const char *find, const char *replace)
 {
     size_t pos = 0;
-    while ((pos = str.find(find, pos)) != std::string::npos)
+    while ((pos = str.find(find, pos)) != MBSTRING::npos)
     {
         str.erase(pos, strlen(find));
         str.insert(pos, replace);
@@ -3594,7 +3594,7 @@ void FireSenseClass::replaceAll(std::string &str, const char *find, const char *
     }
 }
 
-void FireSenseClass::replaceChannelsValues(std::string &str)
+void FireSenseClass::replaceChannelsValues(MBSTRING &str)
 {
     String s, t;
     for (size_t i = 0; i < channelsList.size(); i++)
@@ -3611,7 +3611,7 @@ void FireSenseClass::replaceChannelsValues(std::string &str)
     }
 }
 
-void FireSenseClass::trim(const char *s, std::string &d, bool isExpression, const char beginTrim, const char endTrim)
+void FireSenseClass::trim(const char *s, MBSTRING &d, bool isExpression, const char beginTrim, const char endTrim)
 {
     int p1 = -1, p2 = -1, p3 = -1, p4 = -1;
 
@@ -3698,7 +3698,7 @@ void FireSenseClass::trim(const char *s, std::string &d, bool isExpression, cons
         p2++;
     }
 
-    std::string tmp;
+    MBSTRING tmp;
 
     int i = 0;
     while (i < p2 - p1 + 1)
@@ -3735,7 +3735,7 @@ void FireSenseClass::getCondition(const char *s, struct cond_item_data_t &data)
 
     cond_comp_opr_type_t comp_type = cond_comp_opr_type_undefined;
     int p1 = -1, p2 = -1;
-    std::string t, left, right;
+    MBSTRING t, left, right;
 
     if (strlen(s) > 7)
     {
@@ -3744,11 +3744,11 @@ void FireSenseClass::getCondition(const char *s, struct cond_item_data_t &data)
         {
             left = s;
             size_t p1 = left.find((const char *)FPSTR("("), 6);
-            if (p1 != std::string::npos)
+            if (p1 != MBSTRING::npos)
             {
                 p1++;
                 size_t p2 = left.find((const char *)FPSTR(")"), p1 + 1);
-                if (p2 != std::string::npos)
+                if (p2 != MBSTRING::npos)
                 {
                     trim(left.substr(p1, p2 - p1).c_str(), right, false);
                     for (size_t j = 0; j < channelsList.size(); j++)
@@ -3835,7 +3835,7 @@ void FireSenseClass::getCondition(const char *s, struct cond_item_data_t &data)
         if (comp_type != cond_comp_opr_type_undefined)
         {
             int i = 0;
-            std::string r, l;
+            MBSTRING r, l;
             while (i < p1)
             {
                 l += s[i];
@@ -3863,7 +3863,7 @@ void FireSenseClass::getCondition(const char *s, struct cond_item_data_t &data)
     }
 }
 
-void FireSenseClass::getConditionItem(struct cond_item_data_t &data, std::string &left, std::string &right)
+void FireSenseClass::getConditionItem(struct cond_item_data_t &data, MBSTRING &left, MBSTRING &right)
 {
     if (left.length() == 0)
         return;
@@ -3999,7 +3999,7 @@ void FireSenseClass::parseDateTime(const char *str, int type, struct tm &out)
     out.tm_mon = -1;
     out.tm_year = -1;
     out.tm_wday = -1;
-    std::vector<std::string> tmtk = std::vector<std::string>();
+    std::vector<MBSTRING> tmtk = std::vector<MBSTRING>();
 
     if (type == cond_operand_type_day)
         out.tm_mday = atoi(str);
@@ -4053,7 +4053,7 @@ void FireSenseClass::parseDateTime(const char *str, int type, struct tm &out)
 
 void FireSenseClass::getExpression(const char *s, struct expr_item_data_t &data)
 {
-    std::string str = s;
+    MBSTRING str = s;
 
     if (strlen(s) > 0)
     {
@@ -4103,7 +4103,7 @@ void FireSenseClass::getExpression(const char *s, struct expr_item_data_t &data)
     }
 
     data.type = expr_operand_type_value;
-    if (str.find((const char *)FPSTR(".")) != std::string::npos)
+    if (str.find((const char *)FPSTR(".")) != MBSTRING::npos)
     {
         data.value.type = data_type_float;
         data.value.float_data = atof(s);
@@ -4126,7 +4126,7 @@ void FireSenseClass::parseExpression(const char *src, std::vector<struct express
     bool nested = false;
     int aType = assignment_operator_type_undefined;
 
-    std::string s, buf, t;
+    MBSTRING s, buf, t;
     trim(src, s, true);
     int dp = depth + 1;
     bool not_op = false;
@@ -4253,7 +4253,7 @@ void FireSenseClass::parseCondition(const char *src, std::vector<struct conditio
 
     int orbk = 0, crbk = 0;
     bool nested = false;
-    std::string s, buf, t;
+    MBSTRING s, buf, t;
     trim(src, s, false);
     int dp = depth + 1;
     bool not_op = false;
@@ -4344,10 +4344,10 @@ void FireSenseClass::parseStatement(const char *src, std::vector<struct statemen
     if (!Firebase.ready())
         return;
 
-    std::string s, t, left, right;
+    MBSTRING s, t, left, right;
     trim(src, s, false);
 
-    std::vector<std::string> stmTk = std::vector<std::string>();
+    std::vector<MBSTRING> stmTk = std::vector<MBSTRING>();
     split(stmTk, s.c_str(), ',', '(', ')');
 
     for (size_t i = 0; i < stmTk.size(); i++)
@@ -4368,7 +4368,7 @@ void FireSenseClass::getStatement(const char *src, struct stm_item_t &data)
     if (!Firebase.ready())
         return;
 
-    std::string s, t, left, right;
+    MBSTRING s, t, left, right;
     trim(src, s, false);
 
     int pos = 0;
@@ -4385,16 +4385,16 @@ void FireSenseClass::getStatement(const char *src, struct stm_item_t &data)
         if (pos > 0)
         {
             p1 = s.find((const char *)FPSTR("("), pos);
-            if (p1 != std::string::npos)
+            if (p1 != MBSTRING::npos)
             {
                 p1++;
                 p2 = s.rfind((const char *)FPSTR(")"), s.length() - 1);
-                if (p2 != std::string::npos && p2 > p1)
+                if (p2 != MBSTRING::npos && p2 > p1)
                 {
                     if (pos == 4)
                     {
                         data.left.type = stm_operand_type_function;
-                        std::vector<std::string> params = std::vector<std::string>();
+                        std::vector<MBSTRING> params = std::vector<MBSTRING>();
                         split(params, s.substr(p1, p2 - p1).c_str(), ',', '\'', '\'');
                         int func_idx = -1;
 
@@ -4409,7 +4409,7 @@ void FireSenseClass::getStatement(const char *src, struct stm_item_t &data)
                         }
                         if (params.size() > 2)
                         {
-                            std::string s;
+                            MBSTRING s;
                             trim(params[2].c_str(), s, false, '\'', '\'');
                             data.left.function.payload = s;
                         }
@@ -4506,7 +4506,7 @@ void FireSenseClass::getStatement(const char *src, struct stm_item_t &data)
         {
 
             int m = 0;
-            std::string r, l;
+            MBSTRING r, l;
             while (m < (int)p1)
             {
                 delay(0);
@@ -4560,7 +4560,7 @@ void FireSenseClass::getStatement(const char *src, struct stm_item_t &data)
     }
 }
 
-void FireSenseClass::split(std::vector<std::string> &out, const char *str, const char delim, const char beginEsc, const char endEsc)
+void FireSenseClass::split(std::vector<MBSTRING> &out, const char *str, const char delim, const char beginEsc, const char endEsc)
 {
     uint16_t index = 0;
     uint16_t len = strlen(str);

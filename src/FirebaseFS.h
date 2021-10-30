@@ -55,5 +55,13 @@
 //Comment to exclude Cloud Function for Firebase
 #define ENABLE_FB_FUNCTIONS
 
+/** Use PSRAM for supported ESP32 module */
+#if defined(ESP32)
+#define FIREBASE_USE_PSRAM
+#endif
+
+//tempolary fix the Google server side issue
+//https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941
+#define FIX_FIRERBASE_RTDB_PRINT_SILENT
 
 #endif

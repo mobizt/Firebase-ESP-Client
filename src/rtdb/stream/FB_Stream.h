@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.0
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -231,10 +231,10 @@ public:
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value, T>::type
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value, T>::type
     {
 
-        if (sif->data.length() > 0 && sif->data_type == fb_esp_data_type::d_string)
+        if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_string || sif->data_type == fb_esp_data_type::d_std_string || sif->data_type == fb_esp_data_type::d_mb_string))
             return sif->data.substr(1, sif->data.length() - 2).c_str();
 
         return sif->data.c_str();
@@ -304,7 +304,7 @@ public:
 
             if (Signer.getCfg()->_int.fb_flash_rdy)
                 Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
-            ut->delS(tmp);
+            ut->delP(&tmp);
         }
 
         return Signer.getCfg()->_int.fb_file;

@@ -268,7 +268,7 @@ private:
 
 protected:
   template <typename T>
-  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
   template <typename T>
   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
@@ -2189,7 +2189,7 @@ public:
    * @param httpCode The http code.
    * @param buff The C++ string buffer out.
     */
-  void errorToString(int httpCode, std::string &buff) { Signer.errorToString(httpCode, buff); }
+  void errorToString(int httpCode, MBSTRING &buff) { Signer.errorToString(httpCode, buff); }
 
   template <typename T1 = const char *, typename T2>
   bool set(FirebaseData &fbdo, T1 path, T2 value) { return RTDB.set(&fbdo, path, value); }
@@ -2349,7 +2349,7 @@ private:
 
 protected:
   template <typename T>
-  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
   template <typename T>
   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }

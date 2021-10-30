@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.0
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -62,7 +62,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
     {
         char *tmp = ut->strP(fb_esp_pgm_str_1);
         bool r = strcmp(sif->path.c_str(), tmp) == 0;
-        ut->delS(tmp);
+        ut->delP(&tmp);
         if (r)
         {
             FirebaseJsonData data;
@@ -74,20 +74,20 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
                 if (strcmp(type.c_str(), buf) == 0)
                     type = sif->data_type_str.c_str();
                 eventType = sif->event_type_str.c_str();
-                value = data.to<const char*>();
+                value = data.to<const char *>();
                 dataPath = path;
-                ut->delS(buf);
+                ut->delP(&buf);
                 res = true;
             }
         }
         else
         {
-            std::string p1 = sif->path;
+            MBSTRING p1 = sif->path;
             if (path.length() < p1.length())
                 p1 = p1.substr(0, path.length());
-            std::string p2 = path.c_str();
+            MBSTRING p2 = path.c_str();
             if (p2[0] != '/')
-                p2 = "/" + p2;
+                p2.insert(0, 1, '/');
             if (strcmp(p1.c_str(), p2.c_str()) == 0)
             {
                 sif->m_json->toString(value, true);
@@ -102,12 +102,12 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
     }
     else
     {
-        std::string p1 = sif->path;
+        MBSTRING p1 = sif->path;
         if (path.length() < p1.length())
             p1 = p1.substr(0, path.length());
-        std::string p2 = path.c_str();
+        MBSTRING p2 = path.c_str();
         if (p2[0] != '/')
-            p2 = "/" + p2;
+            p2.insert(0, 1, '/');
         if (strcmp(p1.c_str(), p2.c_str()) == 0)
         {
             value = sif->data.c_str();

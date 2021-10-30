@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.14
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.15
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 20, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -202,15 +202,15 @@ private:
   void clear();
   
   UtilsClass *ut = nullptr;
-  std::string server_key;
-  std::string raw;
+  MBSTRING server_key;
+  MBSTRING raw;
   uint16_t port = FIREBASE_PORT;
   bool intCfg = false;
   SPI_ETH_Module *_spi_ethernet_module = NULL;
 
 protected:
   template <typename T>
-  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
   template <typename T>
   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }

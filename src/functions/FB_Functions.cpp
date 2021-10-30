@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.4
+ * Google's Cloud Functions class, Functions.cpp version 1.1.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 8, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -54,9 +54,9 @@ bool FB_Functions::mCallFunction(FirebaseData *fbdo, const char *projectId, cons
     req.locationId = locationId;
     req.functionId = functionId;
 
-    std::string find;
+    MBSTRING find;
     ut->appendP(find, fb_esp_pgm_str_3);
-    std::string replace;
+    MBSTRING replace;
     ut->appendP(replace, fb_esp_pgm_str_570);
     req.payload = data;
     ut->replaceAll(req.payload, find, replace);
@@ -70,7 +70,7 @@ bool FB_Functions::mCallFunction(FirebaseData *fbdo, const char *projectId, cons
     fbdo->_ss.jsonPtr->add(tmp, req.payload.c_str());
     req.payload = fbdo->_ss.jsonPtr->raw();
     fbdo->_ss.jsonPtr->clear();
-    ut->delS(tmp);
+    ut->delP(&tmp);
     return sendRequest(fbdo, &req);
 }
 
@@ -108,7 +108,7 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
 #if defined(ESP32)
         char *tmp = ut->strP(fb_esp_pgm_str_475);
         runDeployTask(tmp);
-        ut->delS(tmp);
+        ut->delP(&tmp);
 #elif defined(ESP8266)
         runDeployTask();
 #endif
@@ -231,25 +231,25 @@ bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
 
     tmp = ut->strP(fb_esp_pgm_str_387);
     fbdo->_ss.jsonPtr->add(tmp, config->_projectId.c_str());
-    ut->delS(tmp);
+    ut->delP(&tmp);
 
     tmp = ut->strP(fb_esp_pgm_str_409);
     fbdo->_ss.jsonPtr->add(tmp, config->_locationId.c_str());
-    ut->delS(tmp);
+    ut->delP(&tmp);
 
     char *tmp2 = ut->strP(fb_esp_pgm_str_456);
     tmp = ut->strP(fb_esp_pgm_str_453);
     fbdo->_ss.jsonPtr->add(tmp, (const char *)tmp2);
-    ut->delS(tmp);
-    ut->delS(tmp2);
+    ut->delP(&tmp);
+    ut->delP(&tmp2);
 
     tmp = ut->strP(fb_esp_pgm_str_454);
     fbdo->_ss.jsonPtr->add(tmp, Signer.getToken());
-    ut->delS(tmp);
+    ut->delP(&tmp);
 
     tmp = ut->strP(fb_esp_pgm_str_455);
     fbdo->_ss.jsonPtr->add(tmp, config->_bucketSourcesPath.c_str());
-    ut->delS(tmp);
+    ut->delP(&tmp);
 
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_upload_bucket_sources;
@@ -285,8 +285,8 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
     req.locationId = config->_locationId.c_str();
     req.functionId = functionId;
 
-    std::string path;
-    std::string t;
+    MBSTRING path;
+    MBSTRING t;
 
     if (!fbdo->_ss.jsonPtr)
         fbdo->_ss.jsonPtr = new FirebaseJson();
@@ -314,14 +314,14 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
     }
 
     t.clear();
-    std::string str = fbdo->_ss.jsonPtr->raw();
+    MBSTRING str = fbdo->_ss.jsonPtr->raw();
     fbdo->_ss.jsonPtr->clear();
 
     char *find = ut->strP(fb_esp_pgm_str_3);
     char *replace = ut->strP(fb_esp_pgm_str_396);
     ut->replaceAll(str, find, replace);
-    ut->delS(find);
-    ut->delS(replace);
+    ut->delP(&find);
+    ut->delP(&replace);
 
     ut->appendP(t, fb_esp_pgm_str_374, true);
     ut->appendP(t, fb_esp_pgm_str_1);
@@ -331,8 +331,8 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
 
     config->_httpsTriggerUrl.clear();
 
-    std::string().swap(config->_httpsTriggerUrl);
-    std::string().swap(str);
+    MBSTRING().swap(config->_httpsTriggerUrl);
+    MBSTRING().swap(str);
 
     if (config->_triggerType == fb_esp_functions_trigger_type_https)
     {
@@ -346,9 +346,9 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
         t += config->_entryPoint;
         char *tmp = ut->strP(fb_esp_pgm_str_384);
         config->_funcCfg.set(tmp, t.c_str());
-        ut->delS(tmp);
+        ut->delP(&tmp);
         config->_httpsTriggerUrl = t;
-        std::string().swap(t);
+        MBSTRING().swap(t);
     }
 
     req.payload = config->_funcCfg.raw();
@@ -397,14 +397,14 @@ bool FB_Functions::mSetIamPolicy(FirebaseData *fbdo, const char *projectId, cons
         js.clear();
         tmp = ut->strP(fb_esp_pgm_str_399);
         fbdo->_ss.jsonPtr->add(tmp, policy->json);
-        ut->delS(tmp);
+        ut->delP(&tmp);
     }
 
     if (strlen(updateMask) > 0)
     {
         tmp = ut->strP(fb_esp_pgm_str_400);
         fbdo->_ss.jsonPtr->add(tmp, updateMask);
-        ut->delS(tmp);
+        ut->delP(&tmp);
     }
 
     req.payload = fbdo->_ss.jsonPtr->raw();
@@ -451,11 +451,11 @@ bool FB_Functions::mGetFunction(FirebaseData *fbdo, const char *projectId, const
         fbdo->_ss.jsonPtr->setJsonData(fbdo->_ss.cfn.payload.c_str());
         char *tmp = ut->strP(fb_esp_pgm_str_419);
         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, (const char *)tmp);
-        ut->delS(tmp);
+        ut->delP(&tmp);
 
         if (fbdo->_ss.dataPtr->success)
         {
-            std::string s;
+            MBSTRING s;
             ut->appendP(s, fb_esp_pgm_str_420, true);
             if (strcmp_P(fbdo->_ss.dataPtr->to<const char *>(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
@@ -479,7 +479,7 @@ bool FB_Functions::mGetFunction(FirebaseData *fbdo, const char *projectId, const
             ut->appendP(s, fb_esp_pgm_str_425, true);
             if (strcmp_P(fbdo->_ss.dataPtr->to<const char *>(), s.c_str()) == 0)
                 _function_status = fb_esp_functions_status_UNKNOWN;
-            std::string().swap(s);
+            MBSTRING().swap(s);
         }
     }
 
@@ -536,7 +536,7 @@ bool FB_Functions::mGenerateDownloadUrl(FirebaseData *fbdo, const char *projectI
         req.versionId = atoi(versionId);
         char *tmp = ut->strP(fb_esp_pgm_str_437);
         fbdo->_ss.jsonPtr->add(tmp, (int)versionId);
-        ut->delS(tmp);
+        ut->delP(&tmp);
     }
 
     req.payload = fbdo->_ss.jsonPtr->raw();
@@ -633,7 +633,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     bool post = false;
     fbdo->_ss.cfn.requestType = req->requestType;
 
-    std::string header;
+    MBSTRING header;
     if (req->requestType == fb_esp_functions_request_type_get_iam_policy || req->requestType == fb_esp_functions_request_type_list_operations || req->requestType == fb_esp_functions_request_type_get || req->requestType == fb_esp_functions_request_type_get_iam_policy || req->requestType == fb_esp_functions_request_type_list)
         ut->appendP(header, fb_esp_pgm_str_25);
     else if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources || req->requestType == fb_esp_functions_request_type_call || req->requestType == fb_esp_functions_request_type_create || req->requestType == fb_esp_functions_request_type_gen_download_url || req->requestType == fb_esp_functions_request_type_gen_upload_url || req->requestType == fb_esp_functions_request_type_set_iam_policy || req->requestType == fb_esp_functions_request_type_test_iam_policy)
@@ -875,7 +875,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                     break;
                 available = Signer.getCfg()->_int.fb_file.available();
             }
-            delete[] buf;
+            ut->delP(&buf);
             Signer.getCfg()->_int.fb_file.close();
         }
         else if (req->requestType == fb_esp_functions_request_type_pgm_upload)
@@ -896,7 +896,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 len -= available;
                 available = len;
             }
-            delete[] buf;
+            ut->delP(&buf);
         }
 
         if (handleResponse(fbdo))
@@ -935,7 +935,7 @@ bool FB_Functions::connect(FirebaseData *fbdo, const char *host)
     }
     else
     {
-        std::string host;
+        MBSTRING host;
         ut->appendP(host, fb_esp_pgm_str_363);
         ut->appendP(host, fb_esp_pgm_str_120);
         rescon(fbdo, host.c_str());
@@ -973,7 +973,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
     size_t defaultChunkSize = fbdo->_ss.resp_size;
     struct fb_esp_auth_token_error_t error;
     error.code = -1;
-    std::string js;
+    MBSTRING js;
 
     fbdo->_ss.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->_ss.content_length = -1;
@@ -1019,7 +1019,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                 if (chunkIdx == 0)
                 {
                     //the first chunk can be http response header
-                    header = ut->newS(chunkBufSize);
+                    header = (char *)ut->newP(chunkBufSize);
                     hstate = 1;
                     int readLen = ut->readLine(stream, header, chunkBufSize);
                     int pos = 0;
@@ -1034,7 +1034,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                         hBufPos = readLen;
                         response.httpCode = atoi(tmp);
                         fbdo->_ss.http_code = response.httpCode;
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                     }
                 }
                 else
@@ -1045,7 +1045,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                     if (isHeader)
                     {
                         //read one line of next header field until the empty header has found
-                        tmp = ut->newS(chunkBufSize);
+                        tmp = (char *)ut->newP(chunkBufSize);
                         int readLen = ut->readLine(stream, tmp, chunkBufSize);
                         bool headerEnded = false;
 
@@ -1074,12 +1074,12 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                                 error.code = 0;
 
                             if (hstate == 1)
-                                ut->delS(header);
+                                ut->delP(&header);
                             hstate = 0;
 
                             if (response.contentLen == 0)
                             {
-                                ut->delS(tmp);
+                                ut->delP(&tmp);
                                 break;
                             }
                         }
@@ -1089,7 +1089,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                             memcpy(header + hBufPos, tmp, readLen);
                             hBufPos += readLen;
                         }
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                     }
                     else
                     {
@@ -1097,7 +1097,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                         if (!response.noContent)
                         {
                             pChunkIdx++;
-                            pChunk = ut->newS(chunkBufSize + 1);
+                            pChunk = (char *)ut->newP(chunkBufSize + 1);
 
                             if (response.isChunkedEnc)
                                 delay(10);
@@ -1126,7 +1126,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                                 }
                             }
 
-                            ut->delS(pChunk);
+                            ut->delP(&pChunk);
 
                             if (availablePayload < 0 || (payloadRead >= response.contentLen && !response.isChunkedEnc))
                             {
@@ -1150,7 +1150,7 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
         }
 
         if (hstate == 1)
-            ut->delS(header);
+            ut->delP(&header);
 
         fbdo->_ss.cfn.payload.shrink_to_fit();
 
@@ -1168,21 +1168,21 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                 fbdo->_ss.jsonPtr->setJsonData(fbdo->_ss.cfn.payload.c_str());
                 tmp = ut->strP(fb_esp_pgm_str_257);
                 fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                ut->delS(tmp);
+                ut->delP(&tmp);
 
                 if (fbdo->_ss.dataPtr->success)
                 {
                     error.code = fbdo->_ss.dataPtr->intValue;
                     tmp = ut->strP(fb_esp_pgm_str_258);
                     fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delS(tmp);
+                    ut->delP(&tmp);
                     if (fbdo->_ss.dataPtr->success)
                     {
                         fbdo->_ss.error = fbdo->_ss.dataPtr->to<const char *>();
 
                         tmp = ut->strP(fb_esp_pgm_str_418);
                         fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                         if (fbdo->_ss.dataPtr->success)
                         {
                             fbdo->_ss.error += ", ";
@@ -1268,10 +1268,10 @@ void FB_Functions::runDeployTask()
                         taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
                         char *tmp = _this->ut->strP(fb_esp_pgm_str_440);
                         taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
-                        _this->ut->delS(tmp);
+                        _this->ut->delP(&tmp);
                         taskInfo->fbdo->_ss.jsonPtr->clear();
                         taskInfo->fbdo->_ss.arrPtr->clear();
-                        std::string().swap(taskInfo->fbdo->_ss.cfn.payload);
+                        MBSTRING().swap(taskInfo->fbdo->_ss.cfn.payload);
                         if (taskInfo->fbdo->_ss.dataPtr->success)
                         {
                             _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_deploy, taskInfo->callback, taskInfo->statusInfo);
@@ -1301,14 +1301,14 @@ void FB_Functions::runDeployTask()
 
                         char *tmp = _this->ut->strP(fb_esp_pgm_str_457);
                         taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
-                        _this->ut->delS(tmp);
+                        _this->ut->delP(&tmp);
 
                         if (taskInfo->fbdo->_ss.dataPtr->success)
                         {
                             tmp = _this->ut->strP(fb_esp_pgm_str_383);
                             taskInfo->config->_funcCfg.add(tmp, taskInfo->fbdo->_ss.dataPtr->to<const char *>());
                             taskInfo->config->addUpdateMasks(tmp);
-                            _this->ut->delS(tmp);
+                            _this->ut->delP(&tmp);
                         }
 
                         taskInfo->fbdo->_ss.jsonPtr->clear();
@@ -1334,7 +1334,7 @@ void FB_Functions::runDeployTask()
                     else if (taskInfo->config->_sourceType == functions_sources_type_flash_data)
                         ret = _this->uploadPGMArchive(taskInfo->fbdo, taskInfo->uploadUrl.c_str(), taskInfo->config->_pgmArc, taskInfo->config->_pgmArcLen);
                     taskInfo->uploadUrl.clear();
-                    std::string().swap(taskInfo->uploadUrl);
+                    MBSTRING().swap(taskInfo->uploadUrl);
                     if (ret)
                     {
                         if (!taskInfo->fbdo->_ss.dataPtr)
@@ -1343,7 +1343,7 @@ void FB_Functions::runDeployTask()
                         char *tmp = _this->ut->strP(fb_esp_pgm_str_383);
                         taskInfo->config->_funcCfg.set(tmp, taskInfo->fbdo->_ss.dataPtr->to<const char *>());
                         taskInfo->config->addUpdateMasks(tmp);
-                        _this->ut->delS(tmp);
+                        _this->ut->delP(&tmp);
                         _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
                     }
                     else
@@ -1382,7 +1382,7 @@ void FB_Functions::runDeployTask()
                 {
                     taskInfo->done = true;
                     bool ret = false;
-                    std::string t;
+                    MBSTRING t;
                     _this->ut->appendP(t, fb_esp_pgm_str_428);
                     t += taskInfo->projectId;
                     _this->ut->appendP(t, fb_esp_pgm_str_431);
@@ -1401,7 +1401,7 @@ void FB_Functions::runDeployTask()
                         taskInfo->fbdo->_ss.jsonPtr->clear();
                         taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
                         taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
-                        _this->ut->delS(tmp);
+                        _this->ut->delP(&tmp);
                         _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.dataPtr->to<const char *>(), taskInfo->callback, taskInfo->statusInfo);
                     }
 
@@ -1467,12 +1467,12 @@ void FB_Functions::runDeployTask()
                 for (size_t i = 0; i < n; i++)
                 {
                     struct fb_esp_deploy_task_info_t *taskInfo = &_this->_deployTasks[i];
-                    std::string().swap(taskInfo->uploadUrl);
-                    std::string().swap(taskInfo->projectId);
-                    std::string().swap(taskInfo->locationId);
-                    std::string().swap(taskInfo->functionId);
-                    std::string().swap(taskInfo->policy);
-                    std::string().swap(taskInfo->httpsTriggerUrl);
+                    MBSTRING().swap(taskInfo->uploadUrl);
+                    MBSTRING().swap(taskInfo->projectId);
+                    MBSTRING().swap(taskInfo->locationId);
+                    MBSTRING().swap(taskInfo->functionId);
+                    MBSTRING().swap(taskInfo->policy);
+                    MBSTRING().swap(taskInfo->httpsTriggerUrl);
                     taskInfo->fbdo->_ss.long_running_task--;
                     taskInfo->fbdo->clear();
                     taskInfo->fbdo = nullptr;
@@ -1531,10 +1531,10 @@ void FB_Functions::runDeployTask()
                     taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
                     char *tmp = ut->strP(fb_esp_pgm_str_440);
                     taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
-                    ut->delS(tmp);
+                    ut->delP(&tmp);
                     taskInfo->fbdo->_ss.jsonPtr->clear();
                     taskInfo->fbdo->_ss.arrPtr->clear();
-                    std::string().swap(taskInfo->fbdo->_ss.cfn.payload);
+                    MBSTRING().swap(taskInfo->fbdo->_ss.cfn.payload);
                     if (taskInfo->fbdo->_ss.dataPtr->success)
                     {
                         addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_deploy, taskInfo->callback, taskInfo->statusInfo);
@@ -1565,14 +1565,14 @@ void FB_Functions::runDeployTask()
 
                     char *tmp = ut->strP(fb_esp_pgm_str_457);
                     taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
-                    ut->delS(tmp);
+                    ut->delP(&tmp);
 
                     if (taskInfo->fbdo->_ss.dataPtr->success)
                     {
                         tmp = ut->strP(fb_esp_pgm_str_383);
                         taskInfo->config->_funcCfg.add(tmp, taskInfo->fbdo->_ss.dataPtr->to<const char *>());
                         taskInfo->config->addUpdateMasks(tmp);
-                        ut->delS(tmp);
+                        ut->delP(&tmp);
                     }
 
                     taskInfo->fbdo->_ss.jsonPtr->clear();
@@ -1599,13 +1599,13 @@ void FB_Functions::runDeployTask()
                 else if (taskInfo->config->_sourceType == functions_sources_type_flash_data)
                     ret = uploadPGMArchive(taskInfo->fbdo, taskInfo->uploadUrl.c_str(), taskInfo->config->_pgmArc, taskInfo->config->_pgmArcLen);
                 taskInfo->uploadUrl.clear();
-                std::string().swap(taskInfo->uploadUrl);
+                MBSTRING().swap(taskInfo->uploadUrl);
                 if (ret)
                 {
                     char *tmp = ut->strP(fb_esp_pgm_str_383);
                     taskInfo->config->_funcCfg.set(tmp, taskInfo->fbdo->_ss.dataPtr->to<const char *>());
                     taskInfo->config->addUpdateMasks(tmp);
-                    ut->delS(tmp);
+                    ut->delP(&tmp);
                     addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
                 }
                 else
@@ -1647,7 +1647,7 @@ void FB_Functions::runDeployTask()
             {
                 taskInfo->done = true;
                 bool ret = false;
-                std::string t;
+                MBSTRING t;
                 ut->appendP(t, fb_esp_pgm_str_428);
                 t += taskInfo->projectId;
                 ut->appendP(t, fb_esp_pgm_str_431);
@@ -1666,7 +1666,7 @@ void FB_Functions::runDeployTask()
                     taskInfo->fbdo->_ss.jsonPtr->clear();
                     taskInfo->fbdo->_ss.jsonPtr->setJsonData(taskInfo->fbdo->_ss.cfn.payload.c_str());
                     taskInfo->fbdo->_ss.jsonPtr->get(*taskInfo->fbdo->_ss.dataPtr, tmp);
-                    ut->delS(tmp);
+                    ut->delP(&tmp);
                     sendCallback(taskInfo->fbdo, taskInfo->fbdo->_ss.cfn.cbInfo.status, taskInfo->fbdo->_ss.dataPtr->to<const char *>(), taskInfo->callback, taskInfo->statusInfo);
                 }
 
@@ -1734,12 +1734,12 @@ void FB_Functions::runDeployTask()
             for (size_t i = 0; i < n; i++)
             {
                 struct fb_esp_deploy_task_info_t *taskInfo = &_deployTasks[i];
-                std::string().swap(taskInfo->uploadUrl);
-                std::string().swap(taskInfo->projectId);
-                std::string().swap(taskInfo->locationId);
-                std::string().swap(taskInfo->functionId);
-                std::string().swap(taskInfo->policy);
-                std::string().swap(taskInfo->httpsTriggerUrl);
+                MBSTRING().swap(taskInfo->uploadUrl);
+                MBSTRING().swap(taskInfo->projectId);
+                MBSTRING().swap(taskInfo->locationId);
+                MBSTRING().swap(taskInfo->functionId);
+                MBSTRING().swap(taskInfo->policy);
+                MBSTRING().swap(taskInfo->httpsTriggerUrl);
                 taskInfo->fbdo->_ss.long_running_task--;
                 taskInfo->fbdo->clear();
                 taskInfo->fbdo = nullptr;

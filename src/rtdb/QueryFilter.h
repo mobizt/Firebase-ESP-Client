@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.2
+ * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -80,12 +80,12 @@ public:
     QueryFilter &clear();
 
 private:
-    std::string _orderBy;
-    std::string _limitToFirst;
-    std::string _limitToLast;
-    std::string _startAt;
-    std::string _endAt;
-    std::string _equalTo;
+    MBSTRING _orderBy;
+    MBSTRING _limitToFirst;
+    MBSTRING _limitToLast;
+    MBSTRING _startAt;
+    MBSTRING _endAt;
+    MBSTRING _equalTo;
 
     QueryFilter &mOrderBy(const char *val);
     QueryFilter &mLimitToFirst(const char *val);
@@ -96,14 +96,14 @@ private:
 
     char *strP(PGM_P pgm);
     char *newS(size_t len);
-    void appendP(std::string &buf, PGM_P p, bool empty = false);
+    void appendP(MBSTRING &buf, PGM_P p, bool empty = false);
     void delS(char *p);
     char *floatStr(float value);
     char *intStr(int value);
 
 protected:
     template <typename T>
-    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value, const char *>::type { return val.c_str(); }
+    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value, const char *>::type { return val.c_str(); }
 
     template <typename T>
     auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }

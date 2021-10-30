@@ -10,7 +10,7 @@
  *
 */
 
-//This example shows how to app the value to array field. This operation required Email/password, custom or OAUth2.0 authentication.
+//This example shows how to add the value to array field. This operation required Email/password, custom or OAUth2.0 authentication.
 
 #if defined(ESP32)
 #include <WiFi.h>

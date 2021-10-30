@@ -35,6 +35,7 @@
 /* 4. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
+
 //Define Firebase Data object
 FirebaseData fbdo;
 
@@ -97,7 +98,7 @@ void setup()
 
 void loop()
 {
-  //Flash string (PROGMEM and  (FPSTR), String,, String C/C++ string, const char, char array, string literal are supported
+  //Flash string (PROGMEM and FPSTR), Arduino String, C++ string, const char, char array, string literal are supported
   //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > idleTimeForStream || sendDataPrevMillis == 0))

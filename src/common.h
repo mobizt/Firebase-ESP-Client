@@ -1,6 +1,6 @@
 
 /**
- * Created October 7, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -49,7 +49,12 @@
 #include <FS.h>
 
 #include "FirebaseFS.h"
+
+#if defined(FIREBASE_USE_PSRAM)
+#define FIREBASEJSON_USE_PSRAM
+#endif
 #include "json/FirebaseJson.h"
+
 
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_STREAM_CLASS FirebaseStream
@@ -91,6 +96,10 @@ class QueryFilter;
 
 #define MIN_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL 3 * 1000
 #define MAX_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL 30 * 1000
+
+#define MIN_TOKEN_GENERATION_BEGIN_STEP_INTERVAL 300
+
+#define MIN_TOKEN_GENERATION_ERROR_INTERVAL 5 * 1000
 
 #define SD_CS_PIN 15
 
@@ -155,6 +164,7 @@ enum fb_esp_data_type
     d_timestamp,
     d_shallow,
     d_std_string,
+    d_mb_string,
     d_char_array
 };
 
@@ -171,6 +181,7 @@ enum fb_esp_ref_sub_type
     fb_esp_ref_sub_type_uint64,
     fb_esp_ref_sub_type_arduino_string,
     fb_esp_ref_sub_type_std_string,
+    fb_esp_ref_sub_type_mb_string,
     fb_esp_ref_sub_type_const_char,
     fb_esp_ref_sub_type_flash_string,
     fb_esp_ref_sub_type_update_node_silent,
@@ -265,6 +276,7 @@ enum fb_esp_rtdb_value_type
     fb_esp_rtdb_value_type_any = 0,
     fb_esp_rtdb_value_type_std_string,
     fb_esp_rtdb_value_type_arduino_string,
+    fb_esp_rtdb_value_type_mb_string,
     fb_esp_rtdb_value_type_char_array,
     fb_esp_rtdb_value_type_int,
     fb_esp_rtdb_value_type_float,
@@ -509,10 +521,10 @@ struct fb_esp_rtdb_queue_info_t
 #endif
     fb_esp_data_type dataType = fb_esp_data_type::d_any;
     int subType = 0;
-    std::string path;
-    std::string filename;
-    std::string payload;
-    std::string etag;
+    MBSTRING path;
+    MBSTRING filename;
+    MBSTRING payload;
+    MBSTRING etag;
     struct fb_esp_rtdb_address_t address;
     int blobSize = 0;
     bool async = false;
@@ -555,30 +567,30 @@ struct server_response_data_t
     bool noContent = false;
     bool eventPathChanged = false;
     bool dataChanged = false;
-    std::string location;
-    std::string contentType;
-    std::string connection;
-    std::string eventPath;
-    std::string eventType;
-    std::string eventData;
-    std::string etag;
-    std::string pushName;
-    std::string fbError;
-    std::string transferEnc;
+    MBSTRING location;
+    MBSTRING contentType;
+    MBSTRING connection;
+    MBSTRING eventPath;
+    MBSTRING eventType;
+    MBSTRING eventData;
+    MBSTRING etag;
+    MBSTRING pushName;
+    MBSTRING fbError;
+    MBSTRING transferEnc;
 };
 
 struct fb_esp_auth_token_error_t
 {
-    std::string message;
+    MBSTRING message;
     int code = 0;
 };
 
 struct fb_esp_auth_token_info_t
 {
     const char *legacy_token = "";
-    std::string auth_type;
-    std::string jwt;
-    std::string scope;
+    MBSTRING auth_type;
+    MBSTRING jwt;
+    MBSTRING scope;
     unsigned long expires = 0;
     unsigned long last_millis = 0;
     fb_esp_auth_token_type token_type = token_type_undefined;
@@ -588,29 +600,29 @@ struct fb_esp_auth_token_info_t
 
 struct fb_esp_auth_signin_token_t
 {
-    std::string uid;
-    std::string claims;
+    MBSTRING uid;
+    MBSTRING claims;
 };
 
 struct fb_esp_service_account_data_info_t
 {
-    std::string client_email;
-    std::string client_id;
-    std::string project_id;
-    std::string private_key_id;
+    MBSTRING client_email;
+    MBSTRING client_id;
+    MBSTRING project_id;
+    MBSTRING private_key_id;
     const char *private_key = "";
 };
 
 struct fb_esp_auth_signin_user_t
 {
-    std::string email;
-    std::string password;
+    MBSTRING email;
+    MBSTRING password;
 };
 
 struct fb_esp_auth_cert_t
 {
     const char *data = NULL;
-    std::string file;
+    MBSTRING file;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type file_storage = mem_storage_type_flash;
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
@@ -620,7 +632,7 @@ struct fb_esp_auth_cert_t
 
 struct fb_esp_service_account_file_info_t
 {
-    std::string path;
+    MBSTRING path;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storage_type = mem_storage_type_flash;
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
@@ -650,7 +662,7 @@ struct fb_esp_token_signer_resources_t
     unsigned long preRefreshSeconds = 60;
     unsigned long expiredSeconds = 3600;
     unsigned long reqTO = 2000;
-    std::string pk;
+    MBSTRING pk;
     size_t hashSize = 32; //SHA256 size (256 bits or 32 bytes)
     size_t signatureSize = 256;
 #if defined(ESP32)
@@ -659,10 +671,10 @@ struct fb_esp_token_signer_resources_t
     char *hash = nullptr;
 #endif
     unsigned char *signature = nullptr;
-    std::string encHeader;
-    std::string encPayload;
-    std::string encHeadPayload;
-    std::string encSignature;
+    MBSTRING encHeader;
+    MBSTRING encPayload;
+    MBSTRING encHeadPayload;
+    MBSTRING encSignature;
 #if defined(ESP32)
     mbedtls_pk_context *pk_ctx = nullptr;
     mbedtls_entropy_context *entropy_ctx = nullptr;
@@ -682,20 +694,20 @@ struct fb_esp_token_signer_resources_t
 #ifdef ENABLE_RTDB
 struct fb_esp_stream_info_t
 {
-    std::string stream_path;
-    std::string path;
-    std::string data;
+    MBSTRING stream_path;
+    MBSTRING path;
+    MBSTRING data;
     std::vector<uint8_t> *blob = nullptr;
-    std::string data_type_str;
-    std::string event_type_str;
+    MBSTRING data_type_str;
+    MBSTRING event_type_str;
     uint8_t data_type = 0;
     int idx = -1;
     /*
     fb_esp_data_type m_type = d_any;
-    std::string m_data;
-    std::string m_path;
-    std::string m_type_str;
-    std::string m_event_type_str;
+    MBSTRING m_data;
+    MBSTRING m_path;
+    MBSTRING m_type_str;
+    MBSTRING m_event_type_str;
     */
     FirebaseJson *m_json = nullptr;
     size_t payload_length = 0;
@@ -715,14 +727,16 @@ struct fb_esp_cfg_int_t
     bool fb_sd_used = false;
     bool fb_reconnect_wifi = false;
     unsigned long fb_last_reconnect_millis = 0;
+    unsigned long fb_last_jwt_begin_step_millis = 0;
+    unsigned long fb_last_jwt_generation_error_cb_millis = 0;
     bool fb_clock_rdy = false;
     float fb_gmt_offset = 0;
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
     std::vector<std::reference_wrapper<FirebaseData>> fb_sdo;
-    std::string auth_token;
-    std::string refresh_token;
+    MBSTRING auth_token;
+    MBSTRING refresh_token;
     uint16_t rtok_len = 0;
     uint16_t atok_len = 0;
     uint16_t ltok_len = 0;
@@ -741,9 +755,9 @@ struct fb_esp_rtdb_config_t
 
 struct fb_esp_url_info_t
 {
-    std::string host;
-    std::string uri;
-    std::string auth;
+    MBSTRING host;
+    MBSTRING uri;
+    MBSTRING auth;
 };
 
 #if defined(FIREBASE_ESP_CLIENT)
@@ -752,9 +766,9 @@ struct fb_esp_url_info_t
 //shared struct between fcs and gcs
 struct fb_esp_fcs_file_list_item_t
 {
-    std::string name = "";
-    std::string bucket = "";
-    std::string contentType = "";
+    MBSTRING name;
+    MBSTRING bucket;
+    MBSTRING contentType;
     size_t size = 0;
 };
 #endif
@@ -764,9 +778,9 @@ typedef struct fb_esp_gcs_upload_status_info_t
 {
     size_t progress = 0;
     fb_esp_gcs_upload_status status = fb_esp_gcs_upload_status_unknown;
-    std::string localFileName = "";
-    std::string remoteFileName = "";
-    std::string errorMsg = "";
+    MBSTRING localFileName;
+    MBSTRING remoteFileName;
+    MBSTRING errorMsg;
 
 } UploadStatusInfo;
 
@@ -816,15 +830,19 @@ struct fb_esp_client_timeout_t
     //RTDB Stream error notification timeout (interval) in ms (3 sec - 30 sec). It determines how often the readStream
     //will return false (error) when it called repeatedly in loop.
     uint16_t rtdbStreamError = MIN_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL;
+
+    uint16_t tokenGenerationBeginStep = MIN_TOKEN_GENERATION_BEGIN_STEP_INTERVAL;
+
+    uint16_t tokenGenerationError = MIN_TOKEN_GENERATION_ERROR_INTERVAL;
 };
 
 struct fb_esp_cfg_t
 {
     struct fb_esp_service_account_t service_account;
     //deprecated, use database_url instead
-    std::string host;
-    std::string database_url;
-    std::string api_key;
+    MBSTRING host;
+    MBSTRING database_url;
+    MBSTRING api_key;
     float time_zone = 0;
     size_t async_close_session_max_request = 100;
     struct fb_esp_auth_cert_t cert;
@@ -864,16 +882,16 @@ struct fb_esp_rtdb_info_t
     fb_esp_data_type req_data_type = fb_esp_data_type::d_any;
     fb_esp_data_type resp_data_type = fb_esp_data_type::d_any;
     uint16_t data_crc = 0;
-    std::string path;
-    std::string raw;
-    std::string stream_path;
-    std::string push_name;
-    std::string file_name;
-    std::string redirect_url;
-    std::string event_type;
-    std::string data_type_str;
-    std::string req_etag;
-    std::string resp_etag;
+    MBSTRING path;
+    MBSTRING raw;
+    MBSTRING stream_path;
+    MBSTRING push_name;
+    MBSTRING file_name;
+    MBSTRING redirect_url;
+    MBSTRING event_type;
+    MBSTRING data_type_str;
+    MBSTRING req_etag;
+    MBSTRING resp_etag;
     float priority;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storage_type = mem_storage_type_flash;
@@ -896,11 +914,11 @@ struct fb_esp_rtdb_info_t
     bool priority_json_flag = false;
     bool shallow_flag = false;
     int read_tmo = -1;
-    std::string write_limit = "";
+    MBSTRING write_limit;
 
-    std::string backup_node_path = "";
-    std::string backup_dir = "";
-    std::string backup_filename = "";
+    MBSTRING backup_node_path;
+    MBSTRING backup_dir;
+    MBSTRING backup_filename;
     size_t backup_file_size = 0;
 
     struct fb_esp_stream_info_t stream;
@@ -921,20 +939,20 @@ struct fb_esp_rtdb_info_t
 typedef struct fb_esp_function_operation_info_t
 {
     fb_esp_functions_operation_status status = fb_esp_functions_operation_status_unknown;
-    std::string errorMsg = "";
-    std::string triggerUrl = "";
-    std::string functionId = "";
+    MBSTRING errorMsg;
+    MBSTRING triggerUrl;
+    MBSTRING functionId;
 } FunctionsOperationStatusInfo;
 
 typedef void (*FunctionsOperationCallback)(FunctionsOperationStatusInfo);
 
 struct fb_esp_deploy_task_info_t
 {
-    std::string projectId = "";
-    std::string locationId = "";
-    std::string functionId = "";
-    std::string policy = "";
-    std::string httpsTriggerUrl = "";
+    MBSTRING projectId;
+    MBSTRING locationId;
+    MBSTRING functionId;
+    MBSTRING policy;
+    MBSTRING httpsTriggerUrl;
     FunctionsConfig *config = nullptr;
     fb_esp_functions_creation_step step = fb_esp_functions_creation_step_idle;
     fb_esp_functions_creation_step nextStep = fb_esp_functions_creation_step_idle;
@@ -947,7 +965,7 @@ struct fb_esp_deploy_task_info_t
     bool patch = false;
     FunctionsOperationCallback callback = NULL;
     FirebaseData *fbdo = nullptr;
-    std::string uploadUrl = "";
+    MBSTRING uploadUrl;
 };
 
 struct fb_esp_functions_info_t
@@ -956,42 +974,42 @@ struct fb_esp_functions_info_t
     int contentLength = 0;
     fb_esp_functions_operation_status last_status = fb_esp_functions_operation_status_unknown;
     FunctionsOperationStatusInfo cbInfo;
-    std::string payload = "";
+    MBSTRING payload;
 };
 
 struct fb_esp_functions_https_trigger_t
 {
-    std::string url = "";
+    MBSTRING url;
 };
 
 struct fb_esp_functions_event_trigger_t
 {
-    std::string eventType = "";
-    std::string resource = "";
-    std::string service = "";
-    std::string failurePolicy = "";
+    MBSTRING eventType;
+    MBSTRING resource;
+    MBSTRING service;
+    MBSTRING failurePolicy;
 };
 
 struct fb_esp_functions_req_t
 {
-    std::string projectId = "";
-    std::string locationId = "";
-    std::string functionId = "";
-    std::string databaseURL = "";
-    std::string bucketID = "";
-    std::string payload = "";
-    std::string filter = "";
-    std::string host = "";
-    std::string uri = "";
-    std::string filePath = "";
+    MBSTRING projectId;
+    MBSTRING locationId;
+    MBSTRING functionId;
+    MBSTRING databaseURL;
+    MBSTRING bucketID;
+    MBSTRING payload;
+    MBSTRING filter;
+    MBSTRING host;
+    MBSTRING uri;
+    MBSTRING filePath;
     const uint8_t *pgmArc = nullptr;
     size_t pgmArcLen = 0;
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
-    std::string policyVersion = "";
+    MBSTRING policyVersion;
     size_t versionId = 0;
     size_t pageSize = 0;
-    std::string pageToken = "";
-    std::vector<std::string> *updateMask = nullptr;
+    MBSTRING pageToken;
+    std::vector<MBSTRING> *updateMask = nullptr;
     fb_esp_functions_request_type requestType = fb_esp_functions_request_type_undefined;
 };
 
@@ -1001,16 +1019,16 @@ struct fb_esp_functions_req_t
 //shared struct between fcs and gcs
 struct fb_esp_gcs_meta_info_t
 {
-    std::string name = "";
-    std::string bucket = "";
+    MBSTRING name;
+    MBSTRING bucket;
     unsigned long generation = 0;
     unsigned long metageneration = 0;
-    std::string contentType = "";
+    MBSTRING contentType;
     size_t size = 0;
-    std::string etag = "";
-    std::string crc32 = "";
-    std::string downloadTokens = "";
-    std::string mediaLink = "";
+    MBSTRING etag;
+    MBSTRING crc32;
+    MBSTRING downloadTokens;
+    MBSTRING mediaLink;
 };
 #endif
 
@@ -1049,7 +1067,7 @@ struct fb_esp_gcs_info_t
     UploadStatusInfo cbInfo;
     fb_esp_gcs_request_type requestType = fb_esp_gcs_request_type_undefined;
     int contentLength = 0;
-    std::string payload = "";
+    MBSTRING payload;
     struct fb_esp_gcs_meta_info_t meta;
 };
 
@@ -1089,11 +1107,11 @@ typedef struct fb_esp_gcs_list_options_t
 
 struct fb_esp_gcs_req_t
 {
-    std::string remoteFileName = "";
-    std::string localFileName = "";
-    std::string bucketID = "";
-    std::string mime = "";
-    std::string location = "";
+    MBSTRING remoteFileName;
+    MBSTRING localFileName;
+    MBSTRING bucketID;
+    MBSTRING mime;
+    MBSTRING location;
     int chunkIndex = -1;
     int chunkRange = -1;
     int chunkPos = 0;
@@ -1287,7 +1305,7 @@ struct fb_esp_fcm_http_v1_message_info_t
 
 struct fb_esp_fcm_info_t
 {
-    std::string payload = "";
+    MBSTRING payload;
 };
 
 #endif
@@ -1310,10 +1328,10 @@ struct fb_esp_fcs_info_t
 
 struct fb_esp_fcs_req_t
 {
-    std::string remoteFileName = "";
-    std::string localFileName = "";
-    std::string bucketID = "";
-    std::string mime = "";
+    MBSTRING remoteFileName;
+    MBSTRING localFileName;
+    MBSTRING bucketID;
+    MBSTRING mime;
     const uint8_t *pgmArc = nullptr;
     size_t pgmArcLen = 0;
     size_t fileSize = 0;
@@ -1328,7 +1346,7 @@ struct fb_esp_firestore_info_t
 {
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
     int contentLength = 0;
-    std::string payload = "";
+    MBSTRING payload;
     bool async = false;
 };
 
@@ -1350,21 +1368,21 @@ typedef struct fb_esp_firestore_transaction_options_t
 
 struct fb_esp_firestore_req_t
 {
-    std::string projectId = "";
-    std::string databaseId = "";
-    std::string collectionId = "";
-    std::string documentId = "";
-    std::string documentPath = "";
-    std::string mask = "";
-    std::string updateMask = "";
-    std::string payload = "";
-    std::string exists = "";
-    std::string updateTime = "";
-    std::string readTime = "";
-    std::string transaction = "";
+    MBSTRING projectId;
+    MBSTRING databaseId;
+    MBSTRING collectionId;
+    MBSTRING documentId;
+    MBSTRING documentPath;
+    MBSTRING mask;
+    MBSTRING updateMask;
+    MBSTRING payload;
+    MBSTRING exists;
+    MBSTRING updateTime;
+    MBSTRING readTime;
+    MBSTRING transaction;
     int pageSize = 10;
-    std::string pageToken = "";
-    std::string orderBy = "";
+    MBSTRING pageToken;
+    MBSTRING orderBy;
     bool showMissing = false;
     bool async = false;
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
@@ -1420,7 +1438,7 @@ struct fb_esp_session_info_t
     bool chunked_encoding = false;
     bool connected = false;
     bool classic_request = false;
-    std::string host = "";
+    MBSTRING host;
     unsigned long last_conn_ms = 0;
     int cert_addr = 0;
     bool cert_updated = false;
@@ -1431,7 +1449,7 @@ struct fb_esp_session_info_t
     int content_length = 0;
     size_t payload_length = 0;
     size_t max_payload_length = 0;
-    std::string error = "";
+    MBSTRING error;
 #ifdef ENABLE_RTDB
     struct fb_esp_rtdb_info_t rtdb;
 #endif
@@ -2084,6 +2102,7 @@ static const char fb_esp_pgm_str_578[] PROGMEM = "\n** WARNING!, in stream conne
 
 static const char fb_esp_pgm_str_579[] PROGMEM = "Missing data.";
 static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e.g. path, config.database_url and auth token.";
+static const char fb_esp_pgm_str_581[] PROGMEM = "Security rules is not a valid JSON";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

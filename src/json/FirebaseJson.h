@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.5.2
+ * FirebaseJson, version 2.5.3
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * October 16, 2021
+ * October 25, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -56,6 +56,24 @@
 #include <stdio.h>
 #include <strings.h>
 #include <functional>
+
+#if __has_include(<FirebaseFS.h>)
+#include <FirebaseFS.h>
+#endif
+
+#if defined(FIREBASEJSON_USE_PSRAM) || defined(FIREBASE_USE_PSRAM)
+#define MB_STRING_USE_PSRAM
+#endif
+#include "MB_String.h"
+
+
+#ifndef USE_MB_STRING
+#define USE_MB_STRING
+#endif
+
+#ifndef MBSTRING
+#define MBSTRING MB_String
+#endif
 
 #ifdef Serial_Printf
 #undef Serial_Printf
@@ -179,6 +197,56 @@ static const char fb_json_str_9[] PROGMEM = "Location: ";
 class FirebaseJson;
 class FirebaseJsonArray;
 class FirebaseJsonData;
+
+static size_t getReservedLen(size_t len)
+{
+    int blen = len + 1;
+
+    int newlen = (blen / 4) * 4;
+
+    if (newlen < blen)
+        newlen += 4;
+
+    return (size_t)newlen;
+}
+
+static void *fb_js_malloc(size_t len)
+{
+    void *p;
+    size_t newLen = getReservedLen(len);
+
+#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+    if ((p = (void *)ps_malloc(newLen)) == 0)
+        return NULL;
+#else
+    if ((p = (void *)malloc(newLen)) == 0)
+        return NULL;
+#endif
+    return p;
+}
+
+static void fb_js_free(void *ptr)
+{
+    if (ptr)
+        free(ptr);
+}
+
+
+static void *fb_js_realloc(void *ptr, size_t sz)
+{
+    size_t newLen = getReservedLen(sz);
+#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+    ptr = (void *)ps_realloc(ptr, newLen);
+#else
+    ptr = (void *)realloc(ptr, newLen);
+#endif
+    if (!ptr)
+        return NULL;
+
+    return ptr;
+}
+
+static cJSON_Hooks cJSON_hooks __attribute__((used)) = {fb_js_malloc, fb_js_free, fb_js_realloc};
 
 namespace FB_JS
 {
@@ -334,6 +402,18 @@ namespace FB_JS
     };
 
     template <typename T>
+    struct mbs_t
+    {
+        static bool const value = FB_JS::is_same<T, MBSTRING>::value;
+    };
+
+    template <typename T>
+    struct cmbs_t
+    {
+        static bool const value = FB_JS::is_same<T, const MBSTRING>::value;
+    };
+
+    template <typename T>
     struct pgm_t
     {
         static bool const value = FB_JS::is_same<T, PGM_P>::value;
@@ -358,11 +438,17 @@ namespace FB_JS
     };
 
     template <typename T>
+    struct is_mb_string
+    {
+        static bool const value = mbs_t<T>::value || cmbs_t<T>::value;
+    };
+
+    template <typename T>
     struct is_string
     {
         static bool const value = is_const_chars<T>::value || is_arduino_string<T>::value ||
                                   ssh_t<T>::value || fs_t<T>::value ||
-                                  is_std_string<T>::value;
+                                  is_std_string<T>::value || is_mb_string<T>::value;
     };
 
     typedef union
@@ -381,17 +467,17 @@ namespace FB_JS
         int payloadOfs = 0;
         bool isChunkedEnc = false;
         bool noContent = false;
-        std::string location;
-        std::string contentType;
-        std::string connection;
-        std::string transferEnc;
+        MBSTRING location;
+        MBSTRING contentType;
+        MBSTRING connection;
+        MBSTRING transferEnc;
     };
 
     struct serial_data_t
     {
         int pos = -1, start = -1, end = -1;
         int scnt = 0, ecnt = 0;
-        std::string buf;
+        MBSTRING buf;
         unsigned long dataTime = 0;
     };
 };
@@ -401,14 +487,14 @@ class PGM2S
 public:
     PGM2S() { init(1); }
     PGM2S(PGM_P p) { strP(p); }
-    ~PGM2S() { delS(buf); }
+    ~PGM2S() { delP(&buf); }
     const char *get() const { return buf; }
 
 private:
     void init(size_t sz)
     {
-        delS(buf);
-        buf = newS(sz + 1);
+        delP(&buf);
+        buf = (char *)newP(sz + 1);
     }
 
     void strP(PGM_P pgm)
@@ -419,19 +505,47 @@ private:
         buf[strlen_P(pgm)] = 0;
     }
 
-    char *newS(size_t len)
+    void delP(void *ptr)
     {
-        char *p = new char[len];
-        memset(p, 0, len);
+        void **p = (void **)ptr;
+        if (*p)
+        {
+            free(*p);
+            *p = 0;
+        }
+    }
+
+    size_t getReservedLen(size_t len)
+    {
+        int blen = len + 1;
+
+        int newlen = (blen / 4) * 4;
+
+        if (newlen < blen)
+            newlen += 4;
+
+        return (size_t)newlen;
+    }
+
+    void *newP(size_t len)
+    {
+        void *p;
+        size_t newLen = getReservedLen(len);
+#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+
+        if ((p = (void *)ps_malloc(newLen)) == 0)
+            return NULL;
+
+#else
+
+        if ((p = (void *)malloc(len)) == 0)
+            return NULL;
+
+#endif
+        memset(p, 0, newLen);
         return p;
     }
 
-    void delS(char *p)
-    {
-        if (p != nullptr)
-            delete[] p;
-        p = nullptr;
-    }
     char *buf = nullptr;
 };
 
@@ -447,7 +561,7 @@ public:
     NUM2S(bool value) { boolStr(value); }
     NUM2S(float value, int precision = 5) { floatStr(value, precision); }
     NUM2S(double value, int precision = 9) { doubleStr(value, precision); }
-    ~NUM2S() { delS(buf); }
+    ~NUM2S() { delP(&buf); }
     const char *get() const { return buf; }
 
 private:
@@ -538,7 +652,8 @@ private:
         // Handle minimum field width of the output string
         // width is signed value, negative for left adjustment.
         // Range -128,127
-        char fmt[129] = "";
+
+        char *fmt = (char *)newP(129);
         unsigned int w = width;
         if (width < 0)
         {
@@ -556,11 +671,11 @@ private:
             fmt[w - strlen(sout)] = '\0';
             if (negative == 0)
             {
-                char *tmp = (char *)malloc(strlen(sout) + 1);
+                char *tmp = (char *)newP(strlen(sout) + 1);
                 strcpy(tmp, sout);
                 strcpy(sout, fmt);
                 strcat(sout, tmp);
-                free(tmp);
+                delP(&tmp);
             }
             else
             {
@@ -569,32 +684,61 @@ private:
             }
         }
 
+        delP(&fmt);
+
         return sout;
     }
 
     void init(size_t sz)
     {
-        delS(buf);
-        buf = newS(sz + 1);
+        delP(&buf);
+        buf = (char *)newP(sz + 1);
     }
 
-    char *newS(size_t len)
+    void delP(void *ptr)
     {
-        char *p = new char[len];
-        memset(p, 0, len);
+        void **p = (void **)ptr;
+        if (*p)
+        {
+            free(*p);
+            *p = 0;
+        }
+    }
+
+    size_t getReservedLen(size_t len)
+    {
+        int blen = len + 1;
+
+        int newlen = (blen / 4) * 4;
+
+        if (newlen < blen)
+            newlen += 4;
+
+        return (size_t)newlen;
+    }
+
+    void *newP(size_t len)
+    {
+        void *p;
+        size_t newLen = getReservedLen(len);
+#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+
+        if ((p = (void *)ps_malloc(newLen)) == 0)
+            return NULL;
+
+#else
+
+        if ((p = (void *)malloc(newLen)) == 0)
+            return NULL;
+
+#endif
+        memset(p, 0, newLen);
         return p;
-    }
-
-    void delS(char *p)
-    {
-        if (p != nullptr)
-            delete[] p;
-        p = nullptr;
     }
 
     char *intStr(int value)
     {
-        char *t = newS(36);
+        char *t = (char *)newP(36);
         sprintf(t, (const char *)FLASH_MCR("%d"), value);
         return t;
     }
@@ -742,7 +886,7 @@ public:
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value, T>::type
+    auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value, T>::type
     {
         return stringValue.c_str();
     }
@@ -848,7 +992,7 @@ private:
 
 protected:
     template <typename T>
-    auto getStr(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
     {
         return val.c_str();
     }
@@ -920,9 +1064,9 @@ private:
         int matchesCount = 0;
         cJSON *parent = NULL;
         cJSON *parentArr = NULL;
-        std::string path;
-        std::vector<std::string> *searchKeys = NULL;
-        std::vector<std::string> pathList;
+        MBSTRING path;
+        std::vector<MBSTRING> *searchKeys = NULL;
+        std::vector<MBSTRING> pathList;
     };
 
     struct fb_js_iterator_value_t
@@ -947,19 +1091,19 @@ private:
     bool setRaw(const char *raw);
     void prepareRoot();
     cJSON *parse(const char *raw);
-    void searchElements(std::vector<std::string> &keys, cJSON *parent, struct search_result_t &r);
+    void searchElements(std::vector<MBSTRING> &keys, cJSON *parent, struct search_result_t &r);
     cJSON *getElement(cJSON *parent, const char *key, struct search_result_t &r);
-    void mAdd(std::vector<std::string> keys, cJSON **parent, int beginIndex, cJSON *value);
-    void makeList(const char *str, std::vector<std::string> &keys, char delim);
-    void clearList(std::vector<std::string> &keys);
+    void mAdd(std::vector<MBSTRING> keys, cJSON **parent, int beginIndex, cJSON *value);
+    void makeList(const char *str, std::vector<MBSTRING> &keys, char delim);
+    void clearList(std::vector<MBSTRING> &keys);
     bool isArray(cJSON *e);
     bool isObject(cJSON *e);
     cJSON *addArray(cJSON *parent, cJSON *e, size_t size);
-    void appendArray(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *value);
-    void replaceItem(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *value);
-    void replace(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *item);
+    void appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value);
+    void replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value);
+    void replace(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *item);
     size_t mIteratorBegin(cJSON *parent);
-    size_t mIteratorBegin(cJSON *parent, std::vector<std::string> *keys, struct fb_js_search_criteria_t *criteria);
+    size_t mIteratorBegin(cJSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria);
     void collectResult(cJSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria);
     void removeDepthPath();
     void mCollectIterator(cJSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria);
@@ -972,7 +1116,7 @@ private:
     bool mReadStream(Stream *s, int timeoutMS);
     const char *mRaw();
     bool mRemove(const char *path);
-    void mGetPath(std::string &path, std::vector<std::string> paths, int begin = 0, int end = -1);
+    void mGetPath(MBSTRING &path, std::vector<MBSTRING> paths, int begin = 0, int end = -1);
     size_t mGetSerializedBufferLength(bool prettify);
     void mSetFloatDigits(uint8_t digits);
     void mSetDoubleDigits(uint8_t digits);
@@ -1030,10 +1174,11 @@ protected:
     fb_json_root_type root_type = Root_Type_JSON;
     struct iterator_data_t iterator_data;
     cJSON *root = NULL;
-    std::string buf;
+    cJSON_Hooks *hooks = NULL;
+    MBSTRING buf;
 
     template <typename T>
-    auto getStr(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
     {
         return val.c_str();
     }
@@ -1176,35 +1321,62 @@ protected:
         delay(0);
     }
 
-    void clearS(std::string &s)
+    void clearS(MBSTRING &s)
     {
         s.clear();
-        std::string().swap(s);
+        MBSTRING().swap(s);
     }
 
-    void shrinkS(std::string &s)
+    void shrinkS(MBSTRING &s)
     {
 #if defined(ESP32)
         s.shrink_to_fit();
 #else
-        std::string t = s;
+        MBSTRING t = s;
         clearS(s);
         s = t;
         clearS(t);
 #endif
     }
 
-    void delS(char *p)
+    void delP(void *ptr)
     {
-        if (p != nullptr)
-            delete[] p;
-        p = nullptr;
+        void **p = (void **)ptr;
+        if (*p)
+        {
+            free(*p);
+            *p = 0;
+        }
     }
 
-    char *newS(size_t len)
+    size_t getReservedLen(size_t len)
     {
-        char *p = new char[len];
-        memset(p, 0, len);
+        int blen = len + 1;
+
+        int newlen = (blen / 4) * 4;
+
+        if (newlen < blen)
+            newlen += 4;
+
+        return (size_t)newlen;
+    }
+
+    void *newP(size_t len)
+    {
+        void *p;
+        size_t newLen = getReservedLen(len);
+#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+
+        if ((p = (void *)ps_malloc(newLen)) == 0)
+            return NULL;
+
+#else
+
+        if ((p = (void *)malloc(newLen)) == 0)
+            return NULL;
+
+#endif
+        memset(p, 0, newLen);
         return p;
     }
 
@@ -1219,7 +1391,7 @@ protected:
     char *strP(PGM_P pgm)
     {
         size_t len = strlen_P(pgm) + 1;
-        char *buf = newS(len);
+        char *buf = (char *)newP(len);
         strcpy_P(buf, pgm);
         buf[len - 1] = 0;
         return buf;
@@ -1329,7 +1501,7 @@ protected:
         return -1;
     }
 
-    void substr(std::string &str, const char *s, int offset, size_t len)
+    void substr(MBSTRING &str, const char *s, int offset, size_t len)
     {
         if (!s)
             return;
@@ -1366,7 +1538,7 @@ protected:
             buf[i] = '\0';
     }
 
-    void storeS(std::string &s, const char *v, bool append)
+    void storeS(MBSTRING &s, const char *v, bool append)
     {
         if (!append)
             clearS(s);
@@ -1378,7 +1550,7 @@ protected:
             s = v;
         else
         {
-            std::string t = s;
+            MBSTRING t = s;
             t += v;
             clearS(s);
             s = t;
@@ -1387,9 +1559,9 @@ protected:
 #endif
     }
 
-    void storeS(std::string &s, char v, bool append)
+    void storeS(MBSTRING &s, char v, bool append)
     {
-        std::string t;
+        MBSTRING t;
         t += v;
         storeS(s, t.c_str(), append);
         clearS(t);
@@ -1441,7 +1613,7 @@ protected:
         char *tmp = strP(beginH);
         int p1 = strpos(buf, tmp, beginPos);
         int ofs = 0;
-        delS(tmp);
+        delP(&tmp);
         if (p1 != -1)
         {
             tmp = strP(endH);
@@ -1461,56 +1633,19 @@ protected:
             if (p2 == -1)
                 p2 = strlen(buf);
 
-            delS(tmp);
+            delP(&tmp);
 
             if (p2 != -1)
             {
                 beginPos = p2 + ofs;
                 int len = p2 - p1 - strlen_P(beginH);
-                tmp = newS(len + 1);
+                tmp = (char *)newP(len + 1);
                 memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
                 return tmp;
             }
         }
 
         return nullptr;
-    }
-
-    void getHeaderStr(const std::string &in, std::string &out, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
-    {
-
-        char *tmp = strP(beginH);
-        int p1 = strpos(in.c_str(), tmp, beginPos);
-        int ofs = 0;
-        delS(tmp);
-        if (p1 != -1)
-        {
-            tmp = strP(endH);
-            int p2 = -1;
-            if (endPos > 0)
-                p2 = endPos;
-            else if (endPos == 0)
-            {
-                ofs = strlen_P(endH);
-                p2 = strpos(in.c_str(), tmp, p1 + strlen_P(beginH) + 1);
-            }
-            else if (endPos == -1)
-            {
-                beginPos = p1 + strlen_P(beginH);
-            }
-
-            if (p2 == -1)
-                p2 = in.length();
-
-            delS(tmp);
-
-            if (p2 != -1)
-            {
-                beginPos = p2 + ofs;
-                int len = p2 - p1 - strlen_P(beginH);
-                out = in.substr(p1 + strlen_P(beginH), len);
-            }
-        }
     }
 
     void parseRespHeader(const char *buf, struct FB_JS::server_response_data_t &response)
@@ -1527,7 +1662,7 @@ protected:
             if (tmp)
             {
                 response.connection = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
             if (pmax < beginPos)
                 pmax = beginPos;
@@ -1536,7 +1671,7 @@ protected:
             if (tmp)
             {
                 response.contentType = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -1546,7 +1681,7 @@ protected:
             if (tmp)
             {
                 response.contentLen = atoi(tmp);
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -1558,7 +1693,7 @@ protected:
                 response.transferEnc = tmp;
                 if (strcmp(tmp, (const char *)FLASH_MCR("chunked")) == 0)
                     response.isChunkedEnc = true;
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (pmax < beginPos)
@@ -1568,7 +1703,7 @@ protected:
             if (tmp)
             {
                 response.connection = tmp;
-                delS(tmp);
+                delP(&tmp);
             }
 
             if (response.httpCode == FBJS_ERROR_HTTP_CODE_OK || response.httpCode == FBJS_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FBJS_ERROR_HTTP_CODE_FOUND)
@@ -1580,7 +1715,7 @@ protected:
                 if (tmp)
                 {
                     response.location = tmp;
-                    delS(tmp);
+                    delP(&tmp);
                 }
             }
 
@@ -1613,7 +1748,7 @@ protected:
         return idx;
     }
 
-    int readLine(Client *stream, std::string &buf)
+    int readLine(Client *stream, MBSTRING &buf)
     {
         int res = -1;
         char c = 0;
@@ -1649,7 +1784,7 @@ protected:
             chunkState = 1;
             chunkedSize = -1;
             dataLen = 0;
-            buf = newS(bufLen);
+            buf = (char *)newP(bufLen);
             int readLen = readLine(stream, buf, bufLen);
             if (readLen)
             {
@@ -1658,15 +1793,15 @@ protected:
                 {
                     tmp = strP(fb_json_str_7);
                     p1 = strpos(buf, tmp, 0);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 if (p1 != -1)
                 {
-                    tmp = newS(p1 + 1);
+                    tmp = (char *)newP(p1 + 1);
                     memcpy(tmp, buf, p1);
                     chunkedSize = hex2int(tmp);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 //last chunk
@@ -1676,14 +1811,14 @@ protected:
             else
                 chunkState = 0;
 
-            delS(buf);
+            delP(&buf);
         }
         else
         {
 
             if (chunkedSize > -1)
             {
-                buf = newS(bufLen);
+                buf = (char *)newP(bufLen);
                 int readLen = readLine(stream, buf, bufLen);
 
                 if (readLen > 0)
@@ -1709,14 +1844,14 @@ protected:
                     olen = -1;
                 }
 
-                delS(buf);
+                delP(&buf);
             }
         }
 
         return olen;
     }
 
-    int readChunkedData(Client *stream, std::string &out, int &chunkState, int &chunkedSize, int &dataLen)
+    int readChunkedData(Client *stream, MBSTRING &out, int &chunkState, int &chunkedSize, int &dataLen)
     {
         char *tmp = nullptr;
         int p1 = 0;
@@ -1727,7 +1862,7 @@ protected:
             chunkState = 1;
             chunkedSize = -1;
             dataLen = 0;
-            std::string s;
+            MBSTRING s;
             int readLen = readLine(stream, s);
             if (readLen)
             {
@@ -1736,15 +1871,15 @@ protected:
                 {
                     tmp = strP(fb_json_str_7);
                     p1 = strpos(s.c_str(), tmp, 0);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 if (p1 != -1)
                 {
-                    tmp = newS(p1 + 1);
+                    tmp = (char *)newP(p1 + 1);
                     memcpy(tmp, s.c_str(), p1);
                     chunkedSize = hex2int(tmp);
-                    delS(tmp);
+                    delP(&tmp);
                 }
 
                 //last chunk
@@ -1759,7 +1894,7 @@ protected:
 
             if (chunkedSize > -1)
             {
-                std::string s;
+                MBSTRING s;
                 int readLen = readLine(stream, s);
 
                 if (readLen > 0)
@@ -1790,7 +1925,7 @@ protected:
         return olen;
     }
 
-    int readClient(Client *client, std::string &buf)
+    int readClient(Client *client, MBSTRING &buf)
     {
         int ret = -1;
 
@@ -1843,7 +1978,7 @@ protected:
                         if (chunkIdx == 0)
                         {
                             //the first chunk can be http response header
-                            header = newS(chunkBufSize);
+                            header = (char *)newP(chunkBufSize);
                             hstate = 1;
                             int readLen = readLine(client, header, chunkBufSize);
                             int pos = 0;
@@ -1858,7 +1993,7 @@ protected:
                                 hBufPos = readLen;
                                 response.httpCode = atoi(tmp);
                                 httpCode = response.httpCode;
-                                delS(tmp);
+                                delP(&tmp);
                             }
                         }
                         else
@@ -1869,7 +2004,7 @@ protected:
                             if (isHeader)
                             {
                                 //read one line of next header field until the empty header has found
-                                tmp = newS(chunkBufSize);
+                                tmp = (char *)newP(chunkBufSize);
                                 int readLen = readLine(client, tmp, chunkBufSize);
                                 bool headerEnded = false;
 
@@ -1890,12 +2025,12 @@ protected:
                                     parseRespHeader(header, response);
 
                                     if (hstate == 1)
-                                        delS(header);
+                                        delP(&header);
                                     hstate = 0;
 
                                     if (response.contentLen == 0)
                                     {
-                                        delS(tmp);
+                                        delP(&tmp);
                                         break;
                                     }
                                 }
@@ -1905,7 +2040,7 @@ protected:
                                     memcpy(header + hBufPos, tmp, readLen);
                                     hBufPos += readLen;
                                 }
-                                delS(tmp);
+                                delP(&tmp);
                             }
                             else
                             {
@@ -1913,7 +2048,7 @@ protected:
                                 if (!response.noContent)
                                 {
                                     pChunkIdx++;
-                                    pChunk = newS(chunkBufSize + 1);
+                                    pChunk = (char *)newP(chunkBufSize + 1);
                                     if (response.isChunkedEnc)
                                         delay(10);
                                     //read the avilable data
@@ -1929,7 +2064,7 @@ protected:
                                         buf += pChunk;
                                     }
 
-                                    delS(pChunk);
+                                    delP(&pChunk);
 
                                     if (availablePayload < 0 || (payloadRead >= response.contentLen && !response.isChunkedEnc))
                                     {
@@ -1954,7 +2089,7 @@ protected:
                 }
 
                 if (hstate == 1)
-                    delS(header);
+                    delP(&header);
 
                 if (payloadRead > 0)
                     ret = 200;
@@ -1982,7 +2117,7 @@ protected:
         data.dataTime = millis();
     }
 
-    bool readStreamChar(int r, struct FB_JS::serial_data_t &data, std::string &buf, bool isJson)
+    bool readStreamChar(int r, struct FB_JS::serial_data_t &data, MBSTRING &buf, bool isJson)
     {
         bool ret = false;
         if (r > -1)
@@ -2039,7 +2174,7 @@ protected:
         return ret;
     }
 
-    bool readStream(Stream *s, struct FB_JS::serial_data_t &data, std::string &buf, bool isJson, int timeoutMS)
+    bool readStream(Stream *s, struct FB_JS::serial_data_t &data, MBSTRING &buf, bool isJson, int timeoutMS)
     {
 
         bool ret = false;
@@ -2099,23 +2234,27 @@ protected:
     }
 #endif
 
-    void ltrim(std::string &str, const std::string &chars = " ")
+    void ltrim(MBSTRING &str, const MBSTRING &chars = " ")
     {
-        str.erase(0, str.find_first_not_of(chars));
+        size_t pos = str.find_first_not_of(chars);
+        if (pos != MBSTRING::npos)
+            str.erase(0, pos);
     }
 
-    void rtrim(std::string &str, const std::string &chars = " ")
+    void rtrim(MBSTRING &str, const MBSTRING &chars = " ")
     {
-        str.erase(str.find_last_not_of(chars) + 1);
+        size_t pos = str.find_last_not_of(chars);
+        if (pos != MBSTRING::npos)
+            str.erase(pos + 1);
     }
 
-    void trim(std::string &str, const std::string &chars = " ")
+    void trim(MBSTRING &str, const MBSTRING &chars = " ")
     {
         ltrim(str, chars);
         rtrim(str, chars);
     }
 
-    bool isArrayKey(int &keyIndex, std::vector<std::string> &keys)
+    bool isArrayKey(int &keyIndex, std::vector<MBSTRING> &keys)
     {
         if (keyIndex < (int)keys.size())
             return keys[keyIndex][0] == '[' && keys[keyIndex][keys[keyIndex].length() - 1] == ']';
@@ -2131,7 +2270,7 @@ protected:
             return false;
     }
 
-    int getArrIndex(int &keyIndex, std::vector<std::string> &keys)
+    int getArrIndex(int &keyIndex, std::vector<MBSTRING> &keys)
     {
         int res = -1;
         if (keyIndex < (int)keys.size())
@@ -2145,7 +2284,7 @@ protected:
 
     int getArrIndex(const char *key)
     {
-        std::string s = key;
+        MBSTRING s = key;
         int res = -1;
         res = atoi(s.substr(1, s.length() - 2).c_str());
         if (res < 0)

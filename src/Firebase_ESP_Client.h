@@ -1,16 +1,20 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.5.5"
+#define FIREBASE_CLIENT_VERSION "2.6.0"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.5.5
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.6.0
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created October 16, 2021
+ * Created October 30, 2021
  *
  *   Updates:
- * - Fix issue #154 FirebaseJsonArray deseialization invalid call to base class.
+ * - Reduce overall memory usage by moving from std::string and Arduino String to MB_String.
+ * - Add support ESP32 PSRAM in ESP32 for all dynamic memory allocation.
+ * - Fix token (JWT) generation issues.
+ * - Fix ethernet connection issue in ESP32 core v2.0.0.
+ * - Temporary fix the Firebase RTDB server side issue on silent print parameter.
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)

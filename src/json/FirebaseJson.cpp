@@ -1,10 +1,10 @@
 
 /*
- * FirebaseJson, version 2.5.2
+ * FirebaseJson, version 2.5.3
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * October 16, 2021
+ * October 25, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -45,6 +45,7 @@
 
 FirebaseJsonBase::FirebaseJsonBase()
 {
+    cJSON_InitHooks(&cJSON_hooks);
 }
 
 FirebaseJsonBase::~FirebaseJsonBase()
@@ -101,7 +102,7 @@ void FirebaseJsonBase::prepareRoot()
     }
 }
 
-void FirebaseJsonBase::searchElements(std::vector<std::string> &keys, cJSON *parent, struct search_result_t &r)
+void FirebaseJsonBase::searchElements(std::vector<MBSTRING> &keys, cJSON *parent, struct search_result_t &r)
 {
     cJSON *e = parent;
     for (size_t i = 0; i < keys.size(); i++)
@@ -148,7 +149,7 @@ cJSON *FirebaseJsonBase::getElement(cJSON *parent, const char *key, struct searc
     return e;
 }
 
-void FirebaseJsonBase::mAdd(std::vector<std::string> keys, cJSON **parent, int beginIndex, cJSON *value)
+void FirebaseJsonBase::mAdd(std::vector<MBSTRING> keys, cJSON **parent, int beginIndex, cJSON *value)
 {
     cJSON *m_parent = *parent;
 
@@ -186,13 +187,13 @@ void FirebaseJsonBase::mAdd(std::vector<std::string> keys, cJSON **parent, int b
     }
 }
 
-void FirebaseJsonBase::makeList(const char *str, std::vector<std::string> &keys, char delim)
+void FirebaseJsonBase::makeList(const char *str, std::vector<MBSTRING> &keys, char delim)
 {
     clearList(keys);
 
     int current = 0, previous = 0;
     current = strpos(str, delim, 0);
-    std::string s;
+    MBSTRING s;
     while (current != -1)
     {
         clearS(s);
@@ -218,7 +219,7 @@ void FirebaseJsonBase::makeList(const char *str, std::vector<std::string> &keys,
     clearS(s);
 }
 
-void FirebaseJsonBase::clearList(std::vector<std::string> &keys)
+void FirebaseJsonBase::clearList(std::vector<MBSTRING> &keys)
 {
     size_t len = keys.size();
     for (size_t i = 0; i < len; i++)
@@ -226,7 +227,7 @@ void FirebaseJsonBase::clearList(std::vector<std::string> &keys)
     for (int i = len - 1; i >= 0; i--)
         keys.erase(keys.begin() + i);
     keys.clear();
-    std::vector<std::string>().swap(keys);
+    std::vector<MBSTRING>().swap(keys);
 }
 
 bool FirebaseJsonBase::isArray(cJSON *e)
@@ -246,7 +247,7 @@ cJSON *FirebaseJsonBase::addArray(cJSON *parent, cJSON *e, size_t size)
     return e;
 }
 
-void FirebaseJsonBase::appendArray(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *value)
+void FirebaseJsonBase::appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value)
 {
     cJSON *item = NULL;
 
@@ -281,7 +282,7 @@ void FirebaseJsonBase::appendArray(std::vector<std::string> &keys, struct search
         cJSON_Delete(value);
 }
 
-void FirebaseJsonBase::replaceItem(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *value)
+void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value)
 {
     if (r.foundIndex == -1)
     {
@@ -322,7 +323,7 @@ void FirebaseJsonBase::replaceItem(std::vector<std::string> &keys, struct search
     }
 }
 
-void FirebaseJsonBase::replace(std::vector<std::string> &keys, struct search_result_t &r, cJSON *parent, cJSON *item)
+void FirebaseJsonBase::replace(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *item)
 {
     if (isArray(parent))
         cJSON_ReplaceItemInArray(parent, getArrIndex(keys[r.foundIndex].c_str()), item);
@@ -345,7 +346,7 @@ size_t FirebaseJsonBase::mIteratorBegin(cJSON *parent)
     return iterator_data.result.size();
 }
 
-size_t FirebaseJsonBase::mIteratorBegin(cJSON *parent, std::vector<std::string> *keys, struct fb_js_search_criteria_t *criteria)
+size_t FirebaseJsonBase::mIteratorBegin(cJSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria)
 {
     mIteratorEnd();
 
@@ -481,7 +482,7 @@ void FirebaseJsonBase::collectResult(cJSON *e, const char *key, int arrIndex, st
     }
     else if (arrIndex > -1)
     {
-        std::string ar = (const char *)FLASH_MCR("[");
+        MBSTRING ar = (const char *)FLASH_MCR("[");
         ar += NUM2S(arrIndex).get();
         ar += (const char *)FLASH_MCR("]");
 
@@ -548,7 +549,7 @@ void FirebaseJsonBase::collectResult(cJSON *e, const char *key, int arrIndex, st
                 }
             }
 
-            std::string path;
+            MBSTRING path;
             mGetPath(path, iterator_data.pathList);
 
             if (iterator_data.path.length() > 0)
@@ -583,7 +584,7 @@ void FirebaseJsonBase::mCollectIterator(cJSON *e, int type, int &arrIndex, struc
         if (e->string)
         {
             size_t pos = buf.find((const char *)e->string, iterator_data.buf_offset);
-            if (pos != std::string::npos)
+            if (pos != MBSTRING::npos)
             {
                 result.ofs1 = pos;
                 result.len1 = strlen(e->string);
@@ -596,7 +597,7 @@ void FirebaseJsonBase::mCollectIterator(cJSON *e, int type, int &arrIndex, struc
         {
             int i = iterator_data.buf_offset;
             size_t pos = buf.find(p, i);
-            if (pos != std::string::npos)
+            if (pos != MBSTRING::npos)
             {
                 result.ofs2 = pos - result.ofs1 - result.len1;
                 result.len2 = strlen(p);
@@ -626,7 +627,7 @@ bool FirebaseJsonBase::checkKeys(struct fb_js_search_criteria_t *criteria)
     bool matches = false;
     int index = -1;
     int k = 0;
-    std::string sPath, cPath;
+    MBSTRING sPath, cPath;
 
     for (int i = 0; i < (int)iterator_data.searchKeys->size(); i++)
     {
@@ -709,17 +710,17 @@ int FirebaseJsonBase::mIteratorGet(size_t index, int &type, String &key, String 
 
         if (iterator_data.result[index].len1 > 0)
         {
-            char *m_key = new char[iterator_data.result[index].len1 + 1];
+            char *m_key = (char *)newP(iterator_data.result[index].len1 + 1);
             if (m_key)
             {
                 memset(m_key, 0, iterator_data.result[index].len1 + 1);
                 strncpy(m_key, &buf[iterator_data.result[index].ofs1], iterator_data.result[index].len1);
                 key = m_key;
-                delete[] m_key;
+                delP(&m_key);
             }
         }
 
-        char *m_val = new char[iterator_data.result[index].len2 + 1];
+        char *m_val = (char *)newP(iterator_data.result[index].len2 + 1);
         if (m_val)
         {
             memset(m_val, 0, iterator_data.result[index].len2 + 1);
@@ -736,7 +737,7 @@ int FirebaseJsonBase::mIteratorGet(size_t index, int &type, String &key, String 
 
             strncpy(m_val, &buf[ofs], len);
             value = m_val;
-            delete[] m_val;
+            delP(&m_val);
         }
         type = iterator_data.result[index].type;
         depth = iterator_data.result[index].depth;
@@ -804,7 +805,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
 {
     bool ret = false;
     prepareRoot();
-    std::vector<std::string> keys = std::vector<std::string>();
+    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -832,7 +833,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
             cJSON_DeleteItemFromObjectCaseSensitive(parent, keys[r.stopIndex].c_str());
             if (parent->child == NULL && r.stopIndex > 0)
             {
-                std::string path;
+                MBSTRING path;
                 mGetPath(path, keys, 0, r.stopIndex - 1);
                 mRemove(path.c_str());
             }
@@ -843,7 +844,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
     return ret;
 }
 
-void FirebaseJsonBase::mGetPath(std::string &path, std::vector<std::string> paths, int begin, int end)
+void FirebaseJsonBase::mGetPath(MBSTRING &path, std::vector<MBSTRING> paths, int begin, int end)
 {
     if (end < 0 || end >= (int)paths.size())
         end = paths.size() - 1;
@@ -882,7 +883,7 @@ bool FirebaseJsonBase::mGet(cJSON *parent, FirebaseJsonData *result, const char 
 {
     bool ret = false;
     prepareRoot();
-    std::vector<std::string> keys = std::vector<std::string>();
+    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -957,7 +958,7 @@ void FirebaseJsonBase::mSetResFloat(FirebaseJsonData *data, const char *value)
 
 void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
 {
-    char *buf = newS(32);
+    char *buf = (char *)newP(32);
     if (result->type_num == cJSON_Invalid)
     {
         strcpy(buf, (const char *)FLASH_MCR("undefined"));
@@ -1028,13 +1029,13 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
     }
 
     result->type = buf;
-    delS(buf);
+    delP(&buf);
 }
 
 void FirebaseJsonBase::mSet(const char *path, cJSON *value)
 {
     prepareRoot();
-    std::vector<std::string> keys = std::vector<std::string>();
+    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -1070,7 +1071,7 @@ void FirebaseJsonBase::mSet(const char *path, cJSON *value)
 size_t FirebaseJsonBase::mSearch(cJSON *parent, struct fb_js_search_criteria_t *criteria)
 {
     size_t ret = 0;
-    std::vector<std::string> keys = std::vector<std::string>();
+    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
     if (criteria->path.length() > 0)
         makeList(criteria->path.c_str(), keys, '/');
 
@@ -1105,7 +1106,7 @@ size_t FirebaseJsonBase::mSearch(cJSON *parent, FirebaseJsonData *result, struct
 {
     size_t ret = 0;
 
-    std::vector<std::string> keys = std::vector<std::string>();
+    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
     if (criteria->path.length() > 0)
         makeList(criteria->path.c_str(), keys, '/');
 
@@ -1146,7 +1147,7 @@ size_t FirebaseJsonBase::mSearch(cJSON *parent, FirebaseJsonData *result, struct
             }
             else
             {
-                std::string path;
+                MBSTRING path;
                 mGetPath(path, iterator_data.pathList);
                 result->searchPath = path.c_str();
                 if (iterator_data.parent != NULL)
@@ -1189,7 +1190,7 @@ FirebaseJson::~FirebaseJson()
 FirebaseJson &FirebaseJson::nAdd(const char *key, cJSON *value)
 {
     prepareRoot();
-    std::vector<std::string> keys = std::vector<std::string>();
+    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
     //makeList(key, keys, '/');
     keys.push_back(key);
 

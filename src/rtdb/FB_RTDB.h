@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.5
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created September 20, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -868,10 +868,10 @@ public:
    * the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setBlob(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE, size); }
+  bool setBlob(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE, size); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setBlobAsync(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE, size); }
+  bool setBlobAsync(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE, size); }
 
   /** Set (put) the binary data from file to the defined node. 
    * 
@@ -904,10 +904,10 @@ public:
    * the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
+  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 ETag) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
+  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 ETag) { return buildRequest(fbdo, m_put_nocontent, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
   /** Set (put) the Firebase server's timestamp to the defined node.
    * 
@@ -1759,11 +1759,11 @@ private:
   bool mSaveErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType);
   void setBlobRef(FirebaseData *fbdo, int addr);
   void mSetwriteSizeLimit(FirebaseData *fbdo, const char *size);
-  bool handleStreamRequest(FirebaseData *fbdo, const std::string &path);
+  bool handleStreamRequest(FirebaseData *fbdo, const MBSTRING &path);
   bool connectionError(FirebaseData *fbdo);
   bool handleStreamRead(FirebaseData *fbdo);
   void sendCB(FirebaseData *fbdo);
-  void splitStreamPayload(const char *payloads, std::vector<std::string> &payload);
+  void splitStreamPayload(const char *payloads, std::vector<MBSTRING> &payload);
   void parseStreamPayload(FirebaseData *fbdo, const char *payload);
   bool mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
   bool mBeginStream(FirebaseData *fbdo, const char *path);
@@ -1814,12 +1814,14 @@ protected:
   int toAddr(std::vector<uint8_t> *v) { return reinterpret_cast<int>(v); }
   int toAddr(String &v) { return reinterpret_cast<int>(&v); }
   int toAddr(std::string &v) { return reinterpret_cast<int>(&v); }
-
+#ifdef USE_MB_STRING
+  int toAddr(MBSTRING &v) { return reinterpret_cast<int>(&v); }
+#endif
   template <typename T>
   auto addrTo(int address) -> typename FB_JS::enable_if<!FB_JS::is_same<T, nullptr_t>::value, T>::type { return reinterpret_cast<T>(address); }
 
   template <typename T>
-  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
   template <typename T>
   auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
@@ -1835,6 +1837,9 @@ protected:
 
   template <typename T>
   auto toStringType(const T &val) -> typename FB_JS::enable_if<FB_JS::is_arduino_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_arduino_string; }
+
+  template <typename T>
+  auto toStringType(const T &val) -> typename FB_JS::enable_if<FB_JS::is_mb_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_mb_string; }
 
   template <typename T>
   auto toStringType(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_const_char; }

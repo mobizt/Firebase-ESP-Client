@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.2
+ * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created August 15, 2021
+ * Created October 25, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -49,12 +49,12 @@ QueryFilter::~QueryFilter()
 
 QueryFilter &QueryFilter::clear()
 {
-    std::string().swap(_orderBy);
-    std::string().swap(_limitToFirst);
-    std::string().swap(_limitToLast);
-    std::string().swap(_startAt);
-    std::string().swap(_endAt);
-    std::string().swap(_equalTo);
+    MBSTRING().swap(_orderBy);
+    MBSTRING().swap(_limitToFirst);
+    MBSTRING().swap(_limitToLast);
+    MBSTRING().swap(_startAt);
+    MBSTRING().swap(_endAt);
+    MBSTRING().swap(_equalTo);
     return *this;
 }
 
