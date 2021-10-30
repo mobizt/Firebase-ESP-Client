@@ -312,7 +312,7 @@ build_flags = -DBOARD_HAS_PSRAM -mfix-esp32-psram-cache-issue
 *When config the IDE or add the build flags to use PSRAM in the ESP32 dev boards that do not have on-board PSRAM chip, your device will be crashed (reset).
 
 
-Since v2.5.6, this library supports PSRAM for internal memory allocation which you can config to use it via [**FirebaseFS.h**](src/FirebaseFS.h) with this macro.
+Since v2.6.0, this library supports PSRAM for internal memory allocation which you can config to use it via [**FirebaseFS.h**](src/FirebaseFS.h) with this macro.
 
 ```cpp
 #define FIREBASE_USE_PSRAM
