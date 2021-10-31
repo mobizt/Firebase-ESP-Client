@@ -331,7 +331,7 @@ public:
         return strlen(buf);
     }
 
-    MB_String substr(size_t offset, size_t len = npos)
+    MB_String substr(size_t offset, size_t len = npos) const
     {
         MB_String str;
 
