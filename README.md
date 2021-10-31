@@ -318,11 +318,6 @@ Since v2.6.0, this library supports PSRAM for internal memory allocation which y
 #define FIREBASE_USE_PSRAM
 ```
 
-And [**src/json/Config.h**](src/json/Config.h) with this macro.
-
-```cpp
-#define FIREBASEJSON_USE_PSRAM
-```
 
 ## Authentication
 
