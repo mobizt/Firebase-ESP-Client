@@ -658,6 +658,7 @@ struct fb_esp_token_signer_resources_t
     int attempts = 0;
     bool signup = false;
     bool anonymous = false;
+    bool idTokenCutomSet = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
     unsigned long preRefreshSeconds = 60;

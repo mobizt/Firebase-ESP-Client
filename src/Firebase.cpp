@@ -69,6 +69,8 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     }
     else if (Signer.tokenSigninDataReady())
     {
+        cfg->signer.idTokenCutomSet = false;
+
         if (auth->token.uid.length() == 0)
             Signer.setTokenType(token_type_oauth2_access_token);
         else
@@ -142,6 +144,7 @@ void Firebase_ESP_Client::setIdToken(FirebaseConfig *config, const char *idToken
         config->_int.fb_last_jwt_generation_error_cb_millis = 0;
         config->signer.tokens.token_type = token_type_id_token;
         config->signer.anonymous = true;
+        config->signer.idTokenCutomSet = true;
     }
 }
 
@@ -191,6 +194,9 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
     //don't clear auth token if anonymous sign in
     if (!cfg->signer.anonymous)
         ut->clearS(cfg->_int.auth_token);
+
+    if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
+        cfg->signer.idTokenCutomSet = false;
 
     cfg->signer.signup = false;
     Signer.begin(ut, cfg, auth);

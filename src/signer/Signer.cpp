@@ -261,7 +261,7 @@ bool Firebase_Signer::handleToken()
         {
             if (millis() - config->signer.lastReqMillis > config->signer.reqTO || config->signer.lastReqMillis == 0)
             {
-                if (auth->user.email.length() == 0 && auth->user.password.length() == 0 && config->signer.anonymous)
+                if (config->signer.idTokenCutomSet && auth->user.email.length() == 0 && auth->user.password.length() == 0 && config->signer.anonymous)
                     return true;
 
                 if (config->_int.fb_processing)
@@ -1676,6 +1676,7 @@ bool Firebase_Signer::deleteIdToken(const char *idToken)
                 config->_int.fb_last_jwt_generation_error_cb_millis = 0;
                 config->signer.tokens.token_type = token_type_undefined;
                 config->signer.anonymous = false;
+                config->signer.idTokenCutomSet = false;
             }
 
             return true;
