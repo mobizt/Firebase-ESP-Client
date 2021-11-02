@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.6.0
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.6.1
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -399,7 +399,7 @@ With pushAsync and setAsync, the payload response will be ignored and the next d
 ### The authenication credentials and prerequisites
 
 
-To use Email/Password sign-in authentication as in the examples, the Email/Password Sign-in provider must be enabled.
+To use Email/Password sign-in authentication as in the examples, the Email/Password Sign-in provider must be enabled by follow the following steps.
 
 
 
@@ -415,7 +415,17 @@ Add Email and password for first user in your project then use this Email and pa
 
 
 
-To get API Key used in Email/Password sign-in
+To use Anonymous sign-in, the Anonymous Sign-in provider must be enabled by follow the below steps.
+
+![Enable Anonymous Sign-in provider](/media/images/Anonymous1.png)
+
+![Enable Anonymous Sign-in provider](/media/images/Anonymous2.png)
+
+![Enable Anonymous Sign-in provider](/media/images/Anonymous3.png)
+
+
+
+To get API Key used in sign-in/sign-up authentication
 
 ![API Key](/media/images/API_Key.png)
 

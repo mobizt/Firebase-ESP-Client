@@ -1,6 +1,6 @@
 
 /**
- * Created October 25, 2021
+ * Created November 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -657,6 +657,7 @@ struct fb_esp_token_signer_resources_t
     int step = 0;
     int attempts = 0;
     bool signup = false;
+    bool anonymous = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
     unsigned long preRefreshSeconds = 60;
@@ -689,6 +690,7 @@ struct fb_esp_token_signer_resources_t
     struct fb_esp_auth_token_error_t verificationError;
     struct fb_esp_auth_token_error_t resetPswError;
     struct fb_esp_auth_token_error_t signupError;
+    struct fb_esp_auth_token_error_t deleteError;
 };
 
 #ifdef ENABLE_RTDB
@@ -2103,6 +2105,7 @@ static const char fb_esp_pgm_str_578[] PROGMEM = "\n** WARNING!, in stream conne
 static const char fb_esp_pgm_str_579[] PROGMEM = "Missing data.";
 static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e.g. path, config.database_url and auth token.";
 static const char fb_esp_pgm_str_581[] PROGMEM = "Security rules is not a valid JSON";
+static const char fb_esp_pgm_str_582[] PROGMEM = "/v1/accounts:delete?key=";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.1
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created November 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -68,6 +68,7 @@ private:
     struct fb_esp_stream_info_t *sif = nullptr;
     void begin(UtilsClass *u, struct fb_esp_stream_info_t *s);
     void empty();
+    bool checkPath(MBSTRING &root, MBSTRING &branch);
 };
 
 #endif

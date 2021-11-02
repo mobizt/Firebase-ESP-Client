@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.6.0
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.6.1
 
 
 The default filessystem used in the library is flash and SD.
@@ -31,6 +31,29 @@ note: For FirebaseConfig and FirebaseAuth data usage, see the examples.
 void begin(FirebaseConfig *config, FirebaseAuth *auth);
 ```
 
+
+#### Setup the ID token for authentication.
+
+param **`param config`** The pointer to FirebaseConfig data.
+
+param **`param`** idToken The ID Token.
+
+param **`param`** expire The expired interval in seeconds (max.3600 sec).
+
+note For FirebaseConfig and FirebaseAuth data usage, see the examples.
+
+```cpp
+void setIdToken(FirebaseConfig *config, const char *idToken, size_t expire = 3600);
+```
+
+
+#### Check for token expiry status.
+
+return **`bool`** of expiry status.
+
+```cpp
+bool isTokenExpired();
+```
 
 
 #### Provide the details of token generation.
@@ -122,6 +145,20 @@ select Sign-in method tab, under the Sign-in providers list, enable Anonymous pr
 bool signUp(FirebaseConfig *config, FirebaseAuth *auth, <string> email, <string> password);
 ```
 
+
+#### Delete user from project.
+
+param **`config`** The pointer to FirebaseConfig data.
+
+param **`auth`** The pointer to FirebaseAuth data.
+
+param **`idToken`** (optional) The id token of user, leave blank to delete the current sign in user.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, const char* idToken = "");
+```
 
 
 #### Send a user a verification Email.

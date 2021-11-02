@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.4
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created November 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -196,7 +196,34 @@ bool Firebase_Signer::userSigninDataReady()
 {
     if (!config || !auth)
         return false;
+
     return config->api_key.length() > 0 && auth->user.email.length() > 0 && auth->user.password.length() > 0;
+}
+
+bool Firebase_Signer::isAuthToken(bool admin)
+{
+    if (!config || !auth)
+        return false;
+
+    bool ret = config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token;
+    if (admin)
+        ret |= config->signer.tokens.token_type == token_type_oauth2_access_token;
+    return ret;
+}
+
+bool Firebase_Signer::isExpired()
+{
+    if (!config || !auth)
+        return false;
+
+    //if the time was set (changed) after token has been generated, update its expiration
+    if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && time(nullptr) > ESP_DEFAULT_TS)
+        config->signer.tokens.expires += time(nullptr) - (millis() - config->signer.tokens.last_millis) / 1000 - 60;
+
+    if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
+        config->signer.preRefreshSeconds = 60;
+
+    return ((unsigned long)time(nullptr) > config->signer.tokens.expires - config->signer.preRefreshSeconds || config->signer.tokens.expires == 0);
 }
 
 bool Firebase_Signer::handleToken()
@@ -228,30 +255,19 @@ bool Firebase_Signer::handleToken()
     }
 #endif
 
-    //if the time was set (changed) after token has been generated, update its expiration
-    if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && time(nullptr) > ESP_DEFAULT_TS)
-        config->signer.tokens.expires += time(nullptr) - (millis() - config->signer.tokens.last_millis) / 1000 - 60;
-
-    if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
-        config->signer.preRefreshSeconds = 60;
-
-    if ((config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token) && ((unsigned long)time(nullptr) > config->signer.tokens.expires - config->signer.preRefreshSeconds || config->signer.tokens.expires == 0))
+    if (isAuthToken(true) && isExpired())
     {
-        if (config->signer.tokens.expires > 0 && (config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token))
+        if (config->signer.tokens.expires > 0 && isAuthToken(false))
         {
             if (millis() - config->signer.lastReqMillis > config->signer.reqTO || config->signer.lastReqMillis == 0)
             {
+                if (auth->user.email.length() == 0 && auth->user.password.length() == 0 && config->signer.anonymous)
+                    return true;
 
-                config->signer.lastReqMillis = millis();
                 if (config->_int.fb_processing)
                     return false;
-#if defined(ESP32)
+
                 return refreshToken();
-#elif defined(ESP8266)
-                //Due to the response payload of token refreshment request is too big for ESP8266,
-                //get the new id token instead.
-                return getIdToken(false, "", "");
-#endif
             }
             return false;
         }
@@ -319,7 +335,7 @@ void Firebase_Signer::tokenProcessingTask()
 
     config->signer.tokenTaskRunning = true;
 
-    while (!ret)
+    while (!ret && config->signer.tokens.status != token_status_ready)
     {
         delay(0);
 
@@ -623,7 +639,7 @@ bool Firebase_Signer::refreshToken()
 
         if (error.code == 0)
         {
-            if (config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token)
+            if (isAuthToken(false))
             {
                 tmp = ut->strP(fb_esp_pgm_str_208);
                 config->signer.json->get(*config->signer.result, tmp);
@@ -750,9 +766,12 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
 #elif defined(ESP8266)
         config->signer.wcs->stop();
 #endif
-        ut->clearS(config->signer.tokens.error.message);
+
         if (httpCode == 0)
+        {
             setTokenError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT);
+            ut->clearS(config->signer.tokens.error.message);
+        }
         else
         {
             errorToString(httpCode, config->signer.tokens.error.message);
@@ -760,6 +779,7 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
         }
         config->_int.fb_last_jwt_generation_error_cb_millis = 0;
         sendTokenStatusCB();
+
         break;
 
     default:
@@ -781,14 +801,15 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
         config->signer.tokens.error.code = code;
         return false;
     }
-    else if (code == 0)
+    else if (code <= 0)
     {
         ut->clearS(config->signer.tokens.error.message);
         config->signer.tokens.status = token_status_ready;
         config->signer.attempts = 0;
         config->signer.step = fb_esp_jwt_generation_step_begin;
         config->_int.fb_last_jwt_generation_error_cb_millis = 0;
-        sendTokenStatusCB();
+        if (code == 0)
+            sendTokenStatusCB();
         return true;
     }
 
@@ -959,7 +980,7 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
 
     httpCode = response.httpCode;
 
-    if (payload.length() > 0 && !response.noContent && response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
+    if (payload.length() > 0 && !response.noContent)
     {
 
         config->signer.json->setJsonData(payload.c_str());
@@ -1324,12 +1345,15 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->_int.fb_processing)
         return false;
 
-    config->signer.tokens.status = token_status_on_request;
-    config->_int.fb_processing = true;
-    config->signer.tokens.error.code = 0;
-    ut->clearS(config->signer.tokens.error.message);
-    config->_int.fb_last_jwt_generation_error_cb_millis = 0;
-    sendTokenStatusCB();
+    if (!createUser)
+    {
+        config->signer.tokens.status = token_status_on_request;
+        config->_int.fb_processing = true;
+        config->signer.tokens.error.code = 0;
+        ut->clearS(config->signer.tokens.error.message);
+        config->_int.fb_last_jwt_generation_error_cb_millis = 0;
+        sendTokenStatusCB();
+    }
 
 #if defined(ESP32)
     config->signer.wcs = new FB_TCP_Client();
@@ -1416,6 +1440,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
     ut->appendP(req, fb_esp_pgm_str_21);
 
     req += config->signer.json->raw();
+
 #if defined(ESP32)
     int ret = config->signer.wcs->send(req.c_str());
     ut->clearS(req);
@@ -1474,6 +1499,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
                 config->signer.tokens.token_type = token_type_id_token;
                 auth->user.email = email;
                 auth->user.password = password;
+                config->signer.anonymous = strlen(email) == 0 && strlen(password) == 0;
             }
 
             tmp = ut->strP(fb_esp_pgm_str_200);
@@ -1481,7 +1507,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
             ut->delP(&tmp);
             if (config->signer.result->success)
             {
-                ut->storeS(config->_int.auth_token, config->signer.result->to<const char *>(), false);
+                config->_int.auth_token = config->signer.result->to<const char *>();
                 config->_int.atok_len = strlen(config->signer.result->to<const char *>());
                 config->_int.ltok_len = 0;
             }
@@ -1508,13 +1534,155 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
             if (config->signer.result->success)
                 auth->token.uid = config->signer.result->to<const char *>();
 
-            return handleSignerError(0);
+            if (!createUser)
+                return handleSignerError(0);
+            else
+                return handleSignerError(-1);
         }
-
-        return handleSignerError(4);
     }
 
     return handleSignerError(3, httpCode);
+}
+
+bool Firebase_Signer::deleteIdToken(const char *idToken)
+{
+    if (config->_int.fb_reconnect_wifi)
+        ut->reconnect(0);
+
+    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
+        return false;
+
+    config->signer.signup = false;
+    ut->idle();
+
+    if (auth == nullptr)
+        return false;
+
+    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->_int.fb_processing)
+        return false;
+
+    config->_int.fb_processing = true;
+
+#if defined(ESP32)
+    config->signer.wcs = new FB_TCP_Client();
+    config->signer.wcs->setCACert(nullptr);
+#elif defined(ESP8266)
+    config->signer.wcs = new WiFiClientSecure();
+    config->signer.wcs->setInsecure();
+    config->signer.wcs->setBufferSizes(1024, 1024);
+#endif
+    config->signer.json = new FirebaseJson();
+    config->signer.result = new FirebaseJsonData();
+
+    MBSTRING host;
+    ut->appendP(host, fb_esp_pgm_str_250);
+    ut->appendP(host, fb_esp_pgm_str_4);
+    ut->appendP(host, fb_esp_pgm_str_120);
+
+#if defined(ESP32)
+    config->signer.wcs->begin(host.c_str(), 443);
+#elif defined(ESP8266)
+
+    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
+    int ret = config->signer.wcs->connect(host.c_str(), 443);
+    if (ret == 0)
+        return handleSignerError(1);
+#endif
+
+    char *tmp = ut->strP(fb_esp_pgm_str_200);
+
+    if (strlen(idToken) > 0)
+        config->signer.json->add(tmp, idToken);
+    else
+        config->signer.json->add(tmp, config->_int.auth_token);
+
+    ut->delP(&tmp);
+
+    MBSTRING req;
+    ut->appendP(req, fb_esp_pgm_str_24);
+    ut->appendP(req, fb_esp_pgm_str_6);
+
+    ut->appendP(req, fb_esp_pgm_str_582);
+
+    req += config->api_key;
+    ut->appendP(req, fb_esp_pgm_str_30);
+
+    ut->appendP(req, fb_esp_pgm_str_31);
+    ut->appendP(req, fb_esp_pgm_str_250);
+
+    ut->appendP(req, fb_esp_pgm_str_4);
+    ut->appendP(req, fb_esp_pgm_str_120);
+    ut->appendP(req, fb_esp_pgm_str_21);
+    ut->appendP(req, fb_esp_pgm_str_32);
+    ut->appendP(req, fb_esp_pgm_str_12);
+    req += NUM2S(strlen(config->signer.json->raw())).get();
+    ut->appendP(req, fb_esp_pgm_str_21);
+    ut->appendP(req, fb_esp_pgm_str_8);
+    ut->appendP(req, fb_esp_pgm_str_129);
+    ut->appendP(req, fb_esp_pgm_str_21);
+    ut->appendP(req, fb_esp_pgm_str_21);
+
+    req += config->signer.json->raw();
+
+#if defined(ESP32)
+    int ret = config->signer.wcs->send(req.c_str());
+    ut->clearS(req);
+    if (ret < 0)
+        return handleSignerError(2);
+#elif defined(ESP8266)
+    size_t sz = req.length();
+    size_t len = config->signer.wcs->print(req.c_str());
+    ut->clearS(req);
+    if (len != sz)
+        return handleSignerError(2);
+#endif
+
+    config->signer.json->clear();
+
+    int httpCode = 0;
+    if (handleTokenResponse(httpCode))
+    {
+        struct fb_esp_auth_token_error_t error;
+
+        //config->signer.json->toString(Serial, true);
+
+        tmp = ut->strP(fb_esp_pgm_str_257);
+        config->signer.json->get(*config->signer.result, tmp);
+        ut->delP(&tmp);
+
+        if (config->signer.result->success)
+        {
+            error.code = config->signer.result->to<int>();
+
+            tmp = ut->strP(fb_esp_pgm_str_258);
+            config->signer.json->get(*config->signer.result, tmp);
+            ut->delP(&tmp);
+            if (config->signer.result->success)
+                error.message = config->signer.result->to<const char *>();
+        }
+
+        config->signer.deleteError = error;
+
+        if (error.code == 0)
+        {
+            if (strlen(idToken) == 0 || strcmp(config->_int.auth_token.c_str(), idToken) == 0)
+            {
+                config->_int.auth_token.clear();
+                config->_int.atok_len = 0;
+                config->_int.ltok_len = 0;
+                config->signer.tokens.expires = 0;
+                config->signer.attempts = 0;
+                config->signer.step = fb_esp_jwt_generation_step_begin;
+                config->_int.fb_last_jwt_generation_error_cb_millis = 0;
+                config->signer.tokens.token_type = token_type_undefined;
+                config->signer.anonymous = false;
+            }
+
+            return true;
+        }
+    }
+
+    return handleSignerError(4, httpCode);
 }
 
 bool Firebase_Signer::requestTokens()
@@ -1894,13 +2062,13 @@ void Firebase_Signer::checkToken()
     if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
         config->signer.preRefreshSeconds = 60;
 
-    if ((config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token) && ((unsigned long)time(nullptr) > config->signer.tokens.expires - config->signer.preRefreshSeconds || config->signer.tokens.expires == 0))
+    if (isAuthToken(true) && ((unsigned long)time(nullptr) > config->signer.tokens.expires - config->signer.preRefreshSeconds || config->signer.tokens.expires == 0))
         handleToken();
 }
 
 bool Firebase_Signer::tokenReady()
 {
-    if (!auth || !config)
+    if (!config)
         return false;
 
     checkToken();
@@ -2099,14 +2267,14 @@ void Firebase_Signer::errorToString(int httpCode, MBSTRING &buff)
 
 fb_esp_auth_token_type Firebase_Signer::getTokenType()
 {
-    if (!auth || !config)
+    if (!config)
         return token_type_undefined;
     return config->signer.tokens.token_type;
 }
 
 const char *Firebase_Signer::getToken()
 {
-    if (!auth || !config)
+    if (!config)
         return "";
     return config->_int.auth_token.c_str();
 }
@@ -2123,13 +2291,13 @@ FirebaseAuth *Firebase_Signer::getAuth()
 
 MBSTRING Firebase_Signer::getCAFile()
 {
-    if (!auth || !config)
+    if (!config)
         return "";
     return config->cert.file;
 }
 int Firebase_Signer::getCAFileStorage()
 {
-    if (!auth || !config)
+    if (!config)
         return 0;
     return config->cert.file_storage;
 }

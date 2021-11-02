@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.2.4
+ * Google's Firebase Token Generation class, Signer.h version 1.2.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created November 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -90,6 +90,8 @@ private:
     bool tokenSigninDataReady();
     void setTokenType(fb_esp_auth_token_type type);
     bool userSigninDataReady();
+    bool isAuthToken(bool admin);
+    bool isExpired();
     bool handleToken();
     bool refreshToken();
     void setTokenError(int code);
@@ -98,6 +100,7 @@ private:
     void tokenProcessingTask();
     bool createJWT();
     bool getIdToken(bool createUser, const char *email, const char *password);
+    bool deleteIdToken(const char *idToken = "");
     bool requestTokens();
     void checkToken();
     void getExpiration(const char *exp);

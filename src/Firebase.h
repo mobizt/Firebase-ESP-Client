@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.5
+ * The Firebase class, Firebase.h v1.0.6
  * 
- *  Created October 6, 2021
+ *  Created November 2, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -107,6 +107,22 @@ public:
   */
   void begin(FirebaseConfig *config, FirebaseAuth *auth);
 
+  /** Setup the ID token for authentication.
+   *
+   * @param config The pointer to FirebaseConfig data.
+   * @param idToken The ID Token.
+   * @param expire The expired interval in seeconds (max.3600 sec).
+   *
+   * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
+  */
+  void setIdToken(FirebaseConfig *config, const char *idToken, size_t expire = 3600);
+
+  /** Check for token expiry status.
+   *
+   * @return bool of expiry status.
+  */
+  bool isTokenExpired();
+
   /** Provide the details of token generation.
    * 
    * @return token_info_t The token_info_t structured data that indicates the status.
@@ -171,7 +187,21 @@ public:
   bool signUp(FirebaseConfig *config, FirebaseAuth *auth, T1 email, T2 password)
   {
     init(config, auth);
+    Signer.setTokenType(token_type_id_token);
     return Signer.getIdToken(true, toString(email), toString(password));
+  }
+
+  /** Delete user from project.
+   * 
+   * @param config The pointer to FirebaseConfig data.
+   * @param auth The pointer to FirebaseAuth data.
+   * @param idToken (optional) The id token of user, leave blank to delete the current sign in user.
+   * @return Boolean type status indicates the success of the operation.
+  */
+  bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, const char* idToken = "")
+  {
+    init(config, auth);
+    return Signer.deleteIdToken(idToken);
   }
 
   /** Send a user a verification Email.

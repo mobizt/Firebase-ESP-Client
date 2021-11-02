@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.6
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created November 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -136,7 +136,7 @@ bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *n
         if (json->errorPosition() > -1)
         {
             fbdo->_ss.http_code = FIREBASE_ERROR_INVALID_JSON_RULES;
-            ret =  false;
+            ret = false;
         }
         else
         {
@@ -2175,14 +2175,12 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                         //error in request or server
                         if (response.httpCode >= 400)
                         {
-
+                            //non-JSON response error handling
                             if (ut->strposP(response.contentType.c_str(), fb_esp_pgm_str_74, 0) < 0)
                             {
                                 if (stream)
                                 {
-                                    size_t len = stream->available();
-                                    char buf[len];
-                                    stream->readBytes(buf, len);
+                                    fbdo->_ss.error.clear();
                                     while (stream->available())
                                     {
                                         ut->idle();

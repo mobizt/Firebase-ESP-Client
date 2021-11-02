@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.1
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created November 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -52,7 +52,7 @@ void FIREBASE_MP_STREAM_CLASS::begin(UtilsClass *u, struct fb_esp_stream_info_t 
     sif = s;
 }
 
-bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
+bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
 {
     value.clear();
     type.clear();
@@ -82,13 +82,10 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
         }
         else
         {
-            MBSTRING p1 = sif->path;
-            if (path.length() < p1.length())
-                p1 = p1.substr(0, path.length());
-            MBSTRING p2 = path.c_str();
-            if (p2[0] != '/')
-                p2.insert(0, 1, '/');
-            if (strcmp(p1.c_str(), p2.c_str()) == 0)
+            MBSTRING root = path.c_str();
+            MBSTRING branch = sif->path;
+            //check for the steam data path is matched or under the root (child path)
+            if (checkPath(root, branch))
             {
                 sif->m_json->toString(value, true);
                 type = sif->data_type_str.c_str();
@@ -96,19 +93,14 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
                 dataPath = sif->path.c_str();
                 res = true;
             }
-            ut->clearS(p1);
-            ut->clearS(p2);
         }
     }
     else
     {
-        MBSTRING p1 = sif->path;
-        if (path.length() < p1.length())
-            p1 = p1.substr(0, path.length());
-        MBSTRING p2 = path.c_str();
-        if (p2[0] != '/')
-            p2.insert(0, 1, '/');
-        if (strcmp(p1.c_str(), p2.c_str()) == 0)
+        MBSTRING root = path.c_str();
+        MBSTRING branch = sif->path;
+        //check for the steam data path is matched or under the root (child path)
+        if (checkPath(root, branch))
         {
             value = sif->data.c_str();
             dataPath = sif->path.c_str();
@@ -116,10 +108,26 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path)
             eventType = sif->event_type_str.c_str();
             res = true;
         }
-        ut->clearS(p1);
-        ut->clearS(p2);
     }
     return res;
+}
+
+bool FIREBASE_MP_STREAM_CLASS::checkPath(MBSTRING &root, MBSTRING &branch)
+{
+    if (root[0] != '/')
+        root.insert(0, 1, '/');
+
+    if (branch[0] != '/')
+        branch.insert(0, 1, '/');
+
+    if (root.length() != branch.length())
+    {
+        size_t p = branch.find("/", 1);
+        if (p != MBSTRING::npos)
+            branch = branch.substr(0, p);
+    }
+
+    return strcmp(branch.c_str(), root.c_str()) == 0;
 }
 
 void FIREBASE_MP_STREAM_CLASS::empty()
