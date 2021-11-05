@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.13
+ * Firebase TCP Client v1.1.14
  * 
- * Created October 25, 2021
+ * Created November 5, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -159,11 +159,8 @@ private:
   //Actually Arduino base Stream (char read) timeout.
   //This will override internally by WiFiClientSecureCtx::_connectSSL 
   //to 5000 after SSL handshake was done with success.
-  unsigned long socketConnectionTO = 30 * 1000;
+  unsigned long timeout = 10 * 1000;
 
-  //Unused as no override function or no available option 
-  //in BearSSL::WiFiClientSecure class.
-  unsigned long sslHandshakeTO = 2 * 60 * 1000;
 
   MBSTRING _CAFile;
   uint8_t _CAFileStoreageType = 0;

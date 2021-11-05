@@ -97,16 +97,13 @@ void setup()
 
   Firebase.setDoubleDigits(5);
 
-  /** Timeout options, below is default config.
+  /** Timeout options.
 
   //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
   config.timeout.wifiReconnect = 10 * 1000;
 
-  //Socket begin connection timeout (ESP32) or data transfer timeout (ESP8266) in ms (1 sec - 1 min).
-  config.timeout.socketConnection = 30 * 1000;
-
-  //ESP32 SSL handshake in ms (1 sec - 2 min). This option doesn't allow in ESP8266 core library.
-  config.timeout.sslHandshake = 2 * 60 * 1000;
+  //Socket connection and SSL handshake timeout in ms (1 sec - 1 min).
+  config.timeout.socketConnection = 10 * 1000;
 
   //Server response read timeout in ms (1 sec - 1 min).
   config.timeout.serverResponse = 10 * 1000;
@@ -120,6 +117,13 @@ void setup()
   //RTDB Stream error notification timeout (interval) in ms (3 sec - 30 sec). It determines how often the readStream
   //will return false (error) when it called repeatedly in loop.
   config.timeout.rtdbStreamError = 3 * 1000;
+
+  Note:
+  The function that starting the new TCP session i.e. first time server connection or previous session was closed, the function won't exit until the 
+  time of config.timeout.socketConnection.
+
+  You can also set the TCP data sending retry with
+  config.tcp_data_sending_retry = 1;
 
   */
 }

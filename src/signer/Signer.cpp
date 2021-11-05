@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.5
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 2, 2021
+ * Created November 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -419,7 +419,7 @@ void Firebase_Signer::tokenProcessingTask()
 
 #elif defined(ESP8266)
 
-    if (_token_processing_task_enable)
+    if (_token_processing_task_enable && config->signer.tokens.status != token_status_ready)
     {
         if (config->signer.tokens.token_type == token_type_id_token)
         {

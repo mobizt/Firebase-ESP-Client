@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.13
+ * Firebase TCP Client v1.1.14
  * 
- * Created October 25, 2021
+ * Created November 5, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -110,9 +110,8 @@ bool FB_TCP_Client::connect(void)
     return true;
   }
 
-  _wcs->setTimeout(socketConnectionTO);
+  _wcs->setTimeout(timeout);
 
-  
 
   if (!_wcs->connect(_host.c_str(), _port))
     return false;

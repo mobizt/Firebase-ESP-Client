@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.5
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created November 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -718,11 +718,15 @@ int FirebaseData::tcpSend(const char *data)
 {
     size_t len = strlen(data);
     uint8_t attempts = 0;
+    uint8_t maxRetry = 1;
+
+    if (Signer.getCfg())
+        maxRetry = Signer.getCfg()->tcp_data_sending_retry;
+
 #if defined(ESP8266)
-    uint8_t maxRetry = 5 * (1 + (len / _ss.bssl_tx_size));
-#else
-    uint8_t maxRetry = 5;
+    maxRetry *= (1 + (len / _ss.bssl_tx_size));
 #endif
+
     int index = 0;
     int ret = tcpSendChunk(data, index, len);
     while (ret != 0 || index < (int)len)
@@ -846,12 +850,7 @@ void FirebaseData::setTimeout()
         if (Signer.getCfg()->timeout.socketConnection < MIN_SOCKET_CONN_TIMEOUT || Signer.getCfg()->timeout.socketConnection > MAX_SOCKET_CONN_TIMEOUT)
             Signer.getCfg()->timeout.socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
 
-        if (Signer.getCfg()->timeout.sslHandshake < MIN_SSL_HANDSHAKE_TIMEOUT || Signer.getCfg()->timeout.sslHandshake > MAX_SSL_HANDSHAKE_TIMEOUT)
-            Signer.getCfg()->timeout.sslHandshake = MIN_SSL_HANDSHAKE_TIMEOUT;
-
-        tcpClient.socketConnectionTO = Signer.getCfg()->timeout.socketConnection;
-
-        tcpClient.sslHandshakeTO = Signer.getCfg()->timeout.sslHandshake;
+        tcpClient.timeout = Signer.getCfg()->timeout.socketConnection;
     }
 }
 

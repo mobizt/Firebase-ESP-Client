@@ -108,14 +108,6 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
-    /** The id token (C++ string) will be available from config.signer.tokens.id_token
-     * if the sig-up was successful. 
-     * 
-     * Now you can initialize the library using the internal created credentials.
-     * 
-     * If the sign-up was failed, the following function will initialize because 
-     * the internal authentication credentials are not created.
-    */
     Firebase.begin(&config, &auth);
 }
 

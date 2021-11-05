@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.12
+ * Firebase TCP Client v1.1.13
  * 
- * Created October 3, 2001
+ * Created November 5, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -80,27 +80,12 @@ public:
   FB_WCS(){};
   ~FB_WCS(){};
 
-  int _connect(const char *host, uint16_t port, unsigned long socketTO, unsigned long handshakeTO)
+  int _connect(const char *host, uint16_t port, unsigned long timeout)
   {
-    _timeout = socketTO;
+    _timeout = timeout;
 
-    sslclient->handshake_timeout = handshakeTO;
-
-#if __has_include(<esp_idf_version.h>)
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(3, 3, 0)
-    int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL, _use_insecure);
-#else
-    int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL);
-#endif
-#else
-    int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL);
-#endif
-
-    _lastError = ret;
-    if (ret < 0)
+    if (connect(host, port) == 0)
     {
-      log_e("start_ssl_client: %d", ret);
-      stop();
       if (_CA_cert != NULL)
         mbedtls_x509_crt_free(&sslclient->ca_cert);
       return 0;
@@ -168,11 +153,8 @@ private:
   MBSTRING _host;
   uint16_t _port = 0;
 
-  //lwIP socket connection timeout
-  unsigned long socketConnectionTO = 30 * 1000;
-
-  //mbedTLS SSL handshake timeout
-  unsigned long sslHandshakeTO = 2 * 60 * 1000;
+  //lwIP socket connection and ssl handshake timeout
+  unsigned long timeout = 10 * 1000;
 
   MBSTRING _CAFile;
   uint8_t _CAFileStoreageType = 0;

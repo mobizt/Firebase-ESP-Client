@@ -77,11 +77,8 @@ class QueryFilter;
 #define MAX_WIFI_RECONNECT_TIMEOUT 5 * 60 * 1000
 
 #define MIN_SOCKET_CONN_TIMEOUT 1 * 1000
-#define DEFAULT_SOCKET_CONN_TIMEOUT 30 * 1000
+#define DEFAULT_SOCKET_CONN_TIMEOUT 10 * 1000
 #define MAX_SOCKET_CONN_TIMEOUT 60 * 1000
-
-#define MIN_SSL_HANDSHAKE_TIMEOUT 1 * 1000
-#define MAX_SSL_HANDSHAKE_TIMEOUT 2 * 60 * 1000
 
 #define MIN_SERVER_RESPONSE_TIMEOUT 1 * 1000
 #define DEFAULT_SERVER_RESPONSE_TIMEOUT 10 * 1000
@@ -815,11 +812,11 @@ struct fb_esp_client_timeout_t
     //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
     uint16_t wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
 
-    //Socket begin connection timeout (ESP32) or data transfer timeout (ESP8266) in ms (1 sec - 1 min).
+    //Socket connection and ssl handshake timeout in ms (1 sec - 1 min).
     unsigned long socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
 
-    //ESP32 SSL handshake in ms (1 sec - 2 min). This option doesn't allow in ESP8266 core library.
-    unsigned long sslHandshake = MAX_SSL_HANDSHAKE_TIMEOUT;
+    //unused.
+    unsigned long sslHandshake = 0;
 
     //Server response read timeout in ms (1 sec - 1 min).
     unsigned long serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
@@ -847,6 +844,7 @@ struct fb_esp_cfg_t
     MBSTRING database_url;
     MBSTRING api_key;
     float time_zone = 0;
+    uint8_t tcp_data_sending_retry = 1;
     size_t async_close_session_max_request = 100;
     struct fb_esp_auth_cert_t cert;
     struct fb_esp_token_signer_resources_t signer;
