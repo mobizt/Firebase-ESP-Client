@@ -87,6 +87,11 @@ All function for Realtime database between these libraries are compattible.  [Se
 ## Installation
 
 
+### Important Note
+
+If you are already installed this [Firebase-ESP8266 Library](https://github.com/mobizt/Firebase-ESP8266) or [Firebase-ESP32 Library](https://github.com/mobizt/Firebase-ESP32), please remove or uninstall it from your Arduino libraries folder or project included libraries in PlatformIO.
+
+Installing of these two libraries will cause the compiler error in including incorrect files from other Firebase library i.e. the libraries included the same header and source files e.g. Firebase.h and Firebase.cpp which are guarded to use in the specific library i.e. Firebase-ESP8266 or Firebase-ESP32 and Firebase ESP Client which its APIs are different.
 
 ### Using Library Manager
 
