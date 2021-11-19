@@ -1181,10 +1181,10 @@ void errorQueueCallback (QueueInfo queueinfo){
   Serial.println(queueinfo.dataType()); 
 
   Serial.print("Method: ");
-  Serial.println(queueinfo.method());
+  Serial.println(queueinfo.firebaseMethod());
 
   Serial.print("Path: ");
-  Serial.println(queueinfo.path());
+  Serial.println(queueinfo.dataPath());
 
   Serial.println();
 }
