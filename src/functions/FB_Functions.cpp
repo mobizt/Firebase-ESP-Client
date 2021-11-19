@@ -157,18 +157,24 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
                     sendCallback(fbdo, fb_esp_functions_operation_status_error, fbdo->errorReason().c_str(), cb, info);
                     return false;
                 }
-
+#if defined SD_FS
                 if (!SD_FS.exists(config->_uploadArchiveFile.c_str()))
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_ARCHIVE_NOT_FOUND;
                     sendCallback(fbdo, fb_esp_functions_operation_status_error, fbdo->errorReason().c_str(), cb, info);
                     return false;
                 }
-
                 Signer.getCfg()->_int.fb_file = SD_FS.open(config->_uploadArchiveFile.c_str(), FILE_READ);
+#else
+                return false;
+#endif
+
             }
             else if (config->_uploadArchiveStorageType == mem_storage_type_flash)
             {
+               
+#if defined FLASH_FS
+
                 if (!Signer.getCfg()->_int.fb_flash_rdy)
                     ut->flashTest();
 
@@ -180,6 +186,10 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
                 }
 
                 Signer.getCfg()->_int.fb_file = FLASH_FS.open(config->_uploadArchiveFile.c_str(), "r");
+#else
+                return false;
+#endif
+                
             }
 
             if (!Signer.getCfg()->_int.fb_file)

@@ -31,6 +31,7 @@
  #define CARD_TYPE_SD_MMC 1 //For ESP32 SDMMC
  * 
 */
+#include <SD.h>
 #define DEFAULT_SD_FS SD
 #define CARD_TYPE_SD 1
 

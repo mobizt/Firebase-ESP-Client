@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.3
+ * Google's Firebase Util class, Utils.h version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created November 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1064,6 +1064,7 @@ public:
 
     void createDirs(MBSTRING dirs, fb_esp_mem_storage_type storageType)
     {
+#if defined SD_FS
         MBSTRING dir;
         size_t count = 0;
         for (size_t i = 0; i < dirs.length(); i++)
@@ -1087,6 +1088,7 @@ public:
                 SD_FS.mkdir(dir.c_str());
         }
         MBSTRING().swap(dir);
+#endif
     }
 
     void closeFileHandle(bool sd)
@@ -1100,7 +1102,9 @@ public:
         {
             config->_int.fb_sd_used = false;
             config->_int.fb_sd_rdy = false;
+#if defined SD_FS
             SD_FS.end();
+#endif
         }
     }
 
@@ -1264,9 +1268,17 @@ public:
     {
 
         if (storageType == mem_storage_type_flash)
+        {
+#if defined FLASH_FS
             file = FLASH_FS.open(filePath.c_str(), "r");
+#endif
+        }
         else if (storageType == mem_storage_type_sd)
+        {
+#if defined SD_FS
             file = SD_FS.open(filePath.c_str(), FILE_READ);
+#endif
+        }
 
         if (!file)
             return;
@@ -1461,10 +1473,7 @@ public:
 
         if (!config->_int.fb_clock_rdy || gmtOffset != config->_int.fb_gmt_offset)
         {
-            char *server1 = strP(fb_esp_pgm_str_187);
-            char *server2 = strP(fb_esp_pgm_str_188);
-
-            configTime(gmtOffset * 3600, 0, server1, server2);
+            configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
 
             now = time(nullptr);
             unsigned long timeout = millis();
@@ -1475,9 +1484,6 @@ public:
                     break;
                 delay(10);
             }
-
-            delP(&server1);
-            delP(&server2);
         }
 
         config->_int.fb_clock_rdy = now > default_ts;
@@ -1685,6 +1691,7 @@ public:
 #if defined(CARD_TYPE_SD)
     bool sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
     {
+#if defined SD_FS
         if (!config)
             return false;
 
@@ -1709,6 +1716,9 @@ public:
         else
             return SD_FS.begin(SD_CS_PIN);
 #endif
+#else
+        return false;
+#endif
     }
 #endif
 
@@ -1732,6 +1742,7 @@ public:
 
     bool flashTest()
     {
+#if defined FLASH_FS
         if (!config)
             return false;
 #if defined(ESP32)
@@ -1743,10 +1754,14 @@ public:
         config->_int.fb_flash_rdy = FLASH_FS.begin();
 #endif
         return config->_int.fb_flash_rdy;
+#else
+        return false;
+#endif
     }
 
     bool sdTest(fs::File file)
     {
+#if defined SD_FS
         if (!config)
             return false;
 
@@ -1794,6 +1809,9 @@ public:
         config->_int.fb_sd_rdy = true;
 
         return true;
+#else
+        return false;
+#endif
     }
 
 #if defined(ESP8266)

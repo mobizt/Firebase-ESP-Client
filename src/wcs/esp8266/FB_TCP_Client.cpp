@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.14
+ * Firebase TCP Client v1.1.15
  * 
- * Created November 5, 2021
+ * Created November 19, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -112,7 +112,6 @@ bool FB_TCP_Client::connect(void)
 
   _wcs->setTimeout(timeout);
 
-
   if (!_wcs->connect(_host.c_str(), _port))
     return false;
 
@@ -135,7 +134,7 @@ void FB_TCP_Client::setCACert(const char *caCert)
 {
 
   release();
-  
+
   _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
 
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
@@ -165,15 +164,19 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, s
     fs::File f;
     if (storageType == 1)
     {
+#if defined FLASH_FS
       FLASH_FS.begin();
       if (FLASH_FS.exists(caCertFile))
         f = FLASH_FS.open(caCertFile, "r");
+#endif
     }
     else if (storageType == 2)
     {
+#if defined SD_FS
       SD_FS.begin(_sdPin);
       if (SD_FS.exists(caCertFile))
         f = SD_FS.open(caCertFile, FILE_READ);
+#endif
     }
     if (f)
     {

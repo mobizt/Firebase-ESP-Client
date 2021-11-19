@@ -707,6 +707,7 @@ public:
   {
     if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_file && init())
     {
+#if defined FLASH_FS
       char *tmp = ut->strP(fb_esp_pgm_str_184);
 
       ut->flashTest();
@@ -714,6 +715,7 @@ public:
       if (Signer.getCfg()->_int.fb_flash_rdy)
         Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
       ut->delP(&tmp);
+#endif
     }
 
     return Signer.getCfg()->_int.fb_file;

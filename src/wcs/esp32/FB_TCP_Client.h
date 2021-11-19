@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.13
+ * Firebase TCP Client v1.1.14
  * 
- * Created November 5, 2001
+ * Created November 19, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -53,8 +53,12 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#if defined DEFAULT_FLASH_FS
 #define FLASH_FS DEFAULT_FLASH_FS
+#endif
+#if defined DEFAULT_SD_FS
 #define SD_FS DEFAULT_SD_FS
+#endif
 #define FORMAT_FLASH FORMAT_FLASH_IF_MOUNT_FAILED
 
 #include "wcs/HTTPCode.h"

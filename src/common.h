@@ -1,6 +1,6 @@
 
 /**
- * Created November 2, 2021
+ * Created November 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1689,8 +1689,8 @@ static const char fb_esp_pgm_str_183[] PROGMEM = "file";
 static const char fb_esp_pgm_str_184[] PROGMEM = "/fb_bin_0.tmp";
 static const char fb_esp_pgm_str_185[] PROGMEM = "The backup data should be the JSON object";
 static const char fb_esp_pgm_str_186[] PROGMEM = "object";
-static const char fb_esp_pgm_str_187[] PROGMEM = "pool.ntp.org";
-static const char fb_esp_pgm_str_188[] PROGMEM = "time.nist.gov";
+//static const char fb_esp_pgm_str_187[] PROGMEM = "";
+//static const char fb_esp_pgm_str_188[] PROGMEM = "";
 static const char fb_esp_pgm_str_189[] PROGMEM = "payload too large";
 static const char fb_esp_pgm_str_190[] PROGMEM = "cannot config time";
 static const char fb_esp_pgm_str_191[] PROGMEM = "incomplete SSL client data";

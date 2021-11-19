@@ -265,18 +265,26 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     {
         if (req->storageType == mem_storage_type_sd)
         {
+#if defined SD_FS
             if (!ut->sdTest(Signer.getCfg()->_int.fb_file))
             {
                 fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
                 return false;
             }
             Signer.getCfg()->_int.fb_file = SD_FS.open(req->localFileName.c_str(), FILE_WRITE);
+#else
+            return false;
+#endif
         }
         else if (req->storageType == mem_storage_type_flash)
         {
+#if defined FLASH_FS
             if (!Signer.getCfg()->_int.fb_flash_rdy)
                 ut->flashTest();
             Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "w");
+#else
+            return false;
+#endif
         }
     }
     else
@@ -285,6 +293,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         {
             if (req->storageType == mem_storage_type_sd)
             {
+#if defined SD_FS
                 if (!ut->sdTest(Signer.getCfg()->_int.fb_file))
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
@@ -304,9 +313,13 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 }
 
                 Signer.getCfg()->_int.fb_file = SD_FS.open(req->localFileName.c_str(), FILE_READ);
+#else
+                return false;
+#endif
             }
             else if (req->storageType == mem_storage_type_flash)
             {
+#if defined FLASH_FS
                 if (!Signer.getCfg()->_int.fb_flash_rdy)
                     ut->flashTest();
 
@@ -323,6 +336,9 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 }
 
                 Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "r");
+#else
+                return false;
+#endif
             }
 
             req->fileSize = Signer.getCfg()->_int.fb_file.size();
@@ -1747,7 +1763,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                 if (chunkIdx == 0)
                 {
                     //the first chunk can be http response header
-                    header = (char*)ut->newP(chunkBufSize);
+                    header = (char *)ut->newP(chunkBufSize);
                     hstate = 1;
                     int readLen = ut->readLine(stream, header, chunkBufSize);
                     int pos = 0;
@@ -1776,7 +1792,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                     if (isHeader)
                     {
                         //read one line of next header field until the empty header has found
-                        tmp = (char*)ut->newP(chunkBufSize);
+                        tmp = (char *)ut->newP(chunkBufSize);
                         int readLen = ut->readLine(stream, tmp, chunkBufSize);
                         bool headerEnded = false;
 
@@ -1821,7 +1837,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                             ruTask.fbdo = fbdo;
                                             ruTask.req.requestType = fb_esp_gcs_request_type_upload_resumable_run;
 
-                                            char *tmp6 = (char*)ut->newP(strlen(header));
+                                            char *tmp6 = (char *)ut->newP(strlen(header));
                                             strncpy(tmp6, header + p1 + strlen_P(fb_esp_pgm_str_481), strlen(header) - p1 - strlen_P(fb_esp_pgm_str_481));
                                             ruTask.req.chunkRange = atoi(tmp6);
                                             ut->delP(&tmp6);
@@ -1932,7 +1948,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                             else
                             {
                                 pChunkIdx++;
-                                pChunk = (char*)ut->newP(chunkBufSize + 1);
+                                pChunk = (char *)ut->newP(chunkBufSize + 1);
 
                                 if (response.isChunkedEnc)
                                     delay(10);

@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.13
+ * Firebase TCP Client v1.1.14
  * 
- * Created November 5, 2001
+ * Created November 19, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -149,15 +149,18 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, s
     File f;
     if (storageType == 1)
     {
+#if defined FLASH_FS
       if (FORMAT_FLASH == 1)
         FLASH_FS.begin(true);
       else
         FLASH_FS.begin();
       if (FLASH_FS.exists(caCertFile))
         f = FLASH_FS.open(caCertFile, FILE_READ);
+#endif
     }
     else if (storageType == 2)
     {
+#if defined SD_FS
       if (sd_config.ss > -1)
       {
 #ifdef CARD_TYPE_SD
@@ -173,6 +176,7 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, s
 
       if (SD_FS.exists(caCertFile))
         f = SD_FS.open(caCertFile, FILE_READ);
+#endif
     }
 
     if (f)

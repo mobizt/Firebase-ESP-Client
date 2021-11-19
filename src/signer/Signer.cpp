@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.6
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 5, 2021
+ * Created November 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -63,13 +63,17 @@ bool Firebase_Signer::parseSAFile()
     {
         if (config->service_account.json.storage_type == mem_storage_type_flash)
         {
+#if defined FLASH_FS
             if (FLASH_FS.exists(config->service_account.json.path.c_str()))
                 config->_int.fb_file = FLASH_FS.open(config->service_account.json.path.c_str(), "r");
+#endif
         }
         else
         {
+#if defined SD_FS
             if (SD_FS.exists(config->service_account.json.path.c_str()))
                 config->_int.fb_file = SD_FS.open(config->service_account.json.path.c_str(), "r");
+#endif
         }
 
         if (config->_int.fb_file)
@@ -1511,7 +1515,7 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
                 config->_int.atok_len = strlen(config->signer.result->to<const char *>());
                 config->_int.ltok_len = 0;
             }
-#if defined(ESP32)
+
             tmp = ut->strP(fb_esp_pgm_str_201);
             config->signer.json->get(*config->signer.result, tmp);
             ut->delP(&tmp);
@@ -1520,7 +1524,6 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
                 ut->storeS(config->_int.refresh_token, config->signer.result->to<const char *>(), false);
                 config->_int.rtok_len = strlen(config->signer.result->to<const char *>());
             }
-#endif
 
             tmp = ut->strP(fb_esp_pgm_str_202);
             config->signer.json->get(*config->signer.result, tmp);

@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.14
+ * Firebase TCP Client v1.1.15
  * 
- * Created November 5, 2021
+ * Created November 19, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -60,9 +60,17 @@
 
 #define FS_NO_GLOBALS
 #include <FS.h>
-#include <SD.h>
-#include <LittleFS.h>
 #include "FirebaseFS.h"
+
+#if defined DEFAULT_FLASH_FS
+#define FLASH_FS DEFAULT_FLASH_FS
+#endif
+
+#if defined DEFAULT_SD_FS
+#define SD_FS DEFAULT_SD_FS
+#endif
+
+
 #include "./json/FirebaseJson.h"
 
 #if defined __has_include
@@ -90,12 +98,10 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#define FLASH_FS DEFAULT_FLASH_FS
-#define SD_FS DEFAULT_SD_FS
 
 #include "wcs/HTTPCode.h"
 
-struct fb_esp_sd_config_info_t
+    struct fb_esp_sd_config_info_t
 {
   int sck = -1;
   int miso = -1;
@@ -147,9 +153,8 @@ public:
   WiFiClient *stream(void);
 
   void setCACert(const char *caCert);
-  void setCACertFile(const char* caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config);
+  void setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config);
   bool connect(void);
-
 
 private:
   std::unique_ptr<FB_ESP_SSL_CLIENT> _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
@@ -157,10 +162,9 @@ private:
   uint16_t _port = 0;
 
   //Actually Arduino base Stream (char read) timeout.
-  //This will override internally by WiFiClientSecureCtx::_connectSSL 
+  //This will override internally by WiFiClientSecureCtx::_connectSSL
   //to 5000 after SSL handshake was done with success.
   unsigned long timeout = 10 * 1000;
-
 
   MBSTRING _CAFile;
   uint8_t _CAFileStoreageType = 0;

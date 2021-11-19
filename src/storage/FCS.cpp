@@ -207,19 +207,23 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     {
         if (req->storageType == mem_storage_type_sd)
         {
+#if defined SD_FS
             if (!ut->sdTest(Signer.getCfg()->_int.fb_file))
             {
                 fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
                 return false;
             }
             Signer.getCfg()->_int.fb_file = SD_FS.open(req->localFileName.c_str(), FILE_WRITE);
+#endif
         }
         else if (req->storageType == mem_storage_type_flash)
         {
+#if defined FLASH_FS
             if (!Signer.getCfg()->_int.fb_flash_rdy)
                 ut->flashTest();
 
             Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "w");
+#endif
         }
     }
     else
@@ -228,6 +232,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         {
             if (req->storageType == mem_storage_type_sd)
             {
+#if defined SD_FS
                 if (!ut->sdTest(Signer.getCfg()->_int.fb_file))
                 {
                     fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
@@ -247,9 +252,14 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                 }
 
                 Signer.getCfg()->_int.fb_file = SD_FS.open(req->localFileName.c_str(), FILE_READ);
+#else
+                fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
+                return false;
+#endif
             }
             else if (req->storageType == mem_storage_type_flash)
             {
+#if defined FLASH_FS
                 if (!Signer.getCfg()->_int.fb_flash_rdy)
                     ut->flashTest();
 
@@ -266,6 +276,10 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                 }
 
                 Signer.getCfg()->_int.fb_file = FLASH_FS.open(req->localFileName.c_str(), "r");
+#else
+                fbdo->_ss.http_code = FIREBASE_ERROR_FILE_IO_ERROR;
+                return false;
+#endif
             }
 
             req->fileSize = Signer.getCfg()->_int.fb_file.size();
@@ -509,7 +523,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                 if (chunkIdx == 0)
                 {
                     //the first chunk can be http response header
-                    header = (char*)ut->newP(chunkBufSize);
+                    header = (char *)ut->newP(chunkBufSize);
                     hstate = 1;
                     int readLen = ut->readLine(stream, header, chunkBufSize);
                     int pos = 0;
@@ -535,7 +549,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                     if (isHeader)
                     {
                         //read one line of next header field until the empty header has found
-                        tmp = (char*)ut->newP(chunkBufSize);
+                        tmp = (char *)ut->newP(chunkBufSize);
                         int readLen = ut->readLine(stream, tmp, chunkBufSize);
                         bool headerEnded = false;
 
@@ -614,7 +628,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                             else
                             {
                                 pChunkIdx++;
-                                pChunk = (char*)ut->newP(chunkBufSize + 1);
+                                pChunk = (char *)ut->newP(chunkBufSize + 1);
 
                                 if (response.isChunkedEnc)
                                     delay(10);
