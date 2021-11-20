@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.6.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.6.6
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -86,12 +86,12 @@ All function for Realtime database between these libraries are compattible.  [Se
 
 ## Installation
 
-
 ### Important Note
 
-If you are already installed this [Firebase-ESP8266 Library](https://github.com/mobizt/Firebase-ESP8266) or [Firebase-ESP32 Library](https://github.com/mobizt/Firebase-ESP32), please remove or uninstall it from your Arduino libraries folder or project included libraries in PlatformIO.
+Since library v2.6.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) as applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v2.6.6.
 
-Installing of these two libraries will cause the compiler error in including incorrect files from other Firebase library i.e. the libraries included the same header and source files e.g. Firebase.h and Firebase.cpp which are guarded to use in the specific library i.e. Firebase-ESP8266 or Firebase-ESP32 and Firebase ESP Client which its APIs are different.
+The library v2.6.6 and later are recommended.
+
 
 ### Using Library Manager
 
@@ -1181,10 +1181,10 @@ void errorQueueCallback (QueueInfo queueinfo){
   Serial.println(queueinfo.dataType()); 
 
   Serial.print("Method: ");
-  Serial.println(queueinfo.method());
+  Serial.println(queueinfo.firebaseMethod());
 
   Serial.print("Path: ");
-  Serial.println(queueinfo.path());
+  Serial.println(queueinfo.dataPath());
 
   Serial.println();
 }

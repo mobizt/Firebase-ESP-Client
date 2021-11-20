@@ -1,17 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.6.5"
+#define FIREBASE_CLIENT_VERSION "2.6.6"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.6.5
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.6.6
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created November 19, 2021
+ * Created November 20, 2021
  *
  *   Updates:
- * - Fixed MISSING_REFRESH_TOKEN authentication error in ESP8266.
- * - Add support storage filesystem excludable to reduce program flash size.
+ * - Remove server bug workaround.
  * 
  * 
  * This work is a part of Firebase ESP Client library

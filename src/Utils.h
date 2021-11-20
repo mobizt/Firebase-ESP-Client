@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.4
+ * Google's Firebase Util class, Utils.h version 1.1.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 19, 2021
+ * Created November 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -412,60 +412,31 @@ public:
         delP(&auth);
     }
 
-    int url_decode(const char *s, char *dec)
-    {
-        char *o;
-        const char *end = s + strlen(s);
-        int c;
-
-        for (o = dec; s <= end; o++)
-        {
-            c = *s++;
-            if (c == '+')
-                c = ' ';
-            else if (c == '%' && (!ishex(*s++) ||
-                                  !ishex(*s++) ||
-                                  !sscanf(s - 2, "%2x", &c)))
-                return -1;
-
-            if (dec)
-                *o = c;
-        }
-
-        return o - dec;
-    }
-
     MBSTRING url_encode(const MBSTRING &s)
     {
-        const char *str = s.c_str();
-        std::vector<char> v(s.size());
-        v.clear();
+        MBSTRING ret;
+        ret.reserve(s.length() * 3 + 1);
         for (size_t i = 0, l = s.size(); i < l; i++)
         {
-            char c = str[i];
+            char c = s[i];
             if ((c >= '0' && c <= '9') ||
                 (c >= 'A' && c <= 'Z') ||
                 (c >= 'a' && c <= 'z') ||
                 c == '-' || c == '_' || c == '.' || c == '!' || c == '~' ||
                 c == '*' || c == '\'' || c == '(' || c == ')')
             {
-                v.push_back(c);
-            }
-            else if (c == ' ')
-            {
-                v.push_back('+');
+                ret += c;
             }
             else
             {
-                v.push_back('%');
+                ret += '%';
                 unsigned char d1, d2;
                 hexchar(c, d1, d2);
-                v.push_back(d1);
-                v.push_back(d2);
+                ret += d1;
+                ret += d2;
             }
         }
-
-        MBSTRING ret = std::string(v.cbegin(), v.cend()).c_str();
+        ret.shrink_to_fit();
         return ret;
     }
 

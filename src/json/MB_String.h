@@ -1,9 +1,18 @@
 
 /**
- * Mobizt's PSRAM supported String, version 1.0.0
+ * Mobizt's PSRAM supported String, version 1.0.1
  * 
  * 
- * October 28, 2021
+ * November 16, 2021
+ * 
+ * Changes Log
+ * 
+ * v1.0.1
+ * - Add trim function
+ * - Add version enum
+ * 
+ * v1.0.0
+ * - Initial release
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -33,6 +42,10 @@
 #include <Arduino.h>
 #include <string>
 #include <strings.h>
+
+#define MB_STRING_MAJOR 1
+#define MB_STRING_MINOR 0
+#define MB_STRING_PATCH 1
 
 class MB_String
 {
@@ -165,6 +178,37 @@ public:
         }
 
         return *this;
+    }
+
+    void trim()
+    {
+        int p1 = 0, p2 = length() - 1;
+        while (p1 < (int)length())
+        {
+            if (buf[p1] != ' ')
+                break;
+            p1++;
+        }
+
+        while (p2 >= 0)
+        {
+            if (buf[p2] != ' ')
+                break;
+            p2--;
+        }
+
+        if (p1 == (int)length() && p2 < 0)
+        {
+            clear();
+            return;
+        }
+
+        if (p2 >= p1 && p2 >= 0 && p1 < (int)length())
+        {
+            memmove(buf, buf + p1, p2 - p1 + 1);
+            buf[p2 - p1 + 1] = '\0';
+            _reserve(p2 - p1 + 1, true);
+        }
     }
 
     void append(const char *cstr, size_t n)
@@ -695,6 +739,7 @@ private:
                 int slen = length();
 
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
+
                 buf = (char *)ps_realloc(buf, len);
 #else
                 buf = (char *)realloc(buf, len);

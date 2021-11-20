@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.7
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 2, 2021
+ * Created November 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -2629,9 +2629,20 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
             }
         }
     }
-
     if (fbdo->_ss.rtdb.no_content_req || response.noContent)
     {
+        //This issue has been fixed on Google side.
+        //https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941
+        //#ifdef FIX_FIRERBASE_RTDB_PRINT_SILENT
+        //if (ut->stringCompare(fbdo->_ss.rtdb.resp_etag.c_str(), 0, fb_esp_pgm_str_151) && fbdo->_ss.rtdb.no_content_req && fbdo->_ss.rtdb.req_method != m_delete)
+        //{
+        //fbdo->_ss.http_code = FIREBASE_ERROR_PATH_NOT_EXIST;
+        //fbdo->_ss.rtdb.path_not_found = true;
+        //}
+        //else
+        //fbdo->_ss.rtdb.path_not_found = false;
+        //#else
+
         if (ut->stringCompare(fbdo->_ss.rtdb.resp_etag.c_str(), 0, fb_esp_pgm_str_151) && response.noContent)
         {
             fbdo->_ss.http_code = FIREBASE_ERROR_PATH_NOT_EXIST;
@@ -2639,6 +2650,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
         }
         else
             fbdo->_ss.rtdb.path_not_found = false;
+        //#endif
 
         if (fbdo->_ss.http_code == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
         {
@@ -3150,10 +3162,12 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         header += fbdo->_ss.rtdb.file_name;
     }
 
-#ifndef FIX_FIRERBASE_RTDB_PRINT_SILENT
+    //This issue has been fixed on Google side.
+    //https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941
+    //#ifndef FIX_FIRERBASE_RTDB_PRINT_SILENT
     if (req->async || req->method == m_get_nocontent || req->method == m_restore || req->method == m_put_nocontent || req->method == m_patch_nocontent)
         ut->appendP(header, fb_esp_pgm_str_29);
-#endif
+    //#endif
 
     ut->appendP(header, fb_esp_pgm_str_30);
     ut->appendP(header, fb_esp_pgm_str_31);
