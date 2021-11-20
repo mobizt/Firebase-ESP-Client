@@ -88,7 +88,7 @@ All function for Realtime database between these libraries are compattible.  [Se
 
 ### Important Note
 
-Since library v2.6.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) as applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v2.6.6.
+Since library v2.6.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) was applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v2.6.6.
 
 The library v2.6.6 and later are recommended.
 
