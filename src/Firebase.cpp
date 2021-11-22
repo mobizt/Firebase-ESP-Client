@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.9
+ * The Firebase class, Firebase.cpp v1.0.10
  * 
- *  Created November 19, 2021
+ *  Created November 22, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -188,12 +188,14 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
     cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
 
     cfg->signer.lastReqMillis = 0;
-    cfg->signer.tokens.expires = 0;
-
-    //don't clear auth token if anonymous sign in
-    if (!cfg->signer.anonymous)
+   
+    //don't clear auth token if anonymous sign in or Email/Password sign up
+    if (!cfg->signer.anonymous && !cfg->signer.signup)
+    {
         ut->clearS(cfg->_int.auth_token);
-
+        cfg->signer.tokens.expires = 0;
+    }
+        
     if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
         cfg->signer.idTokenCutomSet = false;
 

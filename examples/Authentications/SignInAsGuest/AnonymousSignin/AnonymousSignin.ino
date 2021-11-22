@@ -18,6 +18,7 @@
  * 
  * Warning: this example will create a new anonymous user with 
  * different UID every time you run this example.
+ * 
 */
 
 #if defined(ESP32)
@@ -102,8 +103,8 @@ void setup()
      * under the Sign-in providers list, enable Anonymous provider.
      * 
      * Warning: this will create anonymous user everytime you called this function and your user list
-     * will grow up and the anonymous users stay in the user list after it created and can be garbage user
-     * after the generated id token from this anonymous user will not use anymore.
+     * will grow up and the anonymous users stay in the user list after it created, we recommend to delete
+     * this user after used.
      * 
      * https://stackoverflow.com/questions/38694015/what-happens-to-firebase-anonymous-users
      * https://stackoverflow.com/questions/39640574/how-to-bulk-delete-firebase-anonymous-users
