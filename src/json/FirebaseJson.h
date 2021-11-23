@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.5.3
+ * FirebaseJson, version 2.6.0
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * October 25, 2021
+ * November 23, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -66,7 +66,6 @@
 #endif
 #include "MB_String.h"
 
-
 #ifndef USE_MB_STRING
 #define USE_MB_STRING
 #endif
@@ -124,7 +123,7 @@ extern "C" __attribute__((weak)) void _putchar(char c)
 extern "C"
 {
 #endif
-#include "cJSON/cJSON.h"
+#include "MB_JSON/MB_JSON.h"
 #ifdef __cplusplus
 }
 #endif
@@ -219,7 +218,18 @@ static void *fb_js_malloc(size_t len)
     if ((p = (void *)ps_malloc(newLen)) == 0)
         return NULL;
 #else
-    if ((p = (void *)malloc(newLen)) == 0)
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+    ESP.setExternalHeap();
+#endif
+
+    bool nn = ((p = (void *)malloc(newLen)) > 0);
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+    ESP.resetHeap();
+#endif
+
+    if (!nn)
         return NULL;
 #endif
     return p;
@@ -231,14 +241,23 @@ static void fb_js_free(void *ptr)
         free(ptr);
 }
 
-
 static void *fb_js_realloc(void *ptr, size_t sz)
 {
     size_t newLen = getReservedLen(sz);
 #if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
     ptr = (void *)ps_realloc(ptr, newLen);
 #else
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+    ESP.setExternalHeap();
+#endif
+
     ptr = (void *)realloc(ptr, newLen);
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+    ESP.resetHeap();
+#endif
+
 #endif
     if (!ptr)
         return NULL;
@@ -246,7 +265,7 @@ static void *fb_js_realloc(void *ptr, size_t sz)
     return ptr;
 }
 
-static cJSON_Hooks cJSON_hooks __attribute__((used)) = {fb_js_malloc, fb_js_free, fb_js_realloc};
+static MB_JSON_Hooks MB_JSON_hooks __attribute__((used)) = {fb_js_malloc, fb_js_free, fb_js_realloc};
 
 namespace FB_JS
 {
@@ -538,7 +557,17 @@ private:
 
 #else
 
-        if ((p = (void *)malloc(len)) == 0)
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.setExternalHeap();
+#endif
+
+        bool nn = ((p = (void *)malloc(len)) > 0);
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.resetHeap();
+#endif
+
+        if (!nn)
             return NULL;
 
 #endif
@@ -728,7 +757,17 @@ private:
 
 #else
 
-        if ((p = (void *)malloc(newLen)) == 0)
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.setExternalHeap();
+#endif
+
+        bool nn = ((p = (void *)malloc(newLen)) > 0);
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.resetHeap();
+#endif
+
+        if (!nn)
             return NULL;
 
 #endif
@@ -1035,7 +1074,7 @@ private:
 
     struct search_result_t
     {
-        cJSON *parent = NULL;
+        MB_JSON *parent = NULL;
         key_status status = key_status_not_existed;
         int foundIndex = -1;
         int stopIndex = 0;
@@ -1062,8 +1101,8 @@ private:
         bool searchEnable = false;
         bool searchFinished = false;
         int matchesCount = 0;
-        cJSON *parent = NULL;
-        cJSON *parentArr = NULL;
+        MB_JSON *parent = NULL;
+        MB_JSON *parentArr = NULL;
         MBSTRING path;
         std::vector<MBSTRING> *searchKeys = NULL;
         std::vector<MBSTRING> pathList;
@@ -1090,24 +1129,24 @@ private:
     void mIteratorEnd(bool clearBuf = true);
     bool setRaw(const char *raw);
     void prepareRoot();
-    cJSON *parse(const char *raw);
-    void searchElements(std::vector<MBSTRING> &keys, cJSON *parent, struct search_result_t &r);
-    cJSON *getElement(cJSON *parent, const char *key, struct search_result_t &r);
-    void mAdd(std::vector<MBSTRING> keys, cJSON **parent, int beginIndex, cJSON *value);
+    MB_JSON *parse(const char *raw);
+    void searchElements(std::vector<MBSTRING> &keys, MB_JSON *parent, struct search_result_t &r);
+    MB_JSON *getElement(MB_JSON *parent, const char *key, struct search_result_t &r);
+    void mAdd(std::vector<MBSTRING> keys, MB_JSON **parent, int beginIndex, MB_JSON *value);
     void makeList(const char *str, std::vector<MBSTRING> &keys, char delim);
     void clearList(std::vector<MBSTRING> &keys);
-    bool isArray(cJSON *e);
-    bool isObject(cJSON *e);
-    cJSON *addArray(cJSON *parent, cJSON *e, size_t size);
-    void appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value);
-    void replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value);
-    void replace(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *item);
-    size_t mIteratorBegin(cJSON *parent);
-    size_t mIteratorBegin(cJSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria);
-    void collectResult(cJSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria);
+    bool isArray(MB_JSON *e);
+    bool isObject(MB_JSON *e);
+    MB_JSON *addArray(MB_JSON *parent, MB_JSON *e, size_t size);
+    void appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
+    void replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
+    void replace(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item);
+    size_t mIteratorBegin(MB_JSON *parent);
+    size_t mIteratorBegin(MB_JSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria);
+    void collectResult(MB_JSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria);
     void removeDepthPath();
-    void mCollectIterator(cJSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria);
-    void mIterate(cJSON *parent, int &arrIndex, struct fb_js_search_criteria_t *criteria);
+    void mCollectIterator(MB_JSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria);
+    void mIterate(MB_JSON *parent, int &arrIndex, struct fb_js_search_criteria_t *criteria);
     bool checkKeys(struct fb_js_search_criteria_t *criteria);
     int mIteratorGet(size_t index, int &type, String &key, String &value);
     struct fb_js_iterator_value_t mValueAt(size_t index);
@@ -1121,16 +1160,16 @@ private:
     void mSetFloatDigits(uint8_t digits);
     void mSetDoubleDigits(uint8_t digits);
     int mResponseCode();
-    bool mGet(cJSON *parent, FirebaseJsonData *result, const char *path, bool prettify = false);
+    bool mGet(MB_JSON *parent, FirebaseJsonData *result, const char *path, bool prettify = false);
     void mSetResInt(FirebaseJsonData *data, const char *value);
     void mSetResFloat(FirebaseJsonData *data, const char *value);
     void mSetElementType(FirebaseJsonData *result);
-    void mSet(const char *path, cJSON *value);
+    void mSet(const char *path, MB_JSON *value);
     void mCopy(FirebaseJsonBase &other);
-    size_t mSearch(cJSON *parent, struct fb_js_search_criteria_t *criteria);
-    size_t mSearch(cJSON *parent, FirebaseJsonData *result, struct fb_js_search_criteria_t *criteria, bool prettify = false);
-    size_t mSearch(cJSON *parent, const char *path, bool searchAll = false);
-    const char *mGetElementFullPath(cJSON *parent, const char *path, bool searchAll = false);
+    size_t mSearch(MB_JSON *parent, struct fb_js_search_criteria_t *criteria);
+    size_t mSearch(MB_JSON *parent, FirebaseJsonData *result, struct fb_js_search_criteria_t *criteria, bool prettify = false);
+    size_t mSearch(MB_JSON *parent, const char *path, bool searchAll = false);
+    const char *mGetElementFullPath(MB_JSON *parent, const char *path, bool searchAll = false);
 
 public:
     enum fb_json_root_type
@@ -1173,8 +1212,8 @@ protected:
     struct FB_JS::serial_data_t serData;
     fb_json_root_type root_type = Root_Type_JSON;
     struct iterator_data_t iterator_data;
-    cJSON *root = NULL;
-    cJSON_Hooks *hooks = NULL;
+    MB_JSON *root = NULL;
+    MB_JSON_Hooks *hooks = NULL;
     MBSTRING buf;
 
     template <typename T>
@@ -1197,11 +1236,11 @@ protected:
 
         if (std::is_same<T, char>::value)
         {
-            char *p = prettify ? cJSON_Print(root) : cJSON_PrintUnformatted(root);
+            char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
             if (p)
             {
                 strcpy(ptr, p);
-                cJSON_free(p);
+                MB_JSON_free(p);
                 return true;
             }
         }
@@ -1214,11 +1253,11 @@ protected:
         if (!root)
             return false;
 
-        char *p = prettify ? cJSON_Print(root) : cJSON_PrintUnformatted(root);
+        char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
         if (p)
         {
             out = p;
-            cJSON_free(p);
+            MB_JSON_free(p);
             return true;
         }
         return false;
@@ -1231,11 +1270,11 @@ protected:
     auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, HardwareSerial>::value, bool>::type
 #endif
     {
-        char *p = prettify ? cJSON_Print(root) : cJSON_PrintUnformatted(root);
+        char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
         if (p)
         {
             out.print(p);
-            cJSON_free(p);
+            MB_JSON_free(p);
             return true;
         }
         return false;
@@ -1245,11 +1284,11 @@ protected:
     template <typename T1, typename T2>
     auto toStringHandler(T1 &out, T2 topic) -> typename FB_JS::enable_if<FB_JS::is_same<T1, MQTTClient>::value && FB_JS::is_string<T2>::value, bool>::type
     {
-        char *p = cJSON_PrintUnformatted(root);
+        char *p = MB_JSON_PrintUnformatted(root);
         if (p)
         {
             out.publish(topic, p);
-            cJSON_free(p);
+            MB_JSON_free(p);
             return true;
         }
         return false;
@@ -1304,11 +1343,11 @@ protected:
 
         if (out)
         {
-            char *p = prettify ? cJSON_Print(root) : cJSON_PrintUnformatted(root);
+            char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
             if (p)
             {
                 ret = out.write((const uint8_t *)p, strlen(p)) == strlen(p);
-                cJSON_free(p);
+                MB_JSON_free(p);
                 return ret;
             }
         }
@@ -1372,7 +1411,17 @@ protected:
 
 #else
 
-        if ((p = (void *)malloc(newLen)) == 0)
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.setExternalHeap();
+#endif
+
+        bool nn = ((p = (void *)malloc(newLen)) > 0);
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.resetHeap();
+#endif
+
+        if (!nn)
             return NULL;
 
 #endif
@@ -2335,7 +2384,7 @@ public:
      * 
      * @return instance of an object.
     */
-    FirebaseJsonArray &add() { return nAdd(cJSON_CreateNull()); }
+    FirebaseJsonArray &add() { return nAdd(MB_JSON_CreateNull()); }
 
     /**
      * Add value to FirebaseJsonArray object.
@@ -2544,7 +2593,7 @@ public:
      * Get the length of the array in FirebaseJsonArray object.
      * @return length of the array.
     */
-    size_t size() { return cJSON_GetArraySize(root); }
+    size_t size() { return MB_JSON_GetArraySize(root); }
 
     /**
      * Get the FirebaseJsonArray object serialized string.
@@ -2635,8 +2684,8 @@ public:
     int responseCode() { return mResponseCode(); }
 
 private:
-    FirebaseJsonArray &nAdd(cJSON *value);
-    bool mSetIdx(int index, cJSON *value);
+    FirebaseJsonArray &nAdd(MB_JSON *value);
+    bool mSetIdx(int index, MB_JSON *value);
     bool mGetIdx(FirebaseJsonData *result, int index, bool prettify);
     bool mRemoveIdx(int index);
 
@@ -2667,135 +2716,135 @@ private:
     template <typename T>
     auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_bool<T>::value, FirebaseJsonArray &>::type
     {
-        nAdd(cJSON_CreateBool(arg));
+        nAdd(MB_JSON_CreateBool(arg));
         return *this;
     }
 
     template <typename T>
     auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, FirebaseJsonArray &>::type
     {
-        nAdd(cJSON_CreateRaw(NUM2S(arg).get()));
+        nAdd(MB_JSON_CreateRaw(NUM2S(arg).get()));
         return *this;
     }
 
     template <typename T>
     auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_same<T, float>::value, FirebaseJsonArray &>::type
     {
-        nAdd(cJSON_CreateRaw(NUM2S(arg, floatDigits).get()));
+        nAdd(MB_JSON_CreateRaw(NUM2S(arg, floatDigits).get()));
         return *this;
     }
 
     template <typename T>
     auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_same<T, double>::value, FirebaseJsonArray &>::type
     {
-        nAdd(cJSON_CreateRaw(NUM2S(arg, doubleDigits).get()));
+        nAdd(MB_JSON_CreateRaw(NUM2S(arg, doubleDigits).get()));
         return *this;
     }
 
     template <typename T>
     auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, FirebaseJsonArray &>::type
     {
-        nAdd(cJSON_CreateString(getStr(arg)));
+        nAdd(MB_JSON_CreateString(getStr(arg)));
         return *this;
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, std::nullptr_t>::value>::type
     {
-        mSet(getStr(arg1), cJSON_CreateNull());
+        mSet(getStr(arg1), MB_JSON_CreateNull());
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, std::nullptr_t>::value>::type
     {
-        mSetIdx(arg1, cJSON_CreateNull);
+        mSetIdx(arg1, MB_JSON_CreateNull);
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value>::type
     {
-        mSet(getStr(arg1), cJSON_CreateBool(arg2));
+        mSet(getStr(arg1), MB_JSON_CreateBool(arg2));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_bool<T2>::value>::type
     {
-        mSetIdx(arg1, cJSON_CreateBool(arg2));
+        mSetIdx(arg1, MB_JSON_CreateBool(arg2));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value>::type
     {
-        mSet(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2).get()));
+        mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2).get()));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_num_int<T2>::value>::type
     {
-        mSetIdx(arg1, cJSON_CreateRaw(NUM2S(arg2).get()));
+        mSetIdx(arg1, MB_JSON_CreateRaw(NUM2S(arg2).get()));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value>::type
     {
-        mSet(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+        mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, float>::value>::type
     {
-        mSetIdx(arg1, cJSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+        mSetIdx(arg1, MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value>::type
     {
-        mSet(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+        mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, double>::value>::type
     {
-        mSetIdx(arg1, cJSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+        mSetIdx(arg1, MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value>::type
     {
-        mSet(getStr(arg1), cJSON_CreateString(getStr(arg2)));
+        mSet(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_string<T2>::value>::type
     {
-        mSetIdx(arg1, cJSON_CreateString(getStr(arg2)));
+        mSetIdx(arg1, MB_JSON_CreateString(getStr(arg2)));
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJson>::value>::type
     {
-        cJSON *e = cJSON_Duplicate(arg2.root, true);
+        MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSet(getStr(arg1), e);
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, FirebaseJson>::value>::type
     {
-        cJSON *e = cJSON_Duplicate(arg2.root, true);
+        MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray>::value>::type
     {
-        cJSON *e = cJSON_Duplicate(arg2.root, true);
+        MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSet(getStr(arg1), e);
     }
 
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray>::value>::type
     {
-        cJSON *e = cJSON_Duplicate(arg2.root, true);
+        MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
     }
 };
@@ -3151,15 +3200,15 @@ public:
     int responseCode() { return mResponseCode(); }
 
 private:
-    FirebaseJson &nAdd(const char *key, cJSON *value);
+    FirebaseJson &nAdd(const char *key, MB_JSON *value);
 
     template <typename T1, typename T2>
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), cJSON_CreateBool(arg2));
+            nAdd(getStr(arg1), MB_JSON_CreateBool(arg2));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), cJSON_CreateBool(arg2));
+            mSet(getStr(arg1), MB_JSON_CreateBool(arg2));
         return *this;
     }
 
@@ -3167,9 +3216,9 @@ private:
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2).get()));
+            nAdd(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2).get()));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2).get()));
+            mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2).get()));
         return *this;
     }
 
@@ -3177,9 +3226,9 @@ private:
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+            nAdd(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+            mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
         return *this;
     }
 
@@ -3187,9 +3236,9 @@ private:
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+            nAdd(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), cJSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+            mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
         return *this;
     }
 
@@ -3197,16 +3246,16 @@ private:
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), cJSON_CreateString(getStr(arg2)));
+            nAdd(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), cJSON_CreateString(getStr(arg2)));
+            mSet(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
         return *this;
     }
 
     template <typename T>
     auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, FirebaseJson &>::type
     {
-        cJSON *e = cJSON_Duplicate(json.root, true);
+        MB_JSON *e = MB_JSON_Duplicate(json.root, true);
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg), e);
         else if (type == fb_json_func_type_set)
@@ -3217,7 +3266,7 @@ private:
     template <typename T>
     auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, FirebaseJson &>::type
     {
-        cJSON *e = cJSON_Duplicate(arr.root, true);
+        MB_JSON *e = MB_JSON_Duplicate(arr.root, true);
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg), e);
         else if (type == fb_json_func_type_set)

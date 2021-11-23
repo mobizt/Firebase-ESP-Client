@@ -1,10 +1,10 @@
 
 /*
- * FirebaseJson, version 2.5.3
+ * FirebaseJson, version 2.6.0
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * October 25, 2021
+ * November 23, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -45,7 +45,7 @@
 
 FirebaseJsonBase::FirebaseJsonBase()
 {
-    cJSON_InitHooks(&cJSON_hooks);
+    MB_JSON_InitHooks(&MB_JSON_hooks);
 }
 
 FirebaseJsonBase::~FirebaseJsonBase()
@@ -57,7 +57,7 @@ FirebaseJsonBase &FirebaseJsonBase::mClear()
 {
     mIteratorEnd();
     if (root != NULL)
-        cJSON_Delete(root);
+        MB_JSON_Delete(root);
     root = NULL;
     clearS(buf);
     errorPos = -1;
@@ -66,7 +66,7 @@ FirebaseJsonBase &FirebaseJsonBase::mClear()
 void FirebaseJsonBase::mCopy(FirebaseJsonBase &other)
 {
     mClear();
-    this->root = cJSON_Duplicate(other.root, true);
+    this->root = MB_JSON_Duplicate(other.root, true);
     this->doubleDigits = other.doubleDigits;
     this->floatDigits = other.floatDigits;
     this->httpCode = other.httpCode;
@@ -83,10 +83,10 @@ bool FirebaseJsonBase::setRaw(const char *raw)
     return root != NULL;
 }
 
-cJSON *FirebaseJsonBase::parse(const char *raw)
+MB_JSON *FirebaseJsonBase::parse(const char *raw)
 {
     const char *s = NULL;
-    cJSON *e = cJSON_ParseWithOpts(raw, &s, 1);
+    MB_JSON *e = MB_JSON_ParseWithOpts(raw, &s, 1);
     errorPos = (s - raw != (int)strlen(raw)) ? s - raw : -1;
     return e;
 }
@@ -96,15 +96,15 @@ void FirebaseJsonBase::prepareRoot()
     if (root == NULL)
     {
         if (root_type == Root_Type_JSONArray)
-            root = cJSON_CreateArray();
+            root = MB_JSON_CreateArray();
         else
-            root = cJSON_CreateObject();
+            root = MB_JSON_CreateObject();
     }
 }
 
-void FirebaseJsonBase::searchElements(std::vector<MBSTRING> &keys, cJSON *parent, struct search_result_t &r)
+void FirebaseJsonBase::searchElements(std::vector<MBSTRING> &keys, MB_JSON *parent, struct search_result_t &r)
 {
-    cJSON *e = parent;
+    MB_JSON *e = parent;
     for (size_t i = 0; i < keys.size(); i++)
     {
         r.status = key_status_not_existed;
@@ -122,22 +122,22 @@ void FirebaseJsonBase::searchElements(std::vector<MBSTRING> &keys, cJSON *parent
     }
 }
 
-cJSON *FirebaseJsonBase::getElement(cJSON *parent, const char *key, struct search_result_t &r)
+MB_JSON *FirebaseJsonBase::getElement(MB_JSON *parent, const char *key, struct search_result_t &r)
 {
-    cJSON *e = NULL;
+    MB_JSON *e = NULL;
     bool isArrKey = isArrayKey(key);
     int index = isArrKey ? getArrIndex(key) : -1;
     if ((isArray(parent) && !isArrKey) || (isObject(parent) && isArrKey))
         r.status = key_status_mistype;
     else if (isArray(parent) && isArrKey)
     {
-        e = cJSON_GetArrayItem(parent, index);
+        e = MB_JSON_GetArrayItem(parent, index);
         if (e == NULL)
             r.status = key_status_out_of_range;
     }
     else if (isObject(parent) && !isArrKey)
     {
-        e = cJSON_GetObjectItemCaseSensitive(parent, key);
+        e = MB_JSON_GetObjectItemCaseSensitive(parent, key);
         if (e == NULL)
             r.status = key_status_not_existed;
     }
@@ -149,22 +149,22 @@ cJSON *FirebaseJsonBase::getElement(cJSON *parent, const char *key, struct searc
     return e;
 }
 
-void FirebaseJsonBase::mAdd(std::vector<MBSTRING> keys, cJSON **parent, int beginIndex, cJSON *value)
+void FirebaseJsonBase::mAdd(std::vector<MBSTRING> keys, MB_JSON **parent, int beginIndex, MB_JSON *value)
 {
-    cJSON *m_parent = *parent;
+    MB_JSON *m_parent = *parent;
 
     for (size_t i = beginIndex; i < keys.size(); i++)
     {
         bool isArrKey = isArrayKey(keys[i].c_str());
         int index = isArrKey ? getArrIndex(keys[i].c_str()) : -1;
-        cJSON *e = (i < keys.size() - 1) ? (isArrayKey(keys[i + 1].c_str()) ? cJSON_CreateArray() : cJSON_CreateObject()) : value;
+        MB_JSON *e = (i < keys.size() - 1) ? (isArrayKey(keys[i + 1].c_str()) ? MB_JSON_CreateArray() : MB_JSON_CreateObject()) : value;
 
         if (isArray(m_parent))
         {
             if (isArrKey)
                 m_parent = addArray(m_parent, e, index + 1);
             else
-                cJSON_AddItemToArray(m_parent, e);
+                MB_JSON_AddItemToArray(m_parent, e);
         }
         else
         {
@@ -172,15 +172,15 @@ void FirebaseJsonBase::mAdd(std::vector<MBSTRING> keys, cJSON **parent, int begi
             {
                 if ((int)i == beginIndex)
                 {
-                    m_parent = cJSON_CreateArray();
-                    cJSON_Delete(*parent);
+                    m_parent = MB_JSON_CreateArray();
+                    MB_JSON_Delete(*parent);
                     *parent = m_parent;
                 }
                 m_parent = addArray(m_parent, e, index + 1);
             }
             else
             {
-                cJSON_AddItemToObject(m_parent, keys[i].c_str(), e);
+                MB_JSON_AddItemToObject(m_parent, keys[i].c_str(), e);
                 m_parent = e;
             }
         }
@@ -230,59 +230,59 @@ void FirebaseJsonBase::clearList(std::vector<MBSTRING> &keys)
     std::vector<MBSTRING>().swap(keys);
 }
 
-bool FirebaseJsonBase::isArray(cJSON *e)
+bool FirebaseJsonBase::isArray(MB_JSON *e)
 {
-    return cJSON_IsArray(e);
+    return MB_JSON_IsArray(e);
 }
 
-bool FirebaseJsonBase::isObject(cJSON *e)
+bool FirebaseJsonBase::isObject(MB_JSON *e)
 {
-    return cJSON_IsObject(e);
+    return MB_JSON_IsObject(e);
 }
-cJSON *FirebaseJsonBase::addArray(cJSON *parent, cJSON *e, size_t size)
+MB_JSON *FirebaseJsonBase::addArray(MB_JSON *parent, MB_JSON *e, size_t size)
 {
     for (size_t i = 0; i < size - 1; i++)
-        cJSON_AddItemToArray(parent, cJSON_CreateNull());
-    cJSON_AddItemToArray(parent, e);
+        MB_JSON_AddItemToArray(parent, MB_JSON_CreateNull());
+    MB_JSON_AddItemToArray(parent, e);
     return e;
 }
 
-void FirebaseJsonBase::appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value)
+void FirebaseJsonBase::appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
 {
-    cJSON *item = NULL;
+    MB_JSON *item = NULL;
 
     int index = getArrIndex(keys[r.stopIndex].c_str());
 
     if (r.foundIndex > -1)
     {
         if (isArray(parent))
-            parent = cJSON_GetArrayItem(parent, getArrIndex(keys[r.foundIndex].c_str()));
+            parent = MB_JSON_GetArrayItem(parent, getArrIndex(keys[r.foundIndex].c_str()));
         else
-            parent = cJSON_GetObjectItemCaseSensitive(parent, keys[r.foundIndex].c_str());
+            parent = MB_JSON_GetObjectItemCaseSensitive(parent, keys[r.foundIndex].c_str());
     }
 
     if (isArray(parent))
     {
-        int arrSize = cJSON_GetArraySize(parent);
+        int arrSize = MB_JSON_GetArraySize(parent);
 
         if (r.stopIndex < (int)keys.size() - 1)
         {
-            item = isArrayKey(keys[r.stopIndex + 1].c_str()) ? cJSON_CreateArray() : cJSON_CreateObject();
+            item = isArrayKey(keys[r.stopIndex + 1].c_str()) ? MB_JSON_CreateArray() : MB_JSON_CreateObject();
             mAdd(keys, &item, r.stopIndex + 1, value);
         }
         else
             item = value;
 
         for (int i = arrSize; i < index; i++)
-            cJSON_AddItemToArray(parent, cJSON_CreateNull());
+            MB_JSON_AddItemToArray(parent, MB_JSON_CreateNull());
 
-        cJSON_AddItemToArray(parent, item);
+        MB_JSON_AddItemToArray(parent, item);
     }
     else
-        cJSON_Delete(value);
+        MB_JSON_Delete(value);
 }
 
-void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *value)
+void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
 {
     if (r.foundIndex == -1)
     {
@@ -290,18 +290,18 @@ void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_re
             mAdd(keys, &parent, 0, value);
         else if (r.status == key_status_mistype)
         {
-            cJSON *m_parent = cJSON_CreateObject();
+            MB_JSON *m_parent = MB_JSON_CreateObject();
             mAdd(keys, &m_parent, 0, value);
             *parent = *m_parent;
         }
         else
-            cJSON_Delete(value);
+            MB_JSON_Delete(value);
     }
     else
     {
         if (r.status == key_status_not_existed && !isArrayKey(keys[r.stopIndex].c_str()))
         {
-            cJSON *curItem = isArray(parent) ? cJSON_GetArrayItem(parent, getArrIndex(keys[r.foundIndex].c_str())) : cJSON_GetObjectItem(parent, keys[r.foundIndex].c_str());
+            MB_JSON *curItem = isArray(parent) ? MB_JSON_GetArrayItem(parent, getArrIndex(keys[r.foundIndex].c_str())) : MB_JSON_GetObjectItem(parent, keys[r.foundIndex].c_str());
             if (isObject(curItem))
             {
                 mAdd(keys, &curItem, r.foundIndex + 1, value);
@@ -309,11 +309,11 @@ void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_re
             }
         }
 
-        cJSON *item = NULL;
+        MB_JSON *item = NULL;
 
         if ((r.status == key_status_mistype ? r.stopIndex : r.foundIndex) < (int)keys.size() - 1)
         {
-            item = isArrayKey(keys[r.stopIndex].c_str()) ? cJSON_CreateArray() : cJSON_CreateObject();
+            item = isArrayKey(keys[r.stopIndex].c_str()) ? MB_JSON_CreateArray() : MB_JSON_CreateObject();
             mAdd(keys, &item, r.stopIndex, value);
         }
         else
@@ -323,30 +323,30 @@ void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_re
     }
 }
 
-void FirebaseJsonBase::replace(std::vector<MBSTRING> &keys, struct search_result_t &r, cJSON *parent, cJSON *item)
+void FirebaseJsonBase::replace(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item)
 {
     if (isArray(parent))
-        cJSON_ReplaceItemInArray(parent, getArrIndex(keys[r.foundIndex].c_str()), item);
+        MB_JSON_ReplaceItemInArray(parent, getArrIndex(keys[r.foundIndex].c_str()), item);
     else
-        cJSON_ReplaceItemInObject(parent, keys[r.foundIndex].c_str(), item);
+        MB_JSON_ReplaceItemInObject(parent, keys[r.foundIndex].c_str(), item);
 }
 
-size_t FirebaseJsonBase::mIteratorBegin(cJSON *parent)
+size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent)
 {
     mIteratorEnd();
-    char *p = cJSON_PrintUnformatted(parent);
+    char *p = MB_JSON_PrintUnformatted(parent);
     if (p == NULL)
         return 0;
 
     buf = p;
-    cJSON_free(p);
+    MB_JSON_free(p);
     iterator_data.buf_size = buf.length();
     int index = -1;
     mIterate(parent, index, NULL);
     return iterator_data.result.size();
 }
 
-size_t FirebaseJsonBase::mIteratorBegin(cJSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria)
+size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria)
 {
     mIteratorEnd();
 
@@ -380,11 +380,11 @@ void FirebaseJsonBase::mIteratorEnd(bool clearBuf)
     iterator_data.matchesCount = 0;
     iterator_data.searchKeys = NULL;
     if (iterator_data.parentArr != NULL)
-        cJSON_Delete(iterator_data.parentArr);
+        MB_JSON_Delete(iterator_data.parentArr);
     iterator_data.parentArr = NULL;
 }
 
-void FirebaseJsonBase::mIterate(cJSON *parent, int &arrIndex, struct fb_js_search_criteria_t *criteria)
+void FirebaseJsonBase::mIterate(MB_JSON *parent, int &arrIndex, struct fb_js_search_criteria_t *criteria)
 {
     if (!parent)
         return;
@@ -400,7 +400,7 @@ void FirebaseJsonBase::mIterate(cJSON *parent, int &arrIndex, struct fb_js_searc
     if (isAr)
         arrIndex = 0;
 
-    cJSON *e = parent->child;
+    MB_JSON *e = parent->child;
     if (e)
     {
         iterator_data.depth++;
@@ -417,7 +417,7 @@ void FirebaseJsonBase::mIterate(cJSON *parent, int &arrIndex, struct fb_js_searc
 
             if (isArray(e))
             {
-                cJSON *item = e->child;
+                MB_JSON *item = e->child;
                 int _arrIndex = 0;
 
                 if (e->child)
@@ -463,7 +463,7 @@ void FirebaseJsonBase::mIterate(cJSON *parent, int &arrIndex, struct fb_js_searc
     }
 }
 
-void FirebaseJsonBase::collectResult(cJSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria)
+void FirebaseJsonBase::collectResult(MB_JSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria)
 {
     if (!iterator_data.searchEnable)
         return;
@@ -471,7 +471,7 @@ void FirebaseJsonBase::collectResult(cJSON *e, const char *key, int arrIndex, st
     bool searchComplete = false;
     bool keyMatches = false;
     int matchesCount = iterator_data.matchesCount;
-    cJSON *ref = e;
+    MB_JSON *ref = e;
 
     if (key != NULL)
     {
@@ -510,7 +510,7 @@ void FirebaseJsonBase::collectResult(cJSON *e, const char *key, int arrIndex, st
             if (criteria->endDepth > -1 && iterator_data.depth > criteria->endDepth + 1)
                 return;
 
-            char *p = cJSON_PrintUnformatted(e);
+            char *p = MB_JSON_PrintUnformatted(e);
             if (p)
             {
                 if (strcmp(criteria->value.c_str(), p) == 0)
@@ -523,7 +523,7 @@ void FirebaseJsonBase::collectResult(cJSON *e, const char *key, int arrIndex, st
                             iterator_data.matchesCount++;
                     }
                 }
-                cJSON_free(p);
+                MB_JSON_free(p);
             }
         }
     }
@@ -540,12 +540,12 @@ void FirebaseJsonBase::collectResult(cJSON *e, const char *key, int arrIndex, st
         {
             if (ref != NULL)
             {
-                cJSON *itm = cJSON_Duplicate(ref, true);
+                MB_JSON *itm = MB_JSON_Duplicate(ref, true);
                 if (itm != NULL)
                 {
                     if (iterator_data.parentArr == NULL)
-                        iterator_data.parentArr = cJSON_CreateArray();
-                    cJSON_AddItemToArray(iterator_data.parentArr, itm);
+                        iterator_data.parentArr = MB_JSON_CreateArray();
+                    MB_JSON_AddItemToArray(iterator_data.parentArr, itm);
                 }
             }
 
@@ -575,7 +575,7 @@ void FirebaseJsonBase::removeDepthPath()
     }
 }
 
-void FirebaseJsonBase::mCollectIterator(cJSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria)
+void FirebaseJsonBase::mCollectIterator(MB_JSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria)
 {
     if (!iterator_data.searchEnable)
     {
@@ -588,11 +588,11 @@ void FirebaseJsonBase::mCollectIterator(cJSON *e, int type, int &arrIndex, struc
             {
                 result.ofs1 = pos;
                 result.len1 = strlen(e->string);
-                iterator_data.buf_offset = (e->type != cJSON_Object && e->type != cJSON_Array) ? pos + result.len1 : pos;
+                iterator_data.buf_offset = (e->type != MB_JSON_Object && e->type != MB_JSON_Array) ? pos + result.len1 : pos;
             }
         }
 
-        char *p = cJSON_PrintUnformatted(e);
+        char *p = MB_JSON_PrintUnformatted(e);
         if (p)
         {
             int i = iterator_data.buf_offset;
@@ -601,8 +601,8 @@ void FirebaseJsonBase::mCollectIterator(cJSON *e, int type, int &arrIndex, struc
             {
                 result.ofs2 = pos - result.ofs1 - result.len1;
                 result.len2 = strlen(p);
-                cJSON_free(p);
-                iterator_data.buf_offset = (e->type != cJSON_Object && e->type != cJSON_Array) ? pos + result.len2 : pos;
+                MB_JSON_free(p);
+                iterator_data.buf_offset = (e->type != MB_JSON_Object && e->type != MB_JSON_Array) ? pos + result.len2 : pos;
             }
         }
         result.type = type;
@@ -757,11 +757,11 @@ void FirebaseJsonBase::toBuf(fb_json_serialize_mode mode)
 {
     if (root != NULL)
     {
-        char *out = mode == fb_json_serialize_mode_pretty ? cJSON_Print(root) : cJSON_PrintUnformatted(root);
+        char *out = mode == fb_json_serialize_mode_pretty ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
         if (out)
         {
             storeS(buf, out, false);
-            cJSON_free(out);
+            MB_JSON_free(out);
         }
     }
 }
@@ -773,7 +773,7 @@ bool FirebaseJsonBase::mReadClient(Client *client)
     if (readClient(client, buf))
     {
         if (root != NULL)
-            cJSON_Delete(root);
+            MB_JSON_Delete(root);
         root = parse(buf.c_str());
         clearS(buf);
         return root != NULL;
@@ -787,7 +787,7 @@ bool FirebaseJsonBase::mReadStream(Stream *s, int timeoutMS)
     if (readStream(s, serData, buf, true, timeoutMS))
     {
         if (root != NULL)
-            cJSON_Delete(root);
+            MB_JSON_Delete(root);
         root = parse(buf.c_str());
         clearS(buf);
         return root != NULL;
@@ -817,7 +817,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
         }
     }
 
-    cJSON *parent = root;
+    MB_JSON *parent = root;
 
     struct search_result_t r;
     searchElements(keys, parent, r);
@@ -827,10 +827,10 @@ bool FirebaseJsonBase::mRemove(const char *path)
     {
         ret = true;
         if (isArray(parent))
-            cJSON_DeleteItemFromArray(parent, getArrIndex(keys[r.stopIndex].c_str()));
+            MB_JSON_DeleteItemFromArray(parent, getArrIndex(keys[r.stopIndex].c_str()));
         else
         {
-            cJSON_DeleteItemFromObjectCaseSensitive(parent, keys[r.stopIndex].c_str());
+            MB_JSON_DeleteItemFromObjectCaseSensitive(parent, keys[r.stopIndex].c_str());
             if (parent->child == NULL && r.stopIndex > 0)
             {
                 MBSTRING path;
@@ -861,7 +861,7 @@ void FirebaseJsonBase::mGetPath(MBSTRING &path, std::vector<MBSTRING> paths, int
 
 size_t FirebaseJsonBase::mGetSerializedBufferLength(bool prettify)
 {
-    return cJSON_SerializedBufferLength(root, prettify);
+    return MB_JSON_SerializedBufferLength(root, prettify);
 }
 
 void FirebaseJsonBase::mSetFloatDigits(uint8_t digits)
@@ -879,7 +879,7 @@ int FirebaseJsonBase::mResponseCode()
     return httpCode;
 }
 
-bool FirebaseJsonBase::mGet(cJSON *parent, FirebaseJsonData *result, const char *path, bool prettify)
+bool FirebaseJsonBase::mGet(MB_JSON *parent, FirebaseJsonData *result, const char *path, bool prettify)
 {
     bool ret = false;
     prepareRoot();
@@ -895,27 +895,27 @@ bool FirebaseJsonBase::mGet(cJSON *parent, FirebaseJsonData *result, const char 
         }
     }
 
-    cJSON *_parent = parent;
+    MB_JSON *_parent = parent;
     struct search_result_t r;
     searchElements(keys, parent, r);
     _parent = r.parent;
 
     if (r.status == key_status_existed)
     {
-        cJSON *data = NULL;
+        MB_JSON *data = NULL;
         if (isArray(_parent))
-            data = cJSON_GetArrayItem(_parent, getArrIndex(keys[r.stopIndex].c_str()));
+            data = MB_JSON_GetArrayItem(_parent, getArrIndex(keys[r.stopIndex].c_str()));
         else
-            data = cJSON_GetObjectItemCaseSensitive(_parent, keys[r.stopIndex].c_str());
+            data = MB_JSON_GetObjectItemCaseSensitive(_parent, keys[r.stopIndex].c_str());
 
         if (data != NULL)
         {
             if (result != NULL)
             {
                 result->clear();
-                char *p = prettify ? cJSON_Print(data) : cJSON_PrintUnformatted(data);
+                char *p = prettify ? MB_JSON_Print(data) : MB_JSON_PrintUnformatted(data);
                 result->stringValue = p;
-                cJSON_free(p);
+                MB_JSON_free(p);
                 result->type_num = data->type;
                 result->success = true;
                 mSetElementType(result);
@@ -959,22 +959,22 @@ void FirebaseJsonBase::mSetResFloat(FirebaseJsonData *data, const char *value)
 void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
 {
     char *buf = (char *)newP(32);
-    if (result->type_num == cJSON_Invalid)
+    if (result->type_num == MB_JSON_Invalid)
     {
         strcpy(buf, (const char *)FLASH_MCR("undefined"));
         result->typeNum = JSON_UNDEFINED;
     }
-    else if (result->type_num == cJSON_Object)
+    else if (result->type_num == MB_JSON_Object)
     {
         strcpy(buf, (const char *)FLASH_MCR("object"));
         result->typeNum = JSON_OBJECT;
     }
-    else if (result->type_num == cJSON_Array)
+    else if (result->type_num == MB_JSON_Array)
     {
         strcpy(buf, (const char *)FLASH_MCR("array"));
         result->typeNum = JSON_ARRAY;
     }
-    else if (result->type_num == cJSON_String)
+    else if (result->type_num == MB_JSON_String)
     {
         if (result->stringValue.c_str()[0] == '"')
             result->stringValue.remove(0, 1);
@@ -984,12 +984,12 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
         strcpy(buf, (const char *)FLASH_MCR("string"));
         result->typeNum = JSON_STRING;
     }
-    else if (result->type_num == cJSON_NULL)
+    else if (result->type_num == MB_JSON_NULL)
     {
         strcpy(buf, (const char *)FLASH_MCR("null"));
         result->typeNum = JSON_NULL;
     }
-    else if (result->type_num == cJSON_False || result->type_num == cJSON_True)
+    else if (result->type_num == MB_JSON_False || result->type_num == MB_JSON_True)
     {
         strcpy(buf, (const char *)FLASH_MCR("boolean"));
         bool t = strcmp(result->stringValue.c_str(), (const char *)FLASH_MCR("true")) == 0;
@@ -1002,7 +1002,7 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
         result->floatValue = t;
         result->doubleValue = t;
     }
-    else if (result->type_num == cJSON_Number || result->type_num == cJSON_Raw)
+    else if (result->type_num == MB_JSON_Number || result->type_num == MB_JSON_Raw)
     {
         mSetResInt(result, result->stringValue.c_str());
         mSetResFloat(result, result->stringValue.c_str());
@@ -1032,7 +1032,7 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
     delP(&buf);
 }
 
-void FirebaseJsonBase::mSet(const char *path, cJSON *value)
+void FirebaseJsonBase::mSet(const char *path, MB_JSON *value)
 {
     prepareRoot();
     std::vector<MBSTRING> keys = std::vector<MBSTRING>();
@@ -1042,19 +1042,19 @@ void FirebaseJsonBase::mSet(const char *path, cJSON *value)
     {
         if ((isArrayKey(keys[0].c_str()) && root_type == Root_Type_JSON) || (!isArrayKey(keys[0].c_str()) && root_type == Root_Type_JSONArray))
         {
-            cJSON_Delete(value);
+            MB_JSON_Delete(value);
             clearList(keys);
             return;
         }
     }
 
-    cJSON *parent = root;
+    MB_JSON *parent = root;
     struct search_result_t r;
     searchElements(keys, parent, r);
     parent = r.parent;
 
     if (value == NULL)
-        value = cJSON_CreateNull();
+        value = MB_JSON_CreateNull();
 
     if (r.status == key_status_mistype || r.status == key_status_not_existed)
         replaceItem(keys, r, parent, value);
@@ -1063,12 +1063,12 @@ void FirebaseJsonBase::mSet(const char *path, cJSON *value)
     else if (r.status == key_status_existed)
         replace(keys, r, parent, value);
     else
-        cJSON_Delete(value);
+        MB_JSON_Delete(value);
 
     clearList(keys);
 }
 
-size_t FirebaseJsonBase::mSearch(cJSON *parent, struct fb_js_search_criteria_t *criteria)
+size_t FirebaseJsonBase::mSearch(MB_JSON *parent, struct fb_js_search_criteria_t *criteria)
 {
     size_t ret = 0;
     std::vector<MBSTRING> keys = std::vector<MBSTRING>();
@@ -1085,7 +1085,7 @@ size_t FirebaseJsonBase::mSearch(cJSON *parent, struct fb_js_search_criteria_t *
     return ret;
 }
 
-size_t FirebaseJsonBase::mSearch(cJSON *parent, const char *path, bool searchAll)
+size_t FirebaseJsonBase::mSearch(MB_JSON *parent, const char *path, bool searchAll)
 {
     struct fb_js_search_criteria_t criteria;
     criteria.searchAll = searchAll;
@@ -1093,7 +1093,7 @@ size_t FirebaseJsonBase::mSearch(cJSON *parent, const char *path, bool searchAll
     return mSearch(parent, &criteria);
 }
 
-const char *FirebaseJsonBase::mGetElementFullPath(cJSON *parent, const char *path, bool searchAll)
+const char *FirebaseJsonBase::mGetElementFullPath(MB_JSON *parent, const char *path, bool searchAll)
 {
     struct fb_js_search_criteria_t criteria;
     criteria.searchAll = searchAll;
@@ -1102,7 +1102,7 @@ const char *FirebaseJsonBase::mGetElementFullPath(cJSON *parent, const char *pat
     return buf.c_str();
 }
 
-size_t FirebaseJsonBase::mSearch(cJSON *parent, FirebaseJsonData *result, struct fb_js_search_criteria_t *criteria, bool prettify)
+size_t FirebaseJsonBase::mSearch(MB_JSON *parent, FirebaseJsonData *result, struct fb_js_search_criteria_t *criteria, bool prettify)
 {
     size_t ret = 0;
 
@@ -1127,9 +1127,9 @@ size_t FirebaseJsonBase::mSearch(cJSON *parent, FirebaseJsonData *result, struct
             {
                 if (iterator_data.parentArr != NULL)
                 {
-                    char *p = prettify ? cJSON_Print(iterator_data.parentArr) : cJSON_PrintUnformatted(iterator_data.parentArr);
+                    char *p = prettify ? MB_JSON_Print(iterator_data.parentArr) : MB_JSON_PrintUnformatted(iterator_data.parentArr);
                     result->stringValue = p;
-                    cJSON_free(p);
+                    MB_JSON_free(p);
                     result->type_num = iterator_data.parentArr->type;
                     iterator_data.path += (const char *)FLASH_MCR("]");
                     result->searchPath = iterator_data.path.c_str();
@@ -1152,9 +1152,9 @@ size_t FirebaseJsonBase::mSearch(cJSON *parent, FirebaseJsonData *result, struct
                 result->searchPath = path.c_str();
                 if (iterator_data.parent != NULL)
                 {
-                    char *p = prettify ? cJSON_Print(iterator_data.parent) : cJSON_PrintUnformatted(iterator_data.parent);
+                    char *p = prettify ? MB_JSON_Print(iterator_data.parent) : MB_JSON_PrintUnformatted(iterator_data.parent);
                     result->stringValue = p;
-                    cJSON_free(p);
+                    MB_JSON_free(p);
                     result->type_num = iterator_data.parent->type;
                     result->success = true;
                     mSetElementType(result);
@@ -1187,7 +1187,7 @@ FirebaseJson::~FirebaseJson()
     clear();
 }
 
-FirebaseJson &FirebaseJson::nAdd(const char *key, cJSON *value)
+FirebaseJson &FirebaseJson::nAdd(const char *key, MB_JSON *value)
 {
     prepareRoot();
     std::vector<MBSTRING> keys = std::vector<MBSTRING>();
@@ -1195,7 +1195,7 @@ FirebaseJson &FirebaseJson::nAdd(const char *key, cJSON *value)
     keys.push_back(key);
 
     if (value == NULL)
-        value = cJSON_CreateNull();
+        value = MB_JSON_CreateNull();
 
     if (keys.size() > 0)
     {
@@ -1232,14 +1232,14 @@ FirebaseJsonArray::FirebaseJsonArray(FirebaseJsonArray &other)
         mCopy(other);
 }
 
-FirebaseJsonArray &FirebaseJsonArray::nAdd(cJSON *value)
+FirebaseJsonArray &FirebaseJsonArray::nAdd(MB_JSON *value)
 {
     prepareRoot();
 
     if (value == NULL)
-        value = cJSON_CreateNull();
+        value = MB_JSON_CreateNull();
 
-    cJSON_AddItemToArray(root, value);
+    MB_JSON_AddItemToArray(root, value);
 
     return *this;
 }
@@ -1251,15 +1251,15 @@ bool FirebaseJsonArray::mGetIdx(FirebaseJsonData *result, int index, bool pretti
 
     result->clear();
 
-    cJSON *data = NULL;
+    MB_JSON *data = NULL;
     if (isArray(root))
-        data = cJSON_GetArrayItem(root, index);
+        data = MB_JSON_GetArrayItem(root, index);
 
     if (data != NULL)
     {
-        char *p = prettify ? cJSON_Print(data) : cJSON_PrintUnformatted(data);
+        char *p = prettify ? MB_JSON_Print(data) : MB_JSON_PrintUnformatted(data);
         result->stringValue = p;
-        cJSON_free(p);
+        MB_JSON_free(p);
         result->type_num = data->type;
         result->success = true;
         mSetElementType(result);
@@ -1268,30 +1268,30 @@ bool FirebaseJsonArray::mGetIdx(FirebaseJsonData *result, int index, bool pretti
     return ret;
 }
 
-bool FirebaseJsonArray::mSetIdx(int index, cJSON *value)
+bool FirebaseJsonArray::mSetIdx(int index, MB_JSON *value)
 {
-    int size = cJSON_GetArraySize(root);
+    int size = MB_JSON_GetArraySize(root);
     if (index < size)
-        return cJSON_ReplaceItemInArray(root, index, value);
+        return MB_JSON_ReplaceItemInArray(root, index, value);
     else
     {
         while (size < index)
         {
-            cJSON_AddItemToArray(root, cJSON_CreateNull());
+            MB_JSON_AddItemToArray(root, MB_JSON_CreateNull());
             size++;
         }
-        cJSON_AddItemToArray(root, value);
+        MB_JSON_AddItemToArray(root, value);
     }
     return true;
 }
 
 bool FirebaseJsonArray::mRemoveIdx(int index)
 {
-    int size = cJSON_GetArraySize(root);
+    int size = MB_JSON_GetArraySize(root);
     if (index < size)
     {
-        cJSON_DeleteItemFromArray(root, index);
-        return size != cJSON_GetArraySize(root);
+        MB_JSON_DeleteItemFromArray(root, index);
+        return size != MB_JSON_GetArraySize(root);
     }
     return false;
 }
@@ -1304,14 +1304,14 @@ FirebaseJsonArray &FirebaseJsonArray::clear()
 
 FirebaseJsonArray &FirebaseJsonArray::add(FirebaseJson &value)
 {
-    cJSON *e = cJSON_Duplicate(value.root, true);
+    MB_JSON *e = MB_JSON_Duplicate(value.root, true);
     nAdd(e);
     return *this;
 }
 
 FirebaseJsonArray &FirebaseJsonArray::add(FirebaseJsonArray &value)
 {
-    cJSON *e = cJSON_Duplicate(value.root, true);
+    MB_JSON *e = MB_JSON_Duplicate(value.root, true);
     nAdd(e);
     return *this;
 }
@@ -1336,7 +1336,7 @@ bool FirebaseJsonData::mGetArray(const char *source, FirebaseJsonArray &jsonArra
 {
 
     if (jsonArray.root != NULL)
-        cJSON_Delete(jsonArray.root);
+        MB_JSON_Delete(jsonArray.root);
 
     jsonArray.root = jsonArray.parse(source);
 
@@ -1353,7 +1353,7 @@ bool FirebaseJsonData::getJSON(FirebaseJson &json)
 bool FirebaseJsonData::mGetJSON(const char *source, FirebaseJson &json)
 {
     if (json.root != NULL)
-        cJSON_Delete(json.root);
+        MB_JSON_Delete(json.root);
 
     json.root = json.parse(source);
 

@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.10
+ * The Firebase class, Firebase.cpp v1.0.11
  * 
- *  Created November 22, 2021
+ *  Created November 23, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -188,14 +188,14 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
     cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
 
     cfg->signer.lastReqMillis = 0;
-   
+
     //don't clear auth token if anonymous sign in or Email/Password sign up
     if (!cfg->signer.anonymous && !cfg->signer.signup)
     {
         ut->clearS(cfg->_int.auth_token);
         cfg->signer.tokens.expires = 0;
     }
-        
+
     if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
         cfg->signer.idTokenCutomSet = false;
 
@@ -435,11 +435,13 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
     cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
 
     cfg->signer.lastReqMillis = 0;
-    cfg->signer.tokens.expires = 0;
 
-    //don't clear auth token if anonymous sign in
-    if (!cfg->signer.anonymous)
+    //don't clear auth token if anonymous sign in or Email/Password sign up
+    if (!cfg->signer.anonymous && !cfg->signer.signup)
+    {
         ut->clearS(cfg->_int.auth_token);
+        cfg->signer.tokens.expires = 0;
+    }
 
     if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
         cfg->signer.idTokenCutomSet = false;
@@ -609,7 +611,7 @@ bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 
 bool FIREBASE_CLASS::sdMMCBegin(const String &mountpoint, bool mode1bit, bool format_if_mount_failed)
 {
-#if defined (SD_FS) && defined(ESP32) && defined(CARD_TYPE_SD_MMC)
+#if defined(SD_FS) && defined(ESP32) && defined(CARD_TYPE_SD_MMC)
     if (Signer.getCfg())
     {
         Signer.getCfg()->_int.sd_config.sd_mmc_mountpoint = mountpoint;

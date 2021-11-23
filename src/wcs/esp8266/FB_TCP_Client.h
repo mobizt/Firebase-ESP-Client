@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.15
+ * Firebase TCP Client v1.1.16
  * 
- * Created November 19, 2021
+ * Created November 23, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -70,6 +70,9 @@
 #define SD_FS DEFAULT_SD_FS
 #endif
 
+#if defined(FIREBASE_USE_PSRAM)
+#define FIREBASEJSON_USE_PSRAM
+#endif
 
 #include "./json/FirebaseJson.h"
 

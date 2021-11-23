@@ -56,8 +56,8 @@
 //Comment to exclude Cloud Function for Firebase
 #define ENABLE_FB_FUNCTIONS
 
-/** Use PSRAM for supported ESP32 module */
-#if defined(ESP32)
+/** Use PSRAM for supported ESP32/ESP8266 module */
+#if defined(ESP32) || defined(ESP8266)
 #define FIREBASE_USE_PSRAM
 #endif
 

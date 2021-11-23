@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.5
+ * Google's Firebase Util class, Utils.h version 1.1.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 20, 2021
+ * Created November 23, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -303,7 +303,17 @@ public:
 
 #else
 
-        if ((p = (void *)malloc(newLen)) == 0)
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.setExternalHeap();
+#endif
+
+        bool nn = ((p = (void *)malloc(newLen)) > 0);
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.resetHeap();
+#endif
+
+        if (!nn)
             return NULL;
 
 #endif
