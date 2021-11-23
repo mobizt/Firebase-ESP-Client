@@ -98,13 +98,14 @@ typedef struct
 {
     const unsigned char *json;
     size_t position;
-} error;
-static error global_error = {NULL, 0};
+} MB_JSON_error;
+
+static MB_JSON_error MB_JSON_global_error = {NULL, 0};
 
 MB_JSON_PUBLIC(const char *)
 MB_JSON_GetErrorPtr(void)
 {
-    return (const char *)(global_error.json + global_error.position);
+    return (const char *)(MB_JSON_global_error.json + MB_JSON_global_error.position);
 }
 
 MB_JSON_PUBLIC(char *)
@@ -144,7 +145,7 @@ MB_JSON_Version(void)
 }
 
 /* Case insensitive string comparison, doesn't consider two NULL pointers equal though */
-static int case_insensitive_strcmp(const unsigned char *string1, const unsigned char *string2)
+static int MB_JSON_case_insensitive_strcmp(const unsigned char *string1, const unsigned char *string2)
 {
     if ((string1 == NULL) || (string2 == NULL))
     {
@@ -167,12 +168,12 @@ static int case_insensitive_strcmp(const unsigned char *string1, const unsigned 
     return tolower(*string1) - tolower(*string2);
 }
 
-typedef struct internal_hooks
+typedef struct MB_JSON_internal_hooks
 {
     void *(MB_JSON_CDECL *allocate)(size_t size);
     void(MB_JSON_CDECL *deallocate)(void *pointer);
     void *(MB_JSON_CDECL *reallocate)(void *pointer, size_t size);
-} internal_hooks;
+} MB_JSON_internal_hooks;
 
 #if defined(_MSC_VER)
 /* work around MSVC error C2322: '...' address of dllimport '...' is not static */
@@ -189,17 +190,17 @@ static void *MB_JSON_CDECL internal_realloc(void *pointer, size_t size)
     return realloc(pointer, size);
 }
 #else
-#define internal_malloc malloc
-#define internal_free free
-#define internal_realloc realloc
+#define MB_JSON_internal_malloc malloc
+#define MB_JSON_internal_free free
+#define MB_JSON_internal_realloc realloc
 #endif
 
 /* strlen of character literals resolved at compile time */
-#define static_strlen(string_literal) (sizeof(string_literal) - sizeof(""))
+#define MB_JSON_static_strlen(string_literal) (sizeof(string_literal) - sizeof(""))
 
-static internal_hooks global_hooks = {internal_malloc, internal_free, internal_realloc};
+static MB_JSON_internal_hooks MB_JSON_global_hooks = {MB_JSON_internal_malloc, MB_JSON_internal_free, MB_JSON_internal_realloc};
 
-static unsigned char *MB_JSON_strdup(const unsigned char *string, const internal_hooks *const hooks)
+static unsigned char *MB_JSON_strdup(const unsigned char *string, const MB_JSON_internal_hooks *const hooks)
 {
     size_t length = 0;
     unsigned char *copy = NULL;
@@ -226,34 +227,34 @@ MB_JSON_InitHooks(MB_JSON_Hooks *hooks)
     if (hooks == NULL)
     {
         /* Reset hooks */
-        global_hooks.allocate = malloc;
-        global_hooks.deallocate = free;
-        global_hooks.reallocate = realloc;
+        MB_JSON_global_hooks.allocate = malloc;
+        MB_JSON_global_hooks.deallocate = free;
+        MB_JSON_global_hooks.reallocate = realloc;
         return;
     }
 
-    global_hooks.allocate = malloc;
+    MB_JSON_global_hooks.allocate = malloc;
     if (hooks->malloc_fn != NULL)
     {
-        global_hooks.allocate = hooks->malloc_fn;
+        MB_JSON_global_hooks.allocate = hooks->malloc_fn;
     }
 
-    global_hooks.deallocate = free;
+    MB_JSON_global_hooks.deallocate = free;
     if (hooks->free_fn != NULL)
     {
-        global_hooks.deallocate = hooks->free_fn;
+        MB_JSON_global_hooks.deallocate = hooks->free_fn;
     }
 
     /* use realloc only if both free and malloc are used */
-    global_hooks.reallocate = hooks->realloc_fn;
-    if ((global_hooks.allocate == malloc) && (global_hooks.deallocate == free))
+    MB_JSON_global_hooks.reallocate = hooks->realloc_fn;
+    if ((MB_JSON_global_hooks.allocate == malloc) && (MB_JSON_global_hooks.deallocate == free))
     {
-        global_hooks.reallocate = realloc;
+        MB_JSON_global_hooks.reallocate = realloc;
     }
 }
 
 /* Internal constructor. */
-static MB_JSON *MB_JSON_New_Item(const internal_hooks *const hooks)
+static MB_JSON *MB_JSON_New_Item(const MB_JSON_internal_hooks *const hooks)
 {
     MB_JSON *node = (MB_JSON *)hooks->allocate(sizeof(MB_JSON));
     if (node)
@@ -278,13 +279,13 @@ MB_JSON_Delete(MB_JSON *item)
         }
         if (!(item->type & MB_JSON_IsReference) && (item->valuestring != NULL))
         {
-            global_hooks.deallocate(item->valuestring);
+            MB_JSON_global_hooks.deallocate(item->valuestring);
         }
         if (!(item->type & MB_JSON_StringIsConst) && (item->string != NULL))
         {
-            global_hooks.deallocate(item->string);
+            MB_JSON_global_hooks.deallocate(item->string);
         }
-        global_hooks.deallocate(item);
+        MB_JSON_global_hooks.deallocate(item);
         item = next;
     }
 }
@@ -306,7 +307,7 @@ typedef struct
     size_t length;
     size_t offset;
     size_t depth; /* How deeply nested (in arrays/objects) is the input at the current offset. */
-    internal_hooks hooks;
+    MB_JSON_internal_hooks hooks;
 } parse_buffer;
 
 /* check if the given size is left to read in a given parse buffer (starting with 1) */
@@ -428,7 +429,7 @@ MB_JSON_SetValuestring(MB_JSON *object, const char *valuestring)
         strcpy(object->valuestring, valuestring);
         return object->valuestring;
     }
-    copy = (char *)MB_JSON_strdup((const unsigned char *)valuestring, &global_hooks);
+    copy = (char *)MB_JSON_strdup((const unsigned char *)valuestring, &MB_JSON_global_hooks);
     if (copy == NULL)
     {
         return NULL;
@@ -450,7 +451,7 @@ typedef struct
     size_t depth; /* current nesting depth (for formatted printing) */
     MB_JSON_bool noalloc;
     MB_JSON_bool format; /* is this print a formatted print */
-    internal_hooks hooks;
+    MB_JSON_internal_hooks hooks;
 } printbuffer;
 
 typedef struct
@@ -1175,8 +1176,8 @@ MB_JSON_ParseWithLengthOpts(const char *value, size_t buffer_length, const char 
     MB_JSON *item = NULL;
 
     /* reset error position */
-    global_error.json = NULL;
-    global_error.position = 0;
+    MB_JSON_global_error.json = NULL;
+    MB_JSON_global_error.position = 0;
 
     if (value == NULL || 0 == buffer_length)
     {
@@ -1186,9 +1187,9 @@ MB_JSON_ParseWithLengthOpts(const char *value, size_t buffer_length, const char 
     buffer.content = (const unsigned char *)value;
     buffer.length = buffer_length;
     buffer.offset = 0;
-    buffer.hooks = global_hooks;
+    buffer.hooks = MB_JSON_global_hooks;
 
-    item = MB_JSON_New_Item(&global_hooks);
+    item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item == NULL) /* memory fail */
     {
         goto fail;
@@ -1224,7 +1225,7 @@ fail:
 
     if (value != NULL)
     {
-        error local_error;
+        MB_JSON_error local_error;
         local_error.json = (const unsigned char *)value;
         local_error.position = 0;
 
@@ -1242,7 +1243,7 @@ fail:
             *return_parse_end = (const char *)local_error.json + local_error.position;
         }
 
-        global_error = local_error;
+        MB_JSON_global_error = local_error;
     }
 
     return NULL;
@@ -1274,7 +1275,7 @@ size_t MB_JSON_SerializedBufferLength(const MB_JSON *const item, MB_JSON_bool fo
     return buf_len->size;
 }
 
-static unsigned char *print(const MB_JSON *const item, MB_JSON_bool format, const internal_hooks *const hooks)
+static unsigned char *print(const MB_JSON *const item, MB_JSON_bool format, const MB_JSON_internal_hooks *const hooks)
 {
     static const size_t default_buffer_size = 256;
     printbuffer buffer[1];
@@ -1343,13 +1344,13 @@ fail:
 MB_JSON_PUBLIC(char *)
 MB_JSON_Print(const MB_JSON *item)
 {
-    return (char *)print(item, true, &global_hooks);
+    return (char *)print(item, true, &MB_JSON_global_hooks);
 }
 
 MB_JSON_PUBLIC(char *)
 MB_JSON_PrintUnformatted(const MB_JSON *item)
 {
-    return (char *)print(item, false, &global_hooks);
+    return (char *)print(item, false, &MB_JSON_global_hooks);
 }
 
 MB_JSON_PUBLIC(char *)
@@ -1362,7 +1363,7 @@ MB_JSON_PrintBuffered(const MB_JSON *item, int prebuffer, MB_JSON_bool fmt)
         return NULL;
     }
 
-    p.buffer = (unsigned char *)global_hooks.allocate((size_t)prebuffer);
+    p.buffer = (unsigned char *)MB_JSON_global_hooks.allocate((size_t)prebuffer);
     if (!p.buffer)
     {
         return NULL;
@@ -1372,11 +1373,11 @@ MB_JSON_PrintBuffered(const MB_JSON *item, int prebuffer, MB_JSON_bool fmt)
     p.offset = 0;
     p.noalloc = false;
     p.format = fmt;
-    p.hooks = global_hooks;
+    p.hooks = MB_JSON_global_hooks;
 
     if (!print_value(item, &p))
     {
-        global_hooks.deallocate(p.buffer);
+        MB_JSON_global_hooks.deallocate(p.buffer);
         return NULL;
     }
 
@@ -1398,7 +1399,7 @@ MB_JSON_PrintPreallocated(MB_JSON *item, char *buffer, const int length, const M
     p.offset = 0;
     p.noalloc = true;
     p.format = format;
-    p.hooks = global_hooks;
+    p.hooks = MB_JSON_global_hooks;
 
     return print_value(item, &p);
 }
@@ -2217,7 +2218,7 @@ static MB_JSON *get_object_item(const MB_JSON *const object, const char *const n
     }
     else
     {
-        while ((current_element != NULL) && (case_insensitive_strcmp((const unsigned char *)name, (const unsigned char *)(current_element->string)) != 0))
+        while ((current_element != NULL) && (MB_JSON_case_insensitive_strcmp((const unsigned char *)name, (const unsigned char *)(current_element->string)) != 0))
         {
             current_element = current_element->next;
         }
@@ -2257,7 +2258,7 @@ static void suffix_object(MB_JSON *prev, MB_JSON *item)
 }
 
 /* Utility for handling references. */
-static MB_JSON *create_reference(const MB_JSON *item, const internal_hooks *const hooks)
+static MB_JSON *create_reference(const MB_JSON *item, const MB_JSON_internal_hooks *const hooks)
 {
     MB_JSON *reference = NULL;
     if (item == NULL)
@@ -2333,7 +2334,7 @@ static void *cast_away_const(const void *string)
 #pragma GCC diagnostic pop
 #endif
 
-static MB_JSON_bool add_item_to_object(MB_JSON *const object, const char *const string, MB_JSON *const item, const internal_hooks *const hooks, const MB_JSON_bool constant_key)
+static MB_JSON_bool add_item_to_object(MB_JSON *const object, const char *const string, MB_JSON *const item, const MB_JSON_internal_hooks *const hooks, const MB_JSON_bool constant_key)
 {
     char *new_key = NULL;
     int new_type = MB_JSON_Invalid;
@@ -2373,14 +2374,14 @@ static MB_JSON_bool add_item_to_object(MB_JSON *const object, const char *const 
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_AddItemToObject(MB_JSON *object, const char *string, MB_JSON *item)
 {
-    return add_item_to_object(object, string, item, &global_hooks, false);
+    return add_item_to_object(object, string, item, &MB_JSON_global_hooks, false);
 }
 
 /* Add an item to an object with constant string as key */
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_AddItemToObjectCS(MB_JSON *object, const char *string, MB_JSON *item)
 {
-    return add_item_to_object(object, string, item, &global_hooks, true);
+    return add_item_to_object(object, string, item, &MB_JSON_global_hooks, true);
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
@@ -2391,7 +2392,7 @@ MB_JSON_AddItemReferenceToArray(MB_JSON *array, MB_JSON *item)
         return false;
     }
 
-    return add_item_to_array(array, create_reference(item, &global_hooks));
+    return add_item_to_array(array, create_reference(item, &MB_JSON_global_hooks));
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
@@ -2402,14 +2403,14 @@ MB_JSON_AddItemReferenceToObject(MB_JSON *object, const char *string, MB_JSON *i
         return false;
     }
 
-    return add_item_to_object(object, string, create_reference(item, &global_hooks), &global_hooks, false);
+    return add_item_to_object(object, string, create_reference(item, &MB_JSON_global_hooks), &MB_JSON_global_hooks, false);
 }
 
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddNullToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *null = MB_JSON_CreateNull();
-    if (add_item_to_object(object, name, null, &global_hooks, false))
+    if (add_item_to_object(object, name, null, &MB_JSON_global_hooks, false))
     {
         return null;
     }
@@ -2422,7 +2423,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddTrueToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *true_item = MB_JSON_CreateTrue();
-    if (add_item_to_object(object, name, true_item, &global_hooks, false))
+    if (add_item_to_object(object, name, true_item, &MB_JSON_global_hooks, false))
     {
         return true_item;
     }
@@ -2435,7 +2436,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddFalseToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *false_item = MB_JSON_CreateFalse();
-    if (add_item_to_object(object, name, false_item, &global_hooks, false))
+    if (add_item_to_object(object, name, false_item, &MB_JSON_global_hooks, false))
     {
         return false_item;
     }
@@ -2448,7 +2449,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddBoolToObject(MB_JSON *const object, const char *const name, const MB_JSON_bool boolean)
 {
     MB_JSON *bool_item = MB_JSON_CreateBool(boolean);
-    if (add_item_to_object(object, name, bool_item, &global_hooks, false))
+    if (add_item_to_object(object, name, bool_item, &MB_JSON_global_hooks, false))
     {
         return bool_item;
     }
@@ -2461,7 +2462,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddNumberToObject(MB_JSON *const object, const char *const name, const double number)
 {
     MB_JSON *number_item = MB_JSON_CreateNumber(number);
-    if (add_item_to_object(object, name, number_item, &global_hooks, false))
+    if (add_item_to_object(object, name, number_item, &MB_JSON_global_hooks, false))
     {
         return number_item;
     }
@@ -2474,7 +2475,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddStringToObject(MB_JSON *const object, const char *const name, const char *const string)
 {
     MB_JSON *string_item = MB_JSON_CreateString(string);
-    if (add_item_to_object(object, name, string_item, &global_hooks, false))
+    if (add_item_to_object(object, name, string_item, &MB_JSON_global_hooks, false))
     {
         return string_item;
     }
@@ -2487,7 +2488,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddRawToObject(MB_JSON *const object, const char *const name, const char *const raw)
 {
     MB_JSON *raw_item = MB_JSON_CreateRaw(raw);
-    if (add_item_to_object(object, name, raw_item, &global_hooks, false))
+    if (add_item_to_object(object, name, raw_item, &MB_JSON_global_hooks, false))
     {
         return raw_item;
     }
@@ -2500,7 +2501,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddObjectToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *object_item = MB_JSON_CreateObject();
-    if (add_item_to_object(object, name, object_item, &global_hooks, false))
+    if (add_item_to_object(object, name, object_item, &MB_JSON_global_hooks, false))
     {
         return object_item;
     }
@@ -2513,7 +2514,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddArrayToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *array = MB_JSON_CreateArray();
-    if (add_item_to_object(object, name, array, &global_hooks, false))
+    if (add_item_to_object(object, name, array, &MB_JSON_global_hooks, false))
     {
         return array;
     }
@@ -2708,7 +2709,7 @@ static MB_JSON_bool replace_item_in_object(MB_JSON *object, const char *string, 
     {
         MB_JSON_free(replacement->string);
     }
-    replacement->string = (char *)MB_JSON_strdup((const unsigned char *)string, &global_hooks);
+    replacement->string = (char *)MB_JSON_strdup((const unsigned char *)string, &MB_JSON_global_hooks);
     replacement->type &= ~MB_JSON_StringIsConst;
 
     return MB_JSON_ReplaceItemViaPointer(object, get_object_item(object, string, case_sensitive), replacement);
@@ -2730,7 +2731,7 @@ MB_JSON_ReplaceItemInObjectCaseSensitive(MB_JSON *object, const char *string, MB
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateNull(void)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_NULL;
@@ -2742,7 +2743,7 @@ MB_JSON_CreateNull(void)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateTrue(void)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_True;
@@ -2754,7 +2755,7 @@ MB_JSON_CreateTrue(void)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateFalse(void)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_False;
@@ -2766,7 +2767,7 @@ MB_JSON_CreateFalse(void)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateBool(MB_JSON_bool boolean)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = boolean ? MB_JSON_True : MB_JSON_False;
@@ -2778,7 +2779,7 @@ MB_JSON_CreateBool(MB_JSON_bool boolean)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateNumber(double num)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_Number;
@@ -2805,11 +2806,11 @@ MB_JSON_CreateNumber(double num)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateString(const char *string)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_String;
-        item->valuestring = (char *)MB_JSON_strdup((const unsigned char *)string, &global_hooks);
+        item->valuestring = (char *)MB_JSON_strdup((const unsigned char *)string, &MB_JSON_global_hooks);
         if (!item->valuestring)
         {
             MB_JSON_Delete(item);
@@ -2823,7 +2824,7 @@ MB_JSON_CreateString(const char *string)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateStringReference(const char *string)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item != NULL)
     {
         item->type = MB_JSON_String | MB_JSON_IsReference;
@@ -2836,7 +2837,7 @@ MB_JSON_CreateStringReference(const char *string)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateObjectReference(const MB_JSON *child)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item != NULL)
     {
         item->type = MB_JSON_Object | MB_JSON_IsReference;
@@ -2849,7 +2850,7 @@ MB_JSON_CreateObjectReference(const MB_JSON *child)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateArrayReference(const MB_JSON *child)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item != NULL)
     {
         item->type = MB_JSON_Array | MB_JSON_IsReference;
@@ -2862,11 +2863,11 @@ MB_JSON_CreateArrayReference(const MB_JSON *child)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateRaw(const char *raw)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_Raw;
-        item->valuestring = (char *)MB_JSON_strdup((const unsigned char *)raw, &global_hooks);
+        item->valuestring = (char *)MB_JSON_strdup((const unsigned char *)raw, &MB_JSON_global_hooks);
         if (!item->valuestring)
         {
             MB_JSON_Delete(item);
@@ -2880,7 +2881,7 @@ MB_JSON_CreateRaw(const char *raw)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateArray(void)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_Array;
@@ -2892,7 +2893,7 @@ MB_JSON_CreateArray(void)
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_CreateObject(void)
 {
-    MB_JSON *item = MB_JSON_New_Item(&global_hooks);
+    MB_JSON *item = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (item)
     {
         item->type = MB_JSON_Object;
@@ -3085,7 +3086,7 @@ MB_JSON_Duplicate(const MB_JSON *item, MB_JSON_bool recurse)
         goto fail;
     }
     /* Create new item */
-    newitem = MB_JSON_New_Item(&global_hooks);
+    newitem = MB_JSON_New_Item(&MB_JSON_global_hooks);
     if (!newitem)
     {
         goto fail;
@@ -3096,7 +3097,7 @@ MB_JSON_Duplicate(const MB_JSON *item, MB_JSON_bool recurse)
     newitem->valuedouble = item->valuedouble;
     if (item->valuestring)
     {
-        newitem->valuestring = (char *)MB_JSON_strdup((unsigned char *)item->valuestring, &global_hooks);
+        newitem->valuestring = (char *)MB_JSON_strdup((unsigned char *)item->valuestring, &MB_JSON_global_hooks);
         if (!newitem->valuestring)
         {
             goto fail;
@@ -3104,7 +3105,7 @@ MB_JSON_Duplicate(const MB_JSON *item, MB_JSON_bool recurse)
     }
     if (item->string)
     {
-        newitem->string = (item->type & MB_JSON_StringIsConst) ? item->string : (char *)MB_JSON_strdup((unsigned char *)item->string, &global_hooks);
+        newitem->string = (item->type & MB_JSON_StringIsConst) ? item->string : (char *)MB_JSON_strdup((unsigned char *)item->string, &MB_JSON_global_hooks);
         if (!newitem->string)
         {
             goto fail;
@@ -3157,13 +3158,13 @@ fail:
 
 static void skip_oneline_comment(char **input)
 {
-    *input += static_strlen("//");
+    *input += MB_JSON_static_strlen("//");
 
     for (; (*input)[0] != '\0'; ++(*input))
     {
         if ((*input)[0] == '\n')
         {
-            *input += static_strlen("\n");
+            *input += MB_JSON_static_strlen("\n");
             return;
         }
     }
@@ -3171,13 +3172,13 @@ static void skip_oneline_comment(char **input)
 
 static void skip_multiline_comment(char **input)
 {
-    *input += static_strlen("/*");
+    *input += MB_JSON_static_strlen("/*");
 
     for (; (*input)[0] != '\0'; ++(*input))
     {
         if (((*input)[0] == '*') && ((*input)[1] == '/'))
         {
-            *input += static_strlen("*/");
+            *input += MB_JSON_static_strlen("*/");
             return;
         }
     }
@@ -3186,8 +3187,8 @@ static void skip_multiline_comment(char **input)
 static void minify_string(char **input, char **output)
 {
     (*output)[0] = (*input)[0];
-    *input += static_strlen("\"");
-    *output += static_strlen("\"");
+    *input += MB_JSON_static_strlen("\"");
+    *output += MB_JSON_static_strlen("\"");
 
     for (; (*input)[0] != '\0'; (void)++(*input), ++(*output))
     {
@@ -3196,15 +3197,15 @@ static void minify_string(char **input, char **output)
         if ((*input)[0] == '\"')
         {
             (*output)[0] = '\"';
-            *input += static_strlen("\"");
-            *output += static_strlen("\"");
+            *input += MB_JSON_static_strlen("\"");
+            *output += MB_JSON_static_strlen("\"");
             return;
         }
         else if (((*input)[0] == '\\') && ((*input)[1] == '\"'))
         {
             (*output)[1] = (*input)[1];
-            *input += static_strlen("\"");
-            *output += static_strlen("\"");
+            *input += MB_JSON_static_strlen("\"");
+            *output += MB_JSON_static_strlen("\"");
         }
     }
 }
@@ -3499,13 +3500,13 @@ MB_JSON_Compare(const MB_JSON *const a, const MB_JSON *const b, const MB_JSON_bo
 MB_JSON_PUBLIC(void *)
 MB_JSON_malloc(size_t size)
 {
-    return global_hooks.allocate(size);
+    return MB_JSON_global_hooks.allocate(size);
 }
 
 MB_JSON_PUBLIC(void)
 MB_JSON_free(void *object)
 {
-    global_hooks.deallocate(object);
+    MB_JSON_global_hooks.deallocate(object);
 }
 
 #endif //MB_JSON_C
