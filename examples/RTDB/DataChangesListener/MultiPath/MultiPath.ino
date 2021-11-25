@@ -52,6 +52,8 @@ String childPath[2] = {"/node1", "/node2"};
 
 int count = 0;
 
+volatile bool dataChanged = false;
+
 void streamCallback(MultiPathStream stream)
 {
   size_t numChild = sizeof(childPath) / sizeof(childPath[0]);
@@ -72,6 +74,10 @@ void streamCallback(MultiPathStream stream)
   //This max value will be zero as no payload received in case of ESP8266 which
   //BearSSL reserved Rx buffer size is less than the actual stream payload.
   Serial.printf("Received stream payload size: %d (Max. %d)\n\n", stream.payloadLength(), stream.maxPayloadLength());
+
+  //Due to limited of stack memory, do not perform any task that used large memory here especially starting connect to server.
+  //Just set this flag and check it status later.
+  dataChanged = true;
 }
 
 void streamTimeoutCallback(bool timeout)
@@ -192,5 +198,11 @@ void loop()
     }
 
     Serial.println("ok\n");
+  }
+
+  if (dataChanged)
+  {
+    dataChanged = false;
+    //When stream data is available, do anything here...
   }
 }
