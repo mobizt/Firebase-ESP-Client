@@ -1,11 +1,14 @@
 
 /**
- * Mobizt's PSRAM supported String, version 1.1.1
+ * Mobizt's PSRAM supported String, version 1.1.2
  * 
  * 
- * November 23, 2021
+ * November 29, 2021
  * 
  * Changes Log
+ * 
+ * v1.1.2
+ * - Fix substring with zero length return the original string issue.
  * 
  * v1.1.1
  * - Fix possible ESP8266 code exit without resetting the external heap stack
@@ -396,9 +399,6 @@ public:
     MB_String substr(size_t offset, size_t len = npos) const
     {
         MB_String str;
-
-        if (offset >= length())
-            return *this;
 
         if (length() > 0 && offset < length())
         {
