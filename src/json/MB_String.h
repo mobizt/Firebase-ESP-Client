@@ -54,7 +54,7 @@
 
 #define MB_STRING_MAJOR 1
 #define MB_STRING_MINOR 1
-#define MB_STRING_PATCH 0
+#define MB_STRING_PATCH 2
 
 #if defined(ESP8266) && defined(MMU_EXTERNAL_HEAP) && defined(MB_STRING_USE_PSRAM)
 #include <umm_malloc/umm_malloc.h>

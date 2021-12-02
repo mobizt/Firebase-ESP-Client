@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.8
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 20, 2021
+ * Created December 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -102,6 +102,29 @@ bool FB_RTDB::mSetRules(FirebaseData *fbdo, const char *rules)
     return ret;
 }
 
+void FB_RTDB::storeToken(MBSTRING &atok, const char *databaseSecret)
+{
+    atok = Signer.config->_int.auth_token;
+    Signer.setTokenType(token_type_legacy_token);
+    Signer.config->signer.tokens.legacy_token = databaseSecret;
+    ut->storeS(Signer.config->_int.auth_token, Signer.config->signer.tokens.legacy_token, false);
+    Signer.config->_int.ltok_len = strlen(databaseSecret);
+    Signer.config->_int.rtok_len = 0;
+    Signer.config->_int.atok_len = 0;
+    Signer.handleToken();
+}
+
+void FB_RTDB::restoreToken(MBSTRING &atok, fb_esp_auth_token_type tk)
+{
+    ut->storeS(Signer.config->_int.auth_token, atok.c_str(), false);
+    ut->clearS(atok);
+    Signer.config->signer.tokens.legacy_token = "";
+    Signer.config->signer.tokens.token_type = tk;
+    Signer.config->_int.atok_len = Signer.config->_int.auth_token.length();
+    Signer.config->_int.ltok_len = 0;
+    Signer.handleToken();
+}
+
 bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret)
 {
     if (fbdo->_ss.rtdb.pause)
@@ -117,16 +140,7 @@ bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *n
     fb_esp_auth_token_type tk = Signer.getTokenType();
 
     if (strlen(databaseSecret) && tk != token_type_oauth2_access_token && tk != token_type_legacy_token)
-    {
-        atok = Signer.config->_int.auth_token;
-        Signer.setTokenType(token_type_legacy_token);
-        Signer.config->signer.tokens.legacy_token = databaseSecret;
-        ut->storeS(Signer.config->_int.auth_token, Signer.config->signer.tokens.legacy_token, false);
-        Signer.config->_int.ltok_len = strlen(databaseSecret);
-        Signer.config->_int.rtok_len = 0;
-        Signer.config->_int.atok_len = 0;
-        Signer.handleToken();
-    }
+        storeToken(atok, databaseSecret);
 
     if (getRules(fbdo))
     {
@@ -171,15 +185,7 @@ bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *n
     }
 
     if (strlen(databaseSecret) && tk != token_type_oauth2_access_token && tk != token_type_legacy_token)
-    {
-        ut->storeS(Signer.config->_int.auth_token, atok.c_str(), false);
-        ut->clearS(atok);
-        Signer.config->signer.tokens.legacy_token = "";
-        Signer.config->signer.tokens.token_type = tk;
-        Signer.config->_int.atok_len = Signer.config->_int.auth_token.length();
-        Signer.config->_int.ltok_len = 0;
-        Signer.handleToken();
-    }
+        restoreToken(atok, tk);
 
     ut->clearS(s);
     return ret;
@@ -195,15 +201,12 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, const char *path, const cha
 
     MBSTRING s;
     bool ret = false;
+    MBSTRING atok;
 
     fb_esp_auth_token_type tk = Signer.getTokenType();
 
     if (strlen(databaseSecret) && tk != token_type_oauth2_access_token && tk != token_type_legacy_token)
-    {
-        Signer.config->signer.tokens.legacy_token = databaseSecret;
-        Signer.config->signer.tokens.token_type = token_type_legacy_token;
-        Signer.handleToken();
-    }
+        storeToken(atok, databaseSecret);
 
     if (getRules(fbdo))
     {
@@ -267,10 +270,7 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, const char *path, const cha
     }
 
     if (strlen(databaseSecret) && tk != token_type_oauth2_access_token && tk != token_type_legacy_token)
-    {
-        Signer.config->signer.tokens.token_type = tk;
-        Signer.handleToken();
-    }
+        restoreToken(atok, tk);
 
     ut->clearS(s);
     return ret;

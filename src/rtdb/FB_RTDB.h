@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.8
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 20, 2021
+ * Created December 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1765,6 +1765,8 @@ private:
   void sendCB(FirebaseData *fbdo);
   void splitStreamPayload(const char *payloads, std::vector<MBSTRING> &payload);
   void parseStreamPayload(FirebaseData *fbdo, const char *payload);
+  void storeToken(MBSTRING &atok, const char *databaseSecret);
+  void restoreToken(MBSTRING &atok, fb_esp_auth_token_type tk);
   bool mSetQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
   bool mBeginStream(FirebaseData *fbdo, const char *path);
   void mSetReadTimeout(FirebaseData *fbdo, const char *millisec);

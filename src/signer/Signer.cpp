@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.7
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 19, 2021
+ * Created December 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -93,27 +93,17 @@ bool Firebase_Signer::parseSAFile()
             config->_int.fb_file.close();
             ut->delP(&buf);
 
-            tmp = ut->strP(fb_esp_pgm_str_243);
-            config->signer.json->get(*config->signer.result, (const char *)tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_243))
             {
                 if (ut->strposP(config->signer.result->to<const char *>(), fb_esp_pgm_str_244, 0) > -1)
                 {
-                    tmp = ut->strP(fb_esp_pgm_str_245);
-                    config->signer.json->get(*config->signer.result, (const char *)tmp);
-                    ut->delP(&tmp);
-                    if (config->signer.result->success)
+                    if (parseJsonResponse(fb_esp_pgm_str_245))
                         config->service_account.data.project_id = config->signer.result->to<const char *>();
-                    tmp = ut->strP(fb_esp_pgm_str_246);
-                    config->signer.json->get(*config->signer.result, (const char *)tmp);
-                    ut->delP(&tmp);
-                    if (config->signer.result->success)
+                
+                    if (parseJsonResponse(fb_esp_pgm_str_246))
                         config->service_account.data.private_key_id = config->signer.result->to<const char *>();
-                    tmp = ut->strP(fb_esp_pgm_str_247);
-                    config->signer.json->get(*config->signer.result, (const char *)tmp);
-                    ut->delP(&tmp);
-                    if (config->signer.result->success)
+            
+                    if (parseJsonResponse(fb_esp_pgm_str_247))
                     {
                         tmp = (char *)ut->newP(strlen(config->signer.result->to<const char *>()));
                         size_t c = 0;
@@ -133,15 +123,9 @@ bool Firebase_Signer::parseSAFile()
                         ut->delP(&tmp);
                     }
 
-                    tmp = ut->strP(fb_esp_pgm_str_248);
-                    config->signer.json->get(*config->signer.result, (const char *)tmp);
-                    ut->delP(&tmp);
-                    if (config->signer.result->success)
+                    if (parseJsonResponse(fb_esp_pgm_str_248))
                         config->service_account.data.client_email = config->signer.result->to<const char *>();
-                    tmp = ut->strP(fb_esp_pgm_str_253);
-                    config->signer.json->get(*config->signer.result, (const char *)tmp);
-                    ut->delP(&tmp);
-                    if (config->signer.result->success)
+                    if (parseJsonResponse(fb_esp_pgm_str_253))
                         config->service_account.data.client_id = config->signer.result->to<const char *>();
 
                     delete config->signer.json;
@@ -513,6 +497,15 @@ void Firebase_Signer::tokenProcessingTask()
 #endif
 }
 
+bool Firebase_Signer::parseJsonResponse(PGM_P key_path)
+{
+    char *tmp = ut->strP(key_path);
+    config->signer.result->clear();
+    config->signer.json->get(*config->signer.result, tmp);
+    ut->delP(&tmp);
+    return config->signer.result->success;
+}
+
 bool Firebase_Signer::refreshToken()
 {
     if (config->_int.fb_reconnect_wifi)
@@ -617,19 +610,12 @@ bool Firebase_Signer::refreshToken()
     int httpCode = 0;
     if (handleTokenResponse(httpCode))
     {
-        tmp = ut->strP(fb_esp_pgm_str_257);
-        config->signer.json->get(*config->signer.result, tmp);
-        ut->delP(&tmp);
-
-        if (config->signer.result->success)
+        if (parseJsonResponse(fb_esp_pgm_str_257))
         {
             error.code = config->signer.result->to<int>();
             config->signer.tokens.status = token_status_error;
 
-            tmp = ut->strP(fb_esp_pgm_str_258);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_258))
                 error.message = config->signer.result->to<const char *>();
         }
 
@@ -645,36 +631,25 @@ bool Firebase_Signer::refreshToken()
         {
             if (isAuthToken(false))
             {
-                tmp = ut->strP(fb_esp_pgm_str_208);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_208))
                 {
                     ut->storeS(config->_int.auth_token, config->signer.result->to<const char *>(), false);
                     config->_int.atok_len = strlen(config->signer.result->to<const char *>());
                     config->_int.ltok_len = 0;
                 }
 
-                tmp = ut->strP(fb_esp_pgm_str_209);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_209))
                 {
                     ut->storeS(config->_int.refresh_token, config->signer.result->to<const char *>(), false);
                     config->_int.rtok_len = strlen(config->signer.result->to<const char *>());
                 }
 
-                tmp = ut->strP(fb_esp_pgm_str_210);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_210))
                     getExpiration(config->signer.result->to<const char *>());
 
-                tmp = ut->strP(fb_esp_pgm_str_175);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_187))
                     auth->token.uid = config->signer.result->to<const char *>();
+
             }
             return handleSignerError(0);
         }
@@ -1465,20 +1440,13 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
     {
         struct fb_esp_auth_token_error_t error;
 
-        tmp = ut->strP(fb_esp_pgm_str_257);
-        config->signer.json->get(*config->signer.result, tmp);
-        ut->delP(&tmp);
-
-        if (config->signer.result->success)
+        if (parseJsonResponse(fb_esp_pgm_str_257))
         {
             error.code = config->signer.result->to<int>();
             if (!createUser)
                 config->signer.tokens.status = token_status_error;
 
-            tmp = ut->strP(fb_esp_pgm_str_258);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_258))
                 error.message = config->signer.result->to<const char *>();
         }
 
@@ -1506,35 +1474,23 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
                 config->signer.anonymous = strlen(email) == 0 && strlen(password) == 0;
             }
 
-            tmp = ut->strP(fb_esp_pgm_str_200);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_200))
             {
                 config->_int.auth_token = config->signer.result->to<const char *>();
                 config->_int.atok_len = strlen(config->signer.result->to<const char *>());
                 config->_int.ltok_len = 0;
             }
 
-            tmp = ut->strP(fb_esp_pgm_str_201);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_201))
             {
                 ut->storeS(config->_int.refresh_token, config->signer.result->to<const char *>(), false);
                 config->_int.rtok_len = strlen(config->signer.result->to<const char *>());
             }
 
-            tmp = ut->strP(fb_esp_pgm_str_202);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_202))
                 getExpiration(config->signer.result->to<const char *>());
 
-            tmp = ut->strP(fb_esp_pgm_str_175);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_175))
                 auth->token.uid = config->signer.result->to<const char *>();
 
             if (!createUser)
@@ -1647,20 +1603,10 @@ bool Firebase_Signer::deleteIdToken(const char *idToken)
     {
         struct fb_esp_auth_token_error_t error;
 
-        //config->signer.json->toString(Serial, true);
-
-        tmp = ut->strP(fb_esp_pgm_str_257);
-        config->signer.json->get(*config->signer.result, tmp);
-        ut->delP(&tmp);
-
-        if (config->signer.result->success)
+        if (parseJsonResponse(fb_esp_pgm_str_257))
         {
             error.code = config->signer.result->to<int>();
-
-            tmp = ut->strP(fb_esp_pgm_str_258);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_258))
                 error.message = config->signer.result->to<const char *>();
         }
 
@@ -1808,18 +1754,12 @@ bool Firebase_Signer::requestTokens()
     if (handleTokenResponse(httpCode))
     {
         ut->clearS(config->signer.tokens.jwt);
-        char *tmp = ut->strP(fb_esp_pgm_str_257);
-        config->signer.json->get(*config->signer.result, tmp);
-        ut->delP(&tmp);
-        if (config->signer.result->success)
+        if (parseJsonResponse(fb_esp_pgm_str_257))
         {
             error.code = config->signer.result->to<int>();
             config->signer.tokens.status = token_status_error;
 
-            tmp = ut->strP(fb_esp_pgm_str_258);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_258))
                 error.message = config->signer.result->to<const char *>();
         }
 
@@ -1835,53 +1775,37 @@ bool Firebase_Signer::requestTokens()
         {
             if (config->signer.tokens.token_type == token_type_custom_token)
             {
-                tmp = ut->strP(fb_esp_pgm_str_200);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+    
+                if (parseJsonResponse(fb_esp_pgm_str_200))
                 {
                     ut->storeS(config->_int.auth_token, config->signer.result->to<const char *>(), false);
                     config->_int.atok_len = strlen(config->signer.result->to<const char *>());
                     config->_int.ltok_len = 0;
                 }
 
-                tmp = ut->strP(fb_esp_pgm_str_201);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_201))
                 {
                     ut->storeS(config->_int.refresh_token, config->signer.result->to<const char *>(), false);
                     config->_int.rtok_len = strlen(config->signer.result->to<const char *>());
                 }
 
-                tmp = ut->strP(fb_esp_pgm_str_202);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_202))
                     getExpiration(config->signer.result->to<const char *>());
             }
             else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
             {
-                tmp = ut->strP(fb_esp_pgm_str_235);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+    
+                if (parseJsonResponse(fb_esp_pgm_str_235))
                 {
                     ut->storeS(config->_int.auth_token, config->signer.result->to<const char *>(), false);
                     config->_int.atok_len = strlen(config->signer.result->to<const char *>());
                     config->_int.ltok_len = 0;
                 }
 
-                tmp = ut->strP(fb_esp_pgm_str_236);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_236))
                     config->signer.tokens.auth_type = config->signer.result->to<const char *>();
 
-                tmp = ut->strP(fb_esp_pgm_str_210);
-                config->signer.json->get(*config->signer.result, tmp);
-                ut->delP(&tmp);
-                if (config->signer.result->success)
+                if (parseJsonResponse(fb_esp_pgm_str_210))
                     getExpiration(config->signer.result->to<const char *>());
             }
             return handleSignerError(0);
@@ -2024,17 +1948,10 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
     {
         struct fb_esp_auth_token_error_t error;
 
-        tmp = ut->strP(fb_esp_pgm_str_257);
-        config->signer.json->get(*config->signer.result, tmp);
-        ut->delP(&tmp);
-
-        if (config->signer.result->success)
+        if (parseJsonResponse(fb_esp_pgm_str_257))
         {
             error.code = config->signer.result->to<int>();
-            tmp = ut->strP(fb_esp_pgm_str_258);
-            config->signer.json->get(*config->signer.result, tmp);
-            ut->delP(&tmp);
-            if (config->signer.result->success)
+            if (parseJsonResponse(fb_esp_pgm_str_258))
                 error.message = config->signer.result->to<const char *>();
         }
         if (type == fb_esp_user_email_sending_type_verify)
