@@ -927,6 +927,8 @@ struct fb_esp_rtdb_info_t
     TaskHandle_t stream_task_handle = NULL;
     TaskHandle_t queue_task_handle = NULL;
     size_t stream_task_stack_size = STREAM_TASK_STACK_SIZE;
+    uint8_t stream_task_priority = 3;
+    uint8_t stream_task_cpu_core = 1;
     size_t queue_task_stack_size = QUEUE_TASK_STACK_SIZE;
     bool stream_task_enable = false;
 #endif
