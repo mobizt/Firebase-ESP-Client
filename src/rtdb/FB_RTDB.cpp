@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.10
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 5, 2021
+ * Created December 7, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -805,7 +805,7 @@ void FB_RTDB::runStreamTask()
 
     TaskFunction_t taskCode = [](void *param)
     {
-        const TickType_t xDelay = 3 / portTICK_PERIOD_MS;
+        const TickType_t xDelay = fbdo->_ss.rtdb.stream_task_delay_ms / portTICK_PERIOD_MS;
         while (Signer.getCfg()->_int.fb_sdo[id].get()._ss.rtdb.stream_task_enable)
         {
             if ((Signer.getCfg()->_int.fb_sdo[id].get()._dataAvailableCallback || Signer.getCfg()->_int.fb_sdo[id].get()._timeoutCallback))
@@ -984,7 +984,7 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
 
     TaskFunction_t taskCode = [](void *param)
     {
-        const TickType_t xDelay = 3 / portTICK_PERIOD_MS;
+        const TickType_t xDelay = fbdo->_ss.rtdb.queue_task_delay_ms / portTICK_PERIOD_MS;
         for (;;)
         {
             if (Signer.getCfg()->_int.fb_sdo[index].get()._queueInfoCallback)
@@ -999,7 +999,7 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
         vTaskDelete(NULL);
     };
 
-    xTaskCreatePinnedToCore(taskCode, taskName.c_str(), Signer.getCfg()->_int.fb_sdo[index].get()._ss.rtdb.queue_task_stack_size, NULL, 1, &Signer.getCfg()->_int.fb_sdo[index].get()._ss.rtdb.queue_task_handle, 1);
+    xTaskCreatePinnedToCore(taskCode, taskName.c_str(), Signer.getCfg()->_int.fb_sdo[index].get()._ss.rtdb.queue_task_stack_size, NULL, fbdo->_ss.rtdb.queue_task_priority, &Signer.getCfg()->_int.fb_sdo[index].get()._ss.rtdb.queue_task_handle, fbdo->_ss.rtdb.queue_task_cpu_core);
 
 #elif defined(ESP8266)
     ut->set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
