@@ -805,7 +805,7 @@ void FB_RTDB::runStreamTask()
 
     TaskFunction_t taskCode = [](void *param)
     {
-        const TickType_t xDelay = fbdo->_ss.rtdb.stream_task_delay_ms / portTICK_PERIOD_MS;
+        const TickType_t xDelay = Signer.getCfg()->_int.fb_sdo[id].get()._ss.rtdb.stream_task_delay_ms / portTICK_PERIOD_MS;
         while (Signer.getCfg()->_int.fb_sdo[id].get()._ss.rtdb.stream_task_enable)
         {
             if ((Signer.getCfg()->_int.fb_sdo[id].get()._dataAvailableCallback || Signer.getCfg()->_int.fb_sdo[id].get()._timeoutCallback))
@@ -984,7 +984,7 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
 
     TaskFunction_t taskCode = [](void *param)
     {
-        const TickType_t xDelay = fbdo->_ss.rtdb.queue_task_delay_ms / portTICK_PERIOD_MS;
+        const TickType_t xDelay = Signer.getCfg()->_int.fb_sdo[index].get()._ss.rtdb.queue_task_delay_ms / portTICK_PERIOD_MS;
         for (;;)
         {
             if (Signer.getCfg()->_int.fb_sdo[index].get()._queueInfoCallback)
