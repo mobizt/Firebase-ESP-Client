@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.6
+ * Google's Firebase Util class, Utils.h version 1.1.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 23, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -346,7 +346,7 @@ public:
         MBSTRING s;
         while (current != -1)
         {
-            clearS(s);
+            s.clear();
             substr(s, str, previous, current - previous);
             trim(s);
             if (s.length() > 0)
@@ -357,7 +357,7 @@ public:
             delay(0);
         }
 
-        clearS(s);
+        s.clear();
 
         if (previous > 0 && current == -1)
             substr(s, str, previous, strlen(str) - previous);
@@ -367,7 +367,7 @@ public:
         trim(s);
         if (s.length() > 0)
             out.push_back(s);
-        clearS(s);
+        s.clear();
     }
 
     void getUrlInfo(const MBSTRING &url, struct fb_esp_url_info_t &info)
@@ -2033,44 +2033,11 @@ public:
         return settimeofday((const timeval *)&tm, 0);
     }
 
-    void shrinkS(MBSTRING &s)
-    {
-        //#if defined(ESP32)
-        //s.shrink_to_fit();
-        //#elif defined(ESP8266)
-        MBSTRING t = s;
-        clearS(s);
-        s = t;
-        clearS(t);
-        //#endif
-    }
-
-    void clearS(MBSTRING &s)
-    {
-        s.clear();
-        MBSTRING().swap(s);
-    }
-
     void storeS(MBSTRING &s, const char *v, bool append)
     {
         if (!append)
-            clearS(s);
-
-#if defined(ESP32)
+            s.clear();
         s += v;
-        s.shrink_to_fit();
-#else
-        if (!append)
-            s = v;
-        else
-        {
-            MBSTRING t = s;
-            t += v;
-            clearS(s);
-            s = t;
-            clearS(t);
-        }
-#endif
     }
 
     uint16_t calCRC(const char *buf)

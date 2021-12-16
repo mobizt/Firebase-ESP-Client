@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.11
+ * The Firebase class, Firebase.cpp v1.0.12
  * 
- *  Created November 23, 2021
+ *  Created December 10, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -192,7 +192,7 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
     //don't clear auth token if anonymous sign in or Email/Password sign up
     if (!cfg->signer.anonymous && !cfg->signer.signup)
     {
-        ut->clearS(cfg->_int.auth_token);
+        cfg->_int.auth_token.clear();
         cfg->signer.tokens.expires = 0;
     }
 
@@ -201,7 +201,7 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
 
     cfg->signer.signup = false;
     Signer.begin(ut, cfg, auth);
-    ut->clearS(cfg->signer.tokens.error.message);
+    cfg->signer.tokens.error.message.clear();
 }
 
 void Firebase_ESP_Client::reconnectWiFi(bool reconnect)
@@ -216,25 +216,25 @@ const char *Firebase_ESP_Client::getToken()
 
 void Firebase_ESP_Client::setFloatDigits(uint8_t digits)
 {
-    if (digits < 7 && Signer.getCfg())
+    if (digits < 7 && cfg)
         cfg->_int.fb_float_digits = digits;
 }
 
 void Firebase_ESP_Client::setDoubleDigits(uint8_t digits)
 {
-    if (digits < 9 && Signer.getCfg())
+    if (digits < 9 && cfg)
         cfg->_int.fb_double_digits = digits;
 }
 
 bool Firebase_ESP_Client::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
 #if defined SD_FS
-    if (Signer.getCfg())
+    if (cfg)
     {
-        Signer.getCfg()->_int.sd_config.sck = sck;
-        Signer.getCfg()->_int.sd_config.miso = miso;
-        Signer.getCfg()->_int.sd_config.mosi = mosi;
-        Signer.getCfg()->_int.sd_config.ss = ss;
+        cfg->_int.sd_config.sck = sck;
+        cfg->_int.sd_config.miso = miso;
+        cfg->_int.sd_config.mosi = mosi;
+        cfg->_int.sd_config.ss = ss;
     }
 #if defined(ESP32)
     if (ss > -1)
@@ -261,11 +261,11 @@ bool Firebase_ESP_Client::sdMMCBegin(const char *mountpoint, bool mode1bit, bool
 {
 #if defined(ESP32)
 #if defined(CARD_TYPE_SD_MMC)
-    if (Signer.getCfg())
+    if (cfg)
     {
-        Signer.getCfg()->_int.sd_config.sd_mmc_mountpoint = mountpoint;
-        Signer.getCfg()->_int.sd_config.sd_mmc_mode1bit = mode1bit;
-        Signer.getCfg()->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
+        cfg->_int.sd_config.sd_mmc_mountpoint = mountpoint;
+        cfg->_int.sd_config.sd_mmc_mode1bit = mode1bit;
+        cfg->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
     }
     return SD_FS.begin(mountpoint, mode1bit, format_if_mount_failed);
 #endif
@@ -439,7 +439,7 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
     //don't clear auth token if anonymous sign in or Email/Password sign up
     if (!cfg->signer.anonymous && !cfg->signer.signup)
     {
-        ut->clearS(cfg->_int.auth_token);
+        cfg->_int.auth_token.clear();
         cfg->signer.tokens.expires = 0;
     }
 
@@ -448,7 +448,7 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
 
     cfg->signer.signup = false;
     Signer.begin(ut, this->cfg, this->auth);
-    ut->clearS(cfg->signer.tokens.error.message);
+    cfg->signer.tokens.error.message.clear();
 }
 
 void FIREBASE_CLASS::reconnectWiFi(bool reconnect)
@@ -558,12 +558,12 @@ bool FIREBASE_CLASS::sendTopic(FirebaseData &fbdo)
 bool FIREBASE_CLASS::sdBegin(int8_t ss)
 {
 #if defined SD_FS
-    if (Signer.getCfg())
+    if (cfg)
     {
-        Signer.getCfg()->_int.sd_config.sck = -1;
-        Signer.getCfg()->_int.sd_config.miso = -1;
-        Signer.getCfg()->_int.sd_config.mosi = -1;
-        Signer.getCfg()->_int.sd_config.ss = ss;
+        cfg->_int.sd_config.sck = -1;
+        cfg->_int.sd_config.miso = -1;
+        cfg->_int.sd_config.mosi = -1;
+        cfg->_int.sd_config.ss = ss;
     }
 
     if (ss > -1)
@@ -581,12 +581,12 @@ bool FIREBASE_CLASS::sdBegin(int8_t ss)
 bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
 #if defined SD_FS
-    if (Signer.getCfg())
+    if (cfg)
     {
-        Signer.getCfg()->_int.sd_config.sck = sck;
-        Signer.getCfg()->_int.sd_config.miso = miso;
-        Signer.getCfg()->_int.sd_config.mosi = mosi;
-        Signer.getCfg()->_int.sd_config.ss = ss;
+        cfg->_int.sd_config.sck = sck;
+        cfg->_int.sd_config.miso = miso;
+        cfg->_int.sd_config.mosi = mosi;
+        cfg->_int.sd_config.ss = ss;
     }
 #if defined(ESP32)
     if (ss > -1)
@@ -612,11 +612,11 @@ bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 bool FIREBASE_CLASS::sdMMCBegin(const String &mountpoint, bool mode1bit, bool format_if_mount_failed)
 {
 #if defined(SD_FS) && defined(ESP32) && defined(CARD_TYPE_SD_MMC)
-    if (Signer.getCfg())
+    if (cfg)
     {
-        Signer.getCfg()->_int.sd_config.sd_mmc_mountpoint = mountpoint;
-        Signer.getCfg()->_int.sd_config.sd_mmc_mode1bit = mode1bit;
-        Signer.getCfg()->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
+        cfg->_int.sd_config.sd_mmc_mountpoint = mountpoint;
+        cfg->_int.sd_config.sd_mmc_mode1bit = mode1bit;
+        cfg->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
     }
     return SD_FS.begin(mountpoint, mode1bit, format_if_mount_failed);
 #endif

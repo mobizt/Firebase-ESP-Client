@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.15
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.16
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -82,7 +82,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 
     fcm_prepareLegacyPayload(msg);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_legacy_http, raw.c_str());
-    ut->clearS(raw);
+    raw.clear();
     return ret;
 }
 
@@ -101,7 +101,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 
     fcm_prepareV1Payload(msg);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_httpv1, raw.c_str());
-    ut->clearS(raw);
+    raw.clear();
     return ret;
 }
 
@@ -120,7 +120,7 @@ bool FB_CM::mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *II
 
     fcm_preparSubscriptionPayload(topic, IID, atoi(numToken));
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_subscribe, raw.c_str());
-    ut->clearS(raw);
+    raw.clear();
     return ret;
 }
 
@@ -139,7 +139,7 @@ bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *
 
     fcm_preparSubscriptionPayload(topic, IID, atoi(numToken));
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_unsubscribe, raw.c_str());
-    ut->clearS(raw);
+    raw.clear();
     return ret;
 }
 
@@ -156,7 +156,7 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 
     MBSTRING payload = IID;
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_app_instance_info, payload.c_str());
-    ut->clearS(payload);
+    payload.clear();
     return ret;
 }
 
@@ -175,7 +175,7 @@ bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool s
 
     fcm_preparAPNsRegistPayload(application, sandbox, APNs, atoi(numToken));
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_apn_token_registration, raw.c_str());
-    ut->clearS(raw);
+    raw.clear();
     return ret;
 }
 
@@ -275,7 +275,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
         ut->appendP(header, fb_esp_pgm_str_271);
 
         ret = fbdo->tcpSend(header.c_str());
-        ut->clearS(header);
+        header.clear();
 
         if (ret < 0)
             return ret;
@@ -290,7 +290,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
         ut->appendP(header, fb_esp_pgm_str_131);
 
         ret = fbdo->tcpSend(header.c_str());
-        ut->clearS(header);
+        header.clear();
 
         if (ret < 0)
             return ret;
@@ -320,7 +320,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
     ut->appendP(header, fb_esp_pgm_str_21);
 
     ret = fbdo->tcpSend(header.c_str());
-    ut->clearS(header);
+    header.clear();
 
     return ret;
 }
@@ -330,7 +330,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
     MBSTRING s;
 
-    ut->clearS(raw);
+    raw.clear();
 
     FirebaseJson json;
 
@@ -527,7 +527,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         ut->appendP(s, fb_esp_pgm_str_294);
         json.set(s.c_str(), msg->payloads.notification.color);
     }
-    ut->clearS(s);
+    s.clear();
     raw = json.raw();
 }
 
@@ -535,7 +535,7 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
 {
     MBSTRING base, s;
 
-    ut->clearS(raw);
+    raw.clear();
     FirebaseJson json;
 
     ut->appendP(base, fb_esp_pgm_str_128, true);
@@ -561,8 +561,8 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
 
     json.add(base.c_str(), arr);
 
-    ut->clearS(base);
-    ut->clearS(s);
+    base.clear();
+    s.clear();
     raw = json.raw();
 }
 
@@ -570,7 +570,7 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
 {
     MBSTRING base, s;
 
-    ut->clearS(raw);
+    raw.clear();
     FirebaseJson json;
 
     ut->appendP(base, fb_esp_pgm_str_337, true);
@@ -594,8 +594,8 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
     ut->appendP(base, fb_esp_pgm_str_339, true);
     json.add(base.c_str(), arr);
 
-    ut->clearS(base);
-    ut->clearS(s);
+    base.clear();
+    s.clear();
     raw = json.raw();
 }
 
@@ -605,7 +605,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     MBSTRING base, _base, s;
 
     FirebaseJson json;
-    ut->clearS(raw);
+    raw.clear();
 
     ut->appendP(base, fb_esp_pgm_str_295);
     ut->appendP(base, fb_esp_pgm_str_1);
@@ -1157,9 +1157,9 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         json.set(s.c_str(), msg->apns.fcm_options.image);
     }
 
-    ut->clearS(base);
-    ut->clearS(_base);
-    ut->clearS(s);
+    base.clear();
+    _base.clear();
+    s.clear();
     raw = json.raw();
 }
 
@@ -1180,7 +1180,7 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *m
     if (ret == 0)
         ret = fbdo->tcpClient.send(msg);
 
-    ut->clearS(fbdo->_ss.fcm.payload);
+    fbdo->_ss.fcm.payload.clear();
     if (ret != 0)
     {
         fbdo->closeSession();
@@ -1552,8 +1552,8 @@ bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const
 
 void FB_CM::clear()
 {
-    ut->clearS(raw);
-    ut->clearS(server_key);
+    raw.clear();
+    server_key.clear();
     if (ut && intCfg)
         delete ut;
 }

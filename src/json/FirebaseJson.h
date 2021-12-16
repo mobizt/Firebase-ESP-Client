@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.6.1
+ * FirebaseJson, version 2.6.2
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * November 29, 2021
+ * December 16, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -500,7 +500,6 @@ namespace FB_JS
         unsigned long dataTime = 0;
     };
 };
-
 class PGM2S
 {
 public:
@@ -561,7 +560,7 @@ private:
         ESP.setExternalHeap();
 #endif
 
-        bool nn = ((p = (void *)malloc(len)) > 0);
+        bool nn = ((p = (void *)malloc(newLen)) > 0);
 
 #if defined(ESP8266_USE_EXTERNAL_HEAP)
         ESP.resetHeap();

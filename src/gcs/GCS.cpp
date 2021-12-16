@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.3
+ * Google's Cloud Storage class, GCS.cpp version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -106,12 +106,12 @@ bool GG_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *r
 
     gcs_connect(fbdo);
 
-    ut->clearS(fbdo->_ss.gcs.meta.name);
-    ut->clearS(fbdo->_ss.gcs.meta.bucket);
-    ut->clearS(fbdo->_ss.gcs.meta.contentType);
-    ut->clearS(fbdo->_ss.gcs.meta.crc32);
-    ut->clearS(fbdo->_ss.gcs.meta.etag);
-    ut->clearS(fbdo->_ss.gcs.meta.downloadTokens);
+    fbdo->_ss.gcs.meta.name.clear();
+    fbdo->_ss.gcs.meta.bucket.clear();
+    fbdo->_ss.gcs.meta.contentType.clear();
+    fbdo->_ss.gcs.meta.crc32.clear();
+    fbdo->_ss.gcs.meta.etag.clear();
+    fbdo->_ss.gcs.meta.downloadTokens.clear();
     fbdo->_ss.gcs.meta.generation = 0;
     fbdo->_ss.gcs.meta.size = 0;
 
@@ -489,7 +489,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             ut->appendP(header, fb_esp_pgm_str_271);
 
         ret = fbdo->tcpSend(header.c_str());
-        ut->clearS(header);
+        header.clear();
 
         if (ret < 0)
             return false;
@@ -627,17 +627,17 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     if (req->requestType == fb_esp_gcs_request_type_download)
     {
         ret = fbdo->tcpSend(header.c_str());
-        ut->clearS(header);
+        header.clear();
     }
     else
     {
         ret = fbdo->tcpSend(header.c_str());
-        ut->clearS(header);
+        header.clear();
         if (ret == 0)
             ret = fbdo->tcpSend(fbdo->_ss.jsonPtr->raw());
     }
 
-    ut->clearS(boundary);
+    boundary.clear();
 
     if (ret == 0)
     {
@@ -649,7 +649,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
             {
                 ret = fbdo->tcpSend(multipart_header.c_str());
-                ut->clearS(multipart_header);
+                multipart_header.clear();
             }
 
             int available = req->fileSize;
@@ -682,7 +682,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
             {
                 ret = fbdo->tcpSend(multipart_header2.c_str());
-                ut->clearS(multipart_header2);
+                multipart_header2.clear();
             }
 
             reportUpploadProgress(fbdo, req, req->fileSize);
@@ -2011,11 +2011,11 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                                         itm.contentType = part4;
                                                         itm.size = atoi(part5.c_str());
                                                         fbdo->_ss.fcs.files.items.push_back(itm);
-                                                        ut->clearS(part1);
-                                                        ut->clearS(part2);
-                                                        ut->clearS(part3);
-                                                        ut->clearS(part4);
-                                                        ut->clearS(part5);
+                                                        part1.clear();
+                                                        part2.clear();
+                                                        part3.clear();
+                                                        part4.clear();
+                                                        part5.clear();
                                                     }
                                                 }
                                             }
@@ -2073,7 +2073,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                     fbdo->_ss.dataPtr = new FirebaseJsonData();
 
                 fbdo->_ss.jsonPtr->setJsonData(payload.c_str());
-                ut->clearS(payload);
+                payload.clear();
 
                 char *tmp = ut->strP(fb_esp_pgm_str_257);
                 fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);

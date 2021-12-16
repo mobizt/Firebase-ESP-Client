@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.6
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 5, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -103,9 +103,9 @@ void FirebaseData::mSetResFloat(const char *value)
 
 void FirebaseData::clearQueueItem(QueueItem *item)
 {
-    ut->clearS(item->path);
-    ut->clearS(item->filename);
-    ut->clearS(item->payload);
+    item->path.clear();
+    item->filename.clear();
+    item->payload.clear();
     item->address.din = 0;
     item->address.dout = 0;
     item->blobSize = 0;
@@ -981,13 +981,13 @@ void FirebaseData::clear()
     _timeoutCallback = NULL;
     _queueInfoCallback = NULL;
 
-    ut->clearS(_ss.rtdb.raw);
-    ut->clearS(_ss.rtdb.push_name);
-    ut->clearS(_ss.rtdb.file_name);
-    ut->clearS(_ss.rtdb.redirect_url);
-    ut->clearS(_ss.rtdb.event_type);
-    ut->clearS(_ss.rtdb.req_etag);
-    ut->clearS(_ss.rtdb.resp_etag);
+   _ss.rtdb.raw.clear();
+    _ss.rtdb.push_name.clear();
+    _ss.rtdb.file_name.clear();
+    _ss.rtdb.redirect_url.clear();
+    _ss.rtdb.event_type.clear();
+    _ss.rtdb.req_etag.clear();
+    _ss.rtdb.resp_etag.clear();
     _ss.rtdb.priority = 0;
 
     if (_ss.rtdb.blob && _ss.rtdb.isBlobPtr)
@@ -1000,33 +1000,33 @@ void FirebaseData::clear()
 
 #if defined(FIREBASE_ESP_CLIENT)
 #ifdef ENABLE_GC_STORAGE
-    ut->clearS(_ss.gcs.meta.bucket);
-    ut->clearS(_ss.gcs.meta.contentType);
-    ut->clearS(_ss.gcs.meta.crc32);
-    ut->clearS(_ss.gcs.meta.downloadTokens);
-    ut->clearS(_ss.gcs.meta.etag);
-    ut->clearS(_ss.gcs.meta.name);
+    _ss.gcs.meta.bucket.clear();
+    _ss.gcs.meta.contentType.clear();
+    _ss.gcs.meta.crc32.clear();
+    _ss.gcs.meta.downloadTokens.clear();
+    _ss.gcs.meta.etag.clear();
+    _ss.gcs.meta.name.clear();
 #endif
 #ifdef ENABLE_FB_STORAGE
-    ut->clearS(_ss.fcs.meta.name);
-    ut->clearS(_ss.fcs.meta.bucket);
-    ut->clearS(_ss.fcs.meta.contentType);
-    ut->clearS(_ss.fcs.meta.etag);
-    ut->clearS(_ss.fcs.meta.crc32);
-    ut->clearS(_ss.fcs.meta.downloadTokens);
-    ut->clearS(_ss.fcs.meta.bucket);
-    ut->clearS(_ss.fcs.meta.contentType);
-    ut->clearS(_ss.fcs.meta.crc32);
-    ut->clearS(_ss.fcs.meta.downloadTokens);
-    ut->clearS(_ss.fcs.meta.etag);
-    ut->clearS(_ss.fcs.meta.name);
+    _ss.fcs.meta.name.clear();
+    _ss.fcs.meta.bucket.clear();
+    _ss.fcs.meta.contentType.clear();
+    _ss.fcs.meta.etag.clear();
+    _ss.fcs.meta.crc32.clear();
+    _ss.fcs.meta.downloadTokens.clear();
+    _ss.fcs.meta.bucket.clear();
+    _ss.fcs.meta.contentType.clear();
+    _ss.fcs.meta.crc32.clear();
+    _ss.fcs.meta.downloadTokens.clear();
+    _ss.fcs.meta.etag.clear();
+    _ss.fcs.meta.name.clear();
     _ss.fcs.files.items.clear();
 #endif
 #ifdef ENABLE_FB_FUNCTIONS
-    ut->clearS(_ss.cfn.payload);
+    _ss.cfn.payload.clear();
 #endif
 #ifdef ENABLE_FIRESTORE
-    ut->clearS(_ss.cfs.payload);
+    _ss.cfs.payload.clear();
 #endif
 #endif
 }
@@ -1054,8 +1054,8 @@ void FCMObject::mBegin(const char *serverKey, SPI_ETH_Module *spi_ethernet_modul
     MBSTRING s;
     ut->appendP(s, fb_esp_pgm_str_577);
     json->set(s.c_str(), serverKey);
-    ut->clearS(raw);
-    ut->clearS(s);
+    raw.clear();
+    s.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1069,7 +1069,7 @@ void FCMObject::mAddDeviceToken(const char *deviceToken)
     FirebaseJsonArray *arr = new FirebaseJsonArray();
     arr->setJsonArrayData(idTokens.c_str());
     arr->add(deviceToken);
-    ut->clearS(idTokens);
+    idTokens.clear();
     idTokens = arr->raw();
     arr->clear();
     delete arr;
@@ -1083,7 +1083,7 @@ void FCMObject::removeDeviceToken(uint16_t index)
     FirebaseJsonArray *arr = new FirebaseJsonArray();
     arr->setJsonArrayData(idTokens.c_str());
     arr->remove(index);
-    ut->clearS(idTokens);
+    idTokens.clear();
     idTokens = arr->raw();
     arr->clear();
     delete arr;
@@ -1093,7 +1093,7 @@ void FCMObject::clearDeviceToken()
 {
     if (!ut)
         ut = new UtilsClass(nullptr);
-    ut->clearS(idTokens);
+    idTokens.clear();
 }
 
 void FCMObject::mSetNotifyMessage(const char *title, const char *body)
@@ -1117,8 +1117,8 @@ void FCMObject::mSetNotifyMessage(const char *title, const char *body)
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_123);
     json->set(s.c_str(), body);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1139,8 +1139,8 @@ void FCMObject::mSetNotifyMessage(const char *title, const char *body, const cha
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_124);
     json->set(s.c_str(), icon);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1161,8 +1161,8 @@ void FCMObject::mSetNotifyMessage(const char *title, const char *body, const cha
     ut->appendP(s, fb_esp_pgm_str_1);
     ut->appendP(s, fb_esp_pgm_str_125);
     json->set(s.c_str(), click_action);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1182,8 +1182,8 @@ void FCMObject::mAddCustomNotifyMessage(const char *key, const char *value)
     ut->appendP(s, fb_esp_pgm_str_1);
     s += key;
     json->set(s.c_str(), value);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1201,8 +1201,8 @@ void FCMObject::clearNotifyMessage()
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->remove(s.c_str());
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1225,8 +1225,8 @@ void FCMObject::mSetDataMessage(const char *jsonString)
     json->set(s.c_str(), *js);
     js->clear();
     delete js;
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1244,8 +1244,8 @@ void FCMObject::setDataMessage(FirebaseJson &json)
     FirebaseJson *js = new FirebaseJson();
     js->setJsonData(raw);
     js->set(s.c_str(), json);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = js->raw();
     js->clear();
     delete js;
@@ -1263,8 +1263,8 @@ void FCMObject::clearDataMessage()
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->remove(s.c_str());
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1281,8 +1281,8 @@ void FCMObject::mSetPriority(const char *priority)
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->set(s.c_str(), priority);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1300,8 +1300,8 @@ void FCMObject::mSetCollapseKey(const char *key)
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->set(s.c_str(), key);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1324,8 +1324,8 @@ void FCMObject::setTimeToLive(uint32_t seconds)
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->set(s.c_str(), _ttl);
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1342,9 +1342,9 @@ void FCMObject::mSetTopic(const char *topic)
     ut->appendP(v, fb_esp_pgm_str_134);
     v += topic;
     json->set(s.c_str(), v.c_str());
-    ut->clearS(raw);
-    ut->clearS(s);
-    ut->clearS(v);
+    raw.clear();
+    s.clear();
+    v.clear();
     raw = json->raw();
     json->clear();
     delete json;
@@ -1383,7 +1383,7 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     MBSTRING s;
     ut->appendP(s, fb_esp_pgm_str_577);
     json->get(*server_key, s.c_str());
-    ut->clearS(s);
+    s.clear();
     json->clear();
 
     ut->appendP(header, fb_esp_pgm_str_24, true);
@@ -1401,7 +1401,7 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
 
     ret = fbdo.tcpSend(header.c_str());
 
-    ut->clearS(header);
+    header.clear();
     if (ret < 0)
     {
         server_key->clear();
@@ -1430,7 +1430,7 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     ut->appendP(header, fb_esp_pgm_str_21);
 
     ret = fbdo.tcpSend(header.c_str());
-    ut->clearS(header);
+    header.clear();
 
     return ret;
 }
@@ -1454,8 +1454,8 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
         FirebaseJsonData *data = fbdo.to<FirebaseJsonData *>();
         arr->get(*data, _index);
         json->set(s.c_str(), data->to<const char *>());
-        ut->clearS(s);
-        ut->clearS(raw);
+        s.clear();
+        raw.clear();
         raw = json->raw();
         arr->clear();
         data->clear();
@@ -1471,9 +1471,9 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
         ut->appendP(s, fb_esp_pgm_str_130);
 
         json->set(s.c_str(), *arr);
-        ut->clearS(s);
+        s.clear();
         arr->clear();
-        ut->clearS(raw);
+        raw.clear();
         raw = json->raw();
     }
     else if (messageType == fb_esp_fcm_msg_type::msg_topic)
@@ -1487,10 +1487,10 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
         MBSTRING s2;
         ut->appendP(s2, fb_esp_pgm_str_576);
         json->get(*topic, s2.c_str());
-        ut->clearS(s2);
+        s2.clear();
         json->set(s.c_str(), topic->to<const char *>());
-        ut->clearS(s);
-        ut->clearS(raw);
+        s.clear();
+        raw.clear();
         raw = json->raw();
         topic->clear();
     }
@@ -1520,7 +1520,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
         return false;
     }
 
-    ut->clearS(result);
+    result.clear();
 
     unsigned long dataTime = millis();
 
@@ -1807,8 +1807,8 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
     json->setJsonData(raw);
     json->remove(s.c_str());
-    ut->clearS(s);
-    ut->clearS(raw);
+    s.clear();
+    raw.clear();
     raw = json->raw();
     json->clear();
     msg->clear();
@@ -1850,8 +1850,8 @@ void FCMObject::rescon(FirebaseData &fbdo, const char *host)
 
 void FCMObject::clear()
 {
-    ut->clearS(raw);
-    ut->clearS(result);
+    raw.clear();
+    result.clear();
     _ttl = -1;
     _index = 0;
     clearDeviceToken();

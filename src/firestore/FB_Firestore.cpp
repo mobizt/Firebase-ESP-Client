@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.6
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -91,7 +91,7 @@ bool FB_Firestore::mExportDocuments(FirebaseData *fbdo, const char *projectId, c
     fbdo->_ss.arrPtr->clear();
 
     bool ret = sendRequest(fbdo, &req);
-    ut->clearS(req.payload);
+    req.payload.clear();
     return ret;
 }
 
@@ -139,7 +139,7 @@ bool FB_Firestore::mImportDocuments(FirebaseData *fbdo, const char *projectId, c
     fbdo->_ss.arrPtr->clear();
 
     bool ret = sendRequest(fbdo, &req);
-    ut->clearS(req.payload);
+    req.payload.clear();
     return ret;
 }
 
@@ -443,7 +443,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, const char *projectId, co
     }
 
     bool ret = sendRequest(fbdo, &req);
-    ut->clearS(req.payload);
+    req.payload.clear();
     return ret;
 }
 
@@ -491,7 +491,7 @@ bool FB_Firestore::mBeginTransaction(FirebaseData *fbdo, const char *projectId, 
     req.payload = fbdo->_ss.jsonPtr->raw();
     fbdo->_ss.jsonPtr->clear();
     bool ret = sendRequest(fbdo, &req);
-    ut->clearS(req.payload);
+    req.payload.clear();
     return ret;
 }
 
@@ -517,7 +517,7 @@ bool FB_Firestore::mRollback(FirebaseData *fbdo, const char *projectId, const ch
     req.payload = fbdo->_ss.jsonPtr->raw();
     fbdo->_ss.jsonPtr->clear();
     bool ret = sendRequest(fbdo, &req);
-    ut->clearS(req.payload);
+    req.payload.clear();
     return ret;
 }
 
@@ -559,7 +559,7 @@ bool FB_Firestore::mRunQuery(FirebaseData *fbdo, const char *projectId, const ch
     fbdo->_ss.jsonPtr->clear();
 
     bool ret = sendRequest(fbdo, &req);
-    ut->clearS(req.payload);
+    req.payload.clear();
     return ret;
 }
 
@@ -612,7 +612,7 @@ bool FB_Firestore::mListCollectionIds(FirebaseData *fbdo, const char *projectId,
     req.payload = fbdo->_ss.jsonPtr->raw();
     fbdo->_ss.jsonPtr->clear();
     bool ret = sendRequest(fbdo, &req);
-    ut->clearS(req.payload);
+    req.payload.clear();
     return ret;
 }
 
@@ -881,7 +881,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         ut->appendP(header, fb_esp_pgm_str_271);
 
     ret = fbdo->tcpSend(header.c_str());
-    ut->clearS(header);
+    header.clear();
 
     if (ret < 0)
         return false;
@@ -903,8 +903,8 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     if (ret == 0 && req->payload.length() > 0)
         ret = fbdo->tcpSend(req->payload.c_str());
 
-    ut->clearS(header);
-    ut->clearS(req->payload);
+    header.clear();
+    req->payload.clear();
 
     if (ret == 0)
     {

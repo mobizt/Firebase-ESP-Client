@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.5
+ * Google's Cloud Functions class, Functions.cpp version 1.1.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -864,8 +864,8 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     if (ret == 0 && req->payload.length() > 0)
         ret = fbdo->tcpSend(req->payload.c_str());
 
-    ut->clearS(header);
-    ut->clearS(req->payload);
+    header.clear();
+    req->payload.clear();
 
     if (ret == 0)
     {

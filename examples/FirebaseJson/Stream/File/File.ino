@@ -44,7 +44,7 @@ void setup()
 
     //Print the demo data to file.
     //No matter what the separation between each JSON object or array is, it can be space, new line or nothing
-    file.print("{\"a\":123}{\"b\":456}{\"c\":789}");
+    file.print("{\"a\":123}\n{\"b\":456}\n{\"c\":789}");
 
     file.close();
 }
@@ -69,8 +69,8 @@ void loop()
             File file2 = DEFAULT_FLASH_FS.open("/test2.txt", "a");
             json.toString(file2);
 
-            //if you want to append new line to separate each JSON data (not necessary)
-            //file2.println();
+            //if you want to append new line to separate each JSON data (recommended)
+            file2.println();
 
             file2.close();
         }

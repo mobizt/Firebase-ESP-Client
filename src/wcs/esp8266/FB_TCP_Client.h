@@ -104,7 +104,7 @@
 
 #include "wcs/HTTPCode.h"
 
-    struct fb_esp_sd_config_info_t
+struct fb_esp_sd_config_info_t
 {
   int sck = -1;
   int miso = -1;

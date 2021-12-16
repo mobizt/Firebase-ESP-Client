@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.11
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 7, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1817,10 +1817,16 @@ protected:
   int toAddr(String &v) { return reinterpret_cast<int>(&v); }
   int toAddr(std::string &v) { return reinterpret_cast<int>(&v); }
 #ifdef USE_MB_STRING
-  int toAddr(MBSTRING &v) { return reinterpret_cast<int>(&v); }
+  int toAddr(MBSTRING &v)
+  {
+    return reinterpret_cast<int>(&v);
+  }
 #endif
   template <typename T>
-  auto addrTo(int address) -> typename FB_JS::enable_if<!FB_JS::is_same<T, nullptr_t>::value, T>::type { return reinterpret_cast<T>(address); }
+  auto addrTo(int address) -> typename FB_JS::enable_if<!FB_JS::is_same<T, nullptr_t>::value, T>::type
+  {
+    return reinterpret_cast<T>(address);
+  }
 
   template <typename T>
   auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }

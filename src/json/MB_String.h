@@ -1,6 +1,6 @@
 
 /**
- * Mobizt's PSRAM supported String, version 1.1.2
+ * Mobizt's SRAM/PSRAM supported String, version 1.1.2
  * 
  * 
  * November 29, 2021
@@ -8,7 +8,7 @@
  * Changes Log
  * 
  * v1.1.2
- * - Fix substring with zero length return the original string issue.
+ * - Fix substring with zero length returns the original string issue.
  * 
  * v1.1.1
  * - Fix possible ESP8266 code exit without resetting the external heap stack

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.6
+ * Google's Firebase Storage class, FCS.cpp version 1.1.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created December 10, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -80,12 +80,12 @@ bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
     Signer.getCfg()->_int.fb_processing = true;
 
     fcs_connect(fbdo);
-    ut->clearS(fbdo->_ss.fcs.meta.name);
-    ut->clearS(fbdo->_ss.fcs.meta.bucket);
-    ut->clearS(fbdo->_ss.fcs.meta.contentType);
-    ut->clearS(fbdo->_ss.fcs.meta.crc32);
-    ut->clearS(fbdo->_ss.fcs.meta.etag);
-    ut->clearS(fbdo->_ss.fcs.meta.downloadTokens);
+    fbdo->_ss.fcs.meta.name.clear();
+    fbdo->_ss.fcs.meta.bucket.clear();
+    fbdo->_ss.fcs.meta.contentType.clear();
+    fbdo->_ss.fcs.meta.crc32.clear();
+    fbdo->_ss.fcs.meta.etag.clear();
+    fbdo->_ss.fcs.meta.downloadTokens.clear();
     fbdo->_ss.fcs.meta.generation = 0;
     fbdo->_ss.fcs.meta.size = 0;
 
@@ -354,7 +354,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         ut->appendP(header, fb_esp_pgm_str_271);
 
     ret = fbdo->tcpSend(header.c_str());
-    ut->clearS(header);
+    header.clear();
 
     if (ret < 0)
         return false;
@@ -372,7 +372,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     fbdo->_ss.http_code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
     ret = fbdo->tcpSend(header.c_str());
-    ut->clearS(header);
+    header.clear();
 
     if (ret == 0)
     {
@@ -501,7 +501,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
 
     dataTime = millis();
 #ifdef ENABLE_FB_FUNCTIONS
-    ut->clearS(fbdo->_ss.cfn.payload);
+    fbdo->_ss.cfn.payload.clear();
 #endif
 
     if (chunkBufSize > 1)
@@ -669,8 +669,8 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                                     itm.name = part2;
                                                     itm.bucket = part1.substr(p1 + strlen(tmp2), p2 - p1 - strlen(tmp2));
                                                     fbdo->_ss.fcs.files.items.push_back(itm);
-                                                    ut->clearS(part2);
-                                                    ut->clearS(part1);
+                                                    part2.clear();
+                                                    part1.clear();
                                                 }
                                             }
                                         }
@@ -722,7 +722,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                     fbdo->_ss.dataPtr = new FirebaseJsonData();
 
                 fbdo->_ss.jsonPtr->setJsonData(payload.c_str());
-                ut->clearS(payload);
+                payload.clear();
 
                 char *tmp = ut->strP(fb_esp_pgm_str_257);
                 fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);

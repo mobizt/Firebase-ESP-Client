@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.11
+ * The Firebase class, Firebase.h v1.0.12
  * 
- *  Created November 23, 2021
+ *  Created December 10, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
