@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.12
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created December 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -107,7 +107,7 @@ void FB_RTDB::storeToken(MBSTRING &atok, const char *databaseSecret)
     atok = Signer.config->_int.auth_token;
     Signer.setTokenType(token_type_legacy_token);
     Signer.config->signer.tokens.legacy_token = databaseSecret;
-    ut->storeS(Signer.config->_int.auth_token, Signer.config->signer.tokens.legacy_token, false);
+    Signer.config->_int.auth_token = Signer.config->signer.tokens.legacy_token;
     Signer.config->_int.ltok_len = strlen(databaseSecret);
     Signer.config->_int.rtok_len = 0;
     Signer.config->_int.atok_len = 0;
@@ -116,7 +116,7 @@ void FB_RTDB::storeToken(MBSTRING &atok, const char *databaseSecret)
 
 void FB_RTDB::restoreToken(MBSTRING &atok, fb_esp_auth_token_type tk)
 {
-    ut->storeS(Signer.config->_int.auth_token, atok.c_str(), false);
+    Signer.config->_int.auth_token = atok.c_str();
     atok.clear();
     Signer.config->signer.tokens.legacy_token = "";
     Signer.config->signer.tokens.token_type = tk;
@@ -2593,7 +2593,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                                 if (path)
                                 {
                                     strncpy(path, fbdo->_ss.rtdb.path.c_str(), fbdo->_ss.rtdb.path.length() - strlen_P(fb_esp_pgm_str_156));
-                                    ut->storeS(fbdo->_ss.rtdb.path, path, false);
+                                    fbdo->_ss.rtdb.path = path;
                                     ut->delP(&path);
                                 }
                             }
@@ -2603,7 +2603,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
                             {
                                 if (response.pushName.length() > 0)
                                 {
-                                    ut->storeS(fbdo->_ss.rtdb.push_name, response.pushName.c_str(), false);
+                                    fbdo->_ss.rtdb.push_name = response.pushName.c_str();
                                     fbdo->_ss.rtdb.resp_data_type = d_any;
                                     fbdo->_ss.rtdb.raw.clear();
                                 }
@@ -2929,9 +2929,9 @@ void FB_RTDB::handlePayload(FirebaseData *fbdo, struct server_response_data_t &r
     if (fbdo->_ss.rtdb.resp_data_type != d_blob && fbdo->_ss.rtdb.resp_data_type != d_file)
     {
         if (response.isEvent)
-            ut->storeS(fbdo->_ss.rtdb.raw, response.eventData.c_str(), false);
+            fbdo->_ss.rtdb.raw = response.eventData.c_str();
         else
-            ut->storeS(fbdo->_ss.rtdb.raw, payload, false);
+            fbdo->_ss.rtdb.raw = payload;
         uint16_t crc = ut->calCRC(fbdo->_ss.rtdb.raw.c_str());
         response.dataChanged = fbdo->_ss.rtdb.data_crc != crc;
         fbdo->_ss.rtdb.data_crc = crc;

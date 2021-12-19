@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.12
+ * The Firebase class, Firebase.cpp v1.0.13
  * 
- *  Created December 10, 2021
+ *  Created December 19, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -61,7 +61,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     if (strlen(cfg->signer.tokens.legacy_token) > 0)
     {
         Signer.setTokenType(token_type_legacy_token);
-        ut->storeS(cfg->_int.auth_token, cfg->signer.tokens.legacy_token, false);
+        cfg->_int.auth_token = cfg->signer.tokens.legacy_token;
         cfg->_int.ltok_len = strlen(cfg->signer.tokens.legacy_token);
         cfg->_int.rtok_len = 0;
         cfg->_int.atok_len = 0;
@@ -314,7 +314,7 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
     if (strlen(cfg->signer.tokens.legacy_token) > 0)
     {
         Signer.setTokenType(token_type_legacy_token);
-        ut->storeS(cfg->_int.auth_token, cfg->signer.tokens.legacy_token, false);
+        cfg->_int.auth_token = cfg->signer.tokens.legacy_token;
         cfg->_int.ltok_len = strlen(cfg->signer.tokens.legacy_token);
         cfg->_int.rtok_len = 0;
         cfg->_int.atok_len = 0;

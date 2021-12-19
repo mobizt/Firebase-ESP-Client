@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.7
+ * Google's Firebase Util class, Utils.h version 1.1.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created December 19, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -2031,13 +2031,6 @@ public:
     {
         struct timeval tm = {ts, 0}; // sec, us
         return settimeofday((const timeval *)&tm, 0);
-    }
-
-    void storeS(MBSTRING &s, const char *v, bool append)
-    {
-        if (!append)
-            s.clear();
-        s += v;
     }
 
     uint16_t calCRC(const char *buf)
