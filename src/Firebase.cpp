@@ -51,51 +51,54 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
 void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
 {
     init(config, auth);
-
-    if (cfg->service_account.json.path.length() > 0)
+    if (!cfg->signer.test_mode)
     {
-        if (!Signer.parseSAFile())
-            cfg->signer.tokens.status = token_status_uninitialized;
-    }
 
-    if (strlen(cfg->signer.tokens.legacy_token) > 0)
-    {
-        Signer.setTokenType(token_type_legacy_token);
-        cfg->_int.auth_token = cfg->signer.tokens.legacy_token;
-        cfg->_int.ltok_len = strlen(cfg->signer.tokens.legacy_token);
-        cfg->_int.rtok_len = 0;
-        cfg->_int.atok_len = 0;
-    }
-    else if (Signer.tokenSigninDataReady())
-    {
-        cfg->signer.idTokenCutomSet = false;
+        if (cfg->service_account.json.path.length() > 0)
+        {
+            if (!Signer.parseSAFile())
+                cfg->signer.tokens.status = token_status_uninitialized;
+        }
 
-        if (auth->token.uid.length() == 0)
-            Signer.setTokenType(token_type_oauth2_access_token);
-        else
-            Signer.setTokenType(token_type_custom_token);
-    }
-    else if (Signer.userSigninDataReady() || cfg->signer.anonymous)
-        Signer.setTokenType(token_type_id_token);
+        if (strlen(cfg->signer.tokens.legacy_token) > 0)
+        {
+            Signer.setTokenType(token_type_legacy_token);
+            cfg->_int.auth_token = cfg->signer.tokens.legacy_token;
+            cfg->_int.ltok_len = strlen(cfg->signer.tokens.legacy_token);
+            cfg->_int.rtok_len = 0;
+            cfg->_int.atok_len = 0;
+        }
+        else if (Signer.tokenSigninDataReady())
+        {
+            cfg->signer.idTokenCutomSet = false;
 
-    struct fb_esp_url_info_t uinfo;
-    cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
+            if (auth->token.uid.length() == 0)
+                Signer.setTokenType(token_type_oauth2_access_token);
+            else
+                Signer.setTokenType(token_type_custom_token);
+        }
+        else if (Signer.userSigninDataReady() || cfg->signer.anonymous)
+            Signer.setTokenType(token_type_id_token);
 
-    if (cfg->host.length() > 0)
-        cfg->database_url = cfg->host;
+        struct fb_esp_url_info_t uinfo;
+        cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
 
-    if (cfg->database_url.length() > 0)
-    {
-        ut->getUrlInfo(cfg->database_url.c_str(), uinfo);
-        cfg->database_url = uinfo.host.c_str();
-    }
+        if (cfg->host.length() > 0)
+            cfg->database_url = cfg->host;
 
-    if (cfg->cert.file.length() > 0)
-    {
-        if (cfg->cert.file_storage == mem_storage_type_sd && !cfg->_int.fb_sd_rdy)
-            cfg->_int.fb_sd_rdy = ut->sdTest(cfg->_int.fb_file);
-        else if ((cfg->cert.file_storage == mem_storage_type_flash) && !cfg->_int.fb_flash_rdy)
-            ut->flashTest();
+        if (cfg->database_url.length() > 0)
+        {
+            ut->getUrlInfo(cfg->database_url.c_str(), uinfo);
+            cfg->database_url = uinfo.host.c_str();
+        }
+
+        if (cfg->cert.file.length() > 0)
+        {
+            if (cfg->cert.file_storage == mem_storage_type_sd && !cfg->_int.fb_sd_rdy)
+                cfg->_int.fb_sd_rdy = ut->sdTest(cfg->_int.fb_file);
+            else if ((cfg->cert.file_storage == mem_storage_type_flash) && !cfg->_int.fb_flash_rdy)
+                ut->flashTest();
+        }
     }
 
     Signer.handleToken();

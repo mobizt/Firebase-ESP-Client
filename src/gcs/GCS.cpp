@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.4
+ * Google's Cloud Storage class, GCS.cpp version 1.1.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created December 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -482,24 +482,28 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         ut->appendP(header, fb_esp_pgm_str_193);
         ut->appendP(header, fb_esp_pgm_str_4);
         ut->appendP(header, fb_esp_pgm_str_120);
-        ut->appendP(header, fb_esp_pgm_str_21);
-
-        ut->appendP(header, fb_esp_pgm_str_237);
-        if (Signer.getTokenType() == token_type_oauth2_access_token)
-            ut->appendP(header, fb_esp_pgm_str_271);
-
-        ret = fbdo->tcpSend(header.c_str());
-        header.clear();
-
-        if (ret < 0)
-            return false;
-
-        ret = fbdo->tcpSend(Signer.getToken());
-
-        if (ret < 0)
-            return false;
 
         ut->appendP(header, fb_esp_pgm_str_21);
+
+        if (!Signer.getCfg()->signer.test_mode)
+        {
+            ut->appendP(header, fb_esp_pgm_str_237);
+            if (Signer.getTokenType() == token_type_oauth2_access_token)
+                ut->appendP(header, fb_esp_pgm_str_271);
+
+            ret = fbdo->tcpSend(header.c_str());
+            header.clear();
+
+            if (ret < 0)
+                return false;
+
+            ret = fbdo->tcpSend(Signer.getToken());
+
+            if (ret < 0)
+                return false;
+
+            ut->appendP(header, fb_esp_pgm_str_21);
+        }
     }
 
     ut->appendP(header, fb_esp_pgm_str_32);

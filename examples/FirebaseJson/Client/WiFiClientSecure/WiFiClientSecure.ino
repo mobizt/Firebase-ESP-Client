@@ -19,6 +19,8 @@
 #include <WiFiClientSecure.h>
 
 //Enable WiFiClientSecure library after include the library and before include the FirebaseJson.
+//If you are using the library that built in the FirebaseJson and get the compilation error,
+//move #define FBJS_ENABLE_WIFI_CLIENT_SECURE to the top above that library inclusion.
 #define FBJS_ENABLE_WIFI_CLIENT_SECURE
 #include <FirebaseJson.h>
 

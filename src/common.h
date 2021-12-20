@@ -1,6 +1,6 @@
 
 /**
- * Created December 19, 2021
+ * Created December 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -652,6 +652,7 @@ struct fb_esp_token_signer_resources_t
 {
     int step = 0;
     int attempts = 0;
+    bool test_mode = false;
     bool signup = false;
     bool anonymous = false;
     bool idTokenCutomSet = false;

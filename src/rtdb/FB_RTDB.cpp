@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.13
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.2.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 19, 2021
+ * Created December 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -3040,7 +3040,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         ut->appendP(header, fb_esp_pgm_str_1);
 
     bool appendAuth = false;
-
+   
     if (fbdo->_ss.rtdb.redirect_url.length() > 0)
     {
         struct fb_esp_url_info_t uinfo;
@@ -3053,7 +3053,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
 
     if (appendAuth)
     {
-        if (Signer.getTokenType() == token_type_oauth2_access_token)
+        if (Signer.getTokenType() == token_type_oauth2_access_token || Signer.getCfg()->signer.test_mode)
             ut->appendP(header, fb_esp_pgm_str_238);
         else
             ut->appendP(header, fb_esp_pgm_str_2);
@@ -3064,7 +3064,7 @@ int FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *r
         if (ret < 0)
             return ret;
 
-        if (Signer.getTokenType() != token_type_oauth2_access_token)
+        if (Signer.getTokenType() != token_type_oauth2_access_token && !Signer.getCfg()->signer.test_mode)
             ret = fbdo->tcpSend(Signer.getCfg()->_int.auth_token.c_str());
 
         if (ret < 0)

@@ -1,10 +1,10 @@
 
 /*
- * FirebaseJson, version 2.6.2
+ * FirebaseJson, version 2.6.3
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * December 16, 2021
+ * December 20, 2021
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -59,7 +59,7 @@ FirebaseJsonBase &FirebaseJsonBase::mClear()
     if (root != NULL)
         MB_JSON_Delete(root);
     root = NULL;
-    clearS(buf);
+    buf.clear();
     errorPos = -1;
     return *this;
 }
@@ -196,7 +196,7 @@ void FirebaseJsonBase::makeList(const char *str, std::vector<MBSTRING> &keys, ch
     MBSTRING s;
     while (current != -1)
     {
-        clearS(s);
+        s.clear();
         substr(s, str, previous, current - previous);
         trim(s);
         if (s.length() > 0)
@@ -206,7 +206,7 @@ void FirebaseJsonBase::makeList(const char *str, std::vector<MBSTRING> &keys, ch
         current = strpos(str, delim, previous);
     }
 
-    clearS(s);
+    s.clear();
 
     if (previous > 0 && current == -1)
         substr(s, str, previous, strlen(str) - previous);
@@ -216,14 +216,14 @@ void FirebaseJsonBase::makeList(const char *str, std::vector<MBSTRING> &keys, ch
     trim(s);
     if (s.length() > 0)
         keys.push_back(s);
-    clearS(s);
+    s.clear();
 }
 
 void FirebaseJsonBase::clearList(std::vector<MBSTRING> &keys)
 {
     size_t len = keys.size();
     for (size_t i = 0; i < len; i++)
-        clearS(keys[i]);
+        keys[i].clear();
     for (int i = len - 1; i >= 0; i--)
         keys.erase(keys.begin() + i);
     keys.clear();
@@ -366,12 +366,12 @@ size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent, std::vector<MBSTRING> *
 void FirebaseJsonBase::mIteratorEnd(bool clearBuf)
 {
     if (clearBuf)
-        clearS(buf);
-    clearS(iterator_data.path);
+        buf.clear();
+    iterator_data.path.clear();
     iterator_data.buf_size = 0;
     iterator_data.buf_offset = 0;
     iterator_data.result.clear();
-    clearList(iterator_data.pathList);
+    iterator_data.pathList.clear();
     iterator_data.depth = -1;
     iterator_data._depth = 0;
     iterator_data.searchEnable = false;
@@ -490,7 +490,7 @@ void FirebaseJsonBase::collectResult(MB_JSON *e, const char *key, int arrIndex, 
             iterator_data.pathList[iterator_data.pathList.size() - 1] = ar.c_str();
         else
             iterator_data.pathList.push_back(ar.c_str());
-        clearS(ar);
+        ar.clear();
     }
 
     if (criteria->path.length() > 0)
@@ -560,7 +560,7 @@ void FirebaseJsonBase::collectResult(MB_JSON *e, const char *key, int arrIndex, 
             iterator_data.path += path;
             iterator_data.path += (const char *)FLASH_MCR("\"");
 
-            clearS(path);
+            path.clear();
         }
     }
 }
@@ -691,8 +691,8 @@ bool FirebaseJsonBase::checkKeys(struct fb_js_search_criteria_t *criteria)
     if (matches)
         iterator_data.searchKeyDepth = iterator_data.depth;
 
-    clearS(sPath);
-    clearS(cPath);
+    sPath.clear();
+    cPath.clear();
 
     return matches;
 }
@@ -760,7 +760,7 @@ void FirebaseJsonBase::toBuf(fb_json_serialize_mode mode)
         char *out = mode == fb_json_serialize_mode_pretty ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
         if (out)
         {
-            storeS(buf, out, false);
+            buf = out;
             MB_JSON_free(out);
         }
     }
@@ -769,13 +769,13 @@ void FirebaseJsonBase::toBuf(fb_json_serialize_mode mode)
 bool FirebaseJsonBase::mReadClient(Client *client)
 {
     //blocking read
-    clearS(buf);
+    buf.clear();
     if (readClient(client, buf))
     {
         if (root != NULL)
             MB_JSON_Delete(root);
         root = parse(buf.c_str());
-        clearS(buf);
+        buf.clear();
         return root != NULL;
     }
     return false;
@@ -789,7 +789,7 @@ bool FirebaseJsonBase::mReadStream(Stream *s, int timeoutMS)
         if (root != NULL)
             MB_JSON_Delete(root);
         root = parse(buf.c_str());
-        clearS(buf);
+        buf.clear();
         return root != NULL;
     }
     return false;
@@ -861,6 +861,8 @@ void FirebaseJsonBase::mGetPath(MBSTRING &path, std::vector<MBSTRING> paths, int
 
 size_t FirebaseJsonBase::mGetSerializedBufferLength(bool prettify)
 {
+    if (!root)
+        return 0;
     return MB_JSON_SerializedBufferLength(root, prettify);
 }
 
@@ -1119,7 +1121,7 @@ size_t FirebaseJsonBase::mSearch(MB_JSON *parent, FirebaseJsonData *result, stru
         {
             if (result == NULL)
             {
-                clearS(buf);
+                buf.clear();
                 iterator_data.path += (const char *)FLASH_MCR("]");
                 buf = iterator_data.path.c_str();
             }
@@ -1142,7 +1144,7 @@ size_t FirebaseJsonBase::mSearch(MB_JSON *parent, FirebaseJsonData *result, stru
         {
             if (result == NULL)
             {
-                clearS(buf);
+                buf.clear();
                 mGetPath(buf, iterator_data.pathList);
             }
             else

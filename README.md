@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.2
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.3
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -40,7 +40,7 @@ The library focused on WiFi and Ethernet operations, adding the ability for mobi
 
 To make this library to support all-in-one module that has ESP32 and GSM modem on board, devided this library into small variant which is not compatible with native connectivity and can make the library too complicated. 
  
-In addition, some mobile modem can’t handle the SSL certificate and out date TLS supported. 
+In addition, some mobile modem can’t handle the SSL certificate and out dated TLS supported. 
 
 Creating the new Firebase library that specific to only GSM connectivity concerns the scope of supported MCUs and the SSL library to use on that device and memory available which are most important.
 
@@ -61,7 +61,9 @@ Creating the new Firebase library that specific to only GSM connectivity concern
 
 * **Supports Cloud Functions for Firebase**
 
-* **Built-in JSON parser and builder.**
+* **Built-in JSON editor and deserializer.**
+
+* **Support external Heap via SRAM/PSRAM in ESP8266 and ESP32.**
 
 * **Supports ethernet in ESP32 using LAN8720, TLK110 and IP101 Ethernet modules and ESP8266 using ENC28J60, W5100 and W5500 Ethernet modules.**
 
@@ -117,9 +119,9 @@ For Arduino IDE, download zip file from the repository (Github page) by select *
 
 From Arduino IDE, select menu **Sketch** -> **Include Library** -> **Add .ZIP Library...**.
 
-Choose **Firebase-ESP8266-master.zip** that previously downloaded.
+Choose **Firebase-ESP-Client-main.zip** that previously downloaded.
 
-Go to menu **Files** -> **Examples** -> **Firebase-ESP-Client-master** and choose one from examples.
+Go to menu **Files** -> **Examples** -> **Firebase-ESP-Client-main** and choose one from examples.
 
 
 
@@ -137,9 +139,7 @@ See [function description](/src/README.md) for all available functions.
 
 ```cpp
 
-
 //Include WiFi library
-#include <FirebaseESP8266.h>
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -367,9 +367,6 @@ The authenticate using the legacy token (database secret) does not have these de
 This library focuses on the user privacy and user data protection which follows Google authentication processes. Setting the security rules to allow public access read and write, is not recommended even the data transmision time in this case was significantly reduced as it does not require any auth token then the overall data size was reduced, but anyone can steal, modify, or delete data in your database.
 
 
-Some users may have the question why the time for sending/receiving data with this library was increased when using the different authentication methods which someone compares this with other libraries and platforms which some claims to be fast or has low latency in operation as it does not use any auth token and always requires public read/write allowance security rules which is not good for your privacy and data.
-
-
 Once the auth token is importance and when it was created and ready for authentication process, the data transmission time will depend on the time used in SSL/TLS handshake process (only for new session opening), the size of http header (included auth token size) and payload to be transmitted and the SSL client buffer reserved size especially in ESP8266.
 
 
@@ -413,6 +410,25 @@ For post (push) or put (set) request in RTDB, to speed up the data transfer, use
 
 With pushAsync and setAsync, the payload response will be ignored and the next data will be processed immediately.
 
+
+
+### Access in Test Mode (No Auth)
+
+In Test Mode, token generation will be ignored and no authentication applied to the request.
+
+For RTDB, you can access RTDB database in Test Mode by set the security rules like this.
+
+```json
+{
+  "rules": {
+    ".read": true, 
+    ".write": true
+  }
+}
+```
+And set the `config.signer.test_mode = true;`, see [TestMode.ino](/examples/Authentications/TestMode/TestMode.ino) example.
+
+For Cloud Firestore and Firebase Storage, also set `config.signer.test_mode = true;` and modify the rules for the public access to test.
 
 
 ### The authenication credentials and prerequisites

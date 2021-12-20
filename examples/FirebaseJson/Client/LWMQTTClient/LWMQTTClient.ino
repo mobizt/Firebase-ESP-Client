@@ -22,6 +22,8 @@
 #include <MQTTClient.h>
 
 //Enable LW MQTT library after include the library and before include the FirebaseJson.
+//If you are using the library that built in the FirebaseJson and get the compilation error,
+//move #define FBJS_ENABLE_LW_MQTT to the top above that library inclusion.
 #define FBJS_ENABLE_LW_MQTT
 #include <FirebaseJson.h>
 

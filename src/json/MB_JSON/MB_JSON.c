@@ -1,7 +1,9 @@
 /*
-  MB_JSON.c v1.0.0 based on the modified version of cJSON.c v1.7.14 (Sept 3, 2020)
+  MB_JSON.c v1.0.1 based on the modified version of cJSON.c v1.7.14 (Sept 3, 2020)
+
+  All original static cJSON functions and static variables will be prefixed with MB_JSON_.
   
-  Created August 15, 2021
+  Created December 20, 2021
 
   Copyright (c) 2021 Mobizt (K. Suwatchai)
 
@@ -291,7 +293,7 @@ MB_JSON_Delete(MB_JSON *item)
 }
 
 /* get the decimal point character of the current locale */
-static unsigned char get_decimal_point(void)
+static unsigned char MB_JSON_get_decimal_point(void)
 {
 #ifdef ENABLE_LOCALES
     struct lconv *lconv = localeconv();
@@ -308,23 +310,23 @@ typedef struct
     size_t offset;
     size_t depth; /* How deeply nested (in arrays/objects) is the input at the current offset. */
     MB_JSON_internal_hooks hooks;
-} parse_buffer;
+} MB_JSON_parse_buffer;
 
 /* check if the given size is left to read in a given parse buffer (starting with 1) */
-#define can_read(buffer, size) ((buffer != NULL) && (((buffer)->offset + size) <= (buffer)->length))
+#define MB_JSON_can_read(buffer, size) ((buffer != NULL) && (((buffer)->offset + size) <= (buffer)->length))
 /* check if the buffer can be accessed at the given index (starting with 0) */
-#define can_access_at_index(buffer, index) ((buffer != NULL) && (((buffer)->offset + index) < (buffer)->length))
-#define cannot_access_at_index(buffer, index) (!can_access_at_index(buffer, index))
+#define MB_JSON_can_access_at_index(buffer, index) ((buffer != NULL) && (((buffer)->offset + index) < (buffer)->length))
+#define MB_JSON_cannot_access_at_index(buffer, index) (!MB_JSON_can_access_at_index(buffer, index))
 /* get a pointer to the buffer at the position */
-#define buffer_at_offset(buffer) ((buffer)->content + (buffer)->offset)
+#define MB_JSON_buffer_at_offset(buffer) ((buffer)->content + (buffer)->offset)
 
 /* Parse the input text to generate a number, and populate the result into item. */
-static MB_JSON_bool parse_number(MB_JSON *const item, parse_buffer *const input_buffer)
+static MB_JSON_bool MB_JSON_parse_number(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer)
 {
     double number = 0;
     unsigned char *after_end = NULL;
     unsigned char number_c_string[64];
-    unsigned char decimal_point = get_decimal_point();
+    unsigned char decimal_point = MB_JSON_get_decimal_point();
     size_t i = 0;
 
     if ((input_buffer == NULL) || (input_buffer->content == NULL))
@@ -335,9 +337,9 @@ static MB_JSON_bool parse_number(MB_JSON *const item, parse_buffer *const input_
     /* copy the number into a temporary buffer and replace '.' with the decimal point
      * of the current locale (for strtod)
      * This also takes care of '\0' not necessarily being available for marking the end of the input */
-    for (i = 0; (i < (sizeof(number_c_string) - 1)) && can_access_at_index(input_buffer, i); i++)
+    for (i = 0; (i < (sizeof(number_c_string) - 1)) && MB_JSON_can_access_at_index(input_buffer, i); i++)
     {
-        switch (buffer_at_offset(input_buffer)[i])
+        switch (MB_JSON_buffer_at_offset(input_buffer)[i])
         {
         case '0':
         case '1':
@@ -353,7 +355,7 @@ static MB_JSON_bool parse_number(MB_JSON *const item, parse_buffer *const input_
         case '-':
         case 'e':
         case 'E':
-            number_c_string[i] = buffer_at_offset(input_buffer)[i];
+            number_c_string[i] = MB_JSON_buffer_at_offset(input_buffer)[i];
             break;
 
         case '.':
@@ -452,17 +454,17 @@ typedef struct
     MB_JSON_bool noalloc;
     MB_JSON_bool format; /* is this print a formatted print */
     MB_JSON_internal_hooks hooks;
-} printbuffer;
+} MB_JSON_printbuffer;
 
 typedef struct
 {
     size_t size;
     size_t depth;
     MB_JSON_bool format;
-} buffer_len_data_t;
+} MB_JSON_buffer_len_data_t;
 
-/* realloc printbuffer if necessary to have at least "needed" bytes more */
-static unsigned char *ensure(printbuffer *const p, size_t needed)
+/* realloc MB_JSON_printbuffer if necessary to have at least "needed" bytes more */
+static unsigned char *MB_JSON_ensure(MB_JSON_printbuffer *const p, size_t needed)
 {
     unsigned char *newbuffer = NULL;
     size_t newsize = 0;
@@ -548,8 +550,8 @@ static unsigned char *ensure(printbuffer *const p, size_t needed)
     return newbuffer + p->offset;
 }
 
-/* calculate the new length of the string in a printbuffer and update the offset */
-static void update_offset(printbuffer *const buffer)
+/* calculate the new length of the string in a MB_JSON_printbuffer and update the offset */
+static void MB_JSON_update_offset(MB_JSON_printbuffer *const buffer)
 {
     const unsigned char *buffer_pointer = NULL;
     if ((buffer == NULL) || (buffer->buffer == NULL))
@@ -562,21 +564,21 @@ static void update_offset(printbuffer *const buffer)
 }
 
 /* securely comparison of floating-point variables */
-static MB_JSON_bool compare_double(double a, double b)
+static MB_JSON_bool MB_JSON_compare_double(double a, double b)
 {
     double maxVal = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
     return (fabs(a - b) <= maxVal * DBL_EPSILON);
 }
 
 /* Render the number nicely from the given item into a string. */
-static MB_JSON_bool print_number(const MB_JSON *const item, printbuffer *const output_buffer)
+static MB_JSON_bool MB_JSON_print_number(const MB_JSON *const item, MB_JSON_printbuffer *const output_buffer)
 {
     unsigned char *output_pointer = NULL;
     double d = item->valuedouble;
     int length = 0;
     size_t i = 0;
     unsigned char number_buffer[26] = {0}; /* temporary buffer to print the number into */
-    unsigned char decimal_point = get_decimal_point();
+    unsigned char decimal_point = MB_JSON_get_decimal_point();
     double test = 0.0;
 
     if (output_buffer == NULL)
@@ -595,7 +597,7 @@ static MB_JSON_bool print_number(const MB_JSON *const item, printbuffer *const o
         length = sprintf((char *)number_buffer, "%1.15g", d);
 
         /* Check whether the original double can be recovered */
-        if ((sscanf((char *)number_buffer, "%lg", &test) != 1) || !compare_double((double)test, d))
+        if ((sscanf((char *)number_buffer, "%lg", &test) != 1) || !MB_JSON_compare_double((double)test, d))
         {
             /* If not, print with 17 decimal places of precision */
             length = sprintf((char *)number_buffer, "%1.17g", d);
@@ -609,7 +611,7 @@ static MB_JSON_bool print_number(const MB_JSON *const item, printbuffer *const o
     }
 
     /* reserve appropriate space in the output */
-    output_pointer = ensure(output_buffer, (size_t)length + sizeof(""));
+    output_pointer = MB_JSON_ensure(output_buffer, (size_t)length + sizeof(""));
     if (output_pointer == NULL)
     {
         return false;
@@ -635,7 +637,7 @@ static MB_JSON_bool print_number(const MB_JSON *const item, printbuffer *const o
 }
 
 /* parse 4 digit hexadecimal number */
-static unsigned parse_hex4(const unsigned char *const input)
+static unsigned MB_JSON_parse_hex4(const unsigned char *const input)
 {
     unsigned int h = 0;
     size_t i = 0;
@@ -672,7 +674,7 @@ static unsigned parse_hex4(const unsigned char *const input)
 
 /* converts a UTF-16 literal to UTF-8
  * A literal can be one or two sequences of the form \uXXXX */
-static unsigned char utf16_literal_to_utf8(const unsigned char *const input_pointer, const unsigned char *const input_end, unsigned char **output_pointer)
+static unsigned char MB_JSON_utf16_literal_to_utf8(const unsigned char *const input_pointer, const unsigned char *const input_end, unsigned char **output_pointer)
 {
     long unsigned int codepoint = 0;
     unsigned int first_code = 0;
@@ -689,7 +691,7 @@ static unsigned char utf16_literal_to_utf8(const unsigned char *const input_poin
     }
 
     /* get the first utf16 sequence */
-    first_code = parse_hex4(first_sequence + 2);
+    first_code = MB_JSON_parse_hex4(first_sequence + 2);
 
     /* check that the code is valid */
     if (((first_code >= 0xDC00) && (first_code <= 0xDFFF)))
@@ -717,7 +719,7 @@ static unsigned char utf16_literal_to_utf8(const unsigned char *const input_poin
         }
 
         /* get the second utf16 sequence */
-        second_code = parse_hex4(second_sequence + 2);
+        second_code = MB_JSON_parse_hex4(second_sequence + 2);
         /* check that the code is valid */
         if ((second_code < 0xDC00) || (second_code > 0xDFFF))
         {
@@ -792,15 +794,15 @@ fail:
 }
 
 /* Parse the input text into an unescaped cinput, and populate item. */
-static MB_JSON_bool parse_string(MB_JSON *const item, parse_buffer *const input_buffer)
+static MB_JSON_bool MB_JSON_parse_string(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer)
 {
-    const unsigned char *input_pointer = buffer_at_offset(input_buffer) + 1;
-    const unsigned char *input_end = buffer_at_offset(input_buffer) + 1;
+    const unsigned char *input_pointer = MB_JSON_buffer_at_offset(input_buffer) + 1;
+    const unsigned char *input_end = MB_JSON_buffer_at_offset(input_buffer) + 1;
     unsigned char *output_pointer = NULL;
     unsigned char *output = NULL;
 
     /* not a string */
-    if (buffer_at_offset(input_buffer)[0] != '\"')
+    if (MB_JSON_buffer_at_offset(input_buffer)[0] != '\"')
     {
         goto fail;
     }
@@ -830,7 +832,7 @@ static MB_JSON_bool parse_string(MB_JSON *const item, parse_buffer *const input_
         }
 
         /* This is at most how much we need for the output */
-        allocation_length = (size_t)(input_end - buffer_at_offset(input_buffer)) - skipped_bytes;
+        allocation_length = (size_t)(input_end - MB_JSON_buffer_at_offset(input_buffer)) - skipped_bytes;
         output = (unsigned char *)input_buffer->hooks.allocate(allocation_length + sizeof(""));
         if (output == NULL)
         {
@@ -880,7 +882,7 @@ static MB_JSON_bool parse_string(MB_JSON *const item, parse_buffer *const input_
 
             /* UTF-16 literal */
             case 'u':
-                sequence_length = utf16_literal_to_utf8(input_pointer, input_end, &output_pointer);
+                sequence_length = MB_JSON_utf16_literal_to_utf8(input_pointer, input_end, &output_pointer);
                 if (sequence_length == 0)
                 {
                     /* failed to convert UTF16-literal to UTF-8 */
@@ -920,7 +922,7 @@ fail:
     return false;
 }
 
-static MB_JSON_bool get_string_buffer_length_ptr(const unsigned char *const input, buffer_len_data_t *const buf_len)
+static MB_JSON_bool MB_JSON_get_string_buffer_length_ptr(const unsigned char *const input, MB_JSON_buffer_len_data_t *const buf_len)
 {
     const unsigned char *input_pointer = NULL;
     size_t output_length = 0;
@@ -966,7 +968,7 @@ static MB_JSON_bool get_string_buffer_length_ptr(const unsigned char *const inpu
 }
 
 /* Render the cstring provided to an escaped version that can be printed. */
-static MB_JSON_bool print_string_ptr(const unsigned char *const input, printbuffer *const output_buffer)
+static MB_JSON_bool MB_JSON_print_string_ptr(const unsigned char *const input, MB_JSON_printbuffer *const output_buffer)
 {
     const unsigned char *input_pointer = NULL;
     unsigned char *output = NULL;
@@ -983,7 +985,7 @@ static MB_JSON_bool print_string_ptr(const unsigned char *const input, printbuff
     /* empty string */
     if (input == NULL)
     {
-        output = ensure(output_buffer, sizeof("\"\""));
+        output = MB_JSON_ensure(output_buffer, sizeof("\"\""));
         if (output == NULL)
         {
             return false;
@@ -1019,7 +1021,7 @@ static MB_JSON_bool print_string_ptr(const unsigned char *const input, printbuff
     }
     output_length = (size_t)(input_pointer - input) + escape_characters;
 
-    output = ensure(output_buffer, output_length + sizeof("\"\""));
+    output = MB_JSON_ensure(output_buffer, output_length + sizeof("\"\""));
     if (output == NULL)
     {
         return false;
@@ -1087,43 +1089,43 @@ static MB_JSON_bool print_string_ptr(const unsigned char *const input, printbuff
     return true;
 }
 
-static MB_JSON_bool get_string_buffer_length(const MB_JSON *const item, buffer_len_data_t *const buf_len)
+static MB_JSON_bool MB_JSON_get_string_buffer_length(const MB_JSON *const item, MB_JSON_buffer_len_data_t *const buf_len)
 {
-    return get_string_buffer_length_ptr((unsigned char *)item->valuestring, buf_len);
+    return MB_JSON_get_string_buffer_length_ptr((unsigned char *)item->valuestring, buf_len);
 }
 
 /* Invoke print_string_ptr (which is useful) on an item. */
-static MB_JSON_bool print_string(const MB_JSON *const item, printbuffer *const p)
+static MB_JSON_bool MB_JSON_print_string(const MB_JSON *const item, MB_JSON_printbuffer *const p)
 {
-    return print_string_ptr((unsigned char *)item->valuestring, p);
+    return MB_JSON_print_string_ptr((unsigned char *)item->valuestring, p);
 }
 
 /* Predeclare these prototypes. */
-static MB_JSON_bool parse_value(MB_JSON *const item, parse_buffer *const input_buffer);
-static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const output_buffer);
-static MB_JSON_bool parse_array(MB_JSON *const item, parse_buffer *const input_buffer);
-static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const output_buffer);
-static MB_JSON_bool parse_object(MB_JSON *const item, parse_buffer *const input_buffer);
-static MB_JSON_bool print_object(const MB_JSON *const item, printbuffer *const output_buffer);
+static MB_JSON_bool MB_JSON_parse_value(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer);
+static MB_JSON_bool MB_JSON_print_value(const MB_JSON *const item, MB_JSON_printbuffer *const output_buffer);
+static MB_JSON_bool MB_JSON_parse_array(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer);
+static MB_JSON_bool MB_JSON_print_array(const MB_JSON *const item, MB_JSON_printbuffer *const output_buffer);
+static MB_JSON_bool MB_JSON_parse_object(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer);
+static MB_JSON_bool MB_JSON_print_object(const MB_JSON *const item, MB_JSON_printbuffer *const output_buffer);
 
-static MB_JSON_bool get_object_buffer_length(const MB_JSON *const item, buffer_len_data_t *const buf_len);
-static MB_JSON_bool get_array_buffer_length(const MB_JSON *const item, buffer_len_data_t *const buf_len);
-static MB_JSON_bool get_value_buffer_length(const MB_JSON *const item, buffer_len_data_t *const buf_len);
+static MB_JSON_bool MB_JSON_get_object_buffer_length(const MB_JSON *const item, MB_JSON_buffer_len_data_t *const buf_len);
+static MB_JSON_bool MB_JSON_get_array_buffer_length(const MB_JSON *const item, MB_JSON_buffer_len_data_t *const buf_len);
+static MB_JSON_bool MB_JSON_get_value_buffer_length(const MB_JSON *const item, MB_JSON_buffer_len_data_t *const buf_len);
 
 /* Utility to jump whitespace and cr/lf */
-static parse_buffer *buffer_skip_whitespace(parse_buffer *const buffer)
+static MB_JSON_parse_buffer *MB_JSON_buffer_skip_whitespace(MB_JSON_parse_buffer *const buffer)
 {
     if ((buffer == NULL) || (buffer->content == NULL))
     {
         return NULL;
     }
 
-    if (cannot_access_at_index(buffer, 0))
+    if (MB_JSON_cannot_access_at_index(buffer, 0))
     {
         return buffer;
     }
 
-    while (can_access_at_index(buffer, 0) && (buffer_at_offset(buffer)[0] <= 32))
+    while (MB_JSON_can_access_at_index(buffer, 0) && (MB_JSON_buffer_at_offset(buffer)[0] <= 32))
     {
         buffer->offset++;
     }
@@ -1137,14 +1139,14 @@ static parse_buffer *buffer_skip_whitespace(parse_buffer *const buffer)
 }
 
 /* skip the UTF-8 BOM (byte order mark) if it is at the beginning of a buffer */
-static parse_buffer *skip_utf8_bom(parse_buffer *const buffer)
+static MB_JSON_parse_buffer *MB_JSON_skip_utf8_bom(MB_JSON_parse_buffer *const buffer)
 {
     if ((buffer == NULL) || (buffer->content == NULL) || (buffer->offset != 0))
     {
         return NULL;
     }
 
-    if (can_access_at_index(buffer, 4) && (strncmp((const char *)buffer_at_offset(buffer), "\xEF\xBB\xBF", 3) == 0))
+    if (MB_JSON_can_access_at_index(buffer, 4) && (strncmp((const char *)MB_JSON_buffer_at_offset(buffer), "\xEF\xBB\xBF", 3) == 0))
     {
         buffer->offset += 3;
     }
@@ -1172,7 +1174,7 @@ MB_JSON_ParseWithOpts(const char *value, const char **return_parse_end, MB_JSON_
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_ParseWithLengthOpts(const char *value, size_t buffer_length, const char **return_parse_end, MB_JSON_bool require_null_terminated)
 {
-    parse_buffer buffer = {0, 0, 0, 0, {0, 0, 0}};
+    MB_JSON_parse_buffer buffer = {0, 0, 0, 0, {0, 0, 0}};
     MB_JSON *item = NULL;
 
     /* reset error position */
@@ -1195,7 +1197,7 @@ MB_JSON_ParseWithLengthOpts(const char *value, size_t buffer_length, const char 
         goto fail;
     }
 
-    if (!parse_value(item, buffer_skip_whitespace(skip_utf8_bom(&buffer))))
+    if (!MB_JSON_parse_value(item, MB_JSON_buffer_skip_whitespace(MB_JSON_skip_utf8_bom(&buffer))))
     {
         /* parse failure. ep is set. */
         goto fail;
@@ -1204,15 +1206,15 @@ MB_JSON_ParseWithLengthOpts(const char *value, size_t buffer_length, const char 
     /* if we require null-terminated JSON without appended garbage, skip and then check for a null terminator */
     if (require_null_terminated)
     {
-        buffer_skip_whitespace(&buffer);
-        if ((buffer.offset >= buffer.length) || buffer_at_offset(&buffer)[0] != '\0')
+        MB_JSON_buffer_skip_whitespace(&buffer);
+        if ((buffer.offset >= buffer.length) || MB_JSON_buffer_at_offset(&buffer)[0] != '\0')
         {
             goto fail;
         }
     }
     if (return_parse_end)
     {
-        *return_parse_end = (const char *)buffer_at_offset(&buffer);
+        *return_parse_end = (const char *)MB_JSON_buffer_at_offset(&buffer);
     }
 
     return item;
@@ -1266,19 +1268,19 @@ MB_JSON_ParseWithLength(const char *value, size_t buffer_length)
 
 size_t MB_JSON_SerializedBufferLength(const MB_JSON *const item, MB_JSON_bool format)
 {
-    buffer_len_data_t buf_len[1];
+    MB_JSON_buffer_len_data_t buf_len[1];
     buf_len->depth = 0;
     buf_len->format = format > 0 ? true : false;
     buf_len->size = 0;
 
-    get_value_buffer_length(item, buf_len);
+    MB_JSON_get_value_buffer_length(item, buf_len);
     return buf_len->size;
 }
 
-static unsigned char *print(const MB_JSON *const item, MB_JSON_bool format, const MB_JSON_internal_hooks *const hooks)
+static unsigned char *MB_JSON_print(const MB_JSON *const item, MB_JSON_bool format, const MB_JSON_internal_hooks *const hooks)
 {
     static const size_t default_buffer_size = 256;
-    printbuffer buffer[1];
+    MB_JSON_printbuffer buffer[1];
     unsigned char *printed = NULL;
 
     memset(buffer, 0, sizeof(buffer));
@@ -1294,11 +1296,11 @@ static unsigned char *print(const MB_JSON *const item, MB_JSON_bool format, cons
     }
 
     /* print the value */
-    if (!print_value(item, buffer))
+    if (!MB_JSON_print_value(item, buffer))
     {
         goto fail;
     }
-    update_offset(buffer);
+    MB_JSON_update_offset(buffer);
 
     /* check if reallocate is available */
     if (hooks->reallocate != NULL)
@@ -1344,19 +1346,19 @@ fail:
 MB_JSON_PUBLIC(char *)
 MB_JSON_Print(const MB_JSON *item)
 {
-    return (char *)print(item, true, &MB_JSON_global_hooks);
+    return (char *)MB_JSON_print(item, true, &MB_JSON_global_hooks);
 }
 
 MB_JSON_PUBLIC(char *)
 MB_JSON_PrintUnformatted(const MB_JSON *item)
 {
-    return (char *)print(item, false, &MB_JSON_global_hooks);
+    return (char *)MB_JSON_print(item, false, &MB_JSON_global_hooks);
 }
 
 MB_JSON_PUBLIC(char *)
 MB_JSON_PrintBuffered(const MB_JSON *item, int prebuffer, MB_JSON_bool fmt)
 {
-    printbuffer p = {0, 0, 0, 0, 0, 0, {0, 0, 0}};
+    MB_JSON_printbuffer p = {0, 0, 0, 0, 0, 0, {0, 0, 0}};
 
     if (prebuffer < 0)
     {
@@ -1375,7 +1377,7 @@ MB_JSON_PrintBuffered(const MB_JSON *item, int prebuffer, MB_JSON_bool fmt)
     p.format = fmt;
     p.hooks = MB_JSON_global_hooks;
 
-    if (!print_value(item, &p))
+    if (!MB_JSON_print_value(item, &p))
     {
         MB_JSON_global_hooks.deallocate(p.buffer);
         return NULL;
@@ -1387,7 +1389,7 @@ MB_JSON_PrintBuffered(const MB_JSON *item, int prebuffer, MB_JSON_bool fmt)
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_PrintPreallocated(MB_JSON *item, char *buffer, const int length, const MB_JSON_bool format)
 {
-    printbuffer p = {0, 0, 0, 0, 0, 0, {0, 0, 0}};
+    MB_JSON_printbuffer p = {0, 0, 0, 0, 0, 0, {0, 0, 0}};
 
     if ((length < 0) || (buffer == NULL))
     {
@@ -1401,11 +1403,11 @@ MB_JSON_PrintPreallocated(MB_JSON *item, char *buffer, const int length, const M
     p.format = format;
     p.hooks = MB_JSON_global_hooks;
 
-    return print_value(item, &p);
+    return MB_JSON_print_value(item, &p);
 }
 
 /* Parser core - when encountering text, process appropriately. */
-static MB_JSON_bool parse_value(MB_JSON *const item, parse_buffer *const input_buffer)
+static MB_JSON_bool MB_JSON_parse_value(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer)
 {
     if ((input_buffer == NULL) || (input_buffer->content == NULL))
     {
@@ -1414,21 +1416,21 @@ static MB_JSON_bool parse_value(MB_JSON *const item, parse_buffer *const input_b
 
     /* parse the different types of values */
     /* null */
-    if (can_read(input_buffer, 4) && (strncmp((const char *)buffer_at_offset(input_buffer), "null", 4) == 0))
+    if (MB_JSON_can_read(input_buffer, 4) && (strncmp((const char *)MB_JSON_buffer_at_offset(input_buffer), "null", 4) == 0))
     {
         item->type = MB_JSON_NULL;
         input_buffer->offset += 4;
         return true;
     }
     /* false */
-    if (can_read(input_buffer, 5) && (strncmp((const char *)buffer_at_offset(input_buffer), "false", 5) == 0))
+    if (MB_JSON_can_read(input_buffer, 5) && (strncmp((const char *)MB_JSON_buffer_at_offset(input_buffer), "false", 5) == 0))
     {
         item->type = MB_JSON_False;
         input_buffer->offset += 5;
         return true;
     }
     /* true */
-    if (can_read(input_buffer, 4) && (strncmp((const char *)buffer_at_offset(input_buffer), "true", 4) == 0))
+    if (MB_JSON_can_read(input_buffer, 4) && (strncmp((const char *)MB_JSON_buffer_at_offset(input_buffer), "true", 4) == 0))
     {
         item->type = MB_JSON_True;
         item->valueint = 1;
@@ -1436,30 +1438,30 @@ static MB_JSON_bool parse_value(MB_JSON *const item, parse_buffer *const input_b
         return true;
     }
     /* string */
-    if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '\"'))
+    if (MB_JSON_can_access_at_index(input_buffer, 0) && (MB_JSON_buffer_at_offset(input_buffer)[0] == '\"'))
     {
-        return parse_string(item, input_buffer);
+        return MB_JSON_parse_string(item, input_buffer);
     }
     /* number */
-    if (can_access_at_index(input_buffer, 0) && ((buffer_at_offset(input_buffer)[0] == '-') || ((buffer_at_offset(input_buffer)[0] >= '0') && (buffer_at_offset(input_buffer)[0] <= '9'))))
+    if (MB_JSON_can_access_at_index(input_buffer, 0) && ((MB_JSON_buffer_at_offset(input_buffer)[0] == '-') || ((MB_JSON_buffer_at_offset(input_buffer)[0] >= '0') && (MB_JSON_buffer_at_offset(input_buffer)[0] <= '9'))))
     {
-        return parse_number(item, input_buffer);
+        return MB_JSON_parse_number(item, input_buffer);
     }
     /* array */
-    if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '['))
+    if (MB_JSON_can_access_at_index(input_buffer, 0) && (MB_JSON_buffer_at_offset(input_buffer)[0] == '['))
     {
-        return parse_array(item, input_buffer);
+        return MB_JSON_parse_array(item, input_buffer);
     }
     /* object */
-    if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '{'))
+    if (MB_JSON_can_access_at_index(input_buffer, 0) && (MB_JSON_buffer_at_offset(input_buffer)[0] == '{'))
     {
-        return parse_object(item, input_buffer);
+        return MB_JSON_parse_object(item, input_buffer);
     }
 
     return false;
 }
 
-static MB_JSON_bool get_value_buffer_length(const MB_JSON *const item, buffer_len_data_t *const buf_len)
+static MB_JSON_bool MB_JSON_get_value_buffer_length(const MB_JSON *const item, MB_JSON_buffer_len_data_t *const buf_len)
 {
 
     switch ((item->type) & 0xFF)
@@ -1489,13 +1491,13 @@ static MB_JSON_bool get_value_buffer_length(const MB_JSON *const item, buffer_le
     }
 
     case MB_JSON_String:
-        return get_string_buffer_length(item, buf_len);
+        return MB_JSON_get_string_buffer_length(item, buf_len);
 
     case MB_JSON_Array:
-        return get_array_buffer_length(item, buf_len);
+        return MB_JSON_get_array_buffer_length(item, buf_len);
 
     case MB_JSON_Object:
-        return get_object_buffer_length(item, buf_len);
+        return MB_JSON_get_object_buffer_length(item, buf_len);
 
     default:
         return false;
@@ -1503,7 +1505,7 @@ static MB_JSON_bool get_value_buffer_length(const MB_JSON *const item, buffer_le
 }
 
 /* Render a value to text. */
-static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const output_buffer)
+static MB_JSON_bool MB_JSON_print_value(const MB_JSON *const item, MB_JSON_printbuffer *const output_buffer)
 {
     unsigned char *output = NULL;
 
@@ -1515,7 +1517,7 @@ static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const ou
     switch ((item->type) & 0xFF)
     {
     case MB_JSON_NULL:
-        output = ensure(output_buffer, 5);
+        output = MB_JSON_ensure(output_buffer, 5);
         if (output == NULL)
         {
             return false;
@@ -1524,7 +1526,7 @@ static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const ou
         return true;
 
     case MB_JSON_False:
-        output = ensure(output_buffer, 6);
+        output = MB_JSON_ensure(output_buffer, 6);
         if (output == NULL)
         {
             return false;
@@ -1533,7 +1535,7 @@ static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const ou
         return true;
 
     case MB_JSON_True:
-        output = ensure(output_buffer, 5);
+        output = MB_JSON_ensure(output_buffer, 5);
         if (output == NULL)
         {
             return false;
@@ -1542,7 +1544,7 @@ static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const ou
         return true;
 
     case MB_JSON_Number:
-        return print_number(item, output_buffer);
+        return MB_JSON_print_number(item, output_buffer);
 
     case MB_JSON_Raw:
     {
@@ -1553,7 +1555,7 @@ static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const ou
         }
 
         raw_length = strlen(item->valuestring) + sizeof("");
-        output = ensure(output_buffer, raw_length);
+        output = MB_JSON_ensure(output_buffer, raw_length);
         if (output == NULL)
         {
             return false;
@@ -1563,13 +1565,13 @@ static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const ou
     }
 
     case MB_JSON_String:
-        return print_string(item, output_buffer);
+        return MB_JSON_print_string(item, output_buffer);
 
     case MB_JSON_Array:
-        return print_array(item, output_buffer);
+        return MB_JSON_print_array(item, output_buffer);
 
     case MB_JSON_Object:
-        return print_object(item, output_buffer);
+        return MB_JSON_print_object(item, output_buffer);
 
     default:
         return false;
@@ -1577,7 +1579,7 @@ static MB_JSON_bool print_value(const MB_JSON *const item, printbuffer *const ou
 }
 
 /* Build an array from input text. */
-static MB_JSON_bool parse_array(MB_JSON *const item, parse_buffer *const input_buffer)
+static MB_JSON_bool MB_JSON_parse_array(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer)
 {
     MB_JSON *head = NULL; /* head of the linked list */
     MB_JSON *current_item = NULL;
@@ -1588,22 +1590,22 @@ static MB_JSON_bool parse_array(MB_JSON *const item, parse_buffer *const input_b
     }
     input_buffer->depth++;
 
-    if (buffer_at_offset(input_buffer)[0] != '[')
+    if (MB_JSON_buffer_at_offset(input_buffer)[0] != '[')
     {
         /* not an array */
         goto fail;
     }
 
     input_buffer->offset++;
-    buffer_skip_whitespace(input_buffer);
-    if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == ']'))
+    MB_JSON_buffer_skip_whitespace(input_buffer);
+    if (MB_JSON_can_access_at_index(input_buffer, 0) && (MB_JSON_buffer_at_offset(input_buffer)[0] == ']'))
     {
         /* empty array */
         goto success;
     }
 
     /* check if we skipped to the end of the buffer */
-    if (cannot_access_at_index(input_buffer, 0))
+    if (MB_JSON_cannot_access_at_index(input_buffer, 0))
     {
         input_buffer->offset--;
         goto fail;
@@ -1637,15 +1639,15 @@ static MB_JSON_bool parse_array(MB_JSON *const item, parse_buffer *const input_b
 
         /* parse next value */
         input_buffer->offset++;
-        buffer_skip_whitespace(input_buffer);
-        if (!parse_value(current_item, input_buffer))
+        MB_JSON_buffer_skip_whitespace(input_buffer);
+        if (!MB_JSON_parse_value(current_item, input_buffer))
         {
             goto fail; /* failed to parse value */
         }
-        buffer_skip_whitespace(input_buffer);
-    } while (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == ','));
+        MB_JSON_buffer_skip_whitespace(input_buffer);
+    } while (MB_JSON_can_access_at_index(input_buffer, 0) && (MB_JSON_buffer_at_offset(input_buffer)[0] == ','));
 
-    if (cannot_access_at_index(input_buffer, 0) || buffer_at_offset(input_buffer)[0] != ']')
+    if (MB_JSON_cannot_access_at_index(input_buffer, 0) || MB_JSON_buffer_at_offset(input_buffer)[0] != ']')
     {
         goto fail; /* expected end of array */
     }
@@ -1674,7 +1676,7 @@ fail:
     return false;
 }
 
-MB_JSON_bool get_array_buffer_length(const MB_JSON *const item, buffer_len_data_t *const buf_len)
+MB_JSON_bool MB_JSON_get_array_buffer_length(const MB_JSON *const item, MB_JSON_buffer_len_data_t *const buf_len)
 {
     MB_JSON *current_element = item->child;
 
@@ -1694,7 +1696,7 @@ MB_JSON_bool get_array_buffer_length(const MB_JSON *const item, buffer_len_data_
 
     while (current_element != NULL)
     {
-        if (!get_value_buffer_length(current_element, buf_len))
+        if (!MB_JSON_get_value_buffer_length(current_element, buf_len))
             return false;
 
         if (current_element->next)
@@ -1729,7 +1731,7 @@ MB_JSON_bool get_array_buffer_length(const MB_JSON *const item, buffer_len_data_
 }
 
 /* Render an array to text */
-static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const output_buffer)
+static MB_JSON_bool MB_JSON_print_array(const MB_JSON *const item, MB_JSON_printbuffer *const output_buffer)
 {
     unsigned char *output_pointer = NULL;
     size_t length = 0;
@@ -1742,7 +1744,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
 
     /* Compose the output array. */
     /* opening square bracket */
-    output_pointer = ensure(output_buffer, 1);
+    output_pointer = MB_JSON_ensure(output_buffer, 1);
     if (output_pointer == NULL)
     {
         return false;
@@ -1755,7 +1757,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
     //add newline and tab after [
     if (output_buffer->format)
     {
-        output_pointer = ensure(output_buffer, 2);
+        output_pointer = MB_JSON_ensure(output_buffer, 2);
         if (output_pointer == NULL)
         {
             return false;
@@ -1764,7 +1766,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
         output_buffer->offset += 1;
 
         size_t i;
-        output_pointer = ensure(output_buffer, output_buffer->depth);
+        output_pointer = MB_JSON_ensure(output_buffer, output_buffer->depth);
         if (output_pointer == NULL)
         {
             return false;
@@ -1778,15 +1780,15 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
 
     while (current_element != NULL)
     {
-        if (!print_value(current_element, output_buffer))
+        if (!MB_JSON_print_value(current_element, output_buffer))
         {
             return false;
         }
-        update_offset(output_buffer);
+        MB_JSON_update_offset(output_buffer);
         if (current_element->next)
         {
             length = (size_t)(output_buffer->format ? 2 : 1);
-            output_pointer = ensure(output_buffer, length + 1);
+            output_pointer = MB_JSON_ensure(output_buffer, length + 1);
             if (output_pointer == NULL)
             {
                 return false;
@@ -1802,7 +1804,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
             if (output_buffer->format)
             {
                 size_t i;
-                output_pointer = ensure(output_buffer, output_buffer->depth + 1);
+                output_pointer = MB_JSON_ensure(output_buffer, output_buffer->depth + 1);
                 if (output_pointer == NULL)
                 {
                     return false;
@@ -1819,7 +1821,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
         current_element = current_element->next;
     }
 
-    output_pointer = ensure(output_buffer, 2);
+    output_pointer = MB_JSON_ensure(output_buffer, 2);
     if (output_pointer == NULL)
     {
         return false;
@@ -1829,7 +1831,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
     //add newline and tab before ]
     if (output_buffer->format)
     {
-        output_pointer = ensure(output_buffer, 2);
+        output_pointer = MB_JSON_ensure(output_buffer, 2);
         if (output_pointer == NULL)
         {
             return false;
@@ -1838,7 +1840,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
         output_buffer->offset += 1;
 
         size_t i;
-        output_pointer = ensure(output_buffer, output_buffer->depth + 1);
+        output_pointer = MB_JSON_ensure(output_buffer, output_buffer->depth + 1);
         if (output_pointer == NULL)
         {
             return false;
@@ -1857,7 +1859,7 @@ static MB_JSON_bool print_array(const MB_JSON *const item, printbuffer *const ou
 }
 
 /* Build an object from the text. */
-static MB_JSON_bool parse_object(MB_JSON *const item, parse_buffer *const input_buffer)
+static MB_JSON_bool MB_JSON_parse_object(MB_JSON *const item, MB_JSON_parse_buffer *const input_buffer)
 {
     MB_JSON *head = NULL; /* linked list head */
     MB_JSON *current_item = NULL;
@@ -1868,20 +1870,20 @@ static MB_JSON_bool parse_object(MB_JSON *const item, parse_buffer *const input_
     }
     input_buffer->depth++;
 
-    if (cannot_access_at_index(input_buffer, 0) || (buffer_at_offset(input_buffer)[0] != '{'))
+    if (MB_JSON_cannot_access_at_index(input_buffer, 0) || (MB_JSON_buffer_at_offset(input_buffer)[0] != '{'))
     {
         goto fail; /* not an object */
     }
 
     input_buffer->offset++;
-    buffer_skip_whitespace(input_buffer);
-    if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '}'))
+    MB_JSON_buffer_skip_whitespace(input_buffer);
+    if (MB_JSON_can_access_at_index(input_buffer, 0) && (MB_JSON_buffer_at_offset(input_buffer)[0] == '}'))
     {
         goto success; /* empty object */
     }
 
     /* check if we skipped to the end of the buffer */
-    if (cannot_access_at_index(input_buffer, 0))
+    if (MB_JSON_cannot_access_at_index(input_buffer, 0))
     {
         input_buffer->offset--;
         goto fail;
@@ -1915,33 +1917,33 @@ static MB_JSON_bool parse_object(MB_JSON *const item, parse_buffer *const input_
 
         /* parse the name of the child */
         input_buffer->offset++;
-        buffer_skip_whitespace(input_buffer);
-        if (!parse_string(current_item, input_buffer))
+        MB_JSON_buffer_skip_whitespace(input_buffer);
+        if (!MB_JSON_parse_string(current_item, input_buffer))
         {
             goto fail; /* failed to parse name */
         }
-        buffer_skip_whitespace(input_buffer);
+        MB_JSON_buffer_skip_whitespace(input_buffer);
 
         /* swap valuestring and string, because we parsed the name */
         current_item->string = current_item->valuestring;
         current_item->valuestring = NULL;
 
-        if (cannot_access_at_index(input_buffer, 0) || (buffer_at_offset(input_buffer)[0] != ':'))
+        if (MB_JSON_cannot_access_at_index(input_buffer, 0) || (MB_JSON_buffer_at_offset(input_buffer)[0] != ':'))
         {
             goto fail; /* invalid object */
         }
 
         /* parse the value */
         input_buffer->offset++;
-        buffer_skip_whitespace(input_buffer);
-        if (!parse_value(current_item, input_buffer))
+        MB_JSON_buffer_skip_whitespace(input_buffer);
+        if (!MB_JSON_parse_value(current_item, input_buffer))
         {
             goto fail; /* failed to parse value */
         }
-        buffer_skip_whitespace(input_buffer);
-    } while (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == ','));
+        MB_JSON_buffer_skip_whitespace(input_buffer);
+    } while (MB_JSON_can_access_at_index(input_buffer, 0) && (MB_JSON_buffer_at_offset(input_buffer)[0] == ','));
 
-    if (cannot_access_at_index(input_buffer, 0) || (buffer_at_offset(input_buffer)[0] != '}'))
+    if (MB_JSON_cannot_access_at_index(input_buffer, 0) || (MB_JSON_buffer_at_offset(input_buffer)[0] != '}'))
     {
         goto fail; /* expected end of object */
     }
@@ -1969,7 +1971,7 @@ fail:
     return false;
 }
 
-static MB_JSON_bool get_object_buffer_length(const MB_JSON *const item, buffer_len_data_t *const buf_len)
+static MB_JSON_bool MB_JSON_get_object_buffer_length(const MB_JSON *const item, MB_JSON_buffer_len_data_t *const buf_len)
 {
     size_t length = 0;
     MB_JSON *current_item = item->child;
@@ -1991,7 +1993,7 @@ static MB_JSON_bool get_object_buffer_length(const MB_JSON *const item, buffer_l
                 buf_len->size += buf_len->depth;
 
             /* get key length */
-            if (!get_string_buffer_length_ptr((unsigned char *)current_item->string, buf_len))
+            if (!MB_JSON_get_string_buffer_length_ptr((unsigned char *)current_item->string, buf_len))
                 return false;
 
             length = (size_t)(buf_len->format ? 2 : 1);
@@ -1999,7 +2001,7 @@ static MB_JSON_bool get_object_buffer_length(const MB_JSON *const item, buffer_l
             buf_len->size += length;
 
             /* get value length */
-            if (!get_value_buffer_length(current_item, buf_len))
+            if (!MB_JSON_get_value_buffer_length(current_item, buf_len))
                 return false;
 
             /* add comma length if not last */
@@ -2024,7 +2026,7 @@ static MB_JSON_bool get_object_buffer_length(const MB_JSON *const item, buffer_l
 }
 
 /* Render an object to text. */
-static MB_JSON_bool print_object(const MB_JSON *const item, printbuffer *const output_buffer)
+static MB_JSON_bool MB_JSON_print_object(const MB_JSON *const item, MB_JSON_printbuffer *const output_buffer)
 {
     unsigned char *output_pointer = NULL;
     size_t length = 0;
@@ -2037,7 +2039,7 @@ static MB_JSON_bool print_object(const MB_JSON *const item, printbuffer *const o
 
     /* Compose the output: */
     length = (size_t)(output_buffer->format && current_item != NULL ? 2 : 1); /* fmt: {\n */
-    output_pointer = ensure(output_buffer, length + 1);
+    output_pointer = MB_JSON_ensure(output_buffer, length + 1);
     if (output_pointer == NULL)
     {
         return false;
@@ -2060,7 +2062,7 @@ static MB_JSON_bool print_object(const MB_JSON *const item, printbuffer *const o
             if (output_buffer->format)
             {
                 size_t i;
-                output_pointer = ensure(output_buffer, output_buffer->depth);
+                output_pointer = MB_JSON_ensure(output_buffer, output_buffer->depth);
                 if (output_pointer == NULL)
                 {
                     return false;
@@ -2073,14 +2075,14 @@ static MB_JSON_bool print_object(const MB_JSON *const item, printbuffer *const o
             }
 
             /* print key */
-            if (!print_string_ptr((unsigned char *)current_item->string, output_buffer))
+            if (!MB_JSON_print_string_ptr((unsigned char *)current_item->string, output_buffer))
             {
                 return false;
             }
-            update_offset(output_buffer);
+            MB_JSON_update_offset(output_buffer);
 
             length = (size_t)(output_buffer->format ? 2 : 1);
-            output_pointer = ensure(output_buffer, length);
+            output_pointer = MB_JSON_ensure(output_buffer, length);
             if (output_pointer == NULL)
             {
                 return false;
@@ -2093,15 +2095,15 @@ static MB_JSON_bool print_object(const MB_JSON *const item, printbuffer *const o
             output_buffer->offset += length;
 
             /* print value */
-            if (!print_value(current_item, output_buffer))
+            if (!MB_JSON_print_value(current_item, output_buffer))
             {
                 return false;
             }
-            update_offset(output_buffer);
+            MB_JSON_update_offset(output_buffer);
 
             /* print comma if not last */
             length = ((size_t)(output_buffer->format ? 1 : 0) + (size_t)(current_item->next ? 1 : 0));
-            output_pointer = ensure(output_buffer, length + 1);
+            output_pointer = MB_JSON_ensure(output_buffer, length + 1);
             if (output_pointer == NULL)
             {
                 return false;
@@ -2121,7 +2123,7 @@ static MB_JSON_bool print_object(const MB_JSON *const item, printbuffer *const o
             current_item = current_item->next;
         }
 
-        output_pointer = ensure(output_buffer, output_buffer->format ? (output_buffer->depth + 1) : 2);
+        output_pointer = MB_JSON_ensure(output_buffer, output_buffer->format ? (output_buffer->depth + 1) : 2);
         if (output_pointer == NULL)
         {
             return false;
@@ -2169,7 +2171,7 @@ MB_JSON_GetArraySize(const MB_JSON *array)
     return (int)size;
 }
 
-static MB_JSON *get_array_item(const MB_JSON *array, size_t index)
+static MB_JSON *MB_JSON_get_array_item(const MB_JSON *array, size_t index)
 {
     MB_JSON *current_child = NULL;
 
@@ -2196,10 +2198,10 @@ MB_JSON_GetArrayItem(const MB_JSON *array, int index)
         return NULL;
     }
 
-    return get_array_item(array, (size_t)index);
+    return MB_JSON_get_array_item(array, (size_t)index);
 }
 
-static MB_JSON *get_object_item(const MB_JSON *const object, const char *const name, const MB_JSON_bool case_sensitive)
+static MB_JSON *MB_JSON_get_object_item(const MB_JSON *const object, const char *const name, const MB_JSON_bool case_sensitive)
 {
     MB_JSON *current_element = NULL;
 
@@ -2235,13 +2237,13 @@ static MB_JSON *get_object_item(const MB_JSON *const object, const char *const n
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_GetObjectItem(const MB_JSON *const object, const char *const string)
 {
-    return get_object_item(object, string, false);
+    return MB_JSON_get_object_item(object, string, false);
 }
 
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_GetObjectItemCaseSensitive(const MB_JSON *const object, const char *const string)
 {
-    return get_object_item(object, string, true);
+    return MB_JSON_get_object_item(object, string, true);
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
@@ -2251,14 +2253,14 @@ MB_JSON_HasObjectItem(const MB_JSON *object, const char *string)
 }
 
 /* Utility for array list handling. */
-static void suffix_object(MB_JSON *prev, MB_JSON *item)
+static void MB_JSON_suffix_object(MB_JSON *prev, MB_JSON *item)
 {
     prev->next = item;
     item->prev = prev;
 }
 
 /* Utility for handling references. */
-static MB_JSON *create_reference(const MB_JSON *item, const MB_JSON_internal_hooks *const hooks)
+static MB_JSON *MB_JSON_create_reference(const MB_JSON *item, const MB_JSON_internal_hooks *const hooks)
 {
     MB_JSON *reference = NULL;
     if (item == NULL)
@@ -2279,7 +2281,7 @@ static MB_JSON *create_reference(const MB_JSON *item, const MB_JSON_internal_hoo
     return reference;
 }
 
-static MB_JSON_bool add_item_to_array(MB_JSON *array, MB_JSON *item)
+static MB_JSON_bool MB_JSON_add_item_to_array(MB_JSON *array, MB_JSON *item)
 {
     MB_JSON *child = NULL;
 
@@ -2304,7 +2306,7 @@ static MB_JSON_bool add_item_to_array(MB_JSON *array, MB_JSON *item)
         /* append to the end */
         if (child->prev)
         {
-            suffix_object(child->prev, item);
+            MB_JSON_suffix_object(child->prev, item);
             array->child->prev = item;
         }
     }
@@ -2316,7 +2318,7 @@ static MB_JSON_bool add_item_to_array(MB_JSON *array, MB_JSON *item)
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_AddItemToArray(MB_JSON *array, MB_JSON *item)
 {
-    return add_item_to_array(array, item);
+    return MB_JSON_add_item_to_array(array, item);
 }
 
 #if defined(__clang__) || (defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 5))))
@@ -2334,7 +2336,7 @@ static void *cast_away_const(const void *string)
 #pragma GCC diagnostic pop
 #endif
 
-static MB_JSON_bool add_item_to_object(MB_JSON *const object, const char *const string, MB_JSON *const item, const MB_JSON_internal_hooks *const hooks, const MB_JSON_bool constant_key)
+static MB_JSON_bool MB_JSON_add_item_to_object(MB_JSON *const object, const char *const string, MB_JSON *const item, const MB_JSON_internal_hooks *const hooks, const MB_JSON_bool constant_key)
 {
     char *new_key = NULL;
     int new_type = MB_JSON_Invalid;
@@ -2368,20 +2370,20 @@ static MB_JSON_bool add_item_to_object(MB_JSON *const object, const char *const 
     item->string = new_key;
     item->type = new_type;
 
-    return add_item_to_array(object, item);
+    return MB_JSON_add_item_to_array(object, item);
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_AddItemToObject(MB_JSON *object, const char *string, MB_JSON *item)
 {
-    return add_item_to_object(object, string, item, &MB_JSON_global_hooks, false);
+    return MB_JSON_add_item_to_object(object, string, item, &MB_JSON_global_hooks, false);
 }
 
 /* Add an item to an object with constant string as key */
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_AddItemToObjectCS(MB_JSON *object, const char *string, MB_JSON *item)
 {
-    return add_item_to_object(object, string, item, &MB_JSON_global_hooks, true);
+    return MB_JSON_add_item_to_object(object, string, item, &MB_JSON_global_hooks, true);
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
@@ -2392,7 +2394,7 @@ MB_JSON_AddItemReferenceToArray(MB_JSON *array, MB_JSON *item)
         return false;
     }
 
-    return add_item_to_array(array, create_reference(item, &MB_JSON_global_hooks));
+    return MB_JSON_add_item_to_array(array, MB_JSON_create_reference(item, &MB_JSON_global_hooks));
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
@@ -2403,14 +2405,14 @@ MB_JSON_AddItemReferenceToObject(MB_JSON *object, const char *string, MB_JSON *i
         return false;
     }
 
-    return add_item_to_object(object, string, create_reference(item, &MB_JSON_global_hooks), &MB_JSON_global_hooks, false);
+    return MB_JSON_add_item_to_object(object, string, MB_JSON_create_reference(item, &MB_JSON_global_hooks), &MB_JSON_global_hooks, false);
 }
 
 MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddNullToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *null = MB_JSON_CreateNull();
-    if (add_item_to_object(object, name, null, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, null, &MB_JSON_global_hooks, false))
     {
         return null;
     }
@@ -2423,7 +2425,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddTrueToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *true_item = MB_JSON_CreateTrue();
-    if (add_item_to_object(object, name, true_item, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, true_item, &MB_JSON_global_hooks, false))
     {
         return true_item;
     }
@@ -2436,7 +2438,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddFalseToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *false_item = MB_JSON_CreateFalse();
-    if (add_item_to_object(object, name, false_item, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, false_item, &MB_JSON_global_hooks, false))
     {
         return false_item;
     }
@@ -2449,7 +2451,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddBoolToObject(MB_JSON *const object, const char *const name, const MB_JSON_bool boolean)
 {
     MB_JSON *bool_item = MB_JSON_CreateBool(boolean);
-    if (add_item_to_object(object, name, bool_item, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, bool_item, &MB_JSON_global_hooks, false))
     {
         return bool_item;
     }
@@ -2462,7 +2464,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddNumberToObject(MB_JSON *const object, const char *const name, const double number)
 {
     MB_JSON *number_item = MB_JSON_CreateNumber(number);
-    if (add_item_to_object(object, name, number_item, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, number_item, &MB_JSON_global_hooks, false))
     {
         return number_item;
     }
@@ -2475,7 +2477,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddStringToObject(MB_JSON *const object, const char *const name, const char *const string)
 {
     MB_JSON *string_item = MB_JSON_CreateString(string);
-    if (add_item_to_object(object, name, string_item, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, string_item, &MB_JSON_global_hooks, false))
     {
         return string_item;
     }
@@ -2488,7 +2490,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddRawToObject(MB_JSON *const object, const char *const name, const char *const raw)
 {
     MB_JSON *raw_item = MB_JSON_CreateRaw(raw);
-    if (add_item_to_object(object, name, raw_item, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, raw_item, &MB_JSON_global_hooks, false))
     {
         return raw_item;
     }
@@ -2501,7 +2503,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddObjectToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *object_item = MB_JSON_CreateObject();
-    if (add_item_to_object(object, name, object_item, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, object_item, &MB_JSON_global_hooks, false))
     {
         return object_item;
     }
@@ -2514,7 +2516,7 @@ MB_JSON_PUBLIC(MB_JSON *)
 MB_JSON_AddArrayToObject(MB_JSON *const object, const char *const name)
 {
     MB_JSON *array = MB_JSON_CreateArray();
-    if (add_item_to_object(object, name, array, &MB_JSON_global_hooks, false))
+    if (MB_JSON_add_item_to_object(object, name, array, &MB_JSON_global_hooks, false))
     {
         return array;
     }
@@ -2568,7 +2570,7 @@ MB_JSON_DetachItemFromArray(MB_JSON *array, int which)
         return NULL;
     }
 
-    return MB_JSON_DetachItemViaPointer(array, get_array_item(array, (size_t)which));
+    return MB_JSON_DetachItemViaPointer(array, MB_JSON_get_array_item(array, (size_t)which));
 }
 
 MB_JSON_PUBLIC(void)
@@ -2616,10 +2618,10 @@ MB_JSON_InsertItemInArray(MB_JSON *array, int which, MB_JSON *newitem)
         return false;
     }
 
-    after_inserted = get_array_item(array, (size_t)which);
+    after_inserted = MB_JSON_get_array_item(array, (size_t)which);
     if (after_inserted == NULL)
     {
-        return add_item_to_array(array, newitem);
+        return MB_JSON_add_item_to_array(array, newitem);
     }
 
     newitem->next = after_inserted;
@@ -2694,10 +2696,10 @@ MB_JSON_ReplaceItemInArray(MB_JSON *array, int which, MB_JSON *newitem)
         return false;
     }
 
-    return MB_JSON_ReplaceItemViaPointer(array, get_array_item(array, (size_t)which), newitem);
+    return MB_JSON_ReplaceItemViaPointer(array, MB_JSON_get_array_item(array, (size_t)which), newitem);
 }
 
-static MB_JSON_bool replace_item_in_object(MB_JSON *object, const char *string, MB_JSON *replacement, MB_JSON_bool case_sensitive)
+static MB_JSON_bool MB_JSON_replace_item_in_object(MB_JSON *object, const char *string, MB_JSON *replacement, MB_JSON_bool case_sensitive)
 {
     if ((replacement == NULL) || (string == NULL))
     {
@@ -2712,19 +2714,19 @@ static MB_JSON_bool replace_item_in_object(MB_JSON *object, const char *string, 
     replacement->string = (char *)MB_JSON_strdup((const unsigned char *)string, &MB_JSON_global_hooks);
     replacement->type &= ~MB_JSON_StringIsConst;
 
-    return MB_JSON_ReplaceItemViaPointer(object, get_object_item(object, string, case_sensitive), replacement);
+    return MB_JSON_ReplaceItemViaPointer(object, MB_JSON_get_object_item(object, string, case_sensitive), replacement);
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_ReplaceItemInObject(MB_JSON *object, const char *string, MB_JSON *newitem)
 {
-    return replace_item_in_object(object, string, newitem, false);
+    return MB_JSON_replace_item_in_object(object, string, newitem, false);
 }
 
 MB_JSON_PUBLIC(MB_JSON_bool)
 MB_JSON_ReplaceItemInObjectCaseSensitive(MB_JSON *object, const char *string, MB_JSON *newitem)
 {
-    return replace_item_in_object(object, string, newitem, true);
+    return MB_JSON_replace_item_in_object(object, string, newitem, true);
 }
 
 /* Create basic types: */
@@ -2932,7 +2934,7 @@ MB_JSON_CreateIntArray(const int *numbers, int count)
         }
         else
         {
-            suffix_object(p, n);
+            MB_JSON_suffix_object(p, n);
         }
         p = n;
     }
@@ -2974,7 +2976,7 @@ MB_JSON_CreateFloatArray(const float *numbers, int count)
         }
         else
         {
-            suffix_object(p, n);
+            MB_JSON_suffix_object(p, n);
         }
         p = n;
     }
@@ -3016,7 +3018,7 @@ MB_JSON_CreateDoubleArray(const double *numbers, int count)
         }
         else
         {
-            suffix_object(p, n);
+            MB_JSON_suffix_object(p, n);
         }
         p = n;
     }
@@ -3058,7 +3060,7 @@ MB_JSON_CreateStringArray(const char *const *strings, int count)
         }
         else
         {
-            suffix_object(p, n);
+            MB_JSON_suffix_object(p, n);
         }
         p = n;
     }
@@ -3156,7 +3158,7 @@ fail:
     return NULL;
 }
 
-static void skip_oneline_comment(char **input)
+static void MB_JSON_skip_oneline_comment(char **input)
 {
     *input += MB_JSON_static_strlen("//");
 
@@ -3170,7 +3172,7 @@ static void skip_oneline_comment(char **input)
     }
 }
 
-static void skip_multiline_comment(char **input)
+static void MB_JSON_skip_multiline_comment(char **input)
 {
     *input += MB_JSON_static_strlen("/*");
 
@@ -3184,7 +3186,7 @@ static void skip_multiline_comment(char **input)
     }
 }
 
-static void minify_string(char **input, char **output)
+static void MB_JSON_minify_string(char **input, char **output)
 {
     (*output)[0] = (*input)[0];
     *input += MB_JSON_static_strlen("\"");
@@ -3234,11 +3236,11 @@ MB_JSON_Minify(char *json)
         case '/':
             if (json[1] == '/')
             {
-                skip_oneline_comment(&json);
+                MB_JSON_skip_oneline_comment(&json);
             }
             else if (json[1] == '*')
             {
-                skip_multiline_comment(&json);
+                MB_JSON_skip_multiline_comment(&json);
             }
             else
             {
@@ -3247,7 +3249,7 @@ MB_JSON_Minify(char *json)
             break;
 
         case '\"':
-            minify_string(&json, (char **)&into);
+            MB_JSON_minify_string(&json, (char **)&into);
             break;
 
         default:
@@ -3410,7 +3412,7 @@ MB_JSON_Compare(const MB_JSON *const a, const MB_JSON *const b, const MB_JSON_bo
         return true;
 
     case MB_JSON_Number:
-        if (compare_double(a->valuedouble, b->valuedouble))
+        if (MB_JSON_compare_double(a->valuedouble, b->valuedouble))
         {
             return true;
         }
@@ -3461,7 +3463,7 @@ MB_JSON_Compare(const MB_JSON *const a, const MB_JSON *const b, const MB_JSON_bo
         MB_JSON_ArrayForEach(a_element, a)
         {
             /* TODO This has O(n^2) runtime, which is horrible! */
-            b_element = get_object_item(b, a_element->string, case_sensitive);
+            b_element = MB_JSON_get_object_item(b, a_element->string, case_sensitive);
             if (b_element == NULL)
             {
                 return false;
@@ -3477,7 +3479,7 @@ MB_JSON_Compare(const MB_JSON *const a, const MB_JSON *const b, const MB_JSON_bo
              * TODO: Do this the proper way, this is just a fix for now */
         MB_JSON_ArrayForEach(b_element, b)
         {
-            a_element = get_object_item(a, b_element->string, case_sensitive);
+            a_element = MB_JSON_get_object_item(a, b_element->string, case_sensitive);
             if (a_element == NULL)
             {
                 return false;

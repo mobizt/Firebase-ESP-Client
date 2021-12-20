@@ -69,7 +69,9 @@ void loop()
             File file2 = DEFAULT_FLASH_FS.open("/test2.txt", "a");
             json.toString(file2);
 
-            //if you want to append new line to separate each JSON data (recommended)
+            //Due to bugs in SPIFFS print
+            //https://github.com/esp8266/Arduino/issues/8372
+            //append new line to separate each JSON data (recommended)
             file2.println();
 
             file2.close();

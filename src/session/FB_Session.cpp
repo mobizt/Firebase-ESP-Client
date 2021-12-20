@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.7
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created December 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -926,7 +926,7 @@ void FirebaseData::setCert(const char *ca)
 
 bool FirebaseData::validRequest(const MBSTRING &path)
 {
-    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || strlen(Signer.getToken()) == 0)
+    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || (strlen(Signer.getToken()) == 0 && !Signer.getCfg()->signer.test_mode))
     {
         _ss.http_code = FIREBASE_ERROR_MISSING_CREDENTIALS;
         return false;
@@ -981,7 +981,7 @@ void FirebaseData::clear()
     _timeoutCallback = NULL;
     _queueInfoCallback = NULL;
 
-   _ss.rtdb.raw.clear();
+    _ss.rtdb.raw.clear();
     _ss.rtdb.push_name.clear();
     _ss.rtdb.file_name.clear();
     _ss.rtdb.redirect_url.clear();

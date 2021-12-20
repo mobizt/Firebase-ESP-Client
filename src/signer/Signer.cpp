@@ -3,7 +3,7 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 19, 2021
+ * Created December 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -218,6 +218,12 @@ bool Firebase_Signer::handleToken()
 {
     if (!config || !auth)
         return false;
+        
+    if (config->signer.test_mode)
+    {
+        setTokenError(0);
+        return true;
+    }
 
 #if defined(ESP8266)
     if ((config->cert.data != NULL || config->cert.file.length() > 0) && !config->_int.fb_clock_rdy)

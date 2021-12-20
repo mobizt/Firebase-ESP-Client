@@ -1,7 +1,9 @@
 /*
-  MB_JSON.h v1.0.0 based on the modified version of cJSON.h v1.7.14 (Sept 3, 2020)
+  MB_JSON.h v1.0.1 based on the modified version of cJSON.h v1.7.14 (Sept 3, 2020)
+
+  All original static cJSON functions and static variables will be prefixed with MB_JSON_.
   
-  Created August 15, 2021
+  Created December 20, 2021
 
   Copyright (c) 2021 Mobizt (K. Suwatchai)
 

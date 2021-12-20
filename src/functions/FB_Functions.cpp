@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.6
+ * Google's Cloud Functions class, Functions.cpp version 1.1.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created December 20, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -168,11 +168,10 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
 #else
                 return false;
 #endif
-
             }
             else if (config->_uploadArchiveStorageType == mem_storage_type_flash)
             {
-               
+
 #if defined FLASH_FS
 
                 if (!Signer.getCfg()->_int.fb_flash_rdy)
@@ -189,7 +188,6 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, const char *functionId,
 #else
                 return false;
 #endif
-                
             }
 
             if (!Signer.getCfg()->_int.fb_file)
@@ -845,12 +843,15 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
         if (req->requestType != fb_esp_functions_request_type_upload_bucket_sources)
         {
-            ut->appendP(header, fb_esp_pgm_str_237);
-            if (Signer.getTokenType() == token_type_oauth2_access_token)
-                ut->appendP(header, fb_esp_pgm_str_271);
+            if (!Signer.getCfg()->signer.test_mode)
+            {
+                ut->appendP(header, fb_esp_pgm_str_237);
+                if (Signer.getTokenType() == token_type_oauth2_access_token)
+                    ut->appendP(header, fb_esp_pgm_str_271);
 
-            header += Signer.getToken();
-            ut->appendP(header, fb_esp_pgm_str_21);
+                header += Signer.getToken();
+                ut->appendP(header, fb_esp_pgm_str_21);
+            }
         }
     }
 
