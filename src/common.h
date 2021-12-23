@@ -34,6 +34,7 @@
 #include <time.h>
 #include <vector>
 #include <functional>
+#include <Update.h>
 #if defined(ESP32)
 #include <WiFi.h>
 #include "wcs/esp32/FB_TCP_Client.h"
@@ -53,7 +54,6 @@
 #define FIREBASEJSON_USE_PSRAM
 #endif
 #include "json/FirebaseJson.h"
-
 
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_STREAM_CLASS FirebaseStream
@@ -120,7 +120,8 @@ typedef enum
 {
     mem_storage_type_undefined,
     mem_storage_type_flash,
-    mem_storage_type_sd
+    mem_storage_type_sd,
+    mem_storage_type_ota_update
 } fb_esp_mem_storage_type;
 
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
