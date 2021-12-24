@@ -142,6 +142,16 @@ bool FB_Storage::mDownload(FirebaseData *fbdo, const char *bucketID, const char 
     return sendRequest(fbdo, &req);
 }
 
+bool FB_Storage::mDownloadOTA(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
+{
+    struct fb_esp_fcs_req_t req;
+    req.remoteFileName = remoteFileName;
+    req.storageType = mem_storage_type_ota_update;
+    req.requestType = fb_esp_fcs_request_type_download;
+    req.bucketID = bucketID;
+    return sendRequest(fbdo, &req);
+}
+
 bool FB_Storage::mGetMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
     struct fb_esp_fcs_req_t req;
@@ -199,9 +209,12 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 {
 
     fbdo->_ss.fcs.requestType = req->requestType;
+    fbdo->_ss.fcs.storage_type = req->storageType;
 
     if (!Signer.getCfg()->_int.fb_flash_rdy)
+    {
         ut->flashTest();
+    }
 
     if (req->requestType == fb_esp_fcs_request_type_download)
     {
@@ -423,7 +436,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         ret = handleResponse(fbdo);
         fbdo->closeSession();
 
-        if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download)
+        if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download && req->storageType != mem_storage_type_ota_update)
             Signer.getCfg()->_int.fb_file.close();
 
         Signer.getCfg()->_int.fb_processing = false;
@@ -432,7 +445,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     else
         fbdo->_ss.connected = false;
 
-    if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download)
+    if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download && req->storageType != mem_storage_type_ota_update)
         Signer.getCfg()->_int.fb_file.close();
 
     Signer.getCfg()->_int.fb_processing = false;
@@ -604,6 +617,11 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                 size_t available = fbdo->tcpClient.stream()->available();
                                 dataTime = millis();
                                 uint8_t *buf = (uint8_t *)ut->newP(defaultChunkSize + 1);
+
+                                if (fbdo->_ss.fcs.storage_type == mem_storage_type_ota_update)
+                                {
+                                    Update.begin(response.contentLen);
+                                }
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {
                                     if (available)
@@ -617,7 +635,16 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
 
                                         size_t read = fbdo->tcpClient.stream()->read(buf, available);
                                         if (read == available)
-                                            Signer.getCfg()->_int.fb_file.write(buf, read);
+                                        {
+                                            if (fbdo->_ss.fcs.storage_type == mem_storage_type_ota_update)
+                                            {
+                                                Update.write(buf, read);
+                                            }
+                                            else
+                                            {
+                                                Signer.getCfg()->_int.fb_file.write(buf, read);
+                                            }
+                                        }
 
                                         payloadRead += available;
                                     }
