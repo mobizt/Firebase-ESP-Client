@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.4
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -551,8 +551,7 @@ The classes e.g. RTDB, Firestore, FCM, Storage, Cloud Storage, and Cloud Functio
 
 By comment the following macros.
 
-
-
+```
 ENABLE_RTDB
 
 ENABLE_FIRESTORE
@@ -564,8 +563,13 @@ ENABLE_FB_STORAGE
 ENABLE_GC_STORAGE
 
 ENABLE_FB_FUNCTIONS
+```
 
+To disable OTA update via Firebase Storage and Google Cloud Storage, comment this macro.
 
+```
+ENABLE_STORAGE_BUCKET_OTA_UPDATE
+```
 
 ## Realtime Database
 

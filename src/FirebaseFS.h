@@ -35,9 +35,6 @@
 #define DEFAULT_SD_FS SD
 #define CARD_TYPE_SD 1
 
-// For ESP32, enable OTA updates
-#define ENABLE_OTA
-
 //For ESP32, format SPIFFS or FFat if mounting failed
 #define FORMAT_FLASH_IF_MOUNT_FAILED 1
 
@@ -63,5 +60,8 @@
 #if defined(ESP32) || defined(ESP8266)
 #define FIREBASE_USE_PSRAM
 #endif
+
+// To enable OTA updates via Firebase Storage and Google Cloud Storage buckets
+#define ENABLE_STORAGE_BUCKET_OTA_UPDATE
 
 #endif

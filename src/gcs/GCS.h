@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.1.5
+ * Google's Cloud Storage class, GCS.h version 1.1.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 20, 2021
+ * Created December 24, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -99,6 +99,17 @@ public:
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr) { return mDownload(fbdo, toString(bucketID),  toString(remoteFileName), toString(localFileName), storageType, options); }
 
+    /** Download a firmware file from the Google Cloud Storage data bucket for OTA updates.
+     * 
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param bucketID The Firebase or Google Cloud Storage bucket ID.
+     * @param remotetFileName The firmware file path includes its name of file in the data bucket to download.
+     * @return Boolean value, indicates the success of the operation.
+     * 
+    */
+    template <typename T1 = const char *, typename T2 = const char *>
+    bool downloadOTA(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName) { return mDownloadOTA(fbdo, toString(bucketID), toString(remoteFileName)); }
+
     /** Get the meta data of file in Firebase or Google Cloud Storage data bucket.
      * 
      * @param fbdo The pointer to Firebase Data Object.
@@ -168,6 +179,7 @@ private:
     bool handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req);
     bool mUpload(FirebaseData *fbdo, const char *bucketID, const char *localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, const char *remoteFileName, const char *mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, ProgressCallback callback = NULL);
     bool mDownload(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, const char *localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr);
+    bool mDownloadOTA(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName);
     bool mGetMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName, StorageGetOptions *options = nullptr);
     bool mDeleteFile(FirebaseData *fbdo, const char *bucketID, const char *fileName, DeleteOptions *options = nullptr);
     bool mListFiles(FirebaseData *fbdo, const char *bucketID, ListOptions *options = nullptr);

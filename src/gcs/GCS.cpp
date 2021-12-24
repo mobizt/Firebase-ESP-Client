@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.5
+ * Google's Cloud Storage class, GCS.cpp version 1.1.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 20, 2021
+ * Created December 24, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -115,7 +115,7 @@ bool GG_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *r
     fbdo->_ss.gcs.meta.generation = 0;
     fbdo->_ss.gcs.meta.size = 0;
 
-    if (req->requestType == fb_esp_gcs_request_type_download)
+    if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota)
     {
         if (req->remoteFileName.length() == 0)
         {
@@ -170,6 +170,18 @@ bool GG_CloudStorage::mDownload(FirebaseData *fbdo, const char *bucketID, const 
     req.getOptions = options;
     req.requestType = fb_esp_gcs_request_type_download;
     return sendRequest(fbdo, &req);
+}
+
+bool GG_CloudStorage::mDownloadOTA(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
+{
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+    struct fb_esp_gcs_req_t req;
+    req.bucketID = bucketID;
+    req.remoteFileName = remoteFileName;
+    req.requestType = fb_esp_gcs_request_type_download_ota;
+    return sendRequest(fbdo, &req);
+#endif
+    return false;
 }
 
 bool GG_CloudStorage::mDeleteFile(FirebaseData *fbdo, const char *bucketID, const char *fileName, DeleteOptions *options)
@@ -379,7 +391,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
         ut->appendP(header, fb_esp_pgm_str_24);
-    else if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_list || req->requestType == fb_esp_gcs_request_type_get_metadata)
+    else if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota || req->requestType == fb_esp_gcs_request_type_list || req->requestType == fb_esp_gcs_request_type_get_metadata)
         ut->appendP(header, fb_esp_pgm_str_25);
     else if (req->requestType == fb_esp_gcs_request_type_delete)
         ut->appendP(header, fb_esp_pgm_str_27);
@@ -398,7 +410,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         ut->appendP(header, fb_esp_pgm_str_522);
     }
 
-    if (req->requestType == fb_esp_gcs_request_type_download)
+    if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota)
     {
         ut->appendP(header, fb_esp_pgm_str_1);
         header += ut->url_encode(req->remoteFileName);
@@ -628,7 +640,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     ut->appendP(header, fb_esp_pgm_str_21);
 
-    if (req->requestType == fb_esp_gcs_request_type_download)
+    if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota)
     {
         ret = fbdo->tcpSend(header.c_str());
         header.clear();
@@ -1922,11 +1934,25 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                         //the next chuunk data is the payload
                         if (!response.noContent)
                         {
-                            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && response.contentLen > 0 && req->requestType == fb_esp_gcs_request_type_download)
+                            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && response.contentLen > 0 && (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota))
                             {
                                 size_t available = fbdo->tcpClient.stream()->available();
                                 dataTime = millis();
                                 uint8_t *buf = (uint8_t *)ut->newP(defaultChunkSize + 1);
+
+                                if (fbdo->_ss.gcs.requestType == fb_esp_gcs_request_type_download_ota)
+                                {
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ESP32)
+                                    error.code = 0;
+                                    Update.begin(response.contentLen);
+#elif defined(ESP8266)
+                                    error.code = ut->beginUpdate(fbdo->tcpClient.stream(), response.contentLen);
+
+#endif
+#endif
+                                }
+
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {
                                     if (available)
@@ -1937,16 +1963,46 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                                         size_t read = fbdo->tcpClient.stream()->read(buf, available);
                                         if (read == available)
-                                            Signer.getCfg()->_int.fb_file.write(buf, read);
+                                        {
+                                            if (fbdo->_ss.gcs.requestType == fb_esp_gcs_request_type_download_ota)
+                                            {
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+                                                if (error.code == 0)
+                                                {
+                                                    if (Update.write(buf, read) != read)
+                                                        error.code = FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED;
+                                                }
+#endif
+                                            }
+                                            else
+                                            {
+
+                                                Signer.getCfg()->_int.fb_file.write(buf, read);
+                                            }
+                                        }
 
                                         payloadRead += available;
                                     }
                                     if (fbdo->tcpClient.stream())
                                         available = fbdo->tcpClient.stream()->available();
                                 }
+
+                                ut->delP(&buf);
+
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+
+                                if (error.code == 0)
+                                {
+                                    if (!Update.end())
+                                        error.code = FIREBASE_ERROR_FW_UPDATE_END_FAILED;
+                                }
+
+                                if (error.code != 0)
+                                    fbdo->_ss.http_code = error.code;
+#else
                                 if (payloadRead == response.contentLen)
                                     error.code = 0;
-                                ut->delP(&buf);
+#endif
                                 break;
                             }
                             else

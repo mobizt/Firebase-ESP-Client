@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.8
+ * Google's Firebase Util class, Utils.h version 1.1.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 19, 2021
+ * Created December 24, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -2041,6 +2041,51 @@ public:
     void idle()
     {
         delay(0);
+    }
+
+    int beginUpdate(WiFiClient *tcp, int len)
+    {
+        int code = 0;
+#if defined(ESP8266)
+        if (len > (int)ESP.getFreeSketchSpace())
+        {
+            code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
+        }
+        else
+        {
+            uint8_t buf[4];
+            if (tcp->peekBytes(&buf[0], 4) != 4)
+                code = FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE;
+            else
+            {
+
+                // check for valid first magic byte
+                if (buf[0] != 0xE9 && buf[0] != 0x1f)
+                {
+                    code = FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE;
+                }
+                else if (buf[0] == 0xe9)
+                {
+                    uint32_t bin_flash_size = ESP.magicFlashChipSize((buf[3] & 0xf0) >> 4);
+
+                    // check if new bin fits to SPI flash
+                    if (bin_flash_size > ESP.getFlashChipRealSize())
+                    {
+                        code = FIREBASE_ERROR_FW_UPDATE_BIN_SIZE_NOT_MATCH_SPI_FLASH_SPACE;
+                    }
+                }
+            }
+        }
+
+        if (code == 0)
+        {
+            if (!Update.begin(len, 0, -1, 0))
+            {
+                code = FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
+            }
+        }
+#endif
+        return code;
     }
 
 private:

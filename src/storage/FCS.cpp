@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.8
+ * Google's Firebase Storage class, FCS.cpp version 1.1.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 20, 2021
+ * Created December 24, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -89,7 +89,7 @@ bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
     fbdo->_ss.fcs.meta.generation = 0;
     fbdo->_ss.fcs.meta.size = 0;
 
-    if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_upload)
+    if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_download_ota || req->requestType == fb_esp_fcs_request_type_upload)
     {
         if (req->remoteFileName.length() == 0)
         {
@@ -144,12 +144,14 @@ bool FB_Storage::mDownload(FirebaseData *fbdo, const char *bucketID, const char 
 
 bool FB_Storage::mDownloadOTA(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
     struct fb_esp_fcs_req_t req;
     req.remoteFileName = remoteFileName;
-    req.storageType = mem_storage_type_ota_update;
-    req.requestType = fb_esp_fcs_request_type_download;
+    req.requestType = fb_esp_fcs_request_type_download_ota;
     req.bucketID = bucketID;
     return sendRequest(fbdo, &req);
+#endif
+    return false;
 }
 
 bool FB_Storage::mGetMetadata(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
@@ -209,12 +211,9 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 {
 
     fbdo->_ss.fcs.requestType = req->requestType;
-    fbdo->_ss.fcs.storage_type = req->storageType;
 
     if (!Signer.getCfg()->_int.fb_flash_rdy)
-    {
         ut->flashTest();
-    }
 
     if (req->requestType == fb_esp_fcs_request_type_download)
     {
@@ -304,7 +303,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
     if (req->requestType == fb_esp_fcs_request_type_upload || req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
         ut->appendP(header, fb_esp_pgm_str_24);
-    else if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_get_meta || req->requestType == fb_esp_fcs_request_type_list)
+    else if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_download_ota || req->requestType == fb_esp_fcs_request_type_get_meta || req->requestType == fb_esp_fcs_request_type_list)
         ut->appendP(header, fb_esp_pgm_str_25);
     else if (req->requestType == fb_esp_fcs_request_type_delete)
         ut->appendP(header, fb_esp_pgm_str_27);
@@ -314,7 +313,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     header += req->bucketID;
     ut->appendP(header, fb_esp_pgm_str_267);
 
-    if (req->requestType == fb_esp_fcs_request_type_download)
+    if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_download_ota)
     {
         if (req->remoteFileName[0] != '/')
             ut->appendP(header, fb_esp_pgm_str_1);
@@ -436,7 +435,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         ret = handleResponse(fbdo);
         fbdo->closeSession();
 
-        if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download && req->storageType != mem_storage_type_ota_update)
+        if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download)
             Signer.getCfg()->_int.fb_file.close();
 
         Signer.getCfg()->_int.fb_processing = false;
@@ -445,7 +444,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     else
         fbdo->_ss.connected = false;
 
-    if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download && req->storageType != mem_storage_type_ota_update)
+    if (Signer.getCfg()->_int.fb_file && req->requestType == fb_esp_fcs_request_type_download)
         Signer.getCfg()->_int.fb_file.close();
 
     Signer.getCfg()->_int.fb_processing = false;
@@ -612,16 +611,26 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                         //the next chuunk data is the payload
                         if (!response.noContent)
                         {
-                            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && response.contentLen > 0 && fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download)
+                            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && response.contentLen > 0 && (fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download || fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download_ota))
                             {
                                 size_t available = fbdo->tcpClient.stream()->available();
                                 dataTime = millis();
                                 uint8_t *buf = (uint8_t *)ut->newP(defaultChunkSize + 1);
 
-                                if (fbdo->_ss.fcs.storage_type == mem_storage_type_ota_update)
+                                if (fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download_ota)
                                 {
+
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ESP32)
+                                    error.code = 0;
                                     Update.begin(response.contentLen);
+#elif defined(ESP8266)
+                                    error.code = ut->beginUpdate(fbdo->tcpClient.stream(), response.contentLen);
+
+#endif
+#endif
                                 }
+
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {
                                     if (available)
@@ -636,9 +645,15 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                         size_t read = fbdo->tcpClient.stream()->read(buf, available);
                                         if (read == available)
                                         {
-                                            if (fbdo->_ss.fcs.storage_type == mem_storage_type_ota_update)
+                                            if (fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download_ota)
                                             {
-                                                Update.write(buf, read);
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+                                                if (error.code == 0)
+                                                {
+                                                    if (Update.write(buf, read) != read)
+                                                        error.code = FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED;
+                                                }
+#endif
                                             }
                                             else
                                             {
@@ -651,9 +666,24 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                     if (fbdo->tcpClient.stream())
                                         available = fbdo->tcpClient.stream()->available();
                                 }
+
+                                ut->delP(&buf);
+
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+                               
+                                if (error.code == 0)
+                                {
+                                    if (!Update.end())
+                                        error.code = FIREBASE_ERROR_FW_UPDATE_END_FAILED;
+                                }
+
+                                if (error.code != 0)
+                                    fbdo->_ss.http_code = error.code;
+#else
                                 if (payloadRead == response.contentLen)
                                     error.code = 0;
-                                ut->delP(&buf);
+#endif
+
                                 break;
                             }
                             else

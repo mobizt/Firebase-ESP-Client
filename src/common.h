@@ -34,7 +34,6 @@
 #include <time.h>
 #include <vector>
 #include <functional>
-#include <Update.h>
 #if defined(ESP32)
 #include <WiFi.h>
 #include "wcs/esp32/FB_TCP_Client.h"
@@ -54,6 +53,14 @@
 #define FIREBASEJSON_USE_PSRAM
 #endif
 #include "json/FirebaseJson.h"
+
+#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE) && (defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
+#if defined(ESP32)
+#include <Update.h>
+#elif defined(ESP8266)
+#include <Updater.h>
+#endif
+#endif
 
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_STREAM_CLASS FirebaseStream
@@ -120,8 +127,7 @@ typedef enum
 {
     mem_storage_type_undefined,
     mem_storage_type_flash,
-    mem_storage_type_sd,
-    mem_storage_type_ota_update
+    mem_storage_type_sd
 } fb_esp_mem_storage_type;
 
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
@@ -312,7 +318,8 @@ enum fb_esp_gcs_request_type
     fb_esp_gcs_request_type_get_metadata,
     fb_esp_gcs_request_type_set_metadata,
     fb_esp_gcs_request_type_update_metadata,
-    fb_esp_gcs_request_type_list
+    fb_esp_gcs_request_type_list,
+    fb_esp_gcs_request_type_download_ota
 };
 
 enum fb_esp_gcs_upload_type
@@ -342,7 +349,8 @@ enum fb_esp_fcs_request_type
     fb_esp_fcs_request_type_download,
     fb_esp_fcs_request_type_get_meta,
     fb_esp_fcs_request_type_delete,
-    fb_esp_fcs_request_type_list
+    fb_esp_fcs_request_type_list,
+    fb_esp_fcs_request_type_download_ota
 };
 #endif
 
@@ -2113,6 +2121,14 @@ static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e
 static const char fb_esp_pgm_str_581[] PROGMEM = "Security rules is not a valid JSON";
 static const char fb_esp_pgm_str_582[] PROGMEM = "/v1/accounts:delete?key=";
 static const char fb_esp_pgm_str_583[] PROGMEM = "error_description";
+#if defined(FIREBASE_ESP_CLIENT)
+static const char fb_esp_pgm_str_584[] PROGMEM = "Invalid Firmware";
+static const char fb_esp_pgm_str_585[] PROGMEM = "Too low free sketch space";
+static const char fb_esp_pgm_str_586[] PROGMEM = "Bin size does not fit the free flash space";
+static const char fb_esp_pgm_str_587[] PROGMEM = "Updater begin() failed";
+static const char fb_esp_pgm_str_588[] PROGMEM = "Updater write() failed.";
+static const char fb_esp_pgm_str_589[] PROGMEM = "Updater end() failed.";
+#endif
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

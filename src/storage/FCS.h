@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.h version 1.1.8
+ * Google's Firebase Storage class, FCS.h version 1.1.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 20, 2021
+ * Created December 24, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -102,7 +102,7 @@ public:
      * 
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
-     * @param remotetFileName The file path includes its name of file in the data bucket to download.
+     * @param remotetFileName The firmware file path includes its name of file in the data bucket to download.
      * @return Boolean value, indicates the success of the operation.
      * 
     */

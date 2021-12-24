@@ -223,6 +223,13 @@ authenticated   KEYWORD2
 ready   KEYWORD2
 getToken    KEYWORD2
 
+upload  KEYWORD2
+download    KEYWORD2
+downloadOTA KEYWORD2
+getMetadata KEYWORD2
+deleteFile  KEYWORD2
+listFiles   KEYWORD2
+
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
 #############################################
