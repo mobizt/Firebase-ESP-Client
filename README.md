@@ -53,9 +53,9 @@ Creating the new Firebase library that specific to only GSM connectivity concern
 
 * **Supports Cloud Firestore database.**
 
-* **Supports Firebase Storage.**
+* **Supports Firebase Storage with OTA firmware update.**
 
-* **Supports Google Cloud Storage.**
+* **Supports Google Cloud Storage with OTA firmware update.**
 
 * **Supports Firebase Cloud Messaging**
 
@@ -1415,6 +1415,8 @@ This [Google document](https://firebase.google.com/docs/firestore/security/get-s
 
 The Firebase Storage bucket file upload, download, read its meta data and listing are supported. 
 
+The [OTA firmware update](/examples/Storage/FirebaseStorage/DownloadFileOTA/DownloadFileOTA.ino) via the Strage bucket is supported.
+
 See the [Firebase Storage examples](/examples/Storage/FirebaseStorage) for the usages.
 
 
@@ -1423,7 +1425,9 @@ See the [Firebase Storage examples](/examples/Storage/FirebaseStorage) for the u
 
 The Firebase or Google Cloud Storage bucket file upload, download, read its meta data and listing are supported.
 
-This Google Cloud Storage supported allows large files upload which upload the large file via the Firebase Storage functions is not allowable.
+This Google Cloud Storage allows large files upload which upload the large file via the Firebase Storage functions is not allowable.
+
+The [OTA firmware update](/examples/Storage/GoogleCloudStorage/DownloadFileOTA/DownloadFileOTA.ino) via the Google Strage bucket is supported.
 
 
 See the [Google Cloud Storage examples](/examples/Storage/GoogleCloudStorage) for the usages.
