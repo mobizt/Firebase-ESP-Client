@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.1.6
+ * Google's Cloud Storage class, GCS.h version 1.1.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 24, 2021
+ * Created December 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -105,6 +105,8 @@ public:
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param remotetFileName The firmware file path includes its name of file in the data bucket to download.
      * @return Boolean value, indicates the success of the operation.
+     * 
+     * @note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *>

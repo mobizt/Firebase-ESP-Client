@@ -1,6 +1,6 @@
 
 /**
- * Created December 20, 2021
+ * Created December 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -54,7 +54,7 @@
 #endif
 #include "json/FirebaseJson.h"
 
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE) && (defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
 #if defined(ESP32)
 #include <Update.h>
 #elif defined(ESP8266)
@@ -164,6 +164,7 @@ enum fb_esp_data_type
     d_array,
     d_blob,
     d_file,
+    d_file_ota,
     d_timestamp,
     d_shallow,
     d_std_string,
@@ -1600,7 +1601,7 @@ static const char fb_esp_pgm_str_79[] PROGMEM = ";";
 static const char fb_esp_pgm_str_80[] PROGMEM = "Content-Disposition: ";
 static const char fb_esp_pgm_str_81[] PROGMEM = "application/octet-stream";
 static const char fb_esp_pgm_str_82[] PROGMEM = "attachment";
-static const char fb_esp_pgm_str_83[] PROGMEM = "The backup file is not exist";
+static const char fb_esp_pgm_str_83[] PROGMEM = "File not found";
 static const char fb_esp_pgm_str_84[] PROGMEM = "The SD card is in use";
 static const char fb_esp_pgm_str_85[] PROGMEM = "The SD card is not available";
 static const char fb_esp_pgm_str_86[] PROGMEM = "Could not read/write the backup file";

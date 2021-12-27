@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.6
+ * Google's Cloud Storage class, GCS.cpp version 1.1.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 24, 2021
+ * Created December 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -174,12 +174,29 @@ bool GG_CloudStorage::mDownload(FirebaseData *fbdo, const char *bucketID, const 
 
 bool GG_CloudStorage::mDownloadOTA(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
     struct fb_esp_gcs_req_t req;
     req.bucketID = bucketID;
     req.remoteFileName = remoteFileName;
     req.requestType = fb_esp_gcs_request_type_download_ota;
-    return sendRequest(fbdo, &req);
+
+    fbdo->closeSession();
+
+#if defined(ESP8266)
+    int rx_size = fbdo->_ss.bssl_rx_size;
+    fbdo->_ss.bssl_rx_size = 16384;
+#endif
+
+    bool ret = sendRequest(fbdo, &req);
+
+#if defined(ESP8266)
+    fbdo->_ss.bssl_rx_size = rx_size;
+#endif
+
+    fbdo->closeSession();
+
+    return ret;
+    
 #endif
     return false;
 }
@@ -1942,7 +1959,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                                 if (fbdo->_ss.gcs.requestType == fb_esp_gcs_request_type_download_ota)
                                 {
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
 #if defined(ESP32)
                                     error.code = 0;
                                     Update.begin(response.contentLen);
@@ -1966,7 +1983,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                         {
                                             if (fbdo->_ss.gcs.requestType == fb_esp_gcs_request_type_download_ota)
                                             {
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
                                                 if (error.code == 0)
                                                 {
                                                     if (Update.write(buf, read) != read)
@@ -1989,7 +2006,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                                 ut->delP(&buf);
 
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
 
                                 if (error.code == 0)
                                 {

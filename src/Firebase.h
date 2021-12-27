@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.13
+ * The Firebase class, Firebase.h v1.0.14
  * 
- *  Created December 19, 2021
+ *  Created December 27, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1868,6 +1868,17 @@ public:
   */
   template <typename T1 = const char *, typename T2 = const char *>
   bool getFile(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName) { return RTDB.getFile(&fbdo, getMemStorageType(storageType), nodePath, fileName); }
+
+  /** Download a firmware file from the database.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param fileName  The firmware file path includes its name.
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+  */
+  template <typename T = const char *>
+  bool downloadOTA(FirebaseData &fbdo, T fileName) { return RTDB.downloadOTA(&fbdo, fileName); }
 
   /** Delete all child nodes at the defined database path.
    * 

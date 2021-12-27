@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.4
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.5
 
 
 The default filessystem used in the library is flash and SD.
@@ -1635,6 +1635,7 @@ bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <stri
 
 
 
+
 #### Set the Firebase server's timestamp to the defined node.
 
 param **`fbdo`** The pointer to Firebase Data Object.
@@ -2230,6 +2231,22 @@ return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
 bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName);
+```
+
+
+
+#### Download a firmware file from the database.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`filename`** The firmware file path includes its name.
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+
+```cpp
+bool downloadOTA(FirebaseData *fbdo, <string> fileName);
 ```
 
 
@@ -3404,6 +3421,8 @@ param **`remotetFileName`** The firmware file path includes its name of file in 
 
 return **`Boolean`** value, indicates the success of the operation. 
 
+Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+
 ```cpp
 bool downloadOTA(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName);
 ```
@@ -3559,6 +3578,8 @@ param **`bucketID`** The Firebase or Google Cloud Storage bucket ID.
 param **`remotetFileName`** The firmware file path includes its name of file in the data bucket to download.
 
 return **`Boolean`** value, indicates the success of the operation. 
+
+Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
 
 ```cpp
 bool downloadOTA(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName);

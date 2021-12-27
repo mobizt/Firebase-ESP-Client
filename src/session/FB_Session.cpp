@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.8
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 20, 2021
+ * Created December 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -950,7 +950,7 @@ void FirebaseData::checkOvf(size_t len, struct server_response_data_t &resp)
 #ifdef ENABLE_RTDB
     if (_ss.resp_size < len && !_ss.buffer_ovf)
     {
-        if (_ss.rtdb.req_method == fb_esp_method::m_get && !_ss.rtdb.data_tmo && _ss.con_mode != fb_esp_con_mode_fcm && resp.dataType != fb_esp_data_type::d_file && _ss.rtdb.req_method != fb_esp_method::m_download && _ss.rtdb.req_data_type != fb_esp_data_type::d_file)
+        if (_ss.rtdb.req_method == fb_esp_method::m_get && !_ss.rtdb.data_tmo && _ss.con_mode != fb_esp_con_mode_fcm && resp.dataType != fb_esp_data_type::d_file && _ss.rtdb.req_method != fb_esp_method::m_download && _ss.rtdb.req_data_type != fb_esp_data_type::d_file &&_ss.rtdb.req_data_type != fb_esp_data_type::d_file_ota)
         {
             _ss.buffer_ovf = true;
             _ss.http_code = FIREBASE_ERROR_BUFFER_OVERFLOW;

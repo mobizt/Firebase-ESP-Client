@@ -86,6 +86,9 @@ void loop()
     {
         taskCompleted = true;
 
+        Serial.println("\nWait for file downloading...");
+
+        //In ESP8266, this function will allocate 16k+ memory for internal SSL client.
         Serial.printf("Download firmware file... %s\n", Firebase.GCStorage.downloadOTA(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "<firmware.bin>" /* path of firmware file stored in the bucket */) ? "ok" : fbdo.errorReason().c_str());
 
         if (fbdo.httpCode() == 200)

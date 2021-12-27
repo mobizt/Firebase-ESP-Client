@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.9
+ * Google's Firebase Storage class, FCS.cpp version 1.1.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 24, 2021
+ * Created December 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -144,12 +144,29 @@ bool FB_Storage::mDownload(FirebaseData *fbdo, const char *bucketID, const char 
 
 bool FB_Storage::mDownloadOTA(FirebaseData *fbdo, const char *bucketID, const char *remoteFileName)
 {
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
     struct fb_esp_fcs_req_t req;
     req.remoteFileName = remoteFileName;
     req.requestType = fb_esp_fcs_request_type_download_ota;
     req.bucketID = bucketID;
-    return sendRequest(fbdo, &req);
+
+    fbdo->closeSession();
+
+#if defined(ESP8266)
+    int rx_size = fbdo->_ss.bssl_rx_size;
+    fbdo->_ss.bssl_rx_size = 16384;
+#endif
+
+    bool ret = sendRequest(fbdo, &req);
+
+#if defined(ESP8266)
+    fbdo->_ss.bssl_rx_size = rx_size;
+#endif
+
+    fbdo->closeSession();
+
+    return ret;
+
 #endif
     return false;
 }
@@ -620,7 +637,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                 if (fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download_ota)
                                 {
 
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
 #if defined(ESP32)
                                     error.code = 0;
                                     Update.begin(response.contentLen);
@@ -647,7 +664,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
                                         {
                                             if (fbdo->_ss.fcs.requestType == fb_esp_fcs_request_type_download_ota)
                                             {
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
                                                 if (error.code == 0)
                                                 {
                                                     if (Update.write(buf, read) != read)
@@ -669,8 +686,8 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo)
 
                                 ut->delP(&buf);
 
-#if defined(ENABLE_STORAGE_BUCKET_OTA_UPDATE)
-                               
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
+
                                 if (error.code == 0)
                                 {
                                     if (!Update.end())

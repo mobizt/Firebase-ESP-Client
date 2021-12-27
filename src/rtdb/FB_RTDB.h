@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.14
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.15
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 20, 2021
+ * Created December 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1346,6 +1346,17 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath, T2 fileName) { return buildRequest(fbdo, m_get, toString(nodePath), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toString(fileName), storageType); }
 
+  /** Download a firmware file from the database.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param fileName  The firmware file path includes its name.
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+  */
+  template <typename T = const char *>
+  bool downloadOTA(FirebaseData *fbdo, T fileName) { return buildRequest(fbdo, m_get, toString(fileName), _NO_PAYLOAD, d_file_ota, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+
   /** Delete all child nodes at the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
@@ -1737,6 +1748,7 @@ private:
   bool waitResponse(FirebaseData *fbdo);
   //handle managed response data
   bool handleResponse(FirebaseData *fbdo);
+  void waitRxReady(FirebaseData *fbdo, unsigned long &dataTime);
   //store response payload
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
   //request with queue and data out pointer

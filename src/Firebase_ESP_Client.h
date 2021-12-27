@@ -1,16 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.7.4"
+#define FIREBASE_CLIENT_VERSION "2.7.5"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.7.4
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.7.5
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created December 24, 2021
+ * Created December 27, 2021
  *
  *   Updates:
- * - Add supports (PR #219) Firmware file update over the air (OTA) via Firebase Storage and Google Cloud Storage.
+ * - Add support Firmware file OTA update in RTDB.
+ * - Fixed corrupted data for large file download in RTDB.
  * 
  * 
  * This work is a part of Firebase ESP Client library

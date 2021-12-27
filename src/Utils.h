@@ -1169,83 +1169,7 @@ public:
         return false;
     }
 
-    bool decodeBase64Flash(const char *src, size_t len, fs::File &file)
-    {
-        unsigned char *dtable = (unsigned char *)newP(256);
-        memset(dtable, 0x80, 256);
-        for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
-            dtable[fb_esp_base64_table[i]] = (unsigned char)i;
-        dtable['='] = 0;
-
-        unsigned char *block = (unsigned char *)newP(4);
-        unsigned char tmp;
-        size_t i, count;
-        int pad = 0;
-        size_t extra_pad;
-        count = 0;
-
-        for (i = 0; i < len; i++)
-        {
-            if (dtable[(uint8_t)src[i]] != 0x80)
-                count++;
-        }
-
-        if (count == 0)
-            goto exit;
-
-        extra_pad = (4 - count % 4) % 4;
-
-        count = 0;
-        for (i = 0; i < len + extra_pad; i++)
-        {
-            unsigned char val;
-
-            if (i >= len)
-                val = '=';
-            else
-                val = src[i];
-            tmp = dtable[val];
-            if (tmp == 0x80)
-                continue;
-
-            if (val == '=')
-                pad++;
-
-            block[count] = tmp;
-            count++;
-            if (count == 4)
-            {
-                file.write((block[0] << 2) | (block[1] >> 4));
-                count = 0;
-                if (pad)
-                {
-                    if (pad == 1)
-                        file.write((block[1] << 4) | (block[2] >> 2));
-                    else if (pad > 2)
-                        goto exit;
-                    break;
-                }
-                else
-                {
-                    file.write((block[1] << 4) | (block[2] >> 2));
-                    file.write((block[2] << 6) | block[3]);
-                }
-            }
-        }
-
-        delP(&block);
-        delP(&dtable);
-
-        return true;
-
-    exit:
-        delP(&block);
-        delP(&dtable);
-
-        return false;
-    }
-
-    void sendBase64Stream(WiFiClient *client, const MBSTRING &filePath, uint8_t storageType, fs::File &file)
+    void sendBase64File(WiFiClient *client, const MBSTRING &filePath, uint8_t storageType, fs::File &file)
     {
 
         if (storageType == mem_storage_type_flash)
@@ -1346,7 +1270,7 @@ public:
         delP(&fbuff);
     }
 
-    bool decodeBase64Stream(const char *src, size_t len, fs::File &file)
+    bool decodeBase64Stream(const char *src, size_t len, Stream &s)
     {
         unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
@@ -1393,12 +1317,12 @@ public:
             count++;
             if (count == 4)
             {
-                file.write((block[0] << 2) | (block[1] >> 4));
+                s.write((block[0] << 2) | (block[1] >> 4));
                 count = 0;
                 if (pad)
                 {
                     if (pad == 1)
-                        file.write((block[1] << 4) | (block[2] >> 2));
+                        s.write((block[1] << 4) | (block[2] >> 2));
                     else if (pad > 2)
                         goto exit;
 
@@ -1406,8 +1330,8 @@ public:
                 }
                 else
                 {
-                    file.write((block[1] << 4) | (block[2] >> 2));
-                    file.write((block[2] << 6) | block[3]);
+                    s.write((block[1] << 4) | (block[2] >> 2));
+                    s.write((block[2] << 6) | block[3]);
                 }
             }
         }
@@ -1421,6 +1345,163 @@ public:
 
         delP(&block);
         delP(&dtable);
+
+        return false;
+    }
+    
+    //trim double quotes and return pad length
+    int trimLastChunkBase64(MBSTRING &s, size_t len)
+    {
+        int padLen = -1;
+        if (len > 1)
+        {
+            if (s[len - 1] == '"')
+            {
+                padLen = 0;
+                if (len > 2)
+                {
+                    if (s[len - 2] == '=')
+                        padLen++;
+                }
+                if (len > 3)
+                {
+                    if (s[len - 3] == '=')
+                        padLen++;
+                }
+                s[len - 1] = 0;
+            }
+        }
+        return padLen;
+    }
+
+    bool writeOTA(uint8_t *buf, size_t len, int &code)
+    {
+       
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
+        if (Update.write(buf, len) != len)
+        {
+            code = FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED;
+            return false;
+        }
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    bool addBuffer(uint8_t *buf, uint8_t value, int &index, int chunkSize, int &code)
+    {
+        if (index < chunkSize)
+        {
+            buf[index] = value;
+            index++;
+        }
+        else
+        {
+            index = 0;
+            if (!writeOTA(buf, chunkSize, code))
+                return false;
+            memset(buf, 0, chunkSize);
+            buf[index] = value;
+            index++;
+        }
+
+        return true;
+    }
+
+    bool decodeBase64OTA(const char *src, size_t len, int &code)
+    {
+       
+        unsigned char *dtable = (unsigned char *)newP(256);
+        memset(dtable, 0x80, 256);
+        for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
+            dtable[fb_esp_base64_table[i]] = (unsigned char)i;
+        dtable['='] = 0;
+
+        unsigned char *block = (unsigned char *)newP(4);
+        unsigned char tmp;
+        size_t i, count;
+        int pad = 0;
+        size_t extra_pad;
+
+        int chunkSize = 1024;
+        uint8_t *buf = (uint8_t *)newP(chunkSize);
+        int index = 0;
+
+        count = 0;
+
+        for (i = 0; i < len; i++)
+        {
+            if (dtable[(uint8_t)src[i]] != 0x80)
+                count++;
+        }
+
+        if (count == 0)
+            goto exit;
+
+        extra_pad = (4 - count % 4) % 4;
+
+        count = 0;
+        for (i = 0; i < len + extra_pad; i++)
+        {
+            unsigned char val;
+
+            if (i >= len)
+                val = '=';
+            else
+                val = src[i];
+            tmp = dtable[val];
+            if (tmp == 0x80)
+                continue;
+
+            if (val == '=')
+                pad++;
+
+            block[count] = tmp;
+            count++;
+            if (count == 4)
+            {
+                if (!addBuffer(buf, (block[0] << 2) | (block[1] >> 4), index, chunkSize, code))
+                    break;
+
+                count = 0;
+                if (pad)
+                {
+                    if (pad == 1)
+                    {
+                        if (!addBuffer(buf, (block[1] << 4) | (block[2] >> 2), index, chunkSize, code))
+                            break;
+                    }
+                    else if (pad > 2)
+                        goto exit;
+
+                    break;
+                }
+                else
+                {
+                    if (!addBuffer(buf, (block[1] << 4) | (block[2] >> 2), index, chunkSize, code))
+                        break;
+
+                    if (!addBuffer(buf, (block[2] << 6) | block[3], index, chunkSize, code))
+                        break;
+                }
+            }
+        }
+
+        if(index > 0)
+            writeOTA(buf, index, code);
+
+        delP(&block);
+        delP(&dtable);
+        delP(&buf);
+
+        return true;
+
+    exit:
+
+        delP(&block);
+        delP(&dtable);
+        delP(&buf);
 
         return false;
     }
@@ -2043,7 +2124,7 @@ public:
         delay(0);
     }
 
-    int beginUpdate(WiFiClient *tcp, int len)
+    int beginUpdate(WiFiClient *tcp, int len, bool verify = true)
     {
         int code = 0;
 #if defined(ESP8266)
@@ -2051,7 +2132,7 @@ public:
         {
             code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
         }
-        else
+        else if(verify)
         {
             uint8_t buf[4];
             if (tcp->peekBytes(&buf[0], 4) != 4)

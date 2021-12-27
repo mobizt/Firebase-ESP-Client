@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.4
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.5
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -53,11 +53,15 @@ Creating the new Firebase library that specific to only GSM connectivity concern
 
 * **Supports Cloud Firestore database.**
 
-* **Supports Firebase Storage with OTA firmware update.**
+* **Supports Firebase Storage.**
 
-* **Supports Google Cloud Storage with OTA firmware update.**
+* **Supports Google Cloud Storage.**
 
 * **Supports Firebase Cloud Messaging**
+
+* **Support Test Mode (No Auth)**
+
+* **Supports Firmware OTA updates via RTDB, Firebase Storage and Google Cloud Storage**
 
 * **Supports Cloud Functions for Firebase**
 
@@ -565,10 +569,10 @@ ENABLE_GC_STORAGE
 ENABLE_FB_FUNCTIONS
 ```
 
-To disable OTA update via Firebase Storage and Google Cloud Storage, comment this macro.
+To disable OTA update via RTDB , Firebase Storage and Google Cloud Storage, comment this macro.
 
 ```
-ENABLE_STORAGE_BUCKET_OTA_UPDATE
+ENABLE_OTA_FIRMWARE_UPDATE
 ```
 
 ## Realtime Database
