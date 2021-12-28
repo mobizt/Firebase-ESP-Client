@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.9
+ * Google's Firebase Util class, Utils.h version 1.1.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 24, 2021
+ * Created December 28, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1006,9 +1006,19 @@ public:
     void setNumDataType(const char *buf, int ofs, struct server_response_data_t &response, bool dec)
     {
 
+        if (!buf || ofs < 0)
+            return;
+
+        if (ofs >= strlen(buf))
+            return;
+
         if (response.payloadLen > 0 && response.payloadLen <= (int)strlen(buf) && ofs < (int)strlen(buf) && ofs + response.payloadLen <= (int)strlen(buf))
         {
             char *tmp = (char *)newP(response.payloadLen + 1);
+
+            if (!tmp)
+                return;
+
             memcpy(tmp, &buf[ofs], response.payloadLen);
             tmp[response.payloadLen] = 0;
             double d = atof(tmp);
@@ -1348,7 +1358,7 @@ public:
 
         return false;
     }
-    
+
     //trim double quotes and return pad length
     int trimLastChunkBase64(MBSTRING &s, size_t len)
     {
@@ -1376,7 +1386,7 @@ public:
 
     bool writeOTA(uint8_t *buf, size_t len, int &code)
     {
-       
+
 #if defined(ENABLE_OTA_FIRMWARE_UPDATE)
         if (Update.write(buf, len) != len)
         {
@@ -1411,7 +1421,7 @@ public:
 
     bool decodeBase64OTA(const char *src, size_t len, int &code)
     {
-       
+
         unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
         for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
@@ -1488,7 +1498,7 @@ public:
             }
         }
 
-        if(index > 0)
+        if (index > 0)
             writeOTA(buf, index, code);
 
         delP(&block);
@@ -2132,7 +2142,7 @@ public:
         {
             code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
         }
-        else if(verify)
+        else if (verify)
         {
             uint8_t buf[4];
             if (tcp->peekBytes(&buf[0], 4) != 4)
