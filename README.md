@@ -59,7 +59,7 @@ Creating the new Firebase library that specific to only GSM connectivity concern
 
 * **Supports Firebase Cloud Messaging**
 
-* **Support Test Mode (No Auth)**
+* **Supports Test Mode (No Auth)**
 
 * **Supports Firmware OTA updates via RTDB, Firebase Storage and Google Cloud Storage**
 
