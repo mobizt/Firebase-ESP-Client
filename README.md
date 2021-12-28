@@ -67,7 +67,7 @@ Creating the new Firebase library that specific to only GSM connectivity concern
 
 * **Built-in JSON editor and deserializer.**
 
-* **Support external Heap via SRAM/PSRAM in ESP8266 and ESP32.**
+* **Supports external Heap via SRAM/PSRAM in ESP8266 and ESP32.**
 
 * **Supports ethernet in ESP32 using LAN8720, TLK110 and IP101 Ethernet modules and ESP8266 using ENC28J60, W5100 and W5500 Ethernet modules.**
 
