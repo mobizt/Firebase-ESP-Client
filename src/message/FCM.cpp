@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.16
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.17
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -199,11 +199,11 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
 
     MBSTRING host;
     if (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1)
-        ut->appendP(host, fb_esp_pgm_str_249);
+        host.appendP(fb_esp_pgm_str_249);
     else
-        ut->appendP(host, fb_esp_pgm_str_329);
-    ut->appendP(host, fb_esp_pgm_str_4);
-    ut->appendP(host, fb_esp_pgm_str_120);
+        host.appendP(fb_esp_pgm_str_329);
+    host.appendP(fb_esp_pgm_str_4);
+    host.appendP(fb_esp_pgm_str_120);
 
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), port);
@@ -217,62 +217,62 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
     MBSTRING header;
 
     if (mode == fb_esp_fcm_msg_mode_app_instance_info)
-        ut->appendP(header, fb_esp_pgm_str_25, true);
+        header.appendP(fb_esp_pgm_str_25, true);
     else
-        ut->appendP(header, fb_esp_pgm_str_24, true);
-    ut->appendP(header, fb_esp_pgm_str_6);
+        header.appendP(fb_esp_pgm_str_24, true);
+    header.appendP(fb_esp_pgm_str_6);
 
     if (msgMode)
     {
         if (Signer.getTokenType() != token_type_oauth2_access_token || mode == fb_esp_fcm_msg_mode_legacy_http)
-            ut->appendP(header, fb_esp_pgm_str_121);
+            header.appendP(fb_esp_pgm_str_121);
         else
         {
-            ut->appendP(header, fb_esp_pgm_str_326);
+            header.appendP(fb_esp_pgm_str_326);
             header += Signer.getCfg()->service_account.data.project_id;
-            ut->appendP(header, fb_esp_pgm_str_327);
+            header.appendP(fb_esp_pgm_str_327);
         }
     }
     else
     {
         if (mode == fb_esp_fcm_msg_mode_subscribe)
         {
-            ut->appendP(header, fb_esp_pgm_str_330);
-            ut->appendP(header, fb_esp_pgm_str_331);
+            header.appendP(fb_esp_pgm_str_330);
+            header.appendP(fb_esp_pgm_str_331);
         }
         else if (mode == fb_esp_fcm_msg_mode_unsubscribe)
         {
-            ut->appendP(header, fb_esp_pgm_str_330);
-            ut->appendP(header, fb_esp_pgm_str_332);
+            header.appendP(fb_esp_pgm_str_330);
+            header.appendP(fb_esp_pgm_str_332);
         }
         else if (mode == fb_esp_fcm_msg_mode_app_instance_info)
         {
-            ut->appendP(header, fb_esp_pgm_str_335);
+            header.appendP(fb_esp_pgm_str_335);
             header += payload;
-            ut->appendP(header, fb_esp_pgm_str_336);
+            header.appendP(fb_esp_pgm_str_336);
         }
         else if (mode == fb_esp_fcm_msg_mode_apn_token_registration)
         {
-            ut->appendP(header, fb_esp_pgm_str_330);
-            ut->appendP(header, fb_esp_pgm_str_333);
+            header.appendP(fb_esp_pgm_str_330);
+            header.appendP(fb_esp_pgm_str_333);
         }
     }
 
-    ut->appendP(header, fb_esp_pgm_str_30);
+    header.appendP(fb_esp_pgm_str_30);
 
-    ut->appendP(header, fb_esp_pgm_str_31);
+    header.appendP(fb_esp_pgm_str_31);
     if (msgMode)
-        ut->appendP(header, fb_esp_pgm_str_249);
+        header.appendP(fb_esp_pgm_str_249);
     else
-        ut->appendP(header, fb_esp_pgm_str_329);
-    ut->appendP(header, fb_esp_pgm_str_4);
-    ut->appendP(header, fb_esp_pgm_str_120);
-    ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_329);
+    header.appendP(fb_esp_pgm_str_4);
+    header.appendP(fb_esp_pgm_str_120);
+    header.appendP(fb_esp_pgm_str_21);
 
     if (Signer.getTokenType() == token_type_oauth2_access_token && mode == fb_esp_fcm_msg_mode_httpv1)
     {
-        ut->appendP(header, fb_esp_pgm_str_237);
-        ut->appendP(header, fb_esp_pgm_str_271);
+        header.appendP(fb_esp_pgm_str_237);
+        header.appendP(fb_esp_pgm_str_271);
 
         ret = fbdo->tcpSend(header.c_str());
         header.clear();
@@ -287,7 +287,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
     }
     else
     {
-        ut->appendP(header, fb_esp_pgm_str_131);
+        header.appendP(fb_esp_pgm_str_131);
 
         ret = fbdo->tcpSend(header.c_str());
         header.clear();
@@ -301,23 +301,23 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
             return ret;
     }
 
-    ut->appendP(header, fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_21);
 
-    ut->appendP(header, fb_esp_pgm_str_32);
+    header.appendP(fb_esp_pgm_str_32);
 
     if (mode != fb_esp_fcm_msg_mode_app_instance_info)
     {
-        ut->appendP(header, fb_esp_pgm_str_8);
-        ut->appendP(header, fb_esp_pgm_str_129);
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_8);
+        header.appendP(fb_esp_pgm_str_129);
+        header.appendP(fb_esp_pgm_str_21);
 
-        ut->appendP(header, fb_esp_pgm_str_12);
-        header += NUM2S(strlen(payload)).get();
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_12);
+        header += strlen(payload);
+        header.appendP(fb_esp_pgm_str_21);
     }
 
-    ut->appendP(header, fb_esp_pgm_str_36);
-    ut->appendP(header, fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_36);
+    header.appendP(fb_esp_pgm_str_21);
 
     ret = fbdo->tcpSend(header.c_str());
     header.clear();
@@ -334,197 +334,197 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
     FirebaseJson json;
 
-    if (strlen(msg->targets.to) > 0)
+    if (msg->targets.to.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_128, true);
+        s.appendP(fb_esp_pgm_str_128, true);
         json.add(s.c_str(), msg->targets.to);
     }
 
-    if (strlen(msg->targets.registration_ids) > 0)
+    if (msg->targets.registration_ids.length() > 0)
     {
         FirebaseJsonArray arr;
         arr.clear();
         arr.setJsonArrayData(msg->targets.registration_ids);
 
-        ut->appendP(s, fb_esp_pgm_str_130, true);
+        s.appendP(fb_esp_pgm_str_130, true);
         json.add(s.c_str(), arr);
     }
 
-    if (strlen(msg->targets.condition) > 0)
+    if (msg->targets.condition.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_282, true);
+        s.appendP(fb_esp_pgm_str_282, true);
         json.add(s.c_str(), msg->targets.condition);
     }
 
-    if (strlen(msg->options.collapse_key) > 0)
+    if (msg->options.collapse_key.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_138, true);
+        s.appendP(fb_esp_pgm_str_138, true);
         json.add(s.c_str(), msg->options.collapse_key);
     }
 
-    if (strlen(msg->options.priority) > 0)
+    if (msg->options.priority.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_136, true);
+        s.appendP(fb_esp_pgm_str_136, true);
         json.add(s.c_str(), msg->options.priority);
     }
 
-    if (strlen(msg->options.content_available) > 0)
+    if (msg->options.content_available.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_283, true);
-        json.add(s.c_str(), ut->boolVal(msg->options.content_available));
+        s.appendP(fb_esp_pgm_str_283, true);
+        json.add(s.c_str(), ut->boolVal(msg->options.content_available.c_str()));
     }
 
-    if (strlen(msg->options.mutable_content) > 0)
+    if (msg->options.mutable_content.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_284, true);
-        json.add(s.c_str(), ut->boolVal(msg->options.mutable_content));
+        s.appendP(fb_esp_pgm_str_284, true);
+        json.add(s.c_str(), ut->boolVal(msg->options.mutable_content.c_str()));
     }
 
-    if (strlen(msg->options.time_to_live) > 0)
+    if (msg->options.time_to_live.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_137, true);
-        json.add(s.c_str(), atoi(msg->options.time_to_live));
+        s.appendP(fb_esp_pgm_str_137, true);
+        json.add(s.c_str(), atoi(msg->options.time_to_live.c_str()));
     }
 
-    if (strlen(msg->options.restricted_package_name) > 0)
+    if (msg->options.restricted_package_name.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_147, true);
+        s.appendP(fb_esp_pgm_str_147, true);
         json.add(s.c_str(), msg->options.restricted_package_name);
     }
 
-    if (strlen(msg->options.dry_run) > 0)
+    if (msg->options.dry_run.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_281, true);
+        s.appendP(fb_esp_pgm_str_281, true);
         json.add(s.c_str(), msg->options.dry_run);
     }
 
-    if (strlen(msg->options.direct_boot_ok) > 0)
+    if (msg->options.direct_boot_ok.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_323, true);
-        json.add(s.c_str(), ut->boolVal(msg->options.direct_boot_ok));
+        s.appendP(fb_esp_pgm_str_323, true);
+        json.add(s.c_str(), ut->boolVal(msg->options.direct_boot_ok.c_str()));
     }
 
-    if (strlen(msg->payloads.data) > 0)
+    if (msg->payloads.data.length() > 0)
     {
         FirebaseJson js;
         js.setJsonData(msg->payloads.data);
-        ut->appendP(s, fb_esp_pgm_str_135, true);
+        s.appendP(fb_esp_pgm_str_135, true);
         json.add(s.c_str(), js);
     }
 
-    if (strlen(msg->payloads.notification.title) > 0)
+    if (msg->payloads.notification.title.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_285);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_285);
         json.set(s.c_str(), msg->payloads.notification.title);
     }
 
-    if (strlen(msg->payloads.notification.body) > 0)
+    if (msg->payloads.notification.body.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_123);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_123);
         json.set(s.c_str(), msg->payloads.notification.body);
     }
 
-    if (strlen(msg->payloads.notification.sound) > 0)
+    if (msg->payloads.notification.sound.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_126);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_126);
         json.set(s.c_str(), msg->payloads.notification.sound);
     }
 
-    if (strlen(msg->payloads.notification.badge) > 0)
+    if (msg->payloads.notification.badge.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_286);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_286);
         json.set(s.c_str(), msg->payloads.notification.badge);
     }
 
-    if (strlen(msg->payloads.notification.click_action) > 0)
+    if (msg->payloads.notification.click_action.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_125);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_125);
         json.set(s.c_str(), msg->payloads.notification.click_action);
     }
 
-    if (strlen(msg->payloads.notification.subtitle) > 0)
+    if (msg->payloads.notification.subtitle.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_287);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_287);
         json.set(s.c_str(), msg->payloads.notification.subtitle);
     }
 
-    if (strlen(msg->payloads.notification.body_loc_key) > 0)
+    if (msg->payloads.notification.body_loc_key.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_288);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_288);
         json.set(s.c_str(), msg->payloads.notification.body_loc_key);
     }
 
-    if (strlen(msg->payloads.notification.body_loc_args) > 0)
+    if (msg->payloads.notification.body_loc_args.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_289);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_289);
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->payloads.notification.body_loc_args);
         json.set(s.c_str(), arr);
     }
 
-    if (strlen(msg->payloads.notification.title_loc_key) > 0)
+    if (msg->payloads.notification.title_loc_key.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_290);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_290);
         json.set(s.c_str(), msg->payloads.notification.title_loc_key);
     }
 
-    if (strlen(msg->payloads.notification.title_loc_args) > 0)
+    if (msg->payloads.notification.title_loc_args.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_291);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_291);
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->payloads.notification.title_loc_args);
         json.set(s.c_str(), arr);
     }
 
-    if (strlen(msg->payloads.notification.android_channel_id) > 0)
+    if (msg->payloads.notification.android_channel_id.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_292);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_292);
         json.set(s.c_str(), msg->payloads.notification.android_channel_id);
     }
 
-    if (strlen(msg->payloads.notification.icon) > 0)
+    if (msg->payloads.notification.icon.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_124);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_124);
         json.set(s.c_str(), msg->payloads.notification.icon);
     }
 
-    if (strlen(msg->payloads.notification.tag) > 0)
+    if (msg->payloads.notification.tag.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_293);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_293);
         json.set(s.c_str(), msg->payloads.notification.tag);
     }
 
-    if (strlen(msg->payloads.notification.color) > 0)
+    if (msg->payloads.notification.color.length() > 0)
     {
-        ut->appendP(s, fb_esp_pgm_str_122, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_294);
+        s.appendP(fb_esp_pgm_str_122, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_294);
         json.set(s.c_str(), msg->payloads.notification.color);
     }
     s.clear();
@@ -538,9 +538,9 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
     raw.clear();
     FirebaseJson json;
 
-    ut->appendP(base, fb_esp_pgm_str_128, true);
+    base.appendP(fb_esp_pgm_str_128, true);
 
-    ut->appendP(s, fb_esp_pgm_str_134);
+    s.appendP(fb_esp_pgm_str_134);
     s += topic;
 
     json.add(base.c_str(), s.c_str());
@@ -557,7 +557,7 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
         }
     }
 
-    ut->appendP(base, fb_esp_pgm_str_334, true);
+    base.appendP(fb_esp_pgm_str_334, true);
 
     json.add(base.c_str(), arr);
 
@@ -573,11 +573,11 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
     raw.clear();
     FirebaseJson json;
 
-    ut->appendP(base, fb_esp_pgm_str_337, true);
+    base.appendP(fb_esp_pgm_str_337, true);
 
     json.add(base.c_str(), application);
 
-    ut->appendP(base, fb_esp_pgm_str_338, true);
+    base.appendP(fb_esp_pgm_str_338, true);
     json.add(base.c_str(), sandbox);
 
     FirebaseJsonArray arr;
@@ -591,7 +591,7 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
         }
     }
 
-    ut->appendP(base, fb_esp_pgm_str_339, true);
+    base.appendP(fb_esp_pgm_str_339, true);
     json.add(base.c_str(), arr);
 
     base.clear();
@@ -607,452 +607,452 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     FirebaseJson json;
     raw.clear();
 
-    ut->appendP(base, fb_esp_pgm_str_295);
-    ut->appendP(base, fb_esp_pgm_str_1);
+    base.appendP(fb_esp_pgm_str_295);
+    base.appendP(fb_esp_pgm_str_1);
     _base = base;
 
-    if (strlen(msg->token) > 0)
+    if (msg->token.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_233);
+        s.appendP(fb_esp_pgm_str_233);
         json.set(s.c_str(), msg->token);
     }
-    else if (strlen(msg->topic) > 0)
+    else if (msg->topic.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_296);
+        s.appendP(fb_esp_pgm_str_296);
         json.set(s.c_str(), msg->topic);
     }
-    else if (strlen(msg->condition) > 0)
+    else if (msg->condition.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_282);
+        s.appendP(fb_esp_pgm_str_282);
         json.set(s.c_str(), msg->condition);
     }
 
-    if (strlen(msg->data) > 0)
+    if (msg->data.length() > 0)
     {
         FirebaseJson js;
         js.setJsonData(msg->data);
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_135);
+        s.appendP(fb_esp_pgm_str_135);
         json.set(s.c_str(), js);
     }
 
-    if (strlen(msg->notification.title) > 0)
+    if (msg->notification.title.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_285);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_285);
         json.set(s.c_str(), msg->notification.title);
     }
 
-    if (strlen(msg->notification.body) > 0)
+    if (msg->notification.body.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_123);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_123);
         json.set(s.c_str(), msg->notification.body);
     }
 
-    if (strlen(msg->notification.image) > 0)
+    if (msg->notification.image.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_297);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_297);
         json.set(s.c_str(), msg->notification.image);
     }
 
-    if (strlen(msg->fcm_options.analytics_label) > 0)
+    if (msg->fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_298);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_299);
+        s.appendP(fb_esp_pgm_str_298);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_299);
         json.set(s.c_str(), msg->fcm_options.analytics_label);
     }
 
     ////// AndroidConfig
 
-    if (strlen(msg->android.collapse_key) > 0)
+    if (msg->android.collapse_key.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_138);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_138);
         json.set(s.c_str(), msg->android.collapse_key);
     }
 
-    if (strlen(msg->android.priority) > 0)
+    if (msg->android.priority.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_136);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_136);
         json.set(s.c_str(), msg->android.priority);
     }
 
-    if (strlen(msg->android.ttl) > 0)
+    if (msg->android.ttl.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_303);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_303);
         json.set(s.c_str(), msg->android.ttl);
     }
 
-    if (strlen(msg->android.restricted_package_name) > 0)
+    if (msg->android.restricted_package_name.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_147);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_147);
         json.set(s.c_str(), msg->android.restricted_package_name);
     }
 
-    if (strlen(msg->android.data) > 0)
+    if (msg->android.data.length() > 0)
     {
         FirebaseJson js;
         js.setJsonData(msg->android.data);
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_135);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_135);
         json.set(s.c_str(), js);
     }
 
-    if (strlen(msg->android.fcm_options.analytics_label) > 0)
+    if (msg->android.fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_298);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_299);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_298);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_299);
         json.set(s.c_str(), msg->android.fcm_options.analytics_label);
     }
 
-    if (strlen(msg->android.direct_boot_ok) > 0)
+    if (msg->android.direct_boot_ok.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_323);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_323);
         json.set(s.c_str(), msg->android.direct_boot_ok);
     }
 
-    if (strlen(msg->android.notification.title) > 0)
+    if (msg->android.notification.title.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_285);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_285);
         json.set(s.c_str(), msg->android.notification.title);
     }
-    if (strlen(msg->android.notification.body) > 0)
+    if (msg->android.notification.body.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_123);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_123);
         json.set(s.c_str(), msg->android.notification.body);
     }
 
-    if (strlen(msg->android.notification.icon) > 0)
+    if (msg->android.notification.icon.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_124);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_124);
         json.set(s.c_str(), msg->android.notification.icon);
     }
 
-    if (strlen(msg->android.notification.color) > 0)
+    if (msg->android.notification.color.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_294);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_294);
         json.set(s.c_str(), msg->android.notification.color);
     }
 
-    if (strlen(msg->android.notification.sound) > 0)
+    if (msg->android.notification.sound.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_126);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_126);
         json.set(s.c_str(), msg->android.notification.sound);
     }
-    if (strlen(msg->android.notification.tag) > 0)
+    if (msg->android.notification.tag.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_293);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_293);
         json.set(s.c_str(), msg->android.notification.tag);
     }
-    if (strlen(msg->android.notification.click_action) > 0)
+    if (msg->android.notification.click_action.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_125);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_125);
         json.set(s.c_str(), msg->android.notification.click_action);
     }
 
-    if (strlen(msg->android.notification.body_loc_key) > 0)
+    if (msg->android.notification.body_loc_key.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_288);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_288);
         json.set(s.c_str(), msg->android.notification.body_loc_key);
     }
 
-    if (strlen(msg->android.notification.body_loc_args) > 0)
+    if (msg->android.notification.body_loc_args.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_289);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_289);
         static FirebaseJsonArray arr;
         arr.clear();
         arr.setJsonArrayData(msg->android.notification.body_loc_args);
         json.set(s.c_str(), arr);
     }
 
-    if (strlen(msg->android.notification.title_loc_key) > 0)
+    if (msg->android.notification.title_loc_key.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_290);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_290);
         json.set(s.c_str(), msg->android.notification.title_loc_key);
     }
 
-    if (strlen(msg->android.notification.title_loc_args) > 0)
+    if (msg->android.notification.title_loc_args.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_291);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_291);
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->android.notification.title_loc_args);
         json.set(s.c_str(), arr);
     }
 
-    if (strlen(msg->android.notification.channel_id) > 0)
+    if (msg->android.notification.channel_id.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_304);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_304);
         json.set(s.c_str(), msg->android.notification.channel_id);
     }
-    if (strlen(msg->android.notification.ticker) > 0)
+    if (msg->android.notification.ticker.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_305);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_305);
         json.set(s.c_str(), msg->android.notification.ticker);
     }
-    if (strlen(msg->android.notification.sticky) > 0)
+    if (msg->android.notification.sticky.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_306);
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.sticky));
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_306);
+        json.set(s.c_str(), ut->boolVal(msg->android.notification.sticky.c_str()));
     }
-    if (strlen(msg->android.notification.event_time) > 0)
+    if (msg->android.notification.event_time.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_307);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_307);
         json.set(s.c_str(), msg->android.notification.event_time);
     }
-    if (strlen(msg->android.notification.local_only) > 0)
+    if (msg->android.notification.local_only.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_308);
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.local_only));
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_308);
+        json.set(s.c_str(), ut->boolVal(msg->android.notification.local_only.c_str()));
     }
-    if (strlen(msg->android.notification.notification_priority) > 0)
+    if (msg->android.notification.notification_priority.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_309);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_309);
         json.set(s.c_str(), msg->android.notification.notification_priority);
     }
-    if (strlen(msg->android.notification.default_sound) > 0)
+    if (msg->android.notification.default_sound.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_310);
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_sound));
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_310);
+        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_sound.c_str()));
     }
-    if (strlen(msg->android.notification.default_vibrate_timings) > 0)
+    if (msg->android.notification.default_vibrate_timings.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_311);
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_vibrate_timings));
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_311);
+        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_vibrate_timings.c_str()));
     }
-    if (strlen(msg->android.notification.default_light_settings) > 0)
+    if (msg->android.notification.default_light_settings.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_312);
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_light_settings));
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_312);
+        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_light_settings.c_str()));
     }
-    if (strlen(msg->android.notification.vibrate_timings) > 0)
+    if (msg->android.notification.vibrate_timings.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_313);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_313);
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->android.notification.vibrate_timings);
         json.set(s.c_str(), arr);
     }
 
-    if (strlen(msg->android.notification.visibility) > 0)
+    if (msg->android.notification.visibility.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_314);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_314);
         json.set(s.c_str(), msg->android.notification.visibility);
     }
-    if (strlen(msg->android.notification.notification_count) > 0)
+    if (msg->android.notification.notification_count.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_315);
-        json.set(s.c_str(), atoi(msg->android.notification.notification_count));
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_315);
+        json.set(s.c_str(), atoi(msg->android.notification.notification_count.c_str()));
     }
 
-    if (strlen(msg->android.notification.image) > 0)
+    if (msg->android.notification.image.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_300);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_297);
+        s.appendP(fb_esp_pgm_str_300);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_297);
         json.set(s.c_str(), msg->android.notification.image);
     }
 
     s = base;
-    ut->appendP(s, fb_esp_pgm_str_300);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_122);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_316);
-    ut->appendP(s, fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_300);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_122);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_316);
+    s.appendP(fb_esp_pgm_str_1);
     base = s;
 
-    if (strlen(msg->android.notification.light_settings.color.red) > 0)
+    if (msg->android.notification.light_settings.color.red.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_294);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_317);
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.red));
+        s.appendP(fb_esp_pgm_str_294);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_317);
+        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.red.c_str()));
     }
-    if (strlen(msg->android.notification.light_settings.color.green) > 0)
+    if (msg->android.notification.light_settings.color.green.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_294);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_318);
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.green));
+        s.appendP(fb_esp_pgm_str_294);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_318);
+        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.green.c_str()));
     }
-    if (strlen(msg->android.notification.light_settings.color.blue) > 0)
+    if (msg->android.notification.light_settings.color.blue.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_294);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_319);
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.blue));
+        s.appendP(fb_esp_pgm_str_294);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_319);
+        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.blue.c_str()));
     }
-    if (strlen(msg->android.notification.light_settings.color.alpha) > 0)
+    if (msg->android.notification.light_settings.color.alpha.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_294);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_320);
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.alpha));
+        s.appendP(fb_esp_pgm_str_294);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_320);
+        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.alpha.c_str()));
     }
-    if (strlen(msg->android.notification.light_settings.light_on_duration) > 0)
+    if (msg->android.notification.light_settings.light_on_duration.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_321);
+        s.appendP(fb_esp_pgm_str_321);
         json.set(s.c_str(), msg->android.notification.light_settings.light_on_duration);
     }
-    if (strlen(msg->android.notification.light_settings.light_off_duration) > 0)
+    if (msg->android.notification.light_settings.light_off_duration.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_322);
+        s.appendP(fb_esp_pgm_str_322);
         json.set(s.c_str(), msg->android.notification.light_settings.light_off_duration);
     }
 
@@ -1061,99 +1061,99 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     FirebaseJson js;
     base = _base;
 
-    if (strlen(msg->webpush.headers) > 0)
+    if (msg->webpush.headers.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_301);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_324);
+        s.appendP(fb_esp_pgm_str_301);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_324);
         js.setJsonData(msg->webpush.headers);
         json.set(s.c_str(), js);
     }
 
-    if (strlen(msg->webpush.data) > 0)
+    if (msg->webpush.data.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_301);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_135);
+        s.appendP(fb_esp_pgm_str_301);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_135);
         js.setJsonData(msg->webpush.data);
         json.set(s.c_str(), js);
     }
 
-    if (strlen(msg->webpush.notification) > 0)
+    if (msg->webpush.notification.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_301);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_122);
+        s.appendP(fb_esp_pgm_str_301);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_122);
         js.setJsonData(msg->webpush.notification);
         json.set(s.c_str(), js);
     }
 
-    if (strlen(msg->webpush.fcm_options.analytics_label) > 0)
+    if (msg->webpush.fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_301);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_298);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_299);
+        s.appendP(fb_esp_pgm_str_301);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_298);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_299);
         json.set(s.c_str(), msg->webpush.fcm_options.analytics_label);
     }
 
-    if (strlen(msg->webpush.fcm_options.link) > 0)
+    if (msg->webpush.fcm_options.link.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_301);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_298);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_325);
+        s.appendP(fb_esp_pgm_str_301);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_298);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_325);
         json.set(s.c_str(), msg->webpush.fcm_options.link);
     }
 
     ////// ApnsConfig
 
-    if (strlen(msg->apns.headers) > 0)
+    if (msg->apns.headers.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_302);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_324);
+        s.appendP(fb_esp_pgm_str_302);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_324);
         js.setJsonData(msg->apns.headers);
         json.set(s.c_str(), js);
     }
 
-    if (strlen(msg->apns.payload) > 0)
+    if (msg->apns.payload.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_302);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_135);
+        s.appendP(fb_esp_pgm_str_302);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_135);
         js.setJsonData(msg->apns.payload);
         json.set(s.c_str(), js);
     }
 
-    if (strlen(msg->apns.fcm_options.analytics_label) > 0)
+    if (msg->apns.fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_302);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_298);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_299);
+        s.appendP(fb_esp_pgm_str_302);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_298);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_299);
         json.set(s.c_str(), msg->apns.fcm_options.analytics_label);
     }
 
-    if (strlen(msg->apns.fcm_options.image) > 0)
+    if (msg->apns.fcm_options.image.length() > 0)
     {
         s = base;
-        ut->appendP(s, fb_esp_pgm_str_302);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_298);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_297);
+        s.appendP(fb_esp_pgm_str_302);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_298);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_297);
         json.set(s.c_str(), msg->apns.fcm_options.image);
     }
 
@@ -1459,16 +1459,12 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     FirebaseJsonData data;
                     json.setJsonData(t.c_str());
 
-                    char *tmp = ut->strP(fb_esp_pgm_str_257);
-                    json.get(data, tmp);
-                    ut->delP(&tmp);
-
+                    json.get(data, pgm2Str(fb_esp_pgm_str_257));
+                   
                     if (data.success)
                     {
                         error.code = data.to<int>();
-                        tmp = ut->strP(fb_esp_pgm_str_258);
-                        json.get(data, tmp);
-                        ut->delP(&tmp);
+                        json.get(data, pgm2Str(fb_esp_pgm_str_258));
                         if (data.success)
                             fbdo->_ss.error = data.to<const char *>();
                     }

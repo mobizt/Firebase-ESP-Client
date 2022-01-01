@@ -6,7 +6,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -56,6 +56,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
+
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
@@ -173,7 +174,7 @@ void creatFunction()
     resource += "ImageList";
     resource += "/{id}";
 
-    function_config.setEventTrigger("providers/cloud.firestore/eventTypes/document.create", resource.c_str());
+    function_config.setEventTrigger("providers/cloud.firestore/eventTypes/document.create", resource);
 
     //if firestoreImageDownloadTrigger.zip is already upload to flash memory
     function_config.setSource("/firestoreImageDownloadTrigger.zip" /* relative file path in the Firebase Storage data bucket */, functions_sources_type_local_archive /* source type */);

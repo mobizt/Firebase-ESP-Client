@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.6.3
+ * FirebaseJson, version 2.6.4
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * December 20, 2021
+ * Created January 1, 2022
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -66,6 +66,8 @@
 #endif
 #include "MB_String.h"
 
+using namespace mb_string;
+
 #ifndef USE_MB_STRING
 #define USE_MB_STRING
 #endif
@@ -80,7 +82,6 @@
 
 #if defined(ESP8266) || defined(ESP32)
 #include <FS.h>
-#define FLASH_MCR FPSTR
 #define FILE_SYSTEM fs::File
 #define FBJS_ENABLE_FS
 #define Serial_Printf Serial.printf
@@ -89,17 +90,15 @@
 #include <algorithm>
 #include <SPI.h>
 #include "extras/SD/SD.h"
-#define FLASH_MCR PSTR
 #define FILE_SYSTEM File
 #define FBJS_ENABLE_FS
 #define HardwareSerial Serial_
 
 #elif defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
-#define FLASH_MCR(s) (s)
+
 
 #elif defined(TEENSYDUINO)
 #define FILE_SYSTEM File
-#define FLASH_MCR(s) (s)
 #define HardwareSerial usb_serial_class
 #define Serial_Printf Serial.printf
 
@@ -108,7 +107,8 @@
 #if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
 #include "extras/print/printf.h"
 
-extern "C" __attribute__((weak)) void _putchar(char c)
+extern "C" __attribute__((weak)) void
+_putchar(char c)
 {
     Serial.print(c);
 }
@@ -267,208 +267,8 @@ static void *fb_js_realloc(void *ptr, size_t sz)
 
 static MB_JSON_Hooks MB_JSON_hooks __attribute__((used)) = {fb_js_malloc, fb_js_free, fb_js_realloc};
 
-namespace FB_JS
+namespace fb_js
 {
-    template <bool, typename T = void>
-    struct enable_if
-    {
-    };
-    template <typename T>
-    struct enable_if<true, T>
-    {
-        typedef T type;
-    };
-    template <typename T, typename U>
-    struct is_same
-    {
-        static bool const value = false;
-    };
-    template <typename T>
-    struct is_same<T, T>
-    {
-        static bool const value = true;
-    };
-
-    template <typename T>
-    struct is_num_int8
-    {
-        static bool const value = FB_JS::is_same<T, int8_t>::value || FB_JS::is_same<T, signed char>::value;
-    };
-
-    template <typename T>
-    struct is_num_uint8
-    {
-        static bool const value = FB_JS::is_same<T, uint8_t>::value || FB_JS::is_same<T, unsigned char>::value;
-    };
-
-    template <typename T>
-    struct is_num_int16
-    {
-        static bool const value = FB_JS::is_same<T, int16_t>::value || FB_JS::is_same<T, signed short>::value;
-    };
-
-    template <typename T>
-    struct is_num_uint16
-    {
-        static bool const value = FB_JS::is_same<T, uint16_t>::value || FB_JS::is_same<T, unsigned short>::value;
-    };
-
-    template <typename T>
-    struct is_num_int32
-    {
-        static bool const value = FB_JS::is_same<T, signed int>::value || FB_JS::is_same<T, int>::value ||
-                                  FB_JS::is_same<T, int32_t>::value || FB_JS::is_same<T, long>::value ||
-                                  FB_JS::is_same<T, signed long>::value;
-    };
-
-    template <typename T>
-    struct is_num_uint32
-    {
-        static bool const value = FB_JS::is_same<T, unsigned int>::value || FB_JS::is_same<T, uint32_t>::value ||
-                                  FB_JS::is_same<T, unsigned long>::value;
-    };
-
-    template <typename T>
-    struct is_num_int64
-    {
-        static bool const value = FB_JS::is_same<T, int64_t>::value || FB_JS::is_same<T, signed long long>::value;
-    };
-
-    template <typename T>
-    struct is_num_uint64
-    {
-        static bool const value = FB_JS::is_same<T, uint64_t>::value || FB_JS::is_same<T, unsigned long long>::value;
-    };
-
-    template <typename T>
-    struct is_num_neg_int
-    {
-        static bool const value = FB_JS::is_num_int8<T>::value || FB_JS::is_num_int16<T>::value ||
-                                  FB_JS::is_num_int32<T>::value || FB_JS::is_num_int64<T>::value;
-    };
-
-    template <typename T>
-    struct is_num_pos_int
-    {
-        static bool const value = FB_JS::is_num_uint8<T>::value || FB_JS::is_num_uint16<T>::value ||
-                                  FB_JS::is_num_uint32<T>::value || FB_JS::is_num_uint64<T>::value;
-    };
-
-    template <typename T>
-    struct is_num_int
-    {
-        static bool const value = FB_JS::is_num_pos_int<T>::value || FB_JS::is_num_neg_int<T>::value;
-    };
-
-    template <typename T>
-    struct is_num_float
-    {
-        static bool const value = FB_JS::is_same<T, float>::value || FB_JS::is_same<T, double>::value;
-    };
-
-    template <typename T>
-    struct is_bool
-    {
-        static bool const value = FB_JS::is_same<T, bool>::value;
-    };
-
-    template <typename T>
-    struct cs_t
-    {
-        static bool const value = FB_JS::is_same<T, char *>::value;
-    };
-
-    template <typename T>
-    struct ccs_t
-    {
-        static bool const value = FB_JS::is_same<T, const char *>::value;
-    };
-
-    template <typename T>
-    struct as_t
-    {
-        static bool const value = FB_JS::is_same<T, String>::value;
-    };
-
-    template <typename T>
-    struct cas_t
-    {
-        static bool const value = FB_JS::is_same<T, const String>::value;
-    };
-
-    template <typename T>
-    struct ss_t
-    {
-        static bool const value = FB_JS::is_same<T, std::string>::value;
-    };
-
-    template <typename T>
-    struct css_t
-    {
-        static bool const value = FB_JS::is_same<T, const std::string>::value;
-    };
-
-    template <typename T>
-    struct ssh_t
-    {
-        static bool const value = FB_JS::is_same<T, StringSumHelper>::value;
-    };
-
-    template <typename T>
-    struct fs_t
-    {
-        static bool const value = FB_JS::is_same<T, const __FlashStringHelper *>::value;
-    };
-
-    template <typename T>
-    struct mbs_t
-    {
-        static bool const value = FB_JS::is_same<T, MBSTRING>::value;
-    };
-
-    template <typename T>
-    struct cmbs_t
-    {
-        static bool const value = FB_JS::is_same<T, const MBSTRING>::value;
-    };
-
-    template <typename T>
-    struct pgm_t
-    {
-        static bool const value = FB_JS::is_same<T, PGM_P>::value;
-    };
-
-    template <typename T>
-    struct is_const_chars
-    {
-        static bool const value = cs_t<T>::value || ccs_t<T>::value;
-    };
-
-    template <typename T>
-    struct is_arduino_string
-    {
-        static bool const value = as_t<T>::value || cas_t<T>::value;
-    };
-
-    template <typename T>
-    struct is_std_string
-    {
-        static bool const value = ss_t<T>::value || css_t<T>::value;
-    };
-
-    template <typename T>
-    struct is_mb_string
-    {
-        static bool const value = mbs_t<T>::value || cmbs_t<T>::value;
-    };
-
-    template <typename T>
-    struct is_string
-    {
-        static bool const value = is_const_chars<T>::value || is_arduino_string<T>::value ||
-                                  ssh_t<T>::value || fs_t<T>::value ||
-                                  is_std_string<T>::value || is_mb_string<T>::value;
-    };
 
     typedef union
     {
@@ -499,345 +299,6 @@ namespace FB_JS
         MBSTRING buf;
         unsigned long dataTime = 0;
     };
-};
-class PGM2S
-{
-public:
-    PGM2S() { init(1); }
-    PGM2S(PGM_P p) { strP(p); }
-    ~PGM2S() { delP(&buf); }
-    const char *get() const { return buf; }
-
-private:
-    void init(size_t sz)
-    {
-        delP(&buf);
-        buf = (char *)newP(sz + 1);
-    }
-
-    void strP(PGM_P pgm)
-    {
-        size_t len = strlen_P(pgm) + 5;
-        init(len);
-        strcpy_P(buf, pgm);
-        buf[strlen_P(pgm)] = 0;
-    }
-
-    void delP(void *ptr)
-    {
-        void **p = (void **)ptr;
-        if (*p)
-        {
-            free(*p);
-            *p = 0;
-        }
-    }
-
-    size_t getReservedLen(size_t len)
-    {
-        int blen = len + 1;
-
-        int newlen = (blen / 4) * 4;
-
-        if (newlen < blen)
-            newlen += 4;
-
-        return (size_t)newlen;
-    }
-
-    void *newP(size_t len)
-    {
-        void *p;
-        size_t newLen = getReservedLen(len);
-#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
-
-        if ((p = (void *)ps_malloc(newLen)) == 0)
-            return NULL;
-
-#else
-
-#if defined(ESP8266_USE_EXTERNAL_HEAP)
-        ESP.setExternalHeap();
-#endif
-
-        bool nn = ((p = (void *)malloc(newLen)) > 0);
-
-#if defined(ESP8266_USE_EXTERNAL_HEAP)
-        ESP.resetHeap();
-#endif
-
-        if (!nn)
-            return NULL;
-
-#endif
-        memset(p, 0, newLen);
-        return p;
-    }
-
-    char *buf = nullptr;
-};
-
-class NUM2S
-{
-public:
-    NUM2S() { nullStr(); }
-    NUM2S(unsigned long long value) { uint64Str(value); }
-    NUM2S(signed long long value) { int64Str(value); }
-    NUM2S(unsigned int value) { uint64Str(value); }
-    NUM2S(unsigned long value) { uint64Str(value); }
-    NUM2S(int value) { int64Str(value); }
-    NUM2S(bool value) { boolStr(value); }
-    NUM2S(float value, int precision = 5) { floatStr(value, precision); }
-    NUM2S(double value, int precision = 9) { doubleStr(value, precision); }
-    ~NUM2S() { delP(&buf); }
-    const char *get() const { return buf; }
-
-private:
-    /*** dtostrf function is taken from 
-     * https://github.com/stm32duino/Arduino_Core_STM32/blob/master/cores/arduino/avr/dtostrf.c
-    */
-
-    /***
-     * dtostrf - Emulation for dtostrf function from avr-libc
-     * Copyright (c) 2013 Arduino.  All rights reserved.
-     * Written by Cristian Maglie <c.maglie@arduino.cc>
-     * This library is free software; you can redistribute it and/or
-     * modify it under the terms of the GNU Lesser General Public
-     * License as published by the Free Software Foundation; either
-     * version 2.1 of the License, or (at your option) any later version.
-     * This library is distributed in the hope that it will be useful,
-     * but WITHOUT ANY WARRANTY; without even the implied warranty of
-     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     * Lesser General Public License for more details.
-     * You should have received a copy of the GNU Lesser General Public
-     * License along with this library; if not, write to the Free Software
-     * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-    */
-
-    char *dtostrf(double val, signed char width, unsigned char prec, char *sout)
-    {
-        //Commented code is the original version
-        /***
-          char fmt[20];
-          sprintf(fmt, "%%%d.%df", width, prec);
-          sprintf(sout, fmt, val);
-          return sout;
-        */
-
-        // Handle negative numbers
-        uint8_t negative = 0;
-        if (val < 0.0)
-        {
-            negative = 1;
-            val = -val;
-        }
-
-        // Round correctly so that print(1.999, 2) prints as "2.00"
-        double rounding = 0.5;
-        for (int i = 0; i < prec; ++i)
-        {
-            rounding /= 10.0;
-        }
-
-        val += rounding;
-
-        // Extract the integer part of the number
-        unsigned long int_part = (unsigned long)val;
-        double remainder = val - (double)int_part;
-
-        if (prec > 0)
-        {
-            // Extract digits from the remainder
-            unsigned long dec_part = 0;
-            double decade = 1.0;
-            for (int i = 0; i < prec; i++)
-            {
-                decade *= 10.0;
-            }
-            remainder *= decade;
-            dec_part = (int)remainder;
-
-            if (negative)
-            {
-                sprintf(sout, "-%ld.%0*ld", int_part, prec, dec_part);
-            }
-            else
-            {
-                sprintf(sout, "%ld.%0*ld", int_part, prec, dec_part);
-            }
-        }
-        else
-        {
-            if (negative)
-            {
-                sprintf(sout, "-%ld", int_part);
-            }
-            else
-            {
-                sprintf(sout, "%ld", int_part);
-            }
-        }
-        // Handle minimum field width of the output string
-        // width is signed value, negative for left adjustment.
-        // Range -128,127
-
-        char *fmt = (char *)newP(129);
-        unsigned int w = width;
-        if (width < 0)
-        {
-            negative = 1;
-            w = -width;
-        }
-        else
-        {
-            negative = 0;
-        }
-
-        if (strlen(sout) < w)
-        {
-            memset(fmt, ' ', 128);
-            fmt[w - strlen(sout)] = '\0';
-            if (negative == 0)
-            {
-                char *tmp = (char *)newP(strlen(sout) + 1);
-                strcpy(tmp, sout);
-                strcpy(sout, fmt);
-                strcat(sout, tmp);
-                delP(&tmp);
-            }
-            else
-            {
-                // left adjustment
-                strcat(sout, fmt);
-            }
-        }
-
-        delP(&fmt);
-
-        return sout;
-    }
-
-    void init(size_t sz)
-    {
-        delP(&buf);
-        buf = (char *)newP(sz + 1);
-    }
-
-    void delP(void *ptr)
-    {
-        void **p = (void **)ptr;
-        if (*p)
-        {
-            free(*p);
-            *p = 0;
-        }
-    }
-
-    size_t getReservedLen(size_t len)
-    {
-        int blen = len + 1;
-
-        int newlen = (blen / 4) * 4;
-
-        if (newlen < blen)
-            newlen += 4;
-
-        return (size_t)newlen;
-    }
-
-    void *newP(size_t len)
-    {
-        void *p;
-        size_t newLen = getReservedLen(len);
-#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
-
-        if ((p = (void *)ps_malloc(newLen)) == 0)
-            return NULL;
-
-#else
-
-#if defined(ESP8266_USE_EXTERNAL_HEAP)
-        ESP.setExternalHeap();
-#endif
-
-        bool nn = ((p = (void *)malloc(newLen)) > 0);
-
-#if defined(ESP8266_USE_EXTERNAL_HEAP)
-        ESP.resetHeap();
-#endif
-
-        if (!nn)
-            return NULL;
-
-#endif
-        memset(p, 0, newLen);
-        return p;
-    }
-
-    char *intStr(int value)
-    {
-        char *t = (char *)newP(36);
-        sprintf(t, (const char *)FLASH_MCR("%d"), value);
-        return t;
-    }
-
-    void int64Str(signed long long value)
-    {
-        init(64);
-        sprintf(buf, (const char *)FLASH_MCR("%lld"), value);
-    }
-
-    void uint64Str(unsigned long long value)
-    {
-        init(64);
-        sprintf(buf, (const char *)FLASH_MCR("%llu"), value);
-    }
-
-    void boolStr(bool value)
-    {
-        init(8);
-        value ? strcpy(buf, (const char *)FLASH_MCR("true")) : strcpy(buf, (const char *)FLASH_MCR("false"));
-    }
-
-    void floatStr(float value, int precision)
-    {
-        init(32);
-        dtostrf(value, (precision + 2), precision, buf);
-        trim();
-    }
-
-    void doubleStr(double value, int precision)
-    {
-        init(64);
-        dtostrf(value, (precision + 2), precision, buf);
-        trim();
-    }
-
-    void nullStr()
-    {
-        init(6);
-        strcpy(buf, (const char *)FLASH_MCR("null"));
-    }
-
-    void trim()
-    {
-        size_t i = strlen(buf) - 1;
-        while (buf[i] == '0' && i > 0)
-        {
-            if (buf[i - 1] == '.')
-            {
-                i--;
-                break;
-            }
-            if (buf[i - 1] != '0')
-                break;
-            i--;
-        }
-        if (i < strlen(buf) - 1)
-            buf[i] = '\0';
-    }
-
-    char *buf = nullptr;
 };
 
 class FirebaseJsonData
@@ -895,48 +356,48 @@ public:
      * This should call after parse or get function.
     */
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value || FB_JS::is_num_float<T>::value || FB_JS::is_bool<T>::value, T>::type
+    auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
     {
-        if (FB_JS::is_bool<T>::value)
+        if (is_bool<T>::value)
             return iVal.uint32 > 0;
-        else if (FB_JS::is_num_int8<T>::value)
+        else if (is_num_int8<T>::value)
             return iVal.int8;
-        else if (FB_JS::is_num_uint8<T>::value)
+        else if (is_num_uint8<T>::value)
             return iVal.uint8;
-        else if (FB_JS::is_num_int16<T>::value)
+        else if (is_num_int16<T>::value)
             return iVal.int16;
-        else if (FB_JS::is_num_uint16<T>::value)
+        else if (is_num_uint16<T>::value)
             return iVal.uint16;
-        else if (FB_JS::is_num_int32<T>::value)
+        else if (is_num_int32<T>::value)
             return iVal.int32;
-        else if (FB_JS::is_num_uint32<T>::value)
+        else if (is_num_uint32<T>::value)
             return iVal.uint32;
-        else if (FB_JS::is_num_int64<T>::value)
+        else if (is_num_int64<T>::value)
             return iVal.int64;
-        else if (FB_JS::is_num_uint64<T>::value)
+        else if (is_num_uint64<T>::value)
             return iVal.uint64;
-        else if (FB_JS::is_same<T, float>::value)
+        else if (is_same<T, float>::value)
             return fVal.f;
-        else if (FB_JS::is_same<T, double>::value)
+        else if (is_same<T, double>::value)
             return fVal.d;
         else
             return 0;
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value, T>::type
+    auto to() -> typename enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
     {
         return stringValue.c_str();
     }
 
     template <typename T>
-    auto get(T &json) -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJson>::value>::type
+    auto get(T &json) -> typename enable_if<is_same<T, FirebaseJson>::value>::type
     {
         getJSON(json);
     }
 
     template <typename T>
-    auto get(T &arr) -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonArray>::value>::type
+    auto get(T &arr) -> typename enable_if<is_same<T, FirebaseJsonArray>::value>::type
     {
         getArray(arr);
     }
@@ -1030,16 +491,16 @@ private:
 
 protected:
     template <typename T>
-    auto getStr(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type
     {
         return val.c_str();
     }
 
     template <typename T>
-    auto getStr(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+    auto getStr(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
 
     template <typename T>
-    auto getStr(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+    auto getStr(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
 };
 
 class FirebaseJsonBase
@@ -1208,7 +669,7 @@ protected:
     uint8_t floatDigits = 5;
     int httpCode = 0;
     int errorPos = -1;
-    struct FB_JS::serial_data_t serData;
+    struct fb_js::serial_data_t serData;
     fb_json_root_type root_type = Root_Type_JSON;
     struct iterator_data_t iterator_data;
     MB_JSON *root = NULL;
@@ -1216,16 +677,16 @@ protected:
     MBSTRING buf;
 
     template <typename T>
-    auto getStr(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type
     {
         return val.c_str();
     }
 
     template <typename T>
-    auto getStr(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+    auto getStr(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
 
     template <typename T>
-    auto getStr(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+    auto getStr(T val) -> typename enable_if<is_arduino_flash_string_helper<T>::value, const char *>::type { return (const char *)val; }
 
     template <typename T>
     bool toStringPtrHandler(T *ptr, bool prettify)
@@ -1247,7 +708,7 @@ protected:
     }
 
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_string<T>::value, bool>::type
     {
         if (!root)
             return false;
@@ -1264,9 +725,9 @@ protected:
 
     template <typename T>
 #ifdef FB_JS_INCLUDE_SW_SERIAL
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, HardwareSerial>::value || FB_JS::is_same<T, SoftwareSerial>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, HardwareSerial>::value || is_same<T, SoftwareSerial>::value, bool>::type
 #else
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, HardwareSerial>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, HardwareSerial>::value, bool>::type
 #endif
     {
         char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
@@ -1281,7 +742,7 @@ protected:
 
 #ifdef FB_JS_INCLUDE_LW_MQTT
     template <typename T1, typename T2>
-    auto toStringHandler(T1 &out, T2 topic) -> typename FB_JS::enable_if<FB_JS::is_same<T1, MQTTClient>::value && FB_JS::is_string<T2>::value, bool>::type
+    auto toStringHandler(T1 &out, T2 topic) -> typename enable_if<is_same<T1, MQTTClient>::value && is_string<T2>::value, bool>::type
     {
         char *p = MB_JSON_PrintUnformatted(root);
         if (p)
@@ -1296,21 +757,21 @@ protected:
 
 #if defined(FBJS_ENABLE_FS)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, FILE_SYSTEM>::value || FB_JS::is_same<T, File>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, FILE_SYSTEM>::value || is_same<T, File>::value, bool>::type
     {
         return writeHelper(out, prettify);
     }
 #endif
 
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, Client>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, Client>::value, bool>::type
     {
         return writeHelper(out, prettify);
     }
 
 #if defined(FB_JS_INCLUDE_WIFI_CLIENT)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, WiFiClient>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, WiFiClient>::value, bool>::type
     {
         return writeHelper(out, prettify);
     }
@@ -1318,7 +779,7 @@ protected:
 
 #if defined(FB_JS_INCLUDE_WIFI_CLIENT_SECURE)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, WiFiClientSecure>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, WiFiClientSecure>::value, bool>::type
     {
         return writeHelper(out, prettify);
     }
@@ -1326,7 +787,7 @@ protected:
 
 #if defined(FB_JS_INCLUDE_ARDUINO_MQTT)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_same<T, MqttClient>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, MqttClient>::value, bool>::type
     {
         return writeHelper(out, prettify);
     }
@@ -1654,7 +1115,7 @@ protected:
         return nullptr;
     }
 
-    void parseRespHeader(const char *buf, struct FB_JS::server_response_data_t &response)
+    void parseRespHeader(const char *buf, struct fb_js::server_response_data_t &response)
     {
         int beginPos = 0, pmax = 0, payloadPos = 0;
 
@@ -1697,7 +1158,7 @@ protected:
             if (tmp)
             {
                 response.transferEnc = tmp;
-                if (strcmp(tmp, (const char *)FLASH_MCR("chunked")) == 0)
+                if (strcmp(tmp, (const char *)MBSTRING_FLASH_MCR("chunked")) == 0)
                     response.isChunkedEnc = true;
                 delP(&tmp);
             }
@@ -1940,7 +1401,7 @@ protected:
         char *header = nullptr;
         bool isHeader = false;
 
-        struct FB_JS::server_response_data_t response;
+        struct fb_js::server_response_data_t response;
 
         int chunkIdx = 0;
         int pChunkIdx = 0;
@@ -2112,7 +1573,7 @@ protected:
         return ret;
     }
 
-    void clearSerialData(struct FB_JS::serial_data_t &data)
+    void clearSerialData(struct fb_js::serial_data_t &data)
     {
         data.buf.clear();
         data.start = -1;
@@ -2123,7 +1584,7 @@ protected:
         data.dataTime = millis();
     }
 
-    bool readStreamChar(int r, struct FB_JS::serial_data_t &data, MBSTRING &buf, bool isJson)
+    bool readStreamChar(int r, struct fb_js::serial_data_t &data, MBSTRING &buf, bool isJson)
     {
         bool ret = false;
         if (r > -1)
@@ -2180,7 +1641,7 @@ protected:
         return ret;
     }
 
-    bool readStream(Stream *s, struct FB_JS::serial_data_t &data, MBSTRING &buf, bool isJson, int timeoutMS)
+    bool readStream(Stream *s, struct fb_js::serial_data_t &data, MBSTRING &buf, bool isJson, int timeoutMS)
     {
 
         bool ret = false;
@@ -2647,159 +2108,159 @@ private:
     bool mRemoveIdx(int index);
 
     template <typename T>
-    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, bool>::type
+    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename enable_if<is_string<T>::value, bool>::type
     {
         return mGet(root, &result, getStr(arg), prettify);
     }
 
     template <typename T>
-    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, bool>::type
+    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename enable_if<is_num_int<T>::value, bool>::type
     {
         return mGetIdx(&result, arg, prettify);
     }
 
     template <typename T>
-    auto dataRemoveHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, bool>::type
+    auto dataRemoveHandler(T arg) -> typename enable_if<is_string<T>::value, bool>::type
     {
         return mRemove(getStr(arg));
     }
 
     template <typename T>
-    auto dataRemoveHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, bool>::type
+    auto dataRemoveHandler(T arg) -> typename enable_if<is_num_int<T>::value, bool>::type
     {
         return mRemoveIdx(arg);
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_bool<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename enable_if<is_bool<T>::value, FirebaseJsonArray &>::type
     {
         nAdd(MB_JSON_CreateBool(arg));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename enable_if<is_num_int<T>::value, FirebaseJsonArray &>::type
     {
-        nAdd(MB_JSON_CreateRaw(NUM2S(arg).get()));
+        nAdd(MB_JSON_CreateRaw(num2Str(arg, -1)));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_same<T, float>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename enable_if<is_same<T, float>::value, FirebaseJsonArray &>::type
     {
-        nAdd(MB_JSON_CreateRaw(NUM2S(arg, floatDigits).get()));
+        nAdd(MB_JSON_CreateRaw(num2Str(arg, floatDigits)));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_same<T, double>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename enable_if<is_same<T, double>::value, FirebaseJsonArray &>::type
     {
-        nAdd(MB_JSON_CreateRaw(NUM2S(arg, doubleDigits).get()));
+        nAdd(MB_JSON_CreateRaw(num2Str(arg, doubleDigits)));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename enable_if<is_string<T>::value, FirebaseJsonArray &>::type
     {
         nAdd(MB_JSON_CreateString(getStr(arg)));
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, std::nullptr_t>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, std::nullptr_t>::value>::type
     {
         mSet(getStr(arg1), MB_JSON_CreateNull());
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, std::nullptr_t>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, std::nullptr_t>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateNull);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_bool<T2>::value>::type
     {
         mSet(getStr(arg1), MB_JSON_CreateBool(arg2));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_bool<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_bool<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateBool(arg2));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_num_int<T2>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2).get()));
+        mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, -1)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_num_int<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_num_int<T2>::value>::type
     {
-        mSetIdx(arg1, MB_JSON_CreateRaw(NUM2S(arg2).get()));
+        mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, -1)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, float>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+        mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, float>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, float>::value>::type
     {
-        mSetIdx(arg1, MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+        mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, double>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+        mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, double>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, double>::value>::type
     {
-        mSetIdx(arg1, MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+        mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_string<T2>::value>::type
     {
         mSet(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_string<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_string<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateString(getStr(arg2)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJson>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJson>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSet(getStr(arg1), e);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, FirebaseJson>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, FirebaseJson>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJsonArray>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSet(getStr(arg1), e);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename FB_JS::enable_if<FB_JS::is_num_int<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, FirebaseJsonArray>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
@@ -2949,7 +2410,7 @@ public:
     bool toString(T &out, bool prettify = false) { return toStringHandler(out, prettify); }
 
     template <typename T1, typename T2>
-    auto toString(T1 &out, T2 topic) -> typename FB_JS::enable_if<FB_JS::is_string<T2>::value, bool>::type { return toStringHandler(out, getStr(topic)); }
+    auto toString(T1 &out, T2 topic) -> typename enable_if<is_string<T2>::value, bool>::type { return toStringHandler(out, getStr(topic)); }
 
     template <typename T>
     bool toString(T *ptr, bool prettify = false) { return toStringPtrHandler(ptr, prettify); }
@@ -3160,7 +2621,7 @@ private:
     FirebaseJson &nAdd(const char *key, MB_JSON *value);
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_bool<T2>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg1), MB_JSON_CreateBool(arg2));
@@ -3170,37 +2631,37 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_num_int<T2>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2).get()));
+            nAdd(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, -1)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2).get()));
+            mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, -1)));
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_same<T2, float>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+            nAdd(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, floatDigits).get()));
+            mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_same<T2, double>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+            nAdd(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateRaw(NUM2S(arg2, doubleDigits).get()));
+            mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_string<T2>::value, FirebaseJson &>::type
     {
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
@@ -3210,7 +2671,7 @@ private:
     }
 
     template <typename T>
-    auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, FirebaseJson &>::type
+    auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename enable_if<is_string<T>::value, FirebaseJson &>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(json.root, true);
         if (type == fb_json_func_type_add)
@@ -3221,7 +2682,7 @@ private:
     }
 
     template <typename T>
-    auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename FB_JS::enable_if<FB_JS::is_string<T>::value, FirebaseJson &>::type
+    auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename enable_if<is_string<T>::value, FirebaseJson &>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arr.root, true);
         if (type == fb_json_func_type_add)

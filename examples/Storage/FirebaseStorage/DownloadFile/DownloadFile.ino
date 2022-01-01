@@ -5,7 +5,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -16,6 +16,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
+
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
@@ -78,6 +79,11 @@ void setup()
     //required for large file data, increase Rx size as needed.
     fbdo.setBSSLBufferSize(1024 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
+
+    /* Assign download buffer size in byte */
+    //Data to be downloaded will read as multiple chunks with this size, to compromise between speed and memory used for buffering.
+    //The memory from external SRAM/PSRAM will not use in the TCP client internal rx buffer.
+    config.fcs.download_buffer_size = 2048;
 
     Firebase.begin(&config, &auth);
 

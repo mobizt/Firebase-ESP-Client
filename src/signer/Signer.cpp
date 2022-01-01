@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.11
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 24, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -505,10 +505,8 @@ void Firebase_Signer::tokenProcessingTask()
 
 bool Firebase_Signer::parseJsonResponse(PGM_P key_path)
 {
-    char *tmp = ut->strP(key_path);
     config->signer.result->clear();
-    config->signer.json->get(*config->signer.result, tmp);
-    ut->delP(&tmp);
+    config->signer.json->get(*config->signer.result, pgm2Str(key_path));
     return config->signer.result->success;
 }
 
@@ -551,9 +549,9 @@ bool Firebase_Signer::refreshToken()
     config->signer.result = new FirebaseJsonData();
 
     MBSTRING host;
-    ut->appendP(host, fb_esp_pgm_str_203);
-    ut->appendP(host, fb_esp_pgm_str_4);
-    ut->appendP(host, fb_esp_pgm_str_120);
+    host.appendP(fb_esp_pgm_str_203);
+    host.appendP(fb_esp_pgm_str_4);
+    host.appendP(fb_esp_pgm_str_120);
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
 #elif defined(ESP8266)
@@ -564,38 +562,33 @@ bool Firebase_Signer::refreshToken()
         return handleSignerError(1);
 #endif
 
-    char *tmp = ut->strP(fb_esp_pgm_str_205);
-    char *tmp2 = ut->strP(fb_esp_pgm_str_206);
-    config->signer.json->add(tmp, (const char *)tmp2);
-    ut->delP(&tmp);
-    ut->delP(&tmp2);
-    tmp = ut->strP(fb_esp_pgm_str_207);
-    config->signer.json->add(tmp, config->_int.refresh_token.c_str());
-    ut->delP(&tmp);
+
+    config->signer.json->add(pgm2Str(fb_esp_pgm_str_205), pgm2Str(fb_esp_pgm_str_206));
+    config->signer.json->add(pgm2Str(fb_esp_pgm_str_207), config->_int.refresh_token.c_str());
 
     MBSTRING s;
     config->signer.json->toString(s);
 
     MBSTRING req;
-    ut->appendP(req, fb_esp_pgm_str_24);
-    ut->appendP(req, fb_esp_pgm_str_6);
-    ut->appendP(req, fb_esp_pgm_str_204);
+    req.appendP(fb_esp_pgm_str_24);
+    req.appendP(fb_esp_pgm_str_6);
+    req.appendP(fb_esp_pgm_str_204);
     req += config->api_key;
-    ut->appendP(req, fb_esp_pgm_str_30);
+    req.appendP(fb_esp_pgm_str_30);
 
-    ut->appendP(req, fb_esp_pgm_str_31);
-    ut->appendP(req, fb_esp_pgm_str_203);
-    ut->appendP(req, fb_esp_pgm_str_4);
-    ut->appendP(req, fb_esp_pgm_str_120);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_32);
-    ut->appendP(req, fb_esp_pgm_str_12);
-    req += NUM2S(s.length()).get();
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_8);
-    ut->appendP(req, fb_esp_pgm_str_129);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_31);
+    req.appendP(fb_esp_pgm_str_203);
+    req.appendP(fb_esp_pgm_str_4);
+    req.appendP(fb_esp_pgm_str_120);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_32);
+    req.appendP(fb_esp_pgm_str_12);
+    req += s.length();
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_8);
+    req.appendP(fb_esp_pgm_str_129);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_21);
 
     req += s.c_str();
 #if defined(ESP32)
@@ -683,34 +676,34 @@ void Firebase_Signer::setTokenError(int code)
         switch (code)
         {
         case FIREBASE_ERROR_TOKEN_SET_TIME:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_211, true);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_211, true);
             break;
         case FIREBASE_ERROR_TOKEN_PARSE_PK:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_179, true);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_179, true);
             break;
         case FIREBASE_ERROR_TOKEN_CREATE_HASH:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_545, true);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_545, true);
             break;
         case FIREBASE_ERROR_TOKEN_SIGN:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_178, true);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_178, true);
             break;
         case FIREBASE_ERROR_TOKEN_EXCHANGE:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_177, true);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_177, true);
             break;
         case FIREBASE_ERROR_TOKEN_NOT_READY:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_252, true);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_252, true);
             break;
         case FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_547, true);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_547, true);
             break;
         case FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_42);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_42);
             break;
         case FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_43);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_43);
             break;
         case FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT:
-            ut->appendP(config->signer.tokens.error.message, fb_esp_pgm_str_58);
+            config->signer.tokens.error.message.appendP(fb_esp_pgm_str_58);
             break;
 
         default:
@@ -994,16 +987,9 @@ bool Firebase_Signer::createJWT()
         config->signer.tokens.jwt.clear();
 
         //header
-        char *tmp = ut->strP(fb_esp_pgm_str_239);
-        char *tmp2 = ut->strP(fb_esp_pgm_str_242);
-        config->signer.json->add(tmp, (const char *)tmp2);
-        ut->delP(&tmp);
-        ut->delP(&tmp2);
-        tmp2 = ut->strP(fb_esp_pgm_str_234);
-        tmp = ut->strP(fb_esp_pgm_str_240);
-        config->signer.json->add(tmp, (const char *)tmp2);
-        ut->delP(&tmp);
-        ut->delP(&tmp2);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_239), pgm2Str(fb_esp_pgm_str_242));
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_240), pgm2Str(fb_esp_pgm_str_234));
+
 
         MBSTRING hdr;
         config->signer.json->toString(hdr);
@@ -1017,80 +1003,71 @@ bool Firebase_Signer::createJWT()
 
         //payload
         config->signer.json->clear();
-        tmp = ut->strP(fb_esp_pgm_str_212);
-        config->signer.json->add(tmp, config->service_account.data.client_email.c_str());
-        ut->delP(&tmp);
-        tmp = ut->strP(fb_esp_pgm_str_213);
-        config->signer.json->add(tmp, config->service_account.data.client_email.c_str());
-        ut->delP(&tmp);
-        tmp = ut->strP(fb_esp_pgm_str_214);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_212), config->service_account.data.client_email.c_str());
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_213), config->service_account.data.client_email.c_str());
+       
         MBSTRING t;
-        ut->appendP(t, fb_esp_pgm_str_112);
+        t.appendP(fb_esp_pgm_str_112);
         if (config->signer.tokens.token_type == token_type_custom_token)
         {
-            ut->appendP(t, fb_esp_pgm_str_250);
-            ut->appendP(t, fb_esp_pgm_str_4);
-            ut->appendP(t, fb_esp_pgm_str_120);
-            ut->appendP(t, fb_esp_pgm_str_231);
+            t.appendP(fb_esp_pgm_str_250);
+            t.appendP(fb_esp_pgm_str_4);
+            t.appendP(fb_esp_pgm_str_120);
+            t.appendP(fb_esp_pgm_str_231);
         }
         else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
         {
-            ut->appendP(t, fb_esp_pgm_str_251);
-            ut->appendP(t, fb_esp_pgm_str_4);
-            ut->appendP(t, fb_esp_pgm_str_120);
-            ut->appendP(t, fb_esp_pgm_str_1);
-            ut->appendP(t, fb_esp_pgm_str_233);
+            t.appendP(fb_esp_pgm_str_251);
+            t.appendP(fb_esp_pgm_str_4);
+            t.appendP(fb_esp_pgm_str_120);
+            t.appendP(fb_esp_pgm_str_1);
+            t.appendP(fb_esp_pgm_str_233);
         }
 
-        config->signer.json->add(tmp, t.c_str());
-        ut->delP(&tmp);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_214), t.c_str());
 
-        tmp = ut->strP(fb_esp_pgm_str_218);
-        config->signer.json->add(tmp, (int)now);
-        ut->delP(&tmp);
 
-        tmp = ut->strP(fb_esp_pgm_str_215);
-
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_218), (int)now);
+       
         if (config->signer.expiredSeconds > 3600)
-            config->signer.json->add(tmp, (int)(now + 3600));
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_215), (int)(now + 3600));
         else
-            config->signer.json->add(tmp, (int)(now + config->signer.expiredSeconds));
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_215), (int)(now + config->signer.expiredSeconds));
 
-        ut->delP(&tmp);
 
         if (config->signer.tokens.token_type == token_type_oauth2_access_token)
         {
             MBSTRING buri;
-            ut->appendP(buri, fb_esp_pgm_str_112);
-            ut->appendP(buri, fb_esp_pgm_str_193);
-            ut->appendP(buri, fb_esp_pgm_str_4);
-            ut->appendP(buri, fb_esp_pgm_str_120);
-            ut->appendP(buri, fb_esp_pgm_str_1);
-            ut->appendP(buri, fb_esp_pgm_str_219);
-            ut->appendP(buri, fb_esp_pgm_str_1);
+            buri.appendP(fb_esp_pgm_str_112);
+            buri.appendP(fb_esp_pgm_str_193);
+            buri.appendP(fb_esp_pgm_str_4);
+            buri.appendP(fb_esp_pgm_str_120);
+            buri.appendP(fb_esp_pgm_str_1);
+            buri.appendP(fb_esp_pgm_str_219);
+            buri.appendP(fb_esp_pgm_str_1);
 
             MBSTRING s = buri;
-            ut->appendP(s, fb_esp_pgm_str_221);
+            s.appendP(fb_esp_pgm_str_221);
 
-            ut->appendP(s, fb_esp_pgm_str_6);
+            s.appendP(fb_esp_pgm_str_6);
             s += buri;
-            ut->appendP(s, fb_esp_pgm_str_222);
+            s.appendP(fb_esp_pgm_str_222);
 
-            ut->appendP(s, fb_esp_pgm_str_6);
+            s.appendP(fb_esp_pgm_str_6);
             s += buri;
-            ut->appendP(s, fb_esp_pgm_str_223);
+            s.appendP(fb_esp_pgm_str_223);
 
-            ut->appendP(s, fb_esp_pgm_str_6);
+            s.appendP(fb_esp_pgm_str_6);
             s += buri;
-            ut->appendP(s, fb_esp_pgm_str_224);
+            s.appendP(fb_esp_pgm_str_224);
 
-            ut->appendP(s, fb_esp_pgm_str_6);
+            s.appendP(fb_esp_pgm_str_6);
             s += buri;
-            ut->appendP(s, fb_esp_pgm_str_225);
+            s.appendP(fb_esp_pgm_str_225);
 #if defined(FIREBASE_ESP_CLIENT)
-            ut->appendP(s, fb_esp_pgm_str_6);
+            s.appendP(fb_esp_pgm_str_6);
             s += buri;
-            ut->appendP(s, fb_esp_pgm_str_451);
+            s.appendP(fb_esp_pgm_str_451);
 #endif
 
             if (config->signer.tokens.scope.length() > 0)
@@ -1099,29 +1076,23 @@ bool Firebase_Signer::createJWT()
                 ut->splitTk(config->signer.tokens.scope, scopes, ",");
                 for (size_t i = 0; i < scopes.size(); i++)
                 {
-                    ut->appendP(s, fb_esp_pgm_str_6);
+                    s.appendP(fb_esp_pgm_str_6);
                     s += scopes[i];
                     scopes[i].clear();
                 }
                 scopes.clear();
             }
 
-            tmp = ut->strP(fb_esp_pgm_str_220);
-            config->signer.json->add(tmp, s.c_str());
-            ut->delP(&tmp);
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_220), s.c_str());
         }
         else if (config->signer.tokens.token_type == token_type_custom_token)
         {
-            tmp = ut->strP(fb_esp_pgm_str_254);
-            config->signer.json->add(tmp, auth->token.uid.c_str());
-            ut->delP(&tmp);
-
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_254), auth->token.uid.c_str());
+           
             if (auth->token.claims.length() > 2)
             {
                 FirebaseJson claims(auth->token.claims.c_str());
-                tmp = ut->strP(fb_esp_pgm_str_255);
-                config->signer.json->add(tmp, claims);
-                ut->delP(&tmp);
+                config->signer.json->add(pgm2Str(fb_esp_pgm_str_255), claims);
             }
         }
 
@@ -1135,7 +1106,7 @@ bool Firebase_Signer::createJWT()
         ut->delP(&buf);
         payload.clear();
 
-        ut->appendP(config->signer.encHeadPayload, fb_esp_pgm_str_4);
+        config->signer.encHeadPayload.appendP(fb_esp_pgm_str_4);
         config->signer.encHeadPayload += config->signer.encPayload;
 
         config->signer.encHeader.clear();
@@ -1166,7 +1137,7 @@ bool Firebase_Signer::createJWT()
 #endif
 
         config->signer.tokens.jwt = config->signer.encHeadPayload;
-        ut->appendP(config->signer.tokens.jwt, fb_esp_pgm_str_4);
+        config->signer.tokens.jwt.appendP(fb_esp_pgm_str_4);
         config->signer.encHeadPayload.clear();
 
         delete config->signer.json;
@@ -1351,11 +1322,11 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
 
     MBSTRING host;
     if (createUser)
-        ut->appendP(host, fb_esp_pgm_str_250);
+        host.appendP(fb_esp_pgm_str_250);
     else
-        ut->appendP(host, fb_esp_pgm_str_193);
-    ut->appendP(host, fb_esp_pgm_str_4);
-    ut->appendP(host, fb_esp_pgm_str_120);
+        host.appendP(fb_esp_pgm_str_193);
+    host.appendP(fb_esp_pgm_str_4);
+    host.appendP(fb_esp_pgm_str_120);
 
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
@@ -1367,60 +1338,57 @@ bool Firebase_Signer::getIdToken(bool createUser, const char *email, const char 
         return handleSignerError(1);
 #endif
 
-    char *tmp = ut->strP(fb_esp_pgm_str_196);
     if (createUser)
     {
         config->signer.signupError.message.clear();
         if (strlen(email) > 0 && strlen(password) > 0)
-            config->signer.json->add(tmp, email);
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_196), email);
     }
     else
-        config->signer.json->add(tmp, auth->user.email.c_str());
-    ut->delP(&tmp);
-    tmp = ut->strP(fb_esp_pgm_str_197);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_196), auth->user.email.c_str());
+   
     if (createUser)
     {
         if (strlen(email) > 0 && strlen(password) > 0)
-            config->signer.json->add(tmp, password);
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_197), password);
     }
     else
-        config->signer.json->add(tmp, auth->user.password.c_str());
-    ut->delP(&tmp);
-    tmp = ut->strP(fb_esp_pgm_str_198);
-    config->signer.json->add(tmp, true);
-    ut->delP(&tmp);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_197), auth->user.password.c_str());
+
+    config->signer.json->add(pgm2Str(fb_esp_pgm_str_198), true);
+
 
     MBSTRING req;
-    ut->appendP(req, fb_esp_pgm_str_24);
-    ut->appendP(req, fb_esp_pgm_str_6);
+    req.appendP(fb_esp_pgm_str_24);
+    req.appendP(fb_esp_pgm_str_6);
 
     if (createUser)
-        ut->appendP(req, fb_esp_pgm_str_259);
+        req.appendP(fb_esp_pgm_str_259);
     else
     {
-        ut->appendP(req, fb_esp_pgm_str_194);
-        ut->appendP(req, fb_esp_pgm_str_195);
+        req.appendP(fb_esp_pgm_str_194);
+        req.appendP(fb_esp_pgm_str_195);
     }
 
     req += config->api_key;
-    ut->appendP(req, fb_esp_pgm_str_30);
+    req.appendP(fb_esp_pgm_str_30);
 
-    ut->appendP(req, fb_esp_pgm_str_31);
+    req.appendP(fb_esp_pgm_str_31);
     if (createUser)
-        ut->appendP(req, fb_esp_pgm_str_250);
+        req.appendP(fb_esp_pgm_str_250);
     else
-        ut->appendP(req, fb_esp_pgm_str_193);
-    ut->appendP(req, fb_esp_pgm_str_4);
-    ut->appendP(req, fb_esp_pgm_str_120);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_32);
-    ut->appendP(req, fb_esp_pgm_str_12);
-    req += NUM2S(strlen(config->signer.json->raw())).get();
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_8);
-    ut->appendP(req, fb_esp_pgm_str_129);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_21);
+        req.appendP(fb_esp_pgm_str_193);
+    req.appendP(fb_esp_pgm_str_4);
+    req.appendP(fb_esp_pgm_str_120);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_32);
+    req.appendP(fb_esp_pgm_str_12);
+    req += strlen(config->signer.json->raw());
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_8);
+    req.appendP(fb_esp_pgm_str_129);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_21);
 
     req += config->signer.json->raw();
 
@@ -1538,9 +1506,9 @@ bool Firebase_Signer::deleteIdToken(const char *idToken)
     config->signer.result = new FirebaseJsonData();
 
     MBSTRING host;
-    ut->appendP(host, fb_esp_pgm_str_250);
-    ut->appendP(host, fb_esp_pgm_str_4);
-    ut->appendP(host, fb_esp_pgm_str_120);
+    host.appendP(fb_esp_pgm_str_250);
+    host.appendP(fb_esp_pgm_str_4);
+    host.appendP(fb_esp_pgm_str_120);
 
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
@@ -1552,38 +1520,36 @@ bool Firebase_Signer::deleteIdToken(const char *idToken)
         return handleSignerError(1);
 #endif
 
-    char *tmp = ut->strP(fb_esp_pgm_str_200);
-
+    
     if (strlen(idToken) > 0)
-        config->signer.json->add(tmp, idToken);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_200), idToken);
     else
-        config->signer.json->add(tmp, config->_int.auth_token);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_200), config->_int.auth_token);
 
-    ut->delP(&tmp);
 
     MBSTRING req;
-    ut->appendP(req, fb_esp_pgm_str_24);
-    ut->appendP(req, fb_esp_pgm_str_6);
+    req.appendP(fb_esp_pgm_str_24);
+    req.appendP(fb_esp_pgm_str_6);
 
-    ut->appendP(req, fb_esp_pgm_str_582);
+    req.appendP(fb_esp_pgm_str_582);
 
     req += config->api_key;
-    ut->appendP(req, fb_esp_pgm_str_30);
+    req.appendP(fb_esp_pgm_str_30);
 
-    ut->appendP(req, fb_esp_pgm_str_31);
-    ut->appendP(req, fb_esp_pgm_str_250);
+    req.appendP(fb_esp_pgm_str_31);
+    req.appendP(fb_esp_pgm_str_250);
 
-    ut->appendP(req, fb_esp_pgm_str_4);
-    ut->appendP(req, fb_esp_pgm_str_120);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_32);
-    ut->appendP(req, fb_esp_pgm_str_12);
-    req += NUM2S(strlen(config->signer.json->raw())).get();
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_8);
-    ut->appendP(req, fb_esp_pgm_str_129);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_4);
+    req.appendP(fb_esp_pgm_str_120);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_32);
+    req.appendP(fb_esp_pgm_str_12);
+    req += strlen(config->signer.json->raw());
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_8);
+    req.appendP(fb_esp_pgm_str_129);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_21);
 
     req += config->signer.json->raw();
 
@@ -1671,9 +1637,9 @@ bool Firebase_Signer::requestTokens()
     config->signer.result = new FirebaseJsonData();
 
     MBSTRING host;
-    ut->appendP(host, fb_esp_pgm_str_193);
-    ut->appendP(host, fb_esp_pgm_str_4);
-    ut->appendP(host, fb_esp_pgm_str_120);
+    host.appendP(fb_esp_pgm_str_193);
+    host.appendP(fb_esp_pgm_str_4);
+    host.appendP(fb_esp_pgm_str_120);
 
     ut->idle();
 #if defined(ESP32)
@@ -1687,55 +1653,47 @@ bool Firebase_Signer::requestTokens()
 #endif
 
     MBSTRING req;
-    ut->appendP(req, fb_esp_pgm_str_24);
-    ut->appendP(req, fb_esp_pgm_str_6);
+    req.appendP(fb_esp_pgm_str_24);
+    req.appendP(fb_esp_pgm_str_6);
 
     if (config->signer.tokens.token_type == token_type_custom_token)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_233);
-        config->signer.json->add(tmp, config->signer.tokens.jwt.c_str());
-        ut->delP(&tmp);
-        tmp = ut->strP(fb_esp_pgm_str_198);
-        config->signer.json->add(tmp, true);
-        ut->delP(&tmp);
+       
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_233), config->signer.tokens.jwt.c_str());
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_198), true);
 
-        ut->appendP(req, fb_esp_pgm_str_194);
-        ut->appendP(req, fb_esp_pgm_str_232);
+        req.appendP(fb_esp_pgm_str_194);
+        req.appendP(fb_esp_pgm_str_232);
         req += config->api_key;
-        ut->appendP(req, fb_esp_pgm_str_30);
-        ut->appendP(req, fb_esp_pgm_str_31);
-        ut->appendP(req, fb_esp_pgm_str_193);
+        req.appendP(fb_esp_pgm_str_30);
+        req.appendP(fb_esp_pgm_str_31);
+        req.appendP(fb_esp_pgm_str_193);
     }
     else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_227);
-        char *tmp2 = ut->strP(fb_esp_pgm_str_228);
-        config->signer.json->add(tmp, (const char *)tmp2);
-        ut->delP(&tmp);
-        ut->delP(&tmp2);
-        tmp = ut->strP(fb_esp_pgm_str_229);
-        config->signer.json->add(tmp, config->signer.tokens.jwt.c_str());
-        ut->delP(&tmp);
 
-        ut->appendP(req, fb_esp_pgm_str_1);
-        ut->appendP(req, fb_esp_pgm_str_233);
-        ut->appendP(req, fb_esp_pgm_str_30);
-        ut->appendP(req, fb_esp_pgm_str_31);
-        ut->appendP(req, fb_esp_pgm_str_251);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_227), pgm2Str(fb_esp_pgm_str_228));
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_229), config->signer.tokens.jwt.c_str());
+
+        req.appendP(fb_esp_pgm_str_1);
+        req.appendP(fb_esp_pgm_str_233);
+        req.appendP(fb_esp_pgm_str_30);
+        req.appendP(fb_esp_pgm_str_31);
+        req.appendP(fb_esp_pgm_str_251);
     }
 
-    ut->appendP(req, fb_esp_pgm_str_4);
-    ut->appendP(req, fb_esp_pgm_str_120);
+    req.appendP(fb_esp_pgm_str_4);
+    req.appendP(fb_esp_pgm_str_120);
 
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_32);
-    ut->appendP(req, fb_esp_pgm_str_12);
-    req += NUM2S(strlen(config->signer.json->raw())).get();
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_8);
-    ut->appendP(req, fb_esp_pgm_str_129);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_32);
+    req.appendP(fb_esp_pgm_str_12);
+    req += strlen(config->signer.json->raw());
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_8);
+    req.appendP(fb_esp_pgm_str_129);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_21);
 
     req += config->signer.json->raw();
 #if defined(ESP32)
@@ -1869,9 +1827,9 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
     config->signer.result = new FirebaseJsonData();
 
     MBSTRING host;
-    ut->appendP(host, fb_esp_pgm_str_193);
-    ut->appendP(host, fb_esp_pgm_str_4);
-    ut->appendP(host, fb_esp_pgm_str_120);
+    host.appendP(fb_esp_pgm_str_193);
+    host.appendP(fb_esp_pgm_str_4);
+    host.appendP(fb_esp_pgm_str_120);
 
 #if defined(ESP32)
     config->signer.wcs->begin(host.c_str(), 443);
@@ -1883,66 +1841,57 @@ bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_
         return handleSignerError(1);
 #endif
 
-    char *tmp = ut->strP(fb_esp_pgm_str_260);
-    char *tmp2 = nullptr;
+
     if (type == fb_esp_user_email_sending_type_verify)
     {
         config->signer.verificationError.message.clear();
-        tmp2 = ut->strP(fb_esp_pgm_str_261);
-        config->signer.json->add(tmp, (const char *)tmp2);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_260), pgm2Str(fb_esp_pgm_str_261));
     }
     else if (type == fb_esp_user_email_sending_type_reset_psw)
     {
         config->signer.resetPswError.message.clear();
-        tmp2 = ut->strP(fb_esp_pgm_str_263);
-        config->signer.json->add(tmp, (const char *)tmp2);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_260), pgm2Str(fb_esp_pgm_str_263));
     }
-    ut->delP(&tmp);
 
     if (type == fb_esp_user_email_sending_type_verify)
     {
-        tmp = ut->strP(fb_esp_pgm_str_200);
         if (strlen(payload) > 0)
-            config->signer.json->add(tmp, payload);
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_200), payload);
         else
-            config->signer.json->add(tmp, config->_int.auth_token.c_str());
-
-        ut->delP(&tmp);
+            config->signer.json->add(pgm2Str(fb_esp_pgm_str_200), config->_int.auth_token.c_str());
     }
     else if (type == fb_esp_user_email_sending_type_reset_psw)
     {
-        tmp = ut->strP(fb_esp_pgm_str_196);
-        config->signer.json->add(tmp, payload);
-        ut->delP(&tmp);
+        config->signer.json->add(pgm2Str(fb_esp_pgm_str_196), payload);
     }
 
     MBSTRING s;
     config->signer.json->toString(s);
 
     MBSTRING req;
-    ut->appendP(req, fb_esp_pgm_str_24);
-    ut->appendP(req, fb_esp_pgm_str_6);
+    req.appendP(fb_esp_pgm_str_24);
+    req.appendP(fb_esp_pgm_str_6);
 
-    ut->appendP(req, fb_esp_pgm_str_194);
-    ut->appendP(req, fb_esp_pgm_str_262);
+    req.appendP(fb_esp_pgm_str_194);
+    req.appendP(fb_esp_pgm_str_262);
 
     req += config->api_key;
-    ut->appendP(req, fb_esp_pgm_str_30);
+    req.appendP(fb_esp_pgm_str_30);
 
-    ut->appendP(req, fb_esp_pgm_str_31);
+    req.appendP(fb_esp_pgm_str_31);
 
-    ut->appendP(req, fb_esp_pgm_str_193);
-    ut->appendP(req, fb_esp_pgm_str_4);
-    ut->appendP(req, fb_esp_pgm_str_120);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_32);
-    ut->appendP(req, fb_esp_pgm_str_12);
-    req += NUM2S(s.length()).get();
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_8);
-    ut->appendP(req, fb_esp_pgm_str_129);
-    ut->appendP(req, fb_esp_pgm_str_21);
-    ut->appendP(req, fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_193);
+    req.appendP(fb_esp_pgm_str_4);
+    req.appendP(fb_esp_pgm_str_120);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_32);
+    req.appendP(fb_esp_pgm_str_12);
+    req += s.length();
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_8);
+    req.appendP(fb_esp_pgm_str_129);
+    req.appendP(fb_esp_pgm_str_21);
+    req.appendP(fb_esp_pgm_str_21);
 
     req += s.c_str();
 
@@ -2030,192 +1979,192 @@ void Firebase_Signer::errorToString(int httpCode, MBSTRING &buff)
     switch (httpCode)
     {
     case FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED:
-        ut->appendP(buff, fb_esp_pgm_str_39);
+        buff.appendP(fb_esp_pgm_str_39);
         return;
     case FIREBASE_ERROR_TCP_ERROR_SEND_HEADER_FAILED:
-        ut->appendP(buff, fb_esp_pgm_str_40);
+        buff.appendP(fb_esp_pgm_str_40);
         return;
     case FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED:
-        ut->appendP(buff, fb_esp_pgm_str_41);
+        buff.appendP(fb_esp_pgm_str_41);
         return;
     case FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED:
-        ut->appendP(buff, fb_esp_pgm_str_42);
+        buff.appendP(fb_esp_pgm_str_42);
         return;
     case FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST:
-        ut->appendP(buff, fb_esp_pgm_str_43);
+        buff.appendP(fb_esp_pgm_str_43);
         return;
     case FIREBASE_ERROR_TCP_ERROR_NO_HTTP_SERVER:
-        ut->appendP(buff, fb_esp_pgm_str_44);
+        buff.appendP(fb_esp_pgm_str_44);
         return;
     case FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST:
-        ut->appendP(buff, fb_esp_pgm_str_45);
+        buff.appendP(fb_esp_pgm_str_45);
         return;
     case FIREBASE_ERROR_HTTP_CODE_NON_AUTHORITATIVE_INFORMATION:
-        ut->appendP(buff, fb_esp_pgm_str_46);
+        buff.appendP(fb_esp_pgm_str_46);
         return;
     case FIREBASE_ERROR_HTTP_CODE_NO_CONTENT:
-        ut->appendP(buff, fb_esp_pgm_str_47);
+        buff.appendP(fb_esp_pgm_str_47);
         return;
     case FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY:
-        ut->appendP(buff, fb_esp_pgm_str_48);
+        buff.appendP(fb_esp_pgm_str_48);
         return;
     case FIREBASE_ERROR_HTTP_CODE_USE_PROXY:
-        ut->appendP(buff, fb_esp_pgm_str_49);
+        buff.appendP(fb_esp_pgm_str_49);
         return;
     case FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT:
-        ut->appendP(buff, fb_esp_pgm_str_50);
+        buff.appendP(fb_esp_pgm_str_50);
         return;
     case FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT:
-        ut->appendP(buff, fb_esp_pgm_str_51);
+        buff.appendP(fb_esp_pgm_str_51);
         return;
     case FIREBASE_ERROR_HTTP_CODE_UNAUTHORIZED:
-        ut->appendP(buff, fb_esp_pgm_str_52);
+        buff.appendP(fb_esp_pgm_str_52);
         return;
     case FIREBASE_ERROR_HTTP_CODE_FORBIDDEN:
-        ut->appendP(buff, fb_esp_pgm_str_53);
+        buff.appendP(fb_esp_pgm_str_53);
         return;
     case FIREBASE_ERROR_HTTP_CODE_NOT_FOUND:
-        ut->appendP(buff, fb_esp_pgm_str_54);
+        buff.appendP(fb_esp_pgm_str_54);
         return;
     case FIREBASE_ERROR_HTTP_CODE_METHOD_NOT_ALLOWED:
-        ut->appendP(buff, fb_esp_pgm_str_55);
+        buff.appendP(fb_esp_pgm_str_55);
         return;
     case FIREBASE_ERROR_HTTP_CODE_NOT_ACCEPTABLE:
-        ut->appendP(buff, fb_esp_pgm_str_56);
+        buff.appendP(fb_esp_pgm_str_56);
         return;
     case FIREBASE_ERROR_HTTP_CODE_PROXY_AUTHENTICATION_REQUIRED:
-        ut->appendP(buff, fb_esp_pgm_str_57);
+        buff.appendP(fb_esp_pgm_str_57);
         return;
     case FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT:
-        ut->appendP(buff, fb_esp_pgm_str_58);
+        buff.appendP(fb_esp_pgm_str_58);
         return;
     case FIREBASE_ERROR_HTTP_CODE_LENGTH_REQUIRED:
-        ut->appendP(buff, fb_esp_pgm_str_59);
+        buff.appendP(fb_esp_pgm_str_59);
         return;
     case FIREBASE_ERROR_HTTP_CODE_TOO_MANY_REQUESTS:
-        ut->appendP(buff, fb_esp_pgm_str_60);
+        buff.appendP(fb_esp_pgm_str_60);
         return;
     case FIREBASE_ERROR_HTTP_CODE_REQUEST_HEADER_FIELDS_TOO_LARGE:
-        ut->appendP(buff, fb_esp_pgm_str_61);
+        buff.appendP(fb_esp_pgm_str_61);
         return;
     case FIREBASE_ERROR_HTTP_CODE_INTERNAL_SERVER_ERROR:
-        ut->appendP(buff, fb_esp_pgm_str_62);
+        buff.appendP(fb_esp_pgm_str_62);
         return;
     case FIREBASE_ERROR_HTTP_CODE_BAD_GATEWAY:
-        ut->appendP(buff, fb_esp_pgm_str_63);
+        buff.appendP(fb_esp_pgm_str_63);
         return;
     case FIREBASE_ERROR_HTTP_CODE_SERVICE_UNAVAILABLE:
-        ut->appendP(buff, fb_esp_pgm_str_64);
+        buff.appendP(fb_esp_pgm_str_64);
         return;
     case FIREBASE_ERROR_HTTP_CODE_GATEWAY_TIMEOUT:
-        ut->appendP(buff, fb_esp_pgm_str_65);
+        buff.appendP(fb_esp_pgm_str_65);
         return;
     case FIREBASE_ERROR_HTTP_CODE_HTTP_VERSION_NOT_SUPPORTED:
-        ut->appendP(buff, fb_esp_pgm_str_66);
+        buff.appendP(fb_esp_pgm_str_66);
         return;
     case FIREBASE_ERROR_HTTP_CODE_NETWORK_AUTHENTICATION_REQUIRED:
-        ut->appendP(buff, fb_esp_pgm_str_67);
+        buff.appendP(fb_esp_pgm_str_67);
         return;
     case FIREBASE_ERROR_HTTP_CODE_PRECONDITION_FAILED:
-        ut->appendP(buff, fb_esp_pgm_str_152);
+        buff.appendP(fb_esp_pgm_str_152);
         return;
     case FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT:
-        ut->appendP(buff, fb_esp_pgm_str_69);
+        buff.appendP(fb_esp_pgm_str_69);
         return;
     case FIREBASE_ERROR_DATA_TYPE_MISMATCH:
-        ut->appendP(buff, fb_esp_pgm_str_70);
+        buff.appendP(fb_esp_pgm_str_70);
         return;
     case FIREBASE_ERROR_PATH_NOT_EXIST:
-        ut->appendP(buff, fb_esp_pgm_str_71);
+        buff.appendP(fb_esp_pgm_str_71);
         return;
     case FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED:
-        ut->appendP(buff, fb_esp_pgm_str_94);
+        buff.appendP(fb_esp_pgm_str_94);
         return;
     case FIREBASE_ERROR_TCP_MAX_REDIRECT_REACHED:
-        ut->appendP(buff, fb_esp_pgm_str_169);
+        buff.appendP(fb_esp_pgm_str_169);
         return;
     case FIREBASE_ERROR_BUFFER_OVERFLOW:
-        ut->appendP(buff, fb_esp_pgm_str_68);
+        buff.appendP(fb_esp_pgm_str_68);
         return;
     case FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED:
-        ut->appendP(buff, fb_esp_pgm_str_145);
+        buff.appendP(fb_esp_pgm_str_145);
         return;
     case FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED:
-        ut->appendP(buff, fb_esp_pgm_str_146);
+        buff.appendP(fb_esp_pgm_str_146);
         return;
     case FIREBASE_ERROR_NO_FCM_TOPIC_PROVIDED:
-        ut->appendP(buff, fb_esp_pgm_str_542);
+        buff.appendP(fb_esp_pgm_str_542);
         return;
     case FIREBASE_ERROR_FCM_ID_TOKEN_AT_INDEX_NOT_FOUND:
-        ut->appendP(buff, fb_esp_pgm_str_543);
+        buff.appendP(fb_esp_pgm_str_543);
         return;
     case FIREBASE_ERROR_EXPECTED_JSON_DATA:
-        ut->appendP(buff, fb_esp_pgm_str_185);
+        buff.appendP(fb_esp_pgm_str_185);
         return;
     case FIREBASE_ERROR_HTTP_CODE_PAYLOAD_TOO_LARGE:
-        ut->appendP(buff, fb_esp_pgm_str_189);
+        buff.appendP(fb_esp_pgm_str_189);
         return;
     case FIREBASE_ERROR_CANNOT_CONFIG_TIME:
-        ut->appendP(buff, fb_esp_pgm_str_190);
+        buff.appendP(fb_esp_pgm_str_190);
         return;
     case FIREBASE_ERROR_SSL_RX_BUFFER_SIZE_TOO_SMALL:
-        ut->appendP(buff, fb_esp_pgm_str_191);
+        buff.appendP(fb_esp_pgm_str_191);
         return;
     case FIREBASE_ERROR_FILE_IO_ERROR:
-        ut->appendP(buff, fb_esp_pgm_str_192);
+        buff.appendP(fb_esp_pgm_str_192);
         return;
 #if defined(FIREBASE_ESP_CLIENT)
     case FIREBASE_ERROR_FILE_NOT_FOUND:
-        ut->appendP(buff, fb_esp_pgm_str_449);
+        buff.appendP(fb_esp_pgm_str_449);
         return;
     case FIREBASE_ERROR_ARCHIVE_NOT_FOUND:
-        ut->appendP(buff, fb_esp_pgm_str_450);
+        buff.appendP(fb_esp_pgm_str_450);
         return;
     case FIREBASE_ERROR_LONG_RUNNING_TASK:
-        ut->appendP(buff, fb_esp_pgm_str_534);
+        buff.appendP(fb_esp_pgm_str_534);
         return;
     case FIREBASE_ERROR_UPLOAD_TIME_OUT:
-        ut->appendP(buff, fb_esp_pgm_str_540);
+        buff.appendP(fb_esp_pgm_str_540);
         return;
     case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
-        ut->appendP(buff, fb_esp_pgm_str_541);
+        buff.appendP(fb_esp_pgm_str_541);
         return;
     case FIREBASE_ERROR_OAUTH2_REQUIRED:
-        ut->appendP(buff, fb_esp_pgm_str_328);
+        buff.appendP(fb_esp_pgm_str_328);
         return;
     case FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE:
-        ut->appendP(buff, fb_esp_pgm_str_584);
+        buff.appendP(fb_esp_pgm_str_584);
         return;
     case FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE:
-        ut->appendP(buff, fb_esp_pgm_str_585);
+        buff.appendP(fb_esp_pgm_str_585);
         return;
     case FIREBASE_ERROR_FW_UPDATE_BIN_SIZE_NOT_MATCH_SPI_FLASH_SPACE:
-        ut->appendP(buff, fb_esp_pgm_str_586);
+        buff.appendP(fb_esp_pgm_str_586);
         return;
     case FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED:
-        ut->appendP(buff, fb_esp_pgm_str_587);
+        buff.appendP(fb_esp_pgm_str_587);
         return;
     case FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED:
-        ut->appendP(buff, fb_esp_pgm_str_588);
+        buff.appendP(fb_esp_pgm_str_588);
         return;
     case FIREBASE_ERROR_FW_UPDATE_END_FAILED:
-        ut->appendP(buff, fb_esp_pgm_str_589);
+        buff.appendP(fb_esp_pgm_str_589);
         return;
 #endif
     case FIREBASE_ERROR_TOKEN_NOT_READY:
-        ut->appendP(buff, fb_esp_pgm_str_252);
+        buff.appendP(fb_esp_pgm_str_252);
         return;
     case FIREBASE_ERROR_UNINITIALIZED:
-        ut->appendP(buff, fb_esp_pgm_str_256);
+        buff.appendP(fb_esp_pgm_str_256);
         return;
     case FIREBASE_ERROR_MISSING_DATA:
-        ut->appendP(buff, fb_esp_pgm_str_579);
+        buff.appendP(fb_esp_pgm_str_579);
         return;
     case FIREBASE_ERROR_MISSING_CREDENTIALS:
-        ut->appendP(buff, fb_esp_pgm_str_580);
+        buff.appendP(fb_esp_pgm_str_580);
         return;
     case FIREBASE_ERROR_INVALID_JSON_RULES:
-        ut->appendP(buff, fb_esp_pgm_str_581);
+        buff.appendP(fb_esp_pgm_str_581);
         return;
     default:
         return;

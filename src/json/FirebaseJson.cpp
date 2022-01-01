@@ -1,10 +1,10 @@
 
 /*
- * FirebaseJson, version 2.6.3
+ * FirebaseJson, version 2.6.4
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * December 20, 2021
+ * Created January 1, 2022
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -482,9 +482,9 @@ void FirebaseJsonBase::collectResult(MB_JSON *e, const char *key, int arrIndex, 
     }
     else if (arrIndex > -1)
     {
-        MBSTRING ar = (const char *)FLASH_MCR("[");
-        ar += NUM2S(arrIndex).get();
-        ar += (const char *)FLASH_MCR("]");
+        MBSTRING ar = (const char *)MBSTRING_FLASH_MCR("[");
+        ar += num2Str(arrIndex,-1);
+        ar += (const char *)MBSTRING_FLASH_MCR("]");
 
         if (arrIndex > 0 && iterator_data.pathList.size() > 0)
             iterator_data.pathList[iterator_data.pathList.size() - 1] = ar.c_str();
@@ -553,12 +553,12 @@ void FirebaseJsonBase::collectResult(MB_JSON *e, const char *key, int arrIndex, 
             mGetPath(path, iterator_data.pathList);
 
             if (iterator_data.path.length() > 0)
-                iterator_data.path += (const char *)FLASH_MCR(",\"");
+                iterator_data.path += (const char *)MBSTRING_FLASH_MCR(",\"");
             else
-                iterator_data.path += (const char *)FLASH_MCR("[\"");
+                iterator_data.path += (const char *)MBSTRING_FLASH_MCR("[\"");
 
             iterator_data.path += path;
-            iterator_data.path += (const char *)FLASH_MCR("\"");
+            iterator_data.path += (const char *)MBSTRING_FLASH_MCR("\"");
 
             path.clear();
         }
@@ -646,7 +646,7 @@ bool FirebaseJsonBase::checkKeys(struct fb_js_search_criteria_t *criteria)
         if (k < (int)iterator_data.searchKeys->size())
         {
             if (sPath.length() > 0)
-                sPath += (const char *)FLASH_MCR("/");
+                sPath += (const char *)MBSTRING_FLASH_MCR("/");
             sPath += iterator_data.searchKeys->at(k);
         }
 
@@ -672,7 +672,7 @@ bool FirebaseJsonBase::checkKeys(struct fb_js_search_criteria_t *criteria)
                     }
 
                     if (cPath.length() > 0)
-                        cPath += (const char *)FLASH_MCR("/");
+                        cPath += (const char *)MBSTRING_FLASH_MCR("/");
                     cPath += iterator_data.searchKeys->at(k).c_str();
                     index = j;
                 }
@@ -854,7 +854,7 @@ void FirebaseJsonBase::mGetPath(MBSTRING &path, std::vector<MBSTRING> paths, int
     for (int i = begin; i <= end; i++)
     {
         if (i > 0)
-            path += (const char *)FLASH_MCR("/");
+            path += (const char *)MBSTRING_FLASH_MCR("/");
         path += paths[i].c_str();
     }
 }
@@ -963,17 +963,17 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
     char *buf = (char *)newP(32);
     if (result->type_num == MB_JSON_Invalid)
     {
-        strcpy(buf, (const char *)FLASH_MCR("undefined"));
+        strcpy(buf, (const char *)MBSTRING_FLASH_MCR("undefined"));
         result->typeNum = JSON_UNDEFINED;
     }
     else if (result->type_num == MB_JSON_Object)
     {
-        strcpy(buf, (const char *)FLASH_MCR("object"));
+        strcpy(buf, (const char *)MBSTRING_FLASH_MCR("object"));
         result->typeNum = JSON_OBJECT;
     }
     else if (result->type_num == MB_JSON_Array)
     {
-        strcpy(buf, (const char *)FLASH_MCR("array"));
+        strcpy(buf, (const char *)MBSTRING_FLASH_MCR("array"));
         result->typeNum = JSON_ARRAY;
     }
     else if (result->type_num == MB_JSON_String)
@@ -983,18 +983,18 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
         if (result->stringValue.c_str()[result->stringValue.length() - 1] == '"')
             result->stringValue.remove(result->stringValue.length() - 1, 1);
 
-        strcpy(buf, (const char *)FLASH_MCR("string"));
+        strcpy(buf, (const char *)MBSTRING_FLASH_MCR("string"));
         result->typeNum = JSON_STRING;
     }
     else if (result->type_num == MB_JSON_NULL)
     {
-        strcpy(buf, (const char *)FLASH_MCR("null"));
+        strcpy(buf, (const char *)MBSTRING_FLASH_MCR("null"));
         result->typeNum = JSON_NULL;
     }
     else if (result->type_num == MB_JSON_False || result->type_num == MB_JSON_True)
     {
-        strcpy(buf, (const char *)FLASH_MCR("boolean"));
-        bool t = strcmp(result->stringValue.c_str(), (const char *)FLASH_MCR("true")) == 0;
+        strcpy(buf, (const char *)MBSTRING_FLASH_MCR("boolean"));
+        bool t = strcmp(result->stringValue.c_str(), (const char *)MBSTRING_FLASH_MCR("true")) == 0;
         result->typeNum = JSON_BOOL;
 
         result->iVal = {t};
@@ -1009,23 +1009,23 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
         mSetResInt(result, result->stringValue.c_str());
         mSetResFloat(result, result->stringValue.c_str());
 
-        if (strpos(result->stringValue.c_str(), (const char *)FLASH_MCR("."), 0) > -1)
+        if (strpos(result->stringValue.c_str(), (const char *)MBSTRING_FLASH_MCR("."), 0) > -1)
         {
             double d = atof(result->stringValue.c_str());
             if (d > 0x7fffffff)
             {
-                strcpy(buf, (const char *)FLASH_MCR("double"));
+                strcpy(buf, (const char *)MBSTRING_FLASH_MCR("double"));
                 result->typeNum = JSON_DOUBLE;
             }
             else
             {
-                strcpy(buf, (const char *)FLASH_MCR("float"));
+                strcpy(buf, (const char *)MBSTRING_FLASH_MCR("float"));
                 result->typeNum = JSON_FLOAT;
             }
         }
         else
         {
-            strcpy(buf, (const char *)FLASH_MCR("int"));
+            strcpy(buf, (const char *)MBSTRING_FLASH_MCR("int"));
             result->typeNum = JSON_INT;
         }
     }
@@ -1122,7 +1122,7 @@ size_t FirebaseJsonBase::mSearch(MB_JSON *parent, FirebaseJsonData *result, stru
             if (result == NULL)
             {
                 buf.clear();
-                iterator_data.path += (const char *)FLASH_MCR("]");
+                iterator_data.path += (const char *)MBSTRING_FLASH_MCR("]");
                 buf = iterator_data.path.c_str();
             }
             else
@@ -1133,7 +1133,7 @@ size_t FirebaseJsonBase::mSearch(MB_JSON *parent, FirebaseJsonData *result, stru
                     result->stringValue = p;
                     MB_JSON_free(p);
                     result->type_num = iterator_data.parentArr->type;
-                    iterator_data.path += (const char *)FLASH_MCR("]");
+                    iterator_data.path += (const char *)MBSTRING_FLASH_MCR("]");
                     result->searchPath = iterator_data.path.c_str();
                     result->success = true;
                     mSetElementType(result);

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.3
+ * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -89,8 +89,8 @@ QueryFilter &QueryFilter::mStartAt(const char *val, bool isString)
 
 QueryFilter &QueryFilter::mEndAt(const char *val, bool isString)
 {
-     if (isString)
-         _endAt = (const char *)FPSTR("\"");
+    if (isString)
+        _endAt = (const char *)FPSTR("\"");
     _endAt += val;
     if (isString)
         _endAt = (const char *)FPSTR("\"");

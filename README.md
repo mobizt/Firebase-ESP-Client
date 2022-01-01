@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.5
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.6
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -342,6 +342,7 @@ Since v2.6.0, this library supports PSRAM for internal memory allocation which y
 ```
 
 
+
 ## Authentication
 
 This library supports many types of authentications.
@@ -574,6 +575,7 @@ To disable OTA update via RTDB , Firebase Storage and Google Cloud Storage, comm
 ```
 ENABLE_OTA_FIRMWARE_UPDATE
 ```
+
 
 ## Realtime Database
 
@@ -1898,7 +1900,7 @@ The result of the above code
 
 The MIT License (MIT)
 
-Copyright (C) 2021 K. Suwatchai (Mobizt)
+Copyright (C) 2022 K. Suwatchai (Mobizt)
 
 
 Permission is hereby granted, free of charge, to any person returning a copy of

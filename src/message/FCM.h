@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.16
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.17
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -39,6 +39,8 @@
 #include <Arduino.h>
 #include "Utils.h"
 #include "session/FB_Session.h"
+
+using namespace mb_string;
 
 class FB_CM
 {
@@ -135,7 +137,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool subscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscibeTopic(fbdo, topic, IID, NUM2S(numToken).get()); }
+  bool subscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscibeTopic(fbdo, topic, IID, num2s(numToken).get()); }
 
   /** Unsubscribe the devices from the topic.
    * 
@@ -147,7 +149,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool unsubscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscibeTopic(fbdo, topic, IID, NUM2S(numToken).get()); }
+  bool unsubscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscibeTopic(fbdo, topic, IID, num2s(numToken).get()); }
 
   /** Get the app instance info.
    * 
@@ -170,7 +172,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char **, typename T3 = size_t>
-  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3  numToken) { return mRegisAPNsTokens(fbdo, application, sandbox, APNs, NUM2S(numToken).get()); }
+  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3  numToken) { return mRegisAPNsTokens(fbdo, application, sandbox, APNs, num2s(numToken).get()); }
 
   /** Get the server payload.
    * 
@@ -210,16 +212,16 @@ private:
 
 protected:
   template <typename T>
-  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+  auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
   template <typename T>
-  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+  auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
 
   template <typename T>
-  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+  auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
 
   template <typename T>
-  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+  auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

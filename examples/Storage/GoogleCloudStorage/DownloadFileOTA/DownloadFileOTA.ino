@@ -5,7 +5,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -16,6 +16,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
+
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
@@ -75,6 +76,11 @@ void setup()
     fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 2048 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
 
+    /* Assign download buffer size in byte */
+    //Data to be downloaded will read as multiple chunks with this size, to compromise between speed and memory used for buffering.
+    //The memory from external SRAM/PSRAM will not use in the TCP client internal rx buffer.
+    config.gcs.download_buffer_size = 2048;
+
     Firebase.begin(&config, &auth);
 
     Firebase.reconnectWiFi(true);
@@ -85,6 +91,9 @@ void loop()
     if (Firebase.ready() && !taskCompleted)
     {
         taskCompleted = true;
+
+        //If you want to get download url to use with your own OTA update process using core update library,
+        //see Metadata.ino example
 
         Serial.println("\nWait for file downloading...");
 

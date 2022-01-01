@@ -1,6 +1,6 @@
 
 /**
- * Created December 27, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -494,18 +494,18 @@ struct fb_esp_rtdb_request_data_info
     fb_esp_data_type type = d_any;
     struct fb_esp_rtdb_address_t address;
     int value_subtype = 0;
-    const char *etag = "";
+    MBSTRING etag;
     size_t blobSize = 0;
 };
 
 struct fb_esp_rtdb_request_info_t
 {
     int fileLen = 0;
-    const char *path = "";
-    const char *pre_payload = "";
-    const char *post_payload = "";
-    const char *payload = "";
-    const char *filename = "";
+    MBSTRING path;
+    MBSTRING pre_payload;
+    MBSTRING post_payload;
+    MBSTRING payload;
+    MBSTRING filename;
     fb_esp_method method = m_get;
     struct fb_esp_rtdb_request_data_info data;
     bool queue = false;
@@ -761,6 +761,10 @@ struct fb_esp_cfg_int_t
 struct fb_esp_rtdb_config_t
 {
     bool data_type_stricted = false;
+    size_t upload_buffer_size = 128;
+    
+    //unused, call fbdo.setResponseSize instead
+    //size_t download_buffer_size = 256;
 };
 
 struct fb_esp_url_info_t
@@ -781,9 +785,17 @@ struct fb_esp_fcs_file_list_item_t
     MBSTRING contentType;
     size_t size = 0;
 };
+
 #endif
 
 #ifdef ENABLE_GC_STORAGE
+
+struct fb_esp_gcs_config_t
+{
+    size_t upload_buffer_size = 2048;
+    size_t download_buffer_size = 2048;
+};
+
 typedef struct fb_esp_gcs_upload_status_info_t
 {
     size_t progress = 0;
@@ -796,6 +808,14 @@ typedef struct fb_esp_gcs_upload_status_info_t
 
 typedef void (*ProgressCallback)(UploadStatusInfo);
 
+#endif
+
+#if defined(ENABLE_FB_STORAGE)
+struct fb_esp_fcs_config_t
+{
+    size_t upload_buffer_size = 512;
+    size_t download_buffer_size = 2048;
+};
 #endif
 
 #if defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE)
@@ -862,6 +882,12 @@ struct fb_esp_cfg_t
     TokenStatusCallback token_status_callback = NULL;
     int8_t max_token_generation_retry = MAX_EXCHANGE_TOKEN_ATTEMPTS;
     struct fb_esp_rtdb_config_t rtdb;
+#if defined(ENABLE_GC_STORAGE)
+    struct fb_esp_gcs_config_t gcs;
+#endif
+#if defined(ENABLE_FB_STORAGE)
+    struct fb_esp_fcs_config_t fcs;
+#endif
     SPI_ETH_Module spi_ethernet_module;
     struct fb_esp_client_timeout_t timeout;
 };
@@ -1053,30 +1079,30 @@ struct fb_esp_gcs_meta_info_t
 
 typedef struct fb_esp_gcs_request_properties_t
 {
-    const char *acl = ""; //array
-    const char *cacheControl = "";
-    const char *contentDisposition = "";
-    const char *contentEncoding = "";
-    const char *contentLanguage = "";
-    const char *contentType = "";
-    const char *crc32c = "";
-    const char *customTime = "";     //date time
-    const char *eventBasedHold = ""; //boolean
-    const char *md5Hash = "";
-    const char *metadata = ""; // object
-    const char *name = "";
-    const char *storageClass = "";
-    const char *temporaryHold = ""; //boolean
+    MBSTRING acl; //array
+    MBSTRING cacheControl;
+    MBSTRING contentDisposition;
+    MBSTRING contentEncoding;
+    MBSTRING contentLanguage;
+    MBSTRING contentType;
+    MBSTRING crc32c;
+    MBSTRING customTime;     //date time
+    MBSTRING eventBasedHold; //boolean
+    MBSTRING md5Hash;
+    MBSTRING metadata; // object
+    MBSTRING name;
+    MBSTRING storageClass;
+    MBSTRING temporaryHold; //boolean
 } RequestProperties;
 
 typedef struct fb_esp_gcs_get_options_t
 {
-    const char *generation = "";
-    const char *ifGenerationMatch = "";
-    const char *ifGenerationNotMatch = "";
-    const char *ifMetagenerationMatch = "";
-    const char *ifMetagenerationNotMatch = "";
-    const char *projection = "";
+    MBSTRING generation;
+    MBSTRING ifGenerationMatch;
+    MBSTRING ifGenerationNotMatch;
+    MBSTRING ifMetagenerationMatch;
+    MBSTRING ifMetagenerationNotMatch;
+    MBSTRING projection;
 } StorageGetOptions;
 
 struct fb_esp_gcs_info_t
@@ -1090,36 +1116,36 @@ struct fb_esp_gcs_info_t
 
 typedef struct fb_esp_gcs_upload_options_t
 {
-    const char *contentEncoding = "";
-    const char *ifGenerationMatch = "";        //long
-    const char *ifGenerationNotMatch = "";     //long
-    const char *ifMetagenerationMatch = "";    //long
-    const char *ifMetagenerationNotMatch = ""; //long
-    const char *kmsKeyName = "";
-    const char *projection = "";
-    const char *predefinedAcl = "";
+    MBSTRING contentEncoding;
+    MBSTRING ifGenerationMatch;        //long
+    MBSTRING ifGenerationNotMatch;     //long
+    MBSTRING ifMetagenerationMatch;    //long
+    MBSTRING ifMetagenerationNotMatch; //long
+    MBSTRING kmsKeyName;
+    MBSTRING projection;
+    MBSTRING predefinedAcl;
 } UploadOptions;
 
 typedef struct fb_esp_gcs_delete_options_t
 {
-    const char *generation = "";
-    const char *ifGenerationMatch = "";        //long
-    const char *ifGenerationNotMatch = "";     //long
-    const char *ifMetagenerationMatch = "";    //long
-    const char *ifMetagenerationNotMatch = ""; //long
+    MBSTRING generation;
+    MBSTRING ifGenerationMatch;        //long
+    MBSTRING ifGenerationNotMatch;     //long
+    MBSTRING ifMetagenerationMatch;    //long
+    MBSTRING ifMetagenerationNotMatch; //long
 } DeleteOptions;
 
 typedef struct fb_esp_gcs_list_options_t
 {
-    const char *delimiter = "";
-    const char *endOffset = "";
-    const char *includeTrailingDelimiter = ""; //bool
-    const char *maxResults = "";               //number
-    const char *pageToken = "";
-    const char *prefix = "";
-    const char *projection = "";
-    const char *startOffset = "";
-    const char *versions = ""; //bool
+    MBSTRING delimiter;
+    MBSTRING endOffset;
+    MBSTRING includeTrailingDelimiter; //bool
+    MBSTRING maxResults;               //number
+    MBSTRING pageToken;
+    MBSTRING prefix;
+    MBSTRING projection;
+    MBSTRING startOffset;
+    MBSTRING versions; //bool
 } ListOptions;
 
 struct fb_esp_gcs_req_t
@@ -1158,45 +1184,45 @@ struct fb_gcs_upload_resumable_task_info_t
 #ifdef ENABLE_FCM
 struct fb_esp_fcm_legacy_notification_payload_t
 {
-    const char *title = "";              //string all
-    const char *body = "";               //string all
-    const char *icon = "";               //string Andoid, web
-    const char *click_action = "";       //string all
-    const char *sound = "";              //string iOS, Android
-    const char *badge = "";              //number iOS
-    const char *subtitle = "";           //string iOS
-    const char *body_loc_key = "";       //string iOS, Android
-    const char *body_loc_args = "";      //array of string [] iOS, Android
-    const char *title_loc_key = "";      //string iOS, Android
-    const char *title_loc_args = "";     //array of string [] iOS, Android
-    const char *android_channel_id = ""; //string Android
-    const char *tag = "";                //string Android
-    const char *color = "";              //string Android
+    MBSTRING title;              //string all
+    MBSTRING body;               //string all
+    MBSTRING icon;               //string Andoid, web
+    MBSTRING click_action;       //string all
+    MBSTRING sound;              //string iOS, Android
+    MBSTRING badge;              //number iOS
+    MBSTRING subtitle;           //string iOS
+    MBSTRING body_loc_key;       //string iOS, Android
+    MBSTRING body_loc_args;      //array of string [] iOS, Android
+    MBSTRING title_loc_key;      //string iOS, Android
+    MBSTRING title_loc_args;     //array of string [] iOS, Android
+    MBSTRING android_channel_id; //string Android
+    MBSTRING tag;                //string Android
+    MBSTRING color;              //string Android
 };
 
 struct fb_esp_fcm_legacy_http_message_option_t
 {
-    const char *priority = "";                //string
-    const char *collapse_key = "";            //string
-    const char *time_to_live = "";            //number
-    const char *restricted_package_name = ""; //string
-    const char *mutable_content = "";         //boolean
-    const char *content_available = "";       //boolean
-    const char *dry_run = "";                 //boolean
-    const char *direct_boot_ok = "";          //boolean
+    MBSTRING priority;                //string
+    MBSTRING collapse_key;            //string
+    MBSTRING time_to_live;            //number
+    MBSTRING restricted_package_name; //string
+    MBSTRING mutable_content;         //boolean
+    MBSTRING content_available;       //boolean
+    MBSTRING dry_run;                 //boolean
+    MBSTRING direct_boot_ok;          //boolean
 };
 
 struct fb_esp_fcm_legacy_http_message_payload_t
 {
     struct fb_esp_fcm_legacy_notification_payload_t notification;
-    const char *data = "";
+    MBSTRING data;
 };
 
 struct fb_esp_fcm_legacy_http_message_target_t
 {
-    const char *to = "";               //string
-    const char *registration_ids = ""; //array of string []
-    const char *condition = "";        //string
+    MBSTRING to;               //string
+    MBSTRING registration_ids; //array of string []
+    MBSTRING condition;        //string
 };
 
 struct fb_esp_fcm_legacy_http_message_info_t
@@ -1208,113 +1234,113 @@ struct fb_esp_fcm_legacy_http_message_info_t
 
 struct fb_esp_fcm_http_v1_notification_t
 {
-    const char *title = ""; //string
-    const char *body = "";  //string
-    const char *image = ""; //string
+    MBSTRING title; //string
+    MBSTRING body;  //string
+    MBSTRING image; //string
 };
 
 struct fb_esp_fcm_http_v1_fcm_options_t
 {
-    const char *analytics_label = ""; //string, Label associated with the message's analytics data.
+    MBSTRING analytics_label; //string, Label associated with the message's analytics data.
 };
 
 struct fb_esp_fcm_http_v1_android_fcm_options_t
 {
-    const char *analytics_label = ""; //string, Label associated with the message's analytics data.
+    MBSTRING analytics_label; //string, Label associated with the message's analytics data.
 };
 
 struct fb_esp_fcm_http_v1_android_light_settings_color_t
 {
-    const char *red = "";   //string
-    const char *green = ""; //string
-    const char *blue = "";  //string
-    const char *alpha = ""; //string
+    MBSTRING red;   //string
+    MBSTRING green; //string
+    MBSTRING blue;  //string
+    MBSTRING alpha; //string
 };
 
 struct fb_esp_fcm_http_v1_android_light_settings_t
 {
     struct fb_esp_fcm_http_v1_android_light_settings_color_t color; //object {}
-    const char *light_on_duration = "";                             //string
-    const char *light_off_duration = "";                            //string
+    MBSTRING light_on_duration;                             //string
+    MBSTRING light_off_duration;                            //string
 };
 
 struct fb_esp_fcm_http_v1_android_noti_t
 {
-    const char *title = "";                   //string
-    const char *body = "";                    //string
-    const char *icon = "";                    //string
-    const char *color = "";                   //string
-    const char *sound = "";                   //string
-    const char *tag = "";                     //string
-    const char *click_action = "";            //string
-    const char *body_loc_key = "";            //string
-    const char *body_loc_args = "";           //array of string []
-    const char *title_loc_key = "";           //string
-    const char *title_loc_args = "";          //array of string []
-    const char *channel_id = "";              //string
-    const char *ticker = "";                  //string
-    const char *sticky = "";                  //boolean
-    const char *event_time = "";              //string
-    const char *local_only = "";              //boolean
-    const char *notification_priority = "";   //enum
-    const char *default_sound = "";           //boolean
-    const char *default_vibrate_timings = ""; //boolean
-    const char *default_light_settings = "";  //boolean
-    const char *vibrate_timings = "";         //array of string []
-    const char *visibility = "";              //enum
-    const char *notification_count = "";      //integer
+    MBSTRING title;                   //string
+    MBSTRING body;                    //string
+    MBSTRING icon;                    //string
+    MBSTRING color;                   //string
+    MBSTRING sound;                   //string
+    MBSTRING tag;                     //string
+    MBSTRING click_action;            //string
+    MBSTRING body_loc_key;            //string
+    MBSTRING body_loc_args;           //array of string []
+    MBSTRING title_loc_key;           //string
+    MBSTRING title_loc_args;          //array of string []
+    MBSTRING channel_id;              //string
+    MBSTRING ticker;                  //string
+    MBSTRING sticky;                  //boolean
+    MBSTRING event_time;              //string
+    MBSTRING local_only;              //boolean
+    MBSTRING notification_priority;   //enum
+    MBSTRING default_sound;           //boolean
+    MBSTRING default_vibrate_timings; //boolean
+    MBSTRING default_light_settings;  //boolean
+    MBSTRING vibrate_timings;         //array of string []
+    MBSTRING visibility;              //enum
+    MBSTRING notification_count;      //integer
     struct fb_esp_fcm_http_v1_android_light_settings_t light_settings;
-    const char *image = ""; //string
+    MBSTRING image; //string
 };
 
 struct fb_esp_fcm_http_v1_android_config_t
 {
-    const char *collapse_key = "";            //string
-    const char *priority = "";                //enum
-    const char *ttl = "";                     //string
-    const char *restricted_package_name = ""; //string
-    const char *data = "";                    ///object {} Arbitrary key/value payload
+    MBSTRING collapse_key;            //string
+    MBSTRING priority;                //enum
+    MBSTRING ttl;                     //string
+    MBSTRING restricted_package_name; //string
+    MBSTRING data;                    ///object {} Arbitrary key/value payload
     fb_esp_fcm_http_v1_android_noti_t notification;
     struct fb_esp_fcm_http_v1_android_fcm_options_t fcm_options;
-    const char *direct_boot_ok = ""; //boolean
+    MBSTRING direct_boot_ok; //boolean
 };
 
 struct fb_esp_fcm_http_v1_apns_fcm_opt_t
 {
-    const char *analytics_label = ""; //string Label associated with the message's analytics data
-    const char *image = "";           //string contains the URL of an image that is going to be displayed in a notification.
+    MBSTRING analytics_label; //string Label associated with the message's analytics data
+    MBSTRING image;           //string contains the URL of an image that is going to be displayed in a notification.
 };
 
 struct fb_esp_fcm_http_v1_webpush_fcm_opt_t
 {
-    const char *link = "";            //string, The link to open when the user clicks on the notification.
-    const char *analytics_label = ""; //string, Label associated with the message's analytics data.
+    MBSTRING link;            //string, The link to open when the user clicks on the notification.
+    MBSTRING analytics_label; //string, Label associated with the message's analytics data.
 };
 
 struct fb_esp_fcm_http_v1_apns_config_t
 {
-    const char *headers = "";      //object {} http header key/value defined in Apple Push Notification Service
-    const char *payload = "";      //object {} APNs payload as a JSON object
-    const char *notification = ""; //object {}
+    MBSTRING headers;      //object {} http header key/value defined in Apple Push Notification Service
+    MBSTRING payload;      //object {} APNs payload as a JSON object
+    MBSTRING notification; //object {}
     struct fb_esp_fcm_http_v1_apns_fcm_opt_t fcm_options;
 };
 
 struct fb_esp_fcm_http_v1_webpush_config_t
 {
-    const char *headers = "";      //object {} http header key/value defined in webpush protocol.
-    const char *data = "";         //object {} abitrary key/value payload
-    const char *notification = ""; //object {} Web Notification options as a JSON object
+    MBSTRING headers;      //object {} http header key/value defined in webpush protocol.
+    MBSTRING data;         //object {} abitrary key/value payload
+    MBSTRING notification; //object {} Web Notification options as a JSON object
     struct fb_esp_fcm_http_v1_webpush_fcm_opt_t fcm_options;
 };
 
 struct fb_esp_fcm_http_v1_message_info_t
 {
-    const char *token = "";     //string
-    const char *topic = "";     //string
-    const char *condition = ""; //string
+    MBSTRING token;     //string
+    MBSTRING topic;     //string
+    MBSTRING condition; //string
     struct fb_esp_fcm_http_v1_fcm_options_t fcm_options;
     struct fb_esp_fcm_http_v1_notification_t notification;
-    const char *data = ""; //object {} abitrary key/value payload
+    MBSTRING data; //object {} abitrary key/value payload
     struct fb_esp_fcm_http_v1_android_config_t android;
     struct fb_esp_fcm_http_v1_apns_config_t apns;
     struct fb_esp_fcm_http_v1_webpush_config_t webpush;
@@ -1369,12 +1395,12 @@ struct fb_esp_firestore_info_t
 
 struct fb_esp_firestore_transaction_read_only_option_t
 {
-    const char *readTime = "";
+    MBSTRING readTime;
 };
 
 struct fb_esp_firestore_transaction_read_write_option_t
 {
-    const char *retryTransaction = "";
+    MBSTRING retryTransaction;
 };
 
 typedef struct fb_esp_firestore_transaction_options_t
@@ -1407,34 +1433,34 @@ struct fb_esp_firestore_req_t
 
 struct fb_esp_firestore_document_write_field_transforms_t
 {
-    const char *fieldPath = ""; //string The path of the field. See Document.fields for the field path syntax reference.
+    MBSTRING fieldPath; //string The path of the field. See Document.fields for the field path syntax reference.
     fb_esp_firestore_transform_type transform_type = fb_esp_firestore_transform_type_undefined;
-    const char *transform_content = ""; //string of enum of ServerValue for setToServerValue, string of object of values for increment, maximum and minimum
+    MBSTRING transform_content; //string of enum of ServerValue for setToServerValue, string of object of values for increment, maximum and minimum
     //, string of array object for appendMissingElements or removeAllFromArray.
 };
 
 struct fb_esp_firestore_document_write_document_transform_t
 {
-    const char *transform_document_path = "";                                                                                                                           //The relative path of document to transform.
+    MBSTRING transform_document_path;                                                                                                                           //The relative path of document to transform.
     std::vector<struct fb_esp_firestore_document_write_field_transforms_t> field_transforms = std::vector<struct fb_esp_firestore_document_write_field_transforms_t>(); //array of fb_esp_firestore_document_write_field_transforms_t data.
 };
 
 struct fb_esp_firestore_document_precondition_t
 {
-    const char *exists = "";      //bool
-    const char *update_time = ""; //string of timestamp. When set, the target document must exist and have been last updated at that time.
+    MBSTRING exists;      //bool
+    MBSTRING update_time; //string of timestamp. When set, the target document must exist and have been last updated at that time.
     //A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.Examples : "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
 };
 
 struct fb_esp_firestore_document_write_t
 {
-    const char *update_masks = ""; //string The fields to update. Use comma (,) to separate between the field names
+    MBSTRING update_masks; //string The fields to update. Use comma (,) to separate between the field names
     struct fb_esp_firestore_document_write_field_transforms_t update_transforms;
     struct fb_esp_firestore_document_precondition_t current_document; //An optional precondition on the document.
     fb_esp_firestore_document_write_type type = fb_esp_firestore_document_write_type_undefined;
-    const char *update_document_content = "";                                       //A document object to write for fb_esp_firestore_document_write_type_update.
-    const char *update_document_path = "";                                          //The relative path of document to update for fb_esp_firestore_document_write_type_update.
-    const char *delete_document_path = "";                                          //The relative path of document to delete for fb_esp_firestore_document_write_type_delete.
+    MBSTRING update_document_content;                                       //A document object to write for fb_esp_firestore_document_write_type_update.
+    MBSTRING update_document_path;                                          //The relative path of document to update for fb_esp_firestore_document_write_type_update.
+    MBSTRING delete_document_path;                                          //The relative path of document to delete for fb_esp_firestore_document_write_type_delete.
     struct fb_esp_firestore_document_write_document_transform_t document_transform; //for fb_esp_firestore_document_write_type_transform
 };
 

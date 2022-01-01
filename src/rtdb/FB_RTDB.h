@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.15
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.2.16
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 27, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -43,6 +43,8 @@
 #include "stream/FB_MP_Stream.h"
 #include "stream/FB_Stream.h"
 
+using namespace mb_string;
+
 class FB_RTDB
 {
 
@@ -78,7 +80,7 @@ public:
    * @param millisec The milliseconds to limit the request (0 900,000 ms or 15 min).
   */
   template <typename T = int>
-  void setReadTimeout(FirebaseData *fbdo, T millisec) { mSetReadTimeout(fbdo, NUM2S(millisec).get()); }
+  void setReadTimeout(FirebaseData *fbdo, T millisec) { mSetReadTimeout(fbdo, num2Str(millisec, -1)); }
 
   /** Set the size limit of payload data that will write to the database for each request.
    * 
@@ -230,18 +232,18 @@ public:
    * call [FirebaseData object].pushName() to get the key.
   */
   template <typename T1 = const char *, typename T2 = int>
-  bool pushInt(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushInt(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = int>
-  bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new integer value and the virtual child ".priority" to the defined node.
   */
   template <typename T1 = const char *, typename T2 = int>
-  bool pushInt(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushInt(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = int>
-  bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new float value to the defined node.
    * 
@@ -254,18 +256,18 @@ public:
    * call [FirebaseData object].pushName() to get the key.
   */
   template <typename T = const char *>
-  bool pushFloat(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushFloat(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushFloatAsync(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushFloatAsync(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new float value and the virtual child ".priority" to the defined node.
   */
   template <typename T = const char *>
-  bool pushFloat(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushFloat(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushFloatAsync(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushFloatAsync(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new double value (8 bytes) to the defined node.
    * 
@@ -278,18 +280,18 @@ public:
    * call [FirebaseData object].pushName() to get the key.
   */
   template <typename T = const char *>
-  bool pushDouble(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushDouble(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushDoubleAsync(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushDoubleAsync(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new double value (8 bytes) and the virtual child ".priority" to the defined node.
   */
   template <typename T = const char *>
-  bool pushDouble(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushDouble(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) new Boolean value to the defined node.
    * 
@@ -303,18 +305,18 @@ public:
 
   */
   template <typename T = const char *>
-  bool pushBool(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushBool(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushBoolAsync(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushBoolAsync(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) the new Boolean value and the virtual child ".priority" to the defined node.
   */
   template <typename T = const char *>
-  bool pushBool(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushBool(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Append (post) a new string (text) to the defined node.
    * 
@@ -433,10 +435,10 @@ public:
    * call [FirebaseData object].pushName() to get the key.
    */
   template <typename T = const char *>
-  bool pushTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool pushTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), pgm2Str(fb_esp_pgm_str_154), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool pushTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool pushTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toString(path), pgm2Str(fb_esp_pgm_str_154), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the integer value at the defined node.
    * 
@@ -449,18 +451,18 @@ public:
    * Call [FirebaseData object].to<int>() to get the integer value that stored on the defined node.
   */
   template <typename T1 = const char *, typename T2 = int>
-  bool setInt(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = int>
-  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the integer value and virtual child ".priority" at the defined node.
   */
   template <typename T1 = const char *, typename T2 = int>
-  bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = int>
-  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) the integer value at the defined node if defined node's ETag matched the defined ETag value.
    * 
@@ -480,18 +482,18 @@ public:
    * Also call [FirebaseData object].to<int>() to get the current integer value.
   */
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
-  bool setInt(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
-  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) integer value and the virtual child ".priority" if defined ETag matches at the defined node 
   */
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
-  bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
-  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value at the defined node.
    * 
@@ -504,18 +506,18 @@ public:
    * Call [FirebaseData object].to<float>() to get the float value that stored on the defined node.
   */
   template <typename T = const char *>
-  bool setFloat(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setFloat(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setFloatAsync(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setFloatAsync(FirebaseData *fbdo, T path, float value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value and virtual child ".priority" at the defined node.
   */
   template <typename T = const char *>
-  bool setFloat(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setFloat(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setFloatAsync(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setFloatAsync(FirebaseData *fbdo, T path, float value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -535,18 +537,18 @@ public:
    * Also call [FirebaseData object].to<float>() to get the current float value.
    */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFloat(FirebaseData *fbdo, T1 path, float value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setFloat(FirebaseData *fbdo, T1 path, float value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) float value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFloat(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setFloat(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(false)).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(false)), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value at the defined node.
    * 
@@ -562,18 +564,18 @@ public:
    * use printf("%.9lf\n", firebaseData.to<double>()); for print the returned double value up to 9 decimal places.
   */
   template <typename T = const char *>
-  bool setDouble(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setDouble(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setDoubleAsync(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setDoubleAsync(FirebaseData *fbdo, T path, double value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value and virtual child ".priority" at the defined node.
   */
   template <typename T = const char *>
-  bool setDouble(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setDouble(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -593,18 +595,18 @@ public:
    * Also call [FirebaseData object].doubeData to get the current double value.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setDouble(FirebaseData *fbdo, T1 path, double value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setDouble(FirebaseData *fbdo, T1 path, double value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) double value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setDouble(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setDouble(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value, getPrec(true)).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, getPrec(true)), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value at the defined node.
    * 
@@ -617,18 +619,18 @@ public:
    * Call [FirebaseData object].to<bool>() to get the integer value that stored on the defined node.
   */
   template <typename T = const char *>
-  bool setBool(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setBool(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setBoolAsync(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setBoolAsync(FirebaseData *fbdo, T path, bool value) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value and virtual child ".priority" at the defined node.
   */
   template <typename T = const char *>
-  bool setBool(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setBool(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -648,18 +650,18 @@ public:
    * Also call [FirebaseData object].to<bool>() to get the current boolean value.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setBool(FirebaseData *fbdo, T1 path, bool value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setBool(FirebaseData *fbdo, T1 path, bool value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) boolean value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setBool(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
+  bool setBool(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
+  bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag) { return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toString(ETag), _IS_ASYNC, _NO_QUEUE); }
 
   /** Set (put) string at the defined node. 
    * 
@@ -922,10 +924,10 @@ public:
    * use printf("%.0lf\n", firebaseData.to<double>());.
   */
   template <typename T = const char *>
-  bool setTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
+  bool setTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), pgm2Str(fb_esp_pgm_str_154), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _NO_ASYNC, _NO_QUEUE); }
 
   template <typename T = const char *>
-  bool setTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), PGM2S(fb_esp_pgm_str_154).get(), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
+  bool setTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toString(path), pgm2Str(fb_esp_pgm_str_154), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, _IS_ASYNC, _NO_QUEUE); }
 
   /** Update (patch) the child (s) nodes to the defined node.
    * 
@@ -1392,7 +1394,7 @@ public:
    * is Email/Password sign-in.
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t, typename T4 = unsigned long>
-  bool deleteNodesByTimestamp(FirebaseData *fbdo, T1 path, T2 timestampNode, T3 limit, T4 dataRetentionPeriod) { return mDeleteNodesByTimestamp(fbdo, toString(path), toString(timestampNode), NUM2S(limit).get(), NUM2S(dataRetentionPeriod).get()); }
+  bool deleteNodesByTimestamp(FirebaseData *fbdo, T1 path, T2 timestampNode, T3 limit, T4 dataRetentionPeriod) { return mDeleteNodesByTimestamp(fbdo, toString(path), toString(timestampNode), num2Str(limit, -1), num2Str(dataRetentionPeriod, -1)); }
 
   /** Subscribe to the value changes on the defined node.
    * 
@@ -1835,166 +1837,166 @@ protected:
   }
 #endif
   template <typename T>
-  auto addrTo(int address) -> typename FB_JS::enable_if<!FB_JS::is_same<T, nullptr_t>::value, T>::type
+  auto addrTo(int address) -> typename enable_if<!is_same<T, nullptr_t>::value, T>::type
   {
     return reinterpret_cast<T>(address);
   }
 
   template <typename T>
-  auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+  auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
   template <typename T>
-  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+  auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
 
   template <typename T>
-  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+  auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
 
   template <typename T>
-  auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+  auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 
   template <typename T>
-  auto toStringType(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_std_string; }
+  auto toStringType(const T &val) -> typename enable_if<is_std_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_std_string; }
 
   template <typename T>
-  auto toStringType(const T &val) -> typename FB_JS::enable_if<FB_JS::is_arduino_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_arduino_string; }
+  auto toStringType(const T &val) -> typename enable_if<is_arduino_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_arduino_string; }
 
   template <typename T>
-  auto toStringType(const T &val) -> typename FB_JS::enable_if<FB_JS::is_mb_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_mb_string; }
+  auto toStringType(const T &val) -> typename enable_if<is_mb_string<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_mb_string; }
 
   template <typename T>
-  auto toStringType(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_const_char; }
+  auto toStringType(T val) -> typename enable_if<is_const_chars<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_const_char; }
 
   template <typename T>
-  auto toStringType(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_flash_string; }
+  auto toStringType(T val) -> typename enable_if<fs_t<T>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_flash_string; }
 
   template <typename T>
-  auto toStringType(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_none; }
+  auto toStringType(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, fb_esp_ref_sub_type>::type { return fb_esp_ref_sub_type_none; }
 
   template <typename T>
-  auto getIntType(T val) -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value, fb_esp_ref_sub_type>::type
+  auto getIntType(T val) -> typename enable_if<is_num_int<T>::value, fb_esp_ref_sub_type>::type
   {
 
-    if (FB_JS::is_num_uint64<T>::value)
+    if (is_num_uint64<T>::value)
       return fb_esp_ref_sub_type_uint64;
-    else if (FB_JS::is_num_int64<T>::value)
+    else if (is_num_int64<T>::value)
       return fb_esp_ref_sub_type_int64;
-    else if (FB_JS::is_num_uint32<T>::value)
+    else if (is_num_uint32<T>::value)
       return fb_esp_ref_sub_type_uint32;
-    else if (FB_JS::is_num_int32<T>::value)
+    else if (is_num_int32<T>::value)
       return fb_esp_ref_sub_type_int32;
-    else if (FB_JS::is_num_uint16<T>::value)
+    else if (is_num_uint16<T>::value)
       return fb_esp_ref_sub_type_uint16;
-    else if (FB_JS::is_num_int16<T>::value)
+    else if (is_num_int16<T>::value)
       return fb_esp_ref_sub_type_int16;
-    else if (FB_JS::is_num_uint8<T>::value)
+    else if (is_num_uint8<T>::value)
       return fb_esp_ref_sub_type_uint8;
     return fb_esp_ref_sub_type_int8;
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename enable_if<is_string<T1>::value && is_num_int<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+    return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename enable_if<is_string<T1>::value && is_bool<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+    return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, float>::value, bool>::type
   {
-    return bbuildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+    return bbuildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, double>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
+    return buildRequest(fbdo, m_post, toString(path), num2Str(value, -1), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) -> typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
     return buildRequest(fbdo, m_post, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJson *>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJson *>::value, bool>::type
   {
     return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray *>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJsonArray *>::value, bool>::type
   {
     return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, priority_addr, _NO_ETAG, async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 blob, size_t size, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, uint8_t *>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 blob, size_t size, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, uint8_t *>::value, bool>::type
   {
     return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, _NO_ETAG, async, _NO_QUEUE, size);
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, bool async) -> typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
     return buildRequest(fbdo, m_post, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, _NO_ETAG, async, _NO_QUEUE, _NO_BLOB_SIZE, toString(filename), storageType);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_bool<T2>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_bool<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+    return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_num_int<T2>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_num_int<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+    return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, float>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, float>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+    return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, double>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, double>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toString(path), NUM2S(value).get(), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
+    return buildRequest(fbdo, m_put, toString(path), num2Str(value, -1), d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
     return buildRequest(fbdo, m_put, toString(path), toString(value), d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJson *>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJson *>::value, bool>::type
   {
     return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_json, _NO_SUB_TYPE, toAddr(json), _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_same<T2, FirebaseJsonArray *>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJsonArray *>::value, bool>::type
   {
     return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_array, _NO_SUB_TYPE, toAddr(arr), _NO_QUERY, priority_addr, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 etag, bool async) -> typename enable_if<is_string<T1>::value, bool>::type
   {
     return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toString(etag), async, _NO_QUEUE);
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, T3 etag, bool async) -> typename FB_JS::enable_if<FB_JS::is_string<T1>::value && FB_JS::is_string<T2>::value, bool>::type
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, T3 etag, bool async) -> typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
     return buildRequest(fbdo, m_put, toString(path), _NO_PAYLOAD, d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toString(etag), async, _NO_QUEUE, _NO_BLOB_SIZE, toString(filename), storageType);
   }

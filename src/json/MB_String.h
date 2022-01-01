@@ -1,11 +1,13 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.1.2
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.0
  * 
- * 
- * November 29, 2021
+ * Created January 1, 2022
  * 
  * Changes Log
+ * 
+ * v1.2.0
+ * - Add supports bool, integer and float manipulation.
  * 
  * v1.1.2
  * - Fix substring with zero length returns the original string issue.
@@ -53,14 +55,248 @@
 #include <strings.h>
 
 #define MB_STRING_MAJOR 1
-#define MB_STRING_MINOR 1
-#define MB_STRING_PATCH 2
+#define MB_STRING_MINOR 2
+#define MB_STRING_PATCH 0
 
 #if defined(ESP8266) && defined(MMU_EXTERNAL_HEAP) && defined(MB_STRING_USE_PSRAM)
 #include <umm_malloc/umm_malloc.h>
 #include <umm_malloc/umm_heap_select.h>
 #define ESP8266_USE_EXTERNAL_HEAP
 #endif
+
+#if defined(ESP8266) || defined(ESP32)
+#define MBSTRING_FLASH_MCR FPSTR
+#elif defined(ARDUINO_ARCH_SAMD)
+#define MBSTRING_FLASH_MCR PSTR
+#elif defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
+#define MBSTRING_FLASH_MCR(s) (s)
+#elif defined(TEENSYDUINO)
+#define MBSTRING_FLASH_MCR(s) (s)
+#endif
+
+class MB_String;
+
+#define pgm2Str(p) (MB_String().appendP(p).c_str())
+#define num2Str(v, p) (MB_String().appendNum(v, p).c_str())
+
+namespace mb_string
+{
+
+    template <bool, typename T = void>
+    struct enable_if
+    {
+    };
+    template <typename T>
+    struct enable_if<true, T>
+    {
+        typedef T type;
+    };
+    template <typename T, typename U>
+    struct is_same
+    {
+        static bool const value = false;
+    };
+    template <typename T>
+    struct is_same<T, T>
+    {
+        static bool const value = true;
+    };
+
+    template <typename T>
+    struct is_num_int8
+    {
+        static bool const value = mb_string::is_same<T, int8_t>::value || mb_string::is_same<T, signed char>::value;
+    };
+
+    template <typename T>
+    struct is_num_uint8
+    {
+        static bool const value = mb_string::is_same<T, uint8_t>::value || mb_string::is_same<T, unsigned char>::value;
+    };
+
+    template <typename T>
+    struct is_num_int16
+    {
+        static bool const value = mb_string::is_same<T, int16_t>::value || mb_string::is_same<T, signed short>::value;
+    };
+
+    template <typename T>
+    struct is_num_uint16
+    {
+        static bool const value = mb_string::is_same<T, uint16_t>::value || mb_string::is_same<T, unsigned short>::value;
+    };
+
+    template <typename T>
+    struct is_num_int32
+    {
+        static bool const value = mb_string::is_same<T, signed int>::value || mb_string::is_same<T, int>::value ||
+                                  mb_string::is_same<T, int32_t>::value || mb_string::is_same<T, long>::value ||
+                                  mb_string::is_same<T, signed long>::value;
+    };
+
+    template <typename T>
+    struct is_num_uint32
+    {
+        static bool const value = mb_string::is_same<T, unsigned int>::value || mb_string::is_same<T, uint32_t>::value ||
+                                  mb_string::is_same<T, unsigned long>::value;
+    };
+
+    template <typename T>
+    struct is_num_int64
+    {
+        static bool const value = mb_string::is_same<T, int64_t>::value || mb_string::is_same<T, signed long long>::value;
+    };
+
+    template <typename T>
+    struct is_num_uint64
+    {
+        static bool const value = mb_string::is_same<T, uint64_t>::value || mb_string::is_same<T, unsigned long long>::value;
+    };
+
+    template <typename T>
+    struct is_num_neg_int
+    {
+        static bool const value = mb_string::is_num_int8<T>::value || mb_string::is_num_int16<T>::value ||
+                                  mb_string::is_num_int32<T>::value || mb_string::is_num_int64<T>::value;
+    };
+
+    template <typename T>
+    struct is_num_pos_int
+    {
+        static bool const value = mb_string::is_num_uint8<T>::value || mb_string::is_num_uint16<T>::value ||
+                                  mb_string::is_num_uint32<T>::value || mb_string::is_num_uint64<T>::value;
+    };
+
+    template <typename T>
+    struct is_num_int
+    {
+        static bool const value = mb_string::is_num_pos_int<T>::value || mb_string::is_num_neg_int<T>::value;
+    };
+
+    template <typename T>
+    struct is_num_float
+    {
+        static bool const value = mb_string::is_same<T, float>::value || mb_string::is_same<T, double>::value;
+    };
+
+    template <typename T>
+    struct is_bool
+    {
+        static bool const value = mb_string::is_same<T, bool>::value;
+    };
+
+    template <typename T>
+    struct cs_t
+    {
+        static bool const value = is_same<T, char *>::value;
+    };
+
+    template <typename T>
+    struct ccs_t
+    {
+        static bool const value = is_same<T, const char *>::value;
+    };
+
+    template <typename T>
+    struct as_t
+    {
+        static bool const value = is_same<T, String>::value;
+    };
+
+    template <typename T>
+    struct cas_t
+    {
+        static bool const value = is_same<T, const String>::value;
+    };
+
+    template <typename T>
+    struct ss_t
+    {
+        static bool const value = is_same<T, std::string>::value;
+    };
+
+    template <typename T>
+    struct css_t
+    {
+        static bool const value = is_same<T, const std::string>::value;
+    };
+
+    template <typename T>
+    struct ssh_t
+    {
+        static bool const value = is_same<T, StringSumHelper>::value;
+    };
+
+    template <typename T>
+    struct fs_t
+    {
+        static bool const value = is_same<T, const __FlashStringHelper *>::value;
+    };
+
+    template <typename T>
+    struct mbs_t
+    {
+        static bool const value = is_same<T, MB_String>::value;
+    };
+
+    template <typename T>
+    struct cmbs_t
+    {
+        static bool const value = is_same<T, const MB_String>::value;
+    };
+
+    template <typename T>
+    struct pgm_t
+    {
+        static bool const value = is_same<T, PGM_P>::value;
+    };
+
+    template <typename T>
+    struct is_const_chars
+    {
+        static bool const value = cs_t<T>::value || ccs_t<T>::value;
+    };
+
+    template <typename T>
+    struct is_arduino_string
+    {
+        static bool const value = as_t<T>::value || cas_t<T>::value;
+    };
+
+    template <typename T>
+    struct is_std_string
+    {
+        static bool const value = ss_t<T>::value || css_t<T>::value;
+    };
+
+    template <typename T>
+    struct is_mb_string
+    {
+        static bool const value = mbs_t<T>::value || cmbs_t<T>::value;
+    };
+
+    template <typename T>
+    struct is_arduino_string_sum_helper
+    {
+        static bool const value = ssh_t<T>::value;
+    };
+
+    template <typename T>
+    struct is_arduino_flash_string_helper
+    {
+        static bool const value = fs_t<T>::value;
+    };
+
+    template <typename T>
+    struct is_string
+    {
+        static bool const value = is_const_chars<T>::value || is_arduino_string<T>::value ||
+                                  is_arduino_string_sum_helper<T>::value || is_arduino_flash_string_helper<T>::value ||
+                                  is_std_string<T>::value || is_mb_string<T>::value;
+    };
+}
+
+using namespace mb_string;
 
 class MB_String
 {
@@ -72,6 +308,7 @@ public:
         reset(1);
 #endif
     };
+
     ~MB_String()
     {
         allocate(0, false);
@@ -79,15 +316,92 @@ public:
 
     MB_String(const char *cstr)
     {
-        clear();
         if (cstr)
             copy(cstr, strlen(cstr));
     }
 
     MB_String(const MB_String &value)
     {
-        clear();
         *this = value;
+    }
+
+    MB_String(const __FlashStringHelper *str)
+    {
+        *this = str;
+    }
+
+    MB_String(bool value)
+    {
+        appendNum(value);
+    }
+
+    MB_String(unsigned char value, unsigned char base = 10)
+    {
+        int len = 1 + 8 * sizeof(unsigned char);
+        reserve(len);
+
+        if (bufLen > 0)
+            utoa(value, buf, base);
+    }
+
+    MB_String(int value, unsigned char base = 10)
+    {
+        int len = 2 + 8 * sizeof(int);
+        reserve(len);
+
+        if (bufLen > 0)
+        {
+            if (base == 10)
+                sprintf(buf, (const char *)MBSTRING_FLASH_MCR("%d"), value);
+            else
+                itoa(value, buf, base);
+        }
+    }
+
+    MB_String(unsigned int value, unsigned char base = 10)
+    {
+         int len =1 + 8 * sizeof(unsigned int);
+         reserve(len);
+
+         if (bufLen > 0)
+             utoa(value, buf, base);
+    }
+
+    MB_String(long value, unsigned char base = 10)
+    {
+        int len =2 + 8 * sizeof(long);
+        reserve(len);
+
+        if (bufLen > 0)
+        {
+            if (base == 10)
+                sprintf(buf, (const char *)MBSTRING_FLASH_MCR("%ld"), value);
+            else
+                ltoa(value, buf, base);
+        }
+    }
+
+    MB_String(unsigned long value, unsigned char base = 10)
+    {
+         int len =1 + 8 * sizeof(unsigned long);
+         reserve(len);
+
+         if (bufLen > 0)
+             ultoa(value, buf, base);
+    }
+
+    MB_String(float value, unsigned char decimalPlaces = 2)
+    {
+        reserve(33);
+        if (bufLen > 0)
+            dtostrf(value, (decimalPlaces + 2), decimalPlaces, buf);
+    }
+
+    MB_String(double value, unsigned char decimalPlaces = 3)
+    {
+        reserve(33);
+        if (bufLen > 0)
+            dtostrf(value, (decimalPlaces + 2), decimalPlaces, buf);
     }
 
     MB_String &operator=(const std::string &rhs)
@@ -111,18 +425,53 @@ public:
         return *this;
     }
 
+    MB_String &operator=(const __FlashStringHelper *str)
+    {
+        if (str)
+        {
+            int len = strlen_P((PGM_P)str);
+
+            clear();
+            reserve(len);
+
+            if (bufLen > 0)
+                memcpy_P(buf, (PGM_P)str, len + 1);
+        }
+        return *this;
+    }
+
+    MB_String &operator+=(const __FlashStringHelper *str)
+    {
+        if (str)
+        {
+            int len = strlen_P((PGM_P)str);
+            if (len > 0)
+            {
+                unsigned int newlen = length() + len;
+                reserve(newlen);
+
+                if (bufLen > 0)
+                    memcpy_P(buf + length(), (PGM_P)str, len + 1);
+            }
+        }
+        return *this;
+    }
+
     unsigned char operator==(const MB_String &rhs) const
     {
         return equals(rhs);
     }
+
     unsigned char operator==(const char *cstr) const
     {
         return equals(cstr);
     }
+
     unsigned char operator!=(const MB_String &rhs) const
     {
         return !equals(rhs);
     }
+
     unsigned char operator!=(const char *cstr) const
     {
         return !equals(cstr);
@@ -176,6 +525,91 @@ public:
     MB_String &operator+=(char cstr)
     {
         append(1, cstr);
+        return (*this);
+    }
+
+    MB_String &operator+=(bool value)
+    {
+        appendNum(value);
+        return (*this);
+    }
+
+    template <typename T = int>
+    auto operator=(T value) -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, MB_String &>::type
+    {
+        clear();
+        appendNum(value);
+        return (*this);
+    }
+
+    template <typename T = int>
+    auto operator+=(T value) -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, MB_String &>::type
+    {
+        appendNum(value);
+        return (*this);
+    }
+
+    MB_String &appendP(PGM_P pgms, bool clear = false)
+    {
+        if (clear)
+            this->clear();
+
+        char *t = pgmStr(pgms);
+        if (t)
+        {
+            *this += t;
+            delP(&t);
+        }
+
+        return (*this);
+    }
+
+    template <typename T = int>
+    auto appendNum(T value, int precision = 0) -> typename enable_if<is_num_int<T>::value || is_bool<T>::value, MB_String &>::type
+    {
+        char *s = NULL;
+
+        if (is_bool<T>::value)
+            s = boolStr(value);
+        else if (is_num_neg_int<T>::value)
+            s = int64Str(value);
+        else if (is_num_pos_int<T>::value)
+            s = uint64Str(value);
+
+        if (s)
+        {
+            *this += s;
+            delP(&s);
+        }
+
+        return (*this);
+    }
+
+    MB_String &appendNum(float value, int precision = 5)
+    {
+        if (precision < 0)
+            precision = 5;
+
+        char *s = floatStr(value, precision);
+        if (s)
+        {
+            *this += s;
+            delP(&s);
+        }
+        return (*this);
+    }
+
+    MB_String &appendNum(double value, int precision = 9)
+    {
+        if (precision < 0)
+            precision = 9;
+
+        char *s = doubleStr(value, precision);
+        if (s)
+        {
+            *this += s;
+            delP(&s);
+        }
         return (*this);
     }
 
@@ -344,7 +778,7 @@ public:
         return bufLen;
     }
 
-    size_t find(const MB_String &s, size_t index) const
+    size_t find(const MB_String &s, size_t index = 0) const
     {
         if (!s.buf)
             return -1;
@@ -694,6 +1128,247 @@ public:
     static const size_t npos = -1;
 
 private:
+    /*** dtostrf function is taken from 
+     * https://github.com/stm32duino/Arduino_Core_STM32/blob/master/cores/arduino/avr/dtostrf.c
+    */
+
+    /***
+     * dtostrf - Emulation for dtostrf function from avr-libc
+     * Copyright (c) 2013 Arduino.  All rights reserved.
+     * Written by Cristian Maglie <c.maglie@arduino.cc>
+     * This library is free software; you can redistribute it and/or
+     * modify it under the terms of the GNU Lesser General Public
+     * License as published by the Free Software Foundation; either
+     * version 2.1 of the License, or (at your option) any later version.
+     * This library is distributed in the hope that it will be useful,
+     * but WITHOUT ANY WARRANTY; without even the implied warranty of
+     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     * Lesser General Public License for more details.
+     * You should have received a copy of the GNU Lesser General Public
+     * License along with this library; if not, write to the Free Software
+     * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    */
+
+    char *dtostrf(double val, signed char width, unsigned char prec, char *sout)
+    {
+        //Commented code is the original version
+        /***
+          char fmt[20];
+          sprintf(fmt, "%%%d.%df", width, prec);
+          sprintf(sout, fmt, val);
+          return sout;
+        */
+
+        // Handle negative numbers
+        uint8_t negative = 0;
+        if (val < 0.0)
+        {
+            negative = 1;
+            val = -val;
+        }
+
+        // Round correctly so that print(1.999, 2) prints as "2.00"
+        double rounding = 0.5;
+        for (int i = 0; i < prec; ++i)
+        {
+            rounding /= 10.0;
+        }
+
+        val += rounding;
+
+        // Extract the integer part of the number
+        unsigned long int_part = (unsigned long)val;
+        double remainder = val - (double)int_part;
+
+        if (prec > 0)
+        {
+            // Extract digits from the remainder
+            unsigned long dec_part = 0;
+            double decade = 1.0;
+            for (int i = 0; i < prec; i++)
+            {
+                decade *= 10.0;
+            }
+            remainder *= decade;
+            dec_part = (int)remainder;
+
+            if (negative)
+            {
+                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("-%ld.%0*ld"), int_part, prec, dec_part);
+            }
+            else
+            {
+                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("%ld.%0*ld"), int_part, prec, dec_part);
+            }
+        }
+        else
+        {
+            if (negative)
+            {
+                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("-%ld"), int_part);
+            }
+            else
+            {
+                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("%ld"), int_part);
+            }
+        }
+        // Handle minimum field width of the output string
+        // width is signed value, negative for left adjustment.
+        // Range -128,127
+
+        char *fmt = (char *)newP(129);
+        unsigned int w = width;
+        if (width < 0)
+        {
+            negative = 1;
+            w = -width;
+        }
+        else
+        {
+            negative = 0;
+        }
+
+        if (strlen(sout) < w)
+        {
+            memset(fmt, ' ', 128);
+            fmt[w - strlen(sout)] = '\0';
+            if (negative == 0)
+            {
+                char *tmp = (char *)newP(strlen(sout) + 1);
+                strcpy(tmp, sout);
+                strcpy(sout, fmt);
+                strcat(sout, tmp);
+                delP(&tmp);
+            }
+            else
+            {
+                // left adjustment
+                strcat(sout, fmt);
+            }
+        }
+
+        delP(&fmt);
+
+        return sout;
+    }
+
+    char *intStr(int value)
+    {
+        char *t = (char *)newP(36);
+        sprintf(t, (const char *)MBSTRING_FLASH_MCR("%d"), value);
+        return t;
+    }
+
+    char *int64Str(signed long long value)
+    {
+        char *t = (char *)newP(64);
+        sprintf(t, (const char *)MBSTRING_FLASH_MCR("%lld"), value);
+        return t;
+    }
+
+    char *uint64Str(unsigned long long value)
+    {
+        char *t = (char *)newP(64);
+        sprintf(t, (const char *)MBSTRING_FLASH_MCR("%llu"), value);
+        return t;
+    }
+
+    char *boolStr(bool value)
+    {
+        char *t = (char *)newP(8);
+        value ? strcpy(t, (const char *)MBSTRING_FLASH_MCR("true")) : strcpy(t, (const char *)MBSTRING_FLASH_MCR("false"));
+        return t;
+    }
+
+    char *floatStr(float value, int precision)
+    {
+        char *t = (char *)newP(32);
+        dtostrf(value, (precision + 2), precision, t);
+        trim(t);
+        return t;
+    }
+
+    char *doubleStr(double value, int precision)
+    {
+        char *t = (char *)newP(64);
+        dtostrf(value, (precision + 2), precision, t);
+        trim(t);
+        return t;
+    }
+
+    char *nullStr()
+    {
+        char *t = (char *)newP(6);
+        strcpy(t, (const char *)MBSTRING_FLASH_MCR("null"));
+        return t;
+    }
+
+    char *pgmStr(PGM_P p)
+    {
+        char *t = (char *)newP(strlen_P(p));
+        strcpy_P(t, p);
+        return t;
+    }
+
+    void trim(char *s)
+    {
+        if (!s)
+            return;
+        size_t i = strlen(s) - 1;
+        while (s[i] == '0' && i > 0)
+        {
+            if (s[i - 1] == '.')
+            {
+                i--;
+                break;
+            }
+            if (s[i - 1] != '0')
+                break;
+            i--;
+        }
+        if (i < strlen(s) - 1)
+            s[i] = '\0';
+    }
+
+    void *newP(size_t len)
+    {
+        void *p;
+        size_t newLen = getReservedLen(len);
+#if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
+
+        if ((p = (void *)ps_malloc(newLen)) == 0)
+            return NULL;
+
+#else
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.setExternalHeap();
+#endif
+
+        bool nn = ((p = (void *)malloc(newLen)) > 0);
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+        ESP.resetHeap();
+#endif
+
+        if (!nn)
+            return NULL;
+
+#endif
+        memset(p, 0, newLen);
+        return p;
+    }
+
+    void delP(void *ptr)
+    {
+        void **p = (void **)ptr;
+        if (*p)
+        {
+            free(*p);
+            *p = 0;
+        }
+    }
+
     size_t getReservedLen(size_t len)
     {
         int blen = len + 1;

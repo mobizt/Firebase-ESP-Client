@@ -1,11 +1,11 @@
-/**
+z/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -18,6 +18,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
+
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
@@ -74,6 +75,11 @@ void setup()
 
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    
+    /* Assign upload buffer size in byte */
+    //Data to be uploaded will send as multiple chunks with this size, to compromise between speed and memory used for buffering.
+    //The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
+    config.gcs.upload_buffer_size = 2048;
 
 #if defined(ESP8266)
     //required for large file data, increase Tx size as needed.
@@ -141,5 +147,6 @@ void loop()
         //For request payload properties description of Requestproperties, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-properties
         //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
         Firebase.GCStorage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase or Google Cloud Storage bucket id */, "/media.mp4" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, gcs_upload_type_resumable /* upload type */, "media.mp4" /* path of remote file stored in the bucket */, "video/mp4" /* mime type */, nullptr /* UploadOptions data */, nullptr /* Requestproperties data */, nullptr /* UploadStatusInfo data to get the status */, gcsUploadCallback /* callback function */);
+
     }
 }

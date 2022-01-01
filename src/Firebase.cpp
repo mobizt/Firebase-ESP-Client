@@ -496,7 +496,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     json->setJsonData(fbdo.fcm.raw);
 
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_577, true);
+    s.appendP(fb_esp_pgm_str_577, true);
 
     json->get(data, s.c_str());
 
@@ -521,7 +521,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
         return false;
     }
 
-    ut->appendP(s, fb_esp_pgm_str_576, true);
+    s.appendP(fb_esp_pgm_str_576, true);
 
     json->get(data, s.c_str());
 

@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.7
+ * FireSense v1.0.8
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created October 30, 2021
+ * Created January 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -70,6 +70,8 @@
 #define FIREBASE_STREAM_CLASS StreamData
 #endif
 #endif
+
+using namespace mb_string;
 
 class MillisTimer
 {
@@ -2079,7 +2081,7 @@ void FireSenseClass::checkCommand()
     {
         //ping back
         MBSTRING s = (const char *)FPSTR("reply");
-        s += NUM2S((uint64_t)time(nullptr)).get();
+        s += (uint64_t)time(nullptr);
         Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), s.c_str());
         if (config->close_session)
             config->shared_fbdo->clear();
@@ -2149,7 +2151,6 @@ void FireSenseClass::sendLog()
 
             _json.clear();
             time_t ts = time(nullptr);
-            String t = NUM2S((uint64_t)ts).get();
             size_t count = 0;
             for (size_t i = 0; i < channelsList.size(); i++)
             {
@@ -2169,7 +2170,7 @@ void FireSenseClass::sendLog()
                 _json.add((const char *)FPSTR("time"), (int)ts);
                 MBSTRING path = logPath();
                 path += (const char *)FPSTR("/");
-                path += t.c_str();
+                path += (uint64_t)ts;
 
                 printUpdate("", 1);
                 if (!Firebase.RTDB.updateNode(config->shared_fbdo, path.c_str(), &_json))
@@ -3204,7 +3205,7 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel)
     _json.add((const char *)FPSTR("log"), channel.log);
     path = channelConfigPath();
     path += (const char *)FPSTR("/");
-    path += NUM2S(channelsList.size() - 1).get();
+    path +=channelsList.size() - 1;
     if (!Firebase.RTDB.updateNode(config->shared_fbdo, path.c_str(), &_json))
     {
         printError(config->shared_fbdo);
@@ -3543,26 +3544,26 @@ void FireSenseClass::getDateTimeString(MBSTRING &s)
 
     s = sdow(timeinfo.tm_wday);
     s += (const char *)FPSTR(", ");
-    s += NUM2S(timeinfo.tm_mday).get();
+    s += timeinfo.tm_mday;
     s += (const char *)FPSTR(" ");
     s += months(timeinfo.tm_mon);
 
     s += (const char *)FPSTR(" ");
-    s += NUM2S(timeinfo.tm_year + 1900).get();
+    s += timeinfo.tm_year + 1900;
 
     s += (const char *)FPSTR(" ");
     if (timeinfo.tm_hour < 10)
         s += (const char *)FPSTR("0");
-    s += NUM2S(timeinfo.tm_hour).get();
+    s += timeinfo.tm_hour;
     s += (const char *)FPSTR(":");
     if (timeinfo.tm_min < 10)
         s += (const char *)FPSTR("0");
-    s += NUM2S(timeinfo.tm_min).get();
+    s += timeinfo.tm_min;
 
     s += (const char *)FPSTR(":");
     if (timeinfo.tm_sec < 10)
         s += (const char *)FPSTR("0");
-    s += NUM2S(timeinfo.tm_sec).get();
+    s += timeinfo.tm_sec;
 
     int p = 1;
     if (config->time_zone < 0)
@@ -3576,11 +3577,11 @@ void FireSenseClass::getDateTimeString(MBSTRING &s)
 
     if (tz < 10)
         s += (const char *)FPSTR("0");
-    s += NUM2S(tz).get();
+    s += tz;
 
     if (dif < 10)
         s += (const char *)FPSTR("0");
-    s += NUM2S((int)dif).get();
+    s += (int)dif;
 }
 
 void FireSenseClass::replaceAll(MBSTRING &str, const char *find, const char *replace)
@@ -3605,9 +3606,9 @@ void FireSenseClass::replaceChannelsValues(MBSTRING &str)
         struct data_value_info_t val = getChannelValue(&channelsList[i]);
 
         if (val.type == data_type_float)
-            replaceAll(str, s.c_str(), NUM2S(val.float_data).get());
+            replaceAll(str, s.c_str(), num2Str(val.float_data, -1));
         else
-            replaceAll(str, s.c_str(), NUM2S(val.int_data).get());
+            replaceAll(str, s.c_str(), num2Str(val.int_data, -1));
     }
 }
 

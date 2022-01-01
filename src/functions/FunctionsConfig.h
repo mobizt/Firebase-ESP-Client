@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.5
+ * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -41,6 +41,8 @@
 #include "Utils.h"
 #include "session/FB_Session.h"
 #include "PolicyBuilder.h"
+
+using namespace mb_string;
 
 class FunctionsConfig
 {
@@ -170,7 +172,7 @@ public:
      * @param seconds The number of seconds for timeout.
     */
     template <typename T = size_t>
-    void setTimeout(T seconds) { mSetTimeout(NUM2S(seconds).get()); }
+    void setTimeout(T seconds) { mSetTimeout(num2s(seconds).get()); }
 
     /**
      * Set the amount of memory in MB available for a function.
@@ -180,7 +182,7 @@ public:
      * @param mb The number of MB.
     */
     template <typename T = size_t>
-    void setAvailableMemoryMb(T mb) { mSetAvailableMemoryMb(NUM2S(mb).get()); }
+    void setAvailableMemoryMb(T mb) { mSetAvailableMemoryMb(num2s(mb).get()); }
 
     /**
      * Set the limit on the maximum number of function instances that may coexist at a given time.
@@ -192,7 +194,7 @@ public:
      * @param maxInstances The number of instances.
     */
     template <typename T = size_t>
-    void setMaxInstances(T maxInstances) { mSetMaxInstances(NUM2S(maxInstances).get()); }
+    void setMaxInstances(T maxInstances) { mSetMaxInstances(num2s(maxInstances).get()); }
 
     /**
      * Set the location of the function source code.
@@ -358,16 +360,16 @@ public:
 
 protected:
     template <typename T>
-    auto toString(const T &val) -> typename FB_JS::enable_if<FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value || FB_JS::is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
+    auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
 
     template <typename T>
-    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value, const char *>::type { return val; }
+    auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
 
     template <typename T>
-    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::fs_t<T>::value, const char *>::type { return (const char *)val; }
+    auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
 
     template <typename T>
-    auto toString(T val) -> typename FB_JS::enable_if<FB_JS::is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+    auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

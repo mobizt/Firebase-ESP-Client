@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.9
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 27, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -237,36 +237,36 @@ MBSTRING FirebaseData::getDataType(uint8_t type)
     switch (type)
     {
     case fb_esp_data_type::d_json:
-        ut->appendP(res, fb_esp_pgm_str_74);
+        res.appendP(fb_esp_pgm_str_74);
         break;
     case fb_esp_data_type::d_array:
-        ut->appendP(res, fb_esp_pgm_str_165);
+        res.appendP(fb_esp_pgm_str_165);
         break;
     case fb_esp_data_type::d_string:
     case fb_esp_data_type::d_std_string:
     case fb_esp_data_type::d_mb_string:
-        ut->appendP(res, fb_esp_pgm_str_75);
+        res.appendP(fb_esp_pgm_str_75);
         break;
     case fb_esp_data_type::d_float:
-        ut->appendP(res, fb_esp_pgm_str_76);
+        res.appendP(fb_esp_pgm_str_76);
         break;
     case fb_esp_data_type::d_double:
-        ut->appendP(res, fb_esp_pgm_str_108);
+        res.appendP(fb_esp_pgm_str_108);
         break;
     case fb_esp_data_type::d_boolean:
-        ut->appendP(res, fb_esp_pgm_str_105);
+        res.appendP(fb_esp_pgm_str_105);
         break;
     case fb_esp_data_type::d_integer:
-        ut->appendP(res, fb_esp_pgm_str_77);
+        res.appendP(fb_esp_pgm_str_77);
         break;
     case fb_esp_data_type::d_blob:
-        ut->appendP(res, fb_esp_pgm_str_91);
+        res.appendP(fb_esp_pgm_str_91);
         break;
     case fb_esp_data_type::d_file:
-        ut->appendP(res, fb_esp_pgm_str_183);
+        res.appendP(fb_esp_pgm_str_183);
         break;
     case fb_esp_data_type::d_null:
-        ut->appendP(res, fb_esp_pgm_str_78);
+        res.appendP(fb_esp_pgm_str_78);
         break;
     default:
         break;
@@ -284,21 +284,21 @@ MBSTRING FirebaseData::getMethod(uint8_t method)
     switch (method)
     {
     case fb_esp_method::m_get:
-        ut->appendP(res, fb_esp_pgm_str_115);
+        res.appendP(fb_esp_pgm_str_115);
         break;
     case fb_esp_method::m_put:
     case fb_esp_method::m_put_nocontent:
-        ut->appendP(res, fb_esp_pgm_str_116);
+        res.appendP(fb_esp_pgm_str_116);
         break;
     case fb_esp_method::m_post:
-        ut->appendP(res, fb_esp_pgm_str_117);
+        res.appendP(fb_esp_pgm_str_117);
         break;
     case fb_esp_method::m_patch:
     case fb_esp_method::m_patch_nocontent:
-        ut->appendP(res, fb_esp_pgm_str_118);
+        res.appendP(fb_esp_pgm_str_118);
         break;
     case fb_esp_method::m_delete:
-        ut->appendP(res, fb_esp_pgm_str_119);
+        res.appendP(fb_esp_pgm_str_119);
         break;
     default:
         break;
@@ -604,18 +604,18 @@ String FirebaseData::downloadURL()
 #ifdef ENABLE_FB_STORAGE
         if (_ss.fcs.meta.downloadTokens.length() > 0)
         {
-            ut->appendP(link, fb_esp_pgm_str_112);
-            ut->appendP(link, fb_esp_pgm_str_265);
-            ut->appendP(link, fb_esp_pgm_str_120);
-            ut->appendP(link, fb_esp_pgm_str_266);
+            link.appendP(fb_esp_pgm_str_112);
+            link.appendP(fb_esp_pgm_str_265);
+            link.appendP(fb_esp_pgm_str_120);
+            link.appendP(fb_esp_pgm_str_266);
             link += _ss.fcs.meta.bucket;
-            ut->appendP(link, fb_esp_pgm_str_267);
-            ut->appendP(link, fb_esp_pgm_str_1);
+            link.appendP(fb_esp_pgm_str_267);
+            link.appendP(fb_esp_pgm_str_1);
             link += ut->url_encode(_ss.fcs.meta.name);
-            ut->appendP(link, fb_esp_pgm_str_173);
-            ut->appendP(link, fb_esp_pgm_str_269);
-            ut->appendP(link, fb_esp_pgm_str_172);
-            ut->appendP(link, fb_esp_pgm_str_273);
+            link.appendP(fb_esp_pgm_str_173);
+            link.appendP(fb_esp_pgm_str_269);
+            link.appendP(fb_esp_pgm_str_172);
+            link.appendP(fb_esp_pgm_str_273);
             link += _ss.fcs.meta.downloadTokens.c_str();
         }
 #endif
@@ -625,18 +625,18 @@ String FirebaseData::downloadURL()
 #ifdef ENABLE_GC_STORAGE
         if (_ss.gcs.meta.downloadTokens.length() > 0)
         {
-            ut->appendP(link, fb_esp_pgm_str_112);
-            ut->appendP(link, fb_esp_pgm_str_265);
-            ut->appendP(link, fb_esp_pgm_str_120);
-            ut->appendP(link, fb_esp_pgm_str_266);
+            link.appendP(fb_esp_pgm_str_112);
+            link.appendP(fb_esp_pgm_str_265);
+            link.appendP(fb_esp_pgm_str_120);
+            link.appendP(fb_esp_pgm_str_266);
             link += _ss.gcs.meta.bucket;
-            ut->appendP(link, fb_esp_pgm_str_267);
-            ut->appendP(link, fb_esp_pgm_str_1);
+            link.appendP(fb_esp_pgm_str_267);
+            link.appendP(fb_esp_pgm_str_1);
             link += ut->url_encode(_ss.gcs.meta.name);
-            ut->appendP(link, fb_esp_pgm_str_173);
-            ut->appendP(link, fb_esp_pgm_str_269);
-            ut->appendP(link, fb_esp_pgm_str_172);
-            ut->appendP(link, fb_esp_pgm_str_273);
+            link.appendP(fb_esp_pgm_str_173);
+            link.appendP(fb_esp_pgm_str_269);
+            link.appendP(fb_esp_pgm_str_172);
+            link.appendP(fb_esp_pgm_str_273);
             link += _ss.gcs.meta.downloadTokens.c_str();
         }
 #endif
@@ -724,6 +724,8 @@ int FirebaseData::tcpSend(const char *data)
         maxRetry = Signer.getCfg()->tcp_data_sending_retry;
 
 #if defined(ESP8266)
+    if (_ss.bssl_tx_size < 512)
+        _ss.bssl_tx_size = 512;
     maxRetry *= (1 + (len / _ss.bssl_tx_size));
 #endif
 
@@ -950,7 +952,7 @@ void FirebaseData::checkOvf(size_t len, struct server_response_data_t &resp)
 #ifdef ENABLE_RTDB
     if (_ss.resp_size < len && !_ss.buffer_ovf)
     {
-        if (_ss.rtdb.req_method == fb_esp_method::m_get && !_ss.rtdb.data_tmo && _ss.con_mode != fb_esp_con_mode_fcm && resp.dataType != fb_esp_data_type::d_file && _ss.rtdb.req_method != fb_esp_method::m_download && _ss.rtdb.req_data_type != fb_esp_data_type::d_file &&_ss.rtdb.req_data_type != fb_esp_data_type::d_file_ota)
+        if (_ss.rtdb.req_method == fb_esp_method::m_get && !_ss.rtdb.data_tmo && _ss.con_mode != fb_esp_con_mode_fcm && resp.dataType != fb_esp_data_type::d_file && _ss.rtdb.req_method != fb_esp_method::m_download && _ss.rtdb.req_data_type != fb_esp_data_type::d_file && _ss.rtdb.req_data_type != fb_esp_data_type::d_file_ota)
         {
             _ss.buffer_ovf = true;
             _ss.http_code = FIREBASE_ERROR_BUFFER_OVERFLOW;
@@ -1052,7 +1054,7 @@ void FCMObject::mBegin(const char *serverKey, SPI_ETH_Module *spi_ethernet_modul
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_577);
+    s.appendP(fb_esp_pgm_str_577);
     json->set(s.c_str(), serverKey);
     raw.clear();
     s.clear();
@@ -1104,18 +1106,18 @@ void FCMObject::mSetNotifyMessage(const char *title, const char *body)
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_122);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_285);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_122);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_285);
     json->set(s.c_str(), title);
 
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_122);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_123);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_122);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_123);
     json->set(s.c_str(), body);
     s.clear();
     raw.clear();
@@ -1133,11 +1135,11 @@ void FCMObject::mSetNotifyMessage(const char *title, const char *body, const cha
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_122);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_124);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_122);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_124);
     json->set(s.c_str(), icon);
     s.clear();
     raw.clear();
@@ -1155,11 +1157,11 @@ void FCMObject::mSetNotifyMessage(const char *title, const char *body, const cha
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_122);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_125);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_122);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_125);
     json->set(s.c_str(), click_action);
     s.clear();
     raw.clear();
@@ -1176,10 +1178,10 @@ void FCMObject::mAddCustomNotifyMessage(const char *key, const char *value)
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_122);
-    ut->appendP(s, fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_122);
+    s.appendP(fb_esp_pgm_str_1);
     s += key;
     json->set(s.c_str(), value);
     s.clear();
@@ -1195,9 +1197,9 @@ void FCMObject::clearNotifyMessage()
         ut = new UtilsClass(nullptr);
 
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_122);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_122);
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->remove(s.c_str());
@@ -1215,9 +1217,9 @@ void FCMObject::mSetDataMessage(const char *jsonString)
         ut = new UtilsClass(nullptr);
 
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_135);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_135);
     FirebaseJson *js = new FirebaseJson();
     js->setJsonData(jsonString);
     FirebaseJson *json = new FirebaseJson();
@@ -1238,9 +1240,9 @@ void FCMObject::setDataMessage(FirebaseJson &json)
         ut = new UtilsClass(nullptr);
 
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_135);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_135);
     FirebaseJson *js = new FirebaseJson();
     js->setJsonData(raw);
     js->set(s.c_str(), json);
@@ -1257,9 +1259,9 @@ void FCMObject::clearDataMessage()
         ut = new UtilsClass(nullptr);
 
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_135);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_135);
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->remove(s.c_str());
@@ -1275,9 +1277,9 @@ void FCMObject::mSetPriority(const char *priority)
     if (!ut)
         ut = new UtilsClass(nullptr);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_136);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_136);
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->set(s.c_str(), priority);
@@ -1294,9 +1296,9 @@ void FCMObject::mSetCollapseKey(const char *key)
         ut = new UtilsClass(nullptr);
 
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_138);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_138);
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     json->set(s.c_str(), key);
@@ -1317,9 +1319,9 @@ void FCMObject::setTimeToLive(uint32_t seconds)
     else
         _ttl = -1;
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575, true);
-    ut->appendP(s, fb_esp_pgm_str_1);
-    ut->appendP(s, fb_esp_pgm_str_137);
+    s.appendP(fb_esp_pgm_str_575, true);
+    s.appendP(fb_esp_pgm_str_1);
+    s.appendP(fb_esp_pgm_str_137);
 
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
@@ -1338,8 +1340,8 @@ void FCMObject::mSetTopic(const char *topic)
     FirebaseJson *json = new FirebaseJson();
     json->setJsonData(raw);
     MBSTRING s, v;
-    ut->appendP(s, fb_esp_pgm_str_576);
-    ut->appendP(v, fb_esp_pgm_str_134);
+    s.appendP(fb_esp_pgm_str_576);
+    v.appendP(fb_esp_pgm_str_134);
     v += topic;
     json->set(s.c_str(), v.c_str());
     raw.clear();
@@ -1363,9 +1365,9 @@ void FCMObject::fcm_begin(FirebaseData &fbdo)
     fbdo._spi_ethernet_module = _spi_ethernet_module;
 
     MBSTRING host;
-    ut->appendP(host, fb_esp_pgm_str_249);
-    ut->appendP(host, fb_esp_pgm_str_4);
-    ut->appendP(host, fb_esp_pgm_str_120);
+    host.appendP(fb_esp_pgm_str_249);
+    host.appendP(fb_esp_pgm_str_4);
+    host.appendP(fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
     fbdo.tcpClient.begin(host.c_str(), _port);
 }
@@ -1381,23 +1383,23 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(raw);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_577);
+    s.appendP(fb_esp_pgm_str_577);
     json->get(*server_key, s.c_str());
     s.clear();
     json->clear();
 
-    ut->appendP(header, fb_esp_pgm_str_24, true);
-    ut->appendP(header, fb_esp_pgm_str_6);
-    ut->appendP(header, fb_esp_pgm_str_121);
-    ut->appendP(header, fb_esp_pgm_str_30);
+    header.appendP(fb_esp_pgm_str_24, true);
+    header.appendP(fb_esp_pgm_str_6);
+    header.appendP(fb_esp_pgm_str_121);
+    header.appendP(fb_esp_pgm_str_30);
 
-    ut->appendP(header, fb_esp_pgm_str_31);
-    ut->appendP(header, fb_esp_pgm_str_249);
-    ut->appendP(header, fb_esp_pgm_str_4);
-    ut->appendP(header, fb_esp_pgm_str_120);
-    ut->appendP(header, fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_31);
+    header.appendP(fb_esp_pgm_str_249);
+    header.appendP(fb_esp_pgm_str_4);
+    header.appendP(fb_esp_pgm_str_120);
+    header.appendP(fb_esp_pgm_str_21);
 
-    ut->appendP(header, fb_esp_pgm_str_131);
+    header.appendP(fb_esp_pgm_str_131);
 
     ret = fbdo.tcpSend(header.c_str());
 
@@ -1415,19 +1417,19 @@ int FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     if (ret < 0)
         return ret;
 
-    ut->appendP(header, fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_21);
 
-    ut->appendP(header, fb_esp_pgm_str_32);
+    header.appendP(fb_esp_pgm_str_32);
 
-    ut->appendP(header, fb_esp_pgm_str_8);
-    ut->appendP(header, fb_esp_pgm_str_129);
-    ut->appendP(header, fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_8);
+    header.appendP(fb_esp_pgm_str_129);
+    header.appendP(fb_esp_pgm_str_21);
 
-    ut->appendP(header, fb_esp_pgm_str_12);
-    header += NUM2S(payloadSize).get();
-    ut->appendP(header, fb_esp_pgm_str_21);
-    ut->appendP(header, fb_esp_pgm_str_36);
-    ut->appendP(header, fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_12);
+    header += payloadSize;
+    header.appendP(fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_36);
+    header.appendP(fb_esp_pgm_str_21);
 
     ret = fbdo.tcpSend(header.c_str());
     header.clear();
@@ -1445,9 +1447,9 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
     if (messageType == fb_esp_fcm_msg_type::msg_single)
     {
         MBSTRING s;
-        ut->appendP(s, fb_esp_pgm_str_575, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_128);
+        s.appendP(fb_esp_pgm_str_575, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_128);
 
         FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
         arr->setJsonArrayData(idTokens.c_str());
@@ -1466,9 +1468,9 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
         arr->setJsonArrayData(idTokens.c_str());
 
         MBSTRING s;
-        ut->appendP(s, fb_esp_pgm_str_575, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_130);
+        s.appendP(fb_esp_pgm_str_575, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_130);
 
         json->set(s.c_str(), *arr);
         s.clear();
@@ -1479,13 +1481,13 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
     else if (messageType == fb_esp_fcm_msg_type::msg_topic)
     {
         MBSTRING s;
-        ut->appendP(s, fb_esp_pgm_str_575, true);
-        ut->appendP(s, fb_esp_pgm_str_1);
-        ut->appendP(s, fb_esp_pgm_str_128);
+        s.appendP(fb_esp_pgm_str_575, true);
+        s.appendP(fb_esp_pgm_str_1);
+        s.appendP(fb_esp_pgm_str_128);
 
         FirebaseJsonData *topic = fbdo.to<FirebaseJsonData *>();
         MBSTRING s2;
-        ut->appendP(s2, fb_esp_pgm_str_576);
+        s2.appendP(fb_esp_pgm_str_576);
         json->get(*topic, s2.c_str());
         s2.clear();
         json->set(s.c_str(), topic->to<const char *>());
@@ -1748,16 +1750,12 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
                     FirebaseJsonData *data = fbdo->to<FirebaseJsonData *>();
                     json->setJsonData(t.c_str());
 
-                    char *tmp = ut->strP(fb_esp_pgm_str_257);
-                    json->get(*data, tmp);
-                    ut->delP(&tmp);
+                    json->get(*data, pgm2Str(fb_esp_pgm_str_257));
 
                     if (data->success)
                     {
                         error.code = data->to<int>();
-                        tmp = ut->strP(fb_esp_pgm_str_258);
-                        json->get(*data, tmp);
-                        ut->delP(&tmp);
+                        json->get(*data, pgm2Str(fb_esp_pgm_str_258));
                         if (data->success)
                             fbdo->_ss.error = data->to<const char *>();
                     }
@@ -1795,7 +1793,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(raw);
     MBSTRING s;
-    ut->appendP(s, fb_esp_pgm_str_575);
+    s.appendP(fb_esp_pgm_str_575);
     json->get(*msg, s.c_str());
     raw = json->raw();
     json->clear();

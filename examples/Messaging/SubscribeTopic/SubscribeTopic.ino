@@ -5,7 +5,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -14,7 +14,7 @@
 //Library allows your ESP device to interact with FCM server through FCM Server protocols.
 //https://firebase.google.com/docs/cloud-messaging/server#choose
 
-//This means your device now is not a FCM app client and unable to get the notification messages.
+//This means your device now is not a FCM app clizent and unable to get the notification messages.
 
 //The device registration tokens used in this example were taken from the FCM mobile app (Android or iOS)
 //or web app that athenticated to your project.
@@ -29,6 +29,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
+
 #include <Firebase_ESP_Client.h>
 
 /* 1. Define the WiFi credentials */

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.1
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -45,6 +45,8 @@
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #define FIREBASE_STREAM_CLASS StreamData
 #endif
+
+using namespace mb_string;
 
 class FIREBASE_STREAM_CLASS
 {
@@ -191,12 +193,12 @@ public:
     void empty();
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_num_int<T>::value || FB_JS::is_num_float<T>::value || FB_JS::is_bool<T>::value, T>::type
+    auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
     {
         if (sif->data.length() > 0)
         {
             if (sif->data_type == fb_esp_data_type::d_boolean)
-                mSetResBool(strcmp(sif->data.c_str(), NUM2S(true).get()) == 0);
+                mSetResBool(strcmp(sif->data.c_str(), num2Str(true,-1)) == 0);
             else if (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double)
             {
                 mSetResInt(sif->data.c_str());
@@ -204,34 +206,34 @@ public:
             }
         }
 
-        if (FB_JS::is_bool<T>::value)
+        if (is_bool<T>::value)
             return iVal.uint32 > 0;
-        else if (FB_JS::is_num_int8<T>::value)
+        else if (is_num_int8<T>::value)
             return iVal.int8;
-        else if (FB_JS::is_num_uint8<T>::value)
+        else if (is_num_uint8<T>::value)
             return iVal.uint8;
-        else if (FB_JS::is_num_int16<T>::value)
+        else if (is_num_int16<T>::value)
             return iVal.int16;
-        else if (FB_JS::is_num_uint16<T>::value)
+        else if (is_num_uint16<T>::value)
             return iVal.uint16;
-        else if (FB_JS::is_num_int32<T>::value)
+        else if (is_num_int32<T>::value)
             return iVal.int32;
-        else if (FB_JS::is_num_uint32<T>::value)
+        else if (is_num_uint32<T>::value)
             return iVal.uint32;
-        else if (FB_JS::is_num_int64<T>::value)
+        else if (is_num_int64<T>::value)
             return iVal.int64;
-        else if (FB_JS::is_num_uint64<T>::value)
+        else if (is_num_uint64<T>::value)
             return iVal.uint64;
-        else if (FB_JS::is_same<T, float>::value)
+        else if (is_same<T, float>::value)
             return fVal.f;
-        else if (FB_JS::is_same<T, double>::value)
+        else if (is_same<T, double>::value)
             return fVal.d;
         else
             return 0;
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_const_chars<T>::value || FB_JS::is_std_string<T>::value || FB_JS::is_arduino_string<T>::value || FB_JS::is_mb_string<T>::value, T>::type
+    auto to() -> typename enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
     {
 
         if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_string || sif->data_type == fb_esp_data_type::d_std_string || sif->data_type == fb_esp_data_type::d_mb_string))
@@ -241,7 +243,7 @@ public:
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJson *>::value, FirebaseJson *>::type
+    auto to() -> typename enable_if<is_same<T, FirebaseJson *>::value, FirebaseJson *>::type
     {
         if (!jsonPtr)
             jsonPtr = new FirebaseJson();
@@ -259,13 +261,13 @@ public:
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJson>::value, FirebaseJson &>::type
+    auto to() -> typename enable_if<is_same<T, FirebaseJson>::value, FirebaseJson &>::type
     {
         return *to<FirebaseJson *>();
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonArray *>::value, FirebaseJsonArray *>::type
+    auto to() -> typename enable_if<is_same<T, FirebaseJsonArray *>::value, FirebaseJsonArray *>::type
     {
         if (!arrPtr)
             arrPtr = new FirebaseJsonArray();
@@ -282,30 +284,28 @@ public:
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, FirebaseJsonArray>::value, FirebaseJsonArray &>::type
+    auto to() -> typename enable_if<is_same<T, FirebaseJsonArray>::value, FirebaseJsonArray &>::type
     {
         return *to<FirebaseJsonArray *>();
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, std::vector<uint8_t> *>::value, std::vector<uint8_t> *>::type
+    auto to() -> typename enable_if<is_same<T, std::vector<uint8_t> *>::value, std::vector<uint8_t> *>::type
     {
         return sif->blob;
     }
 
     template <typename T>
-    auto to() -> typename FB_JS::enable_if<FB_JS::is_same<T, File>::value, File>::type
+    auto to() -> typename enable_if<is_same<T, File>::value, File>::type
     {
         if (sif->data_type == fb_esp_data_type::d_file && Signer.getCfg())
         {
 #if defined FLASH_FS
-            char *tmp = ut->strP(fb_esp_pgm_str_184);
-
+           
             ut->flashTest();
 
             if (Signer.getCfg()->_int.fb_flash_rdy)
-                Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
-            ut->delP(&tmp);
+                Signer.getCfg()->_int.fb_file = FLASH_FS.open(pgm2Str(fb_esp_pgm_str_184), "r");
 #endif
         }
 

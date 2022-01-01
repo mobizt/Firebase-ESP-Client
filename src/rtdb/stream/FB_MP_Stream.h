@@ -1,9 +1,9 @@
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.2
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created November 2, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -46,6 +46,8 @@
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
 #endif
+
+using namespace mb_string;
 
 class FIREBASE_MP_STREAM_CLASS
 {

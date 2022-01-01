@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.7
+ * Google's Cloud Storage class, GCS.cpp version 1.1.8
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 27, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -196,7 +196,7 @@ bool GG_CloudStorage::mDownloadOTA(FirebaseData *fbdo, const char *bucketID, con
     fbdo->closeSession();
 
     return ret;
-    
+
 #endif
     return false;
 }
@@ -233,7 +233,7 @@ bool GG_CloudStorage::mGetMetadata(FirebaseData *fbdo, const char *bucketID, con
 bool GG_CloudStorage::gcs_connect(FirebaseData *fbdo)
 {
     MBSTRING host;
-    ut->appendP(host, fb_esp_pgm_str_120);
+    host.appendP(fb_esp_pgm_str_120);
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), 443);
     fbdo->_ss.max_payload_length = 0;
@@ -407,118 +407,118 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     }
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
-        ut->appendP(header, fb_esp_pgm_str_24);
+        header.appendP(fb_esp_pgm_str_24);
     else if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota || req->requestType == fb_esp_gcs_request_type_list || req->requestType == fb_esp_gcs_request_type_get_metadata)
-        ut->appendP(header, fb_esp_pgm_str_25);
+        header.appendP(fb_esp_pgm_str_25);
     else if (req->requestType == fb_esp_gcs_request_type_delete)
-        ut->appendP(header, fb_esp_pgm_str_27);
+        header.appendP(fb_esp_pgm_str_27);
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
-        ut->appendP(header, fb_esp_pgm_str_23);
+        header.appendP(fb_esp_pgm_str_23);
 
-    ut->appendP(header, fb_esp_pgm_str_6);
+    header.appendP(fb_esp_pgm_str_6);
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
-        ut->appendP(header, fb_esp_pgm_str_521);
+        header.appendP(fb_esp_pgm_str_521);
 
     if (req->requestType != fb_esp_gcs_request_type_upload_resumable_run)
     {
-        ut->appendP(header, fb_esp_pgm_str_520);
+        header.appendP(fb_esp_pgm_str_520);
         header += req->bucketID;
-        ut->appendP(header, fb_esp_pgm_str_522);
+        header.appendP(fb_esp_pgm_str_522);
     }
 
     if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota)
     {
-        ut->appendP(header, fb_esp_pgm_str_1);
+        header.appendP(fb_esp_pgm_str_1);
         header += ut->url_encode(req->remoteFileName);
-        ut->appendP(header, fb_esp_pgm_str_523);
+        header.appendP(fb_esp_pgm_str_523);
         setGetOptions(req, header, true);
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_simple)
     {
-        ut->appendP(header, fb_esp_pgm_str_524);
+        header.appendP(fb_esp_pgm_str_524);
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
         setUploadOptions(req, header, true);
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
     {
-        ut->appendP(header, fb_esp_pgm_str_525);
+        header.appendP(fb_esp_pgm_str_525);
         setUploadOptions(req, header, true);
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
     {
-        ut->appendP(header, fb_esp_pgm_str_526);
+        header.appendP(fb_esp_pgm_str_526);
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
         setUploadOptions(req, header, true);
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
     {
         fb_esp_url_info_t urlInfo;
         ut->getUrlInfo(req->location, urlInfo);
-        ut->appendP(header, fb_esp_pgm_str_1);
+        header.appendP(fb_esp_pgm_str_1);
         header += urlInfo.uri;
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
 
-        ut->appendP(header, fb_esp_pgm_str_31);
+        header.appendP(fb_esp_pgm_str_31);
         header += urlInfo.host;
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_21);
     }
     else if (req->requestType == fb_esp_gcs_request_type_delete)
     {
-        ut->appendP(header, fb_esp_pgm_str_1);
+        header.appendP(fb_esp_pgm_str_1);
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
         setDeleteOptions(req, header, true);
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
     }
     else if (req->requestType == fb_esp_gcs_request_type_list)
     {
         setListOptions(req, header, false);
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
     }
     else if (req->requestType == fb_esp_gcs_request_type_get_metadata)
     {
-        ut->appendP(header, fb_esp_pgm_str_1);
+        header.appendP(fb_esp_pgm_str_1);
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
-        ut->appendP(header, fb_esp_pgm_str_527);
+        header.appendP(fb_esp_pgm_str_527);
 
         setGetOptions(req, header, true);
-        ut->appendP(header, fb_esp_pgm_str_30);
+        header.appendP(fb_esp_pgm_str_30);
     }
 
     if (req->requestType != fb_esp_gcs_request_type_upload_resumable_run)
     {
-        ut->appendP(header, fb_esp_pgm_str_31);
-        ut->appendP(header, fb_esp_pgm_str_193);
-        ut->appendP(header, fb_esp_pgm_str_4);
-        ut->appendP(header, fb_esp_pgm_str_120);
+        header.appendP(fb_esp_pgm_str_31);
+        header.appendP(fb_esp_pgm_str_193);
+        header.appendP(fb_esp_pgm_str_4);
+        header.appendP(fb_esp_pgm_str_120);
 
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_21);
 
         if (!Signer.getCfg()->signer.test_mode)
         {
-            ut->appendP(header, fb_esp_pgm_str_237);
+            header.appendP(fb_esp_pgm_str_237);
             if (Signer.getTokenType() == token_type_oauth2_access_token)
-                ut->appendP(header, fb_esp_pgm_str_271);
+                header.appendP(fb_esp_pgm_str_271);
 
             ret = fbdo->tcpSend(header.c_str());
             header.clear();
@@ -531,97 +531,93 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             if (ret < 0)
                 return false;
 
-            ut->appendP(header, fb_esp_pgm_str_21);
+            header.appendP(fb_esp_pgm_str_21);
         }
     }
 
-    ut->appendP(header, fb_esp_pgm_str_32);
-    ut->appendP(header, fb_esp_pgm_str_34);
+    header.appendP(fb_esp_pgm_str_32);
+    header.appendP(fb_esp_pgm_str_34);
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple)
     {
 
-        ut->appendP(header, fb_esp_pgm_str_8);
+        header.appendP(fb_esp_pgm_str_8);
         header += req->mime;
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_21);
 
-        ut->appendP(header, fb_esp_pgm_str_12);
-        header += NUM2S(req->fileSize).get();
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_12);
+        header += req->fileSize;
+        header.appendP(fb_esp_pgm_str_21);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
     {
-        ut->appendP(multipart_header, fb_esp_pgm_str_529);
+        multipart_header.appendP(fb_esp_pgm_str_529);
         multipart_header += boundary;
-        ut->appendP(multipart_header, fb_esp_pgm_str_21);
-        ut->appendP(multipart_header, fb_esp_pgm_str_528);
-        ut->appendP(multipart_header, fb_esp_pgm_str_21);
+        multipart_header.appendP(fb_esp_pgm_str_21);
+        multipart_header.appendP(fb_esp_pgm_str_528);
+        multipart_header.appendP(fb_esp_pgm_str_21);
 
         fbdo->_ss.jsonPtr->clear();
 
-        char *tmp = ut->strP(fb_esp_pgm_str_274);
         if (req->remoteFileName[0] == '/')
-            fbdo->_ss.jsonPtr->add((const char *)tmp, ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1)).c_str());
+            fbdo->_ss.jsonPtr->add(pgm2Str(fb_esp_pgm_str_274), ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1)).c_str());
         else
-            fbdo->_ss.jsonPtr->add((const char *)tmp, ut->url_encode(req->remoteFileName).c_str());
-        ut->delP(&tmp);
+            fbdo->_ss.jsonPtr->add(pgm2Str(fb_esp_pgm_str_274), ut->url_encode(req->remoteFileName).c_str());
 
-        tmp = ut->strP(fb_esp_pgm_str_277);
-        fbdo->_ss.jsonPtr->add((const char *)tmp, req->mime.c_str());
-        ut->delP(&tmp);
+        fbdo->_ss.jsonPtr->add(pgm2Str(fb_esp_pgm_str_277), req->mime.c_str());
 
         bool hasProps = false;
         setRequestproperties(req, fbdo->_ss.jsonPtr, hasProps);
 
         multipart_header += fbdo->_ss.jsonPtr->raw();
-        ut->appendP(multipart_header, fb_esp_pgm_str_21);
-        ut->appendP(multipart_header, fb_esp_pgm_str_21);
+        multipart_header.appendP(fb_esp_pgm_str_21);
+        multipart_header.appendP(fb_esp_pgm_str_21);
 
-        ut->appendP(multipart_header, fb_esp_pgm_str_529);
+        multipart_header.appendP(fb_esp_pgm_str_529);
         multipart_header += boundary;
-        ut->appendP(multipart_header, fb_esp_pgm_str_21);
-        ut->appendP(multipart_header, fb_esp_pgm_str_21);
+        multipart_header.appendP(fb_esp_pgm_str_21);
+        multipart_header.appendP(fb_esp_pgm_str_21);
 
-        ut->appendP(multipart_header2, fb_esp_pgm_str_21);
-        ut->appendP(multipart_header2, fb_esp_pgm_str_529);
+        multipart_header2.appendP(fb_esp_pgm_str_21);
+        multipart_header2.appendP(fb_esp_pgm_str_529);
         multipart_header2 += boundary;
-        ut->appendP(multipart_header2, fb_esp_pgm_str_529);
+        multipart_header2.appendP(fb_esp_pgm_str_529);
 
-        ut->appendP(header, fb_esp_pgm_str_8);
-        ut->appendP(header, fb_esp_pgm_str_533);
+        header.appendP(fb_esp_pgm_str_8);
+        header.appendP(fb_esp_pgm_str_533);
         header += boundary;
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_21);
 
-        ut->appendP(header, fb_esp_pgm_str_12);
-        header += NUM2S(req->fileSize + multipart_header.length() + multipart_header2.length()).get();
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_12);
+        header += req->fileSize + multipart_header.length() + multipart_header2.length();
+        header.appendP(fb_esp_pgm_str_21);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
     {
-        ut->appendP(header, fb_esp_pgm_str_530);
+        header.appendP(fb_esp_pgm_str_530);
         header += req->mime;
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_21);
 
-        ut->appendP(header, fb_esp_pgm_str_531);
-        header += NUM2S(req->fileSize).get();
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header.appendP(fb_esp_pgm_str_531);
+        header += req->fileSize;
+        header.appendP(fb_esp_pgm_str_21);
 
-        ut->appendP(header, fb_esp_pgm_str_528);
+        header.appendP(fb_esp_pgm_str_528);
 
         fbdo->_ss.jsonPtr->clear();
 
         bool hasProps = false;
         setRequestproperties(req, fbdo->_ss.jsonPtr, hasProps);
 
-        ut->appendP(header, fb_esp_pgm_str_12);
+        header.appendP(fb_esp_pgm_str_12);
 
-        header += NUM2S(strlen(fbdo->_ss.jsonPtr->raw())).get();
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header += strlen(fbdo->_ss.jsonPtr->raw());
+        header.appendP(fb_esp_pgm_str_21);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
     {
 
-        ut->appendP(header, fb_esp_pgm_str_12);
+        header.appendP(fb_esp_pgm_str_12);
 
         req->chunkPos = req->chunkRange + 1;
         if (req->chunkRange == -1 && req->fileSize <= gcs_chunkSize)
@@ -637,25 +633,25 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 req->chunkLen = b - 1;
         }
 
-        header += NUM2S(req->chunkLen).get();
-        ut->appendP(header, fb_esp_pgm_str_21);
+        header += req->chunkLen;
+        header.appendP(fb_esp_pgm_str_21);
 
         if (req->chunkRange != -1 || req->location.length() > 0)
         {
-            ut->appendP(header, fb_esp_pgm_str_532);
-            header += NUM2S(req->chunkPos).get();
-            ut->appendP(header, fb_esp_pgm_str_397);
+            header.appendP(fb_esp_pgm_str_532);
+            header += req->chunkPos;
+            header.appendP(fb_esp_pgm_str_397);
 
-            header += NUM2S(req->chunkPos + req->chunkLen - 1).get();
+            header += req->chunkPos + req->chunkLen - 1;
 
-            ut->appendP(header, fb_esp_pgm_str_1);
-            header += NUM2S(req->fileSize).get();
+            header.appendP(fb_esp_pgm_str_1);
+            header += req->fileSize;
 
-            ut->appendP(header, fb_esp_pgm_str_21);
+            header.appendP(fb_esp_pgm_str_21);
         }
     }
 
-    ut->appendP(header, fb_esp_pgm_str_21);
+    header.appendP(fb_esp_pgm_str_21);
 
     if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota)
     {
@@ -687,7 +683,16 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
             int available = req->fileSize;
             size_t byteRead = 0;
-            int bufLen = 2048;
+            int bufLen = Signer.getCfg()->gcs.upload_buffer_size;
+            if (bufLen < 512)
+                bufLen = 512;
+#if defined(ESP32)
+            if (bufLen > 1024 * 50)
+                bufLen = 1024 * 50;
+#elif defined(ESP8266)
+            if (bufLen > 16384)
+                bufLen = 16384;
+#endif
             uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             size_t read = 0;
 
@@ -823,136 +828,106 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
 void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams)
 {
-    char *tmp = nullptr;
     if (req->getOptions)
     {
-        if (strlen(req->getOptions->generation) > 0)
+        if (req->getOptions->generation.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_493);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_493);
 
-            header += NUM2S(atoi(req->getOptions->generation)).get();
+            header += atoi(req->getOptions->generation.c_str());
         }
-        if (strlen(req->getOptions->ifGenerationMatch) > 0)
+        if (req->getOptions->ifGenerationMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_494);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_494);
 
-            header += NUM2S(atoi(req->getOptions->ifGenerationMatch)).get();
+            header += atoi(req->getOptions->ifGenerationMatch.c_str());
         }
 
-        if (strlen(req->getOptions->ifGenerationNotMatch) > 0)
+        if (req->getOptions->ifGenerationNotMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_495);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_495);
 
-            header += NUM2S(atoi(req->getOptions->ifGenerationNotMatch)).get();
+            header += atoi(req->getOptions->ifGenerationNotMatch.c_str());
         }
 
-        if (strlen(req->getOptions->ifMetagenerationMatch) > 0)
+        if (req->getOptions->ifMetagenerationMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_496);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_496);
 
-            header += NUM2S(atoi(req->getOptions->ifMetagenerationMatch)).get();
+            header += atoi(req->getOptions->ifMetagenerationMatch.c_str());
         }
 
-        if (strlen(req->getOptions->ifMetagenerationNotMatch) > 0)
+        if (req->getOptions->ifMetagenerationNotMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_497);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_497);
 
-            header += NUM2S(atoi(req->getOptions->ifMetagenerationNotMatch)).get();
+            header += atoi(req->getOptions->ifMetagenerationNotMatch.c_str());
         }
 
-        if (strlen(req->getOptions->projection) > 0)
+        if (req->getOptions->projection.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_498);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_498);
             header += req->getOptions->projection;
         }
     }
@@ -960,178 +935,138 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MBSTRING &head
 
 void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams)
 {
-    char *tmp = nullptr;
     if (req->uploadOptions)
     {
-        if (strlen(req->uploadOptions->contentEncoding) > 0)
+        if (req->uploadOptions->contentEncoding.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_499);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_499);
             header += req->uploadOptions->contentEncoding;
         }
 
-        if (strlen(req->uploadOptions->ifGenerationMatch) > 0)
+        if (req->uploadOptions->ifGenerationMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_494);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_494);
 
-            header += NUM2S(atoi(req->uploadOptions->ifGenerationMatch)).get();
+            header += atoi(req->uploadOptions->ifGenerationMatch.c_str());
         }
 
-        if (strlen(req->uploadOptions->ifGenerationNotMatch) > 0)
+        if (req->uploadOptions->ifGenerationNotMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_495);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_495);
 
-            header += NUM2S(atoi(req->uploadOptions->ifGenerationNotMatch)).get();
+            header += atoi(req->uploadOptions->ifGenerationNotMatch.c_str());
         }
 
-        if (strlen(req->uploadOptions->ifMetagenerationMatch) > 0)
+        if (req->uploadOptions->ifMetagenerationMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_496);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_496);
 
-            header += NUM2S(atoi(req->uploadOptions->ifMetagenerationMatch)).get();
+            header += atoi(req->uploadOptions->ifMetagenerationMatch.c_str());
         }
 
-        if (strlen(req->uploadOptions->ifMetagenerationNotMatch) > 0)
+        if (req->uploadOptions->ifMetagenerationNotMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_497);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_497);
 
-            header += NUM2S(atoi(req->uploadOptions->ifMetagenerationNotMatch)).get();
+            header += atoi(req->uploadOptions->ifMetagenerationNotMatch.c_str());
         }
 
-        if (strlen(req->uploadOptions->kmsKeyName) > 0)
+        if (req->uploadOptions->kmsKeyName.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_500);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_500);
             header += req->uploadOptions->kmsKeyName;
         }
 
-        if (strlen(req->uploadOptions->predefinedAcl) > 0)
+        if (req->uploadOptions->predefinedAcl.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_501);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_501);
             header += req->uploadOptions->predefinedAcl;
         }
 
-        if (strlen(req->uploadOptions->projection) > 0)
+        if (req->uploadOptions->projection.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_498);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_498);
+
             header += req->uploadOptions->projection;
         }
     }
@@ -1140,135 +1075,100 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MBSTRING &h
 void GG_CloudStorage::setRequestproperties(struct fb_esp_gcs_req_t *req, FirebaseJson *json, bool &hasProps)
 {
 
-    char *tmp = ut->strP(fb_esp_pgm_str_514);
-    char *tmp2 = ut->strP(fb_esp_pgm_str_518);
-    char *tmp3 = ut->strP(fb_esp_pgm_str_519);
     static FirebaseJson js;
     js.clear();
 
     if (req->requestProps)
     {
-        if (strlen(req->requestProps->metadata) > 0)
+        if (req->requestProps->metadata.length() > 0)
         {
             hasProps = true;
             js.setJsonData(req->requestProps->metadata);
         }
     }
 
-    js.add((const char *)tmp2, (const char *)tmp3);
-    json->add((const char *)tmp, js);
-    ut->delP(&tmp);
-    ut->delP(&tmp2);
-    ut->delP(&tmp3);
+    js.add(pgm2Str(fb_esp_pgm_str_518), pgm2Str(fb_esp_pgm_str_519));
+    json->add(pgm2Str(fb_esp_pgm_str_514), js);
 
     if (req->requestProps)
     {
-        if (strlen(req->requestProps->acl) > 0)
+        if (req->requestProps->acl.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_504);
             static FirebaseJsonArray arr;
             arr.clear();
             arr.setJsonArrayData(req->requestProps->acl);
-            json->add((const char *)tmp, arr);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_504), arr);
             hasProps = true;
         }
-        if (strlen(req->requestProps->cacheControl) > 0)
+        if (req->requestProps->cacheControl.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_505);
-            json->add((const char *)tmp, req->requestProps->cacheControl);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_505), req->requestProps->cacheControl);
             hasProps = true;
         }
-        if (strlen(req->requestProps->contentDisposition) > 0)
+        if (req->requestProps->contentDisposition.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_506);
-            json->add((const char *)tmp, req->requestProps->contentDisposition);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_506), req->requestProps->contentDisposition);
             hasProps = true;
         }
-        if (strlen(req->requestProps->contentEncoding) > 0)
+        if (req->requestProps->contentEncoding.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_507);
-            json->add((const char *)tmp, req->requestProps->contentEncoding);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_507), req->requestProps->contentEncoding);
             hasProps = true;
         }
-        if (strlen(req->requestProps->contentLanguage) > 0)
+        if (req->requestProps->contentLanguage.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_508);
-            json->add((const char *)tmp, req->requestProps->contentLanguage);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_508), req->requestProps->contentLanguage);
             hasProps = true;
         }
-        if (strlen(req->requestProps->contentType) > 0)
+        if (req->requestProps->contentType.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_509);
-            json->add((const char *)tmp, req->requestProps->contentType);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_509), req->requestProps->contentType);
             hasProps = true;
         }
-        if (strlen(req->requestProps->crc32c) > 0)
+        if (req->requestProps->crc32c.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_510);
-            json->add((const char *)tmp, req->requestProps->crc32c);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_510), req->requestProps->crc32c);
             hasProps = true;
         }
-        if (strlen(req->requestProps->customTime) > 0)
+        if (req->requestProps->customTime.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_511);
-            json->add((const char *)tmp, req->requestProps->customTime);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_511), req->requestProps->customTime);
             hasProps = true;
         }
 
-        if (strlen(req->requestProps->eventBasedHold) > 0)
+        if (req->requestProps->eventBasedHold.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_512);
-            tmp2 = ut->strP(fb_esp_pgm_str_107);
-            if (strcmp(req->requestProps->eventBasedHold, tmp2))
-                json->add((const char *)tmp, true);
+            if (strcmp(req->requestProps->eventBasedHold.c_str(), pgm2Str(fb_esp_pgm_str_107)))
+                json->add(pgm2Str(fb_esp_pgm_str_512), true);
             else
-                json->add((const char *)tmp, false);
-            ut->delP(&tmp);
-            ut->delP(&tmp2);
+                json->add(pgm2Str(fb_esp_pgm_str_512), false);
+
             hasProps = true;
         }
 
-        if (strlen(req->requestProps->md5Hash) > 0)
+        if (req->requestProps->md5Hash.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_513);
-            json->add((const char *)tmp, req->requestProps->md5Hash);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_513), req->requestProps->md5Hash);
             hasProps = true;
         }
 
-        if (strlen(req->requestProps->name) > 0)
+        if (req->requestProps->name.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_515);
-            json->add((const char *)tmp, req->requestProps->name);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_515), req->requestProps->name);
             hasProps = true;
         }
-        if (strlen(req->requestProps->storageClass) > 0)
+        if (req->requestProps->storageClass.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_516);
-            json->add((const char *)tmp, req->requestProps->storageClass);
-            ut->delP(&tmp);
+            json->add(pgm2Str(fb_esp_pgm_str_516), req->requestProps->storageClass);
             hasProps = true;
         }
 
-        if (strlen(req->requestProps->temporaryHold) > 0)
+        if (req->requestProps->temporaryHold.length() > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_517);
-            tmp2 = ut->strP(fb_esp_pgm_str_107);
-            if (strcmp(req->requestProps->temporaryHold, tmp2))
-                json->add((const char *)tmp, true);
+            if (strcmp(req->requestProps->temporaryHold.c_str(), pgm2Str(fb_esp_pgm_str_107)))
+                json->add(pgm2Str(fb_esp_pgm_str_517), true);
             else
-                json->add((const char *)tmp, false);
-            ut->delP(&tmp);
-            ut->delP(&tmp2);
+                json->add(pgm2Str(fb_esp_pgm_str_517), false);
             hasProps = true;
         }
     }
@@ -1276,96 +1176,74 @@ void GG_CloudStorage::setRequestproperties(struct fb_esp_gcs_req_t *req, Firebas
 
 void GG_CloudStorage::setDeleteOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams)
 {
-    char *tmp = nullptr;
-
     if (req->deleteOptions)
     {
-        if (strlen(req->deleteOptions->ifGenerationMatch) > 0)
+        if (req->deleteOptions->ifGenerationMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_494);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_494);
 
-            header += NUM2S(atoi(req->deleteOptions->ifGenerationMatch)).get();
+            header += atoi(req->deleteOptions->ifGenerationMatch.c_str());
         }
 
-        if (strlen(req->deleteOptions->ifGenerationNotMatch) > 0)
+        if (req->deleteOptions->ifGenerationNotMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_495);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_495);
 
-            header += NUM2S(atoi(req->deleteOptions->ifGenerationNotMatch)).get();
+            header += atoi(req->deleteOptions->ifGenerationNotMatch.c_str());
         }
 
-        if (strlen(req->deleteOptions->ifMetagenerationMatch) > 0)
+        if (req->deleteOptions->ifMetagenerationMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_496);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_496);
 
-            header += NUM2S(atoi(req->deleteOptions->ifMetagenerationMatch)).get();
+            header += atoi(req->deleteOptions->ifMetagenerationMatch.c_str());
         }
 
-        if (strlen(req->deleteOptions->ifMetagenerationNotMatch) > 0)
+        if (req->deleteOptions->ifMetagenerationNotMatch.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_497);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_497);
 
-            header += NUM2S(atoi(req->deleteOptions->ifMetagenerationNotMatch)).get();
+            header += atoi(req->deleteOptions->ifMetagenerationNotMatch.c_str());
         }
     }
 }
@@ -1373,219 +1251,160 @@ void GG_CloudStorage::setDeleteOptions(struct fb_esp_gcs_req_t *req, MBSTRING &h
 void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MBSTRING &header, bool hasParams)
 {
 
-    char *tmp = nullptr;
-    char *tmp2 = nullptr;
-
     if (req->listOptions)
     {
-        if (strlen(req->listOptions->delimiter) > 0)
+        if (req->listOptions->delimiter.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_485);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_485);
             header += req->listOptions->delimiter;
         }
 
-        if (strlen(req->listOptions->endOffset) > 0)
+        if (req->listOptions->endOffset.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_486);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_486);
             header += req->listOptions->endOffset;
         }
 
-        if (strlen(req->listOptions->includeTrailingDelimiter) > 0)
+        if (req->listOptions->includeTrailingDelimiter.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_487);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_487);
 
-            tmp = ut->strP(fb_esp_pgm_str_107);
-            tmp2 = ut->strP(fb_esp_pgm_str_106);
-
-            if (strcmp(req->listOptions->includeTrailingDelimiter, tmp))
-                header += tmp;
+            if (strcmp(req->listOptions->includeTrailingDelimiter.c_str(), pgm2Str(fb_esp_pgm_str_107)))
+                header.appendP(fb_esp_pgm_str_107);
             else
-                header += tmp2;
-            ut->delP(&tmp);
-            ut->delP(&tmp2);
+                header.appendP(fb_esp_pgm_str_106);
         }
 
-        if (strlen(req->listOptions->maxResults) > 0)
+        if (req->listOptions->maxResults.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_484);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_484);
 
-            header += NUM2S(atoi(req->listOptions->maxResults)).get();
+            header += atoi(req->listOptions->maxResults.c_str());
         }
 
-        if (strlen(req->listOptions->pageToken) > 0)
+        if (req->listOptions->pageToken.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_358);
-            tmp2 = ut->strP(fb_esp_pgm_str_361);
-            header += tmp;
-            header += tmp2;
+            header.appendP(fb_esp_pgm_str_358);
+            header.appendP(fb_esp_pgm_str_361);
             header += req->listOptions->pageToken;
-            ut->delP(&tmp);
-            ut->delP(&tmp2);
         }
 
-        if (strlen(req->listOptions->prefix) > 0)
+        if (req->listOptions->prefix.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_488);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_488);
             header += req->listOptions->prefix;
         }
 
-        if (strlen(req->listOptions->projection) > 0)
+        if (req->listOptions->projection.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_489);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_489);
             header += req->listOptions->projection;
         }
 
-        if (strlen(req->listOptions->startOffset) > 0)
+        if (req->listOptions->startOffset.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_490);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_490);
             header += req->listOptions->startOffset;
         }
 
-        if (strlen(req->listOptions->versions) > 0)
+        if (req->listOptions->versions.length() > 0)
         {
             if (hasParams)
             {
-                tmp = ut->strP(fb_esp_pgm_str_172);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_172);
             }
             else
             {
                 hasParams = true;
-                tmp = ut->strP(fb_esp_pgm_str_173);
-                header += tmp;
+                header.appendP(fb_esp_pgm_str_173);
             }
-            ut->delP(&tmp);
 
-            tmp = ut->strP(fb_esp_pgm_str_491);
-            header += tmp;
-            ut->delP(&tmp);
+            header.appendP(fb_esp_pgm_str_491);
 
-            tmp = ut->strP(fb_esp_pgm_str_107);
-            tmp2 = ut->strP(fb_esp_pgm_str_106);
-            if (strcmp(req->listOptions->versions, tmp))
-                header += tmp;
+            if (strcmp(req->listOptions->versions.c_str(), pgm2Str(fb_esp_pgm_str_107)))
+                header.appendP(fb_esp_pgm_str_107);
             else
-                header += tmp2;
-            ut->delP(&tmp);
-            ut->delP(&tmp2);
+                header.appendP(fb_esp_pgm_str_106);
         }
     }
 }
@@ -1737,19 +1556,15 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
     size_t p1 = 0;
     size_t p2 = 0;
 
-    char *tmp1 = nullptr;
-    char *tmp2 = nullptr;
-    char *tmp3 = nullptr;
-    char *tmp4 = nullptr;
-    char *tmp5 = nullptr;
+    MBSTRING tmp1, tmp2, tmp3, tmp4, tmp5;
 
     if (req->requestType == fb_esp_gcs_request_type_list)
     {
-        tmp1 = ut->strP(fb_esp_pgm_str_476);
-        tmp2 = ut->strP(fb_esp_pgm_str_477);
-        tmp3 = ut->strP(fb_esp_pgm_str_482);
-        tmp4 = ut->strP(fb_esp_pgm_str_483);
-        tmp5 = ut->strP(fb_esp_pgm_str_3);
+        tmp1 = pgm2Str(fb_esp_pgm_str_476);
+        tmp2 = pgm2Str(fb_esp_pgm_str_477);
+        tmp3 = pgm2Str(fb_esp_pgm_str_482);
+        tmp4 = pgm2Str(fb_esp_pgm_str_483);
+        tmp5 = pgm2Str(fb_esp_pgm_str_3);
     }
 
     MBSTRING payload;
@@ -1886,9 +1701,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                             if (_resumableUploadTasks.size() == 1)
                                             {
 #if defined(ESP32)
-                                                tmp6 = ut->strP(fb_esp_pgm_str_480);
-                                                runResumableUploadTask(tmp6);
-                                                ut->delP(&tmp6);
+                                                runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480));
 #elif defined(ESP8266)
                                                 runResumableUploadTask();
 #endif
@@ -1918,9 +1731,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                     if (_resumableUploadTasks.size() == 1)
                                     {
 #if defined(ESP32)
-                                        char *tmp7 = ut->strP(fb_esp_pgm_str_480);
-                                        runResumableUploadTask(tmp7);
-                                        ut->delP(&tmp7);
+                                        runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480));
 #elif defined(ESP8266)
                                         runResumableUploadTask();
 #endif
@@ -1970,13 +1781,24 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 #endif
                                 }
 
+                                int bufLen = Signer.getCfg()->gcs.download_buffer_size;
+                                if (bufLen < 512)
+                                    bufLen = 512;
+#if defined(ESP32)
+                                if (bufLen > 1024 * 50)
+                                    bufLen = 1024 * 50;
+#elif defined(ESP8266)
+                                if (bufLen > 16384)
+                                    bufLen = 16384;
+#endif
+
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {
                                     if (available)
                                     {
                                         dataTime = millis();
-                                        if (available > defaultChunkSize)
-                                            available = defaultChunkSize;
+                                        if ((int)available > bufLen)
+                                            available = bufLen;
 
                                         size_t read = fbdo->tcpClient.stream()->read(buf, available);
                                         if (read == available)
@@ -2049,9 +1871,9 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                         p1 = part1.find(tmp1);
                                         if (p1 != MBSTRING::npos)
                                         {
-                                            p2 = part1.find(tmp5, p1 + strlen(tmp1));
+                                            p2 = part1.find(tmp5, p1 + tmp1.length());
                                             if (p2 != MBSTRING::npos)
-                                                part2 = part1.substr(p1 + strlen(tmp1), p2 - p1 - strlen(tmp1));
+                                                part2 = part1.substr(p1 + tmp1.length(), p2 - p1 - tmp1.length());
                                         }
 
                                         if (part2.length() > 1)
@@ -2062,26 +1884,26 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                                 p1 = part1.find(tmp2);
                                                 if (p1 != MBSTRING::npos)
                                                 {
-                                                    p2 = part1.find(tmp5, p1 + strlen(tmp2));
+                                                    p2 = part1.find(tmp5, p1 + tmp2.length());
                                                     if (p2 != MBSTRING::npos)
-                                                        part3 = part1.substr(p1 + strlen(tmp2), p2 - p1 - strlen(tmp2));
+                                                        part3 = part1.substr(p1 + tmp2.length(), p2 - p1 - tmp2.length());
                                                 }
 
                                                 p1 = part1.find(tmp3);
                                                 if (p1 != MBSTRING::npos)
                                                 {
-                                                    p2 = part1.find(tmp5, p1 + strlen(tmp3));
+                                                    p2 = part1.find(tmp5, p1 + tmp3.length());
                                                     if (p2 != MBSTRING::npos)
-                                                        part4 = part1.substr(p1 + strlen(tmp3), p2 - p1 - strlen(tmp3));
+                                                        part4 = part1.substr(p1 + tmp3.length(), p2 - p1 - tmp3.length());
                                                 }
 
                                                 p1 = part1.find(tmp4);
                                                 if (p1 != MBSTRING::npos)
                                                 {
-                                                    p2 = part1.find(tmp5, p1 + strlen(tmp4));
+                                                    p2 = part1.find(tmp5, p1 + tmp4.length());
                                                     if (p2 != MBSTRING::npos)
                                                     {
-                                                        part5 = part1.substr(p1 + strlen(tmp4), p2 - p1 - strlen(tmp4));
+                                                        part5 = part1.substr(p1 + tmp4.length(), p2 - p1 - tmp4.length());
                                                         fb_esp_fcs_file_list_item_t itm;
                                                         itm.name = part2;
                                                         itm.bucket = part3;
@@ -2126,15 +1948,6 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
             }
         }
 
-        if (req->requestType == fb_esp_gcs_request_type_list)
-        {
-            ut->delP(&tmp1);
-            ut->delP(&tmp2);
-            ut->delP(&tmp3);
-            ut->delP(&tmp4);
-            ut->delP(&tmp5);
-        }
-
         if (hstate == 1)
             ut->delP(&header);
 
@@ -2152,16 +1965,11 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                 fbdo->_ss.jsonPtr->setJsonData(payload.c_str());
                 payload.clear();
 
-                char *tmp = ut->strP(fb_esp_pgm_str_257);
-                fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                ut->delP(&tmp);
-
+                fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_257));
                 if (fbdo->_ss.dataPtr->success)
                 {
                     error.code = fbdo->_ss.dataPtr->to<int>();
-                    tmp = ut->strP(fb_esp_pgm_str_258);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_258));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.error = fbdo->_ss.dataPtr->to<const char *>();
                 }
@@ -2169,63 +1977,46 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                 {
                     error.code = 0;
 
-                    tmp = ut->strP(fb_esp_pgm_str_274);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_274));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.name = fbdo->_ss.dataPtr->to<const char *>();
 
-                    tmp = ut->strP(fb_esp_pgm_str_275);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_275));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.bucket = fbdo->_ss.dataPtr->to<const char *>();
 
-                    tmp = ut->strP(fb_esp_pgm_str_276);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_276));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.generation = atoi(fbdo->_ss.dataPtr->to<const char *>());
 
-                    tmp = ut->strP(fb_esp_pgm_str_503);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_503));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.metageneration = atoi(fbdo->_ss.dataPtr->to<const char *>());
 
-                    tmp = ut->strP(fb_esp_pgm_str_277);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_277));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.contentType = fbdo->_ss.dataPtr->to<const char *>();
 
-                    tmp = ut->strP(fb_esp_pgm_str_278);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_278));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.size = atoi(fbdo->_ss.dataPtr->to<const char *>());
 
-                    tmp = ut->strP(fb_esp_pgm_str_279);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_279));
+
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.etag = fbdo->_ss.dataPtr->to<const char *>();
 
-                    tmp = ut->strP(fb_esp_pgm_str_478);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_478));
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.crc32 = fbdo->_ss.dataPtr->to<const char *>();
 
-                    tmp = ut->strP(fb_esp_pgm_str_479);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_479));
+
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.downloadTokens = fbdo->_ss.dataPtr->to<const char *>();
 
-                    tmp = ut->strP(fb_esp_pgm_str_492);
-                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, tmp);
-                    ut->delP(&tmp);
+                    fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_492));
+
                     if (fbdo->_ss.dataPtr->success)
                         fbdo->_ss.gcs.meta.mediaLink = fbdo->_ss.dataPtr->to<const char *>();
                 }

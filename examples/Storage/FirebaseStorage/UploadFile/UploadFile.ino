@@ -5,7 +5,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -17,6 +17,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
+
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
@@ -82,6 +83,11 @@ void setup()
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
+
+    /* Assign upload buffer size in byte */
+    //Data to be uploaded will send as multiple chunks with this size, to compromise between speed and memory used for buffering.
+    //The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
+    config.fcs.upload_buffer_size = 512;
 }
 
 void loop()

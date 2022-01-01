@@ -5,7 +5,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -16,6 +16,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
+
 #include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
@@ -74,17 +75,22 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
-    Firebase.begin(&config, &auth);
-    Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
     //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
 
+    /* Assign upload buffer size in byte */
+    //Data to be uploaded will send as multiple chunks with this size, to compromise between speed and memory used for buffering.
+    //The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
+    config.fcs.upload_buffer_size = 512;
+
     //Set the size of HTTP response buffers in the case where we want to work with large data.
     fbdo.setResponseSize(1024);
 
+    Firebase.begin(&config, &auth);
+    Firebase.reconnectWiFi(true);
 }
 
 void loop()

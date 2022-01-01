@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.5
+ * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created December 10, 2021
+ * Created January 1, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -98,16 +98,14 @@ void FunctionsConfig::mSetName(const char *name)
     if (ut)
     {
         MBSTRING t;
-        ut->appendP(t, fb_esp_pgm_str_395);
+        t.appendP(fb_esp_pgm_str_395);
         t += _projectId;
-        ut->appendP(t, fb_esp_pgm_str_364);
+        t.appendP(fb_esp_pgm_str_364);
         t += _locationId;
-        ut->appendP(t, fb_esp_pgm_str_365);
-        ut->appendP(t, fb_esp_pgm_str_1);
+        t.appendP(fb_esp_pgm_str_365);
+        t.appendP(fb_esp_pgm_str_1);
         t += name;
-        char *tmp = ut->strP(fb_esp_pgm_str_274);
-        _funcCfg.set(tmp, t.c_str());
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_274), t.c_str());
         _name = name;
     }
 }
@@ -118,10 +116,8 @@ void FunctionsConfig::mSetDescription(const char *description)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_367);
-        _funcCfg.set(tmp, description);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_367), description);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_367));
     }
 }
 
@@ -131,10 +127,8 @@ void FunctionsConfig::mSetEntryPoint(const char *entry)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_368);
-        _funcCfg.set(tmp, entry);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_368), entry);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_368));
     }
     _entryPoint = entry;
 }
@@ -145,29 +139,25 @@ void FunctionsConfig::mSetRuntime(const char *runtime)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_369);
-        _funcCfg.set(tmp, runtime);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_369), runtime);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_369));
     }
 }
 
-void FunctionsConfig::mSetTimeout(const char* seconds)
+void FunctionsConfig::mSetTimeout(const char *seconds)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_370);
         MBSTRING s = seconds;
-        ut->appendP(s, fb_esp_pgm_str_417);
-        _funcCfg.set(tmp, s.c_str());
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        s.appendP(fb_esp_pgm_str_417);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_370), s.c_str());
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_370));
     }
 }
 
-void FunctionsConfig::mSetAvailableMemoryMb(const char* mb)
+void FunctionsConfig::mSetAvailableMemoryMb(const char *mb)
 {
     int _mb = atoi(mb);
 
@@ -190,24 +180,20 @@ void FunctionsConfig::mSetAvailableMemoryMb(const char* mb)
         else
             _mb = 128;
 
-        char *tmp = ut->strP(fb_esp_pgm_str_371);
-        _funcCfg.set(tmp, _mb);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_371), _mb);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_371));
     }
 }
 
-void FunctionsConfig::mSetMaxInstances(const char* maxInstances)
+void FunctionsConfig::mSetMaxInstances(const char *maxInstances)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
         int m = atoi(maxInstances);
-        char *tmp = ut->strP(fb_esp_pgm_str_377);
-        _funcCfg.set(tmp, m);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_377), m);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_377));
     }
 }
 
@@ -218,20 +204,19 @@ void FunctionsConfig::mSetSource(const char *path, fb_esp_functions_sources_type
     if (ut)
     {
         MBSTRING t;
-        char *tmp = nullptr;
         switch (sourceType)
         {
         case functions_sources_type_storage_bucket_archive:
 
-            ut->appendP(t, fb_esp_pgm_str_350);
+            t.appendP(fb_esp_pgm_str_350);
             t += _bucketId;
             if (path[0] != '/')
-                ut->appendP(t, fb_esp_pgm_str_1);
+                t.appendP(fb_esp_pgm_str_1);
             t += path;
-            tmp = ut->strP(fb_esp_pgm_str_381);
-            _funcCfg.set(tmp, t.c_str());
-            addUpdateMasks(tmp);
-            ut->delP(&tmp);
+
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_381), t.c_str());
+            addUpdateMasks(pgm2Str(fb_esp_pgm_str_381));
+
             _sourceType = sourceType;
             break;
 
@@ -248,11 +233,8 @@ void FunctionsConfig::mSetSource(const char *path, fb_esp_functions_sources_type
             break;
 
         case functions_sources_type_repository:
-
-            tmp = ut->strP(fb_esp_pgm_str_382);
-            _funcCfg.set(tmp, path);
-            addUpdateMasks(tmp);
-            ut->delP(&tmp);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_382), path);
+            addUpdateMasks(pgm2Str(fb_esp_pgm_str_382));
             _sourceType = sourceType;
             break;
 
@@ -274,10 +256,8 @@ void FunctionsConfig::mSetIngressSettings(const char *settings)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_380);
-        _funcCfg.set(tmp, settings);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_380), settings);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_380));
     }
 }
 
@@ -288,9 +268,9 @@ void FunctionsConfig::mAddLabel(const char *key, const char *value)
     if (ut)
     {
         MBSTRING t;
-        ut->appendP(t, fb_esp_pgm_str_373);
+        t.appendP(fb_esp_pgm_str_373);
         addUpdateMasks(t.c_str());
-        ut->appendP(t, fb_esp_pgm_str_1);
+        t.appendP(fb_esp_pgm_str_1);
         t += key;
         _funcCfg.set(t.c_str(), value);
     }
@@ -301,10 +281,8 @@ void FunctionsConfig::clearLabels()
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_373);
-        _funcCfg.remove(tmp);
-        removeUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_373));
+        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_373));
     }
 }
 void FunctionsConfig::mAddEnvironmentVariable(const char *key, const char *value)
@@ -314,9 +292,9 @@ void FunctionsConfig::mAddEnvironmentVariable(const char *key, const char *value
     if (ut)
     {
         MBSTRING t;
-        ut->appendP(t, fb_esp_pgm_str_374);
+        t.appendP(fb_esp_pgm_str_374);
         addUpdateMasks(t.c_str());
-        ut->appendP(t, fb_esp_pgm_str_1);
+        t.appendP(fb_esp_pgm_str_1);
         t += key;
         _funcCfg.set(t.c_str(), value);
     }
@@ -327,10 +305,8 @@ void FunctionsConfig::clearEnvironmentVariables()
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_374);
-        _funcCfg.remove(tmp);
-        removeUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_374));
+        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_374));
     }
 }
 void FunctionsConfig::mAddBuildEnvironmentVariable(const char *key, const char *value)
@@ -340,9 +316,9 @@ void FunctionsConfig::mAddBuildEnvironmentVariable(const char *key, const char *
     if (ut)
     {
         MBSTRING t;
-        ut->appendP(t, fb_esp_pgm_str_375);
+        t.appendP(fb_esp_pgm_str_375);
         addUpdateMasks(t.c_str());
-        ut->appendP(t, fb_esp_pgm_str_1);
+        t.appendP(fb_esp_pgm_str_1);
         t += key;
         _funcCfg.set(t.c_str(), value);
     }
@@ -354,10 +330,8 @@ void FunctionsConfig::clearBuildEnvironmentVariables()
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_375);
-        _funcCfg.remove(tmp);
-        removeUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_375));
+        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_375));
     }
 }
 void FunctionsConfig::mSetNetwork(const char *network)
@@ -366,10 +340,8 @@ void FunctionsConfig::mSetNetwork(const char *network)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_376);
-        _funcCfg.set(tmp, network);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_376), network);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_376));
     }
 }
 void FunctionsConfig::mSetVpcConnector(const char *vpcConnector)
@@ -378,10 +350,8 @@ void FunctionsConfig::mSetVpcConnector(const char *vpcConnector)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_378);
-        _funcCfg.set(tmp, vpcConnector);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_378), vpcConnector);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_378));
     }
 }
 void FunctionsConfig::mSetVpcConnectorEgressSettings(const char *e)
@@ -390,10 +360,8 @@ void FunctionsConfig::mSetVpcConnectorEgressSettings(const char *e)
         ut = Signer.ut;
     if (ut)
     {
-        char *tmp = ut->strP(fb_esp_pgm_str_379);
-        _funcCfg.set(tmp, e);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_379), e);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_379));
     }
 }
 
@@ -404,42 +372,33 @@ void FunctionsConfig::mSetEventTrigger(const char *eventType, const char *resour
     if (ut)
     {
         _triggerType = fb_esp_functions_trigger_type_event;
-        char *tmp = nullptr;
+
         if (strlen(eventType) > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_385);
-            _funcCfg.set(tmp, eventType);
-            ut->delP(&tmp);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_385), eventType);
         }
 
         if (strlen(resource) > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_391);
-            _funcCfg.set(tmp, resource);
-            ut->delP(&tmp);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_391), resource);
         }
 
         if (strlen(service) > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_392);
-            _funcCfg.set(tmp, service);
-            ut->delP(&tmp);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_392), service);
         }
 
         if (strlen(failurePolicy) > 0)
         {
-            tmp = ut->strP(fb_esp_pgm_str_393);
+
             MBSTRING t;
-            ut->appendP(t, fb_esp_pgm_str_394);
+            t.appendP(fb_esp_pgm_str_394);
             static FirebaseJson js;
             js.clear();
             js.setJsonData(t.c_str());
-            _funcCfg.set(tmp, js);
-            ut->delP(&tmp);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_393), js);
         }
-        tmp = ut->strP(fb_esp_pgm_str_472);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_472));
     }
 }
 
@@ -450,9 +409,7 @@ void FunctionsConfig::setIamPolicy(PolicyBuilder *policy)
     if (ut)
     {
         _policy = policy;
-        char *tmp = ut->strP(fb_esp_pgm_str_473);
-        addUpdateMasks(tmp);
-        ut->delP(&tmp);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_473));
     }
 }
 
