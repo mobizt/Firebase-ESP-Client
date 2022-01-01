@@ -257,7 +257,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t, typename T4 = const char *>
-    bool listFunctions(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 pageSize, T4 pageToken = "") { return mListFunctions(fbdo, toString(projectId), toString(locationId), num2s(pageSize).get(), toString(pageToken)); }
+    bool listFunctions(FirebaseData *fbdo, T1 projectId, T2 locationId, T3 pageSize, T4 pageToken = "") { return mListFunctions(fbdo, toString(projectId), toString(locationId), num2Str(pageSize, -1), toString(pageToken)); }
 
     /** Returns a function with the given name from the requested project.
      * 
@@ -281,7 +281,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = size_t, typename T3 = const char *>
-    bool listOperations(FirebaseData *fbdo, T1 filter, T2 pageSize, T3 pageToken) { return mListOperations(fbdo, toString(filter), num2s(pageSize).get(), toString(pageToken)); }
+    bool listOperations(FirebaseData *fbdo, T1 filter, T2 pageSize, T3 pageToken) { return mListOperations(fbdo, toString(filter), num2Str(pageSize, -1), toString(pageToken)); }
 
 private:
     fb_esp_functions_status _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;

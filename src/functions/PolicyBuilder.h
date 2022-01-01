@@ -329,7 +329,7 @@ public:
      * 
     */
     template <typename T = int>
-    void setVersion(T v) { mSetVersion(num2s(v).get()); }
+    void setVersion(T v) { mSetVersion(num2Str(v, -1)); }
 
     /**
      * Set the ETag.

@@ -315,7 +315,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = size_t, typename T5 = const char *, typename T6 = const char *, typename T7 = const char *>
-    bool listDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 pageSize, T5 pageToken, T6 orderBy, T7 mask, bool showMissing) { return mListDocuments(fbdo, toString(projectId), toString(databaseId), toString(collectionId), num2s(pageSize).get(), toString(pageToken), toString(orderBy), toString(mask), showMissing); }
+    bool listDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 pageSize, T5 pageToken, T6 orderBy, T7 mask, bool showMissing) { return mListDocuments(fbdo, toString(projectId), toString(databaseId), toString(collectionId), num2Str(pageSize, -1), toString(pageToken), toString(orderBy), toString(mask), showMissing); }
 
     /** List the document collection ids in the defined document path.
      * 
@@ -332,7 +332,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = size_t, typename T5 = const char *>
-    bool listCollectionIds(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 pageSize, T5 pageToken) { return mListCollectionIds(fbdo, toString(projectId), toString(databaseId), toString(documentPath), num2s(pageSize).get(), toString(pageToken)); }
+    bool listCollectionIds(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 pageSize, T5 pageToken) { return mListCollectionIds(fbdo, toString(projectId), toString(databaseId), toString(documentPath), num2Str(pageSize, -1), toString(pageToken)); }
 
 private:
     UtilsClass *ut = nullptr;
@@ -354,8 +354,8 @@ private:
     bool mRollback(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *transaction);
     bool mRunQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode = fb_esp_firestore_consistency_mode_undefined, const char *consistency = "");
     bool mDeleteDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *exists = "", const char *updateTime = "");
-    bool mListDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char* pageSize, const char *pageToken, const char *orderBy, const char *mask, bool showMissing);
-    bool mListCollectionIds(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char* pageSize, const char *pageToken);
+    bool mListDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char *pageSize, const char *pageToken, const char *orderBy, const char *mask, bool showMissing);
+    bool mListCollectionIds(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *pageSize, const char *pageToken);
 
 protected:
     template <typename T>

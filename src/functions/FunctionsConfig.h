@@ -64,7 +64,7 @@ private:
 
     void addUpdateMasks(const char *key);
     void removeUpdateMasks(const char *key);
-    void mFunctionsConfig(const char* projectId, const char* locationId, const char *bucketId);
+    void mFunctionsConfig(const char *projectId, const char *locationId, const char *bucketId);
     void mSetProjectId(const char *projectId);
     void mSetLocationId(const char *locationId);
     void mSetBucketId(const char *bucketId);
@@ -72,9 +72,9 @@ private:
     void mSetDescription(const char *description);
     void mSetEntryPoint(const char *entry);
     void mSetRuntime(const char *runtime);
-    void mSetTimeout(const char* seconds);
-    void mSetAvailableMemoryMb(const char* mb);
-    void mSetMaxInstances(const char* maxInstances);
+    void mSetTimeout(const char *seconds);
+    void mSetAvailableMemoryMb(const char *mb);
+    void mSetMaxInstances(const char *maxInstances);
     void mSetSource(const char *path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
     void mAddLabel(const char *key, const char *value);
     void mAddEnvironmentVariable(const char *key, const char *value);
@@ -94,8 +94,8 @@ public:
      * @param locationId The project location.
      * @param bucketId The Firebase storage bucket ID in the project.
     */
-    template <typename T1 = const char*, typename T2= const char*, typename T3= const char*>
-    FunctionsConfig(T1 projectId, T2 locationId, T3 bucketId){mFunctionsConfig(toString(projectId), toString(locationId), toString(bucketId));}
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+    FunctionsConfig(T1 projectId, T2 locationId, T3 bucketId) { mFunctionsConfig(toString(projectId), toString(locationId), toString(bucketId)); }
 
     ~FunctionsConfig();
 
@@ -172,7 +172,7 @@ public:
      * @param seconds The number of seconds for timeout.
     */
     template <typename T = size_t>
-    void setTimeout(T seconds) { mSetTimeout(num2s(seconds).get()); }
+    void setTimeout(T seconds) { mSetTimeout(num2Str(seconds, -1)); }
 
     /**
      * Set the amount of memory in MB available for a function.
@@ -182,7 +182,7 @@ public:
      * @param mb The number of MB.
     */
     template <typename T = size_t>
-    void setAvailableMemoryMb(T mb) { mSetAvailableMemoryMb(num2s(mb).get()); }
+    void setAvailableMemoryMb(T mb) { mSetAvailableMemoryMb(num2Str(mb, -1)); }
 
     /**
      * Set the limit on the maximum number of function instances that may coexist at a given time.
@@ -194,7 +194,7 @@ public:
      * @param maxInstances The number of instances.
     */
     template <typename T = size_t>
-    void setMaxInstances(T maxInstances) { mSetMaxInstances(num2s(maxInstances).get()); }
+    void setMaxInstances(T maxInstances) { mSetMaxInstances(num2Str(maxInstances, -1)); }
 
     /**
      * Set the location of the function source code.
@@ -213,7 +213,7 @@ public:
      * mem_storage_type_flash
      * mem_storage_type_sd
     */
-    template <typename T = const char*>
+    template <typename T = const char *>
     void setSource(T path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined) { mSetSource(path, sourceType, storageType); }
 
     /**

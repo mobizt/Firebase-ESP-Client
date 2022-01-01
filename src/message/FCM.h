@@ -137,7 +137,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool subscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscibeTopic(fbdo, topic, IID, num2s(numToken).get()); }
+  bool subscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscibeTopic(fbdo, topic, IID, num2Str(numToken, -1)); }
 
   /** Unsubscribe the devices from the topic.
    * 
@@ -149,7 +149,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool unsubscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscibeTopic(fbdo, topic, IID, num2s(numToken).get()); }
+  bool unsubscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscibeTopic(fbdo, topic, IID, num2Str(numToken, -1)); }
 
   /** Get the app instance info.
    * 
@@ -172,7 +172,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char **, typename T3 = size_t>
-  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3  numToken) { return mRegisAPNsTokens(fbdo, application, sandbox, APNs, num2s(numToken).get()); }
+  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3  numToken) { return mRegisAPNsTokens(fbdo, application, sandbox, APNs, num2Str(numToken, -1)); }
 
   /** Get the server payload.
    * 

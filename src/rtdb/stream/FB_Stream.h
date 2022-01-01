@@ -198,7 +198,7 @@ public:
         if (sif->data.length() > 0)
         {
             if (sif->data_type == fb_esp_data_type::d_boolean)
-                mSetResBool(strcmp(sif->data.c_str(), num2Str(true,-1)) == 0);
+                mSetResBool(strcmp(sif->data.c_str(), num2Str(true, -1)) == 0);
             else if (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double)
             {
                 mSetResInt(sif->data.c_str());
@@ -301,7 +301,7 @@ public:
         if (sif->data_type == fb_esp_data_type::d_file && Signer.getCfg())
         {
 #if defined FLASH_FS
-           
+
             ut->flashTest();
 
             if (Signer.getCfg()->_int.fb_flash_rdy)

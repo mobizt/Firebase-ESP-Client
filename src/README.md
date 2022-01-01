@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.6
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.7
 
 
 The default filessystem used in the library is flash and SD.

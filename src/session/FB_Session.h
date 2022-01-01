@@ -589,7 +589,7 @@ public:
     if (_ss.rtdb.raw.length() > 0)
     {
       if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_boolean)
-        mSetResBool(strcmp(_ss.rtdb.raw.c_str(), num2Str(true,-1)) == 0);
+        mSetResBool(strcmp(_ss.rtdb.raw.c_str(), num2Str(true, -1)) == 0);
       else if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_integer || _ss.rtdb.resp_data_type == fb_esp_data_type::d_float || _ss.rtdb.resp_data_type == fb_esp_data_type::d_double)
       {
         mSetResInt(_ss.rtdb.raw.c_str());
