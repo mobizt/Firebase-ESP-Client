@@ -99,7 +99,7 @@ jobs:
         - "examples/Storage/GoogleCloudStorage/DownloadFileOTA/DownloadFileOTA.ino"
         - "examples/Storage/GoogleCloudStorage/ListFiles/ListFiles.ino"
         - "examples/Storage/GoogleCloudStorage/Metadata/Metadata.ino"
-        - "examples/Storage/GoogleCloudStorage/UploadFile/UploadFile.ino"
+        #- "examples/Storage/GoogleCloudStorage/UploadFile/UploadFile.ino"
 
     steps:
     - uses: actions/checkout@v2
@@ -227,7 +227,7 @@ jobs:
         - "examples/Storage/GoogleCloudStorage/DownloadFileOTA/DownloadFileOTA.ino"
         - "examples/Storage/GoogleCloudStorage/ListFiles/ListFiles.ino"
         - "examples/Storage/GoogleCloudStorage/Metadata/Metadata.ino"
-        - "examples/Storage/GoogleCloudStorage/UploadFile/UploadFile.ino"
+        #- "examples/Storage/GoogleCloudStorage/UploadFile/UploadFile.ino"
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip
