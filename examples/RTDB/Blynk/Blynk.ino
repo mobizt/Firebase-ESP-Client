@@ -3,7 +3,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt
+ * Github: https://github.com/mobizt/Firebase-ESP-Client
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -107,6 +107,8 @@ void setup()
   //Or use legacy authenticate method
   //config.database_url = DATABASE_URL;
   //config.signer.tokens.legacy_token = "<database secret>";
+
+  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
 

@@ -4,7 +4,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt
+ * Github: https://github.com/mobizt/Firebase-ESP-Client
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -141,6 +141,8 @@ void setup()
   //config.database_url = DATABASE_URL;
   //config.signer.tokens.legacy_token = "<database secret>";
 
+  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+
   Firebase.begin(&config, &auth);
 
   //Comment or pass false value when WiFi reconnection will control by your code or third party library
@@ -182,8 +184,6 @@ void setup()
 
 void loop()
 {
-  //Flash string (PROGMEM and FPSTR), Arduino String, C++ string, const char, char array, string literal are supported
-  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
@@ -215,7 +215,7 @@ void loop()
 
     Serial.printf("Get string... %s\n", Firebase.RTDB.getString(&fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
 
-    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse.ino
     FirebaseJson json;
 
     if (count == 0)

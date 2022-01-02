@@ -1,10 +1,9 @@
 /**
- * Created by K. Suwatchai (Mobizt) and WoolDoughnut310
+ * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt
- * Github: https://github.com/WoolDoughnut310
+ * Github: https://github.com/mobizt/Firebase-ESP-Client
  * 
  * Copyright (c) 2022 mobizt
  *

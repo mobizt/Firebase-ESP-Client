@@ -105,84 +105,84 @@ namespace mb_string
     template <typename T>
     struct is_num_int8
     {
-        static bool const value = mb_string::is_same<T, int8_t>::value || mb_string::is_same<T, signed char>::value;
+        static bool const value = is_same<T, int8_t>::value || is_same<T, signed char>::value;
     };
 
     template <typename T>
     struct is_num_uint8
     {
-        static bool const value = mb_string::is_same<T, uint8_t>::value || mb_string::is_same<T, unsigned char>::value;
+        static bool const value = is_same<T, uint8_t>::value || is_same<T, unsigned char>::value;
     };
 
     template <typename T>
     struct is_num_int16
     {
-        static bool const value = mb_string::is_same<T, int16_t>::value || mb_string::is_same<T, signed short>::value;
+        static bool const value = is_same<T, int16_t>::value || is_same<T, signed short>::value;
     };
 
     template <typename T>
     struct is_num_uint16
     {
-        static bool const value = mb_string::is_same<T, uint16_t>::value || mb_string::is_same<T, unsigned short>::value;
+        static bool const value = is_same<T, uint16_t>::value || is_same<T, unsigned short>::value;
     };
 
     template <typename T>
     struct is_num_int32
     {
-        static bool const value = mb_string::is_same<T, signed int>::value || mb_string::is_same<T, int>::value ||
-                                  mb_string::is_same<T, int32_t>::value || mb_string::is_same<T, long>::value ||
-                                  mb_string::is_same<T, signed long>::value;
+        static bool const value = is_same<T, signed int>::value || is_same<T, int>::value ||
+                                  is_same<T, int32_t>::value || is_same<T, long>::value ||
+                                  is_same<T, signed long>::value;
     };
 
     template <typename T>
     struct is_num_uint32
     {
-        static bool const value = mb_string::is_same<T, unsigned int>::value || mb_string::is_same<T, uint32_t>::value ||
-                                  mb_string::is_same<T, unsigned long>::value;
+        static bool const value = is_same<T, unsigned int>::value || is_same<T, uint32_t>::value ||
+                                  is_same<T, unsigned long>::value;
     };
 
     template <typename T>
     struct is_num_int64
     {
-        static bool const value = mb_string::is_same<T, int64_t>::value || mb_string::is_same<T, signed long long>::value;
+        static bool const value = is_same<T, int64_t>::value || is_same<T, signed long long>::value;
     };
 
     template <typename T>
     struct is_num_uint64
     {
-        static bool const value = mb_string::is_same<T, uint64_t>::value || mb_string::is_same<T, unsigned long long>::value;
+        static bool const value = is_same<T, uint64_t>::value || is_same<T, unsigned long long>::value;
     };
 
     template <typename T>
     struct is_num_neg_int
     {
-        static bool const value = mb_string::is_num_int8<T>::value || mb_string::is_num_int16<T>::value ||
-                                  mb_string::is_num_int32<T>::value || mb_string::is_num_int64<T>::value;
+        static bool const value = is_num_int8<T>::value || is_num_int16<T>::value ||
+                                  is_num_int32<T>::value || is_num_int64<T>::value;
     };
 
     template <typename T>
     struct is_num_pos_int
     {
-        static bool const value = mb_string::is_num_uint8<T>::value || mb_string::is_num_uint16<T>::value ||
-                                  mb_string::is_num_uint32<T>::value || mb_string::is_num_uint64<T>::value;
+        static bool const value = is_num_uint8<T>::value || is_num_uint16<T>::value ||
+                                  is_num_uint32<T>::value || is_num_uint64<T>::value;
     };
 
     template <typename T>
     struct is_num_int
     {
-        static bool const value = mb_string::is_num_pos_int<T>::value || mb_string::is_num_neg_int<T>::value;
+        static bool const value = is_num_pos_int<T>::value || is_num_neg_int<T>::value;
     };
 
     template <typename T>
     struct is_num_float
     {
-        static bool const value = mb_string::is_same<T, float>::value || mb_string::is_same<T, double>::value;
+        static bool const value = is_same<T, float>::value || is_same<T, double>::value;
     };
 
     template <typename T>
     struct is_bool
     {
-        static bool const value = mb_string::is_same<T, bool>::value;
+        static bool const value = is_same<T, bool>::value;
     };
 
     template <typename T>
