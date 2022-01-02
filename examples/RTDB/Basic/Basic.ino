@@ -175,7 +175,7 @@ void loop()
     }
     else
     {
-      json.add(String(count), F("smart!");
+      json.add(String(count), F("smart!"));
       Serial.printf("Update node... %s\n", Firebase.RTDB.updateNode(&fbdo, F("/test/json/value/round"), &json) ? "ok" : fbdo.errorReason().c_str());
     }
 
