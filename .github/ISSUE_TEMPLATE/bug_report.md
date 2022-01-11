@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: BUG
-labels: bug, good first issue, invalid, wontfix
+title: ''
+labels: ''
 assignees: ''
 
 ---
@@ -14,11 +14,10 @@ If you have questions, use [Discussions](https://github.com/mobizt/Firebase-ESP-
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+Create minimal, clean and clear testing code that addressed the issue.
+The third party libraries should be removed.
+And post the testing code here.
+
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
