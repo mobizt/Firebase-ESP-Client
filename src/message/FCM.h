@@ -172,7 +172,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char **, typename T3 = size_t>
-  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3 numToken) { return mRegisAPNsTokens(fbdo, toStringPtr(application), toStringPtr(sandbox), APNs, numToken); }
+  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3 numToken) { return mRegisAPNsTokens(fbdo, toStringPtr(application), sandbox, APNs, numToken); }
 
   /** Get the server payload.
    * 
