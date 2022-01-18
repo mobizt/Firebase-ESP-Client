@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -47,15 +47,15 @@ FunctionsConfig::~FunctionsConfig()
     clear();
 }
 
-void FunctionsConfig::mSetProjectId(const char *projectId)
+void FunctionsConfig::mSetProjectId(MB_StringPtr projectId)
 {
     _projectId = projectId;
 }
-void FunctionsConfig::mSetLocationId(const char *locationId)
+void FunctionsConfig::mSetLocationId(MB_StringPtr locationId)
 {
     _locationId = locationId;
 }
-void FunctionsConfig::mSetBucketId(const char *bucketId)
+void FunctionsConfig::mSetBucketId(MB_StringPtr bucketId)
 {
     _bucketId = bucketId;
 }
@@ -70,7 +70,7 @@ void FunctionsConfig::addUpdateMasks(const char *key)
     }
     _updateMask.push_back(key);
 }
-void FunctionsConfig::mFunctionsConfig(const char *projectId, const char *locationId, const char *bucketId)
+void FunctionsConfig::mFunctionsConfig(MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr bucketId)
 {
     _projectId = projectId;
     _locationId = locationId;
@@ -91,13 +91,13 @@ void FunctionsConfig::removeUpdateMasks(const char *key)
     }
 }
 
-void FunctionsConfig::mSetName(const char *name)
+void FunctionsConfig::mSetName(MB_StringPtr name)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        MBSTRING t;
+        MB_String t;
         t.appendP(fb_esp_pgm_str_395);
         t += _projectId;
         t.appendP(fb_esp_pgm_str_364);
@@ -110,56 +110,60 @@ void FunctionsConfig::mSetName(const char *name)
     }
 }
 
-void FunctionsConfig::mSetDescription(const char *description)
+void FunctionsConfig::mSetDescription(MB_StringPtr description)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_367), description);
+        MB_String _description = description;
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_367), _description);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_367));
     }
 }
 
-void FunctionsConfig::mSetEntryPoint(const char *entry)
+void FunctionsConfig::mSetEntryPoint(MB_StringPtr entry)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_368), entry);
+        MB_String _entry = entry;
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_368), _entry);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_368));
     }
     _entryPoint = entry;
 }
 
-void FunctionsConfig::mSetRuntime(const char *runtime)
+void FunctionsConfig::mSetRuntime(MB_StringPtr runtime)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_369), runtime);
+        MB_String _runtime = runtime;
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_369), _runtime);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_369));
     }
 }
 
-void FunctionsConfig::mSetTimeout(const char *seconds)
+void FunctionsConfig::mSetTimeout(MB_StringPtr seconds)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        MBSTRING s = seconds;
+        MB_String s = seconds;
         s.appendP(fb_esp_pgm_str_417);
         _funcCfg.set(pgm2Str(fb_esp_pgm_str_370), s.c_str());
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_370));
     }
 }
 
-void FunctionsConfig::mSetAvailableMemoryMb(const char *mb)
+void FunctionsConfig::mSetAvailableMemoryMb(MB_StringPtr mb)
 {
-    int _mb = atoi(mb);
+    MB_String m = mb;
+    int _mb = atoi(m.c_str());
 
     if (!ut)
         ut = Signer.ut;
@@ -185,32 +189,34 @@ void FunctionsConfig::mSetAvailableMemoryMb(const char *mb)
     }
 }
 
-void FunctionsConfig::mSetMaxInstances(const char *maxInstances)
+void FunctionsConfig::mSetMaxInstances(MB_StringPtr maxInstances)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        int m = atoi(maxInstances);
+        MB_String _maxInstances = maxInstances;
+        int m = atoi(_maxInstances.c_str());
         _funcCfg.set(pgm2Str(fb_esp_pgm_str_377), m);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_377));
     }
 }
 
-void FunctionsConfig::mSetSource(const char *path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType)
+void FunctionsConfig::mSetSource(MB_StringPtr path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        MBSTRING t;
+        MB_String _path = path;
+        MB_String t;
         switch (sourceType)
         {
         case functions_sources_type_storage_bucket_archive:
 
             t.appendP(fb_esp_pgm_str_350);
             t += _bucketId;
-            if (path[0] != '/')
+            if (_path[0] != '/')
                 t.appendP(fb_esp_pgm_str_1);
             t += path;
 
@@ -233,7 +239,7 @@ void FunctionsConfig::mSetSource(const char *path, fb_esp_functions_sources_type
             break;
 
         case functions_sources_type_repository:
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_382), path);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_382), _path);
             addUpdateMasks(pgm2Str(fb_esp_pgm_str_382));
             _sourceType = sourceType;
             break;
@@ -250,29 +256,31 @@ void FunctionsConfig::setSource(const uint8_t *pgmArchiveData, size_t len)
     _sourceType = functions_sources_type_flash_data;
 }
 
-void FunctionsConfig::mSetIngressSettings(const char *settings)
+void FunctionsConfig::mSetIngressSettings(MB_StringPtr settings)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_380), settings);
+        MB_String _settings = settings;
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_380), _settings);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_380));
     }
 }
 
-void FunctionsConfig::mAddLabel(const char *key, const char *value)
+void FunctionsConfig::mAddLabel(MB_StringPtr key, MB_StringPtr value)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        MBSTRING t;
+        MB_String _value = value;
+        MB_String t;
         t.appendP(fb_esp_pgm_str_373);
         addUpdateMasks(t.c_str());
         t.appendP(fb_esp_pgm_str_1);
         t += key;
-        _funcCfg.set(t.c_str(), value);
+        _funcCfg.set(t.c_str(), _value);
     }
 }
 void FunctionsConfig::clearLabels()
@@ -285,18 +293,19 @@ void FunctionsConfig::clearLabels()
         removeUpdateMasks(pgm2Str(fb_esp_pgm_str_373));
     }
 }
-void FunctionsConfig::mAddEnvironmentVariable(const char *key, const char *value)
+void FunctionsConfig::mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        MBSTRING t;
+        MB_String _value = value;
+        MB_String t;
         t.appendP(fb_esp_pgm_str_374);
         addUpdateMasks(t.c_str());
         t.appendP(fb_esp_pgm_str_1);
         t += key;
-        _funcCfg.set(t.c_str(), value);
+        _funcCfg.set(t.c_str(), _value);
     }
 }
 void FunctionsConfig::clearEnvironmentVariables()
@@ -309,18 +318,19 @@ void FunctionsConfig::clearEnvironmentVariables()
         removeUpdateMasks(pgm2Str(fb_esp_pgm_str_374));
     }
 }
-void FunctionsConfig::mAddBuildEnvironmentVariable(const char *key, const char *value)
+void FunctionsConfig::mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        MBSTRING t;
+        MB_String _value = value;
+        MB_String t;
         t.appendP(fb_esp_pgm_str_375);
         addUpdateMasks(t.c_str());
         t.appendP(fb_esp_pgm_str_1);
         t += key;
-        _funcCfg.set(t.c_str(), value);
+        _funcCfg.set(t.c_str(), _value);
     }
 }
 
@@ -334,64 +344,62 @@ void FunctionsConfig::clearBuildEnvironmentVariables()
         removeUpdateMasks(pgm2Str(fb_esp_pgm_str_375));
     }
 }
-void FunctionsConfig::mSetNetwork(const char *network)
+void FunctionsConfig::mSetNetwork(MB_StringPtr network)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_376), network);
+        MB_String _network = network;
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_376), _network);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_376));
     }
 }
-void FunctionsConfig::mSetVpcConnector(const char *vpcConnector)
+void FunctionsConfig::mSetVpcConnector(MB_StringPtr vpcConnector)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_378), vpcConnector);
+        MB_String _vpcConnector = vpcConnector;
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_378), _vpcConnector);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_378));
     }
 }
-void FunctionsConfig::mSetVpcConnectorEgressSettings(const char *e)
+void FunctionsConfig::mSetVpcConnectorEgressSettings(MB_StringPtr e)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_379), e);
+        MB_String _e = e;
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_379), _e);
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_379));
     }
 }
 
-void FunctionsConfig::mSetEventTrigger(const char *eventType, const char *resource, const char *service, const char *failurePolicy)
+void FunctionsConfig::mSetEventTrigger(MB_StringPtr eventType, MB_StringPtr resource, MB_StringPtr service, MB_StringPtr failurePolicy)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
+        MB_String _eventType = eventType, _resource = resource, _service = service, _failurePolicy = failurePolicy;
         _triggerType = fb_esp_functions_trigger_type_event;
 
-        if (strlen(eventType) > 0)
-        {
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_385), eventType);
-        }
+        if (_eventType.length() > 0)
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_385), _eventType);
 
-        if (strlen(resource) > 0)
-        {
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_391), resource);
-        }
+        if (_resource.length() > 0)
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_391), _resource);
 
-        if (strlen(service) > 0)
-        {
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_392), service);
-        }
+        if (_service.length() > 0)
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_392), _service);
 
-        if (strlen(failurePolicy) > 0)
+        if (_failurePolicy.length() > 0)
         {
 
-            MBSTRING t;
+            MB_String t;
             t.appendP(fb_esp_pgm_str_394);
             static FirebaseJson js;
             js.clear();

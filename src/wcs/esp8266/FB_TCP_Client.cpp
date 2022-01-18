@@ -1,10 +1,10 @@
 /**
- * Firebase TCP Client v1.1.16
+ * Firebase TCP Client v1.1.17
  * 
- * Created November 23, 2021
+ * Created January 18, 2022
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -39,8 +39,8 @@ FB_TCP_Client::FB_TCP_Client()
 FB_TCP_Client::~FB_TCP_Client()
 {
   release();
-  MBSTRING().swap(_host);
-  MBSTRING().swap(_CAFile);
+  _host.clear();
+  _CAFile.clear();
 }
 
 bool FB_TCP_Client::begin(const char *host, uint16_t port)
@@ -143,54 +143,52 @@ void FB_TCP_Client::setCACert(const char *caCert)
   {
     x509 = new X509List(caCert);
     _wcs->setTrustAnchors(x509);
-    _certType = 1;
+    _certType = fb_cert_type_data;
   }
   else
   {
     _wcs->setInsecure();
-    _certType = 0;
+    _certType = fb_cert_type_none;
   }
 
   _wcs->setNoDelay(true);
 }
 
-void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config)
+void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType)
 {
-  _sdPin = sd_config.ss;
+
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
+
+  if (!mbfs)
+    return;
 
   if (_clockReady && strlen(caCertFile) > 0)
   {
-    fs::File f;
-    if (storageType == 1)
+    MB_String filename = caCertFile;
+    if (filename.length() > 0)
     {
-#if defined FLASH_FS
-      FLASH_FS.begin();
-      if (FLASH_FS.exists(caCertFile))
-        f = FLASH_FS.open(caCertFile, "r");
-#endif
+      if (filename[0] != '/')
+        filename.prepend('/');
     }
-    else if (storageType == 2)
+
+    int len = mbfs->open(filename, storageType, mb_file_open_mode_read);
+    if (len > -1)
     {
-#if defined SD_FS
-      SD_FS.begin(_sdPin);
-      if (SD_FS.exists(caCertFile))
-        f = SD_FS.open(caCertFile, FILE_READ);
-#endif
-    }
-    if (f)
-    {
-      size_t len = f.size();
-      uint8_t *der = new uint8_t[len];
-      if (f.available())
-        f.read(der, len);
-      f.close();
+      uint8_t *der = (uint8_t *)mbfs->newP(len);
+      if (mbfs->available(storageType))
+        mbfs->read(storageType, der, len);
+      mbfs->close(storageType);
       _wcs->setTrustAnchors(new X509List(der, len));
-      delete[] der;
+      mbfs->delP(&der);
+      _certType = fb_cert_type_file;
     }
-    _certType = 2;
   }
   _wcs->setNoDelay(true);
+}
+
+void FB_TCP_Client::setMBFS(MB_File *mbfs)
+{
+  this->mbfs = mbfs;
 }
 
 #endif /* ESP8266 */

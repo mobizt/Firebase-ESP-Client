@@ -13,6 +13,9 @@
 //The file media.mp4 in the data folder should be uploaded to the device flash memory before test.
 //The Google Cloud Storage JSON API function required OAuth2.0 authen.
 
+//If SD Card used for storage, assign SD card type and FS used in src/FirebaseFS.h and
+//change the config for that card interfaces in src/addons/SDHelper.h
+
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -23,6 +26,9 @@
 
 //Provide the token generation process info.
 #include <addons/TokenHelper.h>
+
+//Provide the SD card interfaces setting and mounting
+#include <addons/SDHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
@@ -43,6 +49,8 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 bool taskCompleted = false;
+
+
 
 //The Google Cloud Storage upload callback function
 void gcsUploadCallback(UploadStatusInfo info);
@@ -75,7 +83,7 @@ void setup()
 
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
-    
+
     /* Assign upload buffer size in byte */
     //Data to be uploaded will send as multiple chunks with this size, to compromise between speed and memory used for buffering.
     //The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
@@ -89,6 +97,9 @@ void setup()
     Firebase.begin(&config, &auth);
 
     Firebase.reconnectWiFi(true);
+
+    //if use SD card, mount it.
+    SD_Card_Mounting(); //See src/addons/SDHelper.h
 }
 
 //The Google Cloud Storage upload callback function
@@ -96,7 +107,7 @@ void gcsUploadCallback(UploadStatusInfo info)
 {
     if (info.status == fb_esp_gcs_upload_status_init)
     {
-        Serial.printf("Uploading file %s to %s\n", info.localFileName.c_str(), info.remoteFileName.c_str());
+        Serial.printf("Uploading file %s (%d) to %s\n", info.localFileName.c_str(), info.fileSize, info.remoteFileName.c_str());
     }
     else if (info.status == fb_esp_gcs_upload_status_upload)
     {
@@ -128,7 +139,7 @@ void loop()
     {
         taskCompleted = true;
 
-        Serial.println("Upload file via Google Cloud Storage JSON API...");
+        Serial.println("\nUpload file via Google Cloud Storage JSON API...\n");
 
         /**
          * The following function uses Google Cloud Storage JSON API to upload the file (object).
@@ -146,7 +157,6 @@ void loop()
         //For query parameters description of UploadOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-parameters
         //For request payload properties description of Requestproperties, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-properties
         //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-        Firebase.GCStorage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase or Google Cloud Storage bucket id */, "/media.mp4" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, gcs_upload_type_resumable /* upload type */, "media.mp4" /* path of remote file stored in the bucket */, "video/mp4" /* mime type */, nullptr /* UploadOptions data */, nullptr /* Requestproperties data */, nullptr /* UploadStatusInfo data to get the status */, gcsUploadCallback /* callback function */);
-
+        Firebase.GCStorage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase or Google Cloud Storage bucket id */, "/media.mp4" /* path to local file */, mem_storage_type_sd /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, gcs_upload_type_resumable /* upload type */, "media.mp4" /* path of remote file stored in the bucket */, "video/mp4" /* mime type */, nullptr /* UploadOptions data */, nullptr /* Requestproperties data */, nullptr /* UploadStatusInfo data to get the status */, gcsUploadCallback /* callback function */);
     }
 }

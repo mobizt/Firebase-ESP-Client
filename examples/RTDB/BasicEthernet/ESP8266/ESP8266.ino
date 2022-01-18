@@ -150,7 +150,7 @@ void testFirebase()
     if (count == 0)
     {
         json.set("value/round/" + String(count), "cool!");
-        json.set("vaue/ts/.sv", "timestamp");
+        json.set("value/ts/.sv", "timestamp");
         Serial.printf("Set json... %s\n", Firebase.RTDB.set(&fbdo, "/test/json", &json) ? "ok" : fbdo.errorReason().c_str());
     }
     else
@@ -266,6 +266,8 @@ void loop()
     {
         sendDataPrevMillis = millis();
         setupFirebase();
+        
+        //Firebase.ready works for authentication management and should be called repeatedly in the loop.
         if (Firebase.ready())
             testFirebase();
     }

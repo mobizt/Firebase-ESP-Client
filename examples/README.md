@@ -139,7 +139,7 @@ See the examples for the details of usages of this new library.
 
 The MIT License (MIT)
 
-Copyright (c) 2019, 2020, 2021 K. Suwatchai (Mobizt)
+Copyright (c) 2019, 2020, 2021, 2022 K. Suwatchai (Mobizt)
 
 
 Permission is hereby granted, free of charge, to any person returning a copy of

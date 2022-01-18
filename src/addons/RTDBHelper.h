@@ -8,7 +8,6 @@
 #ifndef RTDBHelper_H
 #define RTDBHelper_H
 #include <Arduino.h>
-#include "FirebaseFS.h"
 
 #if defined(FIREBASE_ESP_CLIENT)
 #include <Firebase_ESP_Client.h>
@@ -34,7 +33,7 @@ void printResult(FirebaseData &data)
         Serial.println(data.to<String>());
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
     {
-        FirebaseJson *json = data.to<FirebaseJson*>();
+        FirebaseJson *json = data.to<FirebaseJson *>();
         //Print all object data
         Serial.println((const char *)FPSTR("Pretty printed JSON data:"));
         json->toString(Serial, true);
@@ -54,7 +53,7 @@ void printResult(FirebaseData &data)
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
     {
         //get array data from FirebaseData using FirebaseJsonArray object
-        FirebaseJsonArray *arr = data.to<FirebaseJsonArray*>();
+        FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
         //Print all array values
         Serial.println((const char *)FPSTR("Pretty printed Array:"));
         arr->toString(Serial, true);
@@ -101,6 +100,7 @@ void printResult(FirebaseData &data)
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
     {
+#if defined(FLASH_FS)
         File file = data.to<File>();
         int i = 0;
         while (file.available())
@@ -119,6 +119,7 @@ void printResult(FirebaseData &data)
         }
         Serial.println();
         file.close();
+#endif
     }
     else
     {
@@ -210,6 +211,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
     {
+#if defined(FLASH_FS)
         File file = data.to<File>();
         int i = 0;
         while (file.available())
@@ -228,6 +230,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
         }
         Serial.println();
         file.close();
+#endif
     }
 }
 

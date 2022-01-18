@@ -1,10 +1,10 @@
 /**
- * Firebase TCP Client v1.1.15
+ * Firebase TCP Client v1.1.16
  * 
- * Created November 20, 2021
+ * Created January 18, 2022
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
@@ -33,52 +33,9 @@
 
 #ifdef ESP32
 
-#include <Arduino.h>
-#include <WiFiClient.h>
-#include <FS.h>
-#include <SPIFFS.h>
-#include <SD.h>
-#include <ETH.h>
-#include "FirebaseFS.h"
-#include <WiFiClientSecure.h>
-
-#if defined(FIREBASE_USE_PSRAM)
-#define FIREBASEJSON_USE_PSRAM
-#endif
-#include "./json/FirebaseJson.h"
-
-#if __has_include(<FireBase32.h>)
-#error Prohibited!
-#endif
-
-#if __has_include(<esp_idf_version.h>)
-#include <esp_idf_version.h>
-#endif
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#if defined DEFAULT_FLASH_FS
-#define FLASH_FS DEFAULT_FLASH_FS
-#endif
-#if defined DEFAULT_SD_FS
-#define SD_FS DEFAULT_SD_FS
-#endif
-#define FORMAT_FLASH FORMAT_FLASH_IF_MOUNT_FAILED
-
-#include "wcs/HTTPCode.h"
-
-static const char esp_idf_branch_str[] PROGMEM = "release/v";
-
-struct fb_esp_sd_config_info_t
-{
-  int sck = -1;
-  int miso = -1;
-  int mosi = -1;
-  int ss = -1;
-  const char *sd_mmc_mountpoint = "";
-  bool sd_mmc_mode1bit = false;
-  bool sd_mmc_format_if_mount_failed = false;
-};
+#include "MB_File.h"
+#include "FB_Net.h"
+#include "FB_Error.h"
 
 //The derived class to fix the memory leaks issue
 //https://github.com/espressif/arduino-esp32/issues/5480
@@ -154,20 +111,23 @@ public:
 
   bool connect(void);
   void setCACert(const char *caCert);
-  void setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config);
+  void setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType);
+  void setMBFS(MB_File *mbfs);
 
 private:
   std::unique_ptr<FB_WCS> _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
-  MBSTRING _host;
+  MB_String _host;
   uint16_t _port = 0;
 
   //lwIP socket connection and ssl handshake timeout
   unsigned long timeout = 10 * 1000;
 
-  MBSTRING _CAFile;
+  MB_String _CAFile;
   uint8_t _CAFileStoreageType = 0;
-  int _certType = -1;
+  int _certType = fb_cert_type_undefined;
   bool _clockReady = false;
+  MB_File *mbfs = nullptr;
+  char *cert = NULL;
   void release();
 };
 

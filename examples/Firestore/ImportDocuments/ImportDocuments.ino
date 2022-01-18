@@ -95,6 +95,9 @@ void loop()
 
         Serial.print("Import documents from the Storage bucket... ");
 
+        //This required the Owner and Editor permissions for the account.
+        //See how to add permission here, https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
+
         if (Firebase.Firestore.importDocuments(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, STORAGE_BUCKET_ID, "test_path" /* The path in the Firebase Storage bucket to store the data */, "" /* Which collection ids to import. Unspecified means all collections. */))
             Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
         else

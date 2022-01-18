@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -79,6 +79,7 @@ private:
     UtilsClass *ut = nullptr;
     FirebaseConfig *config = nullptr;
     FirebaseAuth *auth = nullptr;
+    MB_File *mbfs = nullptr;
     callback_function_t _cb = nullptr;
     struct token_info_t tokenInfo;
     bool authenticated = false;
@@ -86,7 +87,7 @@ private:
     unsigned long unauthen_millis = 0;
     unsigned long unauthen_pause_duration = 3000;
 
-    void begin(UtilsClass *ut, FirebaseConfig *config, FirebaseAuth *auth);
+    void begin(UtilsClass *ut, MB_File *mbfs, FirebaseConfig *config, FirebaseAuth *auth);
     bool parseSAFile();
     void clearSA();
     bool tokenSigninDataReady();
@@ -102,24 +103,27 @@ private:
     bool handleTokenResponse(int &httpCode);
     void tokenProcessingTask();
     bool createJWT();
-    bool getIdToken(bool createUser, const char *email, const char *password);
-    bool deleteIdToken(const char *idToken = "");
+    bool getIdToken(bool createUser, MB_StringPtr email, MB_StringPtr password);
+    bool deleteIdToken(MB_StringPtr idToken);
     bool requestTokens();
     void checkToken();
     void getExpiration(const char *exp);
-    bool handleEmailSending(const char *payload, fb_esp_user_email_sending_type type);
-    void errorToString(int httpCode, MBSTRING &buff);
+    bool handleEmailSending(MB_StringPtr payload, fb_esp_user_email_sending_type type);
+    void errorToString(int httpCode, MB_String &buff);
     bool tokenReady();
     void sendTokenStatusCB();
     const char *getToken();
+    bool authChanged(FirebaseConfig *config, FirebaseAuth *auth);
     fb_esp_auth_token_type getTokenType();
-    MBSTRING getCAFile();
-    int getCAFileStorage();
+    MB_String getCAFile();
+    fb_esp_mem_storage_type getCAFileStorage();
     FirebaseConfig *getCfg();
     FirebaseAuth *getAuth();
+    MB_File *getMBFS();
+    UtilsClass *getUtils();
 
 #if defined(ESP8266)
-    void set_scheduled_callback(callback_function_t callback)
+        void set_scheduled_callback(callback_function_t callback)
     {
         _cb = std::move([callback]()
                         { schedule_function(callback); });

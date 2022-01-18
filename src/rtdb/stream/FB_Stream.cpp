@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.1.2
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -36,6 +36,7 @@
 
 #ifndef FIREBASE_STREAM_SESSION_CPP
 #define FIREBASE_STREAM_SESSION_CPP
+
 #include "FB_Stream.h"
 
 FIREBASE_STREAM_CLASS::FIREBASE_STREAM_CLASS()
@@ -93,7 +94,7 @@ String FIREBASE_STREAM_CLASS::jsonString()
     if (sif->data_type == fb_esp_data_type::d_json)
         return sif->data.c_str();
     else
-        return MBSTRING().c_str();
+        return MB_String().c_str();
 }
 
 FirebaseJson *FIREBASE_STREAM_CLASS::jsonObjectPtr()
@@ -121,13 +122,17 @@ std::vector<uint8_t> *FIREBASE_STREAM_CLASS::blobData()
     return to<std::vector<uint8_t> *>();
 }
 
+#if defined(FLASH_FS)
 File FIREBASE_STREAM_CLASS::fileStream()
 {
     return to<File>();
 }
+#endif
 
 String FIREBASE_STREAM_CLASS::payload()
 {
+    if (sif->data_type == fb_esp_data_type::d_string)
+        setRaw(false); //if double quotes trimmed string, retain it.
     return sif->data.c_str();
 }
 
@@ -198,6 +203,31 @@ void FIREBASE_STREAM_CLASS::mSetResBool(bool value)
     {
         iVal = {0};
         fVal.setd(0);
+    }
+}
+
+//Double quotes string trim.
+void FIREBASE_STREAM_CLASS::setRaw(bool trim)
+{
+
+    if (sif->data.length() > 0)
+    {
+        if (trim)
+        {
+            if (sif->data[0] == '"' && sif->data[sif->data.length() - 1] == '"')
+            {
+                sif->data.pop_back();
+                sif->data.erase(0, 1);
+            }
+        }
+        else
+        {
+            if (sif->data[0] != '"' && sif->data[sif->data.length() - 1] != '"')
+            {
+                sif->data.insert(0, '"');
+                sif->data += '"';
+            }
+        }
     }
 }
 

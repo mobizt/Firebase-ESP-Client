@@ -93,6 +93,38 @@ void setup()
     Firebase.reconnectWiFi(true);
 }
 
+//The Firebase Storage upload callback function
+void fcsUploadCallback(FCS_UploadStatusInfo info)
+{
+    if (info.status == fb_esp_fcs_upload_status_init)
+    {
+        Serial.printf("Uploading file %s (%d) to %s\n", info.localFileName.c_str(), info.fileSize, info.remoteFileName.c_str());
+    }
+    else if (info.status == fb_esp_fcs_upload_status_upload)
+    {
+        Serial.printf("Uploaded %d%s\n", (int)info.progress, "%");
+    }
+    else if (info.status == fb_esp_fcs_upload_status_complete)
+    {
+        Serial.println("Upload completed\n");
+        FileMetaInfo meta = fbdo.metaData();
+        Serial.printf("Name: %s\n", meta.name.c_str());
+        Serial.printf("Bucket: %s\n", meta.bucket.c_str());
+        Serial.printf("contentType: %s\n", meta.contentType.c_str());
+        Serial.printf("Size: %d\n", meta.size);
+        Serial.printf("Generation: %lu\n", meta.generation);
+        Serial.printf("Metageneration: %lu\n", meta.metageneration);
+        Serial.printf("ETag: %s\n", meta.etag.c_str());
+        Serial.printf("CRC32: %s\n", meta.crc32.c_str());
+        Serial.printf("Token: %s\n", meta.downloadTokens.c_str());
+        Serial.printf("Download URL: %s\n\n", fbdo.downloadURL().c_str());
+    }
+    else if (info.status == fb_esp_fcs_upload_status_error)
+    {
+        Serial.printf("Upload failed, %s\n", info.errorMsg.c_str());
+    }
+}
+
 void loop()
 {
     if (Firebase.ready() && !taskCompleted)
@@ -103,12 +135,11 @@ void loop()
         for (int i = 0; i < 256; i++)
             test_data[i] = i;
 
-        Serial.print("Upload byte array... ");
+        Serial.println("\nUpload byte array...\n");
 
         //MIME type should be valid to avoid the download problem.
-        if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, test_data /* byte array from ram or flash */, 256 /*  size of data in bytes */, "test.dat" /* path of remote file stored in the bucket */, "application/octet-stream" /* mime type */))
-            Serial.printf("\nDownload URL: %s\n", fbdo.downloadURL().c_str());
-        else
+        //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+        if (!Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, test_data /* byte array from ram or flash */, 256 /*  size of data in bytes */, "test.dat" /* path of remote file stored in the bucket */, "application/octet-stream" /* mime type */, fcsUploadCallback /* callback function */))
             Serial.println(fbdo.errorReason());
     }
 }

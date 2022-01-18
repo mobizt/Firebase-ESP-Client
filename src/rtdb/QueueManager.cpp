@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -36,6 +36,8 @@
 
 #ifndef FIREBASE_QUEUE_MANAGER_CPP
 #define FIREBASE_QUEUE_MANAGER_CPP
+
+
 #include "QueueManager.h"
 
 QueueManager::QueueManager()
@@ -56,9 +58,9 @@ void QueueManager::clear()
         {
             QueueItem item = _queueCollection->at(i);
 
-            MBSTRING().swap(item.path);
-            MBSTRING().swap(item.filename);
-            MBSTRING().swap(item.payload);
+            item.path.clear();
+            item.filename.clear();
+            item.payload.clear();
             item.address.dout = 0;
             item.address.din = 0;
             item.blobSize = 0;

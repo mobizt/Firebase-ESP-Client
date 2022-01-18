@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.7
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.8.0
 
 
 The default filessystem used in the library is flash and SD.
@@ -169,9 +169,9 @@ param **`idToken`** The id token of user that was already signed in with Email a
 
 return **`Boolean`** value, indicates the success of the operation. 
 
-note: The id token can be obtained from config.signer.tokens.id_token after begin with config and auth data
+note: The id token can be obtained from Firebase.getToken() after begin with config and auth data.
 
-If the idToken is not assigned, the internal config.signer.tokens.id_token will be used. 
+If the idToken is not assigned, the internal id_token will be used.
 
 See the Templates of Email address verification in the Firebase console, Authentication.
 
@@ -243,6 +243,51 @@ bool sdBegin( int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -
 
 
 
+#### SD card config with SD FS configurations (ESP8266 only).
+
+param **`sdFSConfig`** The pointer to SDFSConfig object (ESP8266 only).
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool sdBegin(SDFSConfig *sdFSConfig);
+```
+
+
+
+#### SD card config with chip select and SPI configuration (ESP32 only).
+
+param **`ss`** SPI Chip/Slave Select pin.
+
+param **`spiConfig`** The pointer to SPIClass object for SPI configuartion (ESP32 only).
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
+```
+
+
+#### SD card config with SdFat SPI and pins configurations (ESP32 with SdFat included only).
+
+param **`sdFatSPIConfig`** The pointer to SdSpiConfig object for SdFat SPI configuration.
+
+param **`ss`** SPI Chip/Slave Select pin.
+
+param **`sck`** SPI Clock pin.
+
+param **`miso`** SPI MISO pin.
+
+param **`mosi`** SPI MOSI pin.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+```
+
+
+
 #### Initialize the SD_MMC card (ESP32 only).
 
 param **`mountpoint`** The mounting point.
@@ -269,6 +314,17 @@ This function allows the internal time setting by timestamp i.e. timestamp from 
 
 ```cpp
 bool setSystemTime(time_t ts);
+```
+
+
+#### Provide the http code error string
+
+param **`httpCode`** The http code.
+
+param **`buff`** The String buffer out.
+
+```cpp
+void errorToString(int httpCode, String &buff)
 ```
 
 
@@ -338,6 +394,22 @@ bool getRules(FirebaseData *fbdo);
 ```
 
 
+#### Save the database rules to file.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
+
+param **`filename`** Filename to save rules.
+
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
+return - **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+ getRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> filename, RTDB_DownloadProgressCallback callback = NULL)
+```
+
 
 #### Write the database rules.
 
@@ -350,6 +422,26 @@ return - **`Boolean`** value, indicates the success of the operation.
 ```cpp
 bool setRules(FirebaseData *fbdo, <string> rules);
 ```
+
+
+
+#### Restore the database rules from file.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`storageType`** The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
+
+param **`filename`** Filename to read the rules from.
+
+param **`callback`** Optional. The callback function that accept RTDB_UploadStatusInfo data.
+
+return - **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+ setRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> filename, RTDB_UploadProgressCallback callback = NULL)
+```
+
+
 
 
 #### Set the .read and .write database rules.
@@ -823,15 +915,17 @@ param **`path`** The path to the node in which binary data will be appended.
 
 param **`fileName`** The file path includes its name.
 
+param **`callback`** Optional. The callback function that accept RTDB_UploadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation.
 
 The key or name of new created node will be stored in Firebase Data object, 
 call \<FirebaseData\>.pushName() to get the key.
 
 ```cpp
-bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 
-bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -1594,14 +1688,16 @@ param **`path`** The path to the node in which binary data will be set.
 
 param **`fileName`** The file path includes its name.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation.
 
 No payload returned from the server.
 
 ```cpp
-bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 
-bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -1620,6 +1716,8 @@ param **`fileName`** The file path includes its name.
 
 param **`ETag`** Known unique identifier string (ETag) of defined node.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation.
 
 No payload returned from the server. 
@@ -1628,9 +1726,9 @@ If ETag at the defined node does not match the provided ETag parameter,
 the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
 
 ```cpp
-bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
+bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag, RTDB_DownloadProgressCallback callback = NULL);
 
-bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
+bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -1934,15 +2032,15 @@ param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`path`** The path to the node.
 
-param **`target`** The pointer to String object variable to store the value.
+param **`target`** String, std::string or chars array variable to store the value.
 
 return **`Boolean`** value, indicates the success of the operation.
 
-If the type of payload returned from the server is not a string,
-the target String object's value will be empty.
+If the target is chars array, the size of chars array should be greater than the size of payload string to prevent error.
+
 
 ```cpp
-bool getString(FirebaseData *fbdo, <string> path, String *target);
+bool getString(FirebaseData *fbdo, <string> path, <string_or_chars_array> *target);
 ```
 
 
@@ -2227,10 +2325,12 @@ param **`nodePath`** The path to the node that file data will be downloaded.
 
 param **`fileName`**  The file path includes its name.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
-bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName);
+bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2239,14 +2339,18 @@ bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> n
 
 param **`fbdo`** The pointer to Firebase Data Object.
 
-param **`filename`** The firmware file path includes its name.
+param **`fwPath`** The firmware data path.
+
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
 
 return **`Boolean`** value, indicates the success of the operation.
 
 Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
 
+Firmware data is the bin file that stored on datanbase using pushFile or setFile function. 
+
 ```cpp
-bool downloadOTA(FirebaseData *fbdo, <string> fileName);
+bool downloadOTA(FirebaseData *fbdo, <string> fwPath, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2467,10 +2571,12 @@ param **`nodePath`** The path to the node to be backuped.
 
 param **`fileName`**  File name to save.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
-bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName);
+bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2487,10 +2593,12 @@ param **`nodePath`** The path to the node to be restored the data.
 
 param **`fileName`** File name to read.
 
+param **`callback`** Optional. The callback function that accept RTDB_UploadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
-bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName);
+bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -3264,7 +3372,7 @@ param **`numToken`** The size of instance ID tokens array.
 return **`Boolean`** value, indicates the success of the operation. 
 
 ```cpp
-bool subscibeTopic(FirebaseData *fbdo, <string> topic, <string> IID[], size_t numToken);
+bool subscribeTopic(FirebaseData *fbdo, <string> topic, <string> IID[], size_t numToken);
 ```
 
 
@@ -3282,7 +3390,7 @@ param **`numToken`** The size of instance ID tokens array.
 return **`Boolean`** value, indicates the success of the operation. 
 
 ```cpp
-bool unsubscibeTopic(FirebaseData *fbdo, <string> topic, <string> IID[], size_t numToken);
+bool unsubscribeTopic(FirebaseData *fbdo, <string> topic, <string> IID[], size_t numToken);
 ```
 
 
@@ -3355,12 +3463,14 @@ param **`remotetFileName`** The file path includes its name of uploaded file in 
 
 param **`mime`** The file MIME type
 
+param **`callback`** Optional. The callback function that accept FCS_UploadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation. 
 
 Use FirebaseData.downloadURL() to get the download link.
 
 ```cpp
-bool upload(FirebaseData *fbdo, <string> bucketID, <string> localFileName, fb_esp_mem_storage_type storageType, <string> remotetFileName, <string> mime);
+bool upload(FirebaseData *fbdo, <string> bucketID, <string> localFileName, fb_esp_mem_storage_type storageType, <string> remotetFileName, <string> mime, FCS_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -3379,12 +3489,14 @@ param **`remotetFileName`** The file path includes its name of uploaded file in 
 
 param **`mime`** The file MIME type
 
+param **`callback`** Optional. The callback function that accept FCS_UploadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation. 
 
 Use FirebaseData.downloadURL() to get the download link.
 
 ```cpp
-bool upload(FirebaseData *fbdo, <string> bucketID, uint8_t *data, size_t len, <string> remoteFileName, <string> mime);
+bool upload(FirebaseData *fbdo, <string> bucketID, uint8_t *data, size_t len, <string> remoteFileName, <string> mime, FCS_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -3403,10 +3515,12 @@ param **`storageType`** The enum of memory storage type e.g. mem_storage_type_fl
 
 The file systems can be changed in FirebaseFS.h.
 
+param **`callback`** Optional. The callback function that accept FCS_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation. 
 
 ```cpp
-bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, fb_esp_mem_storage_type storageType);
+bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, fb_esp_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -3419,12 +3533,14 @@ param **`bucketID`** The Firebase storage bucket ID in the project.
 
 param **`remotetFileName`** The firmware file path includes its name of file in the data bucket to download.
 
+param **`callback`** Optional. The callback function that accept FCS_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation. 
 
 Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
 
 ```cpp
-bool downloadOTA(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName);
+bool downloadOTA(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, FCS_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -3558,12 +3674,14 @@ param **`option`** Optional. The pointer to StorageGetOptions data that contains
 
 For the query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
 
+param **`callback`** Optional. The callback function that accept GCS_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation. 
 
 This function requires OAuth2.0 authentication.
 
 ```cpp
-bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr);
+bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr, GCS_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -3577,12 +3695,14 @@ param **`bucketID`** The Firebase or Google Cloud Storage bucket ID.
 
 param **`remotetFileName`** The firmware file path includes its name of file in the data bucket to download.
 
+param **`callback`** Optional. The callback function that accept GCS_DownloadStatusInfo data.
+
 return **`Boolean`** value, indicates the success of the operation. 
 
 Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
 
 ```cpp
-bool downloadOTA(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName);
+bool downloadOTA(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, GCS_DownloadProgressCallback callback = NULL);
 ```
 
 

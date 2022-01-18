@@ -3,9 +3,9 @@
 
   All original static cJSON functions and static variables will be prefixed with MB_JSON_.
   
-  Created December 20, 2021
+  Created December 20, 2022
 
-  Copyright (c) 2021 Mobizt (K. Suwatchai)
+  Copyright (c) 2022 Mobizt (K. Suwatchai)
 
   Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
 

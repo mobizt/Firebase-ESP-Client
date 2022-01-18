@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -36,6 +36,8 @@
 
 #ifndef FIREBASE_MULTIPATH_STREAM_SESSION_CPP
 #define FIREBASE_MULTIPATH_STREAM_SESSION_CPP
+
+
 #include "FB_MP_Stream.h"
 
 FIREBASE_MP_STREAM_CLASS::FIREBASE_MP_STREAM_CLASS()
@@ -78,8 +80,8 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
         }
         else
         {
-            MBSTRING root = path.c_str();
-            MBSTRING branch = sif->path;
+            MB_String root = path.c_str();
+            MB_String branch = sif->path;
             //check for the steam data path is matched or under the root (child path)
             if (checkPath(root, branch))
             {
@@ -93,8 +95,8 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
     }
     else
     {
-        MBSTRING root = path.c_str();
-        MBSTRING branch = sif->path;
+        MB_String root = path.c_str();
+        MB_String branch = sif->path;
         //check for the steam data path is matched or under the root (child path)
         if (checkPath(root, branch))
         {
@@ -108,7 +110,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
     return res;
 }
 
-bool FIREBASE_MP_STREAM_CLASS::checkPath(MBSTRING &root, MBSTRING &branch)
+bool FIREBASE_MP_STREAM_CLASS::checkPath(MB_String &root, MB_String &branch)
 {
     if (root[0] != '/')
         root.insert(0, 1, '/');
@@ -119,7 +121,7 @@ bool FIREBASE_MP_STREAM_CLASS::checkPath(MBSTRING &root, MBSTRING &branch)
     if (root.length() != branch.length())
     {
         size_t p = branch.find("/", 1);
-        if (p != MBSTRING::npos)
+        if (p != MB_String::npos)
             branch = branch.substr(0, p);
     }
 

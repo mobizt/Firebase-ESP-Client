@@ -134,6 +134,8 @@ void setup()
 void loop()
 {
 
+  //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
@@ -170,7 +172,7 @@ void loop()
     if (count == 0)
     {
       json.set("value/round/" + String(count), F("cool!"));
-      json.set(F("vaue/ts/.sv"), F("timestamp"));
+      json.set(F("value/ts/.sv"), F("timestamp"));
       Serial.printf("Set json... %s\n", Firebase.RTDB.set(&fbdo, F("/test/json"), &json) ? "ok" : fbdo.errorReason().c_str());
     }
     else
@@ -200,6 +202,23 @@ void loop()
     count++;
   }
 }
+
+/** NOTE: 
+ * When you trying to get boolean, integer and floating point number using getXXX from string, json 
+ * and array that stored on the database, the value will not set (unchanged) in the 
+ * FirebaseData object because of the request and data response type are mismatched.
+ * 
+ * There is no error reported in this case, until you set this option to true
+ * config.rtdb.data_type_stricted = true;
+ * 
+ * In the case of unknown type of data to be retrieved, please use generic get function and cast its value to desired type like this
+ * 
+ * Firebase.RTDB.get(&fbdo, "/path/to/node");
+ * 
+ * float value = fbdo.to<float>();
+ * String str = fbdo.to<String>();
+ * 
+ */
 
 /// PLEASE AVOID THIS ////
 

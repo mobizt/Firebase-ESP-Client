@@ -1,13 +1,12 @@
 /*
- * FirebaseJson, version 2.6.4
+ * FirebaseJson, version 2.6.5
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
- * - Able to search with key/path and value in JSON object and array
  * - Serializing to writable objects e.g. String, C/C++ string, Client (WiFi and Ethernet), File and Hardware Serial.
  * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and 
  *   Hardware Serial.
@@ -16,7 +15,7 @@
  * 
  * The MIT License (MIT)
  * 
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
  * 
  * 
@@ -68,17 +67,20 @@
 
 using namespace mb_string;
 
-#ifndef USE_MB_STRING
-#define USE_MB_STRING
-#endif
-
-#ifndef MBSTRING
-#define MBSTRING MB_String
-#endif
-
 #ifdef Serial_Printf
 #undef Serial_Printf
 #endif
+
+#if defined(ESP32) && defined(SD_FAT_VERSION)
+#define ESP32_SD_FAT_INCLUDED
+#if defined(SD_FS_FILE)
+#define SD_FAT_FILE SD_FS_FILE
+#else
+#define SD_FAT_FILE SdFile
+#endif
+#endif
+
+
 
 #if defined(ESP8266) || defined(ESP32)
 #include <FS.h>
@@ -95,7 +97,6 @@ using namespace mb_string;
 #define HardwareSerial Serial_
 
 #elif defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
-
 
 #elif defined(TEENSYDUINO)
 #define FILE_SYSTEM File
@@ -286,17 +287,17 @@ namespace fb_js
         int payloadOfs = 0;
         bool isChunkedEnc = false;
         bool noContent = false;
-        MBSTRING location;
-        MBSTRING contentType;
-        MBSTRING connection;
-        MBSTRING transferEnc;
+        MB_String location;
+        MB_String contentType;
+        MB_String connection;
+        MB_String transferEnc;
     };
 
     struct serial_data_t
     {
         int pos = -1, start = -1, end = -1;
         int scnt = 0, ecnt = 0;
-        MBSTRING buf;
+        MB_String buf;
         unsigned long dataTime = 0;
     };
 };
@@ -443,11 +444,6 @@ public:
     uint8_t typeNum = 0;
 
     /**
-     * The returning full path of current search.
-    */
-    String searchPath;
-
-    /**
      * The success flag of parsing data.
     */
     bool success = false;
@@ -525,13 +521,6 @@ private:
         key_status_out_of_range = 3
     };
 
-    typedef enum
-    {
-        search_mode_none = 0,
-        search_mode_once = 1,
-        search_mode_all = 2
-    } fb_json_search_mode;
-
     struct search_result_t
     {
         MB_JSON *parent = NULL;
@@ -557,15 +546,9 @@ private:
         size_t buf_size = 0;
         int depth = -1;
         int _depth = 0;
-        int searchKeyDepth = -1;
-        bool searchEnable = false;
-        bool searchFinished = false;
-        int matchesCount = 0;
         MB_JSON *parent = NULL;
         MB_JSON *parentArr = NULL;
-        MBSTRING path;
-        std::vector<MBSTRING> *searchKeys = NULL;
-        std::vector<MBSTRING> pathList;
+        MB_String path;
     };
 
     struct fb_js_iterator_value_t
@@ -576,46 +559,37 @@ private:
         String value;
     };
 
-    struct fb_js_search_criteria_t
-    {
-        int depth = 0;
-        int endDepth = -1;
-        bool searchAll = false;
-        String path;
-        String value;
-    };
-
     FirebaseJsonBase &mClear();
     void mIteratorEnd(bool clearBuf = true);
     bool setRaw(const char *raw);
     void prepareRoot();
     MB_JSON *parse(const char *raw);
-    void searchElements(std::vector<MBSTRING> &keys, MB_JSON *parent, struct search_result_t &r);
+    void searchElements(std::vector<MB_String> &keys, MB_JSON *parent, struct search_result_t &r);
     MB_JSON *getElement(MB_JSON *parent, const char *key, struct search_result_t &r);
-    void mAdd(std::vector<MBSTRING> keys, MB_JSON **parent, int beginIndex, MB_JSON *value);
-    void makeList(const char *str, std::vector<MBSTRING> &keys, char delim);
-    void clearList(std::vector<MBSTRING> &keys);
+    void mAdd(std::vector<MB_String> keys, MB_JSON **parent, int beginIndex, MB_JSON *value);
+    void makeList(const char *str, std::vector<MB_String> &keys, char delim);
+    void clearList(std::vector<MB_String> &keys);
     bool isArray(MB_JSON *e);
     bool isObject(MB_JSON *e);
     MB_JSON *addArray(MB_JSON *parent, MB_JSON *e, size_t size);
-    void appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
-    void replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
-    void replace(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item);
+    void appendArray(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
+    void replaceItem(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
+    void replace(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item);
     size_t mIteratorBegin(MB_JSON *parent);
-    size_t mIteratorBegin(MB_JSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria);
-    void collectResult(MB_JSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria);
-    void removeDepthPath();
-    void mCollectIterator(MB_JSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria);
-    void mIterate(MB_JSON *parent, int &arrIndex, struct fb_js_search_criteria_t *criteria);
-    bool checkKeys(struct fb_js_search_criteria_t *criteria);
+    size_t mIteratorBegin(MB_JSON *parent, std::vector<MB_String> *keys);
+    void mCollectIterator(MB_JSON *e, int type, int &arrIndex);
+    void mIterate(MB_JSON *parent, int &arrIndex);
     int mIteratorGet(size_t index, int &type, String &key, String &value);
     struct fb_js_iterator_value_t mValueAt(size_t index);
     void toBuf(fb_json_serialize_mode mode);
     bool mReadClient(Client *client);
     bool mReadStream(Stream *s, int timeoutMS);
+#if defined(ESP32_SD_FAT_INCLUDED)
+    bool mReadSdFat(SD_FAT_FILE &file, int timeoutMS);
+#endif
     const char *mRaw();
     bool mRemove(const char *path);
-    void mGetPath(MBSTRING &path, std::vector<MBSTRING> paths, int begin = 0, int end = -1);
+    void mGetPath(MB_String &path, std::vector<MB_String> paths, int begin = 0, int end = -1);
     size_t mGetSerializedBufferLength(bool prettify);
     void mSetFloatDigits(uint8_t digits);
     void mSetDoubleDigits(uint8_t digits);
@@ -626,10 +600,6 @@ private:
     void mSetElementType(FirebaseJsonData *result);
     void mSet(const char *path, MB_JSON *value);
     void mCopy(FirebaseJsonBase &other);
-    size_t mSearch(MB_JSON *parent, struct fb_js_search_criteria_t *criteria);
-    size_t mSearch(MB_JSON *parent, FirebaseJsonData *result, struct fb_js_search_criteria_t *criteria, bool prettify = false);
-    size_t mSearch(MB_JSON *parent, const char *path, bool searchAll = false);
-    const char *mGetElementFullPath(MB_JSON *parent, const char *path, bool searchAll = false);
 
 public:
     enum fb_json_root_type
@@ -674,7 +644,7 @@ protected:
     struct iterator_data_t iterator_data;
     MB_JSON *root = NULL;
     MB_JSON_Hooks *hooks = NULL;
-    MBSTRING buf;
+    MB_String buf;
 
     template <typename T>
     auto getStr(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type
@@ -757,7 +727,7 @@ protected:
 
 #if defined(FBJS_ENABLE_FS)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, FILE_SYSTEM>::value || is_same<T, File>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, FILE_SYSTEM>::value || is_same<T, fs::File>::value, bool>::type
     {
         return writeHelper(out, prettify);
     }
@@ -820,7 +790,7 @@ protected:
         delay(0);
     }
 
-    void shrinkS(MBSTRING &s)
+    void shrinkS(MB_String &s)
     {
         s.shrink_to_fit();
     }
@@ -997,7 +967,7 @@ protected:
         return -1;
     }
 
-    void substr(MBSTRING &str, const char *s, int offset, size_t len)
+    void substr(MB_String &str, const char *s, int offset, size_t len)
     {
         if (!s)
             return;
@@ -1215,7 +1185,7 @@ protected:
         return idx;
     }
 
-    int readLine(Client *stream, MBSTRING &buf)
+    int readLine(Client *stream, MB_String &buf)
     {
         int res = -1;
         char c = 0;
@@ -1318,7 +1288,7 @@ protected:
         return olen;
     }
 
-    int readChunkedData(Client *stream, MBSTRING &out, int &chunkState, int &chunkedSize, int &dataLen)
+    int readChunkedData(Client *stream, MB_String &out, int &chunkState, int &chunkedSize, int &dataLen)
     {
         char *tmp = nullptr;
         int p1 = 0;
@@ -1329,7 +1299,7 @@ protected:
             chunkState = 1;
             chunkedSize = -1;
             dataLen = 0;
-            MBSTRING s;
+            MB_String s;
             int readLen = readLine(stream, s);
             if (readLen)
             {
@@ -1361,7 +1331,7 @@ protected:
 
             if (chunkedSize > -1)
             {
-                MBSTRING s;
+                MB_String s;
                 int readLen = readLine(stream, s);
 
                 if (readLen > 0)
@@ -1392,7 +1362,7 @@ protected:
         return olen;
     }
 
-    int readClient(Client *client, MBSTRING &buf)
+    int readClient(Client *client, MB_String &buf)
     {
         int ret = -1;
 
@@ -1584,7 +1554,7 @@ protected:
         data.dataTime = millis();
     }
 
-    bool readStreamChar(int r, struct fb_js::serial_data_t &data, MBSTRING &buf, bool isJson)
+    bool readStreamChar(int r, struct fb_js::serial_data_t &data, MB_String &buf, bool isJson)
     {
         bool ret = false;
         if (r > -1)
@@ -1641,7 +1611,7 @@ protected:
         return ret;
     }
 
-    bool readStream(Stream *s, struct fb_js::serial_data_t &data, MBSTRING &buf, bool isJson, int timeoutMS)
+    bool readStream(Stream *s, struct fb_js::serial_data_t &data, MB_String &buf, bool isJson, int timeoutMS)
     {
 
         bool ret = false;
@@ -1670,6 +1640,39 @@ protected:
         return ret;
     }
 
+#if defined(ESP32_SD_FAT_INCLUDED)
+
+    bool readSdFatFile(SD_FAT_FILE &file, struct fb_js::serial_data_t &data, MB_String &buf, bool isJson, int timeoutMS)
+    {
+
+        bool ret = false;
+
+        if (timeoutMS > -1)
+        {
+            if (millis() - data.dataTime > (unsigned long)timeoutMS)
+                clearSerialData(data);
+        }
+        else
+            clearSerialData(data);
+
+        while (file.available())
+        {
+            idle();
+            int r = file.read();
+            ret = readStreamChar(r, data, buf, isJson);
+            if (ret)
+            {
+                if (timeoutMS == -1)
+                    clearSerialData(data);
+                return true;
+            }
+        }
+
+        return ret;
+    }
+
+#endif
+
     Stream *toStream(HardwareSerial *ser)
     {
         return reinterpret_cast<Stream *>(ser);
@@ -1681,7 +1684,7 @@ protected:
     }
 #endif
 #if defined(FBJS_ENABLE_FS)
-    Stream *toStream(File *file)
+    Stream *toStream(fs::File *file)
     {
         return reinterpret_cast<Stream *>(file);
     }
@@ -1701,27 +1704,27 @@ protected:
     }
 #endif
 
-    void ltrim(MBSTRING &str, const MBSTRING &chars = " ")
+    void ltrim(MB_String &str, const MB_String &chars = " ")
     {
         size_t pos = str.find_first_not_of(chars);
-        if (pos != MBSTRING::npos)
+        if (pos != MB_String::npos)
             str.erase(0, pos);
     }
 
-    void rtrim(MBSTRING &str, const MBSTRING &chars = " ")
+    void rtrim(MB_String &str, const MB_String &chars = " ")
     {
         size_t pos = str.find_last_not_of(chars);
-        if (pos != MBSTRING::npos)
+        if (pos != MB_String::npos)
             str.erase(pos + 1);
     }
 
-    void trim(MBSTRING &str, const MBSTRING &chars = " ")
+    void trim(MB_String &str, const MB_String &chars = " ")
     {
         ltrim(str, chars);
         rtrim(str, chars);
     }
 
-    bool isArrayKey(int &keyIndex, std::vector<MBSTRING> &keys)
+    bool isArrayKey(int &keyIndex, std::vector<MB_String> &keys)
     {
         if (keyIndex < (int)keys.size())
             return keys[keyIndex][0] == '[' && keys[keyIndex][keys[keyIndex].length() - 1] == ']';
@@ -1737,7 +1740,7 @@ protected:
             return false;
     }
 
-    int getArrIndex(int &keyIndex, std::vector<MBSTRING> &keys)
+    int getArrIndex(int &keyIndex, std::vector<MB_String> &keys)
     {
         int res = -1;
         if (keyIndex < (int)keys.size())
@@ -1751,7 +1754,7 @@ protected:
 
     int getArrIndex(const char *key)
     {
-        MBSTRING s = key;
+        MB_String s = key;
         int res = -1;
         res = atoi(s.substr(1, s.length() - 2).c_str());
         if (res < 0)
@@ -1768,7 +1771,6 @@ class FirebaseJsonArray : public FirebaseJsonBase
 
 public:
     typedef struct FirebaseJsonBase::fb_js_iterator_value_t IteratorValue;
-    typedef struct FirebaseJsonBase::fb_js_search_criteria_t SearchCriteria;
 
     FirebaseJsonArray()
     {
@@ -1903,6 +1905,16 @@ public:
     bool readFrom(FILE_SYSTEM &file) { return mReadStream(toStream(&file), -1); }
 #endif
 
+#if defined(ESP32_SD_FAT_INCLUDED)
+    /**
+     * Set JSON array data (SdFat's SdFile object) to FirebaseJsonArray object.
+     * 
+     * @param sdFatFile The SdFat's SdFile object.
+     * @return boolean status of the operation.
+    */
+    bool readFrom(SD_FAT_FILE &sdFatFile) { return mReadSdFat(sdFatFile, -1); }
+#endif
+
     /**
      * Get the array value at the specified index or path from the FirebaseJsonArray object.
      * 
@@ -1916,49 +1928,6 @@ public:
     */
     template <typename T>
     bool get(FirebaseJsonData &result, T index_or_path, bool prettify = false) { return dataGetHandler(index_or_path, result, prettify); }
-
-    /**
-     * Search element by key or path in FirebaseJsonArray object.
-     * 
-     * @param result The reference of FirebaseJsonData that holds the result.
-     * @param criteria The FirebaseJson::SearchCriteria data.
-     * @param prettify The text indentation and new line serialization option.
-     * @return number of elements found from search.
-     * 
-     * The SearchCriteria data has the properties e.g.
-     * path - The key of path to search.
-     * Path can be wildcard with * in search path and * should use as key in part and do not mix with any character.
-     * value - The value string to search.
-     * depth - The begin depth (int) of element to search, default is 0.
-     * endDepth - The end depth (int) of element to search, default is -1.
-     * searchAll - The boolean option to search all occurrences of elements.
-     *  
-    */
-    size_t search(SearchCriteria &criteria) { return mSearch(root, &criteria); }
-
-    size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, &result, &criteria, prettify); }
-
-    /**
-     * Search element by key or path in FirebaseJsonArray object.
-     * 
-     * @param path The key or path to search.
-     * @param searchAll Search all occurrences.
-     * @return number of elements found from search.
-     *  
-    */
-    template <typename T>
-    size_t search(T path, bool searchAll = false) { return mSearch(root, getStr(path), searchAll); }
-
-    /**
-     * Get the full path to any element in FirebaseJson object.
-     * 
-     * @param path The key or path to search in to.
-     * @param searchAll Search all occurrences.
-     * @return full path string in case of found.
-     *  
-    */
-    template <typename T>
-    String getPath(T path, bool searchAll = false) { return mGetElementFullPath(root, getStr(path), searchAll); }
 
     /**
      * Check whether key or path to the child element existed in FirebaseJsonArray or not.
@@ -2275,7 +2244,6 @@ class FirebaseJson : public FirebaseJsonBase
 public:
     typedef enum FirebaseJsonBase::fb_js_json_data_type jsonDataType;
     typedef struct FirebaseJsonBase::fb_js_iterator_value_t IteratorValue;
-    typedef struct FirebaseJsonBase::fb_js_search_criteria_t SearchCriteria;
 
     FirebaseJson() { this->root_type = Root_Type_JSON; }
 
@@ -2367,12 +2335,22 @@ public:
 
 #if defined(FBJS_ENABLE_FS)
     /**
-     * Set JSON array data (File object) to FirebaseJson object.
+     * Set JSON data (File object) to FirebaseJson object.
      * 
      * @param file The File object.
      * @return boolean status of the operation.
     */
     bool readFrom(FILE_SYSTEM &file) { return mReadStream(toStream(&file), -1); }
+#endif
+
+#if defined(ESP32_SD_FAT_INCLUDED)
+    /**
+     * Set JSON data (SdFat's SdFile object) to FirebaseJson object.
+     * 
+     * @param sdFatFile The SdFat's SdFile object.
+     * @return boolean status of the operation.
+    */
+    bool readFrom(SD_FAT_FILE &sdFatFile) { return mReadSdFat(sdFatFile, -1); }
 #endif
 
     /**
@@ -2449,49 +2427,6 @@ public:
     */
     template <typename T>
     bool get(FirebaseJsonData &result, T path, bool prettify = false) { return mGet(root, &result, getStr(path), prettify); }
-
-    /**
-     * Search element by key or path in FirebaseJsonArray object.
-     * 
-     * @param result The reference of FirebaseJsonData that holds the result.
-     * @param criteria The FirebaseJson::SearchCriteria data.
-     * @param prettify The text indentation and new line serialization option.
-     * @return number of elements found from search.
-     * 
-     * The SearchCriteria data has the properties e.g.
-     * path - The key of path to search.
-     * Path can be wildcard with * in search path and * should use as key in part and do not mix with any character.
-     * value - The value string to search.
-     * depth - The begin depth (int) of element to search, default is 0.
-     * endDepth - The end depth (int) of element to search, default is -1.
-     * searchAll - The boolean option to search all occurrences of elements.
-     *  
-    */
-    size_t search(SearchCriteria &criteria) { return mSearch(root, &criteria); }
-
-    size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, &result, &criteria, prettify); }
-
-    /**
-     * Search element by key or path in FirebaseJson object.
-     * 
-     * @param path The key or path to search.
-     * @param searchAll Search all occurrences.
-     * @return number of elements found from search.
-     *  
-    */
-    template <typename T>
-    size_t search(T path, bool searchAll = false) { return mSearch(root, getStr(path), searchAll); }
-
-    /**
-     * Get the full path to any element in FirebaseJson object.
-     * 
-     * @param path The key or path to search in to.
-     * @param searchAll Search all occurrences.
-     * @return full path string in case of found.
-     *  
-    */
-    template <typename T>
-    String getPath(T path, bool searchAll = false) { return mGetElementFullPath(root, getStr(path), searchAll); }
 
     /**
      * Check whether key or path to the child element existed in FirebaseJson object or not.

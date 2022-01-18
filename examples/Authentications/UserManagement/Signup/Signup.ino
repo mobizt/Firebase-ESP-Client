@@ -125,12 +125,14 @@ void setup()
 
 void loop()
 {
+    //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+    
     if (millis() - dataMillis > 5000 && signupOK && Firebase.ready())
     {
         dataMillis = millis();
         String path = "/UsersData/";
         path += auth.token.uid.c_str();//<- user uid
         path += "/test/int";
-        Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path.c_str(), count++) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
     }
 }

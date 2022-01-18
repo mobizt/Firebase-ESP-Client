@@ -1,24 +1,32 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.7.7"
+#define FIREBASE_CLIENT_VERSION "2.8.0"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.7.7
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.8.0
  * 
  * This library supports Espressif ESP8266 and ESP32 MCUs
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  *
  *   Updates:
- * - Fixed RTDB timestamp issue.
- * - Update internal string manipulations.
+ * - Fixed download file and download file OTA issues in Firebase Storage and Google Cloud Storage.
+ * - Fixed upload file resumable issue in Google Cloud Storage.
+ * - Fixed internal url encoding issue.
+ * - Fixed flash string handler issue.
+ * - Fixed FCM legacy API issue.
+ * - Fixed authentication issues.
+ * - Fixed issue #231 for FirebaseData object's StringData
+ * - Improve storage management.
+ * - Add support SdFat in ESP32.
+ * - Add support download and upload callback functions for all file operations.
  * 
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of

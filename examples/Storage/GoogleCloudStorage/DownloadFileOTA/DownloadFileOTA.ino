@@ -86,26 +86,41 @@ void setup()
     Firebase.reconnectWiFi(true);
 }
 
+//The Google Cloud Storage download callback function
+void gcsDownloadCallback(DownloadStatusInfo info)
+{
+    if (info.status == fb_esp_gcs_download_status_init)
+    {
+        Serial.printf("Downloading firmware %s (%d)\n", info.remoteFileName.c_str(), info.fileSize);
+    }
+    else if (info.status == fb_esp_gcs_download_status_download)
+    {
+        Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
+    }
+    else if (info.status == fb_esp_gcs_download_status_complete)
+    {
+        Serial.println("Update firmware completed.");
+        Serial.println();
+        Serial.println("Restarting...\n\n");
+        delay(2000);
+        ESP.restart();
+    }
+    else if (info.status == fb_esp_gcs_download_status_error)
+    {
+        Serial.printf("Download firmware failed, %s\n", info.errorMsg.c_str());
+    }
+}
+
 void loop()
 {
     if (Firebase.ready() && !taskCompleted)
     {
         taskCompleted = true;
 
-        //If you want to get download url to use with your own OTA update process using core update library,
-        //see Metadata.ino example
-
-        Serial.println("\nWait for file downloading...");
+        Serial.println("\nDownload firmware file OTA with Google Cloud Storage JSON API...\n");
 
         //In ESP8266, this function will allocate 16k+ memory for internal SSL client.
-        Serial.printf("Download firmware file... %s\n", Firebase.GCStorage.downloadOTA(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "<firmware.bin>" /* path of firmware file stored in the bucket */) ? "ok" : fbdo.errorReason().c_str());
-
-        if (fbdo.httpCode() == 200)
-        {
-            Serial.println("Update completed. Restarting...");
-            Serial.println();
-            delay(2000);
-            ESP.restart();
-        }
+        if (!Firebase.GCStorage.downloadOTA(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "<firmware.bin>" /* path of firmware file stored in the bucket */, gcsDownloadCallback /* callback function */))
+            Serial.println(fbdo.errorReason());
     }
 }

@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.2
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.3
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -29,7 +29,6 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_RTDB
@@ -195,6 +194,9 @@ public:
     template <typename T>
     auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
     {
+        if (sif->data_type == fb_esp_data_type::d_string)
+            setRaw(true); //if double quotes string, trim it.
+
         if (sif->data.length() > 0)
         {
             if (sif->data_type == fb_esp_data_type::d_boolean)
@@ -236,9 +238,9 @@ public:
     auto to() -> typename enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
     {
 
-        if (sif->data.length() > 0 && (sif->data_type == fb_esp_data_type::d_string || sif->data_type == fb_esp_data_type::d_std_string || sif->data_type == fb_esp_data_type::d_mb_string))
-            return sif->data.substr(1, sif->data.length() - 2).c_str();
-
+        if (sif->data_type == fb_esp_data_type::d_string)
+            setRaw(true);
+            
         return sif->data.c_str();
     }
 
@@ -295,22 +297,20 @@ public:
         return sif->blob;
     }
 
+#if defined(FLASH_FS)
     template <typename T>
-    auto to() -> typename enable_if<is_same<T, File>::value, File>::type
+    auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
     {
         if (sif->data_type == fb_esp_data_type::d_file && Signer.getCfg())
         {
-#if defined FLASH_FS
-
-            ut->flashTest();
-
-            if (Signer.getCfg()->_int.fb_flash_rdy)
-                Signer.getCfg()->_int.fb_file = FLASH_FS.open(pgm2Str(fb_esp_pgm_str_184), "r");
-#endif
+            int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type  mem_storage_type_flash, mb_file_open_mode_read);
+            if (ret < 0)
+                sif->httpCode = ret;
         }
 
-        return Signer.getCfg()->_int.fb_file;
+        return ut->mbfs->getFlashFile();
     }
+#endif
 
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonArray *arrPtr = nullptr;
@@ -355,6 +355,7 @@ private:
     void mSetResInt(const char *value);
     void mSetResFloat(const char *value);
     void mSetResBool(bool value);
+    void setRaw(bool trim);
 };
 
 #endif

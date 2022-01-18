@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.10
+ * Google's Firebase Data class, FB_Session.h version 1.2.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -36,6 +36,7 @@
 #define FIREBASE_SESSION_H
 #include <Arduino.h>
 #include "Utils.h"
+
 #include "rtdb/stream/FB_Stream.h"
 #include "rtdb/stream/FB_MP_Stream.h"
 #include "rtdb/QueueInfo.h"
@@ -89,14 +90,14 @@ public:
    * 
    */
   template <typename T = const char *>
-  void begin(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mBegin(toString(serverKey), spi_ethernet_module); }
+  void begin(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mBegin(toStringPtr(serverKey), spi_ethernet_module); }
 
   /** Add recipient's device registration token or instant ID token.
    * 
    * @param deviceToken Recipient's device registration token to add that message will be sent to.
    */
   template <typename T = const char *>
-  void addDeviceToken(T deviceToken) { mAddDeviceToken(toString(deviceToken)); }
+  void addDeviceToken(T deviceToken) { mAddDeviceToken(toStringPtr(deviceToken)); }
 
   /** Remove the recipient's device registration token or instant ID token.
    * 
@@ -114,7 +115,7 @@ public:
    * @param body The body text of notification message.
    */
   template <typename T1 = const char *, typename T2 = const char *>
-  void setNotifyMessage(T1 title, T2 body) { mSetNotifyMessage(toString(title), toString(body)); }
+  void setNotifyMessage(T1 title, T2 body) { mSetNotifyMessage(toStringPtr(title), toStringPtr(body)); }
 
   /** Set the notify message type information.
    * 
@@ -123,7 +124,7 @@ public:
    * @param icon The name and/or included URI/URL of the icon to show on notifying message.
    */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  void setNotifyMessage(T1 title, T2 body, T3 icon) { mSetNotifyMessage(toString(title), toString(body), toString(icon)); }
+  void setNotifyMessage(T1 title, T2 body, T3 icon) { mSetNotifyMessage(toStringPtr(title), toStringPtr(body), toStringPtr(icon)); }
 
   /** Set the notify message type information.
    * 
@@ -133,7 +134,7 @@ public:
    * @param click_action The URL or intent to accept click event on the notification message.
    */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-  void setNotifyMessage(T1 title, T2 body, T3 icon, T4 click_action) { mSetNotifyMessage(toString(title), toString(body), toString(icon), toString(click_action)); }
+  void setNotifyMessage(T1 title, T2 body, T3 icon, T4 click_action) { mSetNotifyMessage(toStringPtr(title), toStringPtr(body), toStringPtr(icon), toStringPtr(click_action)); }
 
   /** add the custom key/value in the notify message type information.
    * 
@@ -141,7 +142,7 @@ public:
    * @param value The value field in the notification message.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  void addCustomNotifyMessage(T1 key, T2 value) { mAddCustomNotifyMessage(toString(key), toString(value)); }
+  void addCustomNotifyMessage(T1 key, T2 value) { mAddCustomNotifyMessage(toStringPtr(key), toStringPtr(value)); }
 
   /** Clear all notify message information.
   */
@@ -152,7 +153,7 @@ public:
    * @param jsonString The JSON structured data string.
   */
   template <typename T = const char *>
-  void setDataMessage(T jsonString) { mSetDataMessage(toString(jsonString)); }
+  void setDataMessage(T jsonString) { mSetDataMessage(toStringPtr(jsonString)); }
 
   /** Set the custom data message type information.
    * 
@@ -169,14 +170,14 @@ public:
    * @param priority The priority string i.e. normal and high.
   */
   template <typename T = const char *>
-  void setPriority(T priority) { mSetPriority(toString(priority)); }
+  void setPriority(T priority) { mSetPriority(toStringPtr(priority)); }
 
   /** Set the collapse key of the message (notification and custom data).
    * 
    * @param key String of collapse key.
   */
   template <typename T = const char *>
-  void setCollapseKey(T key) { mSetCollapseKey(toString(key)); }
+  void setCollapseKey(T key) { mSetCollapseKey(toStringPtr(key)); }
 
   /** Set the Time To Live of the message (notification and custom data).
    * 
@@ -189,7 +190,7 @@ public:
    * @param topic Topic string.
   */
   template <typename T = const char *>
-  void setTopic(T topic) { mSetTopic(toString(topic)); }
+  void setTopic(T topic) { mSetTopic(toStringPtr(topic)); }
 
   /** Get the send result.
    * 
@@ -214,51 +215,37 @@ private:
 
   void clear();
 
-  void mBegin(const char *serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
+  void mBegin(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
 
-  void mAddDeviceToken(const char *deviceToken);
+  void mAddDeviceToken(MB_StringPtr deviceToken);
 
-  void mSetNotifyMessage(const char *title, const char *body);
+  void mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body);
 
-  void mSetNotifyMessage(const char *title, const char *body, const char *icon);
+  void mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon);
 
-  void mSetNotifyMessage(const char *title, const char *body, const char *icon, const char *click_action);
+  void mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon, MB_StringPtr click_action);
 
-  void mAddCustomNotifyMessage(const char *key, const char *value);
+  void mAddCustomNotifyMessage(MB_StringPtr key, MB_StringPtr value);
 
-  void mSetDataMessage(const char *jsonString);
+  void mSetDataMessage(MB_StringPtr jsonString);
 
-  void mSetPriority(const char *priority);
+  void mSetPriority(MB_StringPtr priority);
 
-  void mSetCollapseKey(const char *key);
+  void mSetCollapseKey(MB_StringPtr key);
 
-  void mSetTopic(const char *topic);
+  void mSetTopic(MB_StringPtr topic);
 
-  MBSTRING result;
-  MBSTRING raw;
-  MBSTRING idTokens;
+  bool prepareUtil();
+
+  MB_String result;
+  MB_String raw;
+  MB_String idTokens;
   int _ttl = -1;
   uint16_t _index = 0;
   uint16_t _port = FIREBASE_PORT;
   UtilsClass *ut = nullptr;
   SPI_ETH_Module *_spi_ethernet_module = NULL;
-
-protected:
-  template <typename T>
-  auto
-  toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type
-  {
-    return val.c_str();
-  }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+  bool intUt = false;
 };
 
 #endif
@@ -585,6 +572,8 @@ public:
   template <typename T>
   auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
   {
+    if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_string)
+      setRaw(true); //if double quotes string, trim it.
 
     if (_ss.rtdb.raw.length() > 0)
     {
@@ -636,14 +625,8 @@ public:
   template <typename T>
   auto to() -> typename enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
   {
-    if (_ss.rtdb.raw.length() > 0 && (_ss.rtdb.resp_data_type == fb_esp_data_type::d_string || _ss.rtdb.resp_data_type == fb_esp_data_type::d_std_string || _ss.rtdb.resp_data_type == fb_esp_data_type::d_mb_string))
-    {
-      if (_ss.rtdb.raw[0] == '"' && _ss.rtdb.raw[_ss.rtdb.raw.length() - 1] == '"')
-      {
-        _ss.rtdb.raw.pop_back();
-        _ss.rtdb.raw.erase(0, 1);
-      }
-    }
+    if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_string)
+      setRaw(true);
     return _ss.rtdb.raw.c_str();
   }
 
@@ -706,21 +689,21 @@ public:
     return _ss.rtdb.blob;
   }
 
+#if defined(FLASH_FS)
   template <typename T>
-  auto to() -> typename enable_if<is_same<T, File>::value, File>::type
+  auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
   {
     if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_file && init())
     {
-#if defined FLASH_FS
-      ut->flashTest();
-
-      if (Signer.getCfg()->_int.fb_flash_rdy)
-        Signer.getCfg()->_int.fb_file = FLASH_FS.open(pgm2Str(fb_esp_pgm_str_184), "r");
-#endif
+      int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type mem_storage_type_flash, mb_file_open_mode_read);
+      if (ret < 0)
+        _ss.http_code = ret;
     }
 
-    return Signer.getCfg()->_int.fb_file;
+    return ut->mbfs->getFlashFile();
   }
+#endif
+
 #endif
 
   /** Return the new appended node's name or key of server returned payload when calling pushXXX function (RTDB only).
@@ -863,7 +846,8 @@ private:
 #endif
 
   UtilsClass *ut = nullptr;
-
+  MB_File *mbfs = nullptr;
+  bool intCfg = false;
   unsigned long last_reconnect_millis = 0;
 
   uint16_t reconnect_tmo = 10 * 1000;
@@ -914,12 +898,12 @@ private:
   int tcpSend(const char *data);
   int tcpSendChunk(const char *data, int &index, size_t len);
   bool reconnect(unsigned long dataTime = 0);
-  MBSTRING getDataType(uint8_t type);
-  MBSTRING getMethod(uint8_t method);
+  MB_String getDataType(uint8_t type);
+  MB_String getMethod(uint8_t method);
   bool tokenReady();
   void setTimeout();
   void setSecure();
-  bool validRequest(const MBSTRING &path);
+  bool validRequest(const MB_String &path);
   void addQueue(struct fb_esp_rtdb_queue_info_t *qinfo);
 #ifdef ENABLE_RTDB
   void clearQueueItem(QueueItem *item);
@@ -930,6 +914,7 @@ private:
 #endif
 
   bool init();
+  void setRaw(bool trim);
 };
 
 #endif

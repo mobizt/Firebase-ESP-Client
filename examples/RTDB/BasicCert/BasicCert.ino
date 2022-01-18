@@ -10,6 +10,9 @@
  *
 */
 
+//If SD Card used for cert file storage, assign SD card type and FS used in src/FirebaseFS.h and
+//change the config for that card interfaces in src/addons/SDHelper.h
+
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -23,6 +26,9 @@
 
 //Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
+
+//Provide the SD card interfaces setting and mounting
+#include <addons/SDHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
@@ -129,12 +135,12 @@ void setup()
 
   /* Or assign the certificate file */
 
-  /** From the test on July 2021, GlobalSign Root CA was missing from Google server
+  /** From the test on January 2022, GlobalSign Root CA was missing from Google server
    * as described above, GTS Root R1 (gsr1.pem or gsr1.der) can be used instead.
    * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
   */
-  //config.cert.file = "/gsr1.pem";
+  //config.cert.file = "/gtsr1.pem";
   //config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
 
   //Or use legacy authenticate method
@@ -150,6 +156,9 @@ void setup()
   
 
   Firebase.setDoubleDigits(5);
+  
+  //If cert file stored in SD card, mount it.
+  //SD_Card_Mounting();//See src/addons/SDHelper.h
 
   /** Timeout options.
 
@@ -185,6 +194,8 @@ void setup()
 void loop()
 {
 
+  //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+  
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
@@ -221,7 +232,7 @@ void loop()
     if (count == 0)
     {
       json.set("value/round/" + String(count), "cool!");
-      json.set("vaue/ts/.sv", "timestamp");
+      json.set("value/ts/.sv", "timestamp");
       Serial.printf("Set json... %s\n", Firebase.RTDB.set(&fbdo, "/test/json", &json) ? "ok" : fbdo.errorReason().c_str());
     }
     else

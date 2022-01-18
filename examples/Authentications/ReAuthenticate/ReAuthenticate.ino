@@ -121,6 +121,8 @@ void loop()
     if (millis() - dataMillis > 5000)
     {
         dataMillis = millis();
+        
+        //Firebase.ready works for authentication management and should be called repeatedly in the loop.
 
         if (Firebase.ready())
         {
@@ -128,7 +130,7 @@ void loop()
             path += auth.token.uid.c_str(); //<- user uid of current user that sign in with Emal/Password
             path += "/test/int";
             Serial.printf("Current UID: %s\n", auth.token.uid.c_str());
-            Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path.c_str(), count++) ? "ok" : fbdo.errorReason().c_str());
+            Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
 
             //Swap users every 5 times
             if (count % 5 == 0)

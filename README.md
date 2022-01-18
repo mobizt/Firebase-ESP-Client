@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.7.7
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.8.0
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -91,12 +91,6 @@ All function for Realtime database between these libraries are compattible.  [Se
 
 
 ## Installation
-
-### Important Note
-
-Since library v2.6.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) was applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v2.6.6.
-
-The library v2.6.6 and later are recommended.
 
 
 ### Using Library Manager
@@ -205,25 +199,71 @@ See [other authentication examples](/examples/Authentications) for more sign in 
 
 
 
-## IDE Configuaration for ESP8266 MMU - Adjust the Ratio of ICACHE to IRAM
+## Memory Options for ESP8266
+
+When you update the ESP8266 Arduino Core SDK to v3.0.0, the memory can be configurable from IDE.
+
+You can choose the Heap memory between internal and external memory chip from IDE e.g. Arduino IDE and PlatformIO on VSCode or Atom IDE.
 
 ### Arduino IDE
 
-When you update the ESP8266 Arduino Core SDK to v3.0.0, the memory can be configurable from Arduino IDE board settings.
 
-By default MMU **option 1** was selected, the free Heap can be low and may not suitable for the SSL client usage in this library.
-
-To increase the Heap, choose the MMU **option 3**, 16KB cache + 48KB IRAM and 2nd Heap (shared).
+For ESP8266 devices that don't not have external SRAM/PSRAM chip installed, choose the MMU **option 3**, 16KB cache + 48KB IRAM and 2nd Heap (shared).
 
 ![Arduino IDE config](/media/images/ArduinoIDE.png)
 
-To use external Heap from 1 Mbit SRAM 23LC1024, choose the MMU **option 5**, 128K External 23LC1024.
+For ESP8266 devices that have external 23LC1024 SRAM chip installed, choose the MMU **option 5**, 128K External 23LC1024.
 
 ![MMU VM 128K](/media/images/ESP8266_VM.png)
 
-To use external Heap from PSRAM, choose the MMU **option 6**, 1M External 64 MBit PSRAM.
+For ESP8266 devices that have external ESP-PSRAM64 chip installed, choose the MMU **option 6**, 1M External 64 MBit PSRAM.
 
-The connection between SRAM/PSRAM and ESP8266
+
+### PlatformIO IDE
+
+The MMU options can be selected from build_flags in your project's platformio.ini file
+
+For ESP8266 devices that don't not have external SRAM/PSRAM chip installed, add build flag as below.
+
+```ini
+[env:d1_mini]
+platform = espressif8266
+build_flags = -D PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+board = d1_mini
+framework = arduino
+monitor_speed = 115200
+```
+
+
+For ESP8266 devices that have external 23LC1024 SRAM chip installed, add build flag as below.
+
+```ini
+[env:d1_mini]
+platform = espressif8266
+;128K External 23LC1024
+build_flags = -D PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_128K
+board = d1_mini
+framework = arduino
+monitor_speed = 115200
+```
+
+
+For ESP8266 devices that have external ESP-PSRAM64 chip installed, add build flag as below.
+
+```ini
+[env:d1_mini]
+platform = espressif8266
+;1M External 64 MBit PSRAM
+build_flags = -D PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_1024K
+board = d1_mini
+framework = arduino
+monitor_speed = 115200
+```
+
+
+### ESP8266 andd SRAM/PSRAM Chip connection
+
+Most ESP8266 modules don't have the built-in SRAM/PSRAM on board. External memory chip connection can be done via SPI port as below.
 
 ```
 23LC1024/ESP-PSRAM64                ESP8266
@@ -237,105 +277,38 @@ Vcc (Pin 8)                         3V3
 Vcc (Pin 4)                         GND
 ```
 
+Once the external Heap memory was selected in IDE, to allow the library to use the external memory, you can set it in [**FirebaseFS.h**](src/FirebaseFS.h) by define this macro.
 
-### PlatformIO IDE
-
-By default the balanced ratio (32KB cache + 32KB IRAM) configuration is used.
-
-To increase the heap, **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED** build flag should be assigned in platformio.ini.
-
-```ini
-[env:d1_mini]
-platform = espressif8266
-build_flags = -D PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
-board = d1_mini
-framework = arduino
-monitor_speed = 115200
-```
-
-And to use external Heap from 1 Mbit SRAM 23LC1024 and 64 Mbit PSRAM, **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_128K** and **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_1024K** build flags should be assigned respectively.
-
-The supportedd MMU build flags in PlatformIO.
-
-- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48**
-
-   16KB cache + 48KB IRAM (IRAM)
-
-- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED**
-
-   16KB cache + 48KB IRAM and 2nd Heap (shared)
-
-- **PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM32_SECHEAP_NOTSHARED**
-
-   16KB cache + 32KB IRAM + 16KB 2nd Heap (not shared)
-
-- **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_128K**
-
-   128K External 23LC1024
-
-- **PIO_FRAMEWORK_ARDUINO_MMU_EXTERNAL_1024K**
-
-   1M External 64 MBit PSRAM
-
-- **PIO_FRAMEWORK_ARDUINO_MMU_CUSTOM**
-
-   Disables default configuration and expects user-specified flags
-
-
-To use PSRAM/SRAM for internal memory allocation which you can config to use it via [**FirebaseFS.h**](src/FirebaseFS.h) with this macro.
 
 ```cpp
 #define FIREBASE_USE_PSRAM
 ```
 
-   
-### Test code for MMU
-
-```cpp
-
-#include <Arduino.h>
-#include <umm_malloc/umm_heap_select.h>
-
-void setup() 
-{
-  Serial.begin(115200);
-  HeapSelectIram ephemeral;
-  Serial.printf("IRAM free: %6d bytes\r\n", ESP.getFreeHeap());
-  {
-    HeapSelectDram ephemeral;
-    Serial.printf("DRAM free: %6d bytes\r\n", ESP.getFreeHeap());
-  }
-
-  ESP.setExternalHeap();
-  Serial.printf("External free: %d\n", ESP.getFreeHeap());
-  ESP.resetHeap();
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-```
+This macro was defined by default when you installed or update the library.
 
 
-### Use PSRAM on ESP32
 
+## Memory Options for ESP32
 
-To enable PSRAM in ESP32 module with on-board PSRAM chip, in Arduino IDE
+In ESP32 module that has PSRAM installed, you can enable it and set the library to use this external memory instead.
+
+### Arduino IDE
+
+To enable PSRAM in ESP32 module.
 
 ![Enable PSRAM in ESP32](/media/images/ESP32-PSRAM.png)
 
 
-In PlatformIO in VSCode IDE, add the following build_flags in your project's platformio.ini file
+### PlatformIO IDE
+
+
+In PlatformIO on VSCode or Atom IDE, add the following build_flags in your project's platformio.ini file.
 
 ```ini
 build_flags = -DBOARD_HAS_PSRAM -mfix-esp32-psram-cache-issue
 ```
 
-*When config the IDE or add the build flags to use PSRAM in the ESP32 dev boards that do not have on-board PSRAM chip, your device will be crashed (reset).
-
-
-Since v2.6.0, this library supports PSRAM for internal memory allocation which you can config to use it via [**FirebaseFS.h**](src/FirebaseFS.h) with this macro.
+As in ESP8266, once the external Heap memory was enabled in IDE, to allow the library to use the external memory, you can set it in [**FirebaseFS.h**](src/FirebaseFS.h) by define this macro.
 
 ```cpp
 #define FIREBASE_USE_PSRAM
@@ -1455,9 +1428,9 @@ See [Cloud Functions examples](/examples/CloudFunctions) for complete usages.
 
 Some Firestore functions and all Cloud Functions functions requires the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
 
-You may still get the error permission denined error even using OAuth2.0 authen with Service Account credentials, because the client in the Service Account does not has the owner permission.
+You may still get the error permission denined error even using OAuth2.0 authen with Service Account credentials, because the client in the Service Account does not have the Owner and Editor permissions.
 
-To assign the owner permission to the client.
+To assign the Owner and Editor permissions to the client.
 
 Go to https://console.cloud.google.com/iam-admin
 
@@ -1468,6 +1441,11 @@ Choose the project, look at the member which matches the client email in service
 ![IAM Edit Permission 2](/media/images/IAM_Permission_Role2.png)
 
 ![IAM Edit Permission 3](/media/images/IAM_Permission_Role3.png)
+
+![IAM Edit Permission 4](/media/images/IAM_Permission_Role4.png)
+
+
+Wait a few minutes for the action to propagate after adding roles. 
 
 
 For Cloud Functions Cloud Build API must be enabled for the project. To enable Cloud Build API go to https://console.developers.google.com/apis/library/cloudbuild.googleapis.com

@@ -1,10 +1,10 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.14
+ * The Firebase class, Firebase.cpp v1.0.16
  * 
- *  Created December 27, 2021
+ *  Created January 18, 2022
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -34,12 +34,24 @@
 
 #if defined(FIREBASE_ESP_CLIENT)
 
-Firebase_ESP_Client::Firebase_ESP_Client() {}
+Firebase_ESP_Client::Firebase_ESP_Client() {
+
+    if (!mbfs)
+        mbfs = new MB_File();
+
+    if (!ut)
+        ut = new UtilsClass(mbfs);
+
+    Signer.begin(ut, mbfs, nullptr, nullptr);
+}
 
 Firebase_ESP_Client::~Firebase_ESP_Client()
 {
     if (ut)
         delete ut;
+
+    if (mbfs)
+        delete mbfs;
 
     if (auth)
         delete auth;
@@ -51,34 +63,10 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
 void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
 {
     init(config, auth);
+
     if (!cfg->signer.test_mode)
     {
-
-        if (cfg->service_account.json.path.length() > 0)
-        {
-            if (!Signer.parseSAFile())
-                cfg->signer.tokens.status = token_status_uninitialized;
-        }
-
-        if (strlen(cfg->signer.tokens.legacy_token) > 0)
-        {
-            Signer.setTokenType(token_type_legacy_token);
-            cfg->_int.auth_token = cfg->signer.tokens.legacy_token;
-            cfg->_int.ltok_len = strlen(cfg->signer.tokens.legacy_token);
-            cfg->_int.rtok_len = 0;
-            cfg->_int.atok_len = 0;
-        }
-        else if (Signer.tokenSigninDataReady())
-        {
-            cfg->signer.idTokenCutomSet = false;
-
-            if (auth->token.uid.length() == 0)
-                Signer.setTokenType(token_type_oauth2_access_token);
-            else
-                Signer.setTokenType(token_type_custom_token);
-        }
-        else if (Signer.userSigninDataReady() || cfg->signer.anonymous)
-            Signer.setTokenType(token_type_id_token);
+        Signer.authChanged(config, auth);
 
         struct fb_esp_url_info_t uinfo;
         cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
@@ -93,14 +81,8 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
         }
 
         if (cfg->cert.file.length() > 0)
-        {
-            if (cfg->cert.file_storage == mem_storage_type_sd && !cfg->_int.fb_sd_rdy)
-                cfg->_int.fb_sd_rdy = ut->sdTest(cfg->_int.fb_file);
-            else if ((cfg->cert.file_storage == mem_storage_type_flash) && !cfg->_int.fb_flash_rdy)
-                ut->flashTest();
-        }
+            mbfs->checkStorageReady(mbfs_type cfg->cert.file_storage);
     }
-
     Signer.handleToken();
 }
 
@@ -119,19 +101,46 @@ bool Firebase_ESP_Client::authenticated()
     return Signer.authenticated;
 }
 
-void Firebase_ESP_Client::setIdToken(FirebaseConfig *config, const char *idToken, size_t expire)
+bool Firebase_ESP_Client::mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password)
+{
+    init(config, auth);
+    Signer.setTokenType(token_type_id_token);
+    return Signer.getIdToken(true, email, password);
+}
+
+bool Firebase_ESP_Client::msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken)
+{
+    init(config, nullptr);
+    return Signer.handleEmailSending(idToken, fb_esp_user_email_sending_type_verify);
+}
+
+bool Firebase_ESP_Client::mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken)
+{
+    init(config, auth);
+    return Signer.deleteIdToken(idToken);
+}
+
+bool Firebase_ESP_Client::mSendResetPassword(FirebaseConfig *config, MB_StringPtr email)
+{
+    init(config, nullptr);
+    return Signer.handleEmailSending(email, fb_esp_user_email_sending_type_reset_psw);
+}
+
+void Firebase_ESP_Client::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire)
 {
     if (!config)
         return;
 
-    if (idToken)
+    MB_String _idToken = idToken;
+
+    if (_idToken.length() > 0)
     {
-        if (strlen(idToken) == 0 || strcmp(config->_int.auth_token.c_str(), idToken) == 0)
+        if (_idToken.length() == 0 || strcmp(config->_int.auth_token.c_str(), _idToken.c_str()) == 0)
             return;
 
-        MBSTRING copy = idToken;
-        config->_int.auth_token = copy;
-        copy.clear();
+        _idToken.clear();
+
+        config->_int.auth_token = idToken;
         config->_int.atok_len = config->_int.auth_token.length();
         config->_int.ltok_len = 0;
 
@@ -166,8 +175,7 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
     if (!this->auth)
         this->auth = new FirebaseAuth();
 
-    if (!ut)
-        ut = new UtilsClass(config);
+    ut->setConfig(cfg);
 
 #ifdef ENABLE_RTDB
     RTDB.begin(ut);
@@ -192,18 +200,11 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
 
     cfg->signer.lastReqMillis = 0;
 
-    //don't clear auth token if anonymous sign in or Email/Password sign up
     if (!cfg->signer.anonymous && !cfg->signer.signup)
-    {
-        cfg->_int.auth_token.clear();
         cfg->signer.tokens.expires = 0;
-    }
-
-    if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
-        cfg->signer.idTokenCutomSet = false;
 
     cfg->signer.signup = false;
-    Signer.begin(ut, cfg, auth);
+    Signer.begin(ut, mbfs, cfg, auth);
     cfg->signer.tokens.error.message.clear();
 }
 
@@ -229,52 +230,46 @@ void Firebase_ESP_Client::setDoubleDigits(uint8_t digits)
         cfg->_int.fb_double_digits = digits;
 }
 
+#if defined(SD_FS) && defined(CARD_TYPE_SD)
+
 bool Firebase_ESP_Client::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
-#if defined SD_FS
-    if (cfg)
-    {
-        cfg->_int.sd_config.sck = sck;
-        cfg->_int.sd_config.miso = miso;
-        cfg->_int.sd_config.mosi = mosi;
-        cfg->_int.sd_config.ss = ss;
-    }
-#if defined(ESP32)
-    if (ss > -1)
-    {
-        SPI.begin(sck, miso, mosi, ss);
-#if defined(CARD_TYPE_SD)
-        return SD_FS.begin(ss, SPI);
-#endif
-        return false;
-    }
-    else
-        return SD_FS.begin();
-#elif defined(ESP8266)
-    if (ss > -1)
-        return SD_FS.begin(ss);
-    else
-        return SD_FS.begin(SD_CS_PIN);
-#endif
-#endif
-    return false;
+    return mbfs->sdBegin(ss, sck, miso, mosi);
 }
+
+#if defined(ESP8266)
+bool Firebase_ESP_Client::sdBegin(SDFSConfig *sdFSConfig)
+{
+    return ut->mbfs->sdFatBegin(sdFSConfig);
+}
+#endif
+
+#if defined(ESP32)
+
+bool Firebase_ESP_Client::sdBegin(int8_t ss, SPIClass *spiConfig)
+{
+    return ut->mbfs->sdSPIBegin(ss, spiConfig);
+}
+#endif
+
+#if defined(USE_SD_FAT_ESP32)
+bool Firebase_ESP_Client::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
+{
+    return ut->mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
+}
+#endif
+
+#endif
+
+#if defined(ESP8266) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
 
 bool Firebase_ESP_Client::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
 {
-#if defined(ESP32)
-#if defined(CARD_TYPE_SD_MMC)
-    if (cfg)
-    {
-        cfg->_int.sd_config.sd_mmc_mountpoint = mountpoint;
-        cfg->_int.sd_config.sd_mmc_mode1bit = mode1bit;
-        cfg->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
-    }
-    return SD_FS.begin(mountpoint, mode1bit, format_if_mount_failed);
-#endif
-#endif
-    return false;
+
+    return mbfs->sdMMCBegin(mountpoint, mode1bit, format_if_mount_failed);
 }
+
+#endif
 
 bool Firebase_ESP_Client::setSystemTime(time_t ts)
 {
@@ -287,12 +282,22 @@ Firebase_ESP_Client Firebase = Firebase_ESP_Client();
 
 FIREBASE_CLASS::FIREBASE_CLASS()
 {
+    if (!mbfs)
+        mbfs = new MB_File();
+
+    if (!ut)
+        ut = new UtilsClass(mbfs);
+
+    Signer.begin(ut, mbfs, nullptr, nullptr);
 }
 
 FIREBASE_CLASS::~FIREBASE_CLASS()
 {
     if (ut)
         delete ut;
+
+    if (mbfs)
+        delete mbfs;
 
     if (!extConfig)
     {
@@ -308,49 +313,26 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
 {
     init(config, auth);
 
-    if (cfg->service_account.json.path.length() > 0)
+    if (!cfg->signer.test_mode)
     {
-        if (!Signer.parseSAFile())
-            cfg->signer.tokens.status = token_status_uninitialized;
-    }
 
-    if (strlen(cfg->signer.tokens.legacy_token) > 0)
-    {
-        Signer.setTokenType(token_type_legacy_token);
-        cfg->_int.auth_token = cfg->signer.tokens.legacy_token;
-        cfg->_int.ltok_len = strlen(cfg->signer.tokens.legacy_token);
-        cfg->_int.rtok_len = 0;
-        cfg->_int.atok_len = 0;
-    }
-    else if (Signer.tokenSigninDataReady())
-    {
-        if (auth->token.uid.length() == 0)
-            Signer.setTokenType(token_type_oauth2_access_token);
-        else
-            Signer.setTokenType(token_type_custom_token);
-    }
-    else if (Signer.userSigninDataReady())
-        Signer.setTokenType(token_type_id_token);
+        Signer.authChanged(config, auth);
 
-    struct fb_esp_url_info_t uinfo;
-    cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
+        struct fb_esp_url_info_t uinfo;
+        cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
 
-    if (cfg->host.length() > 0)
-        cfg->database_url = cfg->host;
+        if (cfg->host.length() > 0)
+            cfg->database_url = cfg->host;
 
-    if (cfg->database_url.length() > 0)
-    {
-        ut->getUrlInfo(cfg->database_url.c_str(), uinfo);
-        cfg->database_url = uinfo.host;
+        if (cfg->database_url.length() > 0)
+        {
+            ut->getUrlInfo(cfg->database_url.c_str(), uinfo);
+            cfg->database_url = uinfo.host.c_str();
+        }
+
+        if (cfg->cert.file.length() > 0)
+            mbfs->checkStorageReady(mbfs_type cfg->cert.file_storage);
     }
-    if (cfg->cert.file.length() > 0)
-    {
-        if (cfg->cert.file_storage == mem_storage_type_sd && !cfg->_int.fb_sd_rdy)
-            cfg->_int.fb_sd_rdy = ut->sdTest(cfg->_int.fb_file);
-        else if (cfg->cert.file_storage == mem_storage_type_flash && !cfg->_int.fb_flash_rdy)
-            ut->flashTest();
-    }
-
     Signer.handleToken();
 }
 
@@ -378,19 +360,46 @@ bool FIREBASE_CLASS::authenticated()
     return Signer.authenticated;
 }
 
-void FIREBASE_CLASS::setIdToken(FirebaseConfig *config, const char *idToken, size_t expire)
+bool FIREBASE_CLASS::mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password)
+{
+    init(config, auth);
+    Signer.setTokenType(token_type_id_token);
+    return Signer.getIdToken(true, email, password);
+}
+
+bool FIREBASE_CLASS::msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken)
+{
+    init(config, nullptr);
+    return Signer.handleEmailSending(idToken, fb_esp_user_email_sending_type_verify);
+}
+
+bool FIREBASE_CLASS::mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken)
+{
+    init(config, auth);
+    return Signer.deleteIdToken(idToken);
+}
+
+bool FIREBASE_CLASS::mSendResetPassword(FirebaseConfig *config, MB_StringPtr email)
+{
+    init(config, nullptr);
+    return Signer.handleEmailSending(email, fb_esp_user_email_sending_type_reset_psw);
+}
+
+void FIREBASE_CLASS::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire)
 {
     if (!config)
         return;
 
-    if (idToken)
+    MB_String _idToken = idToken;
+
+    if (_idToken.length() > 0)
     {
-        if (strlen(idToken) == 0 || strcmp(config->_int.auth_token.c_str(), idToken) == 0)
+        if (_idToken.length() == 0 || strcmp(config->_int.auth_token.c_str(), _idToken.c_str()) == 0)
             return;
 
-        MBSTRING copy = idToken;
-        config->_int.auth_token = copy;
-        copy.clear();
+        _idToken.clear();
+
+        config->_int.auth_token = idToken;
         config->_int.atok_len = config->_int.auth_token.length();
         config->_int.ltok_len = 0;
 
@@ -428,10 +437,8 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
     if (!this->auth)
         this->auth = new FirebaseAuth();
 
-    if (ut)
-        delete ut;
+    ut->setConfig(cfg);
 
-    ut = new UtilsClass(this->cfg);
 #ifdef ENABLE_RTDB
     RTDB.begin(ut);
 #endif
@@ -439,18 +446,11 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
 
     cfg->signer.lastReqMillis = 0;
 
-    //don't clear auth token if anonymous sign in or Email/Password sign up
     if (!cfg->signer.anonymous && !cfg->signer.signup)
-    {
-        cfg->_int.auth_token.clear();
         cfg->signer.tokens.expires = 0;
-    }
-
-    if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
-        cfg->signer.idTokenCutomSet = false;
 
     cfg->signer.signup = false;
-    Signer.begin(ut, this->cfg, this->auth);
+    Signer.begin(ut, mbfs, this->cfg, this->auth);
     cfg->signer.tokens.error.message.clear();
 }
 
@@ -484,9 +484,6 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     if (!fbdo.reconnect())
         return false;
 
-    if (!ut)
-        ut = new UtilsClass(nullptr);
-
     if (!ut->waitIdle(fbdo._ss.http_code))
         return false;
 
@@ -495,7 +492,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
-    MBSTRING s;
+    MB_String s;
     s.appendP(fb_esp_pgm_str_577, true);
 
     json->get(data, s.c_str());
@@ -557,73 +554,43 @@ bool FIREBASE_CLASS::sendTopic(FirebaseData &fbdo)
 
 #endif
 
-#ifdef ESP8266
-bool FIREBASE_CLASS::sdBegin(int8_t ss)
-{
-#if defined SD_FS
-    if (cfg)
-    {
-        cfg->_int.sd_config.sck = -1;
-        cfg->_int.sd_config.miso = -1;
-        cfg->_int.sd_config.mosi = -1;
-        cfg->_int.sd_config.ss = ss;
-    }
-
-    if (ss > -1)
-        return SD_FS.begin(ss);
-    else
-        return SD_FS.begin(SD_CS_PIN);
-#else
-    return false;
-#endif
-}
-#endif
-
-#ifdef ESP32
+#if defined(SD_FS) && defined(CARD_TYPE_SD)
 
 bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
-#if defined SD_FS
-    if (cfg)
-    {
-        cfg->_int.sd_config.sck = sck;
-        cfg->_int.sd_config.miso = miso;
-        cfg->_int.sd_config.mosi = mosi;
-        cfg->_int.sd_config.ss = ss;
-    }
-#if defined(ESP32)
-    if (ss > -1)
-    {
-        SPI.begin(sck, miso, mosi, ss);
-#if defined(CARD_TYPE_SD)
-        return SD_FS.begin(ss, SPI);
-#endif
-        return false;
-    }
-    else
-        return SD_FS.begin();
-#elif defined(ESP8266)
-    if (ss > -1)
-        return SD_FS.begin(ss);
-    else
-        return SD_FS.begin(SD_CS_PIN);
-#endif
-#endif
-    return false;
+    return mbfs->sdBegin(ss, sck, miso, mosi);
 }
 
-bool FIREBASE_CLASS::sdMMCBegin(const String &mountpoint, bool mode1bit, bool format_if_mount_failed)
+#if defined(ESP8266)
+bool FIREBASE_CLASS::sdBegin(SDFSConfig *sdFSConfig)
 {
-#if defined(SD_FS) && defined(ESP32) && defined(CARD_TYPE_SD_MMC)
-    if (cfg)
-    {
-        cfg->_int.sd_config.sd_mmc_mountpoint = mountpoint;
-        cfg->_int.sd_config.sd_mmc_mode1bit = mode1bit;
-        cfg->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
-    }
-    return SD_FS.begin(mountpoint, mode1bit, format_if_mount_failed);
+    return ut->mbfs->sdFatBegin(sdFSConfig);
+}
 #endif
-    return false;
+
+#if defined(ESP32)
+
+bool FIREBASE_CLASS::sdBegin(int8_t ss, SPIClass *spiConfig)
+{
+    return ut->mbfs->sdSPIBegin(ss, spiConfig);
+}
+#endif
+
+#if defined(USE_SD_FAT_ESP32)
+bool FIREBASE_CLASS::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
+{
+    return ut->mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
+}
+#endif
+
+#endif
+
+#if defined(ESP8266) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
+
+bool FIREBASE_CLASS::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
+{
+
+    return mbfs->sdMMCBegin(mountpoint, mode1bit, format_if_mount_failed);
 }
 
 #endif

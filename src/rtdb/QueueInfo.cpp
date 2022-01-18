@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -29,12 +29,14 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_RTDB
 
 #ifndef FIREBASE_QUEUE_INFO_CPP
 #define FIREBASE_QUEUE_INFO_CPP
+
 #include "QueueInfo.h"
 
 QueueInfo::QueueInfo()
@@ -78,9 +80,9 @@ String QueueInfo::dataPath()
 
 void QueueInfo::clear()
 {
-    MBSTRING().swap(_dataType);
-    MBSTRING().swap(_method);
-    MBSTRING().swap(_path);
+    _dataType.clear();
+    _method.clear();
+    _path.clear();
 }
 
 #endif

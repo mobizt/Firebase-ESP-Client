@@ -229,7 +229,7 @@ void setup()
     */
     String var = "$userId";
     String val = "($userId === auth.uid && auth.token.premium_account === true && auth.token.admin === true)";
-    Firebase.RTDB.setReadWriteRules(&fbdo, base_path.c_str(), var.c_str(), val.c_str(), val.c_str(), DATABASE_SECRET);
+    Firebase.RTDB.setReadWriteRules(&fbdo, base_path, var, val, val, DATABASE_SECRET);
 
     /** 
      * The custom token which created internally in this library will use 
@@ -246,12 +246,14 @@ void setup()
 
 void loop()
 {
+    //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+    
     if (millis() - dataMillis > 5000 && Firebase.ready())
     {
         dataMillis = millis();
         String path = "/UsersData/";
         path += auth.token.uid.c_str(); //<- user uid or "Node1"
         path += "/test/int";
-        Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path.c_str(), count++) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
     }
 }

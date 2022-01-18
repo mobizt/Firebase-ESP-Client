@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -53,61 +53,48 @@ public:
     ~QueryFilter();
 
     template <typename T = const char *>
-    QueryFilter &orderBy(T val) { return mOrderBy(toString(val)); }
+    QueryFilter &orderBy(T val) { return mOrderBy(toStringPtr(val)); }
 
     template <typename T = int>
-    QueryFilter &limitToFirst(T val) { return mLimitToFirst(num2Str(val, -1)); }
+    QueryFilter &limitToFirst(T val) { return mLimitToFirst(toStringPtr(val, -1)); }
 
     template <typename T = int>
-    QueryFilter &limitToLast(T val) { return mLimitToLast(num2Str(val, -1)); }
+    QueryFilter &limitToLast(T val) { return mLimitToLast(toStringPtr(val, -1)); }
 
     template <typename T = int>
-    auto startAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value || is_num_int<T>::value, QueryFilter &>::type { return mStartAt(num2Str(val, -1), false); }
+    auto startAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value || is_num_int<T>::value, QueryFilter &>::type { return mStartAt(toStringPtr(val, -1), false); }
 
     template <typename T = int>
-    auto endAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value || is_num_int<T>::value, QueryFilter &>::type { return mEndAt(num2Str(val, -1), false); }
+    auto endAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value || is_num_int<T>::value, QueryFilter &>::type { return mEndAt(toStringPtr(val, -1), false); }
 
     template <typename T = const char *>
-    auto startAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mStartAt(toString(val), true); }
+    auto startAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mStartAt(toStringPtr(val), true); }
 
     template <typename T = const char *>
-    auto endAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mEndAt(toString(val), true); }
+    auto endAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mEndAt(toStringPtr(val), true); }
 
     template <typename T = int>
-    auto equalTo(T val) -> typename enable_if<is_num_int<T>::value, QueryFilter &>::type { return mEqualTo(num2s(val).get(), false); }
+    auto equalTo(T val) -> typename enable_if<is_num_int<T>::value, QueryFilter &>::type { return mEqualTo(toStringPtr(val), false); }
 
     template <typename T = const char *>
-    auto equalTo(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mEqualTo(toString(val), true); }
+    auto equalTo(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mEqualTo(toStringPtr(val), true); }
 
     QueryFilter &clear();
 
 private:
-    MBSTRING _orderBy;
-    MBSTRING _limitToFirst;
-    MBSTRING _limitToLast;
-    MBSTRING _startAt;
-    MBSTRING _endAt;
-    MBSTRING _equalTo;
+    MB_String _orderBy;
+    MB_String _limitToFirst;
+    MB_String _limitToLast;
+    MB_String _startAt;
+    MB_String _endAt;
+    MB_String _equalTo;
 
-    QueryFilter &mOrderBy(const char *val);
-    QueryFilter &mLimitToFirst(const char *val);
-    QueryFilter &mLimitToLast(const char *val);
-    QueryFilter &mStartAt(const char *val, bool isString);
-    QueryFilter &mEndAt(const char *val, bool isString);
-    QueryFilter &mEqualTo(const char *val, bool isString);
-
-protected:
-    template <typename T>
-    auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, const char *>::type { return val.c_str(); }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+    QueryFilter &mOrderBy(MB_StringPtr val);
+    QueryFilter &mLimitToFirst(MB_StringPtr val);
+    QueryFilter &mLimitToLast(MB_StringPtr val);
+    QueryFilter &mStartAt(MB_StringPtr val, bool isString);
+    QueryFilter &mEndAt(MB_StringPtr val, bool isString);
+    QueryFilter &mEqualTo(MB_StringPtr val, bool isString);
 };
 
 #endif

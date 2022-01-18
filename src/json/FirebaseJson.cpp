@@ -1,10 +1,10 @@
 
 /*
- * FirebaseJson, version 2.6.4
+ * FirebaseJson, version 2.6.5
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
@@ -16,7 +16,7 @@
  * 
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
  * 
  * 
@@ -102,7 +102,7 @@ void FirebaseJsonBase::prepareRoot()
     }
 }
 
-void FirebaseJsonBase::searchElements(std::vector<MBSTRING> &keys, MB_JSON *parent, struct search_result_t &r)
+void FirebaseJsonBase::searchElements(std::vector<MB_String> &keys, MB_JSON *parent, struct search_result_t &r)
 {
     MB_JSON *e = parent;
     for (size_t i = 0; i < keys.size(); i++)
@@ -149,7 +149,7 @@ MB_JSON *FirebaseJsonBase::getElement(MB_JSON *parent, const char *key, struct s
     return e;
 }
 
-void FirebaseJsonBase::mAdd(std::vector<MBSTRING> keys, MB_JSON **parent, int beginIndex, MB_JSON *value)
+void FirebaseJsonBase::mAdd(std::vector<MB_String> keys, MB_JSON **parent, int beginIndex, MB_JSON *value)
 {
     MB_JSON *m_parent = *parent;
 
@@ -187,13 +187,13 @@ void FirebaseJsonBase::mAdd(std::vector<MBSTRING> keys, MB_JSON **parent, int be
     }
 }
 
-void FirebaseJsonBase::makeList(const char *str, std::vector<MBSTRING> &keys, char delim)
+void FirebaseJsonBase::makeList(const char *str, std::vector<MB_String> &keys, char delim)
 {
     clearList(keys);
 
     int current = 0, previous = 0;
     current = strpos(str, delim, 0);
-    MBSTRING s;
+    MB_String s;
     while (current != -1)
     {
         s.clear();
@@ -219,7 +219,7 @@ void FirebaseJsonBase::makeList(const char *str, std::vector<MBSTRING> &keys, ch
     s.clear();
 }
 
-void FirebaseJsonBase::clearList(std::vector<MBSTRING> &keys)
+void FirebaseJsonBase::clearList(std::vector<MB_String> &keys)
 {
     size_t len = keys.size();
     for (size_t i = 0; i < len; i++)
@@ -227,7 +227,7 @@ void FirebaseJsonBase::clearList(std::vector<MBSTRING> &keys)
     for (int i = len - 1; i >= 0; i--)
         keys.erase(keys.begin() + i);
     keys.clear();
-    std::vector<MBSTRING>().swap(keys);
+    std::vector<MB_String>().swap(keys);
 }
 
 bool FirebaseJsonBase::isArray(MB_JSON *e)
@@ -247,7 +247,7 @@ MB_JSON *FirebaseJsonBase::addArray(MB_JSON *parent, MB_JSON *e, size_t size)
     return e;
 }
 
-void FirebaseJsonBase::appendArray(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
+void FirebaseJsonBase::appendArray(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
 {
     MB_JSON *item = NULL;
 
@@ -282,7 +282,7 @@ void FirebaseJsonBase::appendArray(std::vector<MBSTRING> &keys, struct search_re
         MB_JSON_Delete(value);
 }
 
-void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
+void FirebaseJsonBase::replaceItem(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
 {
     if (r.foundIndex == -1)
     {
@@ -323,7 +323,7 @@ void FirebaseJsonBase::replaceItem(std::vector<MBSTRING> &keys, struct search_re
     }
 }
 
-void FirebaseJsonBase::replace(std::vector<MBSTRING> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item)
+void FirebaseJsonBase::replace(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item)
 {
     if (isArray(parent))
         MB_JSON_ReplaceItemInArray(parent, getArrIndex(keys[r.foundIndex].c_str()), item);
@@ -342,24 +342,20 @@ size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent)
     MB_JSON_free(p);
     iterator_data.buf_size = buf.length();
     int index = -1;
-    mIterate(parent, index, NULL);
+    mIterate(parent, index);
     return iterator_data.result.size();
 }
 
-size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent, std::vector<MBSTRING> *keys, struct fb_js_search_criteria_t *criteria)
+size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent, std::vector<MB_String> *keys)
 {
     mIteratorEnd();
 
-    if (keys == NULL || criteria == NULL)
+    if (keys == NULL)
         return 0;
 
-    iterator_data.searchEnable = true;
-    iterator_data.searchKeys = keys;
     int index = -1;
-    mIterate(parent, index, criteria);
+    mIterate(parent, index);
 
-    if (criteria->searchAll)
-        iterator_data.searchFinished = iterator_data.matchesCount > 0;
     return iterator_data.result.size();
 }
 
@@ -371,29 +367,17 @@ void FirebaseJsonBase::mIteratorEnd(bool clearBuf)
     iterator_data.buf_size = 0;
     iterator_data.buf_offset = 0;
     iterator_data.result.clear();
-    iterator_data.pathList.clear();
     iterator_data.depth = -1;
     iterator_data._depth = 0;
-    iterator_data.searchEnable = false;
-    iterator_data.searchFinished = false;
-    iterator_data.searchKeyDepth = -1;
-    iterator_data.matchesCount = 0;
-    iterator_data.searchKeys = NULL;
     if (iterator_data.parentArr != NULL)
         MB_JSON_Delete(iterator_data.parentArr);
     iterator_data.parentArr = NULL;
 }
 
-void FirebaseJsonBase::mIterate(MB_JSON *parent, int &arrIndex, struct fb_js_search_criteria_t *criteria)
+void FirebaseJsonBase::mIterate(MB_JSON *parent, int &arrIndex)
 {
     if (!parent)
         return;
-
-    if (iterator_data.searchEnable && !criteria->searchAll && iterator_data.searchFinished)
-    {
-        iterator_data.parent = parent;
-        return;
-    }
 
     bool isAr = isArray(parent);
 
@@ -406,14 +390,9 @@ void FirebaseJsonBase::mIterate(MB_JSON *parent, int &arrIndex, struct fb_js_sea
         iterator_data.depth++;
         while (e)
         {
-            if (iterator_data.searchEnable && !criteria->searchAll && iterator_data.searchFinished)
-                return;
-
-            if (isAr && iterator_data.searchEnable)
-                collectResult(e, NULL, arrIndex, criteria);
 
             if (isArray(e) || isObject(e))
-                mCollectIterator(e, e->string ? JSON_OBJECT : JSON_ARRAY, arrIndex, criteria);
+                mCollectIterator(e, e->string ? JSON_OBJECT : JSON_ARRAY, arrIndex);
 
             if (isArray(e))
             {
@@ -425,276 +404,60 @@ void FirebaseJsonBase::mIterate(MB_JSON *parent, int &arrIndex, struct fb_js_sea
                     iterator_data.depth++;
                     while (item)
                     {
-                        if (iterator_data.searchEnable && !criteria->searchAll && iterator_data.searchFinished)
-                            return;
-
-                        if (iterator_data.searchEnable)
-                            collectResult(item, NULL, _arrIndex, criteria);
 
                         if (isArray(item) || isObject(item))
-                            mIterate(item, _arrIndex, criteria);
+                            mIterate(item, _arrIndex);
                         else
-                            mCollectIterator(item, item->string ? JSON_OBJECT : JSON_ARRAY, _arrIndex, criteria);
+                            mCollectIterator(item, item->string ? JSON_OBJECT : JSON_ARRAY, _arrIndex);
                         item = item->next;
                         _arrIndex++;
                     }
-
-                    if (iterator_data.searchEnable && !criteria->searchAll && iterator_data.searchFinished)
-                        return;
-
-                    removeDepthPath();
                 }
             }
             else if (isObject(e))
-                mIterate(e, arrIndex, criteria);
+                mIterate(e, arrIndex);
             else
-                mCollectIterator(e, e->string ? JSON_OBJECT : JSON_ARRAY, arrIndex, criteria);
+                mCollectIterator(e, e->string ? JSON_OBJECT : JSON_ARRAY, arrIndex);
 
             e = e->next;
 
             if (isAr)
                 arrIndex++;
         }
-
-        if (iterator_data.searchEnable && !criteria->searchAll && iterator_data.searchFinished)
-            return;
-
-        removeDepthPath();
     }
 }
 
-void FirebaseJsonBase::collectResult(MB_JSON *e, const char *key, int arrIndex, struct fb_js_search_criteria_t *criteria)
+void FirebaseJsonBase::mCollectIterator(MB_JSON *e, int type, int &arrIndex)
 {
-    if (!iterator_data.searchEnable)
-        return;
+    struct iterator_result_t result;
 
-    bool searchComplete = false;
-    bool keyMatches = false;
-    int matchesCount = iterator_data.matchesCount;
-    MB_JSON *ref = e;
-
-    if (key != NULL)
+    if (e->string)
     {
-        if ((iterator_data._depth == iterator_data.depth || iterator_data.depth == 0) && iterator_data.pathList.size() > 0)
-            iterator_data.pathList[iterator_data.pathList.size() - 1] = key;
-        else
-            iterator_data.pathList.push_back(key);
-    }
-    else if (arrIndex > -1)
-    {
-        MBSTRING ar = (const char *)MBSTRING_FLASH_MCR("[");
-        ar += num2Str(arrIndex,-1);
-        ar += (const char *)MBSTRING_FLASH_MCR("]");
-
-        if (arrIndex > 0 && iterator_data.pathList.size() > 0)
-            iterator_data.pathList[iterator_data.pathList.size() - 1] = ar.c_str();
-        else
-            iterator_data.pathList.push_back(ar.c_str());
-        ar.clear();
-    }
-
-    if (criteria->path.length() > 0)
-        keyMatches = checkKeys(criteria);
-
-    if (criteria->value.length() == 0)
-    {
-        if (!criteria->searchAll)
-            searchComplete = keyMatches;
-        else if (keyMatches)
-            iterator_data.matchesCount++;
-    }
-    else
-    {
-        if (iterator_data.depth >= criteria->depth)
+        size_t pos = buf.find((const char *)e->string, iterator_data.buf_offset);
+        if (pos != MB_String::npos)
         {
-            if (criteria->endDepth > -1 && iterator_data.depth > criteria->endDepth + 1)
-                return;
-
-            char *p = MB_JSON_PrintUnformatted(e);
-            if (p)
-            {
-                if (strcmp(criteria->value.c_str(), p) == 0)
-                {
-                    if (criteria->path.length() > 0 && keyMatches && iterator_data.depth == iterator_data.searchKeyDepth)
-                    {
-                        if (!criteria->searchAll)
-                            searchComplete = true;
-                        else
-                            iterator_data.matchesCount++;
-                    }
-                }
-                MB_JSON_free(p);
-            }
+            result.ofs1 = pos;
+            result.len1 = strlen(e->string);
+            iterator_data.buf_offset = (e->type != MB_JSON_Object && e->type != MB_JSON_Array) ? pos + result.len1 : pos;
         }
     }
 
-    if (!criteria->searchAll)
+    char *p = MB_JSON_PrintUnformatted(e);
+    if (p)
     {
-        if (searchComplete)
-            iterator_data.parent = e;
-        iterator_data.searchFinished = searchComplete;
-    }
-    else
-    {
-        if (matchesCount != iterator_data.matchesCount)
+        int i = iterator_data.buf_offset;
+        size_t pos = buf.find(p, i);
+        if (pos != MB_String::npos)
         {
-            if (ref != NULL)
-            {
-                MB_JSON *itm = MB_JSON_Duplicate(ref, true);
-                if (itm != NULL)
-                {
-                    if (iterator_data.parentArr == NULL)
-                        iterator_data.parentArr = MB_JSON_CreateArray();
-                    MB_JSON_AddItemToArray(iterator_data.parentArr, itm);
-                }
-            }
-
-            MBSTRING path;
-            mGetPath(path, iterator_data.pathList);
-
-            if (iterator_data.path.length() > 0)
-                iterator_data.path += (const char *)MBSTRING_FLASH_MCR(",\"");
-            else
-                iterator_data.path += (const char *)MBSTRING_FLASH_MCR("[\"");
-
-            iterator_data.path += path;
-            iterator_data.path += (const char *)MBSTRING_FLASH_MCR("\"");
-
-            path.clear();
+            result.ofs2 = pos - result.ofs1 - result.len1;
+            result.len2 = strlen(p);
+            MB_JSON_free(p);
+            iterator_data.buf_offset = (e->type != MB_JSON_Object && e->type != MB_JSON_Array) ? pos + result.len2 : pos;
         }
     }
-}
-
-void FirebaseJsonBase::removeDepthPath()
-{
-    iterator_data.depth--;
-    if (iterator_data.searchEnable)
-    {
-        if (iterator_data._depth != iterator_data.depth && iterator_data.pathList.size() > 0)
-            iterator_data.pathList.pop_back();
-    }
-}
-
-void FirebaseJsonBase::mCollectIterator(MB_JSON *e, int type, int &arrIndex, struct fb_js_search_criteria_t *criteria)
-{
-    if (!iterator_data.searchEnable)
-    {
-        struct iterator_result_t result;
-
-        if (e->string)
-        {
-            size_t pos = buf.find((const char *)e->string, iterator_data.buf_offset);
-            if (pos != MBSTRING::npos)
-            {
-                result.ofs1 = pos;
-                result.len1 = strlen(e->string);
-                iterator_data.buf_offset = (e->type != MB_JSON_Object && e->type != MB_JSON_Array) ? pos + result.len1 : pos;
-            }
-        }
-
-        char *p = MB_JSON_PrintUnformatted(e);
-        if (p)
-        {
-            int i = iterator_data.buf_offset;
-            size_t pos = buf.find(p, i);
-            if (pos != MBSTRING::npos)
-            {
-                result.ofs2 = pos - result.ofs1 - result.len1;
-                result.len2 = strlen(p);
-                MB_JSON_free(p);
-                iterator_data.buf_offset = (e->type != MB_JSON_Object && e->type != MB_JSON_Array) ? pos + result.len2 : pos;
-            }
-        }
-        result.type = type;
-        result.depth = iterator_data.depth;
-        iterator_data.result.push_back(result);
-    }
-    else
-    {
-        if (type == JSON_OBJECT)
-            collectResult(e, e->string, -1, criteria);
-
-        iterator_data._depth = iterator_data.depth;
-    }
-}
-
-bool FirebaseJsonBase::checkKeys(struct fb_js_search_criteria_t *criteria)
-{
-
-    if (iterator_data.searchKeyDepth != -1 && (int)iterator_data.pathList.size() - 1 != iterator_data.searchKeyDepth)
-        return false;
-
-    bool matches = false;
-    int index = -1;
-    int k = 0;
-    MBSTRING sPath, cPath;
-
-    for (int i = 0; i < (int)iterator_data.searchKeys->size(); i++)
-    {
-        matches = false;
-        k = i;
-        if (iterator_data.searchKeys->at(k)[0] == '*')
-        {
-            while (iterator_data.searchKeys->at(k)[0] == '*' && k < (int)iterator_data.searchKeys->size())
-            {
-                k++;
-                if (k > (int)iterator_data.searchKeys->size() - 1)
-                    break;
-            }
-        }
-
-        if (k < (int)iterator_data.searchKeys->size())
-        {
-            if (sPath.length() > 0)
-                sPath += (const char *)MBSTRING_FLASH_MCR("/");
-            sPath += iterator_data.searchKeys->at(k);
-        }
-
-        if (k + criteria->depth < (int)iterator_data.pathList.size() && k < (int)iterator_data.searchKeys->size())
-        {
-            for (int j = k + criteria->depth; j < (int)iterator_data.pathList.size(); j++)
-            {
-                if (j == criteria->depth && iterator_data.searchKeys->at(k)[0] != '*' && iterator_data.searchKeys->at(k) != iterator_data.pathList[j])
-                    break;
-
-                if (iterator_data.searchKeys->at(k) == iterator_data.pathList[j] && j > index)
-                {
-                    if (criteria->endDepth != -1 && j > criteria->endDepth + 1)
-                        break;
-
-                    if (k > 0)
-                    {
-                        if (iterator_data.searchKeys->at(k - 1)[0] == '*' && j - index == 1)
-                        {
-                            index = j;
-                            continue;
-                        }
-                    }
-
-                    if (cPath.length() > 0)
-                        cPath += (const char *)MBSTRING_FLASH_MCR("/");
-                    cPath += iterator_data.searchKeys->at(k).c_str();
-                    index = j;
-                }
-            }
-        }
-
-        if (sPath == cPath)
-            matches = true;
-
-        if (!matches)
-            break;
-
-        i = k;
-    }
-
-    if (matches)
-        iterator_data.searchKeyDepth = iterator_data.depth;
-
-    sPath.clear();
-    cPath.clear();
-
-    return matches;
+    result.type = type;
+    result.depth = iterator_data.depth;
+    iterator_data.result.push_back(result);
 }
 
 int FirebaseJsonBase::mIteratorGet(size_t index, int &type, String &key, String &value)
@@ -795,6 +558,22 @@ bool FirebaseJsonBase::mReadStream(Stream *s, int timeoutMS)
     return false;
 }
 
+#if defined(ESP32_SD_FAT_INCLUDED)
+bool FirebaseJsonBase::mReadSdFat(SD_FAT_FILE &file, int timeoutMS)
+{
+    //non-blocking read
+    if (readSdFatFile(file, serData, buf, true, timeoutMS))
+    {
+        if (root != NULL)
+            MB_JSON_Delete(root);
+        root = parse(buf.c_str());
+        buf.clear();
+        return root != NULL;
+    }
+    return false;
+}
+#endif
+
 const char *FirebaseJsonBase::mRaw()
 {
     toBuf(fb_json_serialize_mode_plain);
@@ -805,7 +584,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
 {
     bool ret = false;
     prepareRoot();
-    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
+    std::vector<MB_String> keys = std::vector<MB_String>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -833,7 +612,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
             MB_JSON_DeleteItemFromObjectCaseSensitive(parent, keys[r.stopIndex].c_str());
             if (parent->child == NULL && r.stopIndex > 0)
             {
-                MBSTRING path;
+                MB_String path;
                 mGetPath(path, keys, 0, r.stopIndex - 1);
                 mRemove(path.c_str());
             }
@@ -844,7 +623,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
     return ret;
 }
 
-void FirebaseJsonBase::mGetPath(MBSTRING &path, std::vector<MBSTRING> paths, int begin, int end)
+void FirebaseJsonBase::mGetPath(MB_String &path, std::vector<MB_String> paths, int begin, int end)
 {
     if (end < 0 || end >= (int)paths.size())
         end = paths.size() - 1;
@@ -885,7 +664,7 @@ bool FirebaseJsonBase::mGet(MB_JSON *parent, FirebaseJsonData *result, const cha
 {
     bool ret = false;
     prepareRoot();
-    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
+    std::vector<MB_String> keys = std::vector<MB_String>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -1037,7 +816,7 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
 void FirebaseJsonBase::mSet(const char *path, MB_JSON *value)
 {
     prepareRoot();
-    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
+    std::vector<MB_String> keys = std::vector<MB_String>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -1070,107 +849,6 @@ void FirebaseJsonBase::mSet(const char *path, MB_JSON *value)
     clearList(keys);
 }
 
-size_t FirebaseJsonBase::mSearch(MB_JSON *parent, struct fb_js_search_criteria_t *criteria)
-{
-    size_t ret = 0;
-    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
-    if (criteria->path.length() > 0)
-        makeList(criteria->path.c_str(), keys, '/');
-
-    mIteratorBegin(parent, &keys, criteria);
-    if (iterator_data.searchFinished)
-        ret = criteria->searchAll ? iterator_data.matchesCount : 1;
-
-    mIteratorEnd();
-    clearList(keys);
-
-    return ret;
-}
-
-size_t FirebaseJsonBase::mSearch(MB_JSON *parent, const char *path, bool searchAll)
-{
-    struct fb_js_search_criteria_t criteria;
-    criteria.searchAll = searchAll;
-    criteria.path = path;
-    return mSearch(parent, &criteria);
-}
-
-const char *FirebaseJsonBase::mGetElementFullPath(MB_JSON *parent, const char *path, bool searchAll)
-{
-    struct fb_js_search_criteria_t criteria;
-    criteria.searchAll = searchAll;
-    criteria.path = path;
-    mSearch(parent, NULL, &criteria);
-    return buf.c_str();
-}
-
-size_t FirebaseJsonBase::mSearch(MB_JSON *parent, FirebaseJsonData *result, struct fb_js_search_criteria_t *criteria, bool prettify)
-{
-    size_t ret = 0;
-
-    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
-    if (criteria->path.length() > 0)
-        makeList(criteria->path.c_str(), keys, '/');
-
-    mIteratorBegin(parent, &keys, criteria);
-
-    if (iterator_data.searchFinished)
-    {
-        ret = criteria->searchAll ? iterator_data.matchesCount : 1;
-        if (criteria->searchAll)
-        {
-            if (result == NULL)
-            {
-                buf.clear();
-                iterator_data.path += (const char *)MBSTRING_FLASH_MCR("]");
-                buf = iterator_data.path.c_str();
-            }
-            else
-            {
-                if (iterator_data.parentArr != NULL)
-                {
-                    char *p = prettify ? MB_JSON_Print(iterator_data.parentArr) : MB_JSON_PrintUnformatted(iterator_data.parentArr);
-                    result->stringValue = p;
-                    MB_JSON_free(p);
-                    result->type_num = iterator_data.parentArr->type;
-                    iterator_data.path += (const char *)MBSTRING_FLASH_MCR("]");
-                    result->searchPath = iterator_data.path.c_str();
-                    result->success = true;
-                    mSetElementType(result);
-                }
-            }
-        }
-        else
-        {
-            if (result == NULL)
-            {
-                buf.clear();
-                mGetPath(buf, iterator_data.pathList);
-            }
-            else
-            {
-                MBSTRING path;
-                mGetPath(path, iterator_data.pathList);
-                result->searchPath = path.c_str();
-                if (iterator_data.parent != NULL)
-                {
-                    char *p = prettify ? MB_JSON_Print(iterator_data.parent) : MB_JSON_PrintUnformatted(iterator_data.parent);
-                    result->stringValue = p;
-                    MB_JSON_free(p);
-                    result->type_num = iterator_data.parent->type;
-                    result->success = true;
-                    mSetElementType(result);
-                }
-            }
-        }
-    }
-
-    mIteratorEnd(result != NULL);
-    clearList(keys);
-
-    return ret;
-}
-
 FirebaseJson &FirebaseJson::operator=(FirebaseJson other)
 {
     if (isObject(other.root))
@@ -1192,7 +870,7 @@ FirebaseJson::~FirebaseJson()
 FirebaseJson &FirebaseJson::nAdd(const char *key, MB_JSON *value)
 {
     prepareRoot();
-    std::vector<MBSTRING> keys = std::vector<MBSTRING>();
+    std::vector<MB_String> keys = std::vector<MB_String>();
     //makeList(key, keys, '/');
     keys.push_back(key);
 
@@ -1365,7 +1043,6 @@ bool FirebaseJsonData::mGetJSON(const char *source, FirebaseJson &json)
 void FirebaseJsonData::clear()
 {
     stringValue.remove(0, stringValue.length());
-    searchPath.remove(0, searchPath.length());
     iVal = {0};
     fVal.setd(0);
     intValue = 0;

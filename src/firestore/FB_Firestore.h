@@ -1,15 +1,15 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.1.9
+ * Google's Cloud Firestore class, Forestore.h version 1.1.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -41,6 +41,11 @@
 #include "Utils.h"
 #include "session/FB_Session.h"
 #include "json/FirebaseJson.h"
+#if defined(ESP32)
+#include "wcs/esp32/FB_TCP_Client.h"
+#elif defined(ESP8266)
+#include "wcs/esp8266/FB_TCP_Client.h"
+#endif
 
 using namespace mb_string;
 
@@ -69,7 +74,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
-    bool exportDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 bucketID, T4 storagePath, T5 collectionIds = "") { return mExportDocuments(fbdo, toString(projectId), toString(databaseId), toString(bucketID), toString(storagePath), toString(collectionIds)); }
+    bool exportDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 bucketID, T4 storagePath, T5 collectionIds = "") { return mExportDocuments(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(bucketID), toStringPtr(storagePath), toStringPtr(collectionIds)); }
 
     /** Import the exported documents stored in the Firebase Storage data bucket.
      * 
@@ -88,7 +93,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
-    bool importDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 bucketID, T4 storagePath, T5 collectionIds = "") { return mImportDocuments(fbdo, toString(projectId), toString(databaseId), toString(bucketID), toString(storagePath), toString(collectionIds)); }
+    bool importDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 bucketID, T4 storagePath, T5 collectionIds = "") { return mImportDocuments(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(bucketID), toStringPtr(storagePath), toStringPtr(collectionIds)); }
 
     /** Create a document at the defined document path.
      * 
@@ -107,7 +112,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
-    bool createDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 content, T5 mask = "") { return mCreateDocument(fbdo, toString(projectId), toString(databaseId), toString(documentPath), toString(content), toString(mask)); }
+    bool createDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 content, T5 mask = "") { return mCreateDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(content), toStringPtr(mask)); }
 
     /** Create a document in the defined collection id.
      * 
@@ -127,7 +132,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *, typename T6 = const char *>
-    bool createDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 documentId, T5 content, T6 mask = "") { return mCreateDocument2(fbdo, toString(projectId), toString(databaseId), toString(collectionId), toString(documentId), toString(content), toString(mask)); }
+    bool createDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 documentId, T5 content, T6 mask = "") { return mCreateDocument2(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId), toStringPtr(documentId), toStringPtr(content), toStringPtr(mask)); }
 
     /** Patch or update a document at the defined path.
      * 
@@ -154,7 +159,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *, typename T6 = const char *, typename T7 = const char *, typename T8 = const char *>
-    bool patchDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 content, T5 updateMask, T6 mask = "", T7 exists = "", T8 updateTime = "") { return mPatchDocument(fbdo, toString(projectId), toString(databaseId), toString(documentPath), toString(content), toString(updateMask), toString(mask), toString(exists), toString(updateTime)); }
+    bool patchDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 content, T5 updateMask, T6 mask = "", T7 exists = "", T8 updateTime = "") { return mPatchDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(content), toStringPtr(updateMask), toStringPtr(mask), toStringPtr(exists), toStringPtr(updateTime)); }
 
     /** Commits a transaction, while optionally updating documents.
      * 
@@ -175,10 +180,10 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool commitDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toString(projectId), toString(databaseId), writes, toString(transaction), false); }
+    bool commitDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), false); }
 
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool commitDocumentAsync(FirebaseData *fbdo, T1 projectId, T2 databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toString(projectId), toString(databaseId), writes, toString(transaction), true); }
+    bool commitDocumentAsync(FirebaseData *fbdo, T1 projectId, T2 databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), true); }
 
     /** Get a document at the defined path.
      * 
@@ -201,7 +206,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *, typename T6 = const char *>
-    bool getDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 mask = "", T5 transaction = "", T6 readTime = "") { return mGetDocument(fbdo, toString(projectId), toString(databaseId), toString(documentPath), toString(mask), toString(transaction), toString(readTime)); }
+    bool getDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 mask = "", T5 transaction = "", T6 readTime = "") { return mGetDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(mask), toStringPtr(transaction), toStringPtr(readTime)); }
 
     /** Starts a new transaction.
      * 
@@ -233,7 +238,7 @@ public:
      * See https://cloud.google.com/firestore/docs/reference/rest/v1/TransactionOptions for transaction options.
     */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool beginTransaction(FirebaseData *fbdo, T1 projectId, T2 databaseId, TransactionOptions *transactionOptions = nullptr) { return mBeginTransaction(fbdo, toString(projectId), toString(databaseId), transactionOptions); }
+    bool beginTransaction(FirebaseData *fbdo, T1 projectId, T2 databaseId, TransactionOptions *transactionOptions = nullptr) { return mBeginTransaction(fbdo, toStringPtr(projectId), toStringPtr(databaseId), transactionOptions); }
 
     /** Rolls back a transaction.
      * 
@@ -249,7 +254,7 @@ public:
      * This function requires OAuth2.0 authentication.
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool rollback(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 transaction) { return mRollback(fbdo, toString(projectId), toString(databaseId), toString(transaction)); }
+    bool rollback(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 transaction) { return mRollback(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(transaction)); }
 
     /** Runs a query.
      * 
@@ -271,7 +276,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    bool runQuery(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode = fb_esp_firestore_consistency_mode_undefined, T4 consistency = "") { return mRunQuery(fbdo, toString(projectId), toString(databaseId), toString(documentPath), structuredQuery, consistencyMode, toString(consistency)); }
+    bool runQuery(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode = fb_esp_firestore_consistency_mode_undefined, T4 consistency = "") { return mRunQuery(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), structuredQuery, consistencyMode, toStringPtr(consistency)); }
 
     /** Delete a document at the defined path.
      * 
@@ -291,7 +296,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
-    bool deleteDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 exists = "", T5 updateTime = "") { return mDeleteDocument(fbdo, toString(projectId), toString(databaseId), toString(documentPath), toString(exists), toString(updateTime)); }
+    bool deleteDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 exists = "", T5 updateTime = "") { return mDeleteDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(exists), toStringPtr(updateTime)); }
 
     /** List the documents in the defined documents collection.
      * 
@@ -315,7 +320,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = size_t, typename T5 = const char *, typename T6 = const char *, typename T7 = const char *>
-    bool listDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 pageSize, T5 pageToken, T6 orderBy, T7 mask, bool showMissing) { return mListDocuments(fbdo, toString(projectId), toString(databaseId), toString(collectionId), num2Str(pageSize, -1), toString(pageToken), toString(orderBy), toString(mask), showMissing); }
+    bool listDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 pageSize, T5 pageToken, T6 orderBy, T7 mask, bool showMissing) { return mListDocuments(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId), toStringPtr(pageSize, -1), toStringPtr(pageToken), toStringPtr(orderBy), toStringPtr(mask), showMissing); }
 
     /** List the document collection ids in the defined document path.
      * 
@@ -332,7 +337,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = size_t, typename T5 = const char *>
-    bool listCollectionIds(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 pageSize, T5 pageToken) { return mListCollectionIds(fbdo, toString(projectId), toString(databaseId), toString(documentPath), num2Str(pageSize, -1), toString(pageToken)); }
+    bool listCollectionIds(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 pageSize, T5 pageToken) { return mListCollectionIds(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(pageSize, -1), toStringPtr(pageToken)); }
 
 private:
     UtilsClass *ut = nullptr;
@@ -343,32 +348,19 @@ private:
     bool firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
     bool handleResponse(FirebaseData *fbdo);
     bool setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms);
-    bool mCommitDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, const char *transaction = "", bool async = false);
-    bool mExportDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *bucketID, const char *storagePath, const char *collectionIds = "");
-    bool mImportDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *bucketID, const char *storagePath, const char *collectionIds = "");
-    bool mCreateDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *mask = "");
-    bool mCreateDocument2(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char *documentId, const char *content, const char *mask = "");
-    bool mPatchDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *content, const char *updateMask, const char *mask = "", const char *exists = "", const char *updateTime = "");
-    bool mGetDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *mask = "", const char *transaction = "", const char *readTime = "");
-    bool mBeginTransaction(FirebaseData *fbdo, const char *projectId, const char *databaseId, TransactionOptions *transactionOptions = nullptr);
-    bool mRollback(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *transaction);
-    bool mRunQuery(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode = fb_esp_firestore_consistency_mode_undefined, const char *consistency = "");
-    bool mDeleteDocument(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *exists = "", const char *updateTime = "");
-    bool mListDocuments(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *collectionId, const char *pageSize, const char *pageToken, const char *orderBy, const char *mask, bool showMissing);
-    bool mListCollectionIds(FirebaseData *fbdo, const char *projectId, const char *databaseId, const char *documentPath, const char *pageSize, const char *pageToken);
-
-protected:
-    template <typename T>
-    auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+    bool mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, MB_StringPtr transaction, bool async = false);
+    bool mExportDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr bucketID, MB_StringPtr storagePath, MB_StringPtr collectionIds);
+    bool mImportDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr bucketID, MB_StringPtr storagePath, MB_StringPtr collectionIds);
+    bool mCreateDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentPath, MB_StringPtr content, MB_StringPtr mask);
+    bool mCreateDocument2(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr collectionId, MB_StringPtr documentId, MB_StringPtr content, MB_StringPtr mask);
+    bool mPatchDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentPath, MB_StringPtr content, MB_StringPtr updateMask, MB_StringPtr mask, MB_StringPtr exists, MB_StringPtr updateTime);
+    bool mGetDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentPath, MB_StringPtr mask, MB_StringPtr transaction, MB_StringPtr readTime);
+    bool mBeginTransaction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, TransactionOptions *transactionOptions = nullptr);
+    bool mRollback(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr transaction);
+    bool mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode, MB_StringPtr consistency);
+    bool mDeleteDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentPath, MB_StringPtr exists, MB_StringPtr updateTime);
+    bool mListDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr collectionId, MB_StringPtr pageSize, MB_StringPtr pageToken, MB_StringPtr orderBy, MB_StringPtr mask, bool showMissing);
+    bool mListCollectionIds(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentPath, MB_StringPtr pageSize, MB_StringPtr pageToken);
 };
 
 #endif

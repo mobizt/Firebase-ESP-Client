@@ -1,15 +1,15 @@
 /**
- * Google's IAM Policy Builder class, PolicyBuilder.cpp version 1.0.5
+ * Google's IAM Policy Builder class, PolicyBuilder.cpp version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -36,6 +36,7 @@
 
 #ifndef _FB_IAM_POLICY_BUILDER_CPP_
 #define _FB_IAM_POLICY_BUILDER_CPP_
+
 #include "PolicyBuilder.h"
 
 AuditLogConfig::AuditLogConfig()
@@ -46,23 +47,25 @@ AuditLogConfig::~AuditLogConfig()
 {
 }
 
-void AuditLogConfig::mSetLogType(const char *logType)
+void AuditLogConfig::mSetLogType(MB_StringPtr logType)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        json.set(pgm2Str(fb_esp_pgm_str_414), logType);
+        MB_String _logType = logType;
+        json.set(pgm2Str(fb_esp_pgm_str_414), _logType);
     }
 }
 
-void AuditLogConfig::mAddexemptedMembers(const char *member)
+void AuditLogConfig::mAddexemptedMembers(MB_StringPtr member)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        arr.add(member);
+        MB_String _member = member;
+        arr.add(_member);
         json.set(pgm2Str(fb_esp_pgm_str_415), arr);
     }
 }
@@ -132,13 +135,14 @@ void AuditConfig::clear()
     }
 }
 
-void AuditConfig::mSetService(const char *service)
+void AuditConfig::mSetService(MB_StringPtr service)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        json.set(pgm2Str(fb_esp_pgm_str_416), service);
+        MB_String _service = service;
+        json.set(pgm2Str(fb_esp_pgm_str_416), _service);
     }
 }
 
@@ -149,59 +153,63 @@ Binding::~Binding()
 {
 }
 
-void Binding::mAddMember(const char *member)
+void Binding::mAddMember(MB_StringPtr member)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        arr.add(member);
+        MB_String _member = member;
+        arr.add(_member);
         json.set(pgm2Str(fb_esp_pgm_str_403), arr);
     }
 }
 
-void Binding::mSetRole(const char *role)
+void Binding::mSetRole(MB_StringPtr role)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        json.set(pgm2Str(fb_esp_pgm_str_402), role);
+        MB_String _role = role;
+        json.set(pgm2Str(fb_esp_pgm_str_402), _role);
     }
 }
-void Binding::mSetCondition(const char *expression, const char *title, const char *description, const char *location)
+void Binding::mSetCondition(MB_StringPtr expression, MB_StringPtr title, MB_StringPtr description, MB_StringPtr location)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        MBSTRING b, t;
+        MB_String b, t;
         b.appendP(fb_esp_pgm_str_405);
         b.appendP(fb_esp_pgm_str_1);
 
-        if (strlen(expression) > 0)
+        MB_String _expression = expression, _title = title, _description = description, _location = location;
+
+        if (_expression.length() > 0)
         {
             t = b;
             t.appendP(fb_esp_pgm_str_406);
-            json.set(t.c_str(), expression);
+            json.set(t.c_str(), _expression);
         }
-        if (strlen(title) > 0)
+        if (_title.length() > 0)
         {
             t = b;
             t.appendP(fb_esp_pgm_str_407);
-            json.set(t.c_str(), title);
+            json.set(t.c_str(), _title);
         }
-        if (strlen(description) > 0)
+        if (_description.length() > 0)
         {
             t = b;
             t.appendP(fb_esp_pgm_str_408);
-            json.set(t.c_str(), description);
+            json.set(t.c_str(), _description);
         }
-        if (strlen(location) > 0)
+        if (_location.length() > 0)
         {
             t = b;
             t.appendP(fb_esp_pgm_str_409);
-            json.set(t.c_str(), location);
+            json.set(t.c_str(), _location);
         }
     }
 }
@@ -273,22 +281,24 @@ void PolicyBuilder::addBinding(Binding *binding, bool clear)
     }
 }
 
-void PolicyBuilder::mSetVersion(const char* v)
+void PolicyBuilder::mSetVersion(MB_StringPtr v)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        json.set(pgm2Str(fb_esp_pgm_str_410), atoi(v));
+        MB_String _v = v;
+        json.set(pgm2Str(fb_esp_pgm_str_410), atoi(_v.c_str()));
     }
 }
-void PolicyBuilder::mSetETag(const char *etag)
+void PolicyBuilder::mSetETag(MB_StringPtr etag)
 {
     if (!ut)
         ut = Signer.ut;
     if (ut)
     {
-        json.set(pgm2Str(fb_esp_pgm_str_412), etag);
+        MB_String _etag = etag;
+        json.set(pgm2Str(fb_esp_pgm_str_412), _etag);
     }
 }
 void PolicyBuilder::clearBindings()

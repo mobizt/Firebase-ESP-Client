@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -70,7 +70,7 @@ private:
     struct fb_esp_stream_info_t *sif = nullptr;
     void begin(UtilsClass *u, struct fb_esp_stream_info_t *s);
     void empty();
-    bool checkPath(MBSTRING &root, MBSTRING &branch);
+    bool checkPath(MB_String &root, MB_String &branch);
 };
 
 #endif

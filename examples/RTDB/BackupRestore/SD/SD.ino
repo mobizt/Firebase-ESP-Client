@@ -46,6 +46,34 @@ FirebaseConfig config;
 
 bool taskCompleted = false;
 
+/** ########################################### **/
+/*  Config SD Media                              */
+/** ########################################### **/
+
+#if defined(SD_FS) && defined(CARD_TYPE_SD)
+
+#if defined(ESP32)
+#define SPI_CS_PIN 13
+#elif defined(ESP8266)
+#define SPI_CS_PIN 15
+#endif
+
+//if SdFat library installed and FirebaseFS.h was set to use it (for ESP32 only)
+#if defined(USE_SD_FAT_ESP32)
+
+//https://github.com/greiman/SdFat
+SdSpiConfig sdFatSPIConfig(SPI_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(16));
+
+#elif defined(ESP32) //if ESP32 and no SdFat library installed
+
+SPIClass spi;
+
+#endif
+
+#endif
+
+/** ########################################### **/
+
 void setup()
 {
 
@@ -92,6 +120,85 @@ void setup()
   //required for large file data, increase Rx size as needed.
   fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
+
+  /** ########################################### **/
+  /*  Mount SD card                                */
+  /** ########################################### **/
+
+#if defined(SD_FS) && defined(CARD_TYPE_SD)
+
+#if defined(USE_SD_FAT_ESP32)
+
+  if (!Firebase.sdBegin(&sdFatSPIConfig, SPI_CS_PIN, 14, 2, 15)) //pointer to SdSpiConfig, SS, SCK,MISO, MOSI
+
+#elif defined(ESP32) //if ESP32 and no SdFat library installed
+
+  spi.begin(14, 2, 15, SPI_CS_PIN);        //SPI pins config -> SCK,MISO, MOSI, SS
+  if (!Firebase.sdBegin(SPI_CS_PIN, &spi)) //SS, pointer to SPIClass <- SPIClass object should defined as static or global
+
+#elif defined(ESP8266)
+
+  if (!Firebase.sdBegin(SPI_CS_PIN)) //SS
+
+#endif
+  {
+    Serial.println("SD Card mounted failed");
+    return;
+  }
+
+#endif
+
+#if defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
+  if (!Firebase.sdMMCBegin("/sdcard", false, true))
+  {
+    Serial.println("SD Card mounted failed");
+    return;
+  }
+#endif
+
+  /** ########################################### **/
+}
+
+//The Firebase download callback function
+void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
+{
+  if (info.status == fb_esp_rtdb_download_status_init)
+  {
+    Serial.printf("Downloading file %s (%d) to %s\n", info.remotePath.c_str(), info.size, info.localFileName.c_str());
+  }
+  else if (info.status == fb_esp_rtdb_download_status_download)
+  {
+    Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
+  }
+  else if (info.status == fb_esp_rtdb_download_status_complete)
+  {
+    Serial.println("Backup completed\n");
+  }
+  else if (info.status == fb_esp_rtdb_download_status_error)
+  {
+    Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
+  }
+}
+
+//The Firebase upload callback function
+void rtdbUploadCallback(RTDB_UploadStatusInfo info)
+{
+  if (info.status == fb_esp_rtdb_upload_status_init)
+  {
+    Serial.printf("Uploading file %s (%d) to %s\n", info.localFileName.c_str(), info.size, info.remotePath.c_str());
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_upload)
+  {
+    Serial.printf("Uploaded %d%s\n", (int)info.progress, "%");
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_complete)
+  {
+    Serial.println("Restore completed\n");
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_error)
+  {
+    Serial.printf("Upload failed, %s\n", info.errorMsg.c_str());
+  }
 }
 
 void loop()
@@ -105,22 +212,24 @@ void loop()
     //<target node> is the full path of database to backup and restore.
     //<file name> is file name in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
 
-    Serial.printf("Backup... %s\n", Firebase.RTDB.backup(&fbdo, mem_storage_type_sd, "/<target node>" /* node path to backup*/, "/<file name>" /* file name included path to save */) ? "ok" : fbdo.fileTransferError().c_str());
+    Serial.println("\nBackup... \n");
 
-    if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
+    if (Firebase.RTDB.backup(&fbdo, mem_storage_type_sd, "/<target node>" /* node path to backup*/, "/<file name>" /* file name included path to save */, rtdbDownloadCallback /* callback function */))
     {
       Serial.printf("backup file, %s\n", fbdo.getBackupFilename().c_str());
       Serial.printf("file size, %d\n", fbdo.getBackupFileSize());
     }
+    else
+      fbdo.fileTransferError().c_str();
 
     //Restore data to defined database path using backup file on Flash memory.
     //<target node> is the full path of database to restore
     //<file name> is file name included path of backed up file.
     //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
 
-    Serial.printf("Restore... %s\n", Firebase.RTDB.restore(&fbdo, mem_storage_type_sd, "/<target node>" /* node path to restore */, "/<file name>" /* backup file to restore */) ? "ok" : fbdo.fileTransferError().c_str());
+    Serial.println("\nRestore... \n");
 
-    if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
-      Serial.printf("backup file, %s\n", fbdo.getBackupFilename().c_str());
+    if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_sd, "/<target node>" /* node path to restore */, "/<file name>" /* backup file to restore */, rtdbUploadCallback /* callback function */))
+      fbdo.fileTransferError().c_str();
   }
 }

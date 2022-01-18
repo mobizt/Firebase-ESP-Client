@@ -1,10 +1,10 @@
 /**
- * Firebase TCP Client v1.1.15
+ * Firebase TCP Client v1.1.16
  * 
- * Created November 20, 2021
+ * Created Created January 18, 2022
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
@@ -45,8 +45,11 @@ FB_TCP_Client::~FB_TCP_Client()
     _wcs.reset(nullptr);
     _wcs.release();
   }
-  MBSTRING().swap(_host);
-  MBSTRING().swap(_CAFile);
+  _host.clear();
+  _CAFile.clear();
+
+  if (cert)
+    mbfs->delP(&cert);
 }
 
 bool FB_TCP_Client::begin(const char *host, uint16_t port)
@@ -126,7 +129,7 @@ void FB_TCP_Client::setCACert(const char *caCert)
 
   if (caCert != NULL)
   {
-    _certType = 1;
+    _certType = fb_cert_type_data;
     _wcs->setCACert(caCert);
   }
   else
@@ -134,56 +137,59 @@ void FB_TCP_Client::setCACert(const char *caCert)
     _wcs->stop();
     _wcs->setCACert(NULL);
     setInsecure();
-    _certType = 0;
+    _certType = fb_cert_type_none;
   }
   //_wcs->setNoDelay(true);
 }
 
-void FB_TCP_Client::setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config)
+void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType)
 {
+  if (!mbfs)
+    return;
 
   if (strlen(caCertFile) > 0)
   {
-    _certType = 2;
-
-    File f;
-    if (storageType == 1)
+    MB_String filename = caCertFile;
+    if (filename.length() > 0)
     {
-#if defined FLASH_FS
-      if (FORMAT_FLASH == 1)
-        FLASH_FS.begin(true);
-      else
-        FLASH_FS.begin();
-      if (FLASH_FS.exists(caCertFile))
-        f = FLASH_FS.open(caCertFile, FILE_READ);
-#endif
+      if (filename[0] != '/')
+        filename.prepend('/');
     }
-    else if (storageType == 2)
+
+    int len = mbfs->open(filename, storageType, mb_file_open_mode_read);
+    if (len > -1)
     {
-#if defined SD_FS
-      if (sd_config.ss > -1)
+
+      if (storageType == mb_file_mem_storage_type_flash)
       {
-#ifdef CARD_TYPE_SD
-        SPI.begin(sd_config.sck, sd_config.miso, sd_config.mosi, sd_config.ss);
-        SD_FS.begin(sd_config.ss, SPI);
-#endif
-#ifdef CARD_TYPE_SD_MMC
-        SD_FS.begin(sd_config.sd_mmc_mountpoint, sd_config.sd_mmc_mode1bit, sd_config.sd_mmc_format_if_mount_failed);
+        fs::File file = mbfs->getFlashFile();
+        _wcs->loadCACert(file, len);
+        mbfs->close(storageType);
+      }
+      else if (storageType == mb_file_mem_storage_type_sd)
+      {
+
+#if defined(USE_SD_FAT_ESP32)
+
+        if (cert)
+          mbfs->delP(&cert);
+
+        cert = (char *)mbfs->newP(len);
+        if (mbfs->available(storageType))
+          mbfs->read(storageType, (uint8_t *)cert, len);
+
+        mbfs->close(storageType);
+        _wcs->setCACert((const char *)cert);
+        _certType = fb_cert_type_file;
+
+#else
+        fs::File file = mbfs->getSDFile();
+        _wcs->loadCACert(file, len);
+        mbfs->close(storageType);
+        _certType = fb_cert_type_file;
+
 #endif
       }
-      else
-        SD_FS.begin();
-
-      if (SD_FS.exists(caCertFile))
-        f = SD_FS.open(caCertFile, FILE_READ);
-#endif
-    }
-
-    if (f)
-    {
-      size_t len = f.size();
-      _wcs->loadCACert(f, len);
-      f.close();
     }
   }
 }
@@ -195,7 +201,17 @@ void FB_TCP_Client::release()
     _wcs->stop();
     _wcs.reset(nullptr);
     _wcs.release();
+
+    if (cert)
+      mbfs->delP(&cert);
+
+    _certType = fb_cert_type_undefined;
   }
+}
+
+void FB_TCP_Client::setMBFS(MB_File *mbfs)
+{
+  this->mbfs = mbfs;
 }
 
 #endif /* ESP32 */

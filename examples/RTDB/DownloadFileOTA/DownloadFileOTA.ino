@@ -99,6 +99,52 @@ void setup()
     Firebase.reconnectWiFi(true);
 }
 
+//The Firebase download callback function
+void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
+{
+    if (info.status == fb_esp_rtdb_download_status_init)
+    {
+        Serial.printf("Downloading firmware file %s (%d)\n", info.remotePath.c_str(), info.size);
+    }
+    else if (info.status == fb_esp_rtdb_download_status_download)
+    {
+        Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
+    }
+    else if (info.status == fb_esp_rtdb_download_status_complete)
+    {
+        Serial.println("Update firmware completed.");
+        Serial.println();
+        Serial.println("Restarting...\n\n");
+        delay(2000);
+        ESP.restart();
+    }
+    else if (info.status == fb_esp_rtdb_download_status_error)
+    {
+        Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
+    }
+}
+
+//The Firebase upload callback function
+void rtdbUploadCallback(RTDB_UploadStatusInfo info)
+{
+    if (info.status == fb_esp_rtdb_upload_status_init)
+    {
+        Serial.printf("Uploading firmware file %s (%d) to %s\n", info.localFileName.c_str(), info.size, info.remotePath.c_str());
+    }
+    else if (info.status == fb_esp_rtdb_upload_status_upload)
+    {
+        Serial.printf("Uploaded %d%s\n", (int)info.progress, "%");
+    }
+    else if (info.status == fb_esp_rtdb_upload_status_complete)
+    {
+        Serial.println("Upload completed\n");
+    }
+    else if (info.status == fb_esp_rtdb_upload_status_error)
+    {
+        Serial.printf("Upload failed, %s\n", info.errorMsg.c_str());
+    }
+}
+
 void loop()
 {
 
@@ -106,21 +152,18 @@ void loop()
     {
         taskCompleted = true;
 
-        /** Assume you use the following code to upload the firmware file stored on SD card to RTDB at path test/firmware/bin
-          Serial.println("\nWait for file uploading...");
-          Serial.printf("Upload firmware file... %s\n", Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, "test/firmware/bin", "<firmware.bin>") ? "ok" : fbdo.errorReason().c_str());
+        //Assume you use the following code to upload the firmware file stored on SD card to RTDB at path test/firmware/bin
+       
+        /*
+        Serial.println("\nUpload firmware to database...\n");
+        if (!Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, "test/firmware/bin", "<firmware.bin>", rtdbUploadCallback))
+            Serial.println(fbdo.errorReason());
         */
-        Serial.println("\nWait for file downloading...");
+
+        Serial.println("\nDownload firmware file...\n");
 
         //In ESP8266, this function will allocate 16k+ memory for internal SSL client.
-        Serial.printf("Download firmware file... %s\n", Firebase.RTDB.downloadOTA(&fbdo, "test/firmware/bin") ? "ok" : fbdo.errorReason().c_str());
-
-        if (fbdo.httpCode() == 200)
-        {
-            Serial.println("Update completed. Restarting...");
-            Serial.println();
-            delay(2000);
-            ESP.restart();
-        }
+        if (!Firebase.RTDB.downloadOTA(&fbdo, F("test/firmware/bin"), rtdbDownloadCallback /* callback function */))
+            Serial.println(fbdo.errorReason());
     }
 }

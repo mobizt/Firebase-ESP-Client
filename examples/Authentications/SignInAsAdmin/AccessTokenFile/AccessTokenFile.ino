@@ -83,7 +83,7 @@ void setup()
    * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
   */
-  config.cert.file = "/gsr1.pem";
+  config.cert.file = "/gtsr1.pem";
   config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
 
   /* The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. */
@@ -93,7 +93,7 @@ void setup()
   config.service_account.json.storage_type = mem_storage_type_flash; //or mem_storage_type_sd
   
   /** The user UID set to empty to sign in as admin */
-  auth.token.uid = "";
+  //auth.token.uid.clear();
 
   /* Assign the RTDB URL */
   config.database_url = DATABASE_URL;
@@ -138,6 +138,8 @@ void setup()
 
 void loop()
 {
+  //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+  
   if (Firebase.ready() && millis() - dataMillis > 5000)
   {
     dataMillis = millis();

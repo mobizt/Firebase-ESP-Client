@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created October 25, 2021
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -51,10 +51,10 @@ struct QueueItem
     uint8_t runCount = 0;
     uint8_t runIndex = 0;
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
-    MBSTRING path;
-    MBSTRING payload;
-    MBSTRING filename;
-    MBSTRING etag;
+    MB_String path;
+    MB_String payload;
+    MB_String filename;
+    MB_String etag;
     struct fb_esp_rtdb_address_t address;
     int blobSize = 0;
     bool async = false;
@@ -80,9 +80,9 @@ private:
     uint32_t _currentQueueID = 0;
     bool _isQueueFull = false;
     bool _isQueue = false;
-    MBSTRING _dataType;
-    MBSTRING _method;
-    MBSTRING _path;
+    MB_String _dataType;
+    MB_String _method;
+    MB_String _path;
 };
 
 #endif

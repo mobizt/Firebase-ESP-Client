@@ -19,6 +19,9 @@
  * #define DEFAULT_FLASH_FS FFat  //For ESP32 FAT
  * 
 */
+#if defined(ESP32)
+#include <SPIFFS.h>
+#endif
 #define DEFAULT_FLASH_FS SPIFFS
 
 /**
@@ -29,8 +32,26 @@
  #include <SD_MMC.h>
  #define DEFAULT_SD_FS SD_MMC //For ESP32 SDMMC
  #define CARD_TYPE_SD_MMC 1 //For ESP32 SDMMC
+ 
  * 
 */
+
+/**
+ * To use SdFat on ESP32
+
+#if defined(ESP32)
+#include <SdFat.h> //https://github.com/greiman/SdFat
+static SdFat sd_fat_fs;   //should declare as static here
+#define DEFAULT_SD_FS sd_fat_fs
+#define CARD_TYPE_SD 1
+#define SD_FS_FILE SdFile
+#endif
+
+* The SdFat (https://github.com/greiman/SdFat) is already implemented as wrapper class in ESP8266 core library. 
+* Do not include SdFat.h library in ESP8266 target code which it conflicts with the wrapper one.
+
+*/
+
 #include <SD.h>
 #define DEFAULT_SD_FS SD
 #define CARD_TYPE_SD 1

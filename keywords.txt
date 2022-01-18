@@ -281,19 +281,12 @@ setCert KEYWORD2
 ########################################################
 # Methods for Firebase Cloud Messaging Object (KEYWORD2)
 ########################################################
-addDeviceToken  KEYWORD2
-removeDeviceToken   KEYWORD2
-clearDeviceToken    KEYWORD2
-setNotifyMessage    KEYWORD2
-addCustomNotifyMessage  KEYWORD2
-clearNotifyMessage  KEYWORD2
-setDataMessage  KEYWORD2
-clearDataMessage    KEYWORD2
-setPriority KEYWORD2
-setCollapseKey  KEYWORD2
-setTimeToLive   KEYWORD2
-setTopic    KEYWORD2
-getSendResult   KEYWORD2
+setServerKey    KEYWORD2
+subscribeTopic  KEYWORD2
+unsubscribeTopic    KEYWORD2
+send    KEYWORD2
+regisAPNsTokens KEYWORD2
+appInstanceInfo KEYWORD2
 
 
 ####################################

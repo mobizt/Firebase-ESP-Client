@@ -11,6 +11,9 @@
 
 //This example shows how to store and read binary data from file on SD card to database.
 
+//If SD Card used for storage, assign SD card type and FS used in src/FirebaseFS.h and
+//change the config for that card interfaces in src/addons/SDHelper.h
+
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -24,6 +27,9 @@
 
 //Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
+
+//Provide the SD card interfaces setting and mounting
+#include <addons/SDHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
@@ -47,7 +53,6 @@ FirebaseConfig config;
 
 bool taskCompleted = false;
 
-File file;
 
 void setup()
 {
@@ -100,16 +105,8 @@ void setup()
 
   Firebase.reconnectWiFi(true);
 
-  //Mount SD card
-#if defined(ESP32)
-  if (!Firebase.sdBegin(13, 14, 2, 15)) //SS, SCK,MISO, MOSI
-#elif defined(ESP8266)
-  if (!Firebase.sdBegin(15)) //SS
-#endif
-  {
-    Serial.println("SD Card mounted failed");
-    return;
-  }
+  //Mount SD card.
+  SD_Card_Mounting();//See src/addons/SDHelper.h
 
   //Delete demo files
   if (DEFAULT_SD_FS.exists("/file1.txt"))
@@ -118,8 +115,19 @@ void setup()
   if (DEFAULT_SD_FS.exists("/file2.txt"))
     DEFAULT_SD_FS.remove("/file2.txt");
 
+#if defined(USE_SD_FAT_ESP32)
+
   //Write demo data to file
-  file = DEFAULT_SD_FS.open("/file1.txt", FILE_WRITE);
+  SdFile file;
+  //Write demo data to file
+  file.open("/file1.txt", O_RDWR | O_CREAT);
+
+#else
+
+  File file = DEFAULT_SD_FS.open("/file1.txt", "w");
+
+#endif
+
   uint8_t v = 0;
   for (int i = 0; i < 512; i++)
   {
@@ -130,6 +138,48 @@ void setup()
   file.close();
 }
 
+//The Firebase download callback function
+void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
+{
+  if (info.status == fb_esp_rtdb_download_status_init)
+  {
+    Serial.printf("Downloading file %s (%d) to %s\n", info.remotePath.c_str(), info.size, info.localFileName.c_str());
+  }
+  else if (info.status == fb_esp_rtdb_download_status_download)
+  {
+    Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
+  }
+  else if (info.status == fb_esp_rtdb_download_status_complete)
+  {
+    Serial.println("Download completed\n");
+  }
+  else if (info.status == fb_esp_rtdb_download_status_error)
+  {
+    Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
+  }
+}
+
+//The Firebase upload callback function
+void rtdbUploadCallback(RTDB_UploadStatusInfo info)
+{
+  if (info.status == fb_esp_rtdb_upload_status_init)
+  {
+    Serial.printf("Uploading file %s (%d) to %s\n", info.localFileName.c_str(), info.size, info.remotePath.c_str());
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_upload)
+  {
+    Serial.printf("Uploaded %d%s\n", (int)info.progress, "%");
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_complete)
+  {
+    Serial.println("Upload completed\n");
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_error)
+  {
+    Serial.printf("Upload failed, %s\n", info.errorMsg.c_str());
+  }
+}
+
 void loop()
 {
 
@@ -138,21 +188,29 @@ void loop()
     taskCompleted = true;
 
     //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
-    Serial.printf("Set file... %s\n", Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, "test/file/data", "/file1.txt") ? "ok" : fbdo.errorReason().c_str());
+    Serial.println("\nSet file...");
+    if (!Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, "test/file/data", "/file1.txt", rtdbUploadCallback /* callback function*/))
+      Serial.println(fbdo.errorReason());
 
-    Serial.printf("Get file... %s\n", Firebase.RTDB.getFile(&fbdo, mem_storage_type_sd, "test/file/data", "/file2.txt") ? "ok" : fbdo.errorReason().c_str());
+    Serial.println("\nGet file...");
+    if (!Firebase.RTDB.getFile(&fbdo, mem_storage_type_sd, "test/file/data", "/file2.txt", rtdbDownloadCallback /* callback function*/))
+      Serial.println(fbdo.errorReason());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {
 
-#if defined(ESP32)
-      Firebase.sdBegin(13, 14, 2, 15); //SS, SCK,MISO, MOSI
-#elif defined(ESP8266)
-      Firebase.sdBegin(15);  //SS
+#if defined(USE_SD_FAT_ESP32)
+      //Write demo data to file
+      SdFile file;
+      //Write demo data to file
+      file.open("/file2.txt", O_RDONLY);
+
+#else
+      File file;
+      file = DEFAULT_SD_FS.open("/file2.txt", "r");
+
 #endif
 
-      //Readout the downloaded file
-      file = DEFAULT_SD_FS.open("/file2.txt", FILE_READ);
       int i = 0;
 
       while (file.available())

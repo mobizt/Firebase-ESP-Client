@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -36,6 +36,7 @@
 
 #ifndef FIREBASE_QUERY_FILTER_CPP
 #define FIREBASE_QUERY_FILTER_CPP
+
 #include "QueryFilter.h"
 
 QueryFilter::QueryFilter()
@@ -49,35 +50,35 @@ QueryFilter::~QueryFilter()
 
 QueryFilter &QueryFilter::clear()
 {
-    MBSTRING().swap(_orderBy);
-    MBSTRING().swap(_limitToFirst);
-    MBSTRING().swap(_limitToLast);
-    MBSTRING().swap(_startAt);
-    MBSTRING().swap(_endAt);
-    MBSTRING().swap(_equalTo);
+    _orderBy.clear();
+    _limitToFirst.clear();
+    _limitToLast.clear();
+    _startAt.clear();
+    _endAt.clear();
+    _equalTo.clear();
     return *this;
 }
 
-QueryFilter &QueryFilter::mOrderBy(const char *val)
+QueryFilter &QueryFilter::mOrderBy(MB_StringPtr val)
 {
     _orderBy = (const char *)FPSTR("\"");
     _orderBy += val;
     _orderBy += (const char *)FPSTR("\"");
     return *this;
 }
-QueryFilter &QueryFilter::mLimitToFirst(const char *val)
+QueryFilter &QueryFilter::mLimitToFirst(MB_StringPtr val)
 {
     _limitToFirst = val;
     return *this;
 }
 
-QueryFilter &QueryFilter::mLimitToLast(const char *val)
+QueryFilter &QueryFilter::mLimitToLast(MB_StringPtr val)
 {
     _limitToLast = val;
     return *this;
 }
 
-QueryFilter &QueryFilter::mStartAt(const char *val, bool isString)
+QueryFilter &QueryFilter::mStartAt(MB_StringPtr val, bool isString)
 {
     if (isString)
         _startAt = (const char *)FPSTR("\"");
@@ -87,7 +88,7 @@ QueryFilter &QueryFilter::mStartAt(const char *val, bool isString)
     return *this;
 }
 
-QueryFilter &QueryFilter::mEndAt(const char *val, bool isString)
+QueryFilter &QueryFilter::mEndAt(MB_StringPtr val, bool isString)
 {
     if (isString)
         _endAt = (const char *)FPSTR("\"");
@@ -97,7 +98,7 @@ QueryFilter &QueryFilter::mEndAt(const char *val, bool isString)
     return *this;
 }
 
-QueryFilter &QueryFilter::mEqualTo(const char *val, bool isString)
+QueryFilter &QueryFilter::mEqualTo(MB_StringPtr val, bool isString)
 {
     if (isString)
         _equalTo = (const char *)FPSTR("\"");

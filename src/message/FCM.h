@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.17
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.18
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -78,7 +78,7 @@ public:
    * The API key created in the Google Cloud console, cannot be used for authorizing FCM requests. 
    */
   template <typename T = const char *>
-  void setServerKey(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mSetServerKey(toString(serverKey), spi_ethernet_module); }
+  void setServerKey(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mSetServerKey(toStringPtr(serverKey), spi_ethernet_module); }
 
   /** Send Firebase Cloud Messaging to the devices with JSON payload using the FCM legacy API.
    * 
@@ -137,7 +137,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool subscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscibeTopic(fbdo, topic, IID, num2Str(numToken, -1)); }
+  bool subscribeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscribeTopic(fbdo, toStringPtr(topic), IID, numToken); }
 
   /** Unsubscribe the devices from the topic.
    * 
@@ -149,7 +149,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool unsubscibeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscibeTopic(fbdo, topic, IID, num2Str(numToken, -1)); }
+  bool unsubscribeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscribeTopic(fbdo, toStringPtr(topic), IID, numToken); }
 
   /** Get the app instance info.
    * 
@@ -159,7 +159,7 @@ public:
    * 
   */
   template <typename T = const char *>
-  bool appInstanceInfo(FirebaseData *fbdo, T IID) { return mAppInstanceInfo(fbdo, toString(IID)); }
+  bool appInstanceInfo(FirebaseData *fbdo, T IID) { return mAppInstanceInfo(fbdo, IID); }
 
   /** Create registration tokens for APNs tokens.
    * 
@@ -172,7 +172,7 @@ public:
    * 
   */
   template <typename T1 = const char *, typename T2 = const char **, typename T3 = size_t>
-  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3  numToken) { return mRegisAPNsTokens(fbdo, application, sandbox, APNs, num2Str(numToken, -1)); }
+  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3 numToken) { return mRegisAPNsTokens(fbdo, toStringPtr(application), toStringPtr(sandbox), APNs, numToken); }
 
   /** Get the server payload.
    * 
@@ -182,7 +182,7 @@ public:
   String payload(FirebaseData *fbdo);
 
 private:
-  bool init();
+  bool prepareUtil();
   void begin(UtilsClass *u);
   bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
   bool waitResponse(FirebaseData *fbdo);
@@ -196,32 +196,19 @@ private:
   void fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken);
   void fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken);
 
-  void mSetServerKey(const char *serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
-  bool mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken);
-  bool mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken);
+  void mSetServerKey(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
+  bool mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken);
+  bool mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken);
   bool mAppInstanceInfo(FirebaseData *fbdo, const char *IID);
-  bool mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char *numToken);
+  bool mRegisAPNsTokens(FirebaseData *fbdo, MB_StringPtr application, bool sandbox, const char *APNs[], size_t numToken);
   void clear();
-  
+
   UtilsClass *ut = nullptr;
-  MBSTRING server_key;
-  MBSTRING raw;
+  MB_String server_key;
+  MB_String raw;
   uint16_t port = FIREBASE_PORT;
-  bool intCfg = false;
+  bool intUt = false;
   SPI_ETH_Module *_spi_ethernet_module = NULL;
-
-protected:
-  template <typename T>
-  auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

@@ -11,6 +11,9 @@
 
 //This example shows how to download file from Firebase Storage bucket.
 
+//If SD Card used for storage, assign SD card type and FS used in src/FirebaseFS.h and
+//change the config for that card interfaces in src/addons/SDHelper.h
+
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -21,6 +24,9 @@
 
 //Provide the token generation process info.
 #include <addons/TokenHelper.h>
+
+//Provide the SD card interfaces setting and mounting
+#include <addons/SDHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
@@ -43,6 +49,7 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 bool taskCompleted = false;
+
 
 void setup()
 {
@@ -88,6 +95,30 @@ void setup()
     Firebase.begin(&config, &auth);
 
     Firebase.reconnectWiFi(true);
+
+    //if use SD card, mount it.
+    SD_Card_Mounting(); //See src/addons/SDHelper.h
+}
+
+//The Firebase Storage download callback function
+void fcsDownloadCallback(FCS_DownloadStatusInfo info)
+{
+    if (info.status == fb_esp_fcs_download_status_init)
+    {
+        Serial.printf("Downloading file %s (%d) to %s\n", info.remoteFileName.c_str(), info.fileSize, info.localFileName.c_str());
+    }
+    else if (info.status == fb_esp_fcs_download_status_download)
+    {
+        Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
+    }
+    else if (info.status == fb_esp_fcs_download_status_complete)
+    {
+        Serial.println("Download completed\n");
+    }
+    else if (info.status == fb_esp_fcs_download_status_error)
+    {
+        Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
+    }
 }
 
 void loop()
@@ -96,12 +127,10 @@ void loop()
     {
         taskCompleted = true;
 
-#if defined(ESP32)
-        Firebase.sdBegin(13, 14, 2, 15); //SS, SCK,MISO, MOSI
-#elif defined(ESP8266)
-        Firebase.sdBegin(15); //SS
-#endif
+        Serial.println("\nDownload file...\n");
+
         //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-        Serial.printf("Download file... %s\n", Firebase.Storage.download(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "path/to/file/filename" /* path of remote file stored in the bucket */, "/path/to/save/filename" /* path to local file */, mem_storage_type_sd /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */) ? "ok" : fbdo.errorReason().c_str());
-        }
+        if(!Firebase.Storage.download(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "path/to/file/filename" /* path of remote file stored in the bucket */, "/path/to/save/filename" /* path to local file */, mem_storage_type_sd /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, fcsDownloadCallback /* callback function */))
+            Serial.println(fbdo.errorReason());
+    }
 }

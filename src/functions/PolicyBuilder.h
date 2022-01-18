@@ -1,15 +1,15 @@
 /**
- * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.5
+ * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.6
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -55,8 +55,8 @@ private:
     FirebaseJson json;
     FirebaseJsonArray arr;
 
-    void mSetLogType(const char *logType);
-    void mAddexemptedMembers(const char *member);
+    void mSetLogType(MB_StringPtr logType);
+    void mAddexemptedMembers(MB_StringPtr member);
 
 public:
     AuditLogConfig();
@@ -73,8 +73,8 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#LogType
      * 
     */
-   template <typename T = const char*>
-    void setLogType(T logType) { mSetLogType(toString(logType)); }
+    template <typename T = const char *>
+    void setLogType(T logType) { mSetLogType(toStringPtr(logType)); }
 
     /**
      * Add the identities that do not cause logging for this type of permission. 
@@ -84,31 +84,18 @@ public:
      * See more at https://cloud.google.com/functions/docs/reference/rest/v1/Policy#Binding.FIELDS.members
      * 
     */
-   template <typename T = const char *>
-   void addexemptedMembers(T member) { mAddexemptedMembers(toString(member)); }
+    template <typename T = const char *>
+    void addexemptedMembers(T member) { mAddexemptedMembers(toStringPtr(member)); }
 
-   /**
+    /**
      * Clear all exempted members. 
     */
-   void clearExemptedMembers();
+    void clearExemptedMembers();
 
-   /**
+    /**
      * Clear all AuditLogConfig data. 
     */
-   void clear();
-
-   protected:
-       template <typename T>
-       auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-       template <typename T>
-       auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-       template <typename T>
-       auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-       template <typename T>
-       auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+    void clear();
 };
 
 /** The class that provides the audit configuration for a service. 
@@ -132,7 +119,7 @@ private:
     FirebaseJson json;
     FirebaseJsonArray arr;
 
-    void mSetService(const char *service);
+    void mSetService(MB_StringPtr service);
 
 public:
     AuditConfig();
@@ -147,7 +134,7 @@ public:
      * 
     */
     template <typename T = const char *>
-    void setService(const char *service) { mSetService(toString(service)); }
+    void setService(const char *service) { mSetService(toStringPtr(service)); }
 
     /** Add AuditLogConfig object 
      * @param config The pointer to the AuditLogConfig class data.
@@ -164,19 +151,6 @@ public:
      * Clear all AuditConfig data. 
     */
     void clear();
-
-protected:
-    template <typename T>
-    auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 /**
@@ -192,9 +166,9 @@ private:
     FirebaseJsonArray arr;
     FirebaseJson json;
 
-    void mAddMember(const char *member);
-    void mSetRole(const char *role);
-    void mSetCondition(const char *expression = "", const char *title = "", const char *description = "", const char *location = "");
+    void mAddMember(MB_StringPtr member);
+    void mSetRole(MB_StringPtr role);
+    void mSetCondition(MB_StringPtr expression, MB_StringPtr title, MB_StringPtr description, MB_StringPtr location);
 
 public:
     Binding();
@@ -208,7 +182,7 @@ public:
      * 
     */
     template <typename T = const char *>
-    void addMember(const char *member) { mAddMember(toString(member)); }
+    void addMember(const char *member) { mAddMember(toStringPtr(member)); }
 
     /**
      * Specifies role that is assigned to members. For example, roles/viewer, roles/editor, or roles/owner.
@@ -218,7 +192,7 @@ public:
      * 
     */
     template <typename T = const char *>
-    void setRole(const char *role) { mSetRole(toString(role)); }
+    void setRole(const char *role) { mSetRole(toStringPtr(role)); }
 
     /**
      * Specifies the condition that is associated with this binding.
@@ -238,7 +212,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    void setCondition(T1 expression = "", T2 title = "", T3 description = "", T4 location = "") { mSetCondition(toString(expression), toString(title), toString(description), toString(location)); }
+    void setCondition(T1 expression = "", T2 title = "", T3 description = "", T4 location = "") { mSetCondition(toStringPtr(expression), toStringPtr(title), toStringPtr(description), toStringPtr(location)); }
 
     /**
      * Clear all members that were added. 
@@ -249,19 +223,6 @@ public:
      * Clear all Binding data. 
     */
     void clear();
-
-protected:
-    template <typename T>
-    auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 /** The class that provides the Policy which is an Identity and Access Management (IAM) policy, 
@@ -289,9 +250,9 @@ private:
     FirebaseJsonArray arr;
     FirebaseJsonArray arr2;
     FirebaseJson json;
-    const char * raw();
-    void mSetVersion(const char* v);
-    void mSetETag(const char *etag);
+    const char *raw();
+    void mSetVersion(MB_StringPtr v);
+    void mSetETag(MB_StringPtr etag);
 
 public:
     PolicyBuilder();
@@ -329,7 +290,7 @@ public:
      * 
     */
     template <typename T = int>
-    void setVersion(T v) { mSetVersion(num2Str(v, -1)); }
+    void setVersion(T v) { mSetVersion(toStringPtr(v, -1)); }
 
     /**
      * Set the ETag.
@@ -346,7 +307,7 @@ public:
      * 
     */
     template <typename T = const char *>
-    void setETag(T etag) { mSetETag(toStr(etag)); }
+    void setETag(T etag) { mSetETag(toStringPtr(etag)); }
 
     /**
      * Clear all Bindings in the collection.
@@ -368,19 +329,6 @@ public:
      * 
     */
     void toString(String &s, bool prettify = false);
-
-protected:
-    template <typename T>
-    auto toStr(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-    template <typename T>
-    auto toStr(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-    template <typename T>
-    auto toStr(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-    template <typename T>
-    auto toStr(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

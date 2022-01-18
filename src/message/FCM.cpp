@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.17
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.18
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -36,6 +36,7 @@
 
 #ifndef FIREBASE_FCM_CPP
 #define FIREBASE_FCM_CPP
+
 #include "FCM.h"
 
 FB_CM::FB_CM() {}
@@ -44,12 +45,16 @@ FB_CM::~FB_CM()
     clear();
 }
 
-bool FB_CM::init()
+bool FB_CM::prepareUtil()
 {
     if (!ut)
+        ut = Signer.getUtils(); //must be initialized in Firebase class constructor
+
+    if (!ut)
     {
-        intCfg = true;
-        ut = new UtilsClass(Signer.getCfg());
+        intUt = true;
+        ut = new UtilsClass(Signer.getMBFS());
+        ut->setConfig(Signer.getCfg());
     }
 
     return ut != nullptr;
@@ -60,7 +65,7 @@ void FB_CM::begin(UtilsClass *u)
     ut = u;
 }
 
-void FB_CM::mSetServerKey(const char *serverKey, SPI_ETH_Module *spi_ethernet_module)
+void FB_CM::mSetServerKey(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_module)
 {
     this->server_key = serverKey;
     this->_spi_ethernet_module = spi_ethernet_module;
@@ -68,10 +73,7 @@ void FB_CM::mSetServerKey(const char *serverKey, SPI_ETH_Module *spi_ethernet_mo
 
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 {
-    if (!Signer.getCfg())
-        return false;
-
-    if (!init())
+    if (!prepareUtil())
         return false;
 
     if (server_key.length() == 0)
@@ -88,7 +90,7 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 
 bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 {
-    if (!init())
+    if (!prepareUtil())
         return false;
 
     Signer.tokenReady();
@@ -105,9 +107,9 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
     return ret;
 }
 
-bool FB_CM::mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken)
+bool FB_CM::mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken)
 {
-    if (!init())
+    if (!prepareUtil())
         return false;
 
     Signer.tokenReady();
@@ -118,15 +120,17 @@ bool FB_CM::mSubscibeTopic(FirebaseData *fbdo, const char *topic, const char *II
         return false;
     }
 
-    fcm_preparSubscriptionPayload(topic, IID, atoi(numToken));
+    MB_String _topic = topic;
+
+    fcm_preparSubscriptionPayload(_topic.c_str(), IID, numToken);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_subscribe, raw.c_str());
     raw.clear();
     return ret;
 }
 
-bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *IID[], const char *numToken)
+bool FB_CM::mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken)
 {
-    if (!init())
+    if (!prepareUtil())
         return false;
 
     Signer.tokenReady();
@@ -137,7 +141,9 @@ bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *
         return false;
     }
 
-    fcm_preparSubscriptionPayload(topic, IID, atoi(numToken));
+    MB_String _topic = topic;
+
+    fcm_preparSubscriptionPayload(_topic.c_str(), IID, numToken);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_unsubscribe, raw.c_str());
     raw.clear();
     return ret;
@@ -145,7 +151,7 @@ bool FB_CM::mUnsubscibeTopic(FirebaseData *fbdo, const char *topic, const char *
 
 bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 {
-    if (!init())
+    if (!prepareUtil())
         return false;
 
     if (server_key.length() == 0)
@@ -154,15 +160,15 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
         return false;
     }
 
-    MBSTRING payload = IID;
+    MB_String payload = IID;
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_app_instance_info, payload.c_str());
     payload.clear();
     return ret;
 }
 
-bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool sandbox, const char *APNs[], const char *numToken)
+bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, MB_StringPtr application, bool sandbox, const char *APNs[], size_t numToken)
 {
-    if (!init())
+    if (!prepareUtil())
         return false;
 
     Signer.tokenReady();
@@ -173,7 +179,9 @@ bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, const char *application, bool s
         return false;
     }
 
-    fcm_preparAPNsRegistPayload(application, sandbox, APNs, atoi(numToken));
+    MB_String _application = application;
+
+    fcm_preparAPNsRegistPayload(_application.c_str(), sandbox, APNs, numToken);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_apn_token_registration, raw.c_str());
     raw.clear();
     return ret;
@@ -197,7 +205,7 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
         }
     }
 
-    MBSTRING host;
+    MB_String host;
     if (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1)
         host.appendP(fb_esp_pgm_str_249);
     else
@@ -214,7 +222,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
 {
     bool msgMode = (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1);
     int ret = -1;
-    MBSTRING header;
+    MB_String header;
 
     if (mode == fb_esp_fcm_msg_mode_app_instance_info)
         header.appendP(fb_esp_pgm_str_25, true);
@@ -328,7 +336,7 @@ int FB_CM::fcm_sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const ch
 void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 {
 
-    MBSTRING s;
+    MB_String s;
 
     raw.clear();
 
@@ -533,7 +541,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
 void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken)
 {
-    MBSTRING base, s;
+    MB_String base, s;
 
     raw.clear();
     FirebaseJson json;
@@ -568,7 +576,7 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
 
 void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken)
 {
-    MBSTRING base, s;
+    MB_String base, s;
 
     raw.clear();
     FirebaseJson json;
@@ -602,7 +610,7 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
 void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 {
 
-    MBSTRING base, _base, s;
+    MB_String base, _base, s;
 
     FirebaseJson json;
     raw.clear();
@@ -1178,7 +1186,7 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *m
 
     int ret = fcm_sendHeader(fbdo, mode, msg);
     if (ret == 0)
-        ret = fbdo->tcpClient.send(msg);
+        ret = fbdo->tcpSend(msg);
 
     fbdo->_ss.fcm.payload.clear();
     if (ret != 0)
@@ -1290,7 +1298,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                 if (chunkIdx == 0)
                 {
                     //the first chunk can be http response header
-                    header = (char*)ut->newP(chunkBufSize);
+                    header = (char *)ut->newP(chunkBufSize);
                     hstate = 1;
                     int readLen = ut->readLine(stream, header, chunkBufSize);
                     int pos = 0;
@@ -1309,7 +1317,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     }
                     else
                     {
-                        payload = (char*)ut->newP(payloadLen);
+                        payload = (char *)ut->newP(payloadLen);
                         pstate = 1;
                         memcpy(payload, header, readLen);
                         pBufPos = readLen;
@@ -1325,7 +1333,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     if (isHeader)
                     {
                         //read one line of next header field until the empty header has found
-                        tmp = (char*)ut->newP(chunkBufSize);
+                        tmp = (char *)ut->newP(chunkBufSize);
                         int readLen = ut->readLine(stream, tmp, chunkBufSize);
                         bool headerEnded = false;
 
@@ -1372,12 +1380,12 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                         {
                             pChunkIdx++;
 
-                            pChunk = (char*)ut->newP(chunkBufSize + 1);
+                            pChunk = (char *)ut->newP(chunkBufSize + 1);
 
                             if (!payload || pstate == 0)
                             {
                                 pstate = 1;
-                                payload = (char*)ut->newP(payloadLen + 1);
+                                payload = (char *)ut->newP(payloadLen + 1);
                             }
 
                             //read the avilable data
@@ -1410,14 +1418,14 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                                         //in case of the accumulated payload size is bigger than the char array
                                         //reallocate the char array
 
-                                        char *buf = (char*)ut->newP(pBufPos + readLen + 1);
+                                        char *buf = (char *)ut->newP(pBufPos + readLen + 1);
                                         memcpy(buf, payload, pBufPos);
 
                                         memcpy(buf + pBufPos, pChunk, readLen);
 
                                         payloadLen = pBufPos + readLen;
                                         ut->delP(&payload);
-                                        payload = (char*)ut->newP(payloadLen + 1);
+                                        payload = (char *)ut->newP(payloadLen + 1);
                                         memcpy(payload, buf, payloadLen);
                                         ut->delP(&buf);
                                     }
@@ -1452,7 +1460,10 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                 fbdo->_ss.fcm.payload = payload;
             else
             {
-                MBSTRING t = ut->trim(payload);
+
+                MB_String t = payload;
+                t.trim();
+
                 if (t[0] == '{' && t[t.length() - 1] == '}')
                 {
                     FirebaseJson json;
@@ -1460,7 +1471,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     json.setJsonData(t.c_str());
 
                     json.get(data, pgm2Str(fb_esp_pgm_str_257));
-                   
+
                     if (data.success)
                     {
                         error.code = data.to<int>();
@@ -1550,7 +1561,7 @@ void FB_CM::clear()
 {
     raw.clear();
     server_key.clear();
-    if (ut && intCfg)
+    if (ut && intUt)
         delete ut;
 }
 

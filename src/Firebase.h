@@ -1,11 +1,11 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.15
+ * The Firebase class, Firebase.h v1.0.16
  * 
- *  Created January 1, 2022
+ *  Created January 18, 2022
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -31,6 +31,8 @@
 
 #if defined(ESP8266) || defined(ESP32)
 
+#include "FirebaseFS.h"
+
 #include <Arduino.h>
 
 #if defined(ESP8266)
@@ -45,7 +47,10 @@
 #include "signer/Signer.h"
 #include "Utils.h"
 #include "session/FB_Session.h"
-#include <SD.h>
+
+#if defined(SD_FS) && defined(CARD_TYPE_SD) && defined(ESP32) && defined(SD_FAT_VERSION)
+class SdSpiConfig;
+#endif
 
 #if defined(FIREBASE_ESP_CLIENT)
 
@@ -115,7 +120,8 @@ public:
    *
    * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
   */
-  void setIdToken(FirebaseConfig *config, const char *idToken, size_t expire = 3600);
+  template <typename T = const char *>
+  void setIdToken(FirebaseConfig *config, T idToken, size_t expire = 3600) { return mSetIdToken(config, toStringPtr(idToken), expire); }
 
   /** Check for token expiry status.
    *
@@ -184,12 +190,7 @@ public:
    * under the Sign-in providers list, enable Anonymous provider.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool signUp(FirebaseConfig *config, FirebaseAuth *auth, T1 email, T2 password)
-  {
-    init(config, auth);
-    Signer.setTokenType(token_type_id_token);
-    return Signer.getIdToken(true, toString(email), toString(password));
-  }
+  bool signUp(FirebaseConfig *config, FirebaseAuth *auth, T1 email, T2 password) { return mSignUp(config, auth, toStringPtr(email), toStringPtr(password)); }
 
   /** Delete user from project.
    * 
@@ -198,11 +199,8 @@ public:
    * @param idToken (optional) The id token of user, leave blank to delete the current sign in user.
    * @return Boolean type status indicates the success of the operation.
   */
-  bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, const char *idToken = "")
-  {
-    init(config, auth);
-    return Signer.deleteIdToken(idToken);
-  }
+  template <typename T = const char *>
+  bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, T idToken = "") { return mDeleteUser(config, auth, toStringPtr(idToken)); }
 
   /** Send a user a verification Email.
    * 
@@ -210,21 +208,16 @@ public:
    * @param idToken The id token of user that was already signed in with Email and password (optional).
    * @return Boolean type status indicates the success of the operation.
    * 
-   * @note The id token can be obtained from config.signer.tokens.id_token
+   * @note The id token can be obtained from Firebase.getToken()
    * after begin with config and auth data.
    * 
-   * If the idToken is not assigned, the internal config.signer.tokens.id_token
-   * will be used.
+   * If the idToken is not assigned, the internal id_token will be used.
    * 
    * See the Templates of Email address verification in the Firebase console
    * , Authentication.
   */
   template <typename T = const char *>
-  bool sendEmailVerification(FirebaseConfig *config, T idToken = "")
-  {
-    init(config, nullptr);
-    return Signer.handleEmailSending(toString(idToken), fb_esp_user_email_sending_type_verify);
-  }
+  bool sendEmailVerification(FirebaseConfig *config, T idToken = "") { return msendEmailVerification(config, toStringPtr(idToken)); }
 
   /** Send a user a password reset link to Email.
    * 
@@ -233,11 +226,7 @@ public:
    * @return Boolean type status indicates the success of the operation.
   */
   template <typename T = const char *>
-  bool sendResetPassword(FirebaseConfig *config, T email)
-  {
-    init(config, nullptr);
-    return Signer.handleEmailSending(toString(email), fb_esp_user_email_sending_type_reset_psw);
-  }
+  bool sendResetPassword(FirebaseConfig *config, T email) { return mSendResetPassword(config, toStringPtr(email)); }
 
   /** Reconnect WiFi if lost connection.
    * 
@@ -263,6 +252,8 @@ public:
   */
   void setDoubleDigits(uint8_t digits);
 
+#if defined(SD_FS) && defined(CARD_TYPE_SD)
+
   /** SD card config with GPIO pins.
    * 
    * @param ss SPI Chip/Slave Select pin.
@@ -273,6 +264,44 @@ public:
   */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 
+#if defined(ESP8266)
+
+  /** SD card config with SD FS configurations (ESP8266 only).
+   * 
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 only).
+   * @return Boolean type status indicates the success of the operation.
+  */
+  bool sdBegin(SDFSConfig *sdFSConfig);
+
+#endif
+
+#if defined(ESP32)
+  /** SD card config with chip select and SPI configuration (ESP32 only).
+   * 
+   * @param ss SPI Chip/Slave Select pin.
+   * @param spiConfig The pointer to SPIClass object for SPI configuartion (ESP32 only).
+   * @return Boolean type status indicates the success of the operation.
+  */
+  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
+#endif
+
+#if defined(USE_SD_FAT_ESP32)
+  /** SD card config with SdFat SPI and pins configurations (ESP32 with SdFat included only).
+   * 
+   * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sck SPI Clock pin.
+   * @param miso SPI MISO pin.
+   * @param mosi SPI MOSI pin.
+   * @return Boolean type status indicates the success of the operation.
+  */
+  bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+#endif
+
+#endif
+
+#if defined(ESP32) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
   /** Initialize the SD_MMC card (ESP32 only).
   *
   * @param mountpoint The mounting point.
@@ -281,6 +310,7 @@ public:
   * @return The boolean value indicates the success of operation.
  */
   bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
+#endif
 
   /** Set system time with timestamp.
    * 
@@ -289,25 +319,30 @@ public:
   */
   bool setSystemTime(time_t ts);
 
+  /** Provide the http code error string
+   * 
+   * @param httpCode The http code.
+   * @param buff The String buffer out.
+  */
+  void errorToString(int httpCode, String &buff)
+  {
+    MB_String out;
+    Signer.errorToString(httpCode, out);
+    buff = out.c_str();
+  }
+
 private:
   void init(FirebaseConfig *config, FirebaseAuth *auth);
+  void mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire = 3600);
+  bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
+  bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
+  bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
+  bool mSendResetPassword(FirebaseConfig *config, MB_StringPtr email);
 
   UtilsClass *ut = nullptr;
   FirebaseAuth *auth = nullptr;
   FirebaseConfig *cfg = nullptr;
-
-protected:
-  template <typename T>
-  auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
+  MB_File *mbfs = nullptr;
 };
 
 extern Firebase_ESP_Client Firebase;
@@ -348,7 +383,8 @@ public:
    *
    * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
   */
-  void setIdToken(FirebaseConfig *config, const char *idToken, size_t expire = 3600);
+  template <typename T = const char *>
+  void setIdToken(FirebaseConfig *config, T idToken, size_t expire = 3600) { return mSetIdToken(config, toStringPtr(idToken), expire); }
 
   /** Check for token expiry status.
    *
@@ -413,18 +449,18 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   void begin(T1 databaseURL, T2 databaseSecret)
   {
-    pre_begin(databaseURL, databaseSecret);
+    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
     begin(cfg, auth);
   }
 
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
   void begin(T1 databaseURL, T2 databaseSecret, T3 caCert, float GMTOffset = 0.0)
   {
-    pre_begin(databaseURL, databaseSecret);
-    if (strlen_P(toString(caCert)))
+    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
+    if (caCert)
     {
       float _gmtOffset = GMTOffset;
-      cfg->cert.data = toString(caCert);
+      cfg->cert.data = caCert;
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
@@ -437,11 +473,14 @@ public:
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
   void begin(T1 databaseURL, T2 databaseSecret, T3 caCertFile, uint8_t storageType, float GMTOffset = 0.0)
   {
-    pre_begin(databaseURL, databaseSecret);
-    if (caCertFile.length() > 0)
+    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
+
+    MB_String _caCertFile = caCertFile;
+
+    if (_caCertFile.length() > 0)
     {
       float _gmtOffset = GMTOffset;
-      cfg->cert.file = toString(caCertFile);
+      cfg->cert.file = _caCertFile;
       cfg->cert.file_storage = storageType;
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
@@ -479,11 +518,7 @@ public:
    * under the Sign-in providers list, enable Anonymous provider.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool signUp(FirebaseConfig *config, FirebaseAuth *auth, T1 email, T2 password)
-  {
-    init(config, auth);
-    return Signer.getIdToken(true, toString(email), toString(password));
-  }
+  bool signUp(FirebaseConfig *config, FirebaseAuth *auth, T1 email, T2 password) { return mSignUp(config, auth, toStringPtr(email), toStringPtr(password)); }
 
   /** Delete user from project.
    * 
@@ -492,11 +527,8 @@ public:
    * @param idToken (optional) The id token of user, leave blank to delete the current sign in user.
    * @return Boolean type status indicates the success of the operation.
   */
-  bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, const char *idToken = "")
-  {
-    init(config, auth);
-    return Signer.deleteIdToken(idToken);
-  }
+  template <typename T = const char *>
+  bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, T idToken = "") { return mDeleteUser(config, auth, toStringPtr(idToken)); }
 
   /** Send a user a verification Email.
    * 
@@ -515,11 +547,7 @@ public:
    * 
   */
   template <typename T = const char *>
-  bool sendEmailVerification(FirebaseConfig *config, T idToken = "")
-  {
-    init(config, nullptr);
-    return Signer.handleEmailSending(toString(idToken), fb_esp_user_email_sending_type_verify);
-  }
+  bool sendEmailVerification(FirebaseConfig *config, T idToken = "") { return msendEmailVerification(config, toStringPtr(idToken)); }
 
   /** Send a user a password reset link to Email.
    * 
@@ -529,11 +557,7 @@ public:
    * 
   */
   template <typename T = const char *>
-  bool sendResetPassword(FirebaseConfig *config, T email)
-  {
-    init(config, nullptr);
-    return Signer.handleEmailSending(toString(email), fb_esp_user_email_sending_type_reset_psw);
-  }
+  bool sendResetPassword(FirebaseConfig *config, T email) { return mSendResetPassword(config, toStringPtr(email)); }
 
   /** Reconnect WiFi if lost connection.
    * 
@@ -602,6 +626,18 @@ public:
   */
   bool getRules(FirebaseData &fbdo) { return RTDB.getRules(&fbdo); }
 
+  /** Save the database rules to file.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param storageType Type of storage to read file data, StorageType::FLASH or StorageType::SD.
+   * @param filename Filename to save rules.
+   * @param callback Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+   * @return Boolean value, indicates the success of the operation. 
+   * 
+  */
+  template <typename T = const char *>
+  bool getRules(FirebaseData &fbdo, uint8_t storageType, T filename, RTDB_DownloadProgressCallback callback = NULL) { return RTDB.getRules(&fbdo, getMemStorageType(storageType), filename, callback); }
+
   /** Write the database rules.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
@@ -610,6 +646,18 @@ public:
   */
   template <typename T = const char *>
   bool setRules(FirebaseData &fbdo, T rules) { return RTDB.setRules(&fbdo, rules); }
+
+  /** Write the database rules from file.
+   * 
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param storageType Type of storage to read file data, StorageType::FLASH or StorageType::SD.
+   * @param filename Filename to read the rules from.
+   * @param callback Optional. The callback function that accept RTDB_UploadStatusInfo data.
+   * @return Boolean type status indicates the success of the operation.
+  */
+  template <typename T = const char *>
+  bool setRules(FirebaseData &fbdo, uint8_t storageType, T filename, RTDB_UploadProgressCallback callback = NULL) { return RTDB.setRules(&fbdo, getMemStorageType(storageType), filename, callback); }
+
 
   /** Set the .read and .write database rules.
    * 
@@ -918,6 +966,7 @@ public:
    * @param storageType Type of storage to read file data, StorageType::FLASH or StorageType::SD.
    * @param path Target database path in which binary data from the file will be appended.
    * @param fileName File name included its path in SD card/Flash memory.
+   * @param callback Optional. The callback function that accept RTDB_UploadStatusInfo data.
    * @return Boolean type status indicates the success of the operation.
    * 
    * @note The new appended node's key will be stored in Firebase Data object, 
@@ -926,10 +975,10 @@ public:
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool pushFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.pushFile(&fbdo, getMemStorageType(storageType), path, fileName); }
+  bool pushFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, RTDB_UploadProgressCallback callback = NULL) { return RTDB.pushFile(&fbdo, getMemStorageType(storageType), path, fileName, callback); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path, fileName); }
+  bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, RTDB_UploadProgressCallback callback = NULL) { return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path, fileName, callback); }
 
   /** Append the new Firebase server's timestamp to the defined database path.*
    * 
@@ -1397,6 +1446,7 @@ public:
    * @param storageType Type of storage to read file data, StorageType::FLASH or StorageType::SD.
    * @param path Target database path in which binary data from the file will be set.
    * @param fileName File name included its path in SD card/Flash memory
+   * @param callback Optional. The callback function that accept RTDB_UploadStatusInfo data.
    * @return Boolean type status indicates the success of the operation. 
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
@@ -1404,10 +1454,10 @@ public:
    * @note No payload returned from the server.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.setFile(&fbdo, getMemStorageType(storageType), path, fileName); }
+  bool setFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, RTDB_UploadProgressCallback callback = NULL) { return RTDB.setFile(&fbdo, getMemStorageType(storageType), path, fileName, callback); }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName); }
+  bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, RTDB_UploadProgressCallback callback = NULL) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName, callback); }
 
   /** Set binary data from file stored on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value.
    * 
@@ -1416,6 +1466,7 @@ public:
    * @param path Target database path in which binary data from the file will be set.
    * @param fileName File name included its path in SD card/Flash memory.
    * @param ETag Known unique identifier string (ETag) of defined database path.
+   * @param callback Optional. The callback function that accept RTDB_UploadStatusInfo data.
    * @return Boolean type status indicates the success of the operation.
    * 
    * @note No payload returned from the server. 
@@ -1426,10 +1477,10 @@ public:
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool setFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag) { return RTDB.setFile(&fbdo, getMemStorageType(storageType), path, fileName, ETag); }
+  bool setFile(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag, RTDB_UploadProgressCallback callback = NULL) { return RTDB.setFile(&fbdo, getMemStorageType(storageType), path, fileName, ETag, callback); }
 
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName, ETag); }
+  bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, T1 path, T2 fileName, T3 ETag, RTDB_UploadProgressCallback callback = NULL) { return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path, fileName, ETag, callback); }
 
   /** Set Firebase server's timestamp to the defined database path.
    * 
@@ -1862,23 +1913,27 @@ public:
    * @param storageType Type of storage to write file data, StorageType::FLASH or StorageType::SD.
    * @param nodePath Database path that file data will be downloaded.
    * @param fileName File name included its path in SD card/Flash memory to save in SD card/Flash memory.
+   * @param callback Optional. The callback function that accept RTDB_DownloadStatusInfo data.
    * @return Boolean type status indicates the success of the operation.
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool getFile(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName) { return RTDB.getFile(&fbdo, getMemStorageType(storageType), nodePath, fileName); }
+  bool getFile(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName, RTDB_DownloadProgressCallback callback = NULL) { return RTDB.getFile(&fbdo, getMemStorageType(storageType), nodePath, fileName, callback); }
 
   /** Download a firmware file from the database.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param fileName  The firmware file path includes its name.
+   * @param fwPath  The firmware data path.
+   * @param callback Optional. The callback function that accept RTDB_DownloadStatusInfo data.
    * @return Boolean value, indicates the success of the operation.
    * 
    * @note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+   * 
+   * Firmware data is the bin file that stored on datanbase using pushFile or setFile function. 
   */
   template <typename T = const char *>
-  bool downloadOTA(FirebaseData &fbdo, T fileName) { return RTDB.downloadOTA(&fbdo, fileName); }
+  bool downloadOTA(FirebaseData &fbdo, T fwPath, RTDB_DownloadProgressCallback callback = NULL) { return RTDB.downloadOTA(&fbdo, fwPath, callback); }
 
   /** Delete all child nodes at the defined database path.
    * 
@@ -2042,6 +2097,7 @@ public:
    * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
    * @param nodePath Database path to be backuped.
    * @param fileName File name to save.
+   * @param callback Optional. The callback function that accept RTDB_DownloadStatusInfo data.
    * @return Boolean type status indicates the success of the operation.
    * 
    * @note Only 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension) can be saved to SD card/Flash memory.
@@ -2049,20 +2105,21 @@ public:
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool backup(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName) { return RTDB.backup(&fbdo, getMemStorageType(storageType), nodePath, fileName); }
+  bool backup(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName, RTDB_DownloadProgressCallback callback = NULL) { return RTDB.backup(&fbdo, getMemStorageType(storageType), nodePath, fileName, callback); }
 
   /** Restore database at a defined path using backup file saved on SD card/Flash memory.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
    * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
    * @param nodePath Database path to  be restored.
-   * @param fileName File name to read
+   * @param fileName File name to read.
+   * @param callback Optional. The callback function that accept RTDB_UploadStatusInfo data.
    * @return Boolean type status indicates the success of the operation.
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool restore(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName) { return RTDB.restore(&fbdo, getMemStorageType(storageType), nodePath, fileName); }
+  bool restore(FirebaseData &fbdo, uint8_t storageType, T1 nodePath, T2 fileName, RTDB_UploadProgressCallback callback = NULL) { return RTDB.restore(&fbdo, getMemStorageType(storageType), nodePath, fileName, callback); }
 
   /** Set maximum Firebase read/store retry operation (0 255) in case of network problems and buffer overflow.
    * @param fbdo Firebase Data Object to hold data and instance.
@@ -2217,26 +2274,56 @@ public:
   bool sendTopic(FirebaseData &fbdo);
 #endif
 
-#ifdef ESP8266
-  /** SD card config with GPIO pins.
-     * 
-     * @param ss SPI Chip/Slave Select pin.
-     * @return Boolean type status indicates the success of the operation.
-    */
-  bool sdBegin(int8_t ss);
-#endif
+#if defined(SD_FS) && defined(CARD_TYPE_SD)
 
-#ifdef ESP32
   /** SD card config with GPIO pins.
-     * 
-     * @param ss -   SPI Chip/Slave Select pin.
-     * @param sck -  SPI Clock pin.
-     * @param miso - SPI MISO pin.
-     * @param mosi - SPI MOSI pin.
-     * @return Boolean type status indicates the success of the operation.
-    */
+   * 
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sck SPI Clock pin.
+   * @param miso SPI MISO pin.
+   * @param mosi SPI MOSI pin.
+   * @return Boolean type status indicates the success of the operation.
+  */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 
+#if defined(ESP8266)
+
+  /** SD card config with SD FS configurations (ESP8266 only).
+   * 
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 only).
+   * @return Boolean type status indicates the success of the operation.
+  */
+  bool sdBegin(SDFSConfig *sdFSConfig);
+
+#endif
+
+#if defined(ESP32)
+  /** SD card config with chip select and SPI configuration (ESP32 only).
+   * 
+   * @param ss SPI Chip/Slave Select pin.
+   * @param spiConfig The pointer to SPIClass object for SPI configuartion (ESP32 only).
+   * @return Boolean type status indicates the success of the operation.
+  */
+  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
+#endif
+
+#if defined(USE_SD_FAT_ESP32)
+  /** SD card config with SdFat SPI and pins configurations (ESP32 with SdFat included only).
+   * 
+   * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sck SPI Clock pin.
+   * @param miso SPI MISO pin.
+   * @param mosi SPI MOSI pin.
+   * @return Boolean type status indicates the success of the operation.
+  */
+  bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+#endif
+
+#endif
+
+#if defined(ESP32) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
   /** Initialize the SD_MMC card (ESP32 only).
   *
   * @param mountpoint The mounting point.
@@ -2244,7 +2331,7 @@ public:
   * @param format_if_mount_failed Format SD_MMC card if mount failed.
   * @return The boolean value indicates the success of operation.
  */
-  bool sdMMCBegin(const String &mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
+  bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 #endif
 
   /** Set system time with timestamp.
@@ -2257,9 +2344,14 @@ public:
   /** Provide the http code error string
    * 
    * @param httpCode The http code.
-   * @param buff The C++ string buffer out.
+   * @param buff The String buffer out.
     */
-  void errorToString(int httpCode, MBSTRING &buff) { Signer.errorToString(httpCode, buff); }
+  void errorToString(int httpCode, String &buff)
+  {
+    MB_String out;
+    Signer.errorToString(httpCode, out);
+    buff = out.c_str();
+  }
 
   template <typename T1 = const char *, typename T2>
   bool set(FirebaseData &fbdo, T1 path, T2 value) { return RTDB.set(&fbdo, path, value); }
@@ -2411,27 +2503,13 @@ private:
 #endif
   fb_esp_mem_storage_type getMemStorageType(uint8_t old_type);
   void init(FirebaseConfig *config, FirebaseAuth *auth);
+  bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
+  void mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire = 3600);
+  bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
+  bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
+  bool mSendResetPassword(FirebaseConfig *config, MB_StringPtr email);
 
-  UtilsClass *ut = nullptr;
-  FirebaseAuth *auth = nullptr;
-  FirebaseConfig *cfg = nullptr;
-  bool extConfig = true;
-
-protected:
-  template <typename T>
-  auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-  template <typename T>
-  auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
-
-  template <typename T1 = const char *, typename T2 = const char *>
-  void pre_begin(T1 databaseURL, T2 databaseSecret)
+  void pre_begin(MB_StringPtr databaseURL, MB_StringPtr databaseSecret)
   {
     if (!cfg)
       cfg = new FirebaseConfig();
@@ -2441,9 +2519,15 @@ protected:
 
     extConfig = false;
 
-    cfg->database_url = toString(databaseURL);
-    cfg->signer.tokens.legacy_token = toString(databaseSecret);
+    cfg->database_url = databaseURL;
+    cfg->signer.tokens.legacy_token = addrTo<const char *>(databaseSecret.address());
   }
+
+  UtilsClass *ut = nullptr;
+  FirebaseAuth *auth = nullptr;
+  FirebaseConfig *cfg = nullptr;
+  MB_File *mbfs = nullptr;
+  bool extConfig = true;
 };
 
 extern FIREBASE_CLASS Firebase;

@@ -87,7 +87,7 @@ void setup()
     iid[0] = DEVICE_REGISTRATION_ID_TOKEN_1;
     iid[1] = DEVICE_REGISTRATION_ID_TOKEN_2;
 
-    if (Firebase.FCM.unsubscibeTopic(&fbdo, "testTopic" /* topic to subscribe */, iid /* IID tokens array */, numToken))
+    if (Firebase.FCM.unsubscribeTopic(&fbdo, "testTopic" /* topic to subscribe */, iid /* IID tokens array */, numToken))
         Serial.printf("ok\n%s\n\n", Firebase.FCM.payload(&fbdo).c_str());
     else
         Serial.println(fbdo.errorReason());

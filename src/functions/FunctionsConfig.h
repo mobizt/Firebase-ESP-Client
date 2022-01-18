@@ -3,13 +3,13 @@
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -50,11 +50,11 @@ class FunctionsConfig
 
 private:
     FirebaseJson _funcCfg;
-    MBSTRING _projectId, _locationId, _bucketId, _entryPoint, _name, _httpsTriggerUrl;
-    std::vector<MBSTRING> _updateMask = std::vector<MBSTRING>();
+    MB_String _projectId, _locationId, _bucketId, _entryPoint, _name, _httpsTriggerUrl;
+    std::vector<MB_String> _updateMask = std::vector<MB_String>();
     UtilsClass *ut = nullptr;
-    MBSTRING _bucketSourcesPath = "";
-    MBSTRING _uploadArchiveFile = "";
+    MB_String _bucketSourcesPath;
+    MB_String _uploadArchiveFile;
     const uint8_t *_pgmArc = nullptr;
     size_t _pgmArcLen = 0;
     fb_esp_mem_storage_type _uploadArchiveStorageType = mem_storage_type_undefined;
@@ -64,26 +64,26 @@ private:
 
     void addUpdateMasks(const char *key);
     void removeUpdateMasks(const char *key);
-    void mFunctionsConfig(const char *projectId, const char *locationId, const char *bucketId);
-    void mSetProjectId(const char *projectId);
-    void mSetLocationId(const char *locationId);
-    void mSetBucketId(const char *bucketId);
-    void mSetName(const char *name);
-    void mSetDescription(const char *description);
-    void mSetEntryPoint(const char *entry);
-    void mSetRuntime(const char *runtime);
-    void mSetTimeout(const char *seconds);
-    void mSetAvailableMemoryMb(const char *mb);
-    void mSetMaxInstances(const char *maxInstances);
-    void mSetSource(const char *path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
-    void mAddLabel(const char *key, const char *value);
-    void mAddEnvironmentVariable(const char *key, const char *value);
-    void mAddBuildEnvironmentVariable(const char *key, const char *value);
-    void mSetNetwork(const char *network);
-    void mSetVpcConnector(const char *vpcConnector);
-    void mSetVpcConnectorEgressSettings(const char *e);
-    void mSetIngressSettings(const char *settings);
-    void mSetEventTrigger(const char *eventType, const char *resource, const char *service = "", const char *failurePolicy = "");
+    void mFunctionsConfig(MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr bucketId);
+    void mSetProjectId(MB_StringPtr projectId);
+    void mSetLocationId(MB_StringPtr locationId);
+    void mSetBucketId(MB_StringPtr bucketId);
+    void mSetName(MB_StringPtr name);
+    void mSetDescription(MB_StringPtr description);
+    void mSetEntryPoint(MB_StringPtr entry);
+    void mSetRuntime(MB_StringPtr runtime);
+    void mSetTimeout(MB_StringPtr seconds);
+    void mSetAvailableMemoryMb(MB_StringPtr mb);
+    void mSetMaxInstances(MB_StringPtr maxInstances);
+    void mSetSource(MB_StringPtr path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
+    void mAddLabel(MB_StringPtr key, MB_StringPtr value);
+    void mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr value);
+    void mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPtr value);
+    void mSetNetwork(MB_StringPtr network);
+    void mSetVpcConnector(MB_StringPtr vpcConnector);
+    void mSetVpcConnectorEgressSettings(MB_StringPtr e);
+    void mSetIngressSettings(MB_StringPtr settings);
+    void mSetEventTrigger(MB_StringPtr eventType, MB_StringPtr resource, MB_StringPtr service, MB_StringPtr failurePolicy);
 
 public:
     /**
@@ -95,7 +95,7 @@ public:
      * @param bucketId The Firebase storage bucket ID in the project.
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    FunctionsConfig(T1 projectId, T2 locationId, T3 bucketId) { mFunctionsConfig(toString(projectId), toString(locationId), toString(bucketId)); }
+    FunctionsConfig(T1 projectId, T2 locationId, T3 bucketId) { mFunctionsConfig(toStringPtr(projectId), toStringPtr(locationId), toStringPtr(bucketId)); }
 
     ~FunctionsConfig();
 
@@ -105,7 +105,7 @@ public:
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
     */
     template <typename T = const char *>
-    void setProjectId(T projectId) { mSetProjectId(toString(projectId)); }
+    void setProjectId(T projectId) { mSetProjectId(toStringPtr(projectId)); }
 
     /**
      * Set the location of project.
@@ -113,7 +113,7 @@ public:
      * @param locationId The project location.
     */
     template <typename T = const char *>
-    void setLocationId(T locationId) { mSetLocationId(toString(locationId)); }
+    void setLocationId(T locationId) { mSetLocationId(toStringPtr(locationId)); }
 
     /**
      * Set the Storage data bucket.
@@ -121,7 +121,7 @@ public:
      * @param bucketId The Firebase storage bucket ID in the project.
     */
     template <typename T = const char *>
-    void setBucketId(T bucketId) { mSetBucketId(toString(bucketId)); }
+    void setBucketId(T bucketId) { mSetBucketId(toStringPtr(bucketId)); }
 
     /**
      * Set a user-defined name of the function. Function names must be unique globally.
@@ -130,7 +130,7 @@ public:
      * @param name The string of function name.
     */
     template <typename T = const char *>
-    void setName(T name) { mSetName(name); }
+    void setName(T name) { mSetName(toStringPtr(name)); }
 
     /**
      * Set User-provided description of a function.
@@ -138,7 +138,7 @@ public:
      * @param description The string of function description.
     */
     template <typename T = const char *>
-    void setDescription(T description) { mSetDescription(toString(description)); }
+    void setDescription(T description) { mSetDescription(toStringPtr(description)); }
 
     /**
      * Set the name of the function (as defined in source code) that will be executed. 
@@ -149,7 +149,7 @@ public:
      * @param entry The string of function entry.
     */
     template <typename T = const char *>
-    void setEntryPoint(T entry) { mSetEntryPoint(toString(entry)); }
+    void setEntryPoint(T entry) { mSetEntryPoint(toStringPtr(entry)); }
 
     /**
      * Set the runtime in which to run the function. 
@@ -160,7 +160,7 @@ public:
      * @param runtime The string of function runtime.
     */
     template <typename T = const char *>
-    void setRuntime(const char *runtime) { mSetRuntime(toString(runtime)); }
+    void setRuntime(const char *runtime) { mSetRuntime(toStringPtr(runtime)); }
 
     /**
      * Set the function execution timeout. 
@@ -172,7 +172,7 @@ public:
      * @param seconds The number of seconds for timeout.
     */
     template <typename T = size_t>
-    void setTimeout(T seconds) { mSetTimeout(num2Str(seconds, -1)); }
+    void setTimeout(T seconds) { mSetTimeout(toStringPtr(seconds, -1)); }
 
     /**
      * Set the amount of memory in MB available for a function.
@@ -182,7 +182,7 @@ public:
      * @param mb The number of MB.
     */
     template <typename T = size_t>
-    void setAvailableMemoryMb(T mb) { mSetAvailableMemoryMb(num2Str(mb, -1)); }
+    void setAvailableMemoryMb(T mb) { mSetAvailableMemoryMb(toStringPtr(mb, -1)); }
 
     /**
      * Set the limit on the maximum number of function instances that may coexist at a given time.
@@ -194,7 +194,7 @@ public:
      * @param maxInstances The number of instances.
     */
     template <typename T = size_t>
-    void setMaxInstances(T maxInstances) { mSetMaxInstances(num2Str(maxInstances, -1)); }
+    void setMaxInstances(T maxInstances) { mSetMaxInstances(toStringPtr(maxInstances, -1)); }
 
     /**
      * Set the location of the function source code.
@@ -214,7 +214,7 @@ public:
      * mem_storage_type_sd
     */
     template <typename T = const char *>
-    void setSource(T path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined) { mSetSource(path, sourceType, storageType); }
+    void setSource(T path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined) { mSetSource(toStringPtr(path), sourceType, storageType); }
 
     /**
      * Set the location of the function source code to the flash zip archive data.
@@ -231,7 +231,7 @@ public:
      * @param value The string of label value.
     */
     template <typename T1 = const char *, typename T2 = const char *>
-    void addLabel(T1 key, T2 value) { mAddLabel(toString(key), toString(value)); }
+    void addLabel(T1 key, T2 value) { mAddLabel(toStringPtr(key), toStringPtr(value)); }
 
     /**
      * Clear the Labels
@@ -246,7 +246,7 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *>
-    void addEnvironmentVariable(T1 key, T2 value) { mAddEnvironmentVariable(toString(key), toString(value)); }
+    void addEnvironmentVariable(T1 key, T2 value) { mAddEnvironmentVariable(toStringPtr(key), toStringPtr(value)); }
 
     /**
      * Clear the Envireonmebt variables.
@@ -260,7 +260,7 @@ public:
     * @param value The string of var value.
    */
     template <typename T1 = const char *, typename T2 = const char *>
-    void addBuildEnvironmentVariable(T1 key, T2 value) { mAddBuildEnvironmentVariable(toString(key), toString(value)); }
+    void addBuildEnvironmentVariable(T1 key, T2 value) { mAddBuildEnvironmentVariable(toStringPtr(key), toStringPtr(value)); }
 
     /**
      * Clear the Build envireonmebt variables.
@@ -278,7 +278,7 @@ public:
      * @param network The string of network.
     */
     template <typename T = const char *>
-    void setNetwork(T network) { mSetNetwork(toString(network)); }
+    void setNetwork(T network) { mSetNetwork(toStringPtr(network)); }
 
     /**
      * The VPC Network Connector that this cloud function can connect to. 
@@ -292,7 +292,7 @@ public:
      * @param vpcConnector The string of vpcConnector.
     */
     template <typename T = const char *>
-    void setVpcConnector(T vpcConnector) { mSetVpcConnector(toString(vpcConnector)); }
+    void setVpcConnector(T vpcConnector) { mSetVpcConnector(toStringPtr(vpcConnector)); }
 
     /**
      * The egress settings for the connector, controlling what traffic is diverted through it.
@@ -303,7 +303,7 @@ public:
      * ALL_TRAFFIC
     */
     template <typename T = const char *>
-    void setVpcConnectorEgressSettings(T e) { mSetVpcConnectorEgressSettings(toString(e)); }
+    void setVpcConnectorEgressSettings(T e) { mSetVpcConnectorEgressSettings(toStringPtr(e)); }
 
     /**
      * The ingress settings for the function, controlling what traffic can reach it.
@@ -315,7 +315,7 @@ public:
      * ALLOW_INTERNAL_AND_GCLB
     */
     template <typename T = const char *>
-    void setIngressSettings(T settings) { mSetIngressSettings(toString(settings)); }
+    void setIngressSettings(T settings) { mSetIngressSettings(toStringPtr(settings)); }
 
     /**
      * Set a source that fires events in response to a condition in another service.
@@ -338,7 +338,7 @@ public:
      * @param failurePolicy Specifies policy for failed executions.
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    void setEventTrigger(T1 eventType, T2 resource, T3 service = "", T4 failurePolicy = "") { mSetEventTrigger(toString(eventType), toString(resource), toString(service), toString(failurePolicy)); }
+    void setEventTrigger(T1 eventType, T2 resource, T3 service = "", T4 failurePolicy = "") { mSetEventTrigger(toStringPtr(eventType), toStringPtr(resource), toStringPtr(service), toStringPtr(failurePolicy)); }
 
     /**
      * Set the IAM policy.
@@ -357,19 +357,6 @@ public:
      * Clear the FunctionsConfig class data.
     */
     void clear();
-
-protected:
-    template <typename T>
-    auto toString(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type { return val.c_str(); }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
-
-    template <typename T>
-    auto toString(T val) -> typename enable_if<is_same<T, std::nullptr_t>::value, const char *>::type { return ""; }
 };
 
 #endif

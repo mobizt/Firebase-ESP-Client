@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.12
+ * Google's Firebase Util class, Utils.h version 1.1.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 1, 2022
+ * Created January 15, 2022
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -35,7 +35,6 @@
 
 #include <Arduino.h>
 #include "common.h"
-#include "addons/fastcrc/FastCRC.h"
 
 using namespace mb_string;
 
@@ -49,14 +48,19 @@ public:
     uint16_t ntpTimeout = 20;
     callback_function_t _callback_function = nullptr;
     FirebaseConfig *config = nullptr;
-    FastCRC16 CRC16;
-
-    UtilsClass(FirebaseConfig *cfg)
-    {
-        config = cfg;
-    };
+    MB_File *mbfs = nullptr;
 
     ~UtilsClass(){};
+
+    UtilsClass(MB_File *mbfs)
+    {
+        this->mbfs = mbfs;
+    }
+
+    void setConfig(FirebaseConfig *config)
+    {
+        this->config = config;
+    }
 
     int strposP(const char *buf, PGM_P beginH, int ofs)
     {
@@ -66,7 +70,7 @@ public:
 
     bool strcmpP(const char *buf, int ofs, PGM_P beginH)
     {
-        
+
         if (ofs < 0)
         {
             int p = strposP(buf, beginH, 0);
@@ -74,7 +78,7 @@ public:
                 return false;
             ofs = p;
         }
-       
+
         char *tmp2 = (char *)newP(strlen_P(beginH) + 1);
         memcpy(tmp2, &buf[ofs], strlen_P(beginH));
         tmp2[strlen_P(beginH)] = 0;
@@ -229,24 +233,24 @@ public:
         return -1;
     }
 
-    void ltrim(MBSTRING &str, const MBSTRING &chars = " ")
+    void ltrim(MB_String &str, const MB_String &chars = " ")
     {
         size_t pos = str.find_first_not_of(chars);
-        if (pos != MBSTRING::npos)
+        if (pos != MB_String::npos)
             str.erase(0, pos);
     }
 
-    void rtrim(MBSTRING &str, const MBSTRING &chars = " ")
+    void rtrim(MB_String &str, const MB_String &chars = " ")
     {
         size_t pos = str.find_last_not_of(chars);
-        if (pos != MBSTRING::npos)
+        if (pos != MB_String::npos)
             str.erase(pos + 1);
     }
 
-    inline MBSTRING trim(const MBSTRING &s)
+    inline MB_String trim(const MB_String &s)
     {
-        MBSTRING chars = " ";
-        MBSTRING str = s;
+        MB_String chars = " ";
+        MB_String str = s;
         ltrim(str, chars);
         rtrim(str, chars);
         return str;
@@ -254,56 +258,26 @@ public:
 
     void delP(void *ptr)
     {
-        void **p = (void **)ptr;
-        if (*p)
-        {
-            free(*p);
-            *p = 0;
-        }
+        if (!mbfs)
+            return;
+        mbfs->delP(ptr);
     }
 
     size_t getReservedLen(size_t len)
     {
-        int blen = len + 1;
-
-        int newlen = (blen / 4) * 4;
-
-        if (newlen < blen)
-            newlen += 4;
-
-        return (size_t)newlen;
+        if (!mbfs)
+            return 0;
+        return mbfs->getReservedLen(len);
     }
 
     void *newP(size_t len)
     {
-        void *p;
-        size_t newLen = getReservedLen(len);
-#if defined(BOARD_HAS_PSRAM) && defined(FIREBASE_USE_PSRAM)
-
-        if ((p = (void *)ps_malloc(newLen)) == 0)
+        if (!mbfs)
             return NULL;
-
-#else
-
-#if defined(ESP8266_USE_EXTERNAL_HEAP)
-        ESP.setExternalHeap();
-#endif
-
-        bool nn = ((p = (void *)malloc(newLen)) > 0);
-
-#if defined(ESP8266_USE_EXTERNAL_HEAP)
-        ESP.resetHeap();
-#endif
-
-        if (!nn)
-            return NULL;
-
-#endif
-        memset(p, 0, newLen);
-        return p;
+        return mbfs->newP(len);
     }
 
-    void substr(MBSTRING &str, const char *s, int offset, size_t len)
+    void substr(MB_String &str, const char *s, int offset, size_t len)
     {
         if (!s)
             return;
@@ -321,11 +295,11 @@ public:
         for (int i = offset; i < last; i++)
             str += s[i];
     }
-    void splitString(const char *str, std::vector<MBSTRING> out, const char delim)
+    void splitString(const char *str, std::vector<MB_String> out, const char delim)
     {
         int current = 0, previous = 0;
         current = strpos(str, delim, 0);
-        MBSTRING s;
+        MB_String s;
         while (current != -1)
         {
             s.clear();
@@ -352,7 +326,7 @@ public:
         s.clear();
     }
 
-    void getUrlInfo(const MBSTRING &url, struct fb_esp_url_info_t &info)
+    void getUrlInfo(const MB_String &url, struct fb_esp_url_info_t &info)
     {
         char *host = (char *)newP(url.length() + 5);
         char *uri = (char *)newP(url.length() + 5);
@@ -390,9 +364,9 @@ public:
         delP(&auth);
     }
 
-    MBSTRING url_encode(const MBSTRING &s)
+    MB_String url_encode(const MB_String &s)
     {
-        MBSTRING ret;
+        MB_String ret;
         ret.reserve(s.length() * 3 + 1);
         for (size_t i = 0, l = s.size(); i < l; i++)
         {
@@ -408,7 +382,7 @@ public:
             else
             {
                 ret += '%';
-                unsigned char d1, d2;
+                char d1, d2;
                 hexchar(c, d1, d2);
                 ret += d1;
                 ret += d2;
@@ -425,12 +399,12 @@ public:
                (x >= 'A' && x <= 'F');
     }
 
-    void hexchar(unsigned char c, unsigned char &hex1, unsigned char &hex2)
+    void hexchar(char c, char &hex1, char &hex2)
     {
         hex1 = c / 16;
         hex2 = c % 16;
-        hex1 += hex1 <= 9 ? '0' : 'a' - 10;
-        hex2 += hex2 <= 9 ? '0' : 'a' - 10;
+        hex1 += hex1 < 10 ? '0' : 'A' - 10;
+        hex2 += hex2 < 10 ? '0' : 'A' - 10;
     }
 
     char from_hex(char ch)
@@ -579,7 +553,7 @@ public:
         return idx;
     }
 
-    int readLine(WiFiClient *stream, MBSTRING &buf)
+    int readLine(WiFiClient *stream, MB_String &buf)
     {
         int res = -1;
         char c = 0;
@@ -681,7 +655,7 @@ public:
         return olen;
     }
 
-    int readChunkedData(WiFiClient *stream, MBSTRING &out, int &chunkState, int &chunkedSize, int &dataLen)
+    int readChunkedData(WiFiClient *stream, MB_String &out, int &chunkState, int &chunkedSize, int &dataLen)
     {
 
         char *tmp = nullptr;
@@ -693,7 +667,7 @@ public:
             chunkState = 1;
             chunkedSize = -1;
             dataLen = 0;
-            MBSTRING s;
+            MB_String s;
             int readLen = readLine(stream, s);
             if (readLen)
             {
@@ -723,7 +697,7 @@ public:
 
             if (chunkedSize > -1)
             {
-                MBSTRING s;
+                MB_String s;
                 int readLen = readLine(stream, s);
 
                 if (readLen > 0)
@@ -762,7 +736,7 @@ public:
         int ofs = 0;
         if (p1 != -1)
         {
-           
+
             int p2 = -1;
             if (endPos > 0)
                 p2 = endPos;
@@ -792,9 +766,9 @@ public:
         return nullptr;
     }
 
-    void getHeaderStr(const MBSTRING &in, MBSTRING &out, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
+    void getHeaderStr(const MB_String &in, MB_String &out, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
     {
-        MBSTRING _in = in;
+        MB_String _in = in;
         int p1 = strpos(in.c_str(), pgm2Str(beginH), beginPos);
         int ofs = 0;
 
@@ -901,24 +875,31 @@ public:
                     response.fbError = d.stringValue.c_str();
             }
 
-            if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_92))
+            if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_92, true))
             {
                 response.dataType = fb_esp_data_type::d_blob;
                 if ((response.isEvent && response.hasEventData) || getOfs)
                 {
-                    int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_92) - 1;
-                    response.payloadLen = dlen;
+                    if (response.eventData.length() > 0)
+                    {
+                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_92) - 1;
+                        response.payloadLen = dlen;
+                    }
                     response.payloadOfs += strlen_P(fb_esp_pgm_str_92);
                     response.eventData.clear();
                 }
             }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_93))
+            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_93, true))
             {
                 response.dataType = fb_esp_data_type::d_file;
                 if ((response.isEvent && response.hasEventData) || getOfs)
                 {
-                    int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_93) - 1;
-                    response.payloadLen = dlen;
+                    if (response.eventData.length() > 0)
+                    {
+                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_93) - 1;
+                        response.payloadLen = dlen;
+                    }
+
                     response.payloadOfs += strlen_P(fb_esp_pgm_str_93);
                     response.eventData.clear();
                 }
@@ -1002,10 +983,10 @@ public:
         }
     }
 
-    void createDirs(MBSTRING dirs, fb_esp_mem_storage_type storageType)
+    void createDirs(MB_String dirs, fb_esp_mem_storage_type storageType)
     {
-#if defined SD_FS
-        MBSTRING dir;
+#if defined(SD_FS)
+        MB_String dir;
         size_t count = 0;
         for (size_t i = 0; i < dirs.length(); i++)
         {
@@ -1027,28 +1008,11 @@ public:
             if (storageType == mem_storage_type_sd)
                 SD_FS.mkdir(dir.c_str());
         }
-        MBSTRING().swap(dir);
+        dir.clear();
 #endif
     }
 
-    void closeFileHandle(bool sd)
-    {
-        if (!config)
-            return;
-
-        if (config->_int.fb_file)
-            config->_int.fb_file.close();
-        if (sd)
-        {
-            config->_int.fb_sd_used = false;
-            config->_int.fb_sd_rdy = false;
-#if defined SD_FS
-            SD_FS.end();
-#endif
-        }
-    }
-
-    bool decodeBase64Str(const MBSTRING &src, std::vector<uint8_t> &out)
+    bool decodeBase64Str(const MB_String &src, std::vector<uint8_t> &out)
     {
         unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
@@ -1128,109 +1092,11 @@ public:
         return false;
     }
 
-    void sendBase64File(size_t bufSize, WiFiClient *client, const MBSTRING &filePath, uint8_t storageType, fs::File &file)
+    bool decodeBase64Stream(const char *src, size_t len, fb_esp_mem_storage_type type)
     {
+        if (!mbfs)
+            return false;
 
-        if (storageType == mem_storage_type_flash)
-        {
-#if defined FLASH_FS
-            file = FLASH_FS.open(filePath.c_str(), "r");
-#endif
-        }
-        else if (storageType == mem_storage_type_sd)
-        {
-#if defined SD_FS
-            file = SD_FS.open(filePath.c_str(), FILE_READ);
-#endif
-        }
-
-        if (!file)
-            return;
-
-        size_t chunkSize = bufSize;
-        size_t fbuffSize = 3;
-        size_t byteAdd = 0;
-        size_t byteSent = 0;
-
-        unsigned char *buff = (unsigned char *)newP(chunkSize);
-        memset(buff, 0, chunkSize);
-
-        size_t len = file.size();
-        size_t fbuffIndex = 0;
-        unsigned char *fbuff = (unsigned char *)newP(3);
-
-        while (file.available())
-        {
-            memset(fbuff, 0, fbuffSize);
-            if (len - fbuffIndex >= 3)
-            {
-                file.read(fbuff, 3);
-
-                buff[byteAdd++] = fb_esp_base64_table[fbuff[0] >> 2];
-                buff[byteAdd++] = fb_esp_base64_table[((fbuff[0] & 0x03) << 4) | (fbuff[1] >> 4)];
-                buff[byteAdd++] = fb_esp_base64_table[((fbuff[1] & 0x0f) << 2) | (fbuff[2] >> 6)];
-                buff[byteAdd++] = fb_esp_base64_table[fbuff[2] & 0x3f];
-
-                if (byteAdd >= chunkSize - 4)
-                {
-                    byteSent += byteAdd;
-                    client->write(buff, byteAdd);
-                    memset(buff, 0, chunkSize);
-                    byteAdd = 0;
-                }
-
-                fbuffIndex += 3;
-            }
-            else
-            {
-
-                if (len - fbuffIndex == 1)
-                {
-                    fbuff[0] = file.read();
-                }
-                else if (len - fbuffIndex == 2)
-                {
-                    fbuff[0] = file.read();
-                    fbuff[1] = file.read();
-                }
-
-                break;
-            }
-        }
-
-        file.close();
-
-        if (byteAdd > 0)
-            client->write(buff, byteAdd);
-
-        if (len - fbuffIndex > 0)
-        {
-
-            memset(buff, 0, chunkSize);
-            byteAdd = 0;
-
-            buff[byteAdd++] = fb_esp_base64_table[fbuff[0] >> 2];
-            if (len - fbuffIndex == 1)
-            {
-                buff[byteAdd++] = fb_esp_base64_table[(fbuff[0] & 0x03) << 4];
-                buff[byteAdd++] = '=';
-            }
-            else
-            {
-                buff[byteAdd++] = fb_esp_base64_table[((fbuff[0] & 0x03) << 4) | (fbuff[1] >> 4)];
-                buff[byteAdd++] = fb_esp_base64_table[(fbuff[1] & 0x0f) << 2];
-            }
-            buff[byteAdd++] = '=';
-
-            client->write(buff, byteAdd);
-        }
-
-        delP(&buff);
-        delP(&fbuff);
-    }
-
-    bool decodeBase64Stream(const char *src, size_t len, Stream &s)
-    {
         unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
         for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
@@ -1276,12 +1142,12 @@ public:
             count++;
             if (count == 4)
             {
-                s.write((block[0] << 2) | (block[1] >> 4));
+                mbfs->write(mbfs_type type, (block[0] << 2) | (block[1] >> 4));
                 count = 0;
                 if (pad)
                 {
                     if (pad == 1)
-                        s.write((block[1] << 4) | (block[2] >> 2));
+                        mbfs->write(mbfs_type type, (block[1] << 4) | (block[2] >> 2));
                     else if (pad > 2)
                         goto exit;
 
@@ -1289,8 +1155,8 @@ public:
                 }
                 else
                 {
-                    s.write((block[1] << 4) | (block[2] >> 2));
-                    s.write((block[2] << 6) | block[3]);
+                    mbfs->write(mbfs_type type, (block[1] << 4) | (block[2] >> 2));
+                    mbfs->write(mbfs_type type, (block[2] << 6) | block[3]);
                 }
             }
         }
@@ -1309,7 +1175,7 @@ public:
     }
 
     //trim double quotes and return pad length
-    int trimLastChunkBase64(MBSTRING &s, size_t len)
+    int trimLastChunkBase64(MB_String &s, int len)
     {
         int padLen = -1;
         if (len > 1)
@@ -1336,7 +1202,7 @@ public:
     bool writeOTA(uint8_t *buf, size_t len, int &code)
     {
 
-#if defined(ENABLE_OTA_FIRMWARE_UPDATE)
+#if defined(OTA_UPDATE_ENABLED)
         if (Update.write(buf, len) != len)
         {
             code = FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED;
@@ -1465,12 +1331,13 @@ public:
         return false;
     }
 
-    bool stringCompare(const char *buf, int ofs, PGM_P beginH)
+    bool stringCompare(const char *buf, int ofs, PGM_P beginH, bool caseInSensitive = false)
     {
         char *tmp2 = (char *)newP(strlen_P(beginH) + 1);
         memcpy(tmp2, &buf[ofs], strlen_P(beginH));
         tmp2[strlen_P(beginH)] = 0;
-        bool ret = (strcmp(pgm2Str(beginH), tmp2) == 0);
+
+        bool ret = caseInSensitive ? (strcasecmp(pgm2Str(beginH), tmp2) == 0) : (strcmp(pgm2Str(beginH), tmp2) == 0);
         delP(&tmp2);
         return ret;
     }
@@ -1503,6 +1370,8 @@ public:
                     break;
                 delay(10);
             }
+            
+            idle();
         }
 
         config->_int.fb_clock_rdy = now > default_ts;
@@ -1549,7 +1418,7 @@ public:
         delP(&b64enc);
     }
 
-    bool sendBase64(size_t bufSize, uint8_t *data, size_t len, bool flashMem, FB_TCP_Client *client)
+    bool sendBase64(size_t bufSize, uint8_t *data, size_t len, bool flashMem, WiFiClient *client)
     {
         bool ret = false;
         const unsigned char *end, *in;
@@ -1583,7 +1452,7 @@ public:
             {
                 byteSent += byteAdded;
 
-                if (client->send((const char *)buf) != 0)
+                if (client->write((const char *)buf) != strlen((const char *)buf))
                     goto ex;
                 memset(buf, 0, chunkSize);
                 byteAdded = 0;
@@ -1594,7 +1463,7 @@ public:
 
         if (byteAdded > 0)
         {
-            if (client->send((const char *)buf) != 0)
+            if (client->write((const char *)buf) != strlen((const char *)buf))
                 goto ex;
         }
 
@@ -1631,7 +1500,7 @@ public:
             }
             buf[byteAdded++] = '=';
 
-            if (client->send((const char *)buf) != 0)
+            if (client->write((const char *)buf) != strlen((const char *)buf))
                 goto ex;
             memset(buf, 0, chunkSize);
         }
@@ -1644,12 +1513,12 @@ public:
         return ret;
     }
 
-    MBSTRING encodeBase64Str(const unsigned char *src, size_t len)
+    MB_String encodeBase64Str(const unsigned char *src, size_t len)
     {
         return encodeBase64Str((uint8_t *)src, len);
     }
 
-    MBSTRING encodeBase64Str(uint8_t *src, size_t len)
+    MB_String encodeBase64Str(uint8_t *src, size_t len)
     {
         unsigned char *out, *pos;
         const unsigned char *end, *in;
@@ -1661,7 +1530,7 @@ public:
 
         olen = 4 * ((len + 2) / 3); /* 3-byte blocks to 4-byte */
 
-        MBSTRING outStr;
+        MB_String outStr;
         outStr.resize(olen);
         out = (unsigned char *)&outStr[0];
 
@@ -1707,132 +1576,6 @@ public:
         return ((len + 2) / 3 * 4) + 1;
     }
 
-#if defined(CARD_TYPE_SD)
-    bool sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
-    {
-#if defined SD_FS
-        if (!config)
-            return false;
-
-        if (config)
-        {
-            config->_int.sd_config.sck = sck;
-            config->_int.sd_config.miso = miso;
-            config->_int.sd_config.mosi = mosi;
-            config->_int.sd_config.ss = ss;
-        }
-#if defined(ESP32)
-        if (ss > -1)
-        {
-            SPI.begin(sck, miso, mosi, ss);
-            return SD_FS.begin(ss, SPI);
-        }
-        else
-            return SD_FS.begin();
-#elif defined(ESP8266)
-        if (ss > -1)
-            return SD_FS.begin(ss);
-        else
-            return SD_FS.begin(SD_CS_PIN);
-#endif
-#else
-        return false;
-#endif
-    }
-#endif
-
-#if defined(ESP32)
-#if defined(CARD_TYPE_SD_MMC)
-    bool sdBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
-    {
-        if (!config)
-            return false;
-
-        if (config)
-        {
-            config->_int.sd_config.sd_mmc_mountpoint = mountpoint;
-            config->_int.sd_config.sd_mmc_mode1bit = mode1bit;
-            config->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
-        }
-        return SD_FS.begin(mountpoint, mode1bit, format_if_mount_failed);
-    }
-#endif
-#endif
-
-    bool flashTest()
-    {
-#if defined FLASH_FS
-        if (!config)
-            return false;
-#if defined(ESP32)
-        if (FORMAT_FLASH == 1)
-            config->_int.fb_flash_rdy = FLASH_FS.begin(true);
-        else
-            config->_int.fb_flash_rdy = FLASH_FS.begin();
-#elif defined(ESP8266)
-        config->_int.fb_flash_rdy = FLASH_FS.begin();
-#endif
-        return config->_int.fb_flash_rdy;
-#else
-        return false;
-#endif
-    }
-
-    bool sdTest(fs::File file)
-    {
-#if defined SD_FS
-        if (!config)
-            return false;
-
-        MBSTRING filepath = "/sdtest01.txt";
-#if defined(CARD_TYPE_SD)
-        if (!sdBegin(config->_int.sd_config.ss, config->_int.sd_config.sck, config->_int.sd_config.miso, config->_int.sd_config.mosi))
-            return false;
-#endif
-#if defined(ESP32)
-#if defined(CARD_TYPE_SD_MMC)
-        if (!sdBegin(config->_int.sd_config.sd_mmc_mountpoint, config->_int.sd_config.sd_mmc_mode1bit, config->_int.sd_config.sd_mmc_format_if_mount_failed))
-            return false;
-#endif
-#endif
-        file = SD_FS.open(filepath.c_str(), FILE_WRITE);
-        if (!file)
-            return false;
-
-        if (!file.write(32))
-        {
-            file.close();
-            return false;
-        }
-
-        file.close();
-
-        file = SD_FS.open(filepath.c_str());
-        if (!file)
-            return false;
-
-        while (file.available())
-        {
-            if (file.read() != 32)
-            {
-                file.close();
-                return false;
-            }
-        }
-        file.close();
-
-        SD_FS.remove(filepath.c_str());
-
-        MBSTRING().swap(filepath);
-
-        config->_int.fb_sd_rdy = true;
-
-        return true;
-#else
-        return false;
-#endif
-    }
-
 #if defined(ESP8266)
     void set_scheduled_callback(callback_function_t callback)
     {
@@ -1856,7 +1599,7 @@ public:
         config->_int.fb_double_digits = digit;
     }
 
-    MBSTRING getBoundary(size_t len)
+    MB_String getBoundary(size_t len)
     {
         const char *tmp = pgm2Str(fb_esp_boundary_table);
         char *buf = (char *)newP(len);
@@ -1872,7 +1615,7 @@ public:
             }
             buf[len] = '\0';
         }
-        MBSTRING s = buf;
+        MB_String s = buf;
         delP(&buf);
         return s;
     }
@@ -1905,13 +1648,13 @@ public:
         return true;
     }
 
-    void splitTk(const MBSTRING &str, std::vector<MBSTRING> &tk, const char *delim)
+    void splitTk(const MB_String &str, std::vector<MB_String> &tk, const char *delim)
     {
         std::size_t current, previous = 0;
         current = str.find(delim, previous);
-        MBSTRING s;
-        MBSTRING _str = str;
-        while (current != MBSTRING::npos)
+        MB_String s;
+        MB_String _str = str;
+        while (current != MB_String::npos)
         {
             s = _str.substr(previous, current - previous);
             tk.push_back(s);
@@ -1920,15 +1663,15 @@ public:
         }
         s = _str.substr(previous, current - previous);
         tk.push_back(s);
-        MBSTRING().swap(s);
+        MB_String().swap(s);
     }
 
-    void replaceAll(MBSTRING &str, const MBSTRING &from, const MBSTRING &to)
+    void replaceAll(MB_String &str, const MB_String &from, const MB_String &to)
     {
         if (from.empty())
             return;
         size_t start_pos = 0;
-        while ((start_pos = str.find(from, start_pos)) != MBSTRING::npos)
+        while ((start_pos = str.find(from, start_pos)) != MB_String::npos)
         {
             str.replace(start_pos, from.length(), to);
             start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
@@ -2070,7 +1813,9 @@ public:
 
     uint16_t calCRC(const char *buf)
     {
-        return CRC16.ccitt((uint8_t *)buf, strlen(buf));
+        if (!mbfs)
+            return 0;
+        return mbfs->calCRC(buf);
     }
 
     void idle()
@@ -2123,7 +1868,54 @@ public:
         return code;
     }
 
-private:
+    void replaceFirebasePath(MB_String &path)
+    {
+
+        path.replaceAll(F("."), F(""));
+        path.replaceAll(F("$"), F(""));
+        path.replaceAll(F("#"), F(""));
+        path.replaceAll(F("["), F(""));
+        path.replaceAll(F("]"), F(""));
+
+        size_t limit = 768;
+
+        for (size_t i = 0; i < path.length(); i++)
+        {
+            if (path[i] < 32 || path[i] == 127)
+            {
+                limit = i;
+                break;
+            }
+        }
+
+        if (path.length() > limit)
+        {
+            path[limit] = 0;
+            path.shrink_to_fit();
+        }
+    }
+
+    void makePath(MB_String &path)
+    {
+        if (path.length() > 0)
+        {
+            if (path[0] != '/')
+                path.prepend('/');
+        }
+    }
+
+    int getBase64Len(int n)
+    {
+        int len = (4 * ceil(n / 3.0));
+        return len;
+    }
+
+    int getBase64Padding(int n)
+    {
+        int pLen = getBase64Len(n);
+        int uLen = ceil(4.0 * n / 3.0);
+        return pLen- uLen;
+    }
 };
 
 #endif

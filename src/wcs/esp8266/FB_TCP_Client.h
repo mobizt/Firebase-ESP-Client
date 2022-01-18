@@ -1,10 +1,10 @@
 /**
- * Firebase TCP Client v1.1.16
+ * Firebase TCP Client v1.1.17
  * 
- * Created November 23, 2021
+ * Created January 18, 2022
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -31,86 +31,10 @@
 #ifdef ESP8266
 
 #include <Arduino.h>
-#include <core_version.h>
-#include <time.h>
 
-//__GNUC__
-//__GNUC_MINOR__
-//__GNUC_PATCHLEVEL__
-
-#ifdef __GNUC__
-#if __GNUC__ > 4 || __GNUC__ == 10
-#include <string>
-#define ESP8266_CORE_SDK_V3_X_X
-#endif
-#endif
-
-#ifndef ARDUINO_ESP8266_GIT_VER
-#error Your ESP8266 Arduino Core SDK is outdated, please update. From Arduino IDE go to Boards Manager and search 'esp8266' then select the latest version.
-#endif
-
-//2.6.1 BearSSL bug
-#if ARDUINO_ESP8266_GIT_VER == 0x482516e3
-#error Due to bugs in BearSSL in ESP8266 Arduino Core SDK version 2.6.1, please update ESP8266 Arduino Core SDK to newer version. The issue was found here https:\/\/github.com/esp8266/Arduino/issues/6811.
-#endif
-
-#include <WiFiClientSecure.h>
-#include <CertStoreBearSSL.h>
-#define FB_ESP_SSL_CLIENT BearSSL::WiFiClientSecure
-
-#define FS_NO_GLOBALS
-#include <FS.h>
-#include "FirebaseFS.h"
-
-#if defined DEFAULT_FLASH_FS
-#define FLASH_FS DEFAULT_FLASH_FS
-#endif
-
-#if defined DEFAULT_SD_FS
-#define SD_FS DEFAULT_SD_FS
-#endif
-
-#if defined(FIREBASE_USE_PSRAM)
-#define FIREBASEJSON_USE_PSRAM
-#endif
-
-#include "./json/FirebaseJson.h"
-
-#if defined __has_include
-
-#if __has_include(<LwipIntfDev.h>)
-#include <LwipIntfDev.h>
-#endif
-
-#if __has_include(<ENC28J60lwIP.h>)
-#define INC_ENC28J60_LWIP
-#include <ENC28J60lwIP.h>
-#endif
-
-#if __has_include(<W5100lwIP.h>)
-#define INC_W5100_LWIP
-#include <W5100lwIP.h>
-#endif
-
-#if __has_include(<W5500lwIP.h>)
-#define INC_W5500_LWIP
-#include <W5500lwIP.h>
-#endif
-
-#endif
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-#include "wcs/HTTPCode.h"
-
-struct fb_esp_sd_config_info_t
-{
-  int sck = -1;
-  int miso = -1;
-  int mosi = -1;
-  int ss = -1;
-};
+#include "MB_File.h"
+#include "FB_Net.h"
+#include "FB_Error.h"
 
 class FB_TCP_Client
 {
@@ -156,12 +80,13 @@ public:
   WiFiClient *stream(void);
 
   void setCACert(const char *caCert);
-  void setCACertFile(const char *caCertFile, uint8_t storageType, struct fb_esp_sd_config_info_t sd_config);
+  void setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType);
   bool connect(void);
+  void setMBFS(MB_File *mbfs);
 
 private:
   std::unique_ptr<FB_ESP_SSL_CLIENT> _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
-  MBSTRING _host;
+  MB_String _host;
   uint16_t _port = 0;
 
   //Actually Arduino base Stream (char read) timeout.
@@ -169,10 +94,9 @@ private:
   //to 5000 after SSL handshake was done with success.
   unsigned long timeout = 10 * 1000;
 
-  MBSTRING _CAFile;
+  MB_String _CAFile;
   uint8_t _CAFileStoreageType = 0;
-  int _certType = -1;
-  uint8_t _sdPin = 15;
+  fb_cert_type _certType = fb_cert_type_undefined;
   bool _clockReady = false;
   uint16_t _bsslRxSize = 512;
   uint16_t _bsslTxSize = 512;
@@ -180,6 +104,7 @@ private:
   int chunkSize = 1024;
   bool mflnChecked = false;
   X509List *x509 = nullptr;
+  MB_File *mbfs = nullptr;
 
   void release();
 };
