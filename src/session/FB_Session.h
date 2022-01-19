@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.11
+ * Google's Firebase Data class, FB_Session.h version 1.2.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -689,13 +689,13 @@ public:
     return _ss.rtdb.blob;
   }
 
-#if defined(FLASH_FS)
+#if defined(MBFS_FLASH_FS)
   template <typename T>
   auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
   {
     if (_ss.rtdb.resp_data_type == fb_esp_data_type::d_file && init())
     {
-      int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type mem_storage_type_flash, mb_file_open_mode_read);
+      int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
       if (ret < 0)
         _ss.http_code = ret;
     }
@@ -846,7 +846,7 @@ private:
 #endif
 
   UtilsClass *ut = nullptr;
-  MB_File *mbfs = nullptr;
+  MB_FS *mbfs = nullptr;
   bool intCfg = false;
   unsigned long last_reconnect_millis = 0;
 

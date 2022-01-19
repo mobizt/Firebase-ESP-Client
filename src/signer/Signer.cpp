@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.12
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -42,7 +42,7 @@ Firebase_Signer::~Firebase_Signer()
 {
 }
 
-void Firebase_Signer::begin(UtilsClass *utils, MB_File *mbfs, FirebaseConfig *cfg, FirebaseAuth *authen)
+void Firebase_Signer::begin(UtilsClass *utils, MB_FS *mbfs, FirebaseConfig *cfg, FirebaseAuth *authen)
 {
     ut = utils;
     this->mbfs = mbfs;
@@ -55,7 +55,7 @@ bool Firebase_Signer::parseSAFile()
     if (config->signer.pk.length() > 0)
         return false;
 
-    int sz = ut->mbfs->open(config->service_account.json.path, mbfs_type config->service_account.json.storage_type, mb_file_open_mode_read);
+    int sz = ut->mbfs->open(config->service_account.json.path, mbfs_type config->service_account.json.storage_type, mb_fs_open_mode_read);
 
     if (sz >= 0)
     {
@@ -2158,7 +2158,7 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
     case FIREBASE_ERROR_SSL_RX_BUFFER_SIZE_TOO_SMALL:
         buff.appendP(fb_esp_pgm_str_191);
         return;
-    case MB_FILE_ERROR_FILE_IO_ERROR:
+    case MB_FS_ERROR_FILE_IO_ERROR:
         buff.appendP(fb_esp_pgm_str_192);
         return;
 #if defined(FIREBASE_ESP_CLIENT)
@@ -2211,24 +2211,24 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
     case FIREBASE_ERROR_INVALID_JSON_RULES:
         buff.appendP(fb_esp_pgm_str_581);
         return;
-#if defined(FLASH_FS) || defined(SD_FS)
+#if defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)
 
-    case MB_FILE_ERROR_FLASH_STORAGE_IS_NOT_READY:
+    case MB_FS_ERROR_FLASH_STORAGE_IS_NOT_READY:
         buff.appendP(fb_esp_pgm_str_590);
         return;
 
-    case MB_FILE_ERROR_SD_STORAGE_IS_NOT_READY:
+    case MB_FS_ERROR_SD_STORAGE_IS_NOT_READY:
         buff.appendP(fb_esp_pgm_str_591);
         return;
 
-    case MB_FILE_ERROR_FILE_STILL_OPENED:
+    case MB_FS_ERROR_FILE_STILL_OPENED:
         buff.appendP(fb_esp_pgm_str_592);
         return;
-    #endif
 
-    case MB_FILE_ERROR_FILE_NOT_FOUND:
+    case MB_FS_ERROR_FILE_NOT_FOUND:
         buff.appendP(fb_esp_pgm_str_593);
         return;
+#endif
 
     default:
         return;
@@ -2259,7 +2259,7 @@ FirebaseAuth *Firebase_Signer::getAuth()
     return auth;
 }
 
-MB_File *Firebase_Signer::getMBFS()
+MB_FS *Firebase_Signer::getMBFS()
 {
     return mbfs;
 }

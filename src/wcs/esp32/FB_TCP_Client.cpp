@@ -1,5 +1,5 @@
 /**
- * Firebase TCP Client v1.1.16
+ * Firebase TCP Client v1.1.17
  * 
  * Created Created January 18, 2022
  * 
@@ -142,7 +142,7 @@ void FB_TCP_Client::setCACert(const char *caCert)
   //_wcs->setNoDelay(true);
 }
 
-void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType)
+void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
 {
   if (!mbfs)
     return;
@@ -156,20 +156,20 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_file_mem_storage_ty
         filename.prepend('/');
     }
 
-    int len = mbfs->open(filename, storageType, mb_file_open_mode_read);
+    int len = mbfs->open(filename, storageType, mb_fs_open_mode_read);
     if (len > -1)
     {
 
-      if (storageType == mb_file_mem_storage_type_flash)
+      if (storageType == mb_fs_mem_storage_type_flash)
       {
         fs::File file = mbfs->getFlashFile();
         _wcs->loadCACert(file, len);
         mbfs->close(storageType);
       }
-      else if (storageType == mb_file_mem_storage_type_sd)
+      else if (storageType == mb_fs_mem_storage_type_sd)
       {
 
-#if defined(USE_SD_FAT_ESP32)
+#if defined(MBFS_ESP32_SDFAT_ENABLED)
 
         if (cert)
           mbfs->delP(&cert);
@@ -209,7 +209,7 @@ void FB_TCP_Client::release()
   }
 }
 
-void FB_TCP_Client::setMBFS(MB_File *mbfs)
+void FB_TCP_Client::setMBFS(MB_FS *mbfs)
 {
   this->mbfs = mbfs;
 }

@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.2.12
+ * Google's Firebase Token Generation class, Signer.h version 1.2.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -79,7 +79,7 @@ private:
     UtilsClass *ut = nullptr;
     FirebaseConfig *config = nullptr;
     FirebaseAuth *auth = nullptr;
-    MB_File *mbfs = nullptr;
+    MB_FS *mbfs = nullptr;
     callback_function_t _cb = nullptr;
     struct token_info_t tokenInfo;
     bool authenticated = false;
@@ -87,7 +87,7 @@ private:
     unsigned long unauthen_millis = 0;
     unsigned long unauthen_pause_duration = 3000;
 
-    void begin(UtilsClass *ut, MB_File *mbfs, FirebaseConfig *config, FirebaseAuth *auth);
+    void begin(UtilsClass *ut, MB_FS *mbfs, FirebaseConfig *config, FirebaseAuth *auth);
     bool parseSAFile();
     void clearSA();
     bool tokenSigninDataReady();
@@ -119,7 +119,7 @@ private:
     fb_esp_mem_storage_type getCAFileStorage();
     FirebaseConfig *getCfg();
     FirebaseAuth *getAuth();
-    MB_File *getMBFS();
+    MB_FS *getMBFS();
     UtilsClass *getUtils();
 
 #if defined(ESP8266)

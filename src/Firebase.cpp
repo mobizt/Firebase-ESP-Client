@@ -1,5 +1,5 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.16
+ * The Firebase class, Firebase.cpp v1.0.17
  * 
  *  Created January 18, 2022
  * 
@@ -37,7 +37,7 @@
 Firebase_ESP_Client::Firebase_ESP_Client() {
 
     if (!mbfs)
-        mbfs = new MB_File();
+        mbfs = new MB_FS();
 
     if (!ut)
         ut = new UtilsClass(mbfs);
@@ -230,7 +230,7 @@ void Firebase_ESP_Client::setDoubleDigits(uint8_t digits)
         cfg->_int.fb_double_digits = digits;
 }
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
 bool Firebase_ESP_Client::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
@@ -261,7 +261,7 @@ bool Firebase_ESP_Client::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t
 
 #endif
 
-#if defined(ESP8266) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP8266) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
 
 bool Firebase_ESP_Client::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
 {
@@ -283,7 +283,7 @@ Firebase_ESP_Client Firebase = Firebase_ESP_Client();
 FIREBASE_CLASS::FIREBASE_CLASS()
 {
     if (!mbfs)
-        mbfs = new MB_File();
+        mbfs = new MB_FS();
 
     if (!ut)
         ut = new UtilsClass(mbfs);
@@ -554,7 +554,7 @@ bool FIREBASE_CLASS::sendTopic(FirebaseData &fbdo)
 
 #endif
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
 bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
@@ -585,7 +585,7 @@ bool FIREBASE_CLASS::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t sck,
 
 #endif
 
-#if defined(ESP8266) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP8266) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
 
 bool FIREBASE_CLASS::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
 {

@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.1.3
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -122,7 +122,7 @@ std::vector<uint8_t> *FIREBASE_STREAM_CLASS::blobData()
     return to<std::vector<uint8_t> *>();
 }
 
-#if defined(FLASH_FS)
+#if defined(MBFS_FLASH_FS)
 File FIREBASE_STREAM_CLASS::fileStream()
 {
     return to<File>();

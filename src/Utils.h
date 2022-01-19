@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.13
+ * Google's Firebase Util class, Utils.h version 1.1.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 15, 2022
+ * Created January 18, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -48,11 +48,11 @@ public:
     uint16_t ntpTimeout = 20;
     callback_function_t _callback_function = nullptr;
     FirebaseConfig *config = nullptr;
-    MB_File *mbfs = nullptr;
+    MB_FS *mbfs = nullptr;
 
     ~UtilsClass(){};
 
-    UtilsClass(MB_File *mbfs)
+    UtilsClass(MB_FS *mbfs)
     {
         this->mbfs = mbfs;
     }
@@ -1368,7 +1368,7 @@ public:
                 now = time(nullptr);
                 if (now > default_ts || millis() - timeout > ntpTimeout)
                     break;
-                delay(10);
+                delay(0);
             }
             
             idle();

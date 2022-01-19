@@ -154,7 +154,7 @@ void FB_TCP_Client::setCACert(const char *caCert)
   _wcs->setNoDelay(true);
 }
 
-void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType)
+void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
 {
 
   _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
@@ -171,7 +171,7 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_file_mem_storage_ty
         filename.prepend('/');
     }
 
-    int len = mbfs->open(filename, storageType, mb_file_open_mode_read);
+    int len = mbfs->open(filename, storageType, mb_fs_open_mode_read);
     if (len > -1)
     {
       uint8_t *der = (uint8_t *)mbfs->newP(len);
@@ -186,7 +186,7 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_file_mem_storage_ty
   _wcs->setNoDelay(true);
 }
 
-void FB_TCP_Client::setMBFS(MB_File *mbfs)
+void FB_TCP_Client::setMBFS(MB_FS *mbfs)
 {
   this->mbfs = mbfs;
 }

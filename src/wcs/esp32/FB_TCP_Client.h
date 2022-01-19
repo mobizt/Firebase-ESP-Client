@@ -1,5 +1,5 @@
 /**
- * Firebase TCP Client v1.1.16
+ * Firebase TCP Client v1.1.17
  * 
  * Created January 18, 2022
  * 
@@ -33,7 +33,7 @@
 
 #ifdef ESP32
 
-#include "MB_File.h"
+#include "mbfs/MB_FS.h"
 #include "FB_Net.h"
 #include "FB_Error.h"
 
@@ -111,8 +111,8 @@ public:
 
   bool connect(void);
   void setCACert(const char *caCert);
-  void setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType);
-  void setMBFS(MB_File *mbfs);
+  void setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType);
+  void setMBFS(MB_FS *mbfs);
 
 private:
   std::unique_ptr<FB_WCS> _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
@@ -126,7 +126,7 @@ private:
   uint8_t _CAFileStoreageType = 0;
   int _certType = fb_cert_type_undefined;
   bool _clockReady = false;
-  MB_File *mbfs = nullptr;
+  MB_FS *mbfs = nullptr;
   char *cert = NULL;
   void release();
 };

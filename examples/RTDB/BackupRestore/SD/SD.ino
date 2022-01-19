@@ -22,6 +22,9 @@
 //Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
+//Provide the SD card interfaces setting and mounting
+#include <addons/SDHelper.h>
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
@@ -45,34 +48,6 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 bool taskCompleted = false;
-
-/** ########################################### **/
-/*  Config SD Media                              */
-/** ########################################### **/
-
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
-
-#if defined(ESP32)
-#define SPI_CS_PIN 13
-#elif defined(ESP8266)
-#define SPI_CS_PIN 15
-#endif
-
-//if SdFat library installed and FirebaseFS.h was set to use it (for ESP32 only)
-#if defined(USE_SD_FAT_ESP32)
-
-//https://github.com/greiman/SdFat
-SdSpiConfig sdFatSPIConfig(SPI_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(16));
-
-#elif defined(ESP32) //if ESP32 and no SdFat library installed
-
-SPIClass spi;
-
-#endif
-
-#endif
-
-/** ########################################### **/
 
 void setup()
 {
@@ -121,42 +96,8 @@ void setup()
   fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
 
-  /** ########################################### **/
-  /*  Mount SD card                                */
-  /** ########################################### **/
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
-
-#if defined(USE_SD_FAT_ESP32)
-
-  if (!Firebase.sdBegin(&sdFatSPIConfig, SPI_CS_PIN, 14, 2, 15)) //pointer to SdSpiConfig, SS, SCK,MISO, MOSI
-
-#elif defined(ESP32) //if ESP32 and no SdFat library installed
-
-  spi.begin(14, 2, 15, SPI_CS_PIN);        //SPI pins config -> SCK,MISO, MOSI, SS
-  if (!Firebase.sdBegin(SPI_CS_PIN, &spi)) //SS, pointer to SPIClass <- SPIClass object should defined as static or global
-
-#elif defined(ESP8266)
-
-  if (!Firebase.sdBegin(SPI_CS_PIN)) //SS
-
-#endif
-  {
-    Serial.println("SD Card mounted failed");
-    return;
-  }
-
-#endif
-
-#if defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
-  if (!Firebase.sdMMCBegin("/sdcard", false, true))
-  {
-    Serial.println("SD Card mounted failed");
-    return;
-  }
-#endif
-
-  /** ########################################### **/
+  SD_Card_Mounting(); //See src/addons/SDHelper.h
 }
 
 //The Firebase download callback function

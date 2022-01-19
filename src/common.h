@@ -2284,7 +2284,7 @@ static const char fb_esp_pgm_str_588[] PROGMEM = "Updater write() failed.";
 static const char fb_esp_pgm_str_589[] PROGMEM = "Updater end() failed.";
 #endif
 
-#if defined(FLASH_FS) || defined(SD_FS)
+#if defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)
 static const char fb_esp_pgm_str_590[] PROGMEM = "Flash Storage is not ready.";
 static const char fb_esp_pgm_str_591[] PROGMEM = "SD Storage is not ready.";
 static const char fb_esp_pgm_str_592[] PROGMEM = "File is still opened.";

@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.12
+ * Google's Firebase Storage class, FCS.cpp version 1.1.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -373,9 +373,9 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     int ret = 0;
 
     if (req->requestType == fb_esp_fcs_request_type_download)
-        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_file_open_mode_write);
+        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
     else if (req->requestType == fb_esp_fcs_request_type_upload)
-        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_file_open_mode_read);
+        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
 
     if (ret < 0)
     {
@@ -403,7 +403,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
     if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_download_ota)
     {
-        ut->makePath(req->remoteFileName);
+        header.appendP(fb_esp_pgm_str_1);
         header += ut->url_encode(req->remoteFileName);
         header.appendP(fb_esp_pgm_str_173);
         header.appendP(fb_esp_pgm_str_269);
@@ -834,7 +834,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
                                                 if (error.code == 0)
                                                 {
                                                     if (ut->mbfs->write(mbfs_type fbdo->_ss.fcs.storage_type, buf, read) != (int)read)
-                                                        error.code = MB_FILE_ERROR_FILE_IO_ERROR;
+                                                        error.code = MB_FS_ERROR_FILE_IO_ERROR;
                                                 }
                                             }
                                         }

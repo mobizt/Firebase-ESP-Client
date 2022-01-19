@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.11
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.12
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -418,7 +418,7 @@ std::vector<uint8_t> *FirebaseData::blobData()
     return to<std::vector<uint8_t> *>();
 }
 
-#if defined(FLASH_FS)
+#if defined(MBFS_FLASH_FS)
 fs::File FirebaseData::fileStream()
 {
     return to<File>();

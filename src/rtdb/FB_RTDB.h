@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.3.0
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.3.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -1785,7 +1785,7 @@ private:
   bool waitResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req);
   //handle managed response data
   bool handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req);
-  int openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_file_open_mode mode, bool closeSession = false);
+  int openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_fs_open_mode mode, bool closeSession = false);
   void waitRxReady(FirebaseData *fbdo, unsigned long &dataTime);
   //store response payload
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
@@ -1834,8 +1834,8 @@ private:
 #endif
   uint8_t openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType, uint8_t mode);
   uint8_t readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &item, uint8_t mode);
-#if defined(USE_SD_FAT_ESP32)
-  uint8_t readQueueFileSdFat(FirebaseData *fbdo, SD_FS_FILE &file, QueueItem &item, uint8_t mode);
+#if defined(MBFS_ESP32_SDFAT_ENABLED)
+  uint8_t readQueueFileSdFat(FirebaseData *fbdo, MBFS_SD_FILE &file, QueueItem &item, uint8_t mode);
 #endif
 
 protected:

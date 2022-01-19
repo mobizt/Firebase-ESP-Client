@@ -1,5 +1,5 @@
 /**
- * Google's Cloud Functions class, Functions.h version 1.1.8
+ * Google's Cloud Functions class, Functions.h version 1.1.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 

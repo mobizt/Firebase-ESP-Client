@@ -1,5 +1,5 @@
 /*
- * FirebaseJson, version 2.6.5
+ * FirebaseJson, version 2.6.6
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
@@ -215,7 +215,7 @@ static void *fb_js_malloc(size_t len)
     void *p;
     size_t newLen = getReservedLen(len);
 
-#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+#if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
     if ((p = (void *)ps_malloc(newLen)) == 0)
         return NULL;
 #else
@@ -245,7 +245,7 @@ static void fb_js_free(void *ptr)
 static void *fb_js_realloc(void *ptr, size_t sz)
 {
     size_t newLen = getReservedLen(sz);
-#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+#if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
     ptr = (void *)ps_realloc(ptr, newLen);
 #else
 
@@ -821,7 +821,7 @@ protected:
     {
         void *p;
         size_t newLen = getReservedLen(len);
-#if defined(BOARD_HAS_PSRAM) && defined(FIREBASEJSON_USE_PSRAM)
+#if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
 
         if ((p = (void *)ps_malloc(newLen)) == 0)
             return NULL;

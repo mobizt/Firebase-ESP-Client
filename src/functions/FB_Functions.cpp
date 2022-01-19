@@ -1,5 +1,5 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.8
+ * Google's Cloud Functions class, Functions.cpp version 1.1.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -147,9 +147,9 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
     {
         if (config->_sourceType == functions_sources_type_local_archive)
         {
-            if (ut->mbfs->open(config->_uploadArchiveFile, mbfs_type config->_uploadArchiveStorageType, mb_file_open_mode_read) < 0)
+            if (ut->mbfs->open(config->_uploadArchiveFile, mbfs_type config->_uploadArchiveStorageType, mb_fs_open_mode_read) < 0)
             {
-                fbdo->_ss.http_code = MB_FILE_ERROR_FILE_IO_ERROR;
+                fbdo->_ss.http_code = MB_FS_ERROR_FILE_IO_ERROR;
                 sendCallback(fbdo, fb_esp_functions_operation_status_error, fbdo->errorReason().c_str(), cb, info);
                 return false;
             }

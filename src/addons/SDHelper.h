@@ -9,7 +9,7 @@
 //If SD Card used for storage, assign SD card type and FS used in src/FirebaseFS.h and
 //change the config for that card interfaces in this file (src/addons/SDHelper.h)
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
 #if defined(ESP32)
 #define SPI_CS_PIN 13
@@ -43,7 +43,7 @@ SPIClass spi;
 bool SD_Card_Mounting()
 {
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
     Serial.print("\nMounting SD Card... ");
 
@@ -72,7 +72,7 @@ bool SD_Card_Mounting()
     }
 #endif
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
 
     Serial.print("\nMounting SD_MMC Card... ");
 

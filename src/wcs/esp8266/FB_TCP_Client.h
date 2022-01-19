@@ -32,7 +32,7 @@
 
 #include <Arduino.h>
 
-#include "MB_File.h"
+#include "mbfs/MB_FS.h"
 #include "FB_Net.h"
 #include "FB_Error.h"
 
@@ -80,9 +80,9 @@ public:
   WiFiClient *stream(void);
 
   void setCACert(const char *caCert);
-  void setCACertFile(const char *caCertFile, mb_file_mem_storage_type storageType);
+  void setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType);
   bool connect(void);
-  void setMBFS(MB_File *mbfs);
+  void setMBFS(MB_FS *mbfs);
 
 private:
   std::unique_ptr<FB_ESP_SSL_CLIENT> _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
@@ -104,7 +104,7 @@ private:
   int chunkSize = 1024;
   bool mflnChecked = false;
   X509List *x509 = nullptr;
-  MB_File *mbfs = nullptr;
+  MB_FS *mbfs = nullptr;
 
   void release();
 };

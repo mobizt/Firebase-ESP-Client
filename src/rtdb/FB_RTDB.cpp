@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.0
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.1
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -371,10 +371,9 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_method method, MB_StringPt
     MB_String _path, tpath, pre, post;
 
     tpath = path;
+    ut->makePath(tpath);
     ut->replaceFirebasePath(tpath);
     _path = tpath;
-
-    ut->makePath(tpath);
 
     req.downloadCallback = downloadCallback;
     req.uploadCallback = uploadCallback;
@@ -722,7 +721,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
 
         fbdo->_ss.con_mode = fb_esp_con_mode_rtdb_stream;
     }
-    
+
     fb_esp_rtdb_request_info_t req;
 
     if (!waitResponse(fbdo, &req))
@@ -1176,7 +1175,7 @@ bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_
 {
     MB_String _filename = filename;
 
-    int ret = ut->mbfs->open(_filename, mbfs_type storageType, mb_file_open_mode_write);
+    int ret = ut->mbfs->open(_filename, mbfs_type storageType, mb_fs_open_mode_write);
 
     if (ret < 0)
     {
@@ -1228,7 +1227,7 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_es
     uint8_t count = 0;
     MB_String _filename = filename;
 
-    int ret = ut->mbfs->open(_filename, mbfs_type storageType, mb_file_open_mode_read);
+    int ret = ut->mbfs->open(_filename, mbfs_type storageType, mb_fs_open_mode_read);
 
     if (ret < 0)
     {
@@ -1244,19 +1243,19 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_es
 
     QueueItem item;
 
-#if defined(USE_SD_FAT_ESP32)
+#if defined(MBFS_ESP32_SDFAT_ENABLED)
 
     if (storageType == mem_storage_type_flash)
     {
-#if defined(FLASH_FS)
+#if defined(MBFS_FLASH_FS)
         fs::File file = ut->mbfs->getFlashFile();
         count = readQueueFile(fbdo, file, item, mode);
 #endif
     }
     else if (storageType == mem_storage_type_sd)
     {
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
-        SD_FS_FILE file = ut->mbfs->getSDFile();
+#if defined(MBFS_SD_FS) && defined(CARD_TYPE_SD)
+        MBFS_SD_FILE file = ut->mbfs->getSDFile();
         count = readQueueFileSdFat(fbdo, file, item, mode);
 #endif
     }
@@ -1265,15 +1264,15 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_es
 
     if (storageType == mem_storage_type_flash)
     {
-#if defined(FLASH_FS)
+#if defined(MBFS_FLASH_FS)
         fs::File file = ut->mbfs->getFlashFile();
         count = readQueueFile(fbdo, file, item, mode);
 #endif
     }
     else if (storageType == mem_storage_type_sd)
     {
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
-        SD_FS_FILE file = ut->mbfs->getSDFile();
+#if defined(MBFS_SD_FS) && defined(CARD_TYPE_SD)
+        MBFS_SD_FILE file = ut->mbfs->getSDFile();
         count = readQueueFile(fbdo, file, item, mode);
 #endif
     }
@@ -1363,8 +1362,8 @@ uint8_t FB_RTDB::readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &it
     return count;
 }
 
-#if defined(USE_SD_FAT_ESP32)
-uint8_t FB_RTDB::readQueueFileSdFat(FirebaseData *fbdo, SD_FS_FILE &file, QueueItem &item, uint8_t mode)
+#if defined(MBFS_ESP32_SDFAT_ENABLED)
+uint8_t FB_RTDB::readQueueFileSdFat(FirebaseData *fbdo, MBFS_SD_FILE &file, QueueItem &item, uint8_t mode)
 {
     uint8_t count = 0;
     FirebaseJsonArray arr;
@@ -1634,13 +1633,13 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 
         if (fbdo->_ss.rtdb.storage_type == mem_storage_type_sd)
         {
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
-            if (!SD_FS.exists(folder.c_str()))
+#if defined(MBFS_SD_FS) && defined(CARD_TYPE_SD)
+            if (!MBFS_SD_FS.exists(folder.c_str()))
                 ut->createDirs(folder, (fb_esp_mem_storage_type)fbdo->_ss.rtdb.storage_type);
 #endif
         }
 
-        int sz = openFile(fbdo, req, mb_file_open_mode_write);
+        int sz = openFile(fbdo, req, mb_fs_open_mode_write);
         if (sz < 0)
             return false;
 
@@ -2066,7 +2065,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     if (req->task_type == fb_esp_rtdb_task_upload_rules)
     {
-        int sz = openFile(fbdo, req, mb_file_open_mode_read);
+        int sz = openFile(fbdo, req, mb_fs_open_mode_read);
         if (sz < 0)
             return sz;
         req->fileSize = sz;
@@ -2084,7 +2083,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
             if (!ut->mbfs->flashReady())
             {
                 fbdo->_ss.error.appendP(fb_esp_pgm_str_164, true);
-                return MB_FILE_ERROR_FILE_IO_ERROR;
+                return MB_FS_ERROR_FILE_IO_ERROR;
             }
         }
         else if (fbdo->_ss.rtdb.storage_type == mem_storage_type_sd)
@@ -2092,13 +2091,13 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
             if (!ut->mbfs->sdReady())
             {
                 fbdo->_ss.error.appendP(fb_esp_pgm_str_85, true);
-                return MB_FILE_ERROR_FILE_IO_ERROR;
+                return MB_FS_ERROR_FILE_IO_ERROR;
             }
         }
 
         if (req->method == m_download || req->method == m_restore)
         {
-            int sz = openFile(fbdo, req, mb_file_open_mode_undefined);
+            int sz = openFile(fbdo, req, mb_fs_open_mode_undefined);
             if (sz < 0)
                 return sz;
 
@@ -2110,7 +2109,7 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         {
             if (req->data.type == d_file)
             {
-                int sz = openFile(fbdo, req, mb_file_open_mode_read);
+                int sz = openFile(fbdo, req, mb_fs_open_mode_read);
                 if (sz < 0)
                     return sz;
                 req->fileSize = sz;
@@ -2426,14 +2425,14 @@ void FB_RTDB::waitRxReady(FirebaseData *fbdo, unsigned long &dataTime)
     }
 }
 
-int FB_RTDB::openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_file_open_mode mode, bool closeSession)
+int FB_RTDB::openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_fs_open_mode mode, bool closeSession)
 {
     int sz = 0;
 
     if (req->method == m_download)
-        sz = ut->mbfs->open(req->filename, mbfs_type req->storageType, mb_file_open_mode_write);
+        sz = ut->mbfs->open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_write);
     else if (req->method == m_restore)
-        sz = ut->mbfs->open(req->filename, mbfs_type req->storageType, mb_file_open_mode_read);
+        sz = ut->mbfs->open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_read);
     else
         sz = ut->mbfs->open(req->filename, mbfs_type req->storageType, mode);
 
@@ -2520,7 +2519,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
     if (req->task_type == fb_esp_rtdb_task_download_rules)
     {
-        if (openFile(fbdo, req, mb_file_open_mode_write, true) < 0)
+        if (openFile(fbdo, req, mb_fs_open_mode_write, true) < 0)
             return false;
     }
 
@@ -2891,8 +2890,10 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                                     in.localFileName = ut->mbfs->name(mbfs_type req->storageType);
                                     in.remotePath = req->path;
                                     in.status = fb_esp_rtdb_download_status_init;
-                                    in.size = req->fileSize;
-                                    if (req->data.type == d_file || req->data.type == d_file_ota)
+                                    
+                                    if (!fbdo->_ss.rtdb.path_not_found)
+                                        in.size = req->fileSize;
+                                    if (req->fileSize > 0 && (req->data.type == d_file || req->data.type == d_file_ota))
                                     {
                                         //decoded data size (with padding)
                                         in.size = (req->fileSize - strlen_P(fb_esp_pgm_str_93)) * 3 / 4;
@@ -2926,7 +2927,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
                                             if (write != readLen)
                                             {
-                                                fbdo->_ss.http_code = MB_FILE_ERROR_FILE_IO_ERROR;
+                                                fbdo->_ss.http_code = MB_FS_ERROR_FILE_IO_ERROR;
                                                 fbdo->closeSession();
                                                 break;
                                             }
@@ -2996,12 +2997,12 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                                 }
                                 else
                                 {
-#if defined(FLASH_FS)
+#if defined(MBFS_FLASH_FS)
                                     if (!ut->mbfs->getFlashFile())
                                     {
                                         fbdo->_ss.rtdb.storage_type = mem_storage_type_flash;
 
-                                        int sz = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type fbdo->_ss.rtdb.storage_type, mb_file_open_mode_write);
+                                        int sz = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type fbdo->_ss.rtdb.storage_type, mb_fs_open_mode_write);
                                         if (sz < 0)
                                             fbdo->_ss.http_code = sz;
 

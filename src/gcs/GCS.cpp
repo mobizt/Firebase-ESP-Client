@@ -1,5 +1,5 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.9
+ * Google's Cloud Storage class, GCS.cpp version 1.1.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -344,7 +344,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     if (req->requestType == fb_esp_gcs_request_type_download)
     {
-        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_file_open_mode_write);
+        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
         if (ret < 0)
         {
             fbdo->_ss.http_code = ret;
@@ -356,7 +356,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
         {
 
-            ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_file_open_mode_read);
+            ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
 
             if (ret < 0)
             {
@@ -1883,7 +1883,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                                 if (error.code == 0)
                                                 {
                                                     if (ut->mbfs->write(mbfs_type req->storageType, buf, read) != (int)read)
-                                                        error.code = MB_FILE_ERROR_FILE_IO_ERROR;
+                                                        error.code = MB_FS_ERROR_FILE_IO_ERROR;
                                                 }
                                             }
                                         }

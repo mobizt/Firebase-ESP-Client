@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.3
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.4
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
@@ -297,13 +297,13 @@ public:
         return sif->blob;
     }
 
-#if defined(FLASH_FS)
+#if defined(MBFS_FLASH_FS)
     template <typename T>
     auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
     {
         if (sif->data_type == fb_esp_data_type::d_file && Signer.getCfg())
         {
-            int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type  mem_storage_type_flash, mb_file_open_mode_read);
+            int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type  mem_storage_type_flash, mb_fs_open_mode_read);
             if (ret < 0)
                 sif->httpCode = ret;
         }

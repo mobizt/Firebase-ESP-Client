@@ -1,6 +1,6 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.16
+ * The Firebase class, Firebase.h v1.0.17
  * 
  *  Created January 18, 2022
  * 
@@ -48,7 +48,7 @@
 #include "Utils.h"
 #include "session/FB_Session.h"
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD) && defined(ESP32) && defined(SD_FAT_VERSION)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD) && defined(ESP32) && defined(SD_FAT_VERSION)
 class SdSpiConfig;
 #endif
 
@@ -252,7 +252,7 @@ public:
   */
   void setDoubleDigits(uint8_t digits);
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
   /** SD card config with GPIO pins.
    * 
@@ -301,7 +301,7 @@ public:
 
 #endif
 
-#if defined(ESP32) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP32) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
   /** Initialize the SD_MMC card (ESP32 only).
   *
   * @param mountpoint The mounting point.
@@ -342,7 +342,7 @@ private:
   UtilsClass *ut = nullptr;
   FirebaseAuth *auth = nullptr;
   FirebaseConfig *cfg = nullptr;
-  MB_File *mbfs = nullptr;
+  MB_FS *mbfs = nullptr;
 };
 
 extern Firebase_ESP_Client Firebase;
@@ -2274,7 +2274,7 @@ public:
   bool sendTopic(FirebaseData &fbdo);
 #endif
 
-#if defined(SD_FS) && defined(CARD_TYPE_SD)
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
   /** SD card config with GPIO pins.
    * 
@@ -2323,7 +2323,7 @@ public:
 
 #endif
 
-#if defined(ESP32) && defined(SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP32) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
   /** Initialize the SD_MMC card (ESP32 only).
   *
   * @param mountpoint The mounting point.
@@ -2526,7 +2526,7 @@ private:
   UtilsClass *ut = nullptr;
   FirebaseAuth *auth = nullptr;
   FirebaseConfig *cfg = nullptr;
-  MB_File *mbfs = nullptr;
+  MB_FS *mbfs = nullptr;
   bool extConfig = true;
 };
 
