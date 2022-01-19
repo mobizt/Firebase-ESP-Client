@@ -208,7 +208,7 @@ You can choose the Heap memory between internal and external memory chip from ID
 ### Arduino IDE
 
 
-For ESP8266 devices that don't not have external SRAM/PSRAM chip installed, choose the MMU **option 3**, 16KB cache + 48KB IRAM and 2nd Heap (shared).
+For ESP8266 devices that don't have external SRAM/PSRAM chip installed, choose the MMU **option 3**, 16KB cache + 48KB IRAM and 2nd Heap (shared).
 
 ![Arduino IDE config](/media/images/ArduinoIDE.png)
 
@@ -261,7 +261,7 @@ monitor_speed = 115200
 ```
 
 
-### ESP8266 andd SRAM/PSRAM Chip connection
+### ESP8266 and SRAM/PSRAM Chip connection
 
 Most ESP8266 modules don't have the built-in SRAM/PSRAM on board. External memory chip connection can be done via SPI port as below.
 
