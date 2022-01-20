@@ -182,7 +182,7 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type
         _wcs->setCACert((const char *)cert);
         _certType = fb_cert_type_file;
 
-#else
+#elif defined(MBFS_SD_FS)
         fs::File file = mbfs->getSDFile();
         _wcs->loadCACert(file, len);
         mbfs->close(storageType);
