@@ -75,6 +75,8 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+    config.gcs.
+
     Firebase.begin(&config, &auth);
     
     Firebase.reconnectWiFi(true);

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.12
+ * Google's Firebase Data class, FB_Session.h version 1.2.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -896,7 +896,6 @@ private:
   bool handleStreamRead();
   void checkOvf(size_t len, struct server_response_data_t &resp);
   int tcpSend(const char *data);
-  int tcpSendChunk(const char *data, int &index, size_t len);
   bool reconnect(unsigned long dataTime = 0);
   MB_String getDataType(uint8_t type);
   MB_String getMethod(uint8_t method);

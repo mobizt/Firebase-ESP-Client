@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.17
+ * Firebase TCP Client v1.1.18
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -82,6 +82,7 @@ public:
   void setCACert(const char *caCert);
   void setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType);
   bool connect(void);
+  void setBufferSizes(int recv, int xmit);
   void setMBFS(MB_FS *mbfs);
 
 private:

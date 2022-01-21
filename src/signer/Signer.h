@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.2.13
+ * Google's Firebase Token Generation class, Signer.h version 1.2.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -76,6 +76,8 @@ public:
     ~Firebase_Signer();
 
 private:
+    int txBufSize = 1024;
+    int rxBufSize = 1024;
     UtilsClass *ut = nullptr;
     FirebaseConfig *config = nullptr;
     FirebaseAuth *auth = nullptr;
@@ -121,9 +123,12 @@ private:
     FirebaseAuth *getAuth();
     MB_FS *getMBFS();
     UtilsClass *getUtils();
+    int tcpSend(const char *data);
+    bool initClient(PGM_P subDomain, bool sendStatus = false);
 
 #if defined(ESP8266)
-        void set_scheduled_callback(callback_function_t callback)
+        void
+        set_scheduled_callback(callback_function_t callback)
     {
         _cb = std::move([callback]()
                         { schedule_function(callback); });

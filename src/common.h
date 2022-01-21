@@ -1,6 +1,6 @@
 
 /**
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -110,6 +110,7 @@ class QueryFilter;
 #define MAX_BLOB_PAYLOAD_SIZE 1024
 #define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
 #define ESP_DEFAULT_TS 1618971013
+#define ESP_REPORT_PROGRESS_INTERVAL 2
 
 #define _NO_REF 0
 #define _NO_QUERY 0
@@ -267,14 +268,6 @@ enum fb_esp_rtdb_task_type
     fb_esp_rtdb_task_store_rules
 };
 
-enum fb_esp_report_state
-{
-    fb_esp_report_state_reset = -1,
-    fb_esp_report_state_enable = 0,
-    fb_esp_report_state_disable,
-    fb_esp_report_state_stop,
-};
-
 enum fb_esp_rtdb_value_type
 {
     fb_esp_rtdb_value_type_any = 0,
@@ -311,6 +304,18 @@ enum fb_esp_rtdb_download_status
 #endif
 
 #if defined(FIREBASE_ESP_CLIENT)
+
+#if defined(ENABLE_FIRESTORE)
+enum fb_esp_cfs_upload_status
+{
+    fb_esp_cfs_upload_status_error = -1,
+    fb_esp_cfs_upload_status_unknown = 0,
+    fb_esp_cfs_upload_status_init,
+    fb_esp_cfs_upload_status_upload,
+    fb_esp_cfs_upload_status_complete,
+    fb_esp_cfs_upload_status_process_response
+};
+#endif
 
 #ifdef ENABLE_FCM
 enum fb_esp_fcm_msg_mode
@@ -587,12 +592,11 @@ struct fb_esp_rtdb_request_info_t
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
     uint8_t storageType = StorageType::UNDEFINED;
 #endif
-
+    int progress = -1;
     RTDB_UploadStatusInfo *uploadStatusInfo = nullptr;
     RTDB_DownloadStatusInfo *downloadStatusInfo = nullptr;
     RTDB_UploadProgressCallback uploadCallback = NULL;
     RTDB_DownloadProgressCallback downloadCallback = NULL;
-    fb_esp_report_state reportState = fb_esp_report_state_reset;
 };
 
 struct fb_esp_rtdb_queue_info_t
@@ -766,10 +770,8 @@ struct fb_esp_token_signer_resources_t
     mbedtls_pk_context *pk_ctx = nullptr;
     mbedtls_entropy_context *entropy_ctx = nullptr;
     mbedtls_ctr_drbg_context *ctr_drbg_ctx = nullptr;
-    FB_TCP_Client *wcs = nullptr;
-#elif defined(ESP8266)
-    WiFiClientSecure *wcs = nullptr;
 #endif
+    FB_TCP_Client *wcs = nullptr;
     FirebaseJson *json = nullptr;
     FirebaseJsonData *result = nullptr;
     struct fb_esp_auth_token_info_t tokens;
@@ -851,6 +853,26 @@ struct fb_esp_url_info_t
 };
 
 #if defined(FIREBASE_ESP_CLIENT)
+
+#if defined(ENABLE_FIRESTORE)
+
+typedef struct fb_esp_cfs_upload_status_info_t
+{
+    size_t progress = 0;
+    fb_esp_cfs_upload_status status = fb_esp_cfs_upload_status_unknown;
+    int size = 0;
+    MB_String errorMsg;
+
+} CFS_UploadStatusInfo;
+
+typedef void (*CFS_UploadProgressCallback)(CFS_UploadStatusInfo);
+
+struct fb_esp_cfs_config_t
+{
+    CFS_UploadProgressCallback upload_callback = NULL;
+};
+
+#endif
 
 #if defined(ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE)
 //shared struct between fcs and gcs
@@ -999,6 +1021,9 @@ struct fb_esp_cfg_t
     struct fb_esp_rtdb_config_t rtdb;
 #if defined(ENABLE_GC_STORAGE)
     struct fb_esp_gcs_config_t gcs;
+#endif
+#if defined(ENABLE_FIRESTORE)
+    struct fb_esp_cfs_config_t cfs;
 #endif
 #if defined(ENABLE_FB_STORAGE)
     struct fb_esp_fcs_config_t fcs;
@@ -1277,6 +1302,7 @@ struct fb_esp_gcs_req_t
     int chunkPos = 0;
     int chunkLen = 0;
     size_t fileSize = 0;
+    int progress = -1;
     ListOptions *listOptions = nullptr;
     StorageGetOptions *getOptions = nullptr;
     UploadOptions *uploadOptions = nullptr;
@@ -1288,7 +1314,6 @@ struct fb_esp_gcs_req_t
     DownloadStatusInfo *downloadStatusInfo = nullptr;
     UploadProgressCallback uploadCallback = NULL;
     DownloadProgressCallback downloadCallback = NULL;
-    fb_esp_report_state reportState = fb_esp_report_state_reset;
 };
 
 struct fb_gcs_upload_resumable_task_info_t
@@ -1500,13 +1525,13 @@ struct fb_esp_fcs_req_t
     const uint8_t *pgmArc = nullptr;
     size_t pgmArcLen = 0;
     size_t fileSize = 0;
+    int progress = -1;
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
     fb_esp_fcs_request_type requestType = fb_esp_fcs_request_type_undefined;
     FCS_UploadStatusInfo *uploadStatusInfo = nullptr;
     FCS_DownloadStatusInfo *downloadStatusInfo = nullptr;
     FCS_UploadProgressCallback uploadCallback = NULL;
     FCS_DownloadProgressCallback downloadCallback = NULL;
-    fb_esp_report_state reportState = fb_esp_report_state_reset;
 };
 
 #endif
@@ -1515,6 +1540,7 @@ struct fb_esp_fcs_req_t
 struct fb_esp_firestore_info_t
 {
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
+    CFS_UploadStatusInfo cbUploadInfo;
     int contentLength = 0;
     MB_String payload;
     bool async = false;
@@ -1555,7 +1581,12 @@ struct fb_esp_firestore_req_t
     MB_String orderBy;
     bool showMissing = false;
     bool async = false;
+    size_t size = 0;
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
+    CFS_UploadStatusInfo *uploadStatusInfo = nullptr;
+    CFS_UploadProgressCallback uploadCallback = NULL;
+    int progress = -1;
+    unsigned long requestTime = 0;
 };
 
 struct fb_esp_firestore_document_write_field_transforms_t

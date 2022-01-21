@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.12
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -750,47 +750,37 @@ void FirebaseData::closeSession()
 
 int FirebaseData::tcpSend(const char *data)
 {
-    size_t len = strlen(data);
-    uint8_t attempts = 0;
-    uint8_t maxRetry = 1;
 
-    if (Signer.getCfg())
-        maxRetry = Signer.getCfg()->tcp_data_sending_retry;
+    size_t len = strlen(data);
 
 #if defined(ESP8266)
     if (_ss.bssl_tx_size < 512)
         _ss.bssl_tx_size = 512;
-    maxRetry *= (1 + (len / _ss.bssl_tx_size));
+    int chunkSize = _ss.bssl_tx_size;
+#else
+    int chunkSize = 4096;
 #endif
 
-    int index = 0;
-    int ret = tcpSendChunk(data, index, len);
-    while (ret != 0 || index < (int)len)
-    {
-        attempts++;
-        if (attempts > maxRetry)
-            break;
-        if (!reconnect())
-            return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
-        ret = tcpSendChunk(data, index, len);
-    }
-    return ret;
-}
+    int sent = 0;
+    int ret = 0;
 
-int FirebaseData::tcpSendChunk(const char *data, int &index, size_t len)
-{
-    ut->idle();
     if (!reconnect())
         return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
-#if defined(ESP8266)
-    int chunkSize = len - index > _ss.bssl_tx_size ? _ss.bssl_tx_size : len - index;
-#else
-    int chunkSize = len;
-#endif
-    if (tcpClient.send(data + index, chunkSize) != 0)
-        return -1;
-    index += chunkSize;
-    return 0;
+
+    while (sent < (int)len)
+    {
+        if (sent + chunkSize > (int)len)
+            chunkSize = len - sent;
+
+        ret = tcpClient.send(data + sent, chunkSize);
+
+        if (ret != 0)
+            return ret;
+
+        sent += chunkSize;
+    }
+
+    return ret;
 }
 
 bool FirebaseData::reconnect(unsigned long dataTime)

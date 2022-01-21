@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.1
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1885,28 +1885,18 @@ void FB_RTDB::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_reques
 
     int p = 100 * readBytes / req->fileSize;
 
-    if ((p % 2 == 0) && (p <= 100))
+    if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
-        if ((p > 0 && req->reportState == fb_esp_report_state_enable) || ((p == 0 || p == 100) && req->reportState == fb_esp_report_state_reset))
-        {
-            fbdo->_ss.rtdb.cbUploadInfo.status = fb_esp_rtdb_upload_status_upload;
-            RTDB_UploadStatusInfo in;
-            in.localFileName = req->filename;
-            in.remotePath = req->path;
-            in.status = fb_esp_rtdb_upload_status_upload;
-            in.progress = p;
-            sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+        req->progress = p;
 
-            if (p == 100)
-                req->reportState = fb_esp_report_state_stop;
-            else if (p == 0 && req->reportState == fb_esp_report_state_reset)
-                req->reportState = fb_esp_report_state_enable;
-            else if (req->reportState == fb_esp_report_state_enable)
-                req->reportState = fb_esp_report_state_reset;
-        }
+        fbdo->_ss.rtdb.cbUploadInfo.status = fb_esp_rtdb_upload_status_upload;
+        RTDB_UploadStatusInfo in;
+        in.localFileName = req->filename;
+        in.remotePath = req->path;
+        in.status = fb_esp_rtdb_upload_status_upload;
+        in.progress = p;
+        sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
     }
-    else if (p < 100)
-        req->reportState = fb_esp_report_state_enable;
 }
 
 void FB_RTDB::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, size_t readBytes)
@@ -1919,29 +1909,19 @@ void FB_RTDB::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_requ
 
     int p = 100 * readBytes / req->fileSize;
 
-    if ((p % 2 == 0) && (p <= 100))
+    if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
-        if ((p > 0 && req->reportState == fb_esp_report_state_enable) || ((p == 0 || p == 100) && req->reportState == fb_esp_report_state_reset))
-        {
-            fbdo->_ss.rtdb.cbDownloadInfo.status = fb_esp_rtdb_download_status_download;
-            RTDB_DownloadStatusInfo in;
-            in.localFileName = req->filename;
-            in.remotePath = req->path;
-            in.status = fb_esp_rtdb_download_status_download;
-            in.progress = p;
-            in.size = req->fileSize;
-            sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
+        req->progress = p;
 
-            if (p == 100)
-                req->reportState = fb_esp_report_state_stop;
-            else if (p == 0 && req->reportState == fb_esp_report_state_reset)
-                req->reportState = fb_esp_report_state_enable;
-            else if (req->reportState == fb_esp_report_state_enable)
-                req->reportState = fb_esp_report_state_reset;
-        }
+        fbdo->_ss.rtdb.cbDownloadInfo.status = fb_esp_rtdb_download_status_download;
+        RTDB_DownloadStatusInfo in;
+        in.localFileName = req->filename;
+        in.remotePath = req->path;
+        in.status = fb_esp_rtdb_download_status_download;
+        in.progress = p;
+        in.size = req->fileSize;
+        sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
     }
-    else if (p < 100)
-        req->reportState = fb_esp_report_state_enable;
 }
 
 void FB_RTDB::sendUploadCallback(FirebaseData *fbdo, RTDB_UploadStatusInfo &in, RTDB_UploadProgressCallback cb, RTDB_UploadStatusInfo *out)
@@ -2890,7 +2870,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                                     in.localFileName = ut->mbfs->name(mbfs_type req->storageType);
                                     in.remotePath = req->path;
                                     in.status = fb_esp_rtdb_download_status_init;
-                                    
+
                                     if (!fbdo->_ss.rtdb.path_not_found)
                                         in.size = req->fileSize;
                                     if (req->fileSize > 0 && (req->data.type == d_file || req->data.type == d_file_ota))

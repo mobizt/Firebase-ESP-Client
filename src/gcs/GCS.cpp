@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.10
+ * Google's Cloud Storage class, GCS.cpp version 1.1.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -279,28 +279,17 @@ void GG_CloudStorage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_gcs
 
     int p = 100 * readBytes / req->fileSize;
 
-    if ((p % 2 == 0) && (p <= 100))
+    if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
-        if ((p > 0 && req->reportState == fb_esp_report_state_enable) || ((p == 0 || p == 100) && req->reportState == fb_esp_report_state_reset))
-        {
-            fbdo->_ss.gcs.cbUploadInfo.status = fb_esp_gcs_upload_status_upload;
-            UploadStatusInfo in;
-            in.localFileName = req->localFileName;
-            in.remoteFileName = req->remoteFileName;
-            in.status = fb_esp_gcs_upload_status_upload;
-            in.progress = p;
-            sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
-
-            if (p == 100)
-                req->reportState = fb_esp_report_state_stop;
-            else if (p == 0 && req->reportState == fb_esp_report_state_reset)
-                req->reportState = fb_esp_report_state_enable;
-            else if (req->reportState == fb_esp_report_state_enable)
-                req->reportState = fb_esp_report_state_reset;
-        }
+        req->progress = p;
+        fbdo->_ss.gcs.cbUploadInfo.status = fb_esp_gcs_upload_status_upload;
+        UploadStatusInfo in;
+        in.localFileName = req->localFileName;
+        in.remoteFileName = req->remoteFileName;
+        in.status = fb_esp_gcs_upload_status_upload;
+        in.progress = p;
+        sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
     }
-    else if (p < 100)
-        req->reportState = fb_esp_report_state_enable;
 }
 
 void GG_CloudStorage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req, size_t readBytes)
@@ -310,29 +299,19 @@ void GG_CloudStorage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_g
 
     int p = 100 * readBytes / req->fileSize;
 
-    if ((p % 2 == 0) && (p <= 100))
+    if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
-        if ((p > 0 && req->reportState == fb_esp_report_state_enable) || ((p == 0 || p == 100) && req->reportState == fb_esp_report_state_reset))
-        {
-            fbdo->_ss.gcs.cbDownloadInfo.status = fb_esp_gcs_download_status_download;
-            DownloadStatusInfo in;
-            in.localFileName = req->localFileName;
-            in.remoteFileName = req->remoteFileName;
-            in.status = fb_esp_gcs_download_status_download;
-            in.progress = p;
-            in.fileSize = req->fileSize;
-            sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
+        req->progress = p;
 
-            if (p == 100)
-                req->reportState = fb_esp_report_state_stop;
-            else if (p == 0 && req->reportState == fb_esp_report_state_reset)
-                req->reportState = fb_esp_report_state_enable;
-            else if (req->reportState == fb_esp_report_state_enable)
-                req->reportState = fb_esp_report_state_reset;
-        }
+        fbdo->_ss.gcs.cbDownloadInfo.status = fb_esp_gcs_download_status_download;
+        DownloadStatusInfo in;
+        in.localFileName = req->localFileName;
+        in.remoteFileName = req->remoteFileName;
+        in.status = fb_esp_gcs_download_status_download;
+        in.progress = p;
+        in.fileSize = req->fileSize;
+        sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
     }
-    else if (p < 100)
-        req->reportState = fb_esp_report_state_enable;
 }
 
 bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req)
@@ -685,13 +664,10 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             int bufLen = Signer.getCfg()->gcs.upload_buffer_size;
             if (bufLen < 512)
                 bufLen = 512;
-#if defined(ESP32)
-            if (bufLen > 1024 * 50)
-                bufLen = 1024 * 50;
-#elif defined(ESP8266)
-            if (bufLen > 16384)
-                bufLen = 16384;
-#endif
+
+            if (bufLen > 1024 * 16)
+                bufLen = 1024 * 16;
+
             uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             size_t read = 0;
 
@@ -1848,13 +1824,9 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                 int bufLen = Signer.getCfg()->gcs.download_buffer_size;
                                 if (bufLen < 512)
                                     bufLen = 512;
-#if defined(ESP32)
-                                if (bufLen > 1024 * 50)
-                                    bufLen = 1024 * 50;
-#elif defined(ESP8266)
-                                if (bufLen > 16384)
-                                    bufLen = 16384;
-#endif
+
+                                if (bufLen > 1024 * 16)
+                                    bufLen = 1024 * 16;
 
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {

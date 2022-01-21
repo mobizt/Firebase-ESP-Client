@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.13
+ * Google's Firebase Storage class, FCS.cpp version 1.1.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -309,28 +309,19 @@ void FB_Storage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_fcs_req_
 
     int p = 100 * readBytes / req->fileSize;
 
-    if ((p % 2 == 0) && (p <= 100))
+    if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
-        if ((p > 0 && req->reportState == fb_esp_report_state_enable) || ((p == 0 || p == 100) && req->reportState == fb_esp_report_state_reset))
-        {
-            fbdo->_ss.fcs.cbUploadInfo.status = fb_esp_fcs_upload_status_upload;
-            FCS_UploadStatusInfo in;
-            in.localFileName = req->localFileName;
-            in.remoteFileName = req->remoteFileName;
-            in.status = fb_esp_fcs_upload_status_upload;
-            in.progress = p;
-            sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+        req->progress = p;
 
-            if (p == 100)
-                req->reportState = fb_esp_report_state_stop;
-            else if (p == 0 && req->reportState == fb_esp_report_state_reset)
-                req->reportState = fb_esp_report_state_enable;
-            else if (req->reportState == fb_esp_report_state_enable)
-                req->reportState = fb_esp_report_state_reset;
-        }
+        fbdo->_ss.fcs.cbUploadInfo.status = fb_esp_fcs_upload_status_upload;
+        FCS_UploadStatusInfo in;
+        in.localFileName = req->localFileName;
+        in.remoteFileName = req->remoteFileName;
+        in.status = fb_esp_fcs_upload_status_upload;
+        in.progress = p;
+        sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+
     }
-    else if (p < 100)
-        req->reportState = fb_esp_report_state_enable;
 }
 
 void FB_Storage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req, size_t readBytes)
@@ -340,29 +331,20 @@ void FB_Storage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_fcs_re
 
     int p = 100 * readBytes / req->fileSize;
 
-    if ((p % 2 == 0) && (p <= 100))
+    if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
-        if ((p > 0 && req->reportState == fb_esp_report_state_enable) || ((p == 0 || p == 100) && req->reportState == fb_esp_report_state_reset))
-        {
-            fbdo->_ss.fcs.cbDownloadInfo.status = fb_esp_fcs_download_status_download;
-            FCS_DownloadStatusInfo in;
-            in.localFileName = req->localFileName;
-            in.remoteFileName = req->remoteFileName;
-            in.status = fb_esp_fcs_download_status_download;
-            in.progress = p;
-            in.fileSize = req->fileSize;
-            sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
+        req->progress = p;
 
-            if (p == 100)
-                req->reportState = fb_esp_report_state_stop;
-            else if (p == 0 && req->reportState == fb_esp_report_state_reset)
-                req->reportState = fb_esp_report_state_enable;
-            else if (req->reportState == fb_esp_report_state_enable)
-                req->reportState = fb_esp_report_state_reset;
-        }
+        fbdo->_ss.fcs.cbDownloadInfo.status = fb_esp_fcs_download_status_download;
+        FCS_DownloadStatusInfo in;
+        in.localFileName = req->localFileName;
+        in.remoteFileName = req->remoteFileName;
+        in.status = fb_esp_fcs_download_status_download;
+        in.progress = p;
+        in.fileSize = req->fileSize;
+        sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
+
     }
-    else if (p < 100)
-        req->reportState = fb_esp_report_state_enable;
 }
 
 bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
@@ -496,13 +478,10 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             int bufLen = Signer.getCfg()->fcs.upload_buffer_size;
             if (bufLen < 512)
                 bufLen = 512;
-#if defined(ESP32)
-            if (bufLen > 1024 * 50)
-                bufLen = 1024 * 50;
-#elif defined(ESP8266)
-            if (bufLen > 16384)
-                bufLen = 16384;
-#endif
+
+            if (bufLen > 1024 * 16)
+                bufLen = 1024 * 16;
+
             uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             size_t read = 0;
             int readCount = 0;
@@ -530,13 +509,10 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             int bufLen = Signer.getCfg()->fcs.upload_buffer_size;
             if (bufLen < 512)
                 bufLen = 512;
-#if defined(ESP32)
-            if (bufLen > 1024 * 50)
-                bufLen = 1024 * 50;
-#elif defined(ESP8266)
-            if (bufLen > 16384)
-                bufLen = 16384;
-#endif
+
+            if (bufLen > 1024 * 16)
+                bufLen = 1024 * 16;
+
             uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             size_t pos = 0;
             while (available)
@@ -794,13 +770,9 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
                                 int bufLen = Signer.getCfg()->fcs.download_buffer_size;
                                 if (bufLen < 512)
                                     bufLen = 512;
-#if defined(ESP32)
-                                if (bufLen > 1024 * 50)
-                                    bufLen = 1024 * 50;
-#elif defined(ESP8266)
-                                if (bufLen > 16384)
-                                    bufLen = 16384;
-#endif
+
+                                if (bufLen > 1024 * 16)
+                                    bufLen = 1024 * 16;
 
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.stream() && payloadRead < response.contentLen)
                                 {

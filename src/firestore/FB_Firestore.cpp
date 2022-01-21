@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.10
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -36,7 +36,6 @@
 
 #ifndef _FB_FIRESTORE_CPP_
 #define _FB_FIRESTORE_CPP_
-
 
 #include "FB_Firestore.h"
 
@@ -172,6 +171,8 @@ bool FB_Firestore::mCreateDocument2(FirebaseData *fbdo, MB_StringPtr projectId, 
     req.collectionId = collectionId;
     req.payload = content;
     req.mask = mask;
+    if (Signer.getCfg())
+        req.uploadCallback = Signer.getCfg()->cfs.upload_callback;
     return sendRequest(fbdo, &req);
 }
 
@@ -187,6 +188,8 @@ bool FB_Firestore::mPatchDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB
     req.mask = mask;
     req.exists = exists;
     req.updateTime = updateTime;
+    if (Signer.getCfg())
+        req.uploadCallback = Signer.getCfg()->cfs.upload_callback;
     return sendRequest(fbdo, &req);
 }
 
@@ -245,6 +248,8 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
     req.databaseId = databaseId;
     req.transaction = transaction;
     req.async = async;
+    if (Signer.getCfg())
+        req.uploadCallback = Signer.getCfg()->cfs.upload_callback;
 
     if (writes.size() > 0)
     {
@@ -253,7 +258,6 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
         updateMaskPath.appendP(fb_esp_pgm_str_1);
         updateMaskPath.appendP(fb_esp_pgm_str_556);
 
-     
         FirebaseJson json;
         bool hasCurDoc = false;
 
@@ -314,7 +318,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
 
                 if (write->current_document.exists.length() > 0)
                 {
-                   
+
                     if (strcmp(write->current_document.exists.c_str(), pgm2Str(fb_esp_pgm_str_107)) == 0)
                     {
                         json.add(pgm2Str(fb_esp_pgm_str_569), pgm2Str(fb_esp_pgm_str_107));
@@ -422,7 +426,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
 
         MB_String _transaction = transaction;
 
-        if (_transaction.length()>0)
+        if (_transaction.length() > 0)
         {
             fbdo->_ss.jsonPtr->add(pgm2Str(fb_esp_pgm_str_537), _transaction);
         }
@@ -513,7 +517,7 @@ bool FB_Firestore::mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_Stri
     req.projectId = projectId;
     req.databaseId = databaseId;
     req.documentPath = documentPath;
-    
+
     if (!fbdo->_ss.jsonPtr)
         fbdo->_ss.jsonPtr = new FirebaseJson();
 
@@ -589,7 +593,7 @@ bool FB_Firestore::mListCollectionIds(FirebaseData *fbdo, MB_StringPtr projectId
     MB_String _pageToken = pageToken;
     fbdo->_ss.jsonPtr->add(pgm2Str(fb_esp_pgm_str_357), atoi(_pageSize.c_str()));
     fbdo->_ss.jsonPtr->add(pgm2Str(fb_esp_pgm_str_358), _pageToken);
-    
+
     req.payload = fbdo->_ss.jsonPtr->raw();
     fbdo->_ss.jsonPtr->clear();
     bool ret = sendRequest(fbdo, &req);
@@ -639,6 +643,8 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
         fbdo->_ss.last_conn_ms = 0;
 
     connect(fbdo);
+
+    req->requestTime = millis();
 
     return firestore_sendRequest(fbdo, req);
 }
@@ -886,7 +892,33 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
 
     ret = fbdo->tcpSend(header.c_str());
     if (ret == 0 && req->payload.length() > 0)
-        ret = fbdo->tcpSend(req->payload.c_str());
+    {
+        if (req->uploadCallback)
+        {
+            req->size = req->payload.length();
+            CFS_UploadStatusInfo in;
+            in.status = fb_esp_cfs_upload_status_init;
+            in.size = req->size;
+            sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+            ret = tcpSend(fbdo, req->payload.c_str(), req);
+            if (ret == 0)
+            {
+                CFS_UploadStatusInfo in;
+                in.status = fb_esp_cfs_upload_status_complete;
+                in.errorMsg = fbdo->errorReason().c_str();
+                sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+            }
+            else
+            {
+                CFS_UploadStatusInfo in;
+                in.status = fb_esp_cfs_upload_status_error;
+                in.errorMsg = fbdo->errorReason().c_str();
+                sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+            }
+        }
+        else
+            ret = fbdo->tcpSend(req->payload.c_str());
+    }
 
     header.clear();
     req->payload.clear();
@@ -894,7 +926,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     if (ret == 0)
     {
         fbdo->_ss.connected = true;
-        if (fbdo->_ss.cfs.async || handleResponse(fbdo))
+        if (fbdo->_ss.cfs.async || handleResponse(fbdo, req))
         {
             Signer.getCfg()->_int.fb_processing = false;
             return true;
@@ -933,7 +965,7 @@ bool FB_Firestore::connect(FirebaseData *fbdo)
     return true;
 }
 
-bool FB_Firestore::handleResponse(FirebaseData *fbdo)
+bool FB_Firestore::handleResponse(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req)
 {
     if (!fbdo->reconnect())
         return false;
@@ -970,7 +1002,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
     fbdo->_ss.chunked_encoding = false;
     fbdo->_ss.buffer_ovf = false;
 
-    defaultChunkSize = 2048;
+    defaultChunkSize = 8192;
 
     while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
     {
@@ -990,6 +1022,17 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
         {
             if (!fbdo->reconnect(dataTime))
                 return false;
+
+            //Waring when large payload response may require the time for complete reading
+            if (req->uploadCallback && millis() - req->requestTime > 10000 && fbdo->_ss.cfs.cbUploadInfo.status != fb_esp_cfs_upload_status_process_response)
+            {
+                req->requestTime = millis();
+                fbdo->_ss.cfs.cbUploadInfo.status = fb_esp_cfs_upload_status_process_response;
+                CFS_UploadStatusInfo in;
+                in.status = fb_esp_cfs_upload_status_process_response;
+                in.progress = 100;
+                sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+            }
 
             chunkBufSize = stream->available();
 
@@ -1139,7 +1182,7 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
 
                 fbdo->_ss.jsonPtr->setJsonData(fbdo->_ss.cfs.payload.c_str());
                 fbdo->_ss.jsonPtr->get(*fbdo->_ss.dataPtr, pgm2Str(fb_esp_pgm_str_257));
-              
+
                 if (fbdo->_ss.dataPtr->success)
                 {
                     error.code = fbdo->_ss.dataPtr->to<int>();
@@ -1172,6 +1215,80 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo)
     }
 
     return false;
+}
+
+void FB_Firestore::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req, size_t readBytes)
+{
+
+    if (req->size == 0)
+        return;
+
+    int p = 100 * readBytes / req->size;
+
+    if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
+    {
+        req->progress = p;
+
+        fbdo->_ss.cfs.cbUploadInfo.status = fb_esp_cfs_upload_status_upload;
+        CFS_UploadStatusInfo in;
+        in.status = fb_esp_cfs_upload_status_upload;
+        in.progress = p;
+        sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
+    }
+}
+
+void FB_Firestore::sendUploadCallback(FirebaseData *fbdo, CFS_UploadStatusInfo &in, CFS_UploadProgressCallback cb, CFS_UploadStatusInfo *out)
+{
+
+    fbdo->_ss.cfs.cbUploadInfo.status = in.status;
+    fbdo->_ss.cfs.cbUploadInfo.errorMsg = in.errorMsg;
+    fbdo->_ss.cfs.cbUploadInfo.progress = in.progress;
+    fbdo->_ss.cfs.cbUploadInfo.size = in.size;
+
+    if (cb)
+        cb(fbdo->_ss.cfs.cbUploadInfo);
+
+    if (out)
+    {
+        out->errorMsg = fbdo->_ss.cfs.cbUploadInfo.errorMsg;
+        out->status = fbdo->_ss.cfs.cbUploadInfo.status;
+        out->progress = fbdo->_ss.cfs.cbUploadInfo.progress;
+    }
+}
+
+int FB_Firestore::tcpSend(FirebaseData *fbdo, const char *data, struct fb_esp_firestore_req_t *req)
+{
+    size_t len = strlen(data);
+
+#if defined(ESP8266)
+    if (fbdo->_ss.bssl_tx_size < 512)
+        fbdo->_ss.bssl_tx_size = 512;
+    int chunkSize = fbdo->_ss.bssl_tx_size;
+#else
+    int chunkSize = 4096;
+#endif
+
+    int sent = 0;
+    int ret = 0;
+
+    while (sent < (int)len)
+    {
+        if (sent + chunkSize > (int)len)
+            chunkSize = len - sent;
+
+        reportUploadProgress(fbdo, req, sent);
+
+        ret = fbdo->tcpClient.send(data + sent, chunkSize);
+
+        if (ret != 0)
+            return ret;
+
+        sent += chunkSize;
+    }
+
+    reportUploadProgress(fbdo, req, sent);
+
+    return ret;
 }
 
 #endif

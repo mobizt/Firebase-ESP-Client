@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.13
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -556,6 +556,39 @@ void Firebase_Signer::tokenProcessingTask()
 #endif
 }
 
+int Firebase_Signer::tcpSend(const char *data)
+{
+
+    size_t len = strlen(data);
+
+#if defined(ESP8266)
+    int chunkSize = txBufSize;
+#else
+    int chunkSize = 8192;
+#endif
+
+    int sent = 0;
+    int ret = 0;
+
+    if (!ut->reconnect(0))
+        return FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
+
+    while (sent < (int)len)
+    {
+        if (sent + chunkSize > (int)len)
+            chunkSize = len - sent;
+
+        ret = config->signer.wcs->send(data + sent, chunkSize);
+
+        if (ret != 0)
+            return ret;
+
+        sent += chunkSize;
+    }
+
+    return ret;
+}
+
 bool Firebase_Signer::parseJsonResponse(PGM_P key_path)
 {
     config->signer.result->clear();
@@ -565,16 +598,6 @@ bool Firebase_Signer::parseJsonResponse(PGM_P key_path)
 
 bool Firebase_Signer::refreshToken()
 {
-    if (config->_int.fb_reconnect_wifi)
-        ut->reconnect(0);
-
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
-        return false;
-
-    ut->idle();
-
-    if (auth == nullptr)
-        return false;
 
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->_int.fb_processing)
         return false;
@@ -582,38 +605,8 @@ bool Firebase_Signer::refreshToken()
     if (config->_int.ltok_len > 0 || (config->_int.rtok_len == 0 && config->_int.atok_len == 0))
         return false;
 
-    config->signer.tokens.status = token_status_on_refresh;
-    config->_int.fb_processing = true;
-    config->signer.tokens.error.code = 0;
-    config->signer.tokens.error.message.clear();
-    config->_int.fb_last_jwt_generation_error_cb_millis = 0;
-    sendTokenStatusCB();
-    config->_int.auth_token.clear();
-
-#if defined(ESP32)
-    config->signer.wcs = new FB_TCP_Client();
-    config->signer.wcs->setCACert(nullptr);
-#elif defined(ESP8266)
-    config->signer.wcs = new WiFiClientSecure();
-    config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(1024, 1024);
-#endif
-    config->signer.json = new FirebaseJson();
-    config->signer.result = new FirebaseJsonData();
-
-    MB_String host;
-    host.appendP(fb_esp_pgm_str_203);
-    host.appendP(fb_esp_pgm_str_4);
-    host.appendP(fb_esp_pgm_str_120);
-#if defined(ESP32)
-    config->signer.wcs->begin(host.c_str(), 443);
-#elif defined(ESP8266)
-
-    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
-    int ret = config->signer.wcs->connect(host.c_str(), 443);
-    if (ret == 0)
-        return handleSignerError(1);
-#endif
+    if (!initClient(fb_esp_pgm_str_203, true))
+        return false;
 
     config->signer.json->add(pgm2Str(fb_esp_pgm_str_205), pgm2Str(fb_esp_pgm_str_206));
     config->signer.json->add(pgm2Str(fb_esp_pgm_str_207), config->_int.refresh_token.c_str());
@@ -643,18 +636,11 @@ bool Firebase_Signer::refreshToken()
     req.appendP(fb_esp_pgm_str_21);
 
     req += s.c_str();
-#if defined(ESP32)
-    int ret = config->signer.wcs->send(req.c_str());
+
+    int ret = tcpSend(req.c_str());
     req.clear();
     if (ret < 0)
         return handleSignerError(2);
-#elif defined(ESP8266)
-    size_t sz = req.length();
-    size_t len = config->signer.wcs->print(req.c_str());
-    req.clear();
-    if (len != sz)
-        return handleSignerError(2);
-#endif
 
     struct fb_esp_auth_token_error_t error;
 
@@ -777,24 +763,19 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
         sendTokenStatusCB();
         break;
     case 2:
-#if defined(ESP32)
+
         if (config->signer.wcs->stream())
             config->signer.wcs->stream()->stop();
-#elif defined(ESP8266)
-        config->signer.wcs->stop();
-#endif
+
         config->signer.tokens.error.message.clear();
         setTokenError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
         config->_int.fb_last_jwt_generation_error_cb_millis = 0;
         sendTokenStatusCB();
         break;
     case 3:
-#if defined(ESP32)
+
         if (config->signer.wcs->stream())
             config->signer.wcs->stream()->stop();
-#elif defined(ESP8266)
-        config->signer.wcs->stop();
-#endif
 
         if (httpCode == 0)
         {
@@ -880,11 +861,9 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
     int chunkedDataLen = 0;
     MB_String header, payload;
     bool isHeader = false;
-#if defined(ESP32)
+
     WiFiClient *stream = config->signer.wcs->stream();
-#elif defined(ESP8266)
-    WiFiClient *stream = config->signer.wcs;
-#endif
+
     while (stream->connected() && stream->available() == 0)
     {
         if (!ut->reconnect(dataTime))
@@ -1333,59 +1312,14 @@ bool Firebase_Signer::createJWT()
 
 bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringPtr password)
 {
-    if (config->_int.fb_reconnect_wifi)
-        ut->reconnect(0);
-
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
-        return false;
 
     config->signer.signup = false;
-    ut->idle();
-
-    if (auth == nullptr)
-        return false;
 
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->_int.fb_processing)
         return false;
 
-    if (!createUser)
-    {
-        config->signer.tokens.status = token_status_on_request;
-        config->_int.fb_processing = true;
-        config->signer.tokens.error.code = 0;
-        config->signer.tokens.error.message.clear();
-        config->_int.fb_last_jwt_generation_error_cb_millis = 0;
-        sendTokenStatusCB();
-    }
-
-#if defined(ESP32)
-    config->signer.wcs = new FB_TCP_Client();
-    config->signer.wcs->setCACert(nullptr);
-#elif defined(ESP8266)
-    config->signer.wcs = new WiFiClientSecure();
-    config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(1024, 1024);
-#endif
-    config->signer.json = new FirebaseJson();
-    config->signer.result = new FirebaseJsonData();
-
-    MB_String host;
-    if (createUser)
-        host.appendP(fb_esp_pgm_str_250);
-    else
-        host.appendP(fb_esp_pgm_str_193);
-    host.appendP(fb_esp_pgm_str_4);
-    host.appendP(fb_esp_pgm_str_120);
-
-#if defined(ESP32)
-    config->signer.wcs->begin(host.c_str(), 443);
-#elif defined(ESP8266)
-
-    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
-    int ret = config->signer.wcs->connect(host.c_str(), 443);
-    if (ret == 0)
-        return handleSignerError(1);
-#endif
+    if (!initClient(createUser ? fb_esp_pgm_str_250 : fb_esp_pgm_str_193, !createUser))
+        return false;
 
     if (createUser)
     {
@@ -1440,18 +1374,10 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
     req += config->signer.json->raw();
 
-#if defined(ESP32)
-    int ret = config->signer.wcs->send(req.c_str());
+    int ret = tcpSend(req.c_str());
     req.clear();
     if (ret < 0)
         return handleSignerError(2);
-#elif defined(ESP8266)
-    size_t sz = req.length();
-    size_t len = config->signer.wcs->print(req.c_str());
-    req.clear();
-    if (len != sz)
-        return handleSignerError(2);
-#endif
 
     config->signer.json->clear();
 
@@ -1525,48 +1451,16 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
 bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
 {
-    if (config->_int.fb_reconnect_wifi)
-        ut->reconnect(0);
-
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
-        return false;
-
-    config->signer.signup = false;
-    ut->idle();
-
-    if (auth == nullptr)
-        return false;
 
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->_int.fb_processing)
         return false;
 
+    if (!initClient(fb_esp_pgm_str_250, false))
+        return false;
+
+    config->signer.signup = false;
+
     config->_int.fb_processing = true;
-
-#if defined(ESP32)
-    config->signer.wcs = new FB_TCP_Client();
-    config->signer.wcs->setCACert(nullptr);
-#elif defined(ESP8266)
-    config->signer.wcs = new WiFiClientSecure();
-    config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(1024, 1024);
-#endif
-    config->signer.json = new FirebaseJson();
-    config->signer.result = new FirebaseJsonData();
-
-    MB_String host;
-    host.appendP(fb_esp_pgm_str_250);
-    host.appendP(fb_esp_pgm_str_4);
-    host.appendP(fb_esp_pgm_str_120);
-
-#if defined(ESP32)
-    config->signer.wcs->begin(host.c_str(), 443);
-#elif defined(ESP8266)
-
-    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
-    int ret = config->signer.wcs->connect(host.c_str(), 443);
-    if (ret == 0)
-        return handleSignerError(1);
-#endif
 
     MB_String _idToken = idToken;
     if (_idToken.length() > 0)
@@ -1600,18 +1494,10 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
 
     req += config->signer.json->raw();
 
-#if defined(ESP32)
-    int ret = config->signer.wcs->send(req.c_str());
+    int ret = tcpSend(req.c_str());
     req.clear();
     if (ret < 0)
         return handleSignerError(2);
-#elif defined(ESP8266)
-    size_t sz = req.length();
-    size_t len = config->signer.wcs->print(req.c_str());
-    req.clear();
-    if (len != sz)
-        return handleSignerError(2);
-#endif
 
     config->signer.json->clear();
 
@@ -1652,7 +1538,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     return handleSignerError(4, httpCode);
 }
 
-bool Firebase_Signer::requestTokens()
+bool Firebase_Signer::initClient(PGM_P subDomain, bool sendStatus)
 {
     if (config->_int.fb_reconnect_wifi)
         ut->reconnect(0);
@@ -1662,29 +1548,26 @@ bool Firebase_Signer::requestTokens()
 
     ut->idle();
 
-    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || time(nullptr) < ut->default_ts || config->_int.fb_processing)
-        return false;
+    if (sendStatus)
+    {
+        config->signer.tokens.status = token_status_on_request;
+        config->_int.fb_processing = true;
+        config->signer.tokens.error.code = 0;
+        config->signer.tokens.error.message.clear();
+        config->_int.fb_last_jwt_generation_error_cb_millis = 0;
+        sendTokenStatusCB();
+    }
 
-    config->signer.tokens.status = token_status_on_request;
-    config->_int.fb_processing = true;
-    config->signer.tokens.error.code = 0;
-    config->signer.tokens.error.message.clear();
-    config->_int.fb_last_jwt_generation_error_cb_millis = 0;
-    sendTokenStatusCB();
-
-#if defined(ESP32)
     config->signer.wcs = new FB_TCP_Client();
     config->signer.wcs->setCACert(nullptr);
-#elif defined(ESP8266)
-    config->signer.wcs = new WiFiClientSecure();
-    config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(1024, 1024);
+#if defined(ESP8266)
+    config->signer.wcs->setBufferSizes(rxBufSize, txBufSize);
 #endif
     config->signer.json = new FirebaseJson();
     config->signer.result = new FirebaseJsonData();
 
     MB_String host;
-    host.appendP(fb_esp_pgm_str_193);
+    host.appendP(subDomain);
     host.appendP(fb_esp_pgm_str_4);
     host.appendP(fb_esp_pgm_str_120);
 
@@ -1694,10 +1577,21 @@ bool Firebase_Signer::requestTokens()
 #elif defined(ESP8266)
 
     ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
-    int ret = config->signer.wcs->connect(host.c_str(), 443);
-    if (ret == 0)
-        return handleSignerError(1);
+    config->signer.wcs->begin(host.c_str(), 443);
+
 #endif
+
+    return true;
+}
+
+bool Firebase_Signer::requestTokens()
+{
+
+    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || time(nullptr) < ut->default_ts || config->_int.fb_processing)
+        return false;
+
+    if (!initClient(fb_esp_pgm_str_193, false))
+        return false;
 
     MB_String req;
     req.appendP(fb_esp_pgm_str_24);
@@ -1743,19 +1637,11 @@ bool Firebase_Signer::requestTokens()
     req.appendP(fb_esp_pgm_str_21);
 
     req += config->signer.json->raw();
-#if defined(ESP32)
-    config->signer.wcs->setInsecure();
-    int ret = config->signer.wcs->send(req.c_str());
+
+    int ret = tcpSend(req.c_str());
     req.clear();
     if (ret < 0)
         return handleSignerError(2);
-#elif defined(ESP8266)
-    size_t sz = req.length();
-    size_t len = config->signer.wcs->print(req.c_str());
-    req.clear();
-    if (len != sz)
-        return handleSignerError(2);
-#endif
 
     struct fb_esp_auth_token_error_t error;
 
@@ -1849,46 +1735,16 @@ void Firebase_Signer::getExpiration(const char *exp)
 
 bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email_sending_type type)
 {
-    if (config->_int.fb_reconnect_wifi)
-        ut->reconnect(0);
-
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp(&config->spi_ethernet_module))
-        return false;
-
-    ut->idle();
 
     if (config->_int.fb_processing)
+        return false;
+
+    if (!initClient(fb_esp_pgm_str_193, false))
         return false;
 
     MB_String _payload = payload;
 
     config->_int.fb_processing = true;
-
-#if defined(ESP32)
-    config->signer.wcs = new FB_TCP_Client();
-    config->signer.wcs->setCACert(nullptr);
-#elif defined(ESP8266)
-    config->signer.wcs = new WiFiClientSecure();
-    config->signer.wcs->setInsecure();
-    config->signer.wcs->setBufferSizes(1024, 1024);
-#endif
-    config->signer.json = new FirebaseJson();
-    config->signer.result = new FirebaseJsonData();
-
-    MB_String host;
-    host.appendP(fb_esp_pgm_str_193);
-    host.appendP(fb_esp_pgm_str_4);
-    host.appendP(fb_esp_pgm_str_120);
-
-#if defined(ESP32)
-    config->signer.wcs->begin(host.c_str(), 443);
-#elif defined(ESP8266)
-
-    ut->ethDNSWorkAround(&ut->config->spi_ethernet_module, host.c_str(), 443);
-    int ret = config->signer.wcs->connect(host.c_str(), 443);
-    if (ret == 0)
-        return handleSignerError(1);
-#endif
 
     if (type == fb_esp_user_email_sending_type_verify)
     {
@@ -1943,18 +1799,10 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
 
     req += s.c_str();
 
-#if defined(ESP32)
-    int ret = config->signer.wcs->send(req.c_str());
+    int ret = tcpSend(req.c_str());
     req.clear();
     if (ret < 0)
         return handleSignerError(2);
-#elif defined(ESP8266)
-    size_t sz = req.length();
-    size_t len = config->signer.wcs->print(req.c_str());
-    req.clear();
-    if (len != sz)
-        return handleSignerError(2);
-#endif
 
     config->signer.json->clear();
 

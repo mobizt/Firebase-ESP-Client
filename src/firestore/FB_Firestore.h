@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.1.10
+ * Google's Cloud Firestore class, Forestore.h version 1.1.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created January 18, 2022
+ * Created January 21, 2022
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -346,7 +346,10 @@ private:
     bool connect(FirebaseData *fbdo);
     bool sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
     bool firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
-    bool handleResponse(FirebaseData *fbdo);
+    bool handleResponse(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
+    void reportUploadProgress(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req, size_t readBytes);
+    int tcpSend(FirebaseData *fbdo, const char *data, struct fb_esp_firestore_req_t *req);
+    void sendUploadCallback(FirebaseData *fbdo, CFS_UploadStatusInfo &in, CFS_UploadProgressCallback cb, CFS_UploadStatusInfo *out);
     bool setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms);
     bool mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, MB_StringPtr transaction, bool async = false);
     bool mExportDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr bucketID, MB_StringPtr storagePath, MB_StringPtr collectionIds);
