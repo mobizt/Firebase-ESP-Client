@@ -3,9 +3,9 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt/FirebaseJson
+ * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2022 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
@@ -16,12 +16,11 @@
 #include <ESP8266WiFi.h>
 #endif
 
+//This example is for ESP8266 and ESP32
+
 #include <WiFiClientSecure.h>
 
-//Enable WiFiClientSecure library after include the library and before include the FirebaseJson.
-//If you are using the library that built in the FirebaseJson and get the compilation error,
-//move #define FBJS_ENABLE_WIFI_CLIENT_SECURE to the top above that library inclusion.
-#define FBJS_ENABLE_WIFI_CLIENT_SECURE
+
 #include <FirebaseJson.h>
 
 /* Define the WiFi credentials */

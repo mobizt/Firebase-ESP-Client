@@ -29,11 +29,11 @@
  * 
 */
 
-#include <Firebase_ESP_Client.h>
-
 #include <ENC28J60lwIP.h>
 //#include <W5100lwIP.h>
 //#include <W5500lwIP.h>
+
+#include <Firebase_ESP_Client.h>
 
 //Provide the token generation process info.
 #include <addons/TokenHelper.h>

@@ -3,55 +3,53 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt/FirebaseJson
+ * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2022 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
-#include <Arduino.h>
-#if defined(ESP32)
-#include <WiFi.h>
+//https://github.com/arduino-libraries/ArduinoMqttClient
+#include <ArduinoMqttClient.h>
+#if defined(ARDUINO_SAMD_MKRWIFI1010) || defined(ARDUINO_SAMD_NANO_33_IOT) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
+#include <WiFiNINA.h>
+#elif defined(ARDUINO_SAMD_MKR1000)
+#include <WiFi101.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
 #endif
 
-#include <WiFiClientSecure.h>
+//Enable LW MQTT library after include the library and before include the FirebaseJson.
+
+#include <FirebaseJson.h>
 
 /* Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-//https://github.com/arduino-libraries/ArduinoMqttClient
-#include <ArduinoMqttClient.h>
-
-//Enable Arduino MQTT library after include the library and before include the FirebaseJson.
-//If you are using the library that built in the FirebaseJson and get the compilation error,
-//move #define FBJS_ENABLE_ARDUINO_MQTT to the top above that library inclusion.
-#define FBJS_ENABLE_ARDUINO_MQTT
-#include <FirebaseJson.h>
-
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
 unsigned long lastMillis = 0;
+
 int count = 0;
 
-void onMqttMessage(int messageSize)
-{
-    Serial.print("Got message, topic: ");
-    Serial.print(mqttClient.messageTopic());
-    Serial.print(", message: ");
-    while (mqttClient.available())
-    {
-        Serial.print((char)mqttClient.read());
-    }
-    Serial.println();
-}
+const char broker[] = "test.mosquitto.org";
+int port = 1883;
+const char topic[] = "arduino/simple";
+
+const long interval = 1000;
+unsigned long previousMillis = 0;
+
+bool mqttReady = false;
 
 void setup()
 {
+
     Serial.begin(115200);
+    Serial.println();
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     Serial.print("Connecting to Wi-Fi");
@@ -65,35 +63,48 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    Serial.print("Connecting to MQTT broker");
-    if (!mqttClient.connect("test.mosquitto.org", 1883))
+    Serial.print("Attempting to connect to the MQTT broker: ");
+    Serial.println(broker);
+
+    if (!mqttClient.connect(broker, port))
     {
-        Serial.print(", failed! Error code = ");
+        Serial.print("MQTT connection failed! Error code = ");
         Serial.println(mqttClient.connectError());
-
-        while (1)
-        {
-            delay(0);
-        }
+        return;
     }
-    Serial.println(", connected.");
+    mqttReady = true;
 
-    mqttClient.onMessage(onMqttMessage);
-
-    mqttClient.subscribe("hello");
+    Serial.println("You're connected to the MQTT broker!");
+    Serial.println();
 }
 
 void loop()
 {
+    if (!mqttReady)
+        return;
+
     mqttClient.poll();
+
     if (millis() - lastMillis > 1000)
     {
         lastMillis = millis();
+
+        Serial.print("Sending message to topic: ");
+
+        Serial.println(topic);
+
         FirebaseJson json;
         json.add("abc", count);
         json.add("def", count % 5 == 0);
-        mqttClient.beginMessage("hello");
+
+        json.toString(Serial);
+        Serial.println();
+
+        // send message, the Print interface can be used to set the message contents
+        mqttClient.beginMessage(topic);
+
         json.toString(mqttClient);
+
         mqttClient.endMessage();
         count++;
     }

@@ -112,8 +112,19 @@ void loop()
 
     for (size_t i = 0; i < 10; i++)
     {
-      //The response is ignored in this async function, it may return true as long as the connection is established.
-      //The purpose for this async function is to set, push and update data instantly.
+
+      // The purpose for this async function is to set, push and update data instantly but...
+
+      //The async function is implemented by the library and not supported by Firebase.
+
+      // When use this async function, the response will be ignored, then sometimes server may reject the subsequence requests or
+      // full of receive buffer can be interrupted the async continuous operation.
+
+      // You do not need to use these async functions in general usage.
+
+      // Use library in Test Mode (see examples/Authentication/TestMode) or legacy database secret authentication,
+      // the speed of data transfer will be increased.
+
       Firebase.RTDB.setIntAsync(&fbdo, "/test/int", count);
       count++;
     }
