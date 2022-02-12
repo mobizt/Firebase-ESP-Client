@@ -1,14 +1,12 @@
-
 /*
- * FirebaseJson, version 2.6.6
+ * FirebaseJson, version 2.6.10
  * 
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * Created January 18, 2022
+ * Created February 11, 2022
  * 
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
- * - Able to search with key/path and value in JSON object and array
  * - Serializing to writable objects e.g. String, C/C++ string, Client (WiFi and Ethernet), File and Hardware Serial.
  * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and 
  *   Hardware Serial.
@@ -102,7 +100,7 @@ void FirebaseJsonBase::prepareRoot()
     }
 }
 
-void FirebaseJsonBase::searchElements(std::vector<MB_String> &keys, MB_JSON *parent, struct search_result_t &r)
+void FirebaseJsonBase::searchElements(MB_VECTOR<MB_String> &keys, MB_JSON *parent, struct search_result_t &r)
 {
     MB_JSON *e = parent;
     for (size_t i = 0; i < keys.size(); i++)
@@ -149,7 +147,7 @@ MB_JSON *FirebaseJsonBase::getElement(MB_JSON *parent, const char *key, struct s
     return e;
 }
 
-void FirebaseJsonBase::mAdd(std::vector<MB_String> keys, MB_JSON **parent, int beginIndex, MB_JSON *value)
+void FirebaseJsonBase::mAdd(MB_VECTOR<MB_String> keys, MB_JSON **parent, int beginIndex, MB_JSON *value)
 {
     MB_JSON *m_parent = *parent;
 
@@ -187,7 +185,7 @@ void FirebaseJsonBase::mAdd(std::vector<MB_String> keys, MB_JSON **parent, int b
     }
 }
 
-void FirebaseJsonBase::makeList(const char *str, std::vector<MB_String> &keys, char delim)
+void FirebaseJsonBase::makeList(const char *str, MB_VECTOR<MB_String> &keys, char delim)
 {
     clearList(keys);
 
@@ -219,7 +217,7 @@ void FirebaseJsonBase::makeList(const char *str, std::vector<MB_String> &keys, c
     s.clear();
 }
 
-void FirebaseJsonBase::clearList(std::vector<MB_String> &keys)
+void FirebaseJsonBase::clearList(MB_VECTOR<MB_String> &keys)
 {
     size_t len = keys.size();
     for (size_t i = 0; i < len; i++)
@@ -227,7 +225,9 @@ void FirebaseJsonBase::clearList(std::vector<MB_String> &keys)
     for (int i = len - 1; i >= 0; i--)
         keys.erase(keys.begin() + i);
     keys.clear();
-    std::vector<MB_String>().swap(keys);
+#if defined(MB_USE_STD_VECTOR)
+    MB_VECTOR<MB_String>().swap(keys);
+#endif
 }
 
 bool FirebaseJsonBase::isArray(MB_JSON *e)
@@ -247,7 +247,7 @@ MB_JSON *FirebaseJsonBase::addArray(MB_JSON *parent, MB_JSON *e, size_t size)
     return e;
 }
 
-void FirebaseJsonBase::appendArray(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
+void FirebaseJsonBase::appendArray(MB_VECTOR<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
 {
     MB_JSON *item = NULL;
 
@@ -282,7 +282,7 @@ void FirebaseJsonBase::appendArray(std::vector<MB_String> &keys, struct search_r
         MB_JSON_Delete(value);
 }
 
-void FirebaseJsonBase::replaceItem(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
+void FirebaseJsonBase::replaceItem(MB_VECTOR<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value)
 {
     if (r.foundIndex == -1)
     {
@@ -323,7 +323,7 @@ void FirebaseJsonBase::replaceItem(std::vector<MB_String> &keys, struct search_r
     }
 }
 
-void FirebaseJsonBase::replace(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item)
+void FirebaseJsonBase::replace(MB_VECTOR<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item)
 {
     if (isArray(parent))
         MB_JSON_ReplaceItemInArray(parent, getArrIndex(keys[r.foundIndex].c_str()), item);
@@ -346,7 +346,7 @@ size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent)
     return iterator_data.result.size();
 }
 
-size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent, std::vector<MB_String> *keys)
+size_t FirebaseJsonBase::mIteratorBegin(MB_JSON *parent, MB_VECTOR<MB_String> *keys)
 {
     mIteratorEnd();
 
@@ -584,7 +584,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
 {
     bool ret = false;
     prepareRoot();
-    std::vector<MB_String> keys = std::vector<MB_String>();
+    MB_VECTOR<MB_String> keys = MB_VECTOR<MB_String>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -623,7 +623,7 @@ bool FirebaseJsonBase::mRemove(const char *path)
     return ret;
 }
 
-void FirebaseJsonBase::mGetPath(MB_String &path, std::vector<MB_String> paths, int begin, int end)
+void FirebaseJsonBase::mGetPath(MB_String &path, MB_VECTOR<MB_String> paths, int begin, int end)
 {
     if (end < 0 || end >= (int)paths.size())
         end = paths.size() - 1;
@@ -664,7 +664,7 @@ bool FirebaseJsonBase::mGet(MB_JSON *parent, FirebaseJsonData *result, const cha
 {
     bool ret = false;
     prepareRoot();
-    std::vector<MB_String> keys = std::vector<MB_String>();
+    MB_VECTOR<MB_String> keys = MB_VECTOR<MB_String>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -714,7 +714,11 @@ void FirebaseJsonBase::mSetResInt(FirebaseJsonData *data, const char *value)
     if (strlen(value) > 0)
     {
         char *pEnd;
+#if !defined(__AVR__)
         value[0] == '-' ? data->iVal.int64 = strtoll(value, &pEnd, 10) : data->iVal.uint64 = strtoull(value, &pEnd, 10);
+#else
+        value[0] == '-' ? data->iVal.int64 = strtol(value, &pEnd, 10) : data->iVal.uint64 = strtoull_alt(value);
+#endif
     }
     else
         data->iVal = {0};
@@ -816,7 +820,7 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
 void FirebaseJsonBase::mSet(const char *path, MB_JSON *value)
 {
     prepareRoot();
-    std::vector<MB_String> keys = std::vector<MB_String>();
+    MB_VECTOR<MB_String> keys = MB_VECTOR<MB_String>();
     makeList(path, keys, '/');
 
     if (keys.size() > 0)
@@ -849,6 +853,18 @@ void FirebaseJsonBase::mSet(const char *path, MB_JSON *value)
     clearList(keys);
 }
 
+#if defined(__AVR__)
+unsigned long long FirebaseJsonBase::strtoull_alt(const char *s)
+{
+    unsigned long long sum = 0;
+    while (*s)
+    {
+        sum = sum * 10 + (*s++ - '0');
+    }
+    return sum;
+}
+#endif
+
 FirebaseJson &FirebaseJson::operator=(FirebaseJson other)
 {
     if (isObject(other.root))
@@ -870,9 +886,10 @@ FirebaseJson::~FirebaseJson()
 FirebaseJson &FirebaseJson::nAdd(const char *key, MB_JSON *value)
 {
     prepareRoot();
-    std::vector<MB_String> keys = std::vector<MB_String>();
+    MB_VECTOR<MB_String> keys = MB_VECTOR<MB_String>();
     //makeList(key, keys, '/');
-    keys.push_back(key);
+    MB_String ky = key;
+    keys.push_back(ky);
 
     if (value == NULL)
         value = MB_JSON_CreateNull();
@@ -1038,6 +1055,59 @@ bool FirebaseJsonData::mGetJSON(const char *source, FirebaseJson &json)
     json.root = json.parse(source);
 
     return json.root != NULL;
+}
+
+size_t FirebaseJsonData::getReservedLen(size_t len)
+{
+    int blen = len + 1;
+
+    int newlen = (blen / 4) * 4;
+
+    if (newlen < blen)
+        newlen += 4;
+
+    return (size_t)newlen;
+}
+
+void FirebaseJsonData::delP(void *ptr)
+{
+    void **p = (void **)ptr;
+    if (*p)
+    {
+        free(*p);
+        *p = 0;
+    }
+}
+
+void *FirebaseJsonData::newP(size_t len)
+{
+    void *p;
+    size_t newLen = getReservedLen(len);
+#if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
+
+    p = (void *)ps_malloc(newLen);
+    if (!p)
+        return NULL;
+
+#else
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+    ESP.setExternalHeap();
+#endif
+
+    p = (void *)malloc(newLen);
+    bool nn = p ? true : false;
+
+#if defined(ESP8266_USE_EXTERNAL_HEAP)
+    ESP.resetHeap();
+#endif
+
+    if (!nn)
+        return NULL;
+
+#endif
+    memset(p, 0, newLen);
+    return p;
 }
 
 void FirebaseJsonData::clear()

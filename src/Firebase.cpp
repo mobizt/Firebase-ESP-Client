@@ -1,40 +1,41 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.17
- * 
- *  Created January 18, 2022
- * 
+ * The Firebase class, Firebase.cpp v1.0.18
+ *
+ *  Created February 10, 2022
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef Firebase_CPP
 #define Firebase_CPP
 
-#if defined(ESP8266) || defined(ESP32)
-
 #include "Firebase.h"
+
+#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #if defined(FIREBASE_ESP_CLIENT)
 
-Firebase_ESP_Client::Firebase_ESP_Client() {
+Firebase_ESP_Client::Firebase_ESP_Client()
+{
 
     if (!mbfs)
         mbfs = new MB_FS();
@@ -69,7 +70,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
         Signer.authChanged(config, auth);
 
         struct fb_esp_url_info_t uinfo;
-        cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
+        cfg->internal.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
 
         if (cfg->host.length() > 0)
             cfg->database_url = cfg->host;
@@ -83,6 +84,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
         if (cfg->cert.file.length() > 0)
             mbfs->checkStorageReady(mbfs_type cfg->cert.file_storage);
     }
+
     Signer.handleToken();
 }
 
@@ -135,24 +137,24 @@ void Firebase_ESP_Client::mSetIdToken(FirebaseConfig *config, MB_StringPtr idTok
 
     if (_idToken.length() > 0)
     {
-        if (_idToken.length() == 0 || strcmp(config->_int.auth_token.c_str(), _idToken.c_str()) == 0)
+        if (_idToken.length() == 0 || strcmp(config->internal.auth_token.c_str(), _idToken.c_str()) == 0)
             return;
 
         _idToken.clear();
 
-        config->_int.auth_token = idToken;
-        config->_int.atok_len = config->_int.auth_token.length();
-        config->_int.ltok_len = 0;
+        config->internal.auth_token = idToken;
+        config->internal.atok_len = config->internal.auth_token.length();
+        config->internal.ltok_len = 0;
 
         if (expire > 3600)
             expire = 3600;
 
-        config->signer.tokens.expires += time(nullptr) + expire;
+        config->signer.tokens.expires += Signer.getTime() + expire;
 
         config->signer.tokens.status = token_status_ready;
         config->signer.attempts = 0;
         config->signer.step = fb_esp_jwt_generation_step_begin;
-        config->_int.fb_last_jwt_generation_error_cb_millis = 0;
+        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         config->signer.tokens.token_type = token_type_id_token;
         config->signer.anonymous = true;
         config->signer.idTokenCutomSet = true;
@@ -196,7 +198,7 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
     GCStorage.begin(ut);
 #endif
 
-    cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
+    cfg->internal.fb_reconnect_wifi = Signer.autoReconnectWiFi;
 
     cfg->signer.lastReqMillis = 0;
 
@@ -210,7 +212,33 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
 
 void Firebase_ESP_Client::reconnectWiFi(bool reconnect)
 {
+#if defined(ESP32) || defined(ESP8266)
     WiFi.setAutoReconnect(reconnect);
+#endif
+    Signer.setAutoReconnectWiFi(reconnect);
+}
+
+time_t Firebase_ESP_Client::getCurrentTime()
+{
+    return Signer.getTime();
+}
+
+int Firebase_ESP_Client::getFreeHeap()
+{
+#if defined(ESP32) || defined(ESP8266)
+    return ESP.getFreeHeap();
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(TEENSYDUINO)
+    char top;
+#ifdef __arm__
+    return &top - reinterpret_cast<char *>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+    return &top - __brkval;
+#else  // __arm__
+    return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif // __arm__
+#else
+    return 0;
+#endif
 }
 
 const char *Firebase_ESP_Client::getToken()
@@ -220,17 +248,23 @@ const char *Firebase_ESP_Client::getToken()
 
 void Firebase_ESP_Client::setFloatDigits(uint8_t digits)
 {
+    if (!cfg)
+        return;
+        
     if (digits < 7 && cfg)
-        cfg->_int.fb_float_digits = digits;
+        cfg->internal.fb_float_digits = digits;
 }
 
 void Firebase_ESP_Client::setDoubleDigits(uint8_t digits)
 {
+    if (!cfg)
+        return;
+
     if (digits < 9 && cfg)
-        cfg->_int.fb_double_digits = digits;
+        cfg->internal.fb_double_digits = digits;
 }
 
-#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
+#if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 
 bool Firebase_ESP_Client::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
@@ -240,7 +274,7 @@ bool Firebase_ESP_Client::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mos
 #if defined(ESP8266)
 bool Firebase_ESP_Client::sdBegin(SDFSConfig *sdFSConfig)
 {
-    return ut->mbfs->sdFatBegin(sdFSConfig);
+    return mbfs->sdFatBegin(sdFSConfig);
 }
 #endif
 
@@ -248,20 +282,20 @@ bool Firebase_ESP_Client::sdBegin(SDFSConfig *sdFSConfig)
 
 bool Firebase_ESP_Client::sdBegin(int8_t ss, SPIClass *spiConfig)
 {
-    return ut->mbfs->sdSPIBegin(ss, spiConfig);
+    return mbfs->sdSPIBegin(ss, spiConfig);
 }
 #endif
 
-#if defined(USE_SD_FAT_ESP32)
+#if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
 bool Firebase_ESP_Client::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
-    return ut->mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
+    return mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
 }
 #endif
 
 #endif
 
-#if defined(ESP8266) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP8266) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
 
 bool Firebase_ESP_Client::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
 {
@@ -273,7 +307,7 @@ bool Firebase_ESP_Client::sdMMCBegin(const char *mountpoint, bool mode1bit, bool
 
 bool Firebase_ESP_Client::setSystemTime(time_t ts)
 {
-    return ut->setTimestamp(ts) == 0;
+    return Signer.setTime(ts);
 }
 
 Firebase_ESP_Client Firebase = Firebase_ESP_Client();
@@ -319,7 +353,7 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
         Signer.authChanged(config, auth);
 
         struct fb_esp_url_info_t uinfo;
-        cfg->_int.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
+        cfg->internal.fb_auth_uri = cfg->signer.tokens.token_type == token_type_legacy_token || cfg->signer.tokens.token_type == token_type_id_token;
 
         if (cfg->host.length() > 0)
             cfg->database_url = cfg->host;
@@ -394,24 +428,24 @@ void FIREBASE_CLASS::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, s
 
     if (_idToken.length() > 0)
     {
-        if (_idToken.length() == 0 || strcmp(config->_int.auth_token.c_str(), _idToken.c_str()) == 0)
+        if (_idToken.length() == 0 || strcmp(config->internal.auth_token.c_str(), _idToken.c_str()) == 0)
             return;
 
         _idToken.clear();
 
-        config->_int.auth_token = idToken;
-        config->_int.atok_len = config->_int.auth_token.length();
-        config->_int.ltok_len = 0;
+        config->internal.auth_token = idToken;
+        config->internal.atok_len = config->internal.auth_token.length();
+        config->internal.ltok_len = 0;
 
         if (expire > 3600)
             expire = 3600;
 
-        config->signer.tokens.expires += time(nullptr) + expire;
+        config->signer.tokens.expires += Signer.getTime() + expire;
 
         config->signer.tokens.status = token_status_ready;
         config->signer.attempts = 0;
         config->signer.step = fb_esp_jwt_generation_step_begin;
-        config->_int.fb_last_jwt_generation_error_cb_millis = 0;
+        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         config->signer.tokens.token_type = token_type_id_token;
         config->signer.anonymous = true;
         config->signer.idTokenCutomSet = true;
@@ -442,7 +476,8 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
 #ifdef ENABLE_RTDB
     RTDB.begin(ut);
 #endif
-    cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
+
+    cfg->internal.fb_reconnect_wifi = Signer.autoReconnectWiFi;
 
     cfg->signer.lastReqMillis = 0;
 
@@ -456,7 +491,10 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
 
 void FIREBASE_CLASS::reconnectWiFi(bool reconnect)
 {
+#if defined(ESP32) || defined(ESP8266)
     WiFi.setAutoReconnect(reconnect);
+#endif
+    Signer.setAutoReconnectWiFi(reconnect);
 }
 
 const char *FIREBASE_CLASS::getToken()
@@ -464,27 +502,56 @@ const char *FIREBASE_CLASS::getToken()
     return Signer.getToken();
 }
 
+int FIREBASE_CLASS::getFreeHeap()
+{
+#if defined(ESP32) || defined(ESP8266)
+    return ESP.getFreeHeap();
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(TEENSYDUINO)
+    char top;
+#ifdef __arm__
+    return &top - reinterpret_cast<char *>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+    return &top - __brkval;
+#else  // __arm__
+    return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif // __arm__
+#else
+    return 0;
+#endif
+}
+
+time_t FIREBASE_CLASS::getCurrentTime()
+{
+    return Signer.getTime();
+}
+
 void FIREBASE_CLASS::setFloatDigits(uint8_t digits)
 {
+    if (!cfg)
+        return;
+
     if (digits < 7)
-        cfg->_int.fb_float_digits = digits;
+        cfg->internal.fb_float_digits = digits;
 }
 
 void FIREBASE_CLASS::setDoubleDigits(uint8_t digits)
 {
+    if (!cfg)
+        return;
+
     if (digits < 9)
-        cfg->_int.fb_double_digits = digits;
+        cfg->internal.fb_double_digits = digits;
 }
 
 #ifdef ENABLE_FCM
 bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
-    fbdo._spi_ethernet_module = fbdo.fcm._spi_ethernet_module;
+    fbdo.tcpClient.setSPIEthernet(fbdo.fcm._spi_ethernet_module);
 
     if (!fbdo.reconnect())
         return false;
 
-    if (!ut->waitIdle(fbdo._ss.http_code))
+    if (!ut->waitIdle(fbdo.session.http_code))
         return false;
 
     FirebaseJsonData data;
@@ -492,20 +559,19 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
-    MB_String s;
-    s.appendP(fb_esp_pgm_str_577, true);
+    MB_String s = fb_esp_pgm_str_577;
 
     json->get(data, s.c_str());
 
     if (data.stringValue.length() == 0)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo.session.http_code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
     if (fbdo.fcm.idTokens.length() == 0 && messageType == fb_esp_fcm_msg_type::msg_single)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED;
+        fbdo.session.http_code = FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED;
         return false;
     }
 
@@ -514,17 +580,17 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
 
     if (messageType == fb_esp_fcm_msg_type::msg_single && fbdo.fcm.idTokens.length() > 0 && fbdo.fcm._index > arr->size() - 1)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_FCM_ID_TOKEN_AT_INDEX_NOT_FOUND;
+        fbdo.session.http_code = FIREBASE_ERROR_FCM_ID_TOKEN_AT_INDEX_NOT_FOUND;
         return false;
     }
 
-    s.appendP(fb_esp_pgm_str_576, true);
+    s = fb_esp_pgm_str_576;
 
     json->get(data, s.c_str());
 
     if (messageType == fb_esp_fcm_msg_type::msg_topic && data.stringValue.length() == 0)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_NO_FCM_TOPIC_PROVIDED;
+        fbdo.session.http_code = FIREBASE_ERROR_NO_FCM_TOPIC_PROVIDED;
         return false;
     }
 
@@ -554,7 +620,7 @@ bool FIREBASE_CLASS::sendTopic(FirebaseData &fbdo)
 
 #endif
 
-#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
+#if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 
 bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
@@ -564,7 +630,7 @@ bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 #if defined(ESP8266)
 bool FIREBASE_CLASS::sdBegin(SDFSConfig *sdFSConfig)
 {
-    return ut->mbfs->sdFatBegin(sdFSConfig);
+    return mbfs->sdFatBegin(sdFSConfig);
 }
 #endif
 
@@ -572,20 +638,20 @@ bool FIREBASE_CLASS::sdBegin(SDFSConfig *sdFSConfig)
 
 bool FIREBASE_CLASS::sdBegin(int8_t ss, SPIClass *spiConfig)
 {
-    return ut->mbfs->sdSPIBegin(ss, spiConfig);
+    return mbfs->sdSPIBegin(ss, spiConfig);
 }
 #endif
 
-#if defined(USE_SD_FAT_ESP32)
+#if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
 bool FIREBASE_CLASS::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
 {
-    return ut->mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
+    return mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
 }
 #endif
 
 #endif
 
-#if defined(ESP8266) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP8266) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
 
 bool FIREBASE_CLASS::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
 {

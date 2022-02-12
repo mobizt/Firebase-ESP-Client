@@ -1,39 +1,54 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.17
- * 
- *  Created January 18, 2022
- * 
+ * The Firebase class, Firebase.h v1.0.18
+ *
+ *  Created February 10, 2022
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef Firebase_H
 #define Firebase_H
 
-#if defined(ESP8266) || defined(ESP32)
-
 #include "FirebaseFS.h"
 
+#if !defined(ESP32) && !defined(ESP8266)
+#ifndef FB_ENABLE_EXTERNAL_CLIENT
+#define FB_ENABLE_EXTERNAL_CLIENT
+#endif
+#endif
+
+#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+
 #include <Arduino.h>
+
+#if !defined(ESP32) && !defined(ESP8266)
+#ifdef __arm__
+// should use uinstd.h to define sbrk but Due causes a conflict
+extern "C" char *sbrk(int incr);
+#else  // __ARM__
+extern char *__brkval;
+#endif // __arm__
+#endif
 
 #if defined(ESP8266)
 #include <SPI.h>
@@ -44,8 +59,10 @@
 #include <ets_sys.h>
 #endif
 
-#include "signer/Signer.h"
+
 #include "Utils.h"
+#include "wcs/clients.h"
+#include "signer/Signer.h"
 #include "session/FB_Session.h"
 
 #if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD) && defined(ESP32) && defined(SD_FAT_VERSION)
@@ -73,6 +90,10 @@ class SdSpiConfig;
 #ifdef ENABLE_FB_FUNCTIONS
 #include "functions/FB_Functions.h"
 #include "functions/FunctionsConfig.h"
+#endif
+
+#ifndef FPSTR
+#define FPSTR MBSTRING_FLASH_MCR
 #endif
 
 class Firebase_ESP_Client
@@ -240,10 +261,22 @@ public:
   */
   const char *getToken();
 
-  /** Set the decimal places for float value to be stored in database.
-   * 
-   * @param digits The decimal places.
+  /** Get free Heap memory.
+   *
+   * @return free Heap memory size.
   */
+  int getFreeHeap();
+
+  /** Get current timestamp.
+   *
+   * @return current timestamp.
+  */
+  time_t getCurrentTime();
+
+  /** Set the decimal places for float value to be stored in database.
+   *
+   * @param digits The decimal places.
+   */
   void setFloatDigits(uint8_t digits);
 
   /** Set the decimal places for double value to be stored in database.
@@ -252,65 +285,67 @@ public:
   */
   void setDoubleDigits(uint8_t digits);
 
-#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
+
+#if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 
   /** SD card config with GPIO pins.
-   * 
+   *
    * @param ss SPI Chip/Slave Select pin.
    * @param sck SPI Clock pin.
    * @param miso SPI MISO pin.
    * @param mosi SPI MOSI pin.
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 
 #if defined(ESP8266)
 
   /** SD card config with SD FS configurations (ESP8266 only).
-   * 
+   *
    * @param ss SPI Chip/Slave Select pin.
    * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 only).
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(SDFSConfig *sdFSConfig);
 
 #endif
 
 #if defined(ESP32)
   /** SD card config with chip select and SPI configuration (ESP32 only).
-   * 
+   *
    * @param ss SPI Chip/Slave Select pin.
    * @param spiConfig The pointer to SPIClass object for SPI configuartion (ESP32 only).
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
 #endif
 
-#if defined(USE_SD_FAT_ESP32)
+#if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
   /** SD card config with SdFat SPI and pins configurations (ESP32 with SdFat included only).
-   * 
+   *
    * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
    * @param ss SPI Chip/Slave Select pin.
    * @param sck SPI Clock pin.
    * @param miso SPI MISO pin.
    * @param mosi SPI MOSI pin.
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 #endif
 
 #endif
 
-#if defined(ESP32) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
   /** Initialize the SD_MMC card (ESP32 only).
-  *
-  * @param mountpoint The mounting point.
-  * @param mode1bit Allow 1 bit data line (SPI mode).
-  * @param format_if_mount_failed Format SD_MMC card if mount failed.
-  * @return The boolean value indicates the success of operation.
- */
+   *
+   * @param mountpoint The mounting point.
+   * @param mode1bit Allow 1 bit data line (SPI mode).
+   * @param format_if_mount_failed Format SD_MMC card if mount failed.
+   * @return The boolean value indicates the success of operation.
+   */
   bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 #endif
+
 
   /** Set system time with timestamp.
    * 
@@ -348,6 +383,10 @@ private:
 extern Firebase_ESP_Client Firebase;
 
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+
+#ifndef FPSTR
+#define FPSTR MBSTRING_FLASH_MCR
+#endif
 
 #ifdef ENABLE_RTDB
 #include "rtdb/FB_RTDB.h"
@@ -571,6 +610,18 @@ public:
   */
   const char *getToken();
 
+  /** Get free Heap memory.
+   *
+   * @return free Heap memory size.
+   */
+  int getFreeHeap();
+
+  /** Get current timestamp.
+   *
+   * @return current timestamp.
+   */
+  time_t getCurrentTime();
+
   /** Set the decimal places for float value to be stored in database.
    * 
    * @param digits The decimal places. 
@@ -595,7 +646,7 @@ public:
   void allowMultipleRequests(bool enable)
   {
     if (Signer.getCfg())
-      Signer.getCfg()->_int.fb_multiple_requests = enable;
+      Signer.getCfg()->internal.fb_multiple_requests = enable;
   }
 #endif
 
@@ -1904,7 +1955,7 @@ public:
    * the target variable value will be an empty array.
   */
   template <typename T = const char *>
-  bool getBlob(FirebaseData &fbdo, T path, std::vector<uint8_t> &target) { return RTDB.getBlob(&fbdo, path, &target); }
+  bool getBlob(FirebaseData &fbdo, T path, MB_VECTOR<uint8_t> &target) { return RTDB.getBlob(&fbdo, path, &target); }
 
   /** Download file data in a database at the defined database path and save it to SD card/Flash memory. 
    * The downloaded data will be decoded to binary and save to SD card/Flash memory, then please make sure that data at the defined database path is the file type.
@@ -2037,7 +2088,7 @@ public:
    * Call [streamData object].xxxData will return the appropriate data type of 
    * the payload returned from the server.
   */
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
   void setStreamCallback(FirebaseData &fbdo, FirebaseData::StreamEventCallback dataAvailablecallback, FirebaseData::StreamTimeoutCallback timeoutCallback = NULL)
   {
     RTDB.setStreamCallback(&fbdo, dataAvailablecallback, timeoutCallback);
@@ -2127,6 +2178,7 @@ public:
   */
   void setMaxRetry(FirebaseData &fbdo, uint8_t num) { RTDB.setMaxRetry(&fbdo, num); }
 
+#if defined(ENABLE_ERROR_QUEUE)
   /** Set the maximum Firebase Error Queues in the collection (0 255). 
    * Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues collection.
    * @param fbdo Firebase Data Object to hold data and instance.
@@ -2246,6 +2298,8 @@ public:
 
 #endif
 
+#endif
+
     /** Send Firebase Cloud Messaging to the device with the first registration token which added by firebaseData.fcm.addDeviceToken.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
@@ -2274,63 +2328,63 @@ public:
   bool sendTopic(FirebaseData &fbdo);
 #endif
 
-#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
+#if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 
   /** SD card config with GPIO pins.
-   * 
+   *
    * @param ss SPI Chip/Slave Select pin.
    * @param sck SPI Clock pin.
    * @param miso SPI MISO pin.
    * @param mosi SPI MOSI pin.
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 
 #if defined(ESP8266)
 
   /** SD card config with SD FS configurations (ESP8266 only).
-   * 
+   *
    * @param ss SPI Chip/Slave Select pin.
    * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 only).
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(SDFSConfig *sdFSConfig);
 
 #endif
 
 #if defined(ESP32)
   /** SD card config with chip select and SPI configuration (ESP32 only).
-   * 
+   *
    * @param ss SPI Chip/Slave Select pin.
    * @param spiConfig The pointer to SPIClass object for SPI configuartion (ESP32 only).
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
 #endif
 
-#if defined(USE_SD_FAT_ESP32)
+#if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
   /** SD card config with SdFat SPI and pins configurations (ESP32 with SdFat included only).
-   * 
+   *
    * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
    * @param ss SPI Chip/Slave Select pin.
    * @param sck SPI Clock pin.
    * @param miso SPI MISO pin.
    * @param mosi SPI MOSI pin.
    * @return Boolean type status indicates the success of the operation.
-  */
+   */
   bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 #endif
 
 #endif
 
-#if defined(ESP32) && defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
+#if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
   /** Initialize the SD_MMC card (ESP32 only).
-  *
-  * @param mountpoint The mounting point.
-  * @param mode1bit Allow 1 bit data line (SPI mode).
-  * @param format_if_mount_failed Format SD_MMC card if mount failed.
-  * @return The boolean value indicates the success of operation.
- */
+   *
+   * @param mountpoint The mounting point.
+   * @param mode1bit Allow 1 bit data line (SPI mode).
+   * @param format_if_mount_failed Format SD_MMC card if mount failed.
+   * @return The boolean value indicates the success of operation.
+   */
   bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 #endif
 

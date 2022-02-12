@@ -214,5 +214,6 @@ void setup()
 
 void loop()
 {
+    FireSense.run();
     //do not use delay or blocking operating code heare
 }

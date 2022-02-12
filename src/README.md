@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.8.3
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v3.0.0
 
 
 The default filessystem used in the library is flash and SD.
@@ -202,6 +202,37 @@ param **`reconnect`** The boolean to set/unset WiFi AP reconnection.
 ```cpp
 void reconnectWiFi(bool reconnect);
 ```
+
+
+
+#### Get currently used auth token string.
+
+param **`constant char*`** of currently used auth token.
+
+```cpp
+const char *getToken();
+```
+
+
+
+#### Get free Heap memory.
+
+param **`int *`** of free Heap memory size.
+
+```cpp
+int getFreeHeap();
+```
+
+
+
+#### Get current timestamp.
+
+param **`time_t *`** of current timestamp.
+
+```cpp
+time_t getCurrentTime();
+```
+
 
 
 
@@ -4105,6 +4136,42 @@ The description of PolicyBuilder and FunctionsConfig classes and their functions
 
 
 
+#### Assign external Arduino Client.
+
+param **`client`** The pointer to Arduino Client derived class e.g. WiFiClient, WiFiClientSecure, EthernetClient or GSMClient. 
+
+```cpp
+void setExternalClient(Client *client);
+```
+
+
+
+#### Assign the callback functions required for external Client usage.
+
+param **`tcpConnectionCB`** The function that handles the server connection. 
+
+param **`networkConnectionCB`** The function that handles the network connection. 
+
+param **`networkStatusCB`** The function that handle the network connection status acknowledgement.
+
+```cpp
+void setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB, FB_NetworkConnectionRequestCallback networkConnectionCB, FB_NetworkStatusRequestCallback networkStatusCB);
+```
+
+
+
+
+#### Set the network status acknowledgement.
+
+param **`status`** The network status. 
+
+```cpp
+void setNetworkStatus(bool status);
+```
+
+
+
+
 #### Set the receive and transmit buffer memory size for secured mode BearSSL WiFi client.
 
 param **`rx`** The number of bytes for receive buffer memory for secured mode BearSSL (512 is minimum, 16384 is maximum).
@@ -4362,6 +4429,27 @@ return **`FirebaseJsonArray object pointer`**.
 ```cpp
 FirebaseJsonArray *jsonArrayPtr();
 ```
+
+
+
+#### Return the internal Firebase JSON Data object.
+
+return **`FirebaseJsonData object`**.
+
+```cpp
+FirebaseJsonData &jsonData();
+```
+
+
+
+#### Return the pointer to internal Firebase JSON Data object.
+
+return **`FirebaseJsonData object pointer`**.
+
+```cpp
+FirebaseJsonData *jsonDataPtr();
+```
+
 
 
 

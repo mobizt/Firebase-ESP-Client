@@ -182,33 +182,33 @@ void Binding::mSetCondition(MB_StringPtr expression, MB_StringPtr title, MB_Stri
     if (ut)
     {
         MB_String b, t;
-        b.appendP(fb_esp_pgm_str_405);
-        b.appendP(fb_esp_pgm_str_1);
+        b +=fb_esp_pgm_str_405;
+        b +=fb_esp_pgm_str_1;
 
         MB_String _expression = expression, _title = title, _description = description, _location = location;
 
         if (_expression.length() > 0)
         {
             t = b;
-            t.appendP(fb_esp_pgm_str_406);
+            t +=fb_esp_pgm_str_406;
             json.set(t.c_str(), _expression);
         }
         if (_title.length() > 0)
         {
             t = b;
-            t.appendP(fb_esp_pgm_str_407);
+            t +=fb_esp_pgm_str_407;
             json.set(t.c_str(), _title);
         }
         if (_description.length() > 0)
         {
             t = b;
-            t.appendP(fb_esp_pgm_str_408);
+            t +=fb_esp_pgm_str_408;
             json.set(t.c_str(), _description);
         }
         if (_location.length() > 0)
         {
             t = b;
-            t.appendP(fb_esp_pgm_str_409);
+            t +=fb_esp_pgm_str_409;
             json.set(t.c_str(), _location);
         }
     }

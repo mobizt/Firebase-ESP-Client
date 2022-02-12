@@ -1,12 +1,12 @@
 /**
- * Firebase TCP Client v1.1.17
- * 
- * Created Created January 18, 2022
- * 
+ * Firebase TCP Client v1.1.18
+ *
+ * Created February 10, 2022
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
  * Port to ESP32 by Evandro Luis Copercini (2017),
@@ -26,97 +26,37 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
-*/
+ */
 
 #ifndef FB_TCP_Client_CPP
 #define FB_TCP_Client_CPP
 
-#ifdef ESP32
+#if defined(ESP32) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #include "FB_TCP_Client.h"
 
-FB_TCP_Client::FB_TCP_Client() {}
+FB_TCP_Client::FB_TCP_Client()
+{
+  client = wcs.get();
+}
 
 FB_TCP_Client::~FB_TCP_Client()
 {
-  if (_wcs)
+  if (wcs)
   {
-    _wcs->stop();
-    _wcs.reset(nullptr);
-    _wcs.release();
+    wcs->stop();
+    wcs.reset(nullptr);
+    wcs.release();
   }
-  _host.clear();
-  _CAFile.clear();
-
   if (cert)
     mbfs->delP(&cert);
-}
-
-bool FB_TCP_Client::begin(const char *host, uint16_t port)
-{
-  _host = host;
-  _port = port;
-  return true;
-}
-
-bool FB_TCP_Client::connected()
-{
-  if (_wcs)
-    return (_wcs->connected());
-  return false;
-}
-
-void FB_TCP_Client::stop()
-{
-  if (!connected())
-    return;
-  return _wcs->stop();
-}
-
-int FB_TCP_Client::send(const char *data, size_t len)
-{
-  if (!connect())
-    return FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED;
-
-  if (len == 0)
-    len = strlen(data);
-
-  if (len == 0)
-    return 0;
-
-  if (_wcs->write((const uint8_t *)data, len) != len)
-    return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
-
-  return 0;
-}
-
-WiFiClient *FB_TCP_Client::stream(void)
-{
-  if (connected())
-    return _wcs.get();
-  return nullptr;
-}
-
-bool FB_TCP_Client::connect(void)
-{
-  if (connected())
-  {
-    while (_wcs->available() > 0)
-      _wcs->read();
-    return true;
-  }
-
-  if (!_wcs->_connect(_host.c_str(), _port, timeout))
-    return false;
-
-  return connected();
 }
 
 void FB_TCP_Client::setInsecure()
 {
 #if __has_include(<esp_idf_version.h>)
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(3, 3, 0)
-  _wcs->setInsecure();
+  wcs->setInsecure();
 #endif
 #endif
 }
@@ -125,27 +65,28 @@ void FB_TCP_Client::setCACert(const char *caCert)
 {
   release();
 
-  _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
+  wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
+  client = wcs.get();
 
   if (caCert != NULL)
   {
-    _certType = fb_cert_type_data;
-    _wcs->setCACert(caCert);
+    baseSetCertType(fb_cert_type_data);
+    wcs->setCACert(caCert);
   }
   else
   {
-    _wcs->stop();
-    _wcs->setCACert(NULL);
+    wcs->stop();
+    wcs->setCACert(NULL);
     setInsecure();
-    _certType = fb_cert_type_none;
+    baseSetCertType(fb_cert_type_none);
   }
-  //_wcs->setNoDelay(true);
+  // wcs->setNoDelay(true);
 }
 
-void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
+bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
 {
   if (!mbfs)
-    return;
+    return false;
 
   if (strlen(caCertFile) > 0)
   {
@@ -163,8 +104,9 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type
       if (storageType == mb_fs_mem_storage_type_flash)
       {
         fs::File file = mbfs->getFlashFile();
-        _wcs->loadCACert(file, len);
+        wcs->loadCACert(file, len);
         mbfs->close(storageType);
+        baseSetCertType(fb_cert_type_file);
       }
       else if (storageType == mb_fs_mem_storage_type_sd)
       {
@@ -179,39 +121,106 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type
           mbfs->read(storageType, (uint8_t *)cert, len);
 
         mbfs->close(storageType);
-        _wcs->setCACert((const char *)cert);
-        _certType = fb_cert_type_file;
+        wcs->setCACert((const char *)cert);
+        baseSetCertType(fb_cert_type_file);
 
 #elif defined(MBFS_SD_FS)
         fs::File file = mbfs->getSDFile();
-        _wcs->loadCACert(file, len);
+        wcs->loadCACert(file, len);
         mbfs->close(storageType);
-        _certType = fb_cert_type_file;
+        baseSetCertType(fb_cert_type_file);
 
 #endif
       }
     }
   }
+
+  return getCertType() == fb_cert_type_file;
+}
+
+bool FB_TCP_Client::networkReady()
+{
+  return WiFi.status() == WL_CONNECTED || ethLinkUp();
+}
+
+void FB_TCP_Client::networkReconnect()
+{
+  esp_wifi_connect();
+}
+
+void FB_TCP_Client::networkDisconnect()
+{
+  WiFi.disconnect();
+}
+
+fb_tcp_client_type FB_TCP_Client::type()
+{
+  return fb_tcp_client_type_internal;
+}
+
+bool FB_TCP_Client::isInitialized() { return true; }
+
+int FB_TCP_Client::hostByName(const char *name, IPAddress &ip)
+{
+  return WiFi.hostByName(name, ip);
+}
+
+void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
+{
+  if (wcs)
+    wcs->setTimeout(timeoutmSec / 1000);
+
+  baseSetTimeout(timeoutmSec);
+}
+
+bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
+{
+  this->host = host;
+  this->port = port;
+  this->response_code = response_code;
+  return true;
+}
+
+// override the base connect
+bool FB_TCP_Client::connect()
+{
+  if (connected())
+  {
+    flush();
+    return true;
+  }
+
+  wcs->setTimeout(timeoutMs);
+
+  if (!wcs->_connect(host.c_str(), port, timeoutMs))
+    return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
+
+  return connected();
+}
+
+bool FB_TCP_Client::ethLinkUp()
+{
+  if (strcmp(ETH.localIP().toString().c_str(), (const char *)MBSTRING_FLASH_MCR("0.0.0.0")) != 0)
+  {
+    ETH.linkUp();
+    return true;
+  }
+  return false;
 }
 
 void FB_TCP_Client::release()
 {
-  if (_wcs)
+  if (wcs)
   {
-    _wcs->stop();
-    _wcs.reset(nullptr);
-    _wcs.release();
+    wcs->stop();
+    wcs.reset(nullptr);
+    wcs.release();
 
     if (cert)
       mbfs->delP(&cert);
 
-    _certType = fb_cert_type_undefined;
+    baseSetCertType(fb_cert_type_undefined);
   }
-}
-
-void FB_TCP_Client::setMBFS(MB_FS *mbfs)
-{
-  this->mbfs = mbfs;
 }
 
 #endif /* ESP32 */

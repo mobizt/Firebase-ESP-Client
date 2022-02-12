@@ -1,34 +1,34 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.4
- * 
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.5
+ *
  * This library supports Espressif ESP8266 and ESP32
- * 
- * Created January 18, 2022
- * 
+ *
+ * Created February 10, 2022
+ *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_RTDB
@@ -61,85 +61,89 @@ public:
     String streamPath();
 
     /** Return the integer data of server returned payload.
-     * 
+     *
      * @return integer value.
-    */
+     */
     int intData();
 
     /** Return the float data of server returned payload.
-     * 
+     *
      * @return Float value.
-    */
+     */
     float floatData();
 
     /** Return the double data of server returned payload.
-     * 
+     *
      * @return double value.
-    */
+     */
     double doubleData();
 
     /** Return the Boolean data of server returned payload.
-     * 
+     *
      * @return Boolean value.
-    */
+     */
     bool boolData();
 
     /** Return the String data of server returned payload.
-     * 
+     *
      * @return String (String object).
-    */
+     */
     String stringData();
 
     /** Return the JSON String data of server returned payload.
-     * 
+     *
      * @return String (String object).
-    */
+     */
     String jsonString();
 
     /** Return the Firebase JSON object pointer of server returned payload.
-     * 
+     *
      * @return FirebaseJson object pointer.
-    */
+     */
     FirebaseJson *jsonObjectPtr();
 
     /** Return the Firebase JSON object of server returned payload.
-     * 
+     *
      * @return FirebaseJson object.
-    */
+     */
     FirebaseJson &jsonObject();
 
     /** Return the Firebase JSON Array object pointer of server returned payload.
-     * 
+     *
      * @return FirebaseJsonArray object pointer.
-    */
+     */
     FirebaseJsonArray *jsonArrayPtr();
 
     /** Return the Firebase JSON Array object of server returned payload.
      * @return FirebaseJsonArray object.
-    */
+     */
     FirebaseJsonArray &jsonArray();
 
     /** Return the pointer to blob data (uint8_t) array of server returned payload.
-     * 
+     *
      * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
-    */
-    std::vector<uint8_t> *blobData();
+     */
+    MB_VECTOR<uint8_t> *blobData();
 
+#if defined(ESP32) || defined(ESP8266)
+#if defined(MBFS_FLASH_FS)
     /** Return the file stream of server returned payload.
-     * 
+     *
      * @return the file stream.
-    */
+     */
     File fileStream();
+#endif
+#endif
 
     /** Get the data type of payload returned from the server.
      * @return The one of these data type e.g. integer, float, double, boolean, string, JSON and blob.
-    */
+     */
     String dataType();
 
     /** Get the data type of payload returned from the server.
-     * 
+     *
      * @return The enumeration value of fb_esp_rtdb_data_type.
-     * 
+     *
      * fb_esp_rtdb_data_type_null or 1,
      * fb_esp_rtdb_data_type_integer or 2,
      * fb_esp_rtdb_data_type_float or 3,
@@ -150,52 +154,52 @@ public:
      * fb_esp_rtdb_data_type_array or 8,
      * fb_esp_rtdb_data_type_blob or 9,
      * fb_esp_rtdb_data_type_file or 10
-    */
+     */
     uint8_t dataTypeEnum();
 
     /** Return the event type string.
-     * 
+     *
      * @return the event type String object.
-    */
+     */
     String eventType();
 
     /** Return the server's payload data.
-     * 
+     *
      * @return Payload string (String object).
-     * 
+     *
      * @note The returned String will be empty when the response data is File, BLOB, JSON and JSON Array objects.
-     * 
+     *
      * For File data type, call fileStream to get the file stream.
-     * 
+     *
      * For BLOB data type, call blobData to get the dynamic array of unsigned 8-bit data.
-     * 
+     *
      * For JSON object data type, call jsonObject and jsonObjectPtr to get the object and its pointer.
-     * 
+     *
      * For JSON Array data type, call jsonArray and jsonArrayPtr to get the object and its pointer.
-     * 
-    */
+     *
+     */
     String payload();
 
     /** Get the HTTP payload length returned from the server.
      * @return integer number of payload length.
-    */
+     */
     int payloadLength();
 
     /** Get the maximum size of HTTP payload length returned from the server.
-     * 
+     *
      * @return integer number of payload length.
-    */
+     */
     int maxPayloadLength();
 
     /** Clear or empty data in FirebaseStream or StreamData object.
-    */
+     */
     void empty();
 
     template <typename T>
     auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
     {
         if (sif->data_type == fb_esp_data_type::d_string)
-            setRaw(true); //if double quotes string, trim it.
+            setRaw(true); // if double quotes string, trim it.
 
         if (sif->data.length() > 0)
         {
@@ -240,7 +244,7 @@ public:
 
         if (sif->data_type == fb_esp_data_type::d_string)
             setRaw(true);
-            
+
         return sif->data.c_str();
     }
 
@@ -292,7 +296,7 @@ public:
     }
 
     template <typename T>
-    auto to() -> typename enable_if<is_same<T, std::vector<uint8_t> *>::value, std::vector<uint8_t> *>::type
+    auto to() -> typename enable_if<is_same<T, MB_VECTOR<uint8_t> *>::value, MB_VECTOR<uint8_t> *>::type
     {
         return sif->blob;
     }
@@ -303,7 +307,7 @@ public:
     {
         if (sif->data_type == fb_esp_data_type::d_file && Signer.getCfg())
         {
-            int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type  mem_storage_type_flash, mb_fs_open_mode_read);
+            int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
             if (ret < 0)
                 sif->httpCode = ret;
         }
@@ -321,14 +325,14 @@ private:
 
     union IVal
     {
-        std::uint64_t uint64;
-        std::int64_t int64;
-        std::uint32_t uint32;
-        std::int32_t int32;
-        std::int16_t int16;
-        std::uint16_t uint16;
-        std::int8_t int8;
-        std::uint8_t uint8;
+        uint64_t uint64;
+        int64_t int64;
+        uint32_t uint32;
+        int32_t int32;
+        int16_t int16;
+        uint16_t uint16;
+        int8_t int8;
+        uint8_t uint8;
     };
 
     struct FVal
@@ -360,4 +364,4 @@ private:
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

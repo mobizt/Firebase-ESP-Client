@@ -1,51 +1,49 @@
 
 /**
- * Created January 21, 2022
- * 
+ * Created February 10, 2022
+ *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef FB_COMMON_H_
 #define FB_COMMON_H_
 
-#include "FirebaseFS.h"
+#pragma once
 
 #include <Arduino.h>
 #include <time.h>
+
+#if !defined(__AVR__)
 #include <vector>
 #include <functional>
-#if defined(ESP32)
-#include <WiFi.h>
-#include "wcs/esp32/FB_TCP_Client.h"
-#elif defined(ESP8266)
-#include <Schedule.h>
-#include <ets_sys.h>
-#include <ESP8266WiFi.h>
-#include "wcs/esp8266/FB_TCP_Client.h"
-#define FS_NO_GLOBALS
 #endif
+
+#include "FB_Net.h"
+#include "FirebaseFS.h"
+#include "./mbfs/MB_FS.h"
+
 
 #if defined(FIREBASE_USE_PSRAM)
 #define FIREBASEJSON_USE_PSRAM
@@ -127,6 +125,12 @@ class QueryFilter;
 
 #include "FB_Error.h"
 
+class FirebaseData;
+
+typedef void (*FB_TCPConnectionRequestCallback)(const char *, int);
+typedef void (*FB_NetworkConnectionRequestCallback)(void);
+typedef void (*FB_NetworkStatusRequestCallback)(void);
+
 typedef enum
 {
     mem_storage_type_undefined,
@@ -137,9 +141,9 @@ typedef enum
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 struct StorageType
 {
-    static const int8_t UNDEFINED = 0; //add to compatible with fb_esp_mem_storage_type enum
-    static const int8_t FLASH = 1;     //now set to 1 instead of 0 in older version
-    static const int8_t SD = 2;        //now set to 2 instead of 1 in older version
+    static const int8_t UNDEFINED = 0; // add to compatible with fb_esp_mem_storage_type enum
+    static const int8_t FLASH = 1;     // now set to 1 instead of 0 in older version
+    static const int8_t SD = 2;        // now set to 2 instead of 1 in older version
 };
 #endif
 
@@ -530,6 +534,11 @@ enum fb_esp_functions_operation_status
 
 #endif
 
+struct fb_esp_response_t
+{
+    int code = 0;
+};
+
 #ifdef ENABLE_RTDB
 
 struct fb_esp_rtdb_address_t
@@ -647,7 +656,7 @@ struct server_response_data_t
     int intData = 0;
     float floatData = 0.0f;
     double doubleData = 0.0f;
-    std::vector<uint8_t> blobData;
+    MB_VECTOR<uint8_t> blobData;
     bool isEvent = false;
     bool noEvent = false;
     bool isChunkedEnc = false;
@@ -754,7 +763,7 @@ struct fb_esp_token_signer_resources_t
     unsigned long expiredSeconds = 3600;
     unsigned long reqTO = 2000;
     MB_String pk;
-    size_t hashSize = 32; //SHA256 size (256 bits or 32 bytes)
+    size_t hashSize = 32; // SHA256 size (256 bits or 32 bytes)
     size_t signatureSize = 256;
 #if defined(ESP32)
     uint8_t *hash = nullptr;
@@ -771,9 +780,6 @@ struct fb_esp_token_signer_resources_t
     mbedtls_entropy_context *entropy_ctx = nullptr;
     mbedtls_ctr_drbg_context *ctr_drbg_ctx = nullptr;
 #endif
-    FB_TCP_Client *wcs = nullptr;
-    FirebaseJson *json = nullptr;
-    FirebaseJsonData *result = nullptr;
     struct fb_esp_auth_token_info_t tokens;
     struct fb_esp_auth_token_error_t verificationError;
     struct fb_esp_auth_token_error_t resetPswError;
@@ -787,7 +793,7 @@ struct fb_esp_stream_info_t
     MB_String stream_path;
     MB_String path;
     MB_String data;
-    std::vector<uint8_t> *blob = nullptr;
+    MB_VECTOR<uint8_t> *blob = nullptr;
     MB_String data_type_str;
     MB_String event_type_str;
     uint8_t data_type = 0;
@@ -817,11 +823,15 @@ struct fb_esp_cfg_int_t
     unsigned long fb_last_jwt_begin_step_millis = 0;
     unsigned long fb_last_jwt_generation_error_cb_millis = 0;
     bool fb_clock_rdy = false;
+    bool fb_clock_checked = false;
     float fb_gmt_offset = 0;
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
-    std::vector<std::reference_wrapper<FirebaseData>> fb_sdo;
+
+    MB_VECTOR<uint32_t> fbdo_addr;
+
+
     MB_String auth_token;
     MB_String refresh_token;
     uint16_t rtok_len = 0;
@@ -841,8 +851,8 @@ struct fb_esp_rtdb_config_t
     bool data_type_stricted = false;
     size_t upload_buffer_size = 128;
 
-    //unused, call fbdo.setResponseSize instead
-    //size_t download_buffer_size = 256;
+    // unused, call fbdo.setResponseSize instead
+    // size_t download_buffer_size = 256;
 };
 
 struct fb_esp_url_info_t
@@ -875,7 +885,7 @@ struct fb_esp_cfs_config_t
 #endif
 
 #if defined(ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE)
-//shared struct between fcs and gcs
+// shared struct between fcs and gcs
 struct fb_esp_fcs_file_list_item_t
 {
     MB_String name;
@@ -956,10 +966,10 @@ typedef void (*FCS_DownloadProgressCallback)(FCS_DownloadStatusInfo);
 #endif
 
 #if defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE)
-//shared struct between fcs and gcs
+// shared struct between fcs and gcs
 struct fb_esp_fcs_file_list_t
 {
-    std::vector<struct fb_esp_fcs_file_list_item_t> items = std::vector<struct fb_esp_fcs_file_list_item_t>();
+    MB_VECTOR<struct fb_esp_fcs_file_list_item_t> items;
 };
 #endif
 
@@ -976,26 +986,26 @@ typedef void (*TokenStatusCallback)(TokenInfo);
 
 struct fb_esp_client_timeout_t
 {
-    //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
+    // WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
     uint16_t wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
 
-    //Socket connection and ssl handshake timeout in ms (1 sec - 1 min).
+    // Socket connection and ssl handshake timeout in ms (1 sec - 1 min).
     unsigned long socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
 
-    //unused.
+    // unused.
     unsigned long sslHandshake = 0;
 
-    //Server response read timeout in ms (1 sec - 1 min).
+    // Server response read timeout in ms (1 sec - 1 min).
     unsigned long serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
 
-    //RTDB Stream keep-alive timeout in ms (20 sec - 2 min) when no server's keep-alive event data received.
+    // RTDB Stream keep-alive timeout in ms (20 sec - 2 min) when no server's keep-alive event data received.
     unsigned long rtdbKeepAlive = DEFAULT_RTDB_KEEP_ALIVE_TIMEOUT;
 
-    //RTDB Stream reconnect timeout (interval) in ms (1 sec - 1 min) when RTDB Stream closed and want to resume.
+    // RTDB Stream reconnect timeout (interval) in ms (1 sec - 1 min) when RTDB Stream closed and want to resume.
     uint16_t rtdbStreamReconnect = MIN_RTDB_STREAM_RECONNECT_INTERVAL;
 
-    //RTDB Stream error notification timeout (interval) in ms (3 sec - 30 sec). It determines how often the readStream
-    //will return false (error) when it called repeatedly in loop.
+    // RTDB Stream error notification timeout (interval) in ms (3 sec - 30 sec). It determines how often the readStream
+    // will return false (error) when it called repeatedly in loop.
     uint16_t rtdbStreamError = MIN_RTDB_STREAM_ERROR_NOTIFIED_INTERVAL;
 
     uint16_t tokenGenerationBeginStep = MIN_TOKEN_GENERATION_BEGIN_STEP_INTERVAL;
@@ -1006,7 +1016,7 @@ struct fb_esp_client_timeout_t
 struct fb_esp_cfg_t
 {
     struct fb_esp_service_account_t service_account;
-    //deprecated, use database_url instead
+    // deprecated, use database_url instead
     MB_String host;
     MB_String database_url;
     MB_String api_key;
@@ -1015,7 +1025,7 @@ struct fb_esp_cfg_t
     size_t async_close_session_max_request = 100;
     struct fb_esp_auth_cert_t cert;
     struct fb_esp_token_signer_resources_t signer;
-    struct fb_esp_cfg_int_t _int;
+    struct fb_esp_cfg_int_t internal;
     TokenStatusCallback token_status_callback = NULL;
     int8_t max_token_generation_retry = MAX_EXCHANGE_TOKEN_ATTEMPTS;
     struct fb_esp_rtdb_config_t rtdb;
@@ -1031,6 +1041,7 @@ struct fb_esp_cfg_t
     SPI_ETH_Module spi_ethernet_module;
     struct fb_esp_client_timeout_t timeout;
 };
+
 #ifdef ENABLE_RTDB
 struct fb_esp_rtdb_info_t
 {
@@ -1082,7 +1093,7 @@ struct fb_esp_rtdb_info_t
     unsigned long stream_resume_millis = 0;
     unsigned long data_millis = 0;
 
-    std::vector<uint8_t> *blob = nullptr;
+    MB_VECTOR<uint8_t> *blob = nullptr;
     int isBlobPtr = false;
 
     bool priority_val_flag = false;
@@ -1192,14 +1203,14 @@ struct fb_esp_functions_req_t
     size_t versionId = 0;
     size_t pageSize = 0;
     MB_String pageToken;
-    std::vector<MB_String> *updateMask = nullptr;
+    MB_VECTOR<MB_String> *updateMask = nullptr;
     fb_esp_functions_request_type requestType = fb_esp_functions_request_type_undefined;
 };
 
 #endif
 
 #if defined(ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE)
-//shared struct between fcs and gcs
+// shared struct between fcs and gcs
 struct fb_esp_gcs_meta_info_t
 {
     MB_String name;
@@ -1219,20 +1230,20 @@ struct fb_esp_gcs_meta_info_t
 
 typedef struct fb_esp_gcs_request_properties_t
 {
-    MB_String acl; //array
+    MB_String acl; // array
     MB_String cacheControl;
     MB_String contentDisposition;
     MB_String contentEncoding;
     MB_String contentLanguage;
     MB_String contentType;
     MB_String crc32c;
-    MB_String customTime;     //date time
-    MB_String eventBasedHold; //boolean
+    MB_String customTime;     // date time
+    MB_String eventBasedHold; // boolean
     MB_String md5Hash;
     MB_String metadata; // object
     MB_String name;
     MB_String storageClass;
-    MB_String temporaryHold; //boolean
+    MB_String temporaryHold; // boolean
 } RequestProperties;
 
 typedef struct fb_esp_gcs_get_options_t
@@ -1259,10 +1270,10 @@ struct fb_esp_gcs_info_t
 typedef struct fb_esp_gcs_upload_options_t
 {
     MB_String contentEncoding;
-    MB_String ifGenerationMatch;        //long
-    MB_String ifGenerationNotMatch;     //long
-    MB_String ifMetagenerationMatch;    //long
-    MB_String ifMetagenerationNotMatch; //long
+    MB_String ifGenerationMatch;        // long
+    MB_String ifGenerationNotMatch;     // long
+    MB_String ifMetagenerationMatch;    // long
+    MB_String ifMetagenerationNotMatch; // long
     MB_String kmsKeyName;
     MB_String projection;
     MB_String predefinedAcl;
@@ -1271,23 +1282,23 @@ typedef struct fb_esp_gcs_upload_options_t
 typedef struct fb_esp_gcs_delete_options_t
 {
     MB_String generation;
-    MB_String ifGenerationMatch;        //long
-    MB_String ifGenerationNotMatch;     //long
-    MB_String ifMetagenerationMatch;    //long
-    MB_String ifMetagenerationNotMatch; //long
+    MB_String ifGenerationMatch;        // long
+    MB_String ifGenerationNotMatch;     // long
+    MB_String ifMetagenerationMatch;    // long
+    MB_String ifMetagenerationNotMatch; // long
 } DeleteOptions;
 
 typedef struct fb_esp_gcs_list_options_t
 {
     MB_String delimiter;
     MB_String endOffset;
-    MB_String includeTrailingDelimiter; //bool
-    MB_String maxResults;               //number
+    MB_String includeTrailingDelimiter; // bool
+    MB_String maxResults;               // number
     MB_String pageToken;
     MB_String prefix;
     MB_String projection;
     MB_String startOffset;
-    MB_String versions; //bool
+    MB_String versions; // bool
 } ListOptions;
 
 struct fb_esp_gcs_req_t
@@ -1328,32 +1339,32 @@ struct fb_gcs_upload_resumable_task_info_t
 #ifdef ENABLE_FCM
 struct fb_esp_fcm_legacy_notification_payload_t
 {
-    MB_String title;              //string all
-    MB_String body;               //string all
-    MB_String icon;               //string Andoid, web
-    MB_String click_action;       //string all
-    MB_String sound;              //string iOS, Android
-    MB_String badge;              //number iOS
-    MB_String subtitle;           //string iOS
-    MB_String body_loc_key;       //string iOS, Android
-    MB_String body_loc_args;      //array of string [] iOS, Android
-    MB_String title_loc_key;      //string iOS, Android
-    MB_String title_loc_args;     //array of string [] iOS, Android
-    MB_String android_channel_id; //string Android
-    MB_String tag;                //string Android
-    MB_String color;              //string Android
+    MB_String title;              // string all
+    MB_String body;               // string all
+    MB_String icon;               // string Andoid, web
+    MB_String click_action;       // string all
+    MB_String sound;              // string iOS, Android
+    MB_String badge;              // number iOS
+    MB_String subtitle;           // string iOS
+    MB_String body_loc_key;       // string iOS, Android
+    MB_String body_loc_args;      // array of string [] iOS, Android
+    MB_String title_loc_key;      // string iOS, Android
+    MB_String title_loc_args;     // array of string [] iOS, Android
+    MB_String android_channel_id; // string Android
+    MB_String tag;                // string Android
+    MB_String color;              // string Android
 };
 
 struct fb_esp_fcm_legacy_http_message_option_t
 {
-    MB_String priority;                //string
-    MB_String collapse_key;            //string
-    MB_String time_to_live;            //number
-    MB_String restricted_package_name; //string
-    MB_String mutable_content;         //boolean
-    MB_String content_available;       //boolean
-    MB_String dry_run;                 //boolean
-    MB_String direct_boot_ok;          //boolean
+    MB_String priority;                // string
+    MB_String collapse_key;            // string
+    MB_String time_to_live;            // number
+    MB_String restricted_package_name; // string
+    MB_String mutable_content;         // boolean
+    MB_String content_available;       // boolean
+    MB_String dry_run;                 // boolean
+    MB_String direct_boot_ok;          // boolean
 };
 
 struct fb_esp_fcm_legacy_http_message_payload_t
@@ -1364,9 +1375,9 @@ struct fb_esp_fcm_legacy_http_message_payload_t
 
 struct fb_esp_fcm_legacy_http_message_target_t
 {
-    MB_String to;               //string
-    MB_String registration_ids; //array of string []
-    MB_String condition;        //string
+    MB_String to;               // string
+    MB_String registration_ids; // array of string []
+    MB_String condition;        // string
 };
 
 struct fb_esp_fcm_legacy_http_message_info_t
@@ -1378,113 +1389,113 @@ struct fb_esp_fcm_legacy_http_message_info_t
 
 struct fb_esp_fcm_http_v1_notification_t
 {
-    MB_String title; //string
-    MB_String body;  //string
-    MB_String image; //string
+    MB_String title; // string
+    MB_String body;  // string
+    MB_String image; // string
 };
 
 struct fb_esp_fcm_http_v1_fcm_options_t
 {
-    MB_String analytics_label; //string, Label associated with the message's analytics data.
+    MB_String analytics_label; // string, Label associated with the message's analytics data.
 };
 
 struct fb_esp_fcm_http_v1_android_fcm_options_t
 {
-    MB_String analytics_label; //string, Label associated with the message's analytics data.
+    MB_String analytics_label; // string, Label associated with the message's analytics data.
 };
 
 struct fb_esp_fcm_http_v1_android_light_settings_color_t
 {
-    MB_String red;   //string
-    MB_String green; //string
-    MB_String blue;  //string
-    MB_String alpha; //string
+    MB_String red;   // string
+    MB_String green; // string
+    MB_String blue;  // string
+    MB_String alpha; // string
 };
 
 struct fb_esp_fcm_http_v1_android_light_settings_t
 {
-    struct fb_esp_fcm_http_v1_android_light_settings_color_t color; //object {}
-    MB_String light_on_duration;                                    //string
-    MB_String light_off_duration;                                   //string
+    struct fb_esp_fcm_http_v1_android_light_settings_color_t color; // object {}
+    MB_String light_on_duration;                                    // string
+    MB_String light_off_duration;                                   // string
 };
 
 struct fb_esp_fcm_http_v1_android_noti_t
 {
-    MB_String title;                   //string
-    MB_String body;                    //string
-    MB_String icon;                    //string
-    MB_String color;                   //string
-    MB_String sound;                   //string
-    MB_String tag;                     //string
-    MB_String click_action;            //string
-    MB_String body_loc_key;            //string
-    MB_String body_loc_args;           //array of string []
-    MB_String title_loc_key;           //string
-    MB_String title_loc_args;          //array of string []
-    MB_String channel_id;              //string
-    MB_String ticker;                  //string
-    MB_String sticky;                  //boolean
-    MB_String event_time;              //string
-    MB_String local_only;              //boolean
-    MB_String notification_priority;   //enum
-    MB_String default_sound;           //boolean
-    MB_String default_vibrate_timings; //boolean
-    MB_String default_light_settings;  //boolean
-    MB_String vibrate_timings;         //array of string []
-    MB_String visibility;              //enum
-    MB_String notification_count;      //integer
+    MB_String title;                   // string
+    MB_String body;                    // string
+    MB_String icon;                    // string
+    MB_String color;                   // string
+    MB_String sound;                   // string
+    MB_String tag;                     // string
+    MB_String click_action;            // string
+    MB_String body_loc_key;            // string
+    MB_String body_loc_args;           // array of string []
+    MB_String title_loc_key;           // string
+    MB_String title_loc_args;          // array of string []
+    MB_String channel_id;              // string
+    MB_String ticker;                  // string
+    MB_String sticky;                  // boolean
+    MB_String event_time;              // string
+    MB_String local_only;              // boolean
+    MB_String notification_priority;   // enum
+    MB_String default_sound;           // boolean
+    MB_String default_vibrate_timings; // boolean
+    MB_String default_light_settings;  // boolean
+    MB_String vibrate_timings;         // array of string []
+    MB_String visibility;              // enum
+    MB_String notification_count;      // integer
     struct fb_esp_fcm_http_v1_android_light_settings_t light_settings;
-    MB_String image; //string
+    MB_String image; // string
 };
 
 struct fb_esp_fcm_http_v1_android_config_t
 {
-    MB_String collapse_key;            //string
-    MB_String priority;                //enum
-    MB_String ttl;                     //string
-    MB_String restricted_package_name; //string
-    MB_String data;                    ///object {} Arbitrary key/value payload
+    MB_String collapse_key;            // string
+    MB_String priority;                // enum
+    MB_String ttl;                     // string
+    MB_String restricted_package_name; // string
+    MB_String data;                    /// object {} Arbitrary key/value payload
     fb_esp_fcm_http_v1_android_noti_t notification;
     struct fb_esp_fcm_http_v1_android_fcm_options_t fcm_options;
-    MB_String direct_boot_ok; //boolean
+    MB_String direct_boot_ok; // boolean
 };
 
 struct fb_esp_fcm_http_v1_apns_fcm_opt_t
 {
-    MB_String analytics_label; //string Label associated with the message's analytics data
-    MB_String image;           //string contains the URL of an image that is going to be displayed in a notification.
+    MB_String analytics_label; // string Label associated with the message's analytics data
+    MB_String image;           // string contains the URL of an image that is going to be displayed in a notification.
 };
 
 struct fb_esp_fcm_http_v1_webpush_fcm_opt_t
 {
-    MB_String link;            //string, The link to open when the user clicks on the notification.
-    MB_String analytics_label; //string, Label associated with the message's analytics data.
+    MB_String link;            // string, The link to open when the user clicks on the notification.
+    MB_String analytics_label; // string, Label associated with the message's analytics data.
 };
 
 struct fb_esp_fcm_http_v1_apns_config_t
 {
-    MB_String headers;      //object {} http header key/value defined in Apple Push Notification Service
-    MB_String payload;      //object {} APNs payload as a JSON object
-    MB_String notification; //object {}
+    MB_String headers;      // object {} http header key/value defined in Apple Push Notification Service
+    MB_String payload;      // object {} APNs payload as a JSON object
+    MB_String notification; // object {}
     struct fb_esp_fcm_http_v1_apns_fcm_opt_t fcm_options;
 };
 
 struct fb_esp_fcm_http_v1_webpush_config_t
 {
-    MB_String headers;      //object {} http header key/value defined in webpush protocol.
-    MB_String data;         //object {} abitrary key/value payload
-    MB_String notification; //object {} Web Notification options as a JSON object
+    MB_String headers;      // object {} http header key/value defined in webpush protocol.
+    MB_String data;         // object {} abitrary key/value payload
+    MB_String notification; // object {} Web Notification options as a JSON object
     struct fb_esp_fcm_http_v1_webpush_fcm_opt_t fcm_options;
 };
 
 struct fb_esp_fcm_http_v1_message_info_t
 {
-    MB_String token;     //string
-    MB_String topic;     //string
-    MB_String condition; //string
+    MB_String token;     // string
+    MB_String topic;     // string
+    MB_String condition; // string
     struct fb_esp_fcm_http_v1_fcm_options_t fcm_options;
     struct fb_esp_fcm_http_v1_notification_t notification;
-    MB_String data; //object {} abitrary key/value payload
+    MB_String data; // object {} abitrary key/value payload
     struct fb_esp_fcm_http_v1_android_config_t android;
     struct fb_esp_fcm_http_v1_apns_config_t apns;
     struct fb_esp_fcm_http_v1_webpush_config_t webpush;
@@ -1591,35 +1602,35 @@ struct fb_esp_firestore_req_t
 
 struct fb_esp_firestore_document_write_field_transforms_t
 {
-    MB_String fieldPath; //string The path of the field. See Document.fields for the field path syntax reference.
+    MB_String fieldPath; // string The path of the field. See Document.fields for the field path syntax reference.
     fb_esp_firestore_transform_type transform_type = fb_esp_firestore_transform_type_undefined;
-    MB_String transform_content; //string of enum of ServerValue for setToServerValue, string of object of values for increment, maximum and minimum
+    MB_String transform_content; // string of enum of ServerValue for setToServerValue, string of object of values for increment, maximum and minimum
     //, string of array object for appendMissingElements or removeAllFromArray.
 };
 
 struct fb_esp_firestore_document_write_document_transform_t
 {
-    MB_String transform_document_path;                                                                                                                                  //The relative path of document to transform.
-    std::vector<struct fb_esp_firestore_document_write_field_transforms_t> field_transforms = std::vector<struct fb_esp_firestore_document_write_field_transforms_t>(); //array of fb_esp_firestore_document_write_field_transforms_t data.
+    MB_String transform_document_path;                                                     // The relative path of document to transform.
+    MB_VECTOR<struct fb_esp_firestore_document_write_field_transforms_t> field_transforms; // array of fb_esp_firestore_document_write_field_transforms_t data.
 };
 
 struct fb_esp_firestore_document_precondition_t
 {
-    MB_String exists;      //bool
-    MB_String update_time; //string of timestamp. When set, the target document must exist and have been last updated at that time.
-    //A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.Examples : "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
+    MB_String exists;      // bool
+    MB_String update_time; // string of timestamp. When set, the target document must exist and have been last updated at that time.
+    // A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.Examples : "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
 };
 
 struct fb_esp_firestore_document_write_t
 {
-    MB_String update_masks; //string The fields to update. Use comma (,) to separate between the field names
+    MB_String update_masks; // string The fields to update. Use comma (,) to separate between the field names
     struct fb_esp_firestore_document_write_field_transforms_t update_transforms;
-    struct fb_esp_firestore_document_precondition_t current_document; //An optional precondition on the document.
+    struct fb_esp_firestore_document_precondition_t current_document; // An optional precondition on the document.
     fb_esp_firestore_document_write_type type = fb_esp_firestore_document_write_type_undefined;
-    MB_String update_document_content;                                              //A document object to write for fb_esp_firestore_document_write_type_update.
-    MB_String update_document_path;                                                 //The relative path of document to update for fb_esp_firestore_document_write_type_update.
-    MB_String delete_document_path;                                                 //The relative path of document to delete for fb_esp_firestore_document_write_type_delete.
-    struct fb_esp_firestore_document_write_document_transform_t document_transform; //for fb_esp_firestore_document_write_type_transform
+    MB_String update_document_content;                                              // A document object to write for fb_esp_firestore_document_write_type_update.
+    MB_String update_document_path;                                                 // The relative path of document to update for fb_esp_firestore_document_write_type_update.
+    MB_String delete_document_path;                                                 // The relative path of document to delete for fb_esp_firestore_document_write_type_delete.
+    struct fb_esp_firestore_document_write_document_transform_t document_transform; // for fb_esp_firestore_document_write_type_transform
 };
 
 #endif
@@ -1643,10 +1654,11 @@ struct fb_esp_session_info_t
     unsigned long last_conn_ms = 0;
     int cert_addr = 0;
     bool cert_updated = false;
-    const uint32_t conn_timeout = 3 * 60 * 1000;
+    uint32_t conn_timeout = 3 * 60 * 1000;
 
     uint16_t resp_size = 2048;
-    int http_code = FIREBASE_ERROR_HTTP_CODE_UNDEFINED;
+    fb_esp_response_t response;
+    int http_code = 0;
     int content_length = 0;
     size_t payload_length = 0;
     size_t max_payload_length = 0;
@@ -1691,7 +1703,7 @@ typedef struct fb_esp_fcs_file_list_t FileList;
 #endif
 
 #if defined(ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE)
-//shared struct between fcs and gcs
+// shared struct between fcs and gcs
 typedef struct fb_esp_gcs_meta_info_t FileMetaInfo;
 typedef struct fb_esp_fcs_file_list_item_t FileItem;
 #endif
@@ -1701,7 +1713,9 @@ typedef struct fb_esp_fcs_file_list_item_t FileItem;
 typedef struct fb_esp_auth_signin_provider_t FirebaseAuth;
 typedef struct fb_esp_cfg_t FirebaseConfig;
 
+#if !defined(__AVR__)
 typedef std::function<void(void)> callback_function_t;
+#endif
 
 static const char fb_esp_pgm_str_1[] PROGMEM = "/";
 static const char fb_esp_pgm_str_2[] PROGMEM = ".json?auth=";
@@ -1742,8 +1756,8 @@ static const char fb_esp_pgm_str_36[] PROGMEM = "Connection: keep-alive\r\n";
 static const char fb_esp_pgm_str_37[] PROGMEM = "Keep-Alive: timeout=30, max=100\r\n";
 static const char fb_esp_pgm_str_38[] PROGMEM = "Accept-Encoding: identity;q=1,chunked;q=0.1,*;q=0\r\n";
 static const char fb_esp_pgm_str_39[] PROGMEM = "connection refused";
-static const char fb_esp_pgm_str_40[] PROGMEM = "send header failed";
-static const char fb_esp_pgm_str_41[] PROGMEM = "send payload failed";
+static const char fb_esp_pgm_str_40[] PROGMEM = "send request failed";
+static const char fb_esp_pgm_str_41[] PROGMEM = "";
 static const char fb_esp_pgm_str_42[] PROGMEM = "not connected";
 static const char fb_esp_pgm_str_43[] PROGMEM = "connection lost";
 static const char fb_esp_pgm_str_44[] PROGMEM = "no HTTP server";
@@ -1786,7 +1800,7 @@ static const char fb_esp_pgm_str_80[] PROGMEM = "Content-Disposition: ";
 static const char fb_esp_pgm_str_81[] PROGMEM = "application/octet-stream";
 static const char fb_esp_pgm_str_82[] PROGMEM = "attachment";
 static const char fb_esp_pgm_str_83[] PROGMEM = "unknown error";
-//static const char fb_esp_pgm_str_84[] PROGMEM = "";
+// static const char fb_esp_pgm_str_84[] PROGMEM = "";
 static const char fb_esp_pgm_str_85[] PROGMEM = "The SD card is not available";
 static const char fb_esp_pgm_str_86[] PROGMEM = "Could not read/write the backup file";
 static const char fb_esp_pgm_str_87[] PROGMEM = "Transmission error, ";
@@ -1890,7 +1904,7 @@ static const char fb_esp_pgm_str_184[] PROGMEM = "/fb_bin_0.tmp";
 static const char fb_esp_pgm_str_185[] PROGMEM = "The backup data should be the JSON object";
 static const char fb_esp_pgm_str_186[] PROGMEM = "object";
 static const char fb_esp_pgm_str_187[] PROGMEM = "user_id";
-//static const char fb_esp_pgm_str_188[] PROGMEM = "";
+// static const char fb_esp_pgm_str_188[] PROGMEM = "";
 static const char fb_esp_pgm_str_189[] PROGMEM = "payload too large";
 static const char fb_esp_pgm_str_190[] PROGMEM = "cannot config time";
 static const char fb_esp_pgm_str_191[] PROGMEM = "incomplete SSL client data";
@@ -2158,7 +2172,7 @@ static const char fb_esp_pgm_str_446[] PROGMEM = "%[^&]";
 #if defined(FIREBASE_ESP_CLIENT)
 static const char fb_esp_pgm_str_447[] PROGMEM = "application/zip";
 static const char fb_esp_pgm_str_448[] PROGMEM = "x-goog-content-length-range: 0,104857600";
-//static const char fb_esp_pgm_str_449[] PROGMEM = "";
+// static const char fb_esp_pgm_str_449[] PROGMEM = "";
 static const char fb_esp_pgm_str_450[] PROGMEM = "Archive not found";
 static const char fb_esp_pgm_str_451[] PROGMEM = "iam";
 static const char fb_esp_pgm_str_452[] PROGMEM = "autozip";
@@ -2302,7 +2316,7 @@ static const char fb_esp_pgm_str_578[] PROGMEM = "\n** WARNING!, in stream conne
 #endif
 
 static const char fb_esp_pgm_str_579[] PROGMEM = "Missing data.";
-static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e.g. path, config.database_url and auth token.";
+static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials.";
 static const char fb_esp_pgm_str_581[] PROGMEM = "Security rules is not a valid JSON";
 static const char fb_esp_pgm_str_582[] PROGMEM = "/v1/accounts:delete?key=";
 static const char fb_esp_pgm_str_583[] PROGMEM = "error_description";
@@ -2322,7 +2336,13 @@ static const char fb_esp_pgm_str_592[] PROGMEM = "File is still opened.";
 static const char fb_esp_pgm_str_593[] PROGMEM = "File not found.";
 #endif
 
-static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char fb_esp_pgm_str_594[] PROGMEM = "The device time was not set.";
+static const char fb_esp_pgm_str_595[] PROGMEM = "Response read failed.";
+static const char fb_esp_pgm_str_596[] PROGMEM = "Custom Client is not yet enabled";
+static const char fb_esp_pgm_str_597[] PROGMEM = "Client is not yet initialized";
+
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 #endif

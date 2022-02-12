@@ -1,34 +1,34 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.6
- * 
+ * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.7
+ *
  * This library supports Espressif ESP8266 and ESP32
- * 
- * Created January 18, 2022
- * 
+ *
+ * Created February 10, 2022
+ *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #include "FirebaseFS.h"
 
@@ -68,7 +68,8 @@ void FunctionsConfig::addUpdateMasks(const char *key)
         if (strcmp(_updateMask[i].c_str(), key) == 0)
             return;
     }
-    _updateMask.push_back(key);
+    MB_String k = key;
+    _updateMask.push_back(k);
 }
 void FunctionsConfig::mFunctionsConfig(MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr bucketId)
 {
@@ -97,13 +98,12 @@ void FunctionsConfig::mSetName(MB_StringPtr name)
         ut = Signer.ut;
     if (ut)
     {
-        MB_String t;
-        t.appendP(fb_esp_pgm_str_395);
+        MB_String t = fb_esp_pgm_str_395;
         t += _projectId;
-        t.appendP(fb_esp_pgm_str_364);
+        t += fb_esp_pgm_str_364;
         t += _locationId;
-        t.appendP(fb_esp_pgm_str_365);
-        t.appendP(fb_esp_pgm_str_1);
+        t += fb_esp_pgm_str_365;
+        t += fb_esp_pgm_str_1;
         t += name;
         _funcCfg.set(pgm2Str(fb_esp_pgm_str_274), t.c_str());
         _name = name;
@@ -154,7 +154,7 @@ void FunctionsConfig::mSetTimeout(MB_StringPtr seconds)
     if (ut)
     {
         MB_String s = seconds;
-        s.appendP(fb_esp_pgm_str_417);
+        s += fb_esp_pgm_str_417;
         _funcCfg.set(pgm2Str(fb_esp_pgm_str_370), s.c_str());
         addUpdateMasks(pgm2Str(fb_esp_pgm_str_370));
     }
@@ -214,10 +214,10 @@ void FunctionsConfig::mSetSource(MB_StringPtr path, fb_esp_functions_sources_typ
         {
         case functions_sources_type_storage_bucket_archive:
 
-            t.appendP(fb_esp_pgm_str_350);
+            t += fb_esp_pgm_str_350;
             t += _bucketId;
             if (_path[0] != '/')
-                t.appendP(fb_esp_pgm_str_1);
+                t += fb_esp_pgm_str_1;
             t += path;
 
             _funcCfg.set(pgm2Str(fb_esp_pgm_str_381), t.c_str());
@@ -275,10 +275,9 @@ void FunctionsConfig::mAddLabel(MB_StringPtr key, MB_StringPtr value)
     if (ut)
     {
         MB_String _value = value;
-        MB_String t;
-        t.appendP(fb_esp_pgm_str_373);
+        MB_String t = fb_esp_pgm_str_373;
         addUpdateMasks(t.c_str());
-        t.appendP(fb_esp_pgm_str_1);
+        t += fb_esp_pgm_str_1;
         t += key;
         _funcCfg.set(t.c_str(), _value);
     }
@@ -300,10 +299,9 @@ void FunctionsConfig::mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr val
     if (ut)
     {
         MB_String _value = value;
-        MB_String t;
-        t.appendP(fb_esp_pgm_str_374);
+        MB_String t = fb_esp_pgm_str_374;
         addUpdateMasks(t.c_str());
-        t.appendP(fb_esp_pgm_str_1);
+        t += fb_esp_pgm_str_1;
         t += key;
         _funcCfg.set(t.c_str(), _value);
     }
@@ -325,10 +323,9 @@ void FunctionsConfig::mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPt
     if (ut)
     {
         MB_String _value = value;
-        MB_String t;
-        t.appendP(fb_esp_pgm_str_375);
+        MB_String t = fb_esp_pgm_str_375;
         addUpdateMasks(t.c_str());
-        t.appendP(fb_esp_pgm_str_1);
+        t += fb_esp_pgm_str_1;
         t += key;
         _funcCfg.set(t.c_str(), _value);
     }
@@ -399,8 +396,7 @@ void FunctionsConfig::mSetEventTrigger(MB_StringPtr eventType, MB_StringPtr reso
         if (_failurePolicy.length() > 0)
         {
 
-            MB_String t;
-            t.appendP(fb_esp_pgm_str_394);
+            MB_String t = fb_esp_pgm_str_394;
             static FirebaseJson js;
             js.clear();
             js.setJsonData(t.c_str());
@@ -445,4 +441,4 @@ void FunctionsConfig::clear()
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

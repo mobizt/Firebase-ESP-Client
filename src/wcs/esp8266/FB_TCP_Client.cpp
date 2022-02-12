@@ -1,139 +1,45 @@
 /**
- * Firebase TCP Client v1.1.18
- * 
- * Created January 21, 2022
- * 
+ * Firebase TCP Client v1.1.19
+ *
+ * Created February 10, 2022
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef FB_TCP_Client_CPP
 #define FB_TCP_Client_CPP
 
-#ifdef ESP8266
+#if defined(ESP8266) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #include "FB_TCP_Client.h"
 
 FB_TCP_Client::FB_TCP_Client()
 {
+  client = wcs.get();
 }
 
 FB_TCP_Client::~FB_TCP_Client()
 {
   release();
-  _host.clear();
-  _CAFile.clear();
-}
-
-bool FB_TCP_Client::begin(const char *host, uint16_t port)
-{
-  if (strcmp(_host.c_str(), host) != 0)
-    mflnChecked = false;
-
-  _host = host;
-  _port = port;
-
-  //probe for fragmentation support at the specified size
-  if (!mflnChecked)
-  {
-    fragmentable = _wcs->probeMaxFragmentLength(_host.c_str(), _port, chunkSize);
-    if (fragmentable)
-    {
-      _bsslRxSize = chunkSize;
-      _bsslTxSize = chunkSize;
-      _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
-    }
-    mflnChecked = true;
-  }
-
-  if (!fragmentable)
-    _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
-
-  return true;
-}
-
-bool FB_TCP_Client::connected()
-{
-  if (_wcs)
-    return (_wcs->connected());
-  return false;
-}
-
-int FB_TCP_Client::send(const char *data, size_t len)
-{
-  if (!connect())
-    return FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED;
-
-  if (len == 0)
-    len = strlen(data);
-
-  if (len == 0)
-    return 0;
-
-  if (_wcs->write((const uint8_t *)data, len) != len)
-    return FIREBASE_ERROR_TCP_ERROR_SEND_PAYLOAD_FAILED;
-
-  return 0;
-}
-
-WiFiClient *FB_TCP_Client::stream(void)
-{
-  if (connected())
-    return _wcs.get();
-  return nullptr;
-}
-
-bool FB_TCP_Client::connect(void)
-{
-  if (connected())
-  {
-    while (_wcs->available() > 0)
-      _wcs->read();
-    return true;
-  }
-
-  _wcs->setTimeout(timeout);
-
-  if (!_wcs->connect(_host.c_str(), _port))
-    return false;
-
-  return connected();
-}
-
-void FB_TCP_Client::release()
-{
-  if (_wcs)
-  {
-    _wcs->stop();
-    _wcs.reset(nullptr);
-    _wcs.release();
-  }
-  if (x509)
-    delete x509;
-}
-
-void FB_TCP_Client::setBufferSizes(int recv, int xmit)
-{
-  _bsslRxSize = recv;
-  _bsslTxSize = xmit;
 }
 
 void FB_TCP_Client::setCACert(const char *caCert)
@@ -141,34 +47,34 @@ void FB_TCP_Client::setCACert(const char *caCert)
 
   release();
 
-  _wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
+  wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
 
-  _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
+  client = wcs.get();
 
   if (caCert)
   {
     x509 = new X509List(caCert);
-    _wcs->setTrustAnchors(x509);
-    _certType = fb_cert_type_data;
+    wcs->setTrustAnchors(x509);
+    baseSetCertType(fb_cert_type_data);
   }
   else
   {
-    _wcs->setInsecure();
-    _certType = fb_cert_type_none;
+    wcs->setInsecure();
+    baseSetCertType(fb_cert_type_none);
   }
 
-  _wcs->setNoDelay(true);
+  wcs->setBufferSizes(bsslRxSize, bsslTxSize);
+
+  wcs->setNoDelay(true);
 }
 
-void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
+bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
 {
 
-  _wcs->setBufferSizes(_bsslRxSize, _bsslTxSize);
-
   if (!mbfs)
-    return;
+    return false;
 
-  if (_clockReady && strlen(caCertFile) > 0)
+  if (clockReady && strlen(caCertFile) > 0)
   {
     MB_String filename = caCertFile;
     if (filename.length() > 0)
@@ -180,21 +86,208 @@ void FB_TCP_Client::setCACertFile(const char *caCertFile, mb_fs_mem_storage_type
     int len = mbfs->open(filename, storageType, mb_fs_open_mode_read);
     if (len > -1)
     {
+
       uint8_t *der = (uint8_t *)mbfs->newP(len);
       if (mbfs->available(storageType))
         mbfs->read(storageType, der, len);
       mbfs->close(storageType);
-      _wcs->setTrustAnchors(new X509List(der, len));
+      wcs->setTrustAnchors(new X509List(der, len));
       mbfs->delP(&der);
-      _certType = fb_cert_type_file;
+      baseSetCertType(fb_cert_type_file);
     }
   }
-  _wcs->setNoDelay(true);
+
+  wcs->setBufferSizes(bsslRxSize, bsslTxSize);
+  wcs->setNoDelay(true);
+
+  return getCertType() == fb_cert_type_file;
 }
 
-void FB_TCP_Client::setMBFS(MB_FS *mbfs)
+void FB_TCP_Client::setBufferSizes(int recv, int xmit)
 {
-  this->mbfs = mbfs;
+  bsslRxSize = recv;
+  bsslTxSize = xmit;
+}
+
+bool FB_TCP_Client::networkReady()
+{
+  return WiFi.status() == WL_CONNECTED || ethLinkUp();
+}
+
+void FB_TCP_Client::networkReconnect()
+{
+  WiFi.reconnect();
+}
+
+void FB_TCP_Client::networkDisconnect()
+{
+  WiFi.disconnect();
+}
+
+fb_tcp_client_type FB_TCP_Client::type()
+{
+  return fb_tcp_client_type_internal;
+}
+
+bool FB_TCP_Client::isInitialized() { return true; }
+
+int FB_TCP_Client::hostByName(const char *name, IPAddress &ip)
+{
+  return WiFi.hostByName(name, ip);
+}
+
+void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
+{
+  if (wcs)
+    wcs->setTimeout(timeoutmSec);
+
+  baseSetTimeout(timeoutmSec);
+}
+
+bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
+{
+
+  this->host = host;
+  this->port = port;
+  this->response_code = response_code;
+
+  ethDNSWorkAround();
+
+  wcs->setBufferSizes(bsslRxSize, bsslTxSize);
+
+  wcs->setNoDelay(true);
+
+  return true;
+}
+
+int FB_TCP_Client::beginUpdate(int len, bool verify)
+{
+  int code = 0;
+  if (len > (int)ESP.getFreeSketchSpace())
+  {
+    code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
+  }
+  else if (verify)
+  {
+    uint8_t buf[4];
+    if (wcs->peekBytes(&buf[0], 4) != 4)
+      code = FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE;
+    else
+    {
+
+      // check for valid first magic byte
+      if (buf[0] != 0xE9 && buf[0] != 0x1f)
+      {
+        code = FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE;
+      }
+      else if (buf[0] == 0xe9)
+      {
+        uint32_t bin_flash_size = ESP.magicFlashChipSize((buf[3] & 0xf0) >> 4);
+
+        // check if new bin fits to SPI flash
+        if (bin_flash_size > ESP.getFlashChipRealSize())
+        {
+          code = FIREBASE_ERROR_FW_UPDATE_BIN_SIZE_NOT_MATCH_SPI_FLASH_SPACE;
+        }
+      }
+    }
+  }
+
+  if (code == 0)
+  {
+    if (!Update.begin(len, 0, -1, 0))
+    {
+      code = FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
+    }
+  }
+  return code;
+}
+
+bool FB_TCP_Client::ethLinkUp()
+{
+  if (!eth && config)
+    eth = &(config->spi_ethernet_module);
+
+  if (!eth)
+    return false;
+
+  bool ret = false;
+#if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
+
+#if defined(INC_ENC28J60_LWIP)
+  if (eth->enc28j60)
+  {
+    ret = eth->enc28j60->status() == WL_CONNECTED;
+    goto ex;
+  }
+#endif
+#if defined(INC_W5100_LWIP)
+  if (eth->w5100)
+  {
+    ret = eth->w5100->status() == WL_CONNECTED;
+    goto ex;
+  }
+#endif
+#if defined(INC_W5100_LWIP)
+  if (eth->w5500)
+  {
+    ret = eth->w5500->status() == WL_CONNECTED;
+    goto ex;
+  }
+#endif
+
+  return ret;
+
+ex:
+  // workaround for ESP8266 Ethernet
+  delayMicroseconds(0);
+#endif
+
+  return ret;
+}
+
+void FB_TCP_Client::ethDNSWorkAround()
+{
+  if (!eth)
+    return;
+
+#if defined(ESP8266_CORE_SDK_V3_X_X)
+
+#if defined(INC_ENC28J60_LWIP)
+  if (eth->enc28j60)
+    goto ex;
+#endif
+#if defined(INC_W5100_LWIP)
+  if (eth->w5100)
+    goto ex;
+#endif
+#if defined(INC_W5100_LWIP)
+  if (eth->w5500)
+    goto ex;
+#endif
+
+  return;
+
+ex:
+  WiFiClient _client;
+  _client.connect(host.c_str(), port);
+  _client.stop();
+#endif
+}
+
+void FB_TCP_Client::release()
+{
+  if (wcs)
+  {
+    wcs->stop();
+    wcs.reset(nullptr);
+    wcs.release();
+
+    if (x509)
+      delete x509;
+
+    baseSetCertType(fb_cert_type_undefined);
+  }
 }
 
 #endif /* ESP8266 */

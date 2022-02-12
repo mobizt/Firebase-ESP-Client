@@ -1,7 +1,7 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
 
-Google's Firebase Arduino Client Library for ESP8266 and ESP32 v2.8.4
+Google's Firebase Arduino Client Library for ESP8266 and ESP32 v3.0.0
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
@@ -13,36 +13,43 @@ This library supports ESP8266 and ESP32 MCU from Espressif. The following are pl
 
 
 
+ 
+## Other Arduino Devices supported using external Clients.
+
+Since version 3.0.0, library allows you to use external Arduino Clients network interfaces e.g. WiFiClient, EthernetClient and GSMClient, the Arduino supported devices that have enough flash size (> 128k) and memory can now use this library.
+
+To use external Client, see the [ExternalClient examples](/examples/ExternalClient).
+
+The authentication with OAuth2.0 and custom auth tokens, RTDB error queue and downloadFileOTA features are not supported for other Arduino devices using external Clients.
+
+The flash and SD filesystems supports depend on the devices and third party filesystems libraries installed.
+
+
 ## Tested Devices
 
- * Wemos D1 Mini
- * NodeMCU (ESP8266)
- * ESP-12F
- * LinkNode (ESP8266)
+### This following devices were tested.
+
  * Sparkfun ESP32 Thing
  * NodeMCU-32
  * WEMOS LOLIN32
  * TTGO T8 V1.8
+ * M5Stack ESP32
+ * NodeMCU ESP8266
+ * Wemos D1 Mini (ESP8266)
+ * Arduino MKR WiFi 1010
+ * LAN8720 Ethernet PHY
+ * ENC28J60 SPI Ethernet module
 
+### Supposted Arduino Devices with flash size > 128k, using custom Clients.
 
-
-## Unsupported AT command and mobile modem bridge
-
-The library required the access to the Firebase server through the native WiFi or Ethernet for the internet connection.  
-
-The library does not support the mobile GPRS/3G/4G modem connected to MCU via serial port or any stand alone, all in one ESP32/GSM module.
-
-There are incompatibilities and security concerns when adding mobile modem with this library.
- 
-Mobile modem is not native and it required library (driver) to handle network connection using AT commands.
- 
-The library focused on WiFi and Ethernet operations, adding the ability for mobile modem breaks the compatibilities among the network connections.
-
-To make this library to support all-in-one module that has ESP32 and GSM modem on board, devided this library into small variant which is not compatible with native connectivity and can make the library too complicated. 
- 
-In addition, some mobile modem can’t handle the SSL certificate and out dated TLS supported. 
-
-Creating the new Firebase library that specific to only GSM connectivity concerns the scope of supported MCUs and the SSL library to use on that device and memory available which are most important.
+ * ESP32
+ * ESP8266
+ * Arduino SAMD
+ * Arduino STM32
+ * Arduino AVR
+ * Teensy 3.1 to 4.1
+ * Arduino Nano RP2040 Connect
+ * Raspberry Pi Pico 
 
 
 

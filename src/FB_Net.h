@@ -5,17 +5,19 @@
 #ifndef FB_Net_H
 #define FB_Net_H
 
-typedef enum
-{
-    fb_cert_type_undefined = -1,
-    fb_cert_type_none = 0,
-    fb_cert_type_data,
-    fb_cert_type_file
+#pragma once
 
-} fb_cert_type;
+#include "FirebaseFS.h"
+
+#if !defined(ESP32) && !defined(ESP8266)
+#ifndef FB_ENABLE_EXTERNAL_CLIENT
+#define FB_ENABLE_EXTERNAL_CLIENT
+#endif
+#endif
 
 #if defined(ESP32)
 #include <Arduino.h>
+#include <WiFi.h>
 #include <WiFiClient.h>
 #include <ETH.h>
 #include <WiFiClientSecure.h>
@@ -27,13 +29,12 @@ static const char esp_idf_branch_str[] PROGMEM = "release/v";
 
 
 #if defined(ESP8266)
-
+#include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <CertStoreBearSSL.h>
-#define FB_ESP_SSL_CLIENT BearSSL::WiFiClientSecure
-
 #include <core_version.h>
 #include <time.h>
+#define FB_ESP_SSL_CLIENT BearSSL::WiFiClientSecure
 
 //__GNUC__
 //__GNUC_MINOR__

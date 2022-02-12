@@ -1,34 +1,34 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.1.11
- * 
+ * Google's Cloud Firestore class, Forestore.h version 1.1.12
+ *
  * This library supports Espressif ESP8266 and ESP32
- * 
- * Created January 21, 2022
- * 
+ *
+ * Created February 10, 2022
+ *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #include "FirebaseFS.h"
 
@@ -180,10 +180,10 @@ public:
      * 
     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool commitDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), false); }
+    bool commitDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), false); }
 
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool commitDocumentAsync(FirebaseData *fbdo, T1 projectId, T2 databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), true); }
+    bool commitDocumentAsync(FirebaseData *fbdo, T1 projectId, T2 databaseId, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), true); }
 
     /** Get a document at the defined path.
      * 
@@ -351,7 +351,7 @@ private:
     int tcpSend(FirebaseData *fbdo, const char *data, struct fb_esp_firestore_req_t *req);
     void sendUploadCallback(FirebaseData *fbdo, CFS_UploadStatusInfo &in, CFS_UploadProgressCallback cb, CFS_UploadStatusInfo *out);
     bool setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms);
-    bool mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, MB_StringPtr transaction, bool async = false);
+    bool mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, MB_StringPtr transaction, bool async = false);
     bool mExportDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr bucketID, MB_StringPtr storagePath, MB_StringPtr collectionIds);
     bool mImportDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr bucketID, MB_StringPtr storagePath, MB_StringPtr collectionIds);
     bool mCreateDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentPath, MB_StringPtr content, MB_StringPtr mask);

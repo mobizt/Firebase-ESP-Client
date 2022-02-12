@@ -1,41 +1,40 @@
 /*
- * FirebaseJson, version 2.6.6
- * 
+ * FirebaseJson, version 2.6.10
+ *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
- * 
- * Created January 18, 2022
- * 
+ *
+ * Created February 11, 2022
+ *
  * Features
- * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
+ * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
  * - Serializing to writable objects e.g. String, C/C++ string, Client (WiFi and Ethernet), File and Hardware Serial.
- * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and 
+ * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and
  *   Hardware Serial.
  * - Use managed class, FirebaseJsonData to keep the deserialized result, which can be casted to any primitive data types.
- * 
- * 
+ *
+ *
  * The MIT License (MIT)
- * 
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef FirebaseJson_H
 #define FirebaseJson_H
@@ -46,26 +45,59 @@
 #undef min
 #undef max
 #endif
+#if __has_include(<FS.h>)
+#include <FS.h>
+#define MB_JSON_FS_H
+#endif
 #endif
 
 #include <Arduino.h>
+#include <stdio.h>
+#include "MB_List.h"
+
+#if !defined(__AVR__)
 #include <memory>
 #include <vector>
 #include <string>
-#include <stdio.h>
 #include <strings.h>
 #include <functional>
+#include <algorithm>
+#else
+#include <stdlib.h>
+#endif
 
-#if __has_include(<FirebaseFS.h>)
-#include <FirebaseFS.h>
+#if defined __has_include
+#if __has_include(<FBJS_Config.h>)
+#include <FBJS_Config.h>
+#endif
 #endif
 
 #if defined(FIREBASEJSON_USE_PSRAM) || defined(FIREBASE_USE_PSRAM)
 #define MB_STRING_USE_PSRAM
 #endif
+
 #include "MB_String.h"
 
 using namespace mb_string;
+
+#if defined __has_include
+#if __has_include(<Client.h>)
+#include <Client.h>
+#endif
+#else
+#include <Client.h>
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+#include "MB_JSON/MB_JSON.h"
+#ifdef __cplusplus
+}
+#endif
+
+#define MB_SERIAL_CLASS decltype(Serial)
 
 #ifdef Serial_Printf
 #undef Serial_Printf
@@ -80,32 +112,12 @@ using namespace mb_string;
 #endif
 #endif
 
+#if defined(ESP8266) || defined(ESP32) || defined(TEENSYDUINO)
 
-
-#if defined(ESP8266) || defined(ESP32)
-#include <FS.h>
-#define FILE_SYSTEM fs::File
-#define FBJS_ENABLE_FS
 #define Serial_Printf Serial.printf
 
-#elif defined(ARDUINO_ARCH_SAMD)
-#include <algorithm>
-#include <SPI.h>
-#include "extras/SD/SD.h"
-#define FILE_SYSTEM File
-#define FBJS_ENABLE_FS
-#define HardwareSerial Serial_
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4) || defined(__AVR__)
 
-#elif defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
-
-#elif defined(TEENSYDUINO)
-#define FILE_SYSTEM File
-#define HardwareSerial usb_serial_class
-#define Serial_Printf Serial.printf
-
-#endif
-
-#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
 #include "extras/print/printf.h"
 
 extern "C" __attribute__((weak)) void
@@ -116,62 +128,6 @@ _putchar(char c)
 
 #define Serial_Printf printf
 
-#endif
-
-#include <Client.h>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-#include "MB_JSON/MB_JSON.h"
-#ifdef __cplusplus
-}
-#endif
-
-#if defined(FBJS_ENABLE_SOFTWARE_SERIAL) || defined(ESP8266)
-#include <SoftwareSerial.h>
-#define FB_JS_INCLUDE_SW_SERIAL
-#endif
-
-#ifdef FBJS_ENABLE_WIFI_CLIENT
-#include <WiFiClient.h>
-#define FB_JS_INCLUDE_WIFI_CLIENT
-#endif
-
-#ifdef FBJS_ENABLE_WIFI_CLIENT_SECURE
-#include <WiFiClientSecure.h>
-#define FB_JS_INCLUDE_WIFI_CLIENT_SECURE
-#endif
-
-#ifdef FBJS_ENABLE_ARDUINO_MQTT
-#include <ArduinoMqttClient.h>
-#define FB_JS_INCLUDE_ARDUINO_MQTT
-#endif
-
-#ifdef FBJS_ENABLE_LW_MQTT
-#include <MQTT.h>
-#define FB_JS_INCLUDE_LW_MQTT
-#endif
-
-#if __has_include(<WiFiClient.h>)
-#include <WiFiClient.h>
-#define FB_JS_INCLUDE_WIFI_CLIENT
-#endif
-
-#if __has_include(<WiFiClientSecure.h>)
-#include <WiFiClientSecure.h>
-#define FB_JS_INCLUDE_WIFI_CLIENT_SECURE
-#endif
-
-#if __has_include(<ArduinoMqttClient.h>)
-#include <ArduinoMqttClient.h>
-#define FB_JS_INCLUDE_ARDUINO_MQTT
-#endif
-
-#if __has_include(<MQTT.h>)
-#include <MQTT.h>
-#define FB_JS_INCLUDE_LW_MQTT
 #endif
 
 /// HTTP codes see RFC7231
@@ -216,7 +172,8 @@ static void *fb_js_malloc(size_t len)
     size_t newLen = getReservedLen(len);
 
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
-    if ((p = (void *)ps_malloc(newLen)) == 0)
+    p = (void *)ps_malloc(newLen);
+    if (!p)
         return NULL;
 #else
 
@@ -224,7 +181,8 @@ static void *fb_js_malloc(size_t len)
     ESP.setExternalHeap();
 #endif
 
-    bool nn = ((p = (void *)malloc(newLen)) > 0);
+    p = (void *)malloc(newLen);
+    bool nn = p ? true : false;
 
 #if defined(ESP8266_USE_EXTERNAL_HEAP)
     ESP.resetHeap();
@@ -314,50 +272,64 @@ public:
 
     /**
      * Get array data as FirebaseJsonArray object from FirebaseJsonData object.
-     * 
+     *
      * @param jsonArray The returning FirebaseJsonArray object.
      * @return bool status for successful operation.
      * This should call after parse or get function.
-    */
+     */
     bool getArray(FirebaseJsonArray &jsonArray);
 
     /**
      * Get array data as FirebaseJsonArray object from string.
-     * 
+     *
      * @param source The JSON array string.
      * @param jsonArray The returning FirebaseJsonArray object.
      * @return bool status for successful operation.
-     * This should call after parse or get function.
-    */
+     *
+     * @note This should call after parse or get function.
+     */
     template <typename T>
-    bool getArray(T source, FirebaseJsonArray &jsonArray) { return mGetArray(getStr(source), jsonArray); }
+    bool getArray(T source, FirebaseJsonArray &jsonArray)
+    {
+        char *s = NULL;
+        bool ret = mGetArray(getStr(source, s), jsonArray);
+        delP(&s);
+        return ret;
+    }
 
     /**
      * Get JSON data as FirebaseJson object from FirebaseJsonData object.
-     * 
+     *
      * @param json The returning FirebaseJson object.
      * @return bool status for successful operation.
      * This should call after parse or get function.
-    */
+     */
     bool getJSON(FirebaseJson &json);
 
     /**
      * Get JSON data as FirebaseJson object from string.
-     * 
+     *
      * @param source The JSON string.
      * @param json The returning FirebaseJson object.
      * @return bool status for successful operation.
-     * This should call after parse or get function.
-    */
+     *
+     * @note This should call after parse or get function.
+     */
     template <typename T>
-    bool getJSON(T source, FirebaseJson &json) { return mGetJSON(getStr(source), json); }
+    bool getJSON(T source, FirebaseJson &json)
+    {
+        char *s = NULL;
+        bool ret = mGetJSON(getStr(source, s), json);
+        delP(&s);
+        return ret;
+    }
 
     /**
      * Get the value by specific type from FirebaseJsonData object.
      * This should call after parse or get function.
-    */
+     */
     template <typename T>
-    auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
+    auto to() -> typename MB_ENABLE_IF<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
     {
         if (is_bool<T>::value)
             return iVal.uint32 > 0;
@@ -377,88 +349,88 @@ public:
             return iVal.int64;
         else if (is_num_uint64<T>::value)
             return iVal.uint64;
-        else if (is_same<T, float>::value)
+        else if (MB_IS_SAME<T, float>::value)
             return fVal.f;
-        else if (is_same<T, double>::value)
+        else if (MB_IS_SAME<T, double>::value)
             return fVal.d;
         else
             return 0;
     }
 
     template <typename T>
-    auto to() -> typename enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
+    auto to() -> typename MB_ENABLE_IF<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
     {
         return stringValue.c_str();
     }
 
     template <typename T>
-    auto get(T &json) -> typename enable_if<is_same<T, FirebaseJson>::value>::type
+    auto get(T &json) -> typename MB_ENABLE_IF<MB_IS_SAME<T, FirebaseJson>::value>::type
     {
         getJSON(json);
     }
 
     template <typename T>
-    auto get(T &arr) -> typename enable_if<is_same<T, FirebaseJsonArray>::value>::type
+    auto get(T &arr) -> typename MB_ENABLE_IF<MB_IS_SAME<T, FirebaseJsonArray>::value>::type
     {
         getArray(arr);
     }
 
     /**
      * Clear internal buffer.
-    */
+     */
     void clear();
 
     /**
      * The String value of parses data.
-    */
+     */
     String stringValue;
 
     /**
      * The int value of parses data.
-    */
+     */
     int intValue = 0;
 
     /**
      * The float value of parses data.
-    */
+     */
     float floatValue = 0.0f;
 
     /**
-   * The double value of parses data.
-  */
+     * The double value of parses data.
+     */
     double doubleValue = 0.0;
 
     /**
      * The bool value of parses data.
-    */
+     */
     bool boolValue = false;
 
     /**
      * The type String of parses data.
-    */
+     */
     String type;
 
     /**
      * The type (number) of parses data.
-    */
+     */
     uint8_t typeNum = 0;
 
     /**
      * The success flag of parsing data.
-    */
+     */
     bool success = false;
 
 private:
     union IVal
     {
-        std::uint64_t uint64;
-        std::int64_t int64;
-        std::uint32_t uint32;
-        std::int32_t int32;
-        std::int16_t int16;
-        std::uint16_t uint16;
-        std::int8_t int8;
-        std::uint8_t uint8;
+        uint64_t uint64;
+        int64_t int64;
+        uint32_t uint32;
+        int32_t int32;
+        int16_t int16;
+        uint16_t uint16;
+        int8_t int8;
+        uint8_t uint8;
     };
 
     struct FVal
@@ -484,19 +456,32 @@ private:
 
     bool mGetArray(const char *source, FirebaseJsonArray &jsonArray);
     bool mGetJSON(const char *source, FirebaseJson &json);
+    size_t getReservedLen(size_t len);
+    void delP(void *ptr);
+    void *newP(size_t len);
 
-protected:
     template <typename T>
-    auto getStr(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val, char *out) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, const char *>::type
     {
         return val.c_str();
     }
 
     template <typename T>
-    auto getStr(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
+    auto getStr(T val, char *out) -> typename MB_ENABLE_IF<is_arduino_flash_string_helper<T>::value, const char *>::type
+    {
+        return getStr(reinterpret_cast<PGM_P>(val), out);
+    }
 
     template <typename T>
-    auto getStr(T val) -> typename enable_if<fs_t<T>::value, const char *>::type { return (const char *)val; }
+    auto getStr(T val, char *out) -> typename MB_ENABLE_IF<is_const_chars<T>::value, const char *>::type
+    {
+        int len = strlen_P((PGM_P)val) + 1;
+        out = (char *)newP(len);
+        uint8_t *d = reinterpret_cast<uint8_t *>(out);
+        while (len-- > 0)
+            *d++ = pgm_read_byte(val++);
+        return out;
+    }
 };
 
 class FirebaseJsonBase
@@ -541,7 +526,7 @@ private:
 
     struct iterator_data_t
     {
-        std::vector<struct iterator_result_t> result;
+        MB_VECTOR<struct iterator_result_t> result;
         int buf_offset = 0;
         size_t buf_size = 0;
         int depth = -1;
@@ -564,19 +549,19 @@ private:
     bool setRaw(const char *raw);
     void prepareRoot();
     MB_JSON *parse(const char *raw);
-    void searchElements(std::vector<MB_String> &keys, MB_JSON *parent, struct search_result_t &r);
+    void searchElements(MB_VECTOR<MB_String> &keys, MB_JSON *parent, struct search_result_t &r);
     MB_JSON *getElement(MB_JSON *parent, const char *key, struct search_result_t &r);
-    void mAdd(std::vector<MB_String> keys, MB_JSON **parent, int beginIndex, MB_JSON *value);
-    void makeList(const char *str, std::vector<MB_String> &keys, char delim);
-    void clearList(std::vector<MB_String> &keys);
+    void mAdd(MB_VECTOR<MB_String> keys, MB_JSON **parent, int beginIndex, MB_JSON *value);
+    void makeList(const char *str, MB_VECTOR<MB_String> &keys, char delim);
+    void clearList(MB_VECTOR<MB_String> &keys);
     bool isArray(MB_JSON *e);
     bool isObject(MB_JSON *e);
     MB_JSON *addArray(MB_JSON *parent, MB_JSON *e, size_t size);
-    void appendArray(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
-    void replaceItem(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
-    void replace(std::vector<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item);
+    void appendArray(MB_VECTOR<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
+    void replaceItem(MB_VECTOR<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *value);
+    void replace(MB_VECTOR<MB_String> &keys, struct search_result_t &r, MB_JSON *parent, MB_JSON *item);
     size_t mIteratorBegin(MB_JSON *parent);
-    size_t mIteratorBegin(MB_JSON *parent, std::vector<MB_String> *keys);
+    size_t mIteratorBegin(MB_JSON *parent, MB_VECTOR<MB_String> *keys);
     void mCollectIterator(MB_JSON *e, int type, int &arrIndex);
     void mIterate(MB_JSON *parent, int &arrIndex);
     int mIteratorGet(size_t index, int &type, String &key, String &value);
@@ -589,7 +574,7 @@ private:
 #endif
     const char *mRaw();
     bool mRemove(const char *path);
-    void mGetPath(MB_String &path, std::vector<MB_String> paths, int begin = 0, int end = -1);
+    void mGetPath(MB_String &path, MB_VECTOR<MB_String> paths, int begin = 0, int end = -1);
     size_t mGetSerializedBufferLength(bool prettify);
     void mSetFloatDigits(uint8_t digits);
     void mSetDoubleDigits(uint8_t digits);
@@ -600,6 +585,9 @@ private:
     void mSetElementType(FirebaseJsonData *result);
     void mSet(const char *path, MB_JSON *value);
     void mCopy(FirebaseJsonBase &other);
+#if defined(__AVR__)
+    unsigned long long strtoull_alt(const char *s);
+#endif
 
 public:
     enum fb_json_root_type
@@ -647,16 +635,27 @@ protected:
     MB_String buf;
 
     template <typename T>
-    auto getStr(const T &val) -> typename enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || is_same<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val, char *out) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, const char *>::type
     {
         return val.c_str();
     }
 
     template <typename T>
-    auto getStr(T val) -> typename enable_if<is_const_chars<T>::value, const char *>::type { return val; }
+    auto getStr(T val, char *out) -> typename MB_ENABLE_IF<is_arduino_flash_string_helper<T>::value, const char *>::type
+    {
+        return getStr(reinterpret_cast<PGM_P>(val), out);
+    }
 
     template <typename T>
-    auto getStr(T val) -> typename enable_if<is_arduino_flash_string_helper<T>::value, const char *>::type { return (const char *)val; }
+    auto getStr(T val, char *out) -> typename MB_ENABLE_IF<is_const_chars<T>::value, const char *>::type
+    {
+        int len = strlen_P((PGM_P)val) + 1;
+        out = (char *)newP(len);
+        uint8_t *d = reinterpret_cast<uint8_t *>(out);
+        while (len-- > 0)
+            *d++ = pgm_read_byte(val++);
+        return out;
+    }
 
     template <typename T>
     bool toStringPtrHandler(T *ptr, bool prettify)
@@ -664,7 +663,7 @@ protected:
         if (!root || !ptr)
             return false;
 
-        if (std::is_same<T, char>::value)
+        if (MB_IS_SAME<T, char>::value)
         {
             char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
             if (p)
@@ -678,7 +677,7 @@ protected:
     }
 
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_string<T>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<is_string<T>::value, bool>::type
     {
         if (!root)
             return false;
@@ -694,11 +693,7 @@ protected:
     }
 
     template <typename T>
-#ifdef FB_JS_INCLUDE_SW_SERIAL
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, HardwareSerial>::value || is_same<T, SoftwareSerial>::value, bool>::type
-#else
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, HardwareSerial>::value, bool>::type
-#endif
+    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, MB_SERIAL_CLASS>::value, bool>::type
     {
         char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
         if (p)
@@ -710,77 +705,38 @@ protected:
         return false;
     }
 
-#ifdef FB_JS_INCLUDE_LW_MQTT
-    template <typename T1, typename T2>
-    auto toStringHandler(T1 &out, T2 topic) -> typename enable_if<is_same<T1, MQTTClient>::value && is_string<T2>::value, bool>::type
-    {
-        char *p = MB_JSON_PrintUnformatted(root);
-        if (p)
-        {
-            out.publish(topic, p);
-            MB_JSON_free(p);
-            return true;
-        }
-        return false;
-    }
-#endif
-
-#if defined(FBJS_ENABLE_FS)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, FILE_SYSTEM>::value || is_same<T, fs::File>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, Stream>::value, bool>::type
     {
-        return writeHelper(out, prettify);
+        return writeStream(out, prettify);
     }
+
+#if defined(MB_JSON_FS_H)
+
+    template <typename T>
+    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, File>::value, bool>::type
+    {
+        return writeStream(out, prettify);
+    }
+
 #endif
 
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, Client>::value, bool>::type
-    {
-        return writeHelper(out, prettify);
-    }
-
-#if defined(FB_JS_INCLUDE_WIFI_CLIENT)
-    template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, WiFiClient>::value, bool>::type
-    {
-        return writeHelper(out, prettify);
-    }
-#endif
-
-#if defined(FB_JS_INCLUDE_WIFI_CLIENT_SECURE)
-    template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, WiFiClientSecure>::value, bool>::type
-    {
-        return writeHelper(out, prettify);
-    }
-#endif
-
-#if defined(FB_JS_INCLUDE_ARDUINO_MQTT)
-    template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename enable_if<is_same<T, MqttClient>::value, bool>::type
-    {
-        return writeHelper(out, prettify);
-    }
-#endif
-
-    template <typename T>
-    bool writeHelper(T &out, bool prettify)
+    bool writeStream(T &out, bool prettify)
     {
         bool ret = false;
 
         if (!root)
             return false;
 
-        if (out)
+        char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
+        if (p)
         {
-            char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
-            if (p)
-            {
-                ret = out.write((const uint8_t *)p, strlen(p)) == strlen(p);
-                MB_JSON_free(p);
-                return ret;
-            }
+            ret = out.write((const uint8_t *)p, strlen(p)) == strlen(p);
+            MB_JSON_free(p);
+            return ret;
         }
+
         return ret;
     }
 
@@ -823,7 +779,8 @@ protected:
         size_t newLen = getReservedLen(len);
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
 
-        if ((p = (void *)ps_malloc(newLen)) == 0)
+        p = (void *)ps_malloc(newLen);
+        if (!p)
             return NULL;
 
 #else
@@ -832,7 +789,8 @@ protected:
         ESP.setExternalHeap();
 #endif
 
-        bool nn = ((p = (void *)malloc(newLen)) > 0);
+        p = (void *)malloc(newLen);
+        bool nn = p ? true : false;
 
 #if defined(ESP8266_USE_EXTERNAL_HEAP)
         ESP.resetHeap();
@@ -1241,7 +1199,7 @@ protected:
                     delP(&tmp);
                 }
 
-                //last chunk
+                // last chunk
                 if (chunkedSize < 1)
                     olen = -1;
             }
@@ -1260,7 +1218,7 @@ protected:
 
                 if (readLen > 0)
                 {
-                    //chunk may contain trailing
+                    // chunk may contain trailing
                     if (dataLen + readLen - 2 < chunkedSize)
                     {
                         dataLen += readLen;
@@ -1319,7 +1277,7 @@ protected:
                     delP(&tmp);
                 }
 
-                //last chunk
+                // last chunk
                 if (chunkedSize < 1)
                     olen = -1;
             }
@@ -1336,7 +1294,7 @@ protected:
 
                 if (readLen > 0)
                 {
-                    //chunk may contain trailing
+                    // chunk may contain trailing
                     if (dataLen + readLen - 2 < chunkedSize)
                     {
                         dataLen += readLen;
@@ -1414,7 +1372,7 @@ protected:
 
                         if (chunkIdx == 0)
                         {
-                            //the first chunk can be http response header
+                            // the first chunk can be http response header
                             header = (char *)newP(chunkBufSize);
                             hstate = 1;
                             int readLen = readLine(client, header, chunkBufSize);
@@ -1425,7 +1383,7 @@ protected:
                             dataTime = millis();
                             if (tmp)
                             {
-                                //http response header with http response code
+                                // http response header with http response code
                                 isHeader = true;
                                 hBufPos = readLen;
                                 response.httpCode = atoi(tmp);
@@ -1437,15 +1395,15 @@ protected:
                         {
                             idle();
                             dataTime = millis();
-                            //the next chunk data can be the remaining http header
+                            // the next chunk data can be the remaining http header
                             if (isHeader)
                             {
-                                //read one line of next header field until the empty header has found
+                                // read one line of next header field until the empty header has found
                                 tmp = (char *)newP(chunkBufSize);
                                 int readLen = readLine(client, tmp, chunkBufSize);
                                 bool headerEnded = false;
 
-                                //check is it the end of http header (\n or \r\n)?
+                                // check is it the end of http header (\n or \r\n)?
                                 if (readLen == 1)
                                     if (tmp[0] == '\r')
                                         headerEnded = true;
@@ -1457,7 +1415,7 @@ protected:
                                 if (headerEnded)
                                 {
                                     buf.clear();
-                                    //parse header string to get the header field
+                                    // parse header string to get the header field
                                     isHeader = false;
                                     parseRespHeader(header, response);
 
@@ -1473,7 +1431,7 @@ protected:
                                 }
                                 else
                                 {
-                                    //accumulate the remaining header field
+                                    // accumulate the remaining header field
                                     memcpy(header + hBufPos, tmp, readLen);
                                     hBufPos += readLen;
                                 }
@@ -1481,15 +1439,15 @@ protected:
                             }
                             else
                             {
-                                //the next chuunk data is the payload
+                                // the next chuunk data is the payload
                                 if (!response.noContent)
                                 {
                                     pChunkIdx++;
                                     pChunk = (char *)newP(chunkBufSize + 1);
                                     if (response.isChunkedEnc)
                                         delay(10);
-                                    //read the avilable data
-                                    //chunk transfer encoding?
+                                    // read the avilable data
+                                    // chunk transfer encoding?
                                     if (response.isChunkedEnc)
                                         availablePayload = readChunkedData(client, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
                                     else
@@ -1512,7 +1470,7 @@ protected:
                                 }
                                 else
                                 {
-                                    //read all the rest data
+                                    // read all the rest data
                                     while (client->available() > 0)
                                         client->read();
                                     break;
@@ -1589,7 +1547,7 @@ protected:
             }
 
             if (data.scnt > 0)
-                data.buf += r;
+                data.buf += (char)r;
 
             if (data.scnt == data.ecnt && data.scnt > 0)
             {
@@ -1673,34 +1631,14 @@ protected:
 
 #endif
 
-    Stream *toStream(HardwareSerial *ser)
+    Stream *toStream(MB_SERIAL_CLASS *ser)
     {
         return reinterpret_cast<Stream *>(ser);
     }
-#ifdef FB_JS_INCLUDE_SW_SERIAL
-    Stream *toStream(SoftwareSerial *ser)
-    {
-        return reinterpret_cast<Stream *>(ser);
-    }
-#endif
 #if defined(FBJS_ENABLE_FS)
     Stream *toStream(fs::File *file)
     {
         return reinterpret_cast<Stream *>(file);
-    }
-#endif
-
-#ifdef FB_JS_INCLUDE_WIFI_CLIENT
-    Client *toClient(WiFiClient *client)
-    {
-        return reinterpret_cast<Client *>(client);
-    }
-#endif
-
-#ifdef FB_JS_INCLUDE_WIFI_CLIENT_SECURE
-    Client *toClient(WiFiClientSecure *client)
-    {
-        return reinterpret_cast<Client *>(client);
     }
 #endif
 
@@ -1724,7 +1662,7 @@ protected:
         rtrim(str, chars);
     }
 
-    bool isArrayKey(int &keyIndex, std::vector<MB_String> &keys)
+    bool isArrayKey(int &keyIndex, MB_VECTOR<MB_String> &keys)
     {
         if (keyIndex < (int)keys.size())
             return keys[keyIndex][0] == '[' && keys[keyIndex][keys[keyIndex].length() - 1] == ']';
@@ -1740,7 +1678,7 @@ protected:
             return false;
     }
 
-    int getArrIndex(int &keyIndex, std::vector<MB_String> &keys)
+    int getArrIndex(int &keyIndex, MB_VECTOR<MB_String> &keys)
     {
         int res = -1;
         if (keyIndex < (int)keys.size())
@@ -1781,7 +1719,7 @@ public:
     FirebaseJsonArray(T data)
     {
         this->root_type = Root_Type_JSONArray;
-        setRaw(getStr(data));
+        setJsonArrayData(data);
     }
 
     FirebaseJsonArray &operator=(FirebaseJsonArray other);
@@ -1790,32 +1728,38 @@ public:
 
     /**
      * Set or deserialize the JSON array data (JSON array literal) as FirebaseJsonArray object.
-     * 
+     *
      * @param data The JSON array literal string to set or deserialize.
      * @return boolean status of the operation.
-     * 
-     * Call FirebaseJsonArray.errorPosition to get the error.
-    */
+     *
+     * @note Call FirebaseJsonArray.errorPosition to get the error.
+     */
     template <typename T>
-    bool setJsonArrayData(T data) { return setRaw(getStr(data)); }
+    bool setJsonArrayData(T data)
+    {
+        char *s = NULL;
+        bool ret = setRaw(getStr(data, s));
+        delP(&s);
+        return ret;
+    }
 
     /**
      * Add null to FirebaseJsonArray object.
-     * 
+     *
      * @return instance of an object.
-    */
+     */
     FirebaseJsonArray &add() { return nAdd(MB_JSON_CreateNull()); }
 
     /**
      * Add value to FirebaseJsonArray object.
-     * 
+     *
      * @param value The value to add.
      * @return instance of an object.
-     * 
-     * The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR/PSTR),
-     * String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, 
+     *
+     * @note The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR/PSTR),
+     * String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers,
      * boolean, FirebaseJson object and array.
-    */
+     */
     template <typename T>
     FirebaseJsonArray &add(T value) { return dataAddHandler(value); }
 
@@ -1826,11 +1770,11 @@ public:
     /**
      * Add multiple values to FirebaseJsonArray object.
      * e.g. add("a","b",1,2)
-     * 
+     *
      * @param v The value of any type to add.
      * @param n The consecutive values of any type to add.
      * @return instance of an object.
-    */
+     */
     template <typename First, typename... Next>
     FirebaseJsonArray &add(First v, Next... n)
     {
@@ -1839,155 +1783,124 @@ public:
     }
 
     /**
-     * Set JSON array data (Client response) to FirebaseJsonArray object.
-     * 
-     * @param client The pointer to or instance of Client class.
+     * Set JSON array data via derived Stream object to FirebaseJsonArray object.
+     *
+     * @param stream The pointer to or instance of derived Stream class.
      * @return boolean status of the operation.
-     * 
-    */
-    bool readFrom(Client *client) { return mReadClient(client); }
+     *
+     */
+    bool readFrom(Stream &stream) { return mReadStream(&stream, -1); }
 
+    bool readFrom(Stream *stream) { return mReadStream(stream, -1); }
+
+    /**
+     * Set JSON array data via derived Client object to FirebaseJsonArray object.
+     *
+     * @param client The pointer to or instance of derived Client class.
+     * @return boolean status of the operation.
+     *
+     */
     bool readFrom(Client &client) { return mReadClient(&client); }
 
-    /**
-     * Set JSON array data (WiFiClient response) to FirebaseJsonArray object.
-     * 
-     * @param client The pointer to or instance of WiFiClient object.
-     * @return boolean status of the operation.
-     * 
-    */
-#if defined(FB_JS_INCLUDE_WIFI_CLIENT)
-    bool readFrom(WiFiClient *client)
-    {
-        return mReadClient(toClient(client));
-    }
-
-    bool readFrom(WiFiClient &client) { return mReadClient(&client); }
-#endif
+    bool readFrom(Client *client) { return mReadClient(client); }
 
     /**
-     * Set JSON array data (WiFiClientSecure response) to FirebaseJsonArray object.
-     * 
-     * @param client The pointer to or instance of WiFiClientSecure object.
-     * @return boolean status of the operation.
-    */
-#if defined(FB_JS_INCLUDE_WIFI_CLIENT_SECURE)
-    bool readFrom(WiFiClientSecure *client)
-    {
-        return mReadClient(toClient(client));
-    }
-
-    bool readFrom(WiFiClientSecure &client) { return mReadClient(&client); }
-#endif
-
-    /**
-     * Set JSON array data (Seral object) to FirebaseJsonArray object.
-     * 
+     * Set JSON array data via Serial to FirebaseJsonArray object.
+     *
      * @param ser The HW or SW Serial object.
      * @param timeoutMS The timeout in millisecond to wait for Serial data to be completed.
      * @return boolean status of the operation.
-    */
-    bool readFrom(HardwareSerial &ser, uint32_t timeoutMS = 5000) { return mReadStream(toStream(&ser), (int)timeoutMS); }
-#ifdef FB_JS_INCLUDE_SW_SERIAL
-    bool readFrom(SoftwareSerial &ser, uint32_t timeoutMS = 5000)
-    {
-        return mReadStream(toStream(&ser), (int)timeoutMS);
-    }
-#endif
-
-#if defined(FBJS_ENABLE_FS)
-    /**
-     * Set JSON array data (File object) to FirebaseJsonArray object.
-     * 
-     * @param file The File object.
-     * @return boolean status of the operation.
-    */
-    bool readFrom(FILE_SYSTEM &file) { return mReadStream(toStream(&file), -1); }
-#endif
+     */
+    bool readFrom(MB_SERIAL_CLASS &ser, uint32_t timeoutMS = 5000) { return mReadStream(toStream(&ser), (int)timeoutMS); }
 
 #if defined(ESP32_SD_FAT_INCLUDED)
     /**
-     * Set JSON array data (SdFat's SdFile object) to FirebaseJsonArray object.
-     * 
-     * @param sdFatFile The SdFat's SdFile object.
+     * Set JSON array data via SdFat's SdFile object to FirebaseJsonArray object.
+     *
+     * @param sdFatFile The SdFat file object.
      * @return boolean status of the operation.
-    */
+     */
     bool readFrom(SD_FAT_FILE &sdFatFile) { return mReadSdFat(sdFatFile, -1); }
 #endif
 
     /**
      * Get the array value at the specified index or path from the FirebaseJsonArray object.
-     * 
+     *
      * @param result The reference of FirebaseJsonData object that holds data at the specified index.
      * @param index_or_path Index of data or relative path to data in FirebaseJsonArray object.
      *  @param prettify The text indentation and new line serialization option.
      * @return boolean status of the operation.
-     * 
-     * The relative path must begin with array index (number placed inside square brackets) followed by
+     *
+     * @note The relative path must begin with array index (number placed inside square brackets) followed by
      * other array indexes or node names e.g. /[2]/myData would get the data from myData key inside the array indexes 2
-    */
+     */
     template <typename T>
     bool get(FirebaseJsonData &result, T index_or_path, bool prettify = false) { return dataGetHandler(index_or_path, result, prettify); }
 
     /**
      * Check whether key or path to the child element existed in FirebaseJsonArray or not.
-     * 
+     *
      * @param path The key or path of child element check.
      * @return boolean status indicated the existence of element.
-     *  
-    */
+     */
     template <typename T>
-    bool isMember(T path) { return mGet(root, NULL, getStr(path)); }
+    bool isMember(T path)
+    {
+        char *s = NULL;
+        bool ret = mGet(root, NULL, getStr(path, s));
+        delP(&s);
+        return ret;
+    }
 
     /**
      * Parse and collect all node/array elements in FirebaseJsonArray object.
      * @return number of child/array elements in FirebaseJson object.
-    */
+     */
     size_t iteratorBegin(const char *data = NULL) { return mIteratorBegin(root); }
 
     /**
      * Get child/array elements from FirebaseJsonArray objects at specified index.
-     * 
+     *
      * @param index The element index to get.
      * @param type The integer which holds the type of data i.e. JSON_OBJECT and JSON_ARR
      * @param key The string which holds the key/key of an object, can return empty String if the data type is an array.
      * @param value The string which holds the value for the element key or array.
      * @return depth of element.
-    */
+     */
     int iteratorGet(size_t index, int &type, String &key, String &value) { return mIteratorGet(index, type, key, value); }
 
     /**
      * Get child/array elements from FirebaseJsonArray objects at specified index.
-     * 
+     *
      * @param index The element index to get.
      * @return IteratorValue struct.
-     * 
+     *
      * This should call after iteratorBegin.
-     * 
+     *
      * The IteratorValue struct contains the following members.
      * int type
      * String key
      * String value
-    */
+     */
     IteratorValue valueAt(size_t index) { return mValueAt(index); }
 
     /**
      * Clear all iterator buffer (should be called since iteratorBegin was called).
-    */
+     */
     void iteratorEnd() { mIteratorEnd(); }
 
     /**
      * Get the length of the array in FirebaseJsonArray object.
      * @return length of the array.
-    */
+     */
     size_t size() { return MB_JSON_GetArraySize(root); }
 
     /**
      * Get the FirebaseJsonArray object serialized string.
-     * 
+     *
      * @param out The object e.g. Serial, String, std::string, char array, Stream, File, Client, that accepts the returning string.
      * @param prettify The text indentation and new line serialization option.
-    */
+     */
     template <typename T>
     bool toString(T &out, bool prettify = false) { return toStringHandler(out, prettify); }
 
@@ -1997,53 +1910,55 @@ public:
     /**
      * Get raw JSON Array
      * @return raw JSON Array string
-    */
+     */
     const char *raw() { return mRaw(); }
 
     /**
      * Get the size of serialized JSON array buffer
      * @param prettify The text indentation and new line serialization option.
-     * @return size in byte of buffer 
-    */
+     * @return size in byte of buffer
+     */
     size_t serializedBufferLength(bool prettify = false) { return mGetSerializedBufferLength(prettify); }
 
     /**
      * Clear all array in FirebaseJsonArray object.
-     * 
+     *
      * @return instance of an object.
-    */
+     */
     FirebaseJsonArray &clear();
 
     /**
      * Set null to FirebaseJsonArray object at specified index or path.
-     * 
+     *
      * @param index_or_path The array index or path that null to be set.
-    */
+     */
     template <typename T>
     void set(T index_or_path) { dataSetHandler(index_or_path, nullptr); }
 
     /**
-     * Set String to FirebaseJsonArray object at the specified index.
-     * 
+     * Set value to FirebaseJsonArray object at the specified index.
+     *
      * @param index_or_path The array index or path that value to be set.
-     * @param value The String to set.
-    */
+     * @param value The value to set.
+     */
     template <typename T1, typename T2>
     void set(T1 index_or_path, T2 value) { dataSetHandler(index_or_path, value); }
+
     template <typename T>
     void set(T index_or_path, FirebaseJson &value) { return dataSetHandler(index_or_path, value); }
+
     template <typename T>
     void set(T index_or_path, FirebaseJsonArray &value) { return dataSetHandler(index_or_path, value); }
 
     /**
      * Remove the array value at the specified index or path from the FirebaseJsonArray object.
-     * 
+     *
      * @param index_or_path The array index or relative path to array to be removed.
      * @return bool value represents the successful operation.
-     * 
-     * The relative path must begin with array index (number placed inside square brackets) followed by
+     *
+     * @note The relative path must begin with array index (number placed inside square brackets) followed by
      * other array indexes or node names e.g. /[2]/myData would remove the data of myData key inside the array indexes 2.
-    */
+     */
     template <typename T1>
     bool remove(T1 index_or_path) { return dataRemoveHandler(index_or_path); }
 
@@ -2051,23 +1966,23 @@ public:
      * Get the error position at the JSON object literal from parsing.
      * @return the position of error in JSON object literal
      * Return -1 when for no parsing error.
-    */
+     */
     int errorPosition() { return errorPos; }
 
     /**
      * Set the precision for float to JSON Array object
-    */
+     */
     void setFloatDigits(uint8_t digits) { mSetFloatDigits(digits); }
 
     /**
      * Set the precision for double to JSON Array object
-    */
+     */
     void setDoubleDigits(uint8_t digits) { mSetDoubleDigits(digits); }
 
     /**
      * Get http response code of reading JSON data from WiFi/Ethernet Client.
      * @return the response code of reading JSON data from WiFi/Ethernet Client
-    */
+     */
     int responseCode() { return mResponseCode(); }
 
 private:
@@ -2077,159 +1992,189 @@ private:
     bool mRemoveIdx(int index);
 
     template <typename T>
-    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename enable_if<is_string<T>::value, bool>::type
+    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename MB_ENABLE_IF<is_string<T>::value, bool>::type
     {
-        return mGet(root, &result, getStr(arg), prettify);
+        char *s = NULL;
+        bool ret = mGet(root, &result, getStr(arg, s), prettify);
+        delP(&s);
+        return ret;
     }
 
     template <typename T>
-    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename enable_if<is_num_int<T>::value, bool>::type
+    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename MB_ENABLE_IF<is_num_int<T>::value, bool>::type
     {
         return mGetIdx(&result, arg, prettify);
     }
 
     template <typename T>
-    auto dataRemoveHandler(T arg) -> typename enable_if<is_string<T>::value, bool>::type
+    auto dataRemoveHandler(T arg) -> typename MB_ENABLE_IF<is_string<T>::value, bool>::type
     {
-        return mRemove(getStr(arg));
+        char *s = NULL;
+        mRemove(getStr(arg, s));
+        delP(&s);
+        return *this;
     }
 
     template <typename T>
-    auto dataRemoveHandler(T arg) -> typename enable_if<is_num_int<T>::value, bool>::type
+    auto dataRemoveHandler(T arg) -> typename MB_ENABLE_IF<is_num_int<T>::value, bool>::type
     {
         return mRemoveIdx(arg);
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename enable_if<is_bool<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_bool<T>::value, FirebaseJsonArray &>::type
     {
         nAdd(MB_JSON_CreateBool(arg));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename enable_if<is_num_int<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_num_int<T>::value, FirebaseJsonArray &>::type
     {
         nAdd(MB_JSON_CreateRaw(num2Str(arg, -1)));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename enable_if<is_same<T, float>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<MB_IS_SAME<T, float>::value, FirebaseJsonArray &>::type
     {
         nAdd(MB_JSON_CreateRaw(num2Str(arg, floatDigits)));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename enable_if<is_same<T, double>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<MB_IS_SAME<T, double>::value, FirebaseJsonArray &>::type
     {
         nAdd(MB_JSON_CreateRaw(num2Str(arg, doubleDigits)));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename enable_if<is_string<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJsonArray &>::type
     {
-        nAdd(MB_JSON_CreateString(getStr(arg)));
+        char *s = NULL;
+        nAdd(MB_JSON_CreateString(getStr(arg, s)));
+        delP(&s);
         return *this;
     }
 
+#if !defined(__AVR__)
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, std::nullptr_t>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, std::nullptr_t>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateNull());
+        char *s = NULL;
+        mSet(getStr(arg1, s), MB_JSON_CreateNull());
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, std::nullptr_t>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, std::nullptr_t>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateNull);
     }
+#endif
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_bool<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_bool<T2>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateBool(arg2));
+        char *s = NULL;
+        mSet(getStr(arg1, s), MB_JSON_CreateBool(arg2));
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_bool<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && is_bool<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateBool(arg2));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_num_int<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_num_int<T2>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, -1)));
+        char *s = NULL;
+        mSet(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, -1)));
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_num_int<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && is_num_int<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, -1)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, float>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, float>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
+        char *s = NULL;
+        mSet(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, float>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, float>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, double>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, double>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
+        char *s = NULL;
+        mSet(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, double>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, double>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_string<T1>::value && is_string<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_string<T2>::value>::type
     {
-        mSet(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
+        char *s1 = NULL;
+        char *s2 = NULL;
+        mSet(getStr(arg1, s1), MB_JSON_CreateString(getStr(arg2, s2)));
+        delP(&s1);
+        delP(&s2);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename enable_if<is_num_int<T1>::value && is_string<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && is_string<T2>::value>::type
     {
-        mSetIdx(arg1, MB_JSON_CreateString(getStr(arg2)));
+        char *s = NULL;
+        mSetIdx(arg1, MB_JSON_CreateString(getStr(arg2, s)));
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJson>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, FirebaseJson>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
-        mSet(getStr(arg1), e);
+        char *s = NULL;
+        mSet(getStr(arg1, s), e);
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, FirebaseJson>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, FirebaseJson>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJsonArray>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, FirebaseJsonArray>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
-        mSet(getStr(arg1), e);
+        char *s = NULL;
+        mSet(getStr(arg1, s), e);
+        delP(&s);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename enable_if<is_num_int<T1>::value && is_same<T2, FirebaseJsonArray>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, FirebaseJsonArray>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
@@ -2251,7 +2196,7 @@ public:
     FirebaseJson(T data)
     {
         this->root_type = Root_Type_JSON;
-        setRaw(getStr(data));
+        setJsonData(data);
     }
 
     FirebaseJson &operator=(FirebaseJson other);
@@ -2262,148 +2207,117 @@ public:
 
     /**
      * Clear internal buffer of FirebaseJson object.
-     * 
+     *
      * @return instance of an object.
-    */
+     */
     FirebaseJson &clear();
 
     /**
      * Set or deserialize the JSON array data (JSON object literal) as FirebaseJson object.
-     * 
+     *
      * @param data The JSON object literal string to set or deserialize.
      * @return boolean status of the operation.
-     * 
-     * Call FirebaseJson.errorPosition to get the error.
-    */
+     *
+     * @note Call FirebaseJson.errorPosition to get the error.
+     */
     template <typename T>
-    bool setJsonData(T data) { return setRaw(getStr(data)); }
+    bool setJsonData(T data)
+    {
+        char *s = NULL;
+        bool ret = setRaw(getStr(data, s));
+        delP(&s);
+        return ret;
+    }
 
     /**
-     * Set JSON data (Client response) to FirebaseJson object.
-     * 
-     * @param client The pointer to or instance of Client object.
+     * Set JSON data via derived Stream object to FirebaseJson object.
+     *
+     * @param stream The pointer to or instance of derived Stream object.
      * @return boolean status of the operation.
-   */
-    bool readFrom(Client *client) { return mReadClient(client); }
+     */
+    bool readFrom(Stream &stream) { return mReadStream(&stream, -1); }
 
+    /**
+     * Set JSON data via derived Client object to FirebaseJson object.
+     *
+     * @param client The pointer to or instance of derived Client object.
+     * @return boolean status of the operation.
+     */
     bool readFrom(Client &client) { return mReadClient(&client); }
 
     /**
-     * Set JSON data (WiFiClient response) to FirebaseJson object.
-     * 
-     * @param client The pointer to or instance of WiFiClient object.
-     * @return boolean status of the operation.
-    */
-#if defined(FB_JS_INCLUDE_WIFI_CLIENT)
-    bool readFrom(WiFiClient *client)
-    {
-        return mReadClient(toClient(client));
-    }
-
-    bool readFrom(WiFiClient &client) { return mReadClient(&client); }
-#endif
-
-    /**
-     * Set JSON data (WiFiClientSecure response) to FirebaseJson object.
-     * 
-     * @param client The pointer to or instance of WiFiClientSecure object.
-     * @return boolean status of the operation.
-    */
-#if defined(FB_JS_INCLUDE_WIFI_CLIENT_SECURE)
-    bool readFrom(WiFiClientSecure *client)
-    {
-        return mReadClient(toClient(client));
-    }
-
-    bool readFrom(WiFiClientSecure &client) { return mReadClient(&client); }
-#endif
-
-    /**
-     * Set JSON array data (Seral object) to FirebaseJson object.
-     * 
+     * Set JSON array data via Serial to FirebaseJson object.
+     *
      * @param ser The HW or SW Serial object.
      * @param timeoutMS The timeout in millisecond to wait for Serial data to be completed.
      * @return boolean status of the operation.
-    */
-    bool readFrom(HardwareSerial &ser, uint32_t timeoutMS = 5000) { return mReadStream(toStream(&ser), (int)timeoutMS); }
-#ifdef FB_JS_INCLUDE_SW_SERIAL
-    bool readFrom(SoftwareSerial &ser, uint32_t timeoutMS = 5000)
-    {
-        return mReadStream(toStream(&ser), (int)timeoutMS);
-    }
-#endif
-
-#if defined(FBJS_ENABLE_FS)
-    /**
-     * Set JSON data (File object) to FirebaseJson object.
-     * 
-     * @param file The File object.
-     * @return boolean status of the operation.
-    */
-    bool readFrom(FILE_SYSTEM &file) { return mReadStream(toStream(&file), -1); }
-#endif
+     */
+    bool readFrom(MB_SERIAL_CLASS &ser, uint32_t timeoutMS = 5000) { return mReadStream(toStream(&ser), (int)timeoutMS); }
 
 #if defined(ESP32_SD_FAT_INCLUDED)
     /**
-     * Set JSON data (SdFat's SdFile object) to FirebaseJson object.
-     * 
+     * Set JSON data via SdFat's SdFile object to FirebaseJson object.
+     *
      * @param sdFatFile The SdFat's SdFile object.
      * @return boolean status of the operation.
-    */
+     */
     bool readFrom(SD_FAT_FILE &sdFatFile) { return mReadSdFat(sdFatFile, -1); }
 #endif
 
     /**
      * Add null to FirebaseJson object.
-     * 
+     *
      * @param key The new key string that null to be added.
      * @return instance of an object.
-    */
+     */
     template <typename T>
-    FirebaseJson &add(T key) { return nAdd(getStr(key), NULL); }
+    FirebaseJson &add(T key)
+    {
+        char *s = NULL;
+        nAdd(getStr(key, s), NULL);
+        delP(&s);
+        return *this;
+    }
 
     /**
      * Add value to FirebaseJson object.
-     * 
+     *
      * @param key The new key string that string value to be added.
      * @param value The value for the new specified key.
-     * 
      * @return instance of an object.
-    */
+     */
     template <typename T1, typename T2>
     FirebaseJson &add(T1 key, T2 value) { return dataHandler(key, value, fb_json_func_type_add); }
+
     template <typename T>
     FirebaseJson &add(T key, FirebaseJson &value) { return dataHandler(key, value, fb_json_func_type_add); }
+
     template <typename T>
     FirebaseJson &add(T key, FirebaseJsonArray &value) { return dataHandler(key, value, fb_json_func_type_add); }
 
     /**
      * Get the FirebaseJson object serialized string.
-     * 
+     *
      * @param out The writable object e.g. String, std::string, char array, Stream e.g ile, WiFi/Ethernet Client and LWMQTT, that accepts the returning string.
-     * @param topic The MQTT topic (LWMQTT).
      * @param prettify The text indentation and new line serialization option.
-    */
-    template <typename T>
-    bool toString(T &out, bool prettify = false) { return toStringHandler(out, prettify); }
+     */
 
-    template <typename T1, typename T2>
-    auto toString(T1 &out, T2 topic) -> typename enable_if<is_string<T2>::value, bool>::type { return toStringHandler(out, getStr(topic)); }
+    bool toString(Stream &out, bool prettify = false) { return toStringHandler(out, prettify); }
 
     template <typename T>
     bool toString(T *ptr, bool prettify = false) { return toStringPtrHandler(ptr, prettify); }
 
-    template <typename T1, typename T2>
-    bool toString(T1 *out, T2 topic) { return toStringHandler(out, getStr(topic)); }
+    template <typename T>
+    bool toString(T &out, bool prettify = false) { return toStringHandler(out, prettify); }
 
     /**
      * Get the value from the specified node path in FirebaseJson object.
-     * 
+     *
      * @param result The reference of FirebaseJsonData that holds the result.
      * @param path Relative path to the specific node in FirebaseJson object.
      * @param prettify The text indentation and new line serialization option.
      * @return boolean status of the operation.
-     * 
+     *
      * The FirebaseJsonData object holds the returned data which can be read from the following properties.
      * result.stringValue - contains the returned string.
      * result.intValue - contains the returned signed 32-bit integer value.
@@ -2413,7 +2327,7 @@ public:
      * result.success - used to determine the result of the get operation.
      * result.type - used to determine the type of returned value in string represent
      * the types of value e.g. string, int, double, boolean, array, object, null and undefined.
-     * 
+     *
      * result.typeNum used to determine the type of returned value is an integer as represented by the following value.
      * FirebaseJson::UNDEFINED = 0
      * FirebaseJson::OBJECT = 1
@@ -2424,206 +2338,247 @@ public:
      * FirebaseJson::DOUBLE = 6
      * FirebaseJson::BOOL = 7 and
      * FirebaseJson::NULL = 8
-    */
+     */
     template <typename T>
-    bool get(FirebaseJsonData &result, T path, bool prettify = false) { return mGet(root, &result, getStr(path), prettify); }
+    bool get(FirebaseJsonData &result, T path, bool prettify = false)
+    {
+        char *s = NULL;
+        bool ret = mGet(root, &result, getStr(path, s), prettify);
+        delP(&s);
+        return ret;
+    }
 
     /**
      * Check whether key or path to the child element existed in FirebaseJson object or not.
-     * 
+     *
      * @param path The key or path of child element check.
      * @return boolean status indicated the existence of element.
-     *  
-    */
+     */
     template <typename T>
-    bool isMember(T path) { return mGet(root, NULL, getStr(path)); }
+    bool isMember(T path)
+    {
+        char *s = NULL;
+        bool ret = mGet(root, NULL, getStr(path, s));
+        delP(&s);
+        return ret;
+    }
 
     /**
      * Parse and collect all node/array elements in FirebaseJson object.
-     * 
+     *
      * @return number of child/array elements in FirebaseJson object.
-    */
+     */
     size_t iteratorBegin() { return mIteratorBegin(root); }
 
     /**
      * Get child/array elements from FirebaseJson objects at specified index.
-     * 
+     *
      * @param index The element index to get.
      * @param type The integer which holds the type of data i.e. JSON_OBJECT and JSON_ARR
      * @param key The string which holds the key/key of an object, can return empty String if the data type is an array.
      * @param value The string which holds the value for the element key or array.
      * @return depth of element.
-    */
+     */
     int iteratorGet(size_t index, int &type, String &key, String &value) { return mIteratorGet(index, type, key, value); }
 
     /**
      * Get child/array elements from FirebaseJson objects at specified index.
-     * 
+     *
      * @param index The element index to get.
      * @return IteratorValue struct.
-     * 
+     *
      * This should call after iteratorBegin.
-     * 
+     *
      * The IteratorValue struct contains the following members.
      * int type
      * String key
      * String value
-    */
+     */
     IteratorValue valueAt(size_t index) { return mValueAt(index); }
 
     /**
      * Clear all iterator buffer (should be called since iteratorBegin was called).
-    */
+     */
     void iteratorEnd() { mIteratorEnd(); }
 
     /**
      * Set null to FirebaseJson object at the specified node path.
-     * 
+     *
      * @param path The relative path that null to be set.
-     * The relative path can be mixed with array index (number placed inside square brackets) and node names
+     *
+     * @note The relative path can be mixed with array index (number placed inside square brackets) and node names
      * e.g. /myRoot/[2]/Sensor1/myData/[3].
-    */
+     */
     template <typename T>
-    void set(T key) { mSet(getStr(key), NULL); }
+    void set(T key)
+    {
+        char *s = NULL;
+        mSet(getStr(key, s), NULL);
+        delP(&s);
+    }
 
     /**
      * Set value to FirebaseJson object at the specified node path.
-     * 
+     *
      * @param path The relative path that string value to be set.
      * @param value The value to set.
-     * 
-     * The relative path can be mixed with array index (number placed inside square brackets) and node names
+     *
+     * @note The relative path can be mixed with array index (number placed inside square brackets) and node names
      * e.g. /myRoot/[2]/Sensor1/myData/[3].
-     * 
-     * The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR/PSTR), 
+     *
+     * The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR/PSTR),
      * String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers,
      * boolean, FirebaseJson object and array.
-    */
+     */
     template <typename T1, typename T2>
     void set(T1 key, T2 value) { dataHandler(key, value, fb_json_func_type_set); }
+
     template <typename T>
     FirebaseJson &set(T key, FirebaseJson &value) { return dataHandler(key, value, fb_json_func_type_set); }
+
     template <typename T>
     FirebaseJson &set(T key, FirebaseJsonArray &value) { return dataHandler(key, value, fb_json_func_type_set); }
 
     /**
      * Remove the specified node and its content.
-     * 
+     *
      * @param path The relative path to remove its contents/children.
      * @return bool value represents the success operation.
-    */
+     */
     template <typename T>
-    bool remove(T path) { return mRemove(getStr(path)); }
+    bool remove(T path)
+    {
+        char *s = NULL;
+        bool ret = mRemove(getStr(path, s));
+        delP(&s);
+        return ret;
+    }
 
     /**
      * Get raw JSON
      * @return raw JSON string
-    */
+     */
     const char *raw() { return mRaw(); }
 
     /**
      * Get the error position at the JSON object literal from parsing.
      * @return the position of error in JSON object literal
      * Return -1 when for no parsing error
-    */
+     */
     int errorPosition() { return errorPos; }
 
     /**
      * Get the size of serialized JSON object buffer
      * @param prettify The text indentation and new line serialization option.
-     * @return size in byte of buffer 
-    */
+     * @return size in byte of buffer
+     */
     size_t serializedBufferLength(bool prettify = false) { return mGetSerializedBufferLength(prettify); }
 
     /**
      * Set the precision for float to JSON object
      * @param digits The number of decimal places.
-    */
+     */
     void setFloatDigits(uint8_t digits) { mSetFloatDigits(digits); }
 
     /**
      * Set the precision for double to JSON object
-    */
+     */
     void setDoubleDigits(uint8_t digits) { mSetDoubleDigits(digits); }
 
     /**
      * Get http response code of reading JSON data from WiFi/Ethernet Client.
      * @return the response code of reading JSON data from WiFi/Ethernet Client
-    */
+     */
     int responseCode() { return mResponseCode(); }
 
 private:
     FirebaseJson &nAdd(const char *key, MB_JSON *value);
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_bool<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_bool<T2>::value, FirebaseJson &>::type
     {
+        char *s = NULL;
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateBool(arg2));
+            nAdd(getStr(arg1, s), MB_JSON_CreateBool(arg2));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateBool(arg2));
+            mSet(getStr(arg1, s), MB_JSON_CreateBool(arg2));
+        delP(&s);
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_num_int<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_num_int<T2>::value, FirebaseJson &>::type
     {
+        char *s = NULL;
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, -1)));
+            nAdd(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, -1)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, -1)));
+            mSet(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, -1)));
+        delP(&s);
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_same<T2, float>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, float>::value, FirebaseJson &>::type
     {
+        char *s = NULL;
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
+            nAdd(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
+            mSet(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
+        delP(&s);
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_same<T2, double>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, double>::value, FirebaseJson &>::type
     {
+        char *s = NULL;
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
+            nAdd(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
+            mSet(getStr(arg1, s), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
+        delP(&s);
         return *this;
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename enable_if<is_string<T1>::value && is_string<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_string<T2>::value, FirebaseJson &>::type
     {
+        char *s1 = NULL;
+        char *s2 = NULL;
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
+            nAdd(getStr(arg1, s1), MB_JSON_CreateString(getStr(arg2, s2)));
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg1), MB_JSON_CreateString(getStr(arg2)));
+            mSet(getStr(arg1, s1), MB_JSON_CreateString(getStr(arg2, s2)));
+        delP(&s1);
+        delP(&s2);
         return *this;
     }
 
     template <typename T>
-    auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename enable_if<is_string<T>::value, FirebaseJson &>::type
+    auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJson &>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(json.root, true);
+        char *s = NULL;
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg), e);
+            nAdd(getStr(arg, s), e);
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg), e);
+            mSet(getStr(arg, s), e);
+        delP(&s);
         return *this;
     }
 
     template <typename T>
-    auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename enable_if<is_string<T>::value, FirebaseJson &>::type
+    auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJson &>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arr.root, true);
+        char *s = NULL;
         if (type == fb_json_func_type_add)
-            nAdd(getStr(arg), e);
+            nAdd(getStr(arg, s), e);
         else if (type == fb_json_func_type_set)
-            mSet(getStr(arg), e);
+            mSet(getStr(arg, s), e);
+        delP(&s);
         return *this;
     }
 };

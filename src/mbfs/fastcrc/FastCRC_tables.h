@@ -32,9 +32,7 @@
 #include "inttypes.h"
 
 #ifdef __AVR__
-#include <avr/pgmspace.h>
-#else
-#include <pgmspace.h>	
+#include <avr/pgmspace.h>	
 #endif
 
 const uint8_t crc_table_crc7[256] PROGMEM = {

@@ -1,16 +1,16 @@
 /**
- * Firebase TCP Client v1.1.17
- * 
- * Created January 18, 2022
- * 
+ * Firebase TCP Client v1.1.18
+ *
+ * Created February 10, 2022
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
- * Port to ESP32 by Evandro Luis Copercini (2017), 
- * changed fingerprints to CA verification. 	
+ * Port to ESP32 by Evandro Luis Copercini (2017),
+ * changed fingerprints to CA verification.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,20 +26,26 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
-*/
+ */
 
 #ifndef FB_TCP_Client_H
 #define FB_TCP_Client_H
 
-#ifdef ESP32
+#if defined(ESP32) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #include "FB_Net.h"
 #include "FB_Error.h"
 #include "mbfs/MB_FS.h"
+#include "./wcs/base/FB_TCP_Client_Base.h"
 
+extern "C"
+{
+#include <esp_err.h>
+#include <esp_wifi.h>
+}
 
-//The derived class to fix the memory leaks issue
-//https://github.com/espressif/arduino-esp32/issues/5480
+// The derived class to fix the memory leaks issue
+// https://github.com/espressif/arduino-esp32/issues/5480
 class FB_WCS : public WiFiClientSecure
 {
 public:
@@ -61,7 +67,7 @@ public:
   }
 };
 
-class FB_TCP_Client
+class FB_TCP_Client : public FB_TCP_Client_Base
 {
 
   friend class FirebaseData;
@@ -73,62 +79,37 @@ public:
   FB_TCP_Client();
   ~FB_TCP_Client();
 
-  /**
-   * Initialization of new http connection.
-   * \param host - Host name without protocols.
-   * \param port - Server's port.
-   * \return True as default.
-   * If no certificate string provided, use (const char*)NULL to CAcert param 
-  */
-  bool begin(const char *host, uint16_t port);
+  void setCACert(const char *caCert);
 
-  /**
-   *  Check the http connection status.
-   * \return True if connected.
-  */
-  bool connected();
+  bool setCertFile(const char *certFile, mb_fs_mem_storage_type storageType);
 
-  /**
-    * Establish TCP connection when required and send data.
-    * \param data - The data to send.
-    * \param len - The length of data to send.
-    * 
-    * \return TCP status code, Return zero if new TCP connection and data sent.
-    */
-  int send(const char *data, size_t len = 0);
-
-  /**
-   * Get the WiFi client pointer.
-   * \return WiFi client pointer.
-  */
-  WiFiClient *stream(void);
-
-  /**
-   * Set insecure mode
-  */
   void setInsecure();
 
-  void stop();
+  bool networkReady();
 
-  bool connect(void);
-  void setCACert(const char *caCert);
-  void setCACertFile(const char *caCertFile, mb_fs_mem_storage_type storageType);
-  void setMBFS(MB_FS *mbfs);
+  void networkReconnect();
+
+  void networkDisconnect();
+
+  fb_tcp_client_type type();
+
+  bool isInitialized();
+
+  int hostByName(const char *name, IPAddress &ip);
+
+  void setTimeout(uint32_t timeoutmSec);
+
+  bool begin(const char *host, uint16_t port, int *response_code);
+
+  bool connect();
 
 private:
-  std::unique_ptr<FB_WCS> _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
-  MB_String _host;
-  uint16_t _port = 0;
 
-  //lwIP socket connection and ssl handshake timeout
-  unsigned long timeout = 10 * 1000;
-
-  MB_String _CAFile;
-  uint8_t _CAFileStoreageType = 0;
-  int _certType = fb_cert_type_undefined;
-  bool _clockReady = false;
-  MB_FS *mbfs = nullptr;
+  std::unique_ptr<FB_WCS> wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
   char *cert = NULL;
+
+  bool ethLinkUp();
+
   void release();
 };
 

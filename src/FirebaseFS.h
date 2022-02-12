@@ -1,5 +1,8 @@
 #ifndef FirebaseFS_H
 #define FirebaseFS_H
+
+#pragma once
+
 #include <Arduino.h>
 
 #define FIREBASE_ESP_CLIENT 1
@@ -22,7 +25,9 @@
 #if defined(ESP32)
 #include <SPIFFS.h>
 #endif
+#if defined(ESP32) || defined(ESP8266)
 #define DEFAULT_FLASH_FS SPIFFS
+#endif
 
 /**
  * To use SD card file systems with different hardware interface
@@ -52,15 +57,19 @@ static SdFat sd_fat_fs;   //should declare as static here
 
 */
 
+#if defined(ESP32) || defined(ESP8266)
 #include <SD.h>
 #define DEFAULT_SD_FS SD
 #define CARD_TYPE_SD 1
+#endif
 
 //For ESP32, format SPIFFS or FFat if mounting failed
 #define FORMAT_FLASH_IF_MOUNT_FAILED 1
 
 //Comment to exclude the Firebase Realtime Database
 #define ENABLE_RTDB
+
+#define ENABLE_ERROR_QUEUE
 
 //Comment to exclude Cloud Firestore
 #define ENABLE_FIRESTORE
@@ -84,5 +93,9 @@ static SdFat sd_fat_fs;   //should declare as static here
 
 // To enable OTA updates via RTDB, Firebase Storage and Google Cloud Storage buckets
 #define ENABLE_OTA_FIRMWARE_UPDATE
+
+// To enable external Client for ESP8266 and ESP32.
+// This will enable automatically for other devices.
+//#define FB_ENABLE_EXTERNAL_CLIENT
 
 #endif

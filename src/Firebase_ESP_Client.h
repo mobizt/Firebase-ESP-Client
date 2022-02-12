@@ -1,43 +1,46 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "2.8.3"
+#define FIREBASE_CLIENT_VERSION "3.0.0"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v2.8.3
- * 
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.0.0
+ *
  * This library supports Espressif ESP8266 and ESP32 MCUs
- * 
- * Created January 21, 2022
+ *
+ * Created February 10, 2022
  *
  *   Updates:
- * - Improve Server data sending process.
- * - Improve Data upload/download progressing reports.
- * - Add support Firestore payload upload callback.
- * 
- * 
+ * - Add supports custom (external) Clients.
+ * - Add support $key in RTDB's deleteNodesByTimestamp.
+ * - Fixed the SdFat filesystem issue.
+ * - Fixed download file OTA issues.
+ * - Fixed RTDB Query filter issue.
+ * - Fixed flash string handler issue.
+ *
+ *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #include "Firebase.h"

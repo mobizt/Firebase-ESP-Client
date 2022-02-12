@@ -1,41 +1,40 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.1.14
- * 
+ * Google's Firebase Util class, Utils.h version 1.1.15
+ *
  * This library supports Espressif ESP8266 and ESP32
- * 
- * Created January 18, 2022
- * 
+ *
+ * Created February 10, 2022
+ *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef FB_UTILS_H
 #define FB_UTILS_H
 
 #include <Arduino.h>
 #include "common.h"
-
 using namespace mb_string;
 
 class UtilsClass
@@ -44,9 +43,11 @@ class UtilsClass
     friend class Firebase_ESP_Client;
 
 public:
-    long default_ts = ESP_DEFAULT_TS;
+    unsigned long default_ts = ESP_DEFAULT_TS;
     uint16_t ntpTimeout = 20;
+#if defined(ESP8266)
     callback_function_t _callback_function = nullptr;
+#endif
     FirebaseConfig *config = nullptr;
     MB_FS *mbfs = nullptr;
 
@@ -295,7 +296,7 @@ public:
         for (int i = offset; i < last; i++)
             str += s[i];
     }
-    void splitString(const char *str, std::vector<MB_String> out, const char delim)
+    void splitString(const char *str, MB_VECTOR<MB_String> out, const char delim)
     {
         int current = 0, previous = 0;
         current = strpos(str, delim, 0);
@@ -412,26 +413,6 @@ public:
         return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
     }
 
-    uint32_t hex2int(const char *hex)
-    {
-        uint32_t val = 0;
-        while (*hex)
-        {
-            // get current character then increment
-            uint8_t byte = *hex++;
-            // transform hex character to the 4bit equivalent number, using the ascii table indexes
-            if (byte >= '0' && byte <= '9')
-                byte = byte - '0';
-            else if (byte >= 'a' && byte <= 'f')
-                byte = byte - 'a' + 10;
-            else if (byte >= 'A' && byte <= 'F')
-                byte = byte - 'A' + 10;
-            // shift 4 to make space for new digit, and add the 4 bits of the new digit
-            val = (val << 4) | (byte & 0xF);
-        }
-        return val;
-    }
-
     void parseRespHeader(const char *buf, struct server_response_data_t &response)
     {
         int beginPos = 0, pmax = 0, payloadPos = 0;
@@ -527,205 +508,6 @@ public:
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
                 response.noContent = true;
         }
-    }
-
-    int readLine(WiFiClient *stream, char *buf, int bufLen)
-    {
-        int res = -1;
-        char c = 0;
-        int idx = 0;
-        if (!stream)
-            return idx;
-        while (stream->available() && idx <= bufLen)
-        {
-            if (!stream)
-                break;
-            res = stream->read();
-            if (res > -1)
-            {
-                c = (char)res;
-                strcat_c(buf, c);
-                idx++;
-                if (c == '\n')
-                    return idx;
-            }
-        }
-        return idx;
-    }
-
-    int readLine(WiFiClient *stream, MB_String &buf)
-    {
-        int res = -1;
-        char c = 0;
-        int idx = 0;
-        if (!stream)
-            return idx;
-        while (stream->available())
-        {
-            if (!stream)
-                break;
-            res = stream->read();
-            if (res > -1)
-            {
-                c = (char)res;
-                buf += c;
-                idx++;
-                if (c == '\n')
-                    return idx;
-            }
-        }
-        return idx;
-    }
-
-    int readChunkedData(WiFiClient *stream, char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen)
-    {
-
-        char *tmp = nullptr;
-        char *buf = nullptr;
-        int p1 = 0;
-        int olen = 0;
-
-        if (chunkState == 0)
-        {
-            chunkState = 1;
-            chunkedSize = -1;
-            dataLen = 0;
-            buf = (char *)newP(bufLen);
-            int readLen = readLine(stream, buf, bufLen);
-            if (readLen)
-            {
-                p1 = strpos(buf, pgm2Str(fb_esp_pgm_str_79), 0);
-                if (p1 == -1)
-                {
-                    p1 = strpos(buf, pgm2Str(fb_esp_pgm_str_21), 0);
-                }
-
-                if (p1 != -1)
-                {
-                    tmp = (char *)newP(p1 + 1);
-                    memcpy(tmp, buf, p1);
-                    chunkedSize = hex2int(tmp);
-                    delP(&tmp);
-                }
-
-                //last chunk
-                if (chunkedSize < 1)
-                    olen = -1;
-            }
-            else
-                chunkState = 0;
-
-            delP(&buf);
-        }
-        else
-        {
-
-            if (chunkedSize > -1)
-            {
-                buf = (char *)newP(bufLen);
-                int readLen = readLine(stream, buf, bufLen);
-
-                if (readLen > 0)
-                {
-                    //chunk may contain trailing
-                    if (dataLen + readLen - 2 < chunkedSize)
-                    {
-                        dataLen += readLen;
-                        memcpy(out, buf, readLen);
-                        olen = readLen;
-                    }
-                    else
-                    {
-                        if (chunkedSize - dataLen > 0)
-                            memcpy(out, buf, chunkedSize - dataLen);
-                        dataLen = chunkedSize;
-                        chunkState = 0;
-                        olen = readLen;
-                    }
-                }
-                else
-                {
-                    olen = -1;
-                }
-
-                delP(&buf);
-            }
-        }
-
-        return olen;
-    }
-
-    int readChunkedData(WiFiClient *stream, MB_String &out, int &chunkState, int &chunkedSize, int &dataLen)
-    {
-
-        char *tmp = nullptr;
-        int p1 = 0;
-        int olen = 0;
-
-        if (chunkState == 0)
-        {
-            chunkState = 1;
-            chunkedSize = -1;
-            dataLen = 0;
-            MB_String s;
-            int readLen = readLine(stream, s);
-            if (readLen)
-            {
-                p1 = strpos(s.c_str(), pgm2Str(fb_esp_pgm_str_79), 0);
-                if (p1 == -1)
-                {
-                    p1 = strpos(s.c_str(), pgm2Str(fb_esp_pgm_str_21), 0);
-                }
-
-                if (p1 != -1)
-                {
-                    tmp = (char *)newP(p1 + 1);
-                    memcpy(tmp, s.c_str(), p1);
-                    chunkedSize = hex2int(tmp);
-                    delP(&tmp);
-                }
-
-                //last chunk
-                if (chunkedSize < 1)
-                    olen = -1;
-            }
-            else
-                chunkState = 0;
-        }
-        else
-        {
-
-            if (chunkedSize > -1)
-            {
-                MB_String s;
-                int readLen = readLine(stream, s);
-
-                if (readLen > 0)
-                {
-                    //chunk may contain trailing
-                    if (dataLen + readLen - 2 < chunkedSize)
-                    {
-                        dataLen += readLen;
-                        out += s;
-                        olen = readLen;
-                    }
-                    else
-                    {
-                        if (chunkedSize - dataLen > 0)
-                            out += s;
-                        dataLen = chunkedSize;
-                        chunkState = 0;
-                        olen = readLen;
-                    }
-                }
-                else
-                {
-                    olen = -1;
-                }
-            }
-        }
-
-        return olen;
     }
 
     char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
@@ -1012,7 +794,19 @@ public:
 #endif
     }
 
-    bool decodeBase64Str(const MB_String &src, std::vector<uint8_t> &out)
+#if defined(__AVR__)
+    unsigned long long strtoull_alt(const char *s)
+    {
+        unsigned long long sum = 0;
+        while (*s)
+        {
+            sum = sum * 10 + (*s++ - '0');
+        }
+        return sum;
+    }
+#endif
+
+    bool decodeBase64Str(const MB_String &src, MB_VECTOR<uint8_t> &out)
     {
         unsigned char *dtable = (unsigned char *)newP(256);
         memset(dtable, 0x80, 256);
@@ -1062,12 +856,16 @@ public:
             count++;
             if (count == 4)
             {
-                out.push_back((block[0] << 2) | (block[1] >> 4));
+                uint8_t v = (block[0] << 2) | (block[1] >> 4);
+                out.push_back(v);
                 count = 0;
                 if (pad)
                 {
                     if (pad == 1)
-                        out.push_back((block[1] << 4) | (block[2] >> 2));
+                    {
+                        v = (block[1] << 4) | (block[2] >> 2);
+                        out.push_back(v);
+                    }
                     else if (pad > 2)
                         goto exit;
 
@@ -1075,8 +873,10 @@ public:
                 }
                 else
                 {
-                    out.push_back((block[1] << 4) | (block[2] >> 2));
-                    out.push_back((block[2] << 6) | block[3]);
+                    v = (block[1] << 4) | (block[2] >> 2);
+                    out.push_back(v);
+                    v = (block[2] << 6) | block[3];
+                    out.push_back(v);
                 }
             }
         }
@@ -1174,7 +974,9 @@ public:
         return false;
     }
 
-    //trim double quotes and return pad length
+#if defined(ESP32) || defined(ESP8266)
+
+    // trim double quotes and return pad length
     int trimLastChunkBase64(MB_String &s, int len)
     {
         int padLen = -1;
@@ -1331,6 +1133,8 @@ public:
         return false;
     }
 
+#endif
+
     bool stringCompare(const char *buf, int ofs, PGM_P beginH, bool caseInSensitive = false)
     {
         char *tmp2 = (char *)newP(strlen_P(beginH) + 1);
@@ -1344,22 +1148,29 @@ public:
 
     bool setClock(float gmtOffset)
     {
+
         if (!config)
             return false;
 
-        if (time(nullptr) > default_ts && gmtOffset == config->_int.fb_gmt_offset)
-            return true;
+#if defined(ESP32) || defined(ESP8266)
 
-        if (config->_int.fb_reconnect_wifi)
-            reconnect(0);
+        if (time(nullptr) > default_ts && gmtOffset == config->internal.fb_gmt_offset)
+            return true;
 
         time_t now = time(nullptr);
 
-        config->_int.fb_clock_rdy = now > default_ts;
+        config->internal.fb_clock_rdy = now > default_ts;
 
-        if (!config->_int.fb_clock_rdy || gmtOffset != config->_int.fb_gmt_offset)
+        if (!config->internal.fb_clock_rdy || gmtOffset != config->internal.fb_gmt_offset)
         {
-            configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
+            if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
+                config->internal.fb_clock_checked = false;
+
+            if (!config->internal.fb_clock_checked)
+            {
+                config->internal.fb_clock_checked = true;
+                configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
+            }
 
             now = time(nullptr);
             unsigned long timeout = millis();
@@ -1370,15 +1181,17 @@ public:
                     break;
                 delay(0);
             }
-            
+
             idle();
         }
 
-        config->_int.fb_clock_rdy = now > default_ts;
-        if (config->_int.fb_clock_rdy)
-            config->_int.fb_gmt_offset = gmtOffset;
+        config->internal.fb_clock_rdy = now > default_ts;
+        if (config->internal.fb_clock_rdy)
+            config->internal.fb_gmt_offset = gmtOffset;
 
-        return config->_int.fb_clock_rdy;
+#endif
+
+        return config->internal.fb_clock_rdy;
     }
 
     void encodeBase64Url(char *encoded, unsigned char *string, size_t len)
@@ -1416,101 +1229,6 @@ public:
         *p++ = '\0';
 
         delP(&b64enc);
-    }
-
-    bool sendBase64(size_t bufSize, uint8_t *data, size_t len, bool flashMem, WiFiClient *client)
-    {
-        bool ret = false;
-        const unsigned char *end, *in;
-
-        end = data + len;
-        in = data;
-
-        size_t chunkSize = bufSize;
-        size_t byteAdded = 0;
-        size_t byteSent = 0;
-
-        unsigned char *buf = (unsigned char *)newP(chunkSize);
-        memset(buf, 0, chunkSize);
-
-        unsigned char *tmp = (unsigned char *)newP(3);
-
-        while (end - in >= 3)
-        {
-            memset(tmp, 0, 3);
-            if (flashMem)
-                memcpy_P(tmp, in, 3);
-            else
-                memcpy(tmp, in, 3);
-
-            buf[byteAdded++] = fb_esp_base64_table[tmp[0] >> 2];
-            buf[byteAdded++] = fb_esp_base64_table[((tmp[0] & 0x03) << 4) | (tmp[1] >> 4)];
-            buf[byteAdded++] = fb_esp_base64_table[((tmp[1] & 0x0f) << 2) | (tmp[2] >> 6)];
-            buf[byteAdded++] = fb_esp_base64_table[tmp[2] & 0x3f];
-
-            if (byteAdded >= chunkSize - 4)
-            {
-                byteSent += byteAdded;
-
-                if (client->write((const char *)buf) != strlen((const char *)buf))
-                    goto ex;
-                memset(buf, 0, chunkSize);
-                byteAdded = 0;
-            }
-
-            in += 3;
-        }
-
-        if (byteAdded > 0)
-        {
-            if (client->write((const char *)buf) != strlen((const char *)buf))
-                goto ex;
-        }
-
-        if (end - in)
-        {
-            memset(buf, 0, chunkSize);
-            byteAdded = 0;
-            memset(tmp, 0, 3);
-            if (flashMem)
-            {
-                if (end - in == 1)
-                    memcpy_P(tmp, in, 1);
-                else
-                    memcpy_P(tmp, in, 2);
-            }
-            else
-            {
-                if (end - in == 1)
-                    memcpy(tmp, in, 1);
-                else
-                    memcpy(tmp, in, 2);
-            }
-
-            buf[byteAdded++] = fb_esp_base64_table[tmp[0] >> 2];
-            if (end - in == 1)
-            {
-                buf[byteAdded++] = fb_esp_base64_table[(tmp[0] & 0x03) << 4];
-                buf[byteAdded++] = '=';
-            }
-            else
-            {
-                buf[byteAdded++] = fb_esp_base64_table[((tmp[0] & 0x03) << 4) | (tmp[1] >> 4)];
-                buf[byteAdded++] = fb_esp_base64_table[(tmp[1] & 0x0f) << 2];
-            }
-            buf[byteAdded++] = '=';
-
-            if (client->write((const char *)buf) != strlen((const char *)buf))
-                goto ex;
-            memset(buf, 0, chunkSize);
-        }
-
-        ret = true;
-    ex:
-
-        delP(&tmp);
-        delP(&buf);
-        return ret;
     }
 
     MB_String encodeBase64Str(const unsigned char *src, size_t len)
@@ -1589,14 +1307,14 @@ public:
     {
         if (!config)
             return;
-        config->_int.fb_float_digits = digit;
+        config->internal.fb_float_digits = digit;
     }
 
     void setDoubleDigit(uint8_t digit)
     {
         if (!config)
             return;
-        config->_int.fb_double_digits = digit;
+        config->internal.fb_double_digits = digit;
     }
 
     MB_String getBoundary(size_t len)
@@ -1631,11 +1349,11 @@ public:
             return true;
 
 #if defined(ESP32)
-        if (config->_int.fb_multiple_requests)
+        if (config->internal.fb_multiple_requests)
             return true;
 
         unsigned long wTime = millis();
-        while (config->_int.fb_processing)
+        while (config->internal.fb_processing)
         {
             if (millis() - wTime > 3000)
             {
@@ -1648,9 +1366,9 @@ public:
         return true;
     }
 
-    void splitTk(const MB_String &str, std::vector<MB_String> &tk, const char *delim)
+    void splitTk(const MB_String &str, MB_VECTOR<MB_String> &tk, const char *delim)
     {
-        std::size_t current, previous = 0;
+        size_t current, previous = 0;
         current = str.find(delim, previous);
         MB_String s;
         MB_String _str = str;
@@ -1695,120 +1413,13 @@ public:
         return (ob == cb && os == cs);
     }
 
-    bool ethLinkUp(SPI_ETH_Module *spi_ethernet_module = NULL)
-    {
-        bool ret = false;
-#if defined(ESP32)
-        if (strcmp(ETH.localIP().toString().c_str(), pgm2Str(fb_esp_pgm_str_548)) != 0)
-        {
-            ret = true;
-            ETH.linkUp();
-        }
-#elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
-
-        if (!spi_ethernet_module)
-            return ret;
-
-#if defined(INC_ENC28J60_LWIP)
-        if (spi_ethernet_module->enc28j60)
-            return spi_ethernet_module->enc28j60->status() == WL_CONNECTED;
-#endif
-#if defined(INC_W5100_LWIP)
-        if (spi_ethernet_module->w5100)
-            return spi_ethernet_module->w5100->status() == WL_CONNECTED;
-#endif
-#if defined(INC_W5100_LWIP)
-        if (spi_ethernet_module->w5500)
-            return spi_ethernet_module->w5500->status() == WL_CONNECTED;
-#endif
-
-#endif
-        return ret;
-    }
-
-    void ethDNSWorkAround(SPI_ETH_Module *spi_ethernet_module, const char *host, int port)
-    {
-#if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
-
-        if (!spi_ethernet_module)
-            goto ex;
-
-#if defined(INC_ENC28J60_LWIP)
-        if (spi_ethernet_module->enc28j60)
-            goto ex;
-#endif
-#if defined(INC_W5100_LWIP)
-        if (spi_ethernet_module->w5100)
-            goto ex;
-#endif
-#if defined(INC_W5100_LWIP)
-        if (spi_ethernet_module->w5500)
-            goto ex;
-#endif
-        return;
-    ex:
-        WiFiClient client;
-        client.connect(host, port);
-        client.stop();
-
-#endif
-    }
-
-    bool reconnect(unsigned long dataTime)
-    {
-
-        bool status = WiFi.status() == WL_CONNECTED;
-
-        if (config)
-            status |= ethLinkUp(&config->spi_ethernet_module);
-
-        if (dataTime > 0)
-        {
-            if (config)
-            {
-                if (config->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT || config->timeout.serverResponse > MIN_SERVER_RESPONSE_TIMEOUT)
-                    config->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
-
-                if (millis() - dataTime > config->timeout.serverResponse)
-                    return false;
-            }
-            else
-            {
-                if (millis() - dataTime > 10 * 1000)
-                    return false;
-            }
-        }
-
-        if (!status)
-        {
-
-            if (config)
-            {
-                if (config->_int.fb_reconnect_wifi)
-                {
-                    if (config->timeout.wifiReconnect < MIN_WIFI_RECONNECT_TIMEOUT || config->timeout.wifiReconnect > MAX_WIFI_RECONNECT_TIMEOUT)
-                        config->timeout.wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
-                    if (millis() - config->_int.fb_last_reconnect_millis > config->timeout.wifiReconnect)
-                    {
-                        WiFi.reconnect();
-                        config->_int.fb_last_reconnect_millis = millis();
-                    }
-                }
-            }
-
-            status = WiFi.status() == WL_CONNECTED;
-
-            if (config)
-                status |= ethLinkUp(&config->spi_ethernet_module);
-        }
-
-        return status;
-    }
-
     int setTimestamp(time_t ts)
     {
+#if defined(ESP32) || defined(ESP8266)
         struct timeval tm = {ts, 0}; // sec, us
         return settimeofday((const timeval *)&tm, 0);
+#endif
+        return -1;
     }
 
     uint16_t calCRC(const char *buf)
@@ -1821,51 +1432,6 @@ public:
     void idle()
     {
         delay(0);
-    }
-
-    int beginUpdate(WiFiClient *tcp, int len, bool verify = true)
-    {
-        int code = 0;
-#if defined(ESP8266)
-        if (len > (int)ESP.getFreeSketchSpace())
-        {
-            code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
-        }
-        else if (verify)
-        {
-            uint8_t buf[4];
-            if (tcp->peekBytes(&buf[0], 4) != 4)
-                code = FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE;
-            else
-            {
-
-                // check for valid first magic byte
-                if (buf[0] != 0xE9 && buf[0] != 0x1f)
-                {
-                    code = FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE;
-                }
-                else if (buf[0] == 0xe9)
-                {
-                    uint32_t bin_flash_size = ESP.magicFlashChipSize((buf[3] & 0xf0) >> 4);
-
-                    // check if new bin fits to SPI flash
-                    if (bin_flash_size > ESP.getFlashChipRealSize())
-                    {
-                        code = FIREBASE_ERROR_FW_UPDATE_BIN_SIZE_NOT_MATCH_SPI_FLASH_SPACE;
-                    }
-                }
-            }
-        }
-
-        if (code == 0)
-        {
-            if (!Update.begin(len, 0, -1, 0))
-            {
-                code = FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
-            }
-        }
-#endif
-        return code;
     }
 
     void replaceFirebasePath(MB_String &path)
@@ -1914,7 +1480,7 @@ public:
     {
         int pLen = getBase64Len(n);
         int uLen = ceil(4.0 * n / 3.0);
-        return pLen- uLen;
+        return pLen - uLen;
     }
 };
 
