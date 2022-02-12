@@ -1,21 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.0.0"
+#define FIREBASE_CLIENT_VERSION "3.0.1"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.0.0
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.0.1
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
  * Created February 10, 2022
  *
  *   Updates:
- * - Add supports custom (external) Clients.
- * - Add support $key in RTDB's deleteNodesByTimestamp.
- * - Fixed the SdFat filesystem issue.
- * - Fixed download file OTA issues.
- * - Fixed RTDB Query filter issue.
- * - Fixed flash string handler issue.
+ * - Fixed custom Client timestamp issue.
  *
  *
  * This work is a part of Firebase ESP Client library

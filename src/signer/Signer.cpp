@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.16
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.17
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -279,9 +279,8 @@ bool Firebase_Signer::setTime(time_t ts)
     }
 
 #else
-
-    this->ts = ts - millis() / 1000;
-
+    if (ts > ESP_DEFAULT_TS)
+        this->ts = ts - millis() / 1000;
 #endif
 
     return false;
