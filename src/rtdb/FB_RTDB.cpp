@@ -182,9 +182,8 @@ bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, MB_StringPtr path, MB_StringPtr
         else
         {
             bool ruleExisted = false;
-
-            s.clear();
-            s += fb_esp_pgm_str_550;
+            
+            s = fb_esp_pgm_str_550;
 
             MB_String _path = path;
             MB_String _node = node;
@@ -256,8 +255,7 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_Strin
         FirebaseJson &json = fbdo->jsonObject();
         bool rd = false, wr = false;
 
-        MB_String s;
-        s += fb_esp_pgm_str_550;
+        MB_String s = fb_esp_pgm_str_550;
 
         ut->replaceFirebasePath(_path);
         ut->makePath(_path);
@@ -294,9 +292,8 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_Strin
         if (wr || rd)
         {
             FirebaseJson js;
-            MB_String r, w;
-            r += fb_esp_pgm_str_552;
-            w += fb_esp_pgm_str_553;
+            MB_String r = fb_esp_pgm_str_552;
+            MB_String w = fb_esp_pgm_str_553;
             if (rd)
                 js.add(r.c_str(), _readVal.c_str());
 
@@ -944,7 +941,7 @@ void FB_RTDB::runStreamTask()
 
             _fbdo->session.rtdb.stream_task_handle = NULL;
         }
-        
+
         vTaskDelete(NULL);
     };
 
@@ -969,7 +966,7 @@ void FB_RTDB::stream()
     for (size_t id = 0; id < cfg->internal.fbdo_addr.size(); id++)
     {
 
-        FirebaseData *fbdo = addrTo<FirebaseData*>(cfg->internal.fbdo_addr[id]);
+        FirebaseData *fbdo = addrTo<FirebaseData *>(cfg->internal.fbdo_addr[id]);
 
         if (fbdo)
         {
@@ -1029,13 +1026,13 @@ void FB_RTDB::addQueueData(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t
 void FB_RTDB::runErrorQueueTask()
 {
     FirebaseConfig *cfg = Signer.getCfg();
-    
+
     if (!cfg)
         return;
 
     for (size_t id = 0; id < cfg->internal.fbdo_addr.size(); id++)
     {
-        FirebaseData *fbdo = addrTo<FirebaseData*>(cfg->internal.fbdo_addr[id]);
+        FirebaseData *fbdo = addrTo<FirebaseData *>(cfg->internal.fbdo_addr[id]);
 
         if (fbdo)
         {
@@ -1045,7 +1042,6 @@ void FB_RTDB::runErrorQueueTask()
             else
                 processErrorQueue(fbdo, NULL);
         }
-
     }
 
     ut->set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
