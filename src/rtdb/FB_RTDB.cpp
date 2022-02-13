@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.3
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.4
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 13, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -56,9 +56,7 @@ void FB_RTDB::begin(UtilsClass *u)
 void FB_RTDB::end(FirebaseData *fbdo)
 {
     endStream(fbdo);
-#if defined(ESP32) || defined(ESP8266)
     removeStreamCallback(fbdo);
-#endif
     fbdo->clear();
 }
 
@@ -3963,7 +3961,7 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
         if (!hasOherHandles)
             cfg->internal.fbdo_addr.erase(cfg->internal.fbdo_addr.begin() + index);
 
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
         fbdo->session.rtdb.Idx = -1;
         cfg->internal.fbdo_addr.erase(cfg->internal.fbdo_addr.begin() + index);
 #endif
