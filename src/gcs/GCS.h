@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.1.13
+ * Google's Cloud Storage class, GCS.h version 1.1.14
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 14, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -53,7 +53,7 @@ public:
     ~GG_CloudStorage();
 
     /** Upload file to the Google Cloud Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param localFileName The file path includes its name to upload.
@@ -67,25 +67,25 @@ public:
      * For request payload properties, see https://cloud.google.com/storage/docs/json_api/v1/objects/insert#optional-properties
      * @param status Optional. The UploadStatusInfo data to get the upload status.
      * @param callback Optional. The callback function that accept UploadStatusInfo data.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note This function requires OAuth2.0 authentication.
-     * 
+     *
      * The upload types of methods can be selectable.
      * The gcs_upload_type_simple upload type is used for small file upload in a single request without metadata.
      * gcs_upload_type_multipart upload type is for small file upload in a single reques with metadata.
      * gcs_upload_type_resumable upload type is for medium or large file (larger than or equal to 256 256 KiB) upload with metadata and can be resumable.
-     * 
+     *
      * The upload with metadata supports allows the library to add the metadata internally for Firebase to request the download access token in Firebase Storage bucket.
      * User also can add custom metadata for the uploading file (object).
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, T3 remoteFileName, T4 mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, UploadProgressCallback callback = NULL) { return mUpload(fbdo, toStringPtr (bucketID), toStringPtr (localFileName), storageType, uploadType, toStringPtr (remoteFileName), toStringPtr (mime), uploadOptions, requestProps, status, callback); }
+    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, T3 remoteFileName, T4 mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, UploadProgressCallback callback = NULL) { return mUpload(fbdo, toStringPtr(bucketID), toStringPtr(localFileName), storageType, uploadType, toStringPtr(remoteFileName), toStringPtr(mime), uploadOptions, requestProps, status, callback); }
 
     /** Downoad file from the Google Cloud Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param remotetFileName The file path includes its name of file in the data bucket to download.
@@ -94,77 +94,77 @@ public:
      * @param options Optional. The pointer to StorageGetOptions data that contains the get query parameters.
      * For the query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
      * @param callback Optional. The callback function that accept DownloadStatusInfo data.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note This function requires OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr, DownloadProgressCallback callback = NULL) { return mDownload(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), toStringPtr(localFileName), storageType, options, callback); }
 
     /** Download a firmware file from the Google Cloud Storage data bucket for OTA updates.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param remotetFileName The firmware file path includes its name of file in the data bucket to download.
      * @return Boolean value, indicates the success of the operation.
      * @param callback Optional. The callback function that accept DownloadStatusInfo data.
-     * 
+     *
      * @note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *>
     bool downloadOTA(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, DownloadProgressCallback callback = NULL) { return mDownloadOTA(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), callback); }
 
     /** Get the meta data of file in Firebase or Google Cloud Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param remotetFileName The file path includes its name of file in the data bucket.
      * @param options Optional. The pointer to StorageGetOptions data that contains the get query parameters.
      * For the query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/get#optional-parameters
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
-     * @note Use the FileMetaInfo type data to get name, bucket, contentType, size, 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use the FileMetaInfo type data to get name, bucket, contentType, size,
      * generation, etag, crc32, downloadTokens properties from file.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, StorageGetOptions *options = nullptr) { return mGetMetadata(fbdo, toStringPtr (bucketID), toStringPtr (remoteFileName), options); }
+    bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, StorageGetOptions *options = nullptr) { return mGetMetadata(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), options); }
 
     /** Delete file from Firebase or Google Cloud Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param remotetFileName The file path includes its name of file in the data bucket.
      * @param options Optional. The pointer to DeleteOptions data contains the query parameters.
      * For query parameters options, see https://cloud.google.com/storage/docs/json_api/v1/objects/delete#optional-parameters
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
-    */
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName, DeleteOptions *options = nullptr) { return mDeleteFile(fbdo, toStringPtr(bucketID), toStringPtr (fileName), options); }
+    bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName, DeleteOptions *options = nullptr) { return mDeleteFile(fbdo, toStringPtr(bucketID), toStringPtr(fileName), options); }
 
     /** List all files in the Firebase or Google Cloud Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase or Google Cloud Storage bucket ID.
      * @param options Optional. The pointer to ListOptions data that contains the query parameters
      * Fore query parameters description, see https://cloud.google.com/storage/docs/json_api/v1/objects/list#optional-parameters
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use the FileList type data to get name and bucket properties for each item.
-     * 
-    */
+     *
+     */
     template <typename T = const char *>
-    bool listFiles(FirebaseData *fbdo, T bucketID, ListOptions *options = nullptr) { return mListFiles(fbdo, toStringPtr (bucketID), options); }
+    bool listFiles(FirebaseData *fbdo, T bucketID, ListOptions *options = nullptr) { return mListFiles(fbdo, toStringPtr(bucketID), options); }
 
 private:
-    const uint32_t gcs_min_chunkSize = 256 * 1024; //Min Google recommended length
+    const uint32_t gcs_min_chunkSize = 256 * 1024; // Min Google recommended length
     uint32_t gcs_chunkSize = 256 * 1024;
     bool _resumable_upload_task_enable = false;
     UtilsClass *ut = nullptr;
@@ -195,7 +195,7 @@ private:
     bool parseJsonResponse(FirebaseData *fbdo, PGM_P key_path);
 
 #if defined(ESP32)
-        void runResumableUploadTask(const char *taskName);
+    void runResumableUploadTask(const char *taskName);
 #elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
     void runResumableUploadTask();
 #endif
@@ -203,4 +203,4 @@ private:
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE
