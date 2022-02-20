@@ -1,6 +1,6 @@
 
 /**
- * Created February 10, 2022
+ * Created February 20, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -822,6 +822,8 @@ struct fb_esp_cfg_int_t
     unsigned long fb_last_reconnect_millis = 0;
     unsigned long fb_last_jwt_begin_step_millis = 0;
     unsigned long fb_last_jwt_generation_error_cb_millis = 0;
+    unsigned long fb_last_request_token_cb_millis = 0;
+    unsigned long fb_last_stream_timeout_cb_millis = 0;
     bool fb_clock_rdy = false;
     bool fb_clock_checked = false;
     float fb_gmt_offset = 0;
@@ -829,8 +831,8 @@ struct fb_esp_cfg_int_t
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
 
-    MB_VECTOR<uint32_t> fbdo_addr;
-
+    MB_VECTOR<uint32_t> so_addr_list;
+    MB_VECTOR<uint32_t> queue_addr_list;
 
     MB_String auth_token;
     MB_String refresh_token;
@@ -843,6 +845,17 @@ struct fb_esp_cfg_int_t
     TaskHandle_t resumable_upload_task_handle = NULL;
     TaskHandle_t functions_check_task_handle = NULL;
     TaskHandle_t functions_deployment_task_handle = NULL;
+
+    TaskHandle_t stream_task_handle = NULL;
+    TaskHandle_t queue_task_handle = NULL;
+    size_t stream_task_stack_size = STREAM_TASK_STACK_SIZE;
+    uint8_t stream_task_priority = 3;
+    uint8_t stream_task_cpu_core = 1;
+    uint8_t stream_task_delay_ms = 3;
+    size_t queue_task_stack_size = QUEUE_TASK_STACK_SIZE;
+    uint8_t queue_task_priority = 1;
+    uint8_t queue_task_cpu_core = 1;
+    uint8_t queue_task_delay_ms = 3;
 #endif
 };
 
@@ -1045,8 +1058,6 @@ struct fb_esp_cfg_t
 #ifdef ENABLE_RTDB
 struct fb_esp_rtdb_info_t
 {
-    int queue_Idx = -1;
-    int Idx = -1;
     bool data_tmo = false;
     bool no_content_req = false;
     bool stream_data_changed = false;
@@ -1108,16 +1119,6 @@ struct fb_esp_rtdb_info_t
     struct fb_esp_stream_info_t stream;
 
 #if defined(ESP32)
-    TaskHandle_t stream_task_handle = NULL;
-    TaskHandle_t queue_task_handle = NULL;
-    size_t stream_task_stack_size = STREAM_TASK_STACK_SIZE;
-    uint8_t stream_task_priority = 3;
-    uint8_t stream_task_cpu_core = 1;
-    uint8_t stream_task_delay_ms = 3;
-    size_t queue_task_stack_size = QUEUE_TASK_STACK_SIZE;
-    uint8_t queue_task_priority = 1;
-    uint8_t queue_task_cpu_core = 1;
-    uint8_t queue_task_delay_ms = 3;
     bool stream_task_enable = false;
 #endif
 

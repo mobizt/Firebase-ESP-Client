@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.18
+ * The Firebase class, Firebase.cpp v1.0.19
  *
- *  Created February 10, 2022
+ *  Created February 20, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -58,7 +58,11 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
         delete auth;
 
     if (cfg)
+    {
+        cfg->internal.so_addr_list.clear();
+        cfg->internal.queue_addr_list.clear();
         delete cfg;
+    }
 }
 
 void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
@@ -332,6 +336,12 @@ FIREBASE_CLASS::~FIREBASE_CLASS()
 
     if (mbfs)
         delete mbfs;
+
+    if (cfg)
+    {
+        cfg->internal.so_addr_list.clear();
+        cfg->internal.queue_addr_list.clear();
+    }
 
     if (!extConfig)
     {

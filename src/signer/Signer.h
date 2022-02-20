@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.2.17
+ * Google's Firebase Token Generation class, Signer.h version 1.2.18
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 12, 2022
+ * Created February 20, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -140,7 +140,7 @@ private:
     FirebaseAuth *getAuth();
     MB_FS *getMBFS();
     UtilsClass *getUtils();
-    bool initClient(PGM_P subDomain, bool sendStatus = false);
+    bool initClient(PGM_P subDomain, fb_esp_auth_token_status status = token_status_uninitialized);
     void setClient(Client *client);
     void setTCPConnectionCallback(FB_TCPConnectionRequestCallback tcpConnectionCB);
     void setNetworkConnectionCallback(FB_NetworkConnectionRequestCallback networkConnectionCB);

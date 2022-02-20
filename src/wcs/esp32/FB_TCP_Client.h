@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.18
+ * Firebase TCP Client v1.1.19
  *
- * Created February 10, 2022
+ * Created February 20, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -31,7 +31,7 @@
 #ifndef FB_TCP_Client_H
 #define FB_TCP_Client_H
 
-#if defined(ESP32) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if defined(ESP32) && !defined(ENABLE_EXTERNAL_CLIENT)
 
 #include "FB_Net.h"
 #include "FB_Error.h"
@@ -55,7 +55,6 @@ public:
   int _connect(const char *host, uint16_t port, unsigned long timeout)
   {
     _timeout = timeout;
-
     if (connect(host, port) == 0)
     {
       if (_CA_cert != NULL)

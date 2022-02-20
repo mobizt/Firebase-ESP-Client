@@ -1,60 +1,63 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.3
- * 
- * Created February 11, 2022
- * 
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.4
+ *
+ * Created February 20, 2022
+ *
  * Changes Log
  * 
+ * v1.2.4
+ * - Check PSRAM availability before allocating the memory 
+ *
  * v1.2.3
  * - Fixed flash string F and PSTR handle
- * 
+ *
  * v1.2.2
  * - Add supports more MCUs.
- * 
+ *
  * v1.2.1
  * - Add flash string manipulation functions.
- * 
+ *
  * v1.2.0
  * - Add supports bool, integer and float manipulation.
- * 
+ *
  * v1.1.2
  * - Fix substring with zero length returns the original string issue.
- * 
+ *
  * v1.1.1
  * - Fix possible ESP8266 code exit without resetting the external heap stack
- * 
+ *
  * v1.1.0
  * - Add support ESP8266 external virtual RAM (SRAM or PSRAM)
- * 
+ *
  * v1.0.1
  * - Add trim function
  * - Add version enum
- * 
+ *
  * v1.0.0
  * - Initial release
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef MB_String_H
 #define MB_String_H
@@ -368,10 +371,16 @@ namespace mb_string
 
 #if defined(__AVR__)
     template <typename T>
-    T addrTo(int address) { return reinterpret_cast<T>(address); }
+    T addrTo(int address)
+    {
+        return reinterpret_cast<T>(address);
+    }
 #else
     template <typename T>
-    auto addrTo(int address) -> typename MB_ENABLE_IF<!MB_IS_SAME<T, nullptr_t>::value, T>::type { return reinterpret_cast<T>(address); }
+    auto addrTo(int address) -> typename MB_ENABLE_IF<!MB_IS_SAME<T, nullptr_t>::value, T>::type
+    {
+        return reinterpret_cast<T>(address);
+    }
 #endif
 
     template <typename T>
@@ -459,7 +468,7 @@ public:
     MB_String()
     {
 #if defined(ESP8266_USE_EXTERNAL_HEAP)
-        //reserve default 1 byte external heap to refer to its pointer later
+        // reserve default 1 byte external heap to refer to its pointer later
         reset(1);
 #endif
     };
@@ -1361,9 +1370,9 @@ public:
     static const size_t npos = -1;
 
 private:
-    /*** dtostrf function is taken from 
+    /*** dtostrf function is taken from
      * https://github.com/stm32duino/Arduino_Core_STM32/blob/master/cores/arduino/avr/dtostrf.c
-    */
+     */
 
     /***
      * dtostrf - Emulation for dtostrf function from avr-libc
@@ -1380,11 +1389,11 @@ private:
      * You should have received a copy of the GNU Lesser General Public
      * License along with this library; if not, write to the Free Software
      * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-    */
+     */
 
     char *dtostrf(double val, signed char width, unsigned char prec, char *sout)
     {
-        //Commented code is the original version
+        // Commented code is the original version
         /***
           char fmt[20];
           sprintf(fmt, "%%%d.%df", width, prec);
@@ -1586,8 +1595,10 @@ private:
         void *p;
         size_t newLen = getReservedLen(len);
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
-
-        p = (void *)ps_malloc(newLen);
+        if (ESP.getPsramSize() > 0)
+            p = (void *)ps_malloc(newLen);
+        else
+            p = (void *)malloc(newLen);
         if (!p)
             return NULL;
 
@@ -1735,7 +1746,10 @@ private:
                 int slen = length();
 
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
-                buf = (char *)ps_realloc(buf, len);
+                if (ESP.getPsramSize() > 0)
+                    buf = (char *)ps_realloc(buf, len);
+                else
+                    buf = (char *)realloc(buf, len);
 #else
                 buf = (char *)realloc(buf, len);
 #endif
@@ -1748,7 +1762,10 @@ private:
             else
             {
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
-                buf = (char *)ps_malloc(len);
+                if (ESP.getPsramSize() > 0)
+                    buf = (char *)ps_malloc(len);
+                else
+                    buf = (char *)malloc(len);
 #else
                 buf = (char *)malloc(len);
 #endif
@@ -1774,7 +1791,7 @@ private:
             clear();
             return *this;
         }
-        
+
         memcpy_P(buf, (PGM_P)cstr, length);
         buf[length] = '\0';
 

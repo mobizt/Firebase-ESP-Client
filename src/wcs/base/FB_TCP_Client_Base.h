@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.0
+ * TCP Client Base class, version 1.0.1
  *
- * Created February 10, 2022
+ * Created February 20, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -149,7 +149,7 @@ public:
 
     virtual int write(uint8_t *data, int len)
     {
-        if (!data)
+        if (!data || !client)
             return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
 
         if (len == 0)
@@ -165,7 +165,10 @@ public:
         {
             if (sent + toSend > len)
                 toSend = len - sent;
-
+                
+#if defined(ESP8266)
+            delay(0);
+#endif
             int res = client->write(data + sent, toSend);
 
             if (res != toSend)
@@ -276,6 +279,10 @@ public:
         {
             if (!client)
                 break;
+
+#if defined(ESP8266)
+            delay(0);
+#endif
             res = client->read();
             if (res > -1)
             {
@@ -303,6 +310,10 @@ public:
         {
             if (!client)
                 break;
+
+#if defined(ESP8266)
+            delay(0);
+#endif
             res = client->read();
             if (res > -1)
             {
@@ -399,10 +410,7 @@ public:
     bool sendBase64(size_t bufSize, uint8_t *data, size_t len, bool flashMem)
     {
         if (!client)
-        {
-            setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
-            return false;
-        }
+            return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
         bool ret = false;
         const unsigned char *end, *in;
@@ -421,6 +429,11 @@ public:
 
         while (end - in >= 3)
         {
+
+#if defined(ESP8266)
+            delay(0);
+#endif
+
             memset(tmp, 0, 3);
             if (flashMem)
                 memcpy_P(tmp, in, 3);

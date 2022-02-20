@@ -1,40 +1,40 @@
 /*
- * FirebaseJson, version 2.6.10
- * 
+ * FirebaseJson, version 2.6.11
+ *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
- * 
- * Created February 11, 2022
- * 
+ *
+ * Created February 20, 2022
+ *
  * Features
- * - Using path to access node element in search style e.g. json.get(result,"a/b/c") 
+ * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
  * - Serializing to writable objects e.g. String, C/C++ string, Client (WiFi and Ethernet), File and Hardware Serial.
- * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and 
+ * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and
  *   Hardware Serial.
  * - Use managed class, FirebaseJsonData to keep the deserialized result, which can be casted to any primitive data types.
- * 
- * 
+ *
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
  * Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef FirebaseJson_CPP
 #define FirebaseJson_CPP
@@ -531,7 +531,7 @@ void FirebaseJsonBase::toBuf(fb_json_serialize_mode mode)
 
 bool FirebaseJsonBase::mReadClient(Client *client)
 {
-    //blocking read
+    // blocking read
     buf.clear();
     if (readClient(client, buf))
     {
@@ -546,7 +546,7 @@ bool FirebaseJsonBase::mReadClient(Client *client)
 
 bool FirebaseJsonBase::mReadStream(Stream *s, int timeoutMS)
 {
-    //non-blocking read
+    // non-blocking read
     if (readStream(s, serData, buf, true, timeoutMS))
     {
         if (root != NULL)
@@ -561,7 +561,7 @@ bool FirebaseJsonBase::mReadStream(Stream *s, int timeoutMS)
 #if defined(ESP32_SD_FAT_INCLUDED)
 bool FirebaseJsonBase::mReadSdFat(SD_FAT_FILE &file, int timeoutMS)
 {
-    //non-blocking read
+    // non-blocking read
     if (readSdFatFile(file, serData, buf, true, timeoutMS))
     {
         if (root != NULL)
@@ -887,7 +887,7 @@ FirebaseJson &FirebaseJson::nAdd(const char *key, MB_JSON *value)
 {
     prepareRoot();
     MB_VECTOR<MB_String> keys = MB_VECTOR<MB_String>();
-    //makeList(key, keys, '/');
+    // makeList(key, keys, '/');
     MB_String ky = key;
     keys.push_back(ky);
 
@@ -1084,8 +1084,10 @@ void *FirebaseJsonData::newP(size_t len)
     void *p;
     size_t newLen = getReservedLen(len);
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
-
-    p = (void *)ps_malloc(newLen);
+    if (ESP.getPsramSize() > 0)
+        p = (void *)ps_malloc(newLen);
+    else
+        p = (void *)malloc(newLen);
     if (!p)
         return NULL;
 

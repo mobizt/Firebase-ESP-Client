@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.16
+ * Google's Firebase Data class, FB_Session.h version 1.2.17
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 20, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -892,6 +892,8 @@ private:
   bool intCfg = false;
   unsigned long last_reconnect_millis = 0;
   uint16_t reconnect_tmo = 10 * 1000;
+  uint32_t so_addr = 0;
+  uint32_t queue_addr = 0;
 
 #ifdef ENABLE_RTDB
   QueueManager _qMan;
@@ -948,6 +950,10 @@ private:
 #endif
 
   bool init();
+  void addSO();
+  void removeSO();
+  void addQueueAddr();
+  void removeQueueAddr();
   void setRaw(bool trim);
 };
 

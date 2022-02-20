@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.17
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.18
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 12, 2022
+ * Created February 20, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -351,7 +351,8 @@ bool Firebase_Signer::handleToken()
                 if (config->internal.fb_processing)
                     return false;
 
-                return refreshToken();
+                if (millis() - config->internal.fb_last_request_token_cb_millis > 5000)
+                    return refreshToken();
             }
             return false;
         }
@@ -478,27 +479,31 @@ void Firebase_Signer::tokenProcessingTask()
             }
             else if (config->signer.step == fb_esp_jwt_generation_step_exchange)
             {
-                if (requestTokens())
+                if (millis() - config->internal.fb_last_request_token_cb_millis > 5000)
                 {
-                    config->signer.attempts = 0;
-                    _token_processing_task_enable = false;
-                    config->signer.step = fb_esp_jwt_generation_step_begin;
-                    ret = true;
-                }
-                else
-                {
-                    if (config->signer.attempts < config->max_token_generation_retry)
-                        config->signer.attempts++;
-                    else
+                    if (requestTokens())
                     {
-                        config->signer.tokens.error.message.clear();
-                        setTokenError(FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED);
-                        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
-                        sendTokenStatusCB();
                         config->signer.attempts = 0;
+                        _token_processing_task_enable = false;
                         config->signer.step = fb_esp_jwt_generation_step_begin;
                         ret = true;
                     }
+                    else
+                    {
+                        if (config->signer.attempts < config->max_token_generation_retry)
+                            config->signer.attempts++;
+                        else
+                        {
+                            config->signer.tokens.error.message.clear();
+                            setTokenError(FIREBASE_ERROR_TOKEN_EXCHANGE_MAX_RETRY_REACHED);
+                            config->internal.fb_last_jwt_generation_error_cb_millis = 0;
+                            sendTokenStatusCB();
+                            config->signer.attempts = 0;
+                            config->signer.step = fb_esp_jwt_generation_step_begin;
+                            ret = true;
+                        }
+                    }
+
                 }
             }
         }
@@ -523,7 +528,7 @@ bool Firebase_Signer::refreshToken()
     if (config->internal.ltok_len > 0 || (config->internal.rtok_len == 0 && config->internal.atok_len == 0))
         return false;
 
-    if (!initClient(fb_esp_pgm_str_203, true))
+    if (!initClient(fb_esp_pgm_str_203, token_status_on_refresh))
         return false;
 
     jsonPtr->add(pgm2Str(fb_esp_pgm_str_205), pgm2Str(fb_esp_pgm_str_206));
@@ -635,7 +640,6 @@ void Firebase_Signer::setTokenError(int code)
 
 bool Firebase_Signer::handleSignerError(int code, int httpCode)
 {
-
     switch (code)
     {
 
@@ -1204,7 +1208,7 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->internal.fb_processing)
         return false;
 
-    if (!initClient(createUser ? fb_esp_pgm_str_250 : fb_esp_pgm_str_193, !createUser))
+    if (!initClient(createUser ? fb_esp_pgm_str_250 : fb_esp_pgm_str_193, createUser ? token_status_uninitialized : token_status_on_request))
         return false;
 
     if (createUser)
@@ -1226,7 +1230,7 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
     jsonPtr->add(pgm2Str(fb_esp_pgm_str_198), true);
 
-    MB_String req= fb_esp_pgm_str_24;
+    MB_String req = fb_esp_pgm_str_24;
     req += fb_esp_pgm_str_6;
 
     if (createUser)
@@ -1341,7 +1345,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->internal.fb_processing)
         return false;
 
-    if (!initClient(fb_esp_pgm_str_250, false))
+    if (!initClient(fb_esp_pgm_str_250, token_status_uninitialized))
         return false;
 
     config->signer.signup = false;
@@ -1354,7 +1358,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     else
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_200), config->internal.auth_token);
 
-    MB_String req= fb_esp_pgm_str_24;
+    MB_String req = fb_esp_pgm_str_24;
     req += fb_esp_pgm_str_6;
 
     req += fb_esp_pgm_str_582;
@@ -1453,18 +1457,19 @@ void Firebase_Signer::setNetworkStatus(bool status)
     networkStatus = status;
 }
 
-bool Firebase_Signer::initClient(PGM_P subDomain, bool sendStatus)
+bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status status)
 {
 
     ut->idle();
 
-    if (sendStatus)
+    if (status != token_status_uninitialized)
     {
-        config->signer.tokens.status = token_status_on_request;
+        config->signer.tokens.status = status;
         config->internal.fb_processing = true;
         config->signer.tokens.error.code = 0;
         config->signer.tokens.error.message.clear();
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
+        config->internal.fb_last_request_token_cb_millis = millis();
         sendTokenStatusCB();
     }
 
@@ -1522,7 +1527,7 @@ bool Firebase_Signer::initClient(PGM_P subDomain, bool sendStatus)
     jsonPtr = new FirebaseJson();
     resultPtr = new FirebaseJsonData();
 
-    MB_String host= subDomain;
+    MB_String host = subDomain;
     host += fb_esp_pgm_str_4;
     host += fb_esp_pgm_str_120;
 
@@ -1539,10 +1544,10 @@ bool Firebase_Signer::requestTokens()
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || (unsigned long)now < ut->default_ts || config->internal.fb_processing)
         return false;
 
-    if (!initClient(fb_esp_pgm_str_193, false))
+    if (!initClient(fb_esp_pgm_str_193, token_status_on_request))
         return false;
 
-    MB_String req= fb_esp_pgm_str_24;
+    MB_String req = fb_esp_pgm_str_24;
     req += fb_esp_pgm_str_6;
 
     if (config->signer.tokens.token_type == token_type_custom_token)
@@ -1688,7 +1693,7 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     if (config->internal.fb_processing)
         return false;
 
-    if (!initClient(fb_esp_pgm_str_193, false))
+    if (!initClient(fb_esp_pgm_str_193, token_status_uninitialized))
         return false;
 
     MB_String _payload = payload;
@@ -1721,7 +1726,7 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     MB_String s;
     jsonPtr->toString(s);
 
-    MB_String req= fb_esp_pgm_str_24;
+    MB_String req = fb_esp_pgm_str_24;
     req += fb_esp_pgm_str_6;
 
     req += fb_esp_pgm_str_194;

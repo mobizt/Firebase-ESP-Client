@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.18
+ * Firebase TCP Client v1.1.19
  *
- * Created February 10, 2022
+ * Created February 20, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -42,14 +42,7 @@ FB_TCP_Client::FB_TCP_Client()
 
 FB_TCP_Client::~FB_TCP_Client()
 {
-  if (wcs)
-  {
-    wcs->stop();
-    wcs.reset(nullptr);
-    wcs.release();
-  }
-  if (cert)
-    mbfs->delP(&cert);
+  release();
 }
 
 void FB_TCP_Client::setInsecure()
