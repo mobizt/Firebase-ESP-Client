@@ -1,31 +1,31 @@
 /**
- * The MB_FS, file wrapper class v1.0.1.
- * 
+ * The MB_FS, file wrapper class v1.0.2.
+ *
  * This wrapper class is for SD and Flash file interfaces which support SdFat in ESP32 (//https://github.com/greiman/SdFat)
- * 
- *  Created February 1, 2022
- * 
+ *
+ *  Created February 21, 2022
+ *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
- * 
- * 
+ *
+ *
  * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #ifndef MBFS_CLASS_H
 #define MBFS_CLASS_H
@@ -138,7 +138,7 @@ public:
 
     struct mbfs_sd_config_info_t sd_config;
 
-    //Assign the SD card interfaces with GPIO pins.
+    // Assign the SD card interfaces with GPIO pins.
     bool sdBegin(int ss = -1, int sck = -1, int miso = -1, int mosi = -1)
     {
         if (sd_rdy)
@@ -163,7 +163,7 @@ public:
 
 #if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 
-    //Assign the SD card interfaces with SPIClass object pointer (ESP32 only).
+    // Assign the SD card interfaces with SPIClass object pointer (ESP32 only).
     bool sdSPIBegin(int ss, SPIClass *spiConfig)
     {
 
@@ -203,7 +203,7 @@ public:
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
 
-    //Assign the SD card interfaces with SdSpiConfig object pointer and SPI pins assignment (ESP32 only).
+    // Assign the SD card interfaces with SdSpiConfig object pointer and SPI pins assignment (ESP32 only).
     bool sdFatBegin(SdSpiConfig *sdFatSPIConfig, int ss, int sck, int miso, int mosi)
     {
 
@@ -230,7 +230,7 @@ public:
 #endif
 
 #if defined(ESP8266) && defined(MBFS_SD_FS)
-    //Assign the SD card interfaces with SDFSConfig object pointer (ESP8266 only).
+    // Assign the SD card interfaces with SDFSConfig object pointer (ESP8266 only).
     bool sdFatBegin(SDFSConfig *sdFSConfig)
     {
 
@@ -249,7 +249,7 @@ public:
     }
 #endif
 
-    //Assign the SD_MMC card interfaces (ESP32 only).
+    // Assign the SD_MMC card interfaces (ESP32 only).
     bool sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
     {
 
@@ -270,7 +270,7 @@ public:
         return false;
     }
 
-    //Check the mounting status of Flash storage.
+    // Check the mounting status of Flash storage.
     bool flashReady()
     {
 #if defined MBFS_FLASH_FS
@@ -295,7 +295,7 @@ public:
         return flash_rdy;
     }
 
-    //Check the mounting status of SD storage.
+    // Check the mounting status of SD storage.
     bool sdReady()
     {
 
@@ -349,7 +349,7 @@ public:
         return sd_rdy;
     }
 
-    //Check the mounting status of Flash or SD storage with mb_fs_mem_storage_type.
+    // Check the mounting status of Flash or SD storage with mb_fs_mem_storage_type.
     bool checkStorageReady(mbfs_file_type type)
     {
 
@@ -371,8 +371,8 @@ public:
         return false;
     }
 
-    //Open file for read or write with file name, mb_fs_mem_storage_type and mb_fs_open_mode.
-    //return size of file (read) or 0 (write) or negative value for error
+    // Open file for read or write with file name, mb_fs_mem_storage_type and mb_fs_open_mode.
+    // return size of file (read) or 0 (write) or negative value for error
     int open(const MB_String &filename, mbfs_file_type type, mb_fs_open_mode mode)
     {
 
@@ -406,7 +406,7 @@ public:
         return MB_FS_ERROR_FILE_IO_ERROR;
     }
 
-    //Check if file is already open.
+    // Check if file is already open.
     bool ready(mbfs_file_type type)
     {
 #if defined(MBFS_FLASH_FS)
@@ -420,7 +420,7 @@ public:
         return false;
     }
 
-    //Get file for read/write with file name, mb_fs_mem_storage_type and mb_fs_open_mode.
+    // Get file for read/write with file name, mb_fs_mem_storage_type and mb_fs_open_mode.
     int size(mbfs_file_type type)
     {
         int size = 0;
@@ -436,7 +436,7 @@ public:
         return size;
     }
 
-    //Check if file is ready to read/write.
+    // Check if file is ready to read/write.
     int available(mbfs_file_type type)
     {
         int available = 0;
@@ -452,7 +452,7 @@ public:
         return available;
     }
 
-    //Read byte array. Return the number of bytes that completed read or negative value for error.
+    // Read byte array. Return the number of bytes that completed read or negative value for error.
     int read(mbfs_file_type type, uint8_t *buf, size_t len)
     {
         int read = 0;
@@ -467,7 +467,7 @@ public:
         return read;
     }
 
-    //Print char array. Return the number of bytes that completed write or negative value for error.
+    // Print char array. Return the number of bytes that completed write or negative value for error.
     int print(mbfs_file_type type, const char *str)
     {
         int write = 0;
@@ -483,7 +483,7 @@ public:
         return write;
     }
 
-    //Print char array with new line. Return the number of bytes that completed write or negative value for error.
+    // Print char array with new line. Return the number of bytes that completed write or negative value for error.
     int println(mbfs_file_type type, const char *str)
     {
         int write = print(type, str);
@@ -492,7 +492,7 @@ public:
         return write;
     }
 
-    //Print integer. Return the number of bytes that completed write or negative value for error.
+    // Print integer. Return the number of bytes that completed write or negative value for error.
     int print(mbfs_file_type type, int v)
     {
         int write = 0;
@@ -508,7 +508,7 @@ public:
         return write;
     }
 
-    //Print integer with newline. Return the number of bytes that completed write or negative value for error.
+    // Print integer with newline. Return the number of bytes that completed write or negative value for error.
     int println(mbfs_file_type type, int v)
     {
         int write = print(type, v);
@@ -532,7 +532,7 @@ public:
         return write;
     }
 
-    //Print integer with newline. Return the number of bytes that completed write or negative value for error.
+    // Print integer with newline. Return the number of bytes that completed write or negative value for error.
     int println(mbfs_file_type type, unsigned int v)
     {
         int write = print(type, v);
@@ -541,7 +541,7 @@ public:
         return write;
     }
 
-    //Write byte array. Return the number of bytes that completed write or negative value for error.
+    // Write byte array. Return the number of bytes that completed write or negative value for error.
     int write(mbfs_file_type type, uint8_t *buf, size_t len)
     {
         int write = 0;
@@ -557,7 +557,7 @@ public:
         return write;
     }
 
-    //Close file.
+    // Close file.
     void close(mbfs_file_type type)
     {
 
@@ -582,7 +582,7 @@ public:
 #endif
     }
 
-    //Check file existence.
+    // Check file existence.
     bool existed(const MB_String &filename, mbfs_file_type type)
     {
 
@@ -608,7 +608,7 @@ public:
         return false;
     }
 
-    //Seek to position in file.
+    // Seek to position in file.
     void seek(mbfs_file_type type, int pos)
     {
 #if defined(MBFS_FLASH_FS)
@@ -621,7 +621,7 @@ public:
 #endif
     }
 
-    //Read byte. Return the 1 for completed read or negative value for error.
+    // Read byte. Return the 1 for completed read or negative value for error.
     int read(mbfs_file_type type)
     {
 #if defined(MBFS_FLASH_FS)
@@ -635,7 +635,7 @@ public:
         return -1;
     }
 
-    //Write byte. Return the 1 for completed write or negative value for error.
+    // Write byte. Return the 1 for completed write or negative value for error.
     int write(mbfs_file_type type, uint8_t v)
     {
 #if defined(MBFS_FLASH_FS)
@@ -662,11 +662,11 @@ public:
         if (type == mbfs_sd)
         {
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
-             if (mb_sdFs.open(filename.c_str(), O_RDWR | O_CREAT | O_APPEND))
-             {
-                 mb_sdFs.remove();
-                 mb_sdFs.close();
-                 return true;
+            if (mb_sdFs.open(filename.c_str(), O_RDWR | O_CREAT | O_APPEND))
+            {
+                mb_sdFs.remove();
+                mb_sdFs.close();
+                return true;
             }
 #else
             return MBFS_SD_FS.remove(filename.c_str());
@@ -677,7 +677,7 @@ public:
         return false;
     }
 
-//Get the Flash file instance.
+// Get the Flash file instance.
 #if defined(MBFS_FLASH_FS)
     fs::File &getFlashFile()
     {
@@ -685,7 +685,7 @@ public:
     }
 #endif
 
-//Get the SD file instance.
+// Get the SD file instance.
 #if defined(MBFS_SD_FS)
     MBFS_SD_FILE &getSDFile()
     {
@@ -693,7 +693,7 @@ public:
     }
 #endif
 
-    //Get name of opened file.
+    // Get name of opened file.
     const char *name(mbfs_file_type type)
     {
 #if defined(MBFS_FLASH_FS)
@@ -708,13 +708,13 @@ public:
         return "";
     }
 
-    //Calculate CRC16 of byte array.
+    // Calculate CRC16 of byte array.
     uint16_t calCRC(const char *buf)
     {
         return CRC16.ccitt((uint8_t *)buf, strlen(buf));
     }
 
-    //Free reserved memory at pointer.
+    // Free reserved memory at pointer.
     void delP(void *ptr)
     {
         void **p = (void **)ptr;
@@ -725,14 +725,19 @@ public:
         }
     }
 
-    //Allocate memory
+    // Allocate memory
     void *newP(size_t len)
     {
         void *p;
         size_t newLen = getReservedLen(len);
 #if defined(BOARD_HAS_PSRAM) && defined(MB_STRING_USE_PSRAM)
 
-        if ((p = (void *)ps_malloc(newLen)) == 0)
+        if (ESP.getPsramSize() > 0)
+            p = (void *)ps_malloc(newLen);
+        else
+            p = (void *)malloc(newLen);
+
+        if (!p)
             return NULL;
 
 #else
@@ -851,11 +856,11 @@ private:
         {
             uint16_t crc = calCRC(filename.c_str());
 
-            if (mode == sd_open_mode && flash_filename_crc == crc && sd_opened) //same sd file opened, leave it
+            if (mode == sd_open_mode && flash_filename_crc == crc && sd_opened) // same sd file opened, leave it
                 return MB_FS_ERROR_FILE_STILL_OPENED;
 
             if (sd_opened)
-                close(mbfs_sd); //sd file opened, close it
+                close(mbfs_sd); // sd file opened, close it
 
             flash_filename_crc = crc;
         }
@@ -924,11 +929,11 @@ private:
         if (mode == mb_fs_open_mode_read || mode == mb_fs_open_mode_write)
         {
             uint16_t crc = calCRC(filename.c_str());
-            if (mode == flash_open_mode && sd_filename_crc == crc && flash_opened) //same flash file opened, leave it
+            if (mode == flash_open_mode && sd_filename_crc == crc && flash_opened) // same flash file opened, leave it
                 return MB_FS_ERROR_FILE_STILL_OPENED;
 
             if (flash_opened)
-                close(mbfs_flash); //flash file opened, close it
+                close(mbfs_flash); // flash file opened, close it
 
             sd_filename_crc = crc;
         }

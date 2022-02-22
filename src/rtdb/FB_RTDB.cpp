@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.4
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.5
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 20, 2022
+ * Created February 22, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -987,9 +987,9 @@ void FB_RTDB::runErrorQueueTask()
     if (!cfg)
         return;
 
-    for (size_t id = 0; id < cfg->internal.so_addr_list.size(); id++)
+    for (size_t id = 0; id < cfg->internal.queue_addr_list.size(); id++)
     {
-        FirebaseData *fbdo = addrTo<FirebaseData *>(cfg->internal.so_addr_list[id]);
+        FirebaseData *fbdo = addrTo<FirebaseData *>(cfg->internal.queue_addr_list[id]);
 
         if (fbdo)
         {

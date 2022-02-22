@@ -1,7 +1,8 @@
+#pragma once
+
 #ifndef FirebaseFS_H
 #define FirebaseFS_H
 
-#pragma once
 
 #include <Arduino.h>
 
