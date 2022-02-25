@@ -7,10 +7,11 @@
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created February 21, 2022
+ * Created February 25, 2022
  *
  *   Updates:
  * - Fixed memory allocation error when PSRAM was enabled but not detected.
+ * - Fixed compile guard for base client issue.
  *
  *
  * This work is a part of Firebase ESP Client library

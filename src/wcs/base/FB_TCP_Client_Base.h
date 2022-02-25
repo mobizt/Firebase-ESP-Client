@@ -26,7 +26,7 @@
  */
 
 #ifndef FB_TCP_CLIENT_BASE_H
-#define TCP_CLIENT_BASE_H
+#define FB_TCP_CLIENT_BASE_H
 
 #include <Arduino.h>
 #include "Utils.h"
