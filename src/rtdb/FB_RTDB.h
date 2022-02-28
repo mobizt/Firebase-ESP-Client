@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.3.6
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.3.7
  *
  * This library supports Espressif ESP8266 and ESP32
  *

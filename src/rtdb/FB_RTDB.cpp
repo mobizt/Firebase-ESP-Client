@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.6
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.7
  *
  * This library supports Espressif ESP8266 and ESP32
  *
@@ -809,6 +809,8 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
     fbdo->_multiPathDataCallback = multiPathDataCallback;
     fbdo->_timeoutCallback = timeoutCallback;
 
+    fbdo->addSO();
+
 #if defined(ESP32)
     MB_String taskName = fb_esp_pgm_str_72;
     taskName += fb_esp_pgm_str_113;
@@ -879,6 +881,8 @@ void FB_RTDB::runStreamTask()
             for (size_t i = 0; i < Signer.getCfg()->internal.so_addr_list.size(); i++)
             {
                 FirebaseData *_fbdo = addrTo<FirebaseData *>(Signer.getCfg()->internal.so_addr_list[i]);
+
+               
 
                 if (_fbdo)
                 {
@@ -3864,7 +3868,7 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     return true;
 }
-#if defined(ESP32) || defined(ESP8266)
+
 void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
 {
     FirebaseConfig *cfg = Signer.getCfg();
@@ -3890,7 +3894,6 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
     }
 }
 
-#endif
 
 void FB_RTDB::clearDataStatus(FirebaseData *fbdo)
 {

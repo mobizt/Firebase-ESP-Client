@@ -1,5 +1,5 @@
 /*
- * FirebaseJson, version 2.6.12
+ * FirebaseJson, version 2.6.13
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *

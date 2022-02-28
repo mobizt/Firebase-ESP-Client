@@ -2,12 +2,12 @@
 /**
  * Mobizt's SRAM/PSRAM supported String, version 1.2.4
  *
- * Created February 20, 2022
+ * Created February 28, 2022
  *
  * Changes Log
- * 
+ *
  * v1.2.4
- * - Check PSRAM availability before allocating the memory 
+ * - Check PSRAM availability before allocating the memory
  *
  * v1.2.3
  * - Fixed flash string F and PSTR handle
@@ -71,7 +71,7 @@
 
 #define MB_STRING_MAJOR 1
 #define MB_STRING_MINOR 2
-#define MB_STRING_PATCH 3
+#define MB_STRING_PATCH 4
 
 #if defined(ESP8266) && defined(MMU_EXTERNAL_HEAP) && defined(MB_STRING_USE_PSRAM)
 #include <umm_malloc/umm_malloc.h>

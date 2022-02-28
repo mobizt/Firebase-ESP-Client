@@ -1,5 +1,5 @@
 /*
- * FirebaseJson, version 2.6.12
+ * FirebaseJson, version 2.6.13
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
@@ -118,15 +118,15 @@ extern "C"
 
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4) || defined(__AVR__)
 
-#include "extras/print/printf_alt.h"
+#include "extras/print/fb_json_print.h"
 
 extern "C" __attribute__((weak)) void
-_putchar_alt(char c)
+fb_json_putchar(char c)
 {
     Serial.print(c);
 }
 
-#define Serial_Printf printf_alt
+#define Serial_Printf fb_json_printf
 
 #endif
 
