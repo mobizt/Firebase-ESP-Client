@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.19
+ * The Firebase class, Firebase.h v1.0.20
  *
- *  Created February 20, 2022
+ *  Created February 28, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -60,8 +60,8 @@ extern char *__brkval;
 #endif
 
 
-#include "Utils.h"
-#include "wcs/clients.h"
+#include "FB_Utils.h"
+#include "wcs/FB_Clients.h"
 #include "signer/Signer.h"
 #include "session/FB_Session.h"
 
@@ -77,7 +77,7 @@ class SdSpiConfig;
 #ifdef ENABLE_FCM
 #include "message/FCM.h"
 #endif
-#include "Utils.h"
+#include "FB_Utils.h"
 #ifdef ENABLE_FB_STORAGE
 #include "storage/FCS.h"
 #endif

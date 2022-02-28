@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.19
+ * The Firebase class, Firebase.cpp v1.0.20
  *
- *  Created February 20, 2022
+ *  Created February 28, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)

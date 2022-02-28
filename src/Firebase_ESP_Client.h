@@ -1,17 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.1.1"
+#define FIREBASE_CLIENT_VERSION "3.1.2"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.1
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.2
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created February 25, 2022
+ * Created February 28, 2022
  *
  *   Updates:
- * - Fixed memory allocation error when PSRAM was enabled but not detected.
- * - Fixed compile guard for base client issue.
+ * - Change files structure.
  *
  *
  * This work is a part of Firebase ESP Client library

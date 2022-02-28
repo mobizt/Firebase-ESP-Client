@@ -28,6 +28,7 @@
 
 
 #if !defined(FastCRC_tables)
+
 #define FastCRC_tables
 #include "inttypes.h"
 

@@ -41,11 +41,11 @@ extern "C"
 #endif
 
     /**
- * Output a character to a custom device like UART, used by the printf() function
- * This function is declared here only. You have to write your custom implementation somewhere
- * \param character Character to output
- */
-    void _putchar(char character);
+     * Output a character to a custom device like UART, used by the printf() function
+     * This function is declared here only. You have to write your custom implementation somewhere
+     * \param character Character to output
+     */
+    void _putchar_alt(char character) __attribute__((used));
 
 /**
  * Tiny printf implementation
@@ -55,8 +55,8 @@ extern "C"
  * \param format A string that specifies the format of the output
  * \return The number of characters that are written into the array, not counting the terminating null character
  */
-#define printf printf_
-    int printf_(const char *format, ...);
+#define printf_alt printf_alt_
+    static int printf_alt_(const char *format, ...) __attribute__((used));
 
 /**
  * Tiny sprintf implementation
@@ -65,8 +65,8 @@ extern "C"
  * \param format A string that specifies the format of the output
  * \return The number of characters that are WRITTEN into the buffer, not counting the terminating null character
  */
-#define sprintf sprintf_
-    int sprintf_(char *buffer, const char *format, ...);
+#define sprintf_alt sprintf_alt_
+    static int sprintf_alt_(char *buffer, const char *format, ...) __attribute__((used));
 
 /**
  * Tiny snprintf/vsnprintf implementation
@@ -78,10 +78,10 @@ extern "C"
  *         null character. A value equal or larger than count indicates truncation. Only when the returned value
  *         is non-negative and less than count, the string has been completely written.
  */
-#define snprintf snprintf_
-#define vsnprintf vsnprintf_
-    int snprintf_(char *buffer, size_t count, const char *format, ...);
-    int vsnprintf_(char *buffer, size_t count, const char *format, va_list va);
+#define snprintf_alt snprintf_alt_
+#define vsnprintf_alt vsnprintf_alt_
+    static int snprintf_alt_(char *buffer, size_t count, const char *format, ...) __attribute__((used));
+    static int vsnprintf_alt_(char *buffer, size_t count, const char *format, va_list va) __attribute__((used));
 
 /**
  * Tiny vprintf implementation
@@ -89,18 +89,18 @@ extern "C"
  * \param va A value identifying a variable arguments list
  * \return The number of characters that are WRITTEN into the buffer, not counting the terminating null character
  */
-#define vprintf vprintf_
-    int vprintf_(const char *format, va_list va);
+#define vprintf_alt vprintf_alt_
+    static int vprintf_alt_(const char *format, va_list va) __attribute__((used));
 
     /**
- * printf with output function
- * You may use this as dynamic alternative to printf() with its fixed _putchar() output
- * \param out An output function which takes one character and an argument pointer
- * \param arg An argument pointer for user data passed to output function
- * \param format A string that specifies the format of the output
- * \return The number of characters that are sent to the output function, not counting the terminating null character
- */
-    int fctprintf(void (*out)(char character, void *arg), void *arg, const char *format, ...);
+     * printf with output function
+     * You may use this as dynamic alternative to printf() with its fixed _putchar() output
+     * \param out An output function which takes one character and an argument pointer
+     * \param arg An argument pointer for user data passed to output function
+     * \param format A string that specifies the format of the output
+     * \return The number of characters that are sent to the output function, not counting the terminating null character
+     */
+    static int fctprintf_alt(void (*out)(char character, void *arg), void *arg, const char *format, ...) __attribute__((used));
 
 #ifdef __cplusplus
 }

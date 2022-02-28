@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.5
+ * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.6
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -37,7 +37,7 @@
 #ifndef FIREBASE_QUERY_FILTER_H
 #define FIREBASE_QUERY_FILTER_H
 #include <Arduino.h>
-#include "Utils.h"
+#include "FB_Utils.h"
 #include "signer/Signer.h"
 
 using namespace mb_string;

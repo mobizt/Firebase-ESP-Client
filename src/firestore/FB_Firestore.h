@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.1.12
+ * Google's Cloud Firestore class, Forestore.h version 1.1.13
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -38,7 +38,7 @@
 #define _FB_FIRESTORE_H_
 
 #include <Arduino.h>
-#include "Utils.h"
+#include "FB_Utils.h"
 #include "session/FB_Session.h"
 #include "json/FirebaseJson.h"
 #if defined(ESP32)

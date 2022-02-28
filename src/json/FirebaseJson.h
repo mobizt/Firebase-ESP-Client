@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.6.11
+ * FirebaseJson, version 2.6.12
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created February 20, 2022
+ * Created February 28, 2022
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -118,15 +118,15 @@ extern "C"
 
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4) || defined(__AVR__)
 
-#include "extras/print/printf.h"
+#include "extras/print/printf_alt.h"
 
 extern "C" __attribute__((weak)) void
-_putchar(char c)
+_putchar_alt(char c)
 {
     Serial.print(c);
 }
 
-#define Serial_Printf printf
+#define Serial_Printf printf_alt
 
 #endif
 

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.h version 1.1.16
+ * Google's Firebase Storage class, FCS.h version 1.1.17
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -38,7 +38,7 @@
 #define FB_Storage_H
 
 #include <Arduino.h>
-#include "Utils.h"
+#include "FB_Utils.h"
 #include "session/FB_Session.h"
 
 using namespace mb_string;

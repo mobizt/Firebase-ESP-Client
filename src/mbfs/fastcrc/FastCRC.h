@@ -39,12 +39,16 @@
 //
 
 
-// Set this to 0 for smaller 32BIT-CRC-Tables:
-#define CRC_BIGTABLES 1
+
 
 
 #if !defined(FastCRC_h)
+
 #define FastCRC_h
+
+// Set this to 0 for smaller 32BIT-CRC-Tables:
+#define CRC_BIGTABLES 1
+
 #include "inttypes.h"
 
 

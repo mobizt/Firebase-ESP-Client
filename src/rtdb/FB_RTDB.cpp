@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.5
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.6
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 22, 2022
+ * Created February 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)

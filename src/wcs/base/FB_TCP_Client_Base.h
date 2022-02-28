@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.1
+ * TCP Client Base class, version 1.0.2
  *
- * Created February 20, 2022
+ * Created February 28, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -29,7 +29,7 @@
 #define FB_TCP_CLIENT_BASE_H
 
 #include <Arduino.h>
-#include "Utils.h"
+#include "FB_Utils.h"
 #include <IPAddress.h>
 #include <Client.h>
 

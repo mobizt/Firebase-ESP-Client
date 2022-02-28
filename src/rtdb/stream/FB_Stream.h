@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.5
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.6
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created February 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -36,7 +36,7 @@
 #ifndef FIREBASE_STREAM_SESSION_H
 #define FIREBASE_STREAM_SESSION_H
 #include <Arduino.h>
-#include "Utils.h"
+#include "FB_Utils.h"
 #include "signer/Signer.h"
 
 #if defined(FIREBASE_ESP_CLIENT)

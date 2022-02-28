@@ -1,9 +1,9 @@
 /**
- * The MB_FS, file wrapper class v1.0.2.
+ * The MB_FS, file wrapper class v1.0.3.
  *
  * This wrapper class is for SD and Flash file interfaces which support SdFat in ESP32 (//https://github.com/greiman/SdFat)
  *
- *  Created February 21, 2022
+ *  Created February 28, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -35,7 +35,6 @@
 #include <FS.h>
 #endif
 #include "MB_FS_Interfaces.h"
-#include "fastcrc/FastCRC.h"
 #include "json/FirebaseJson.h"
 
 using namespace mb_string;
@@ -711,7 +710,18 @@ public:
     // Calculate CRC16 of byte array.
     uint16_t calCRC(const char *buf)
     {
-        return CRC16.ccitt((uint8_t *)buf, strlen(buf));
+        uint8_t x;
+        uint16_t crc = 0xFFFF;
+
+        int length = (int)strlen(buf);
+
+        while (length--)
+        {
+            x = crc >> 8 ^ *buf++;
+            x ^= x >> 4;
+            crc = (crc << 8) ^ ((uint16_t)(x << 12)) ^ ((uint16_t)(x << 5)) ^ ((uint16_t)x);
+        }
+        return crc;
     }
 
     // Free reserved memory at pointer.
@@ -814,7 +824,6 @@ public:
     }
 
 private:
-    FastCRC16 CRC16;
     uint16_t flash_filename_crc = 0;
     uint16_t sd_filename_crc = 0;
     MB_String flash_file, sd_file;
