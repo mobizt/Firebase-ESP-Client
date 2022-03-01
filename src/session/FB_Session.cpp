@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.18
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.19
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created March 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1003,6 +1003,12 @@ void FirebaseData::setCert(const char *ca)
 
 bool FirebaseData::tokenReady()
 {
+    if (Signer.getCfg())
+    {
+        if (Signer.getCfg()->signer.test_mode || (Signer.getCfg()->signer.tokens.token_type == token_type_legacy_token && Signer.getCfg()->signer.tokens.status == token_status_ready))
+            return true;
+    }
+
     if (Signer.isExpired())
     {
         closeSession();
