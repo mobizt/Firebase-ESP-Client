@@ -1,5 +1,6 @@
 # Firebase Arduino Client Library for ESP8266 and ESP32
 
+![](/media/images/flag.svg)
 
 Google's Firebase Arduino Client Library for ESP8266 and ESP32 v3.1.4
 
