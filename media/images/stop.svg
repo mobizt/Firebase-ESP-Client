@@ -1,0 +1,17 @@
+<svg width="480" height="28" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <rect id="svg_1" height="5" width="50" y="0" x="0" fill="#ff0000"/>
+  <rect id="svg_2" height="5" width="50" y="5" x="0" fill="#ffffff"/>
+  <rect id="svg_3" height="8" width="50" y="10" x="0" fill="#0000bf"/>
+  <rect id="svg_4" height="5" width="50" y="18" x="0" fill="#ffffff"/>
+  <rect id="svg_5" height="5" width="50" y="23" x="0" fill="#ff0000"/>
+  
+  <rect id="svg_6" height="9" width="50" y="0" x="375" fill="#ffffff"/>
+  <rect id="svg_7" height="9" width="50" y="9" x="375" fill="#0000bf"/>
+  <rect id="svg_8" height="10" width="50" y="18" x="375" fill="#ff0000"/>
+
+  <text x="55" y="18" fill="#222222">STOP THE SANCTIONS AGAINST RUSSIA !</text>
+  
+ </g>
+</svg>

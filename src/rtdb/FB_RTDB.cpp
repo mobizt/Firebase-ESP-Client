@@ -882,8 +882,6 @@ void FB_RTDB::runStreamTask()
             {
                 FirebaseData *_fbdo = addrTo<FirebaseData *>(Signer.getCfg()->internal.so_addr_list[i]);
 
-               
-
                 if (_fbdo)
                 {
                     if (_fbdo->session.rtdb.stream_task_enable && (_fbdo->_dataAvailableCallback || _fbdo->_timeoutCallback))
@@ -893,7 +891,7 @@ void FB_RTDB::runStreamTask()
 
                         if (_fbdo->streamTimeout() && _fbdo->_timeoutCallback)
                             _fbdo->sendStreamToCB(_fbdo->session.response.code);
-                            
+
                         vTaskDelay(xDelay);
                     }
                 }
@@ -3893,7 +3891,6 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
 #endif
     }
 }
-
 
 void FB_RTDB::clearDataStatus(FirebaseData *fbdo)
 {
