@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.6.13
+ * FirebaseJson, version 2.6.14
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created February 28, 2022
+ * Created March 5, 2022
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -46,7 +46,14 @@
 #undef max
 #endif
 #if __has_include(<FS.h>)
+
+#if defined(ESP8266)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <FS.h>
+
 #define MB_JSON_FS_H
 #endif
 #endif
@@ -2032,9 +2039,9 @@ private:
     auto dataRemoveHandler(T arg) -> typename MB_ENABLE_IF<is_string<T>::value, bool>::type
     {
         uint32_t addr = 0;
-        mRemove(getStr(arg, addr));
+        bool ret = mRemove(getStr(arg, addr));
         delAddr(addr);
-        return *this;
+        return ret;
     }
 
     template <typename T>

@@ -1,16 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.1.4"
+#define FIREBASE_CLIENT_VERSION "3.1.5"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.4
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.5
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created March 1, 2022
+ * Created March 5, 2022
  *
  *   Updates:
- * - Fixed legacy token authentication issue.
+ * - Fixed compile error for FirebaseJsonArray remove.
  *
  *
  * This work is a part of Firebase ESP Client library
