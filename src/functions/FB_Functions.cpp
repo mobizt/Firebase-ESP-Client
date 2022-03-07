@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.11
+ * Google's Cloud Functions class, Functions.cpp version 1.1.12
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created March 7, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -791,6 +791,9 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
     header +=fb_esp_pgm_str_32;
     header +=fb_esp_pgm_str_34;
+
+    ut->getCustomHeaders(header);
+
     header +=fb_esp_pgm_str_21;
 
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;

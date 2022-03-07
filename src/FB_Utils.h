@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, FB_Utils.h version 1.1.15
+ * Google's Firebase Util class, FB_Utils.h version 1.1.16
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created March 7, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1382,6 +1382,32 @@ public:
         s = _str.substr(previous, current - previous);
         tk.push_back(s);
         MB_String().swap(s);
+    }
+
+    void getCustomHeaders(MB_String &header)
+    {
+        if (!config)
+            return;
+
+        if (config->signer.customHeaders.length() > 0)
+        {
+            MB_VECTOR<MB_String> headers;
+            splitTk(config->signer.customHeaders, headers, ",");
+            for (size_t i = 0; i < headers.size(); i++)
+            {
+                size_t p1 = headers[i].find(F("X-Firebase-"));
+                size_t p2 = headers[i].find(':');
+                size_t p3 = headers[i].find(F("-ETag"));
+
+                if (p1 != MB_String::npos && p2 != MB_String::npos && p2 > p1 && p3 == MB_String::npos)
+                {
+                    header += headers[i];
+                    header += fb_esp_pgm_str_21;
+                }
+                headers[i].clear();
+            }
+            headers.clear();
+        }
     }
 
     void replaceAll(MB_String &str, const MB_String &from, const MB_String &to)

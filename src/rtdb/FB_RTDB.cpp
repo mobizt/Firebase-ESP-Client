@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.7
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.8
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created March 7, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -3782,6 +3782,8 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     header += cfg->database_url;
     header += fb_esp_pgm_str_21;
     header += fb_esp_pgm_str_32;
+
+    ut->getCustomHeaders(header);
 
     if (Signer.getTokenType() == token_type_oauth2_access_token)
     {
