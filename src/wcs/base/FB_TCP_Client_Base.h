@@ -155,7 +155,7 @@ public:
         if (len == 0)
             return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
 
-        // call base or derved connect.
+        // call base or derived connect.
         if (!connect())
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 

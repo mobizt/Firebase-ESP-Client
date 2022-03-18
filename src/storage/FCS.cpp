@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.18
+ * Google's Firebase Storage class, FCS.cpp version 1.1.19
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 7, 2022
+ * Created March 18, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -297,7 +297,7 @@ void FB_Storage::sendDownloadCallback(FirebaseData *fbdo, FCS_DownloadStatusInfo
 bool FB_Storage::fcs_connect(FirebaseData *fbdo)
 {
     MB_String host = fb_esp_pgm_str_265;
-    host +=fb_esp_pgm_str_120;
+    host += fb_esp_pgm_str_120;
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), 443, &fbdo->session.response.code);
     fbdo->session.max_payload_length = 0;
@@ -374,28 +374,28 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     ret = -1;
 
     if (req->requestType == fb_esp_fcs_request_type_upload || req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
-        header +=fb_esp_pgm_str_24;
+        header += fb_esp_pgm_str_24;
     else if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_download_ota || req->requestType == fb_esp_fcs_request_type_get_meta || req->requestType == fb_esp_fcs_request_type_list)
-        header +=fb_esp_pgm_str_25;
+        header += fb_esp_pgm_str_25;
     else if (req->requestType == fb_esp_fcs_request_type_delete)
-        header +=fb_esp_pgm_str_27;
+        header += fb_esp_pgm_str_27;
 
-    header +=fb_esp_pgm_str_6;
-    header +=fb_esp_pgm_str_266;
+    header += fb_esp_pgm_str_6;
+    header += fb_esp_pgm_str_266;
     header += req->bucketID;
-    header +=fb_esp_pgm_str_267;
+    header += fb_esp_pgm_str_267;
 
     if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_download_ota)
     {
-        header +=fb_esp_pgm_str_1;
+        header += fb_esp_pgm_str_1;
         header += ut->url_encode(req->remoteFileName);
-        header +=fb_esp_pgm_str_173;
-        header +=fb_esp_pgm_str_269;
+        header += fb_esp_pgm_str_173;
+        header += fb_esp_pgm_str_269;
     }
     else if (req->requestType != fb_esp_fcs_request_type_list)
     {
-        header +=fb_esp_pgm_str_173;
-        header +=fb_esp_pgm_str_268;
+        header += fb_esp_pgm_str_173;
+        header += fb_esp_pgm_str_268;
 
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
@@ -403,15 +403,15 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             header += ut->url_encode(req->remoteFileName);
     }
 
-    header +=fb_esp_pgm_str_30;
+    header += fb_esp_pgm_str_30;
 
     if (req->requestType == fb_esp_fcs_request_type_upload || req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
     {
-        header +=fb_esp_pgm_str_8;
+        header += fb_esp_pgm_str_8;
         header += req->mime;
-        header +=fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21;
 
-        header +=fb_esp_pgm_str_12;
+        header += fb_esp_pgm_str_12;
 
         size_t len = 0;
         if (req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
@@ -420,22 +420,22 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             len = req->fileSize;
 
         header += len;
-        header +=fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21;
     }
 
-    header +=fb_esp_pgm_str_31;
-    header +=fb_esp_pgm_str_265;
-    header +=fb_esp_pgm_str_120;
-    header +=fb_esp_pgm_str_21;
+    header += fb_esp_pgm_str_31;
+    header += fb_esp_pgm_str_265;
+    header += fb_esp_pgm_str_120;
+    header += fb_esp_pgm_str_21;
 
     if (!Signer.getCfg()->signer.test_mode)
     {
-        header +=fb_esp_pgm_str_237;
+        header += fb_esp_pgm_str_237;
         int type = Signer.getTokenType();
         if (type == token_type_id_token || type == token_type_custom_token)
-            header +=fb_esp_pgm_str_270;
+            header += fb_esp_pgm_str_270;
         else if (type == token_type_oauth2_access_token)
-            header +=fb_esp_pgm_str_271;
+            header += fb_esp_pgm_str_271;
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -448,15 +448,15 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         if (fbdo->session.response.code < 0)
             return false;
 
-        header +=fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21;
     }
 
-    header +=fb_esp_pgm_str_32;
-    header +=fb_esp_pgm_str_34;
+    header += fb_esp_pgm_str_32;
+    header += fb_esp_pgm_str_34;
 
     ut->getCustomHeaders(header);
 
-    header +=fb_esp_pgm_str_21;
+    header += fb_esp_pgm_str_21;
 
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
@@ -615,9 +615,13 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
     MB_String tmp1, tmp2, tmp3, part1, part2;
     size_t p1 = 0;
     size_t p2 = 0;
-    tmp1 += fb_esp_pgm_str_476;
-    tmp2 += fb_esp_pgm_str_477;
-    tmp3 += fb_esp_pgm_str_3;
+
+    if (req->requestType == fb_esp_fcs_request_type_list)
+    {
+        tmp1 = fb_esp_pgm_str_476;
+        tmp2 = fb_esp_pgm_str_477;
+        tmp3 = fb_esp_pgm_str_3;
+    }
 
     MB_String payload;
     fbdo->session.fcs.files.items.clear();

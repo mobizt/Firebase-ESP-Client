@@ -103,5 +103,8 @@ void loop()
         }
         else
             Serial.println(fbdo.errorReason());
+
+        // To clear file list
+        fbdo.fileList()->items.clear();
     }
 }

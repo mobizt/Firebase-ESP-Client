@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.15
+ * Google's Cloud Storage class, GCS.cpp version 1.1.16
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created March 18, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1607,6 +1607,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
     }
 
     MB_String payload;
+    fbdo->session.fcs.files.items.clear();
 
     fbdo->session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
     fbdo->session.content_length = -1;

@@ -94,5 +94,8 @@ void loop()
             for (size_t i = 0; i < files->items.size(); i++)
                 Serial.printf("name: %s, bucket: %s\n", files->items[i].name.c_str(), files->items[i].bucket.c_str());
         }
+
+        // To clear file list
+        fbdo.fileList()->items.clear();
     }
 }
