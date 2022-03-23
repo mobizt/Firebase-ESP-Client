@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.8
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.9
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 7, 2022
+ * Created March 23, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -3297,6 +3297,12 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
             if (sendRequest(fbdo, &_req))
                 return waitResponse(fbdo, &_req);
         }
+    }
+
+    if (response.httpCode >= 400)
+    {
+        fbdo->session.error = response.fbError;
+        fbdo->session.response.code = response.httpCode;
     }
 
     return fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_OK;
