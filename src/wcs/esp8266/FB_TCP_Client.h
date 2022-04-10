@@ -37,7 +37,6 @@
 #include "mbfs/MB_FS.h"
 #include "./wcs/base/FB_TCP_Client_Base.h"
 
-
 class FB_TCP_Client : public FB_TCP_Client_Base
 {
 
@@ -62,7 +61,7 @@ public:
   void networkReconnect();
 
   void networkDisconnect();
-  
+
   fb_tcp_client_type type();
 
   bool isInitialized();
@@ -80,7 +79,6 @@ public:
   void ethDNSWorkAround();
 
 private:
-
   std::unique_ptr<FB_ESP_SSL_CLIENT> wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
   uint16_t bsslRxSize = 2048;
   uint16_t bsslTxSize = 512;

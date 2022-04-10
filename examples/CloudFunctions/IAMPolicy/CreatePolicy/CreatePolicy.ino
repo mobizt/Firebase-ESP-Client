@@ -1,18 +1,18 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 /** This example shows how to create IAM Policy used in Cloud Function creation.
  * The helper class PolicyBuilder used in policy JSON object generation
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -22,14 +22,14 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
 
-//We need to define the PolicyBuilder, Binding AuditConfig, and AuditLogConfig data to keep the function and triggers configuaration and IAM policy.
-//These objects should declare as global objects or static to prevent the stack overflow.
+// We need to define the PolicyBuilder, Binding AuditConfig, and AuditLogConfig data to keep the function and triggers configuaration and IAM policy.
+// These objects should declare as global objects or static to prevent the stack overflow.
 PolicyBuilder policy;
 Binding binding;
 AuditConfig audit_config;
@@ -44,8 +44,8 @@ void setup()
 
     Firebase.begin(&config, &auth);
 
-    //This will create the policy JSON object as in this document
-    //https://cloud.google.com/iam/docs/reference/rest/v1/Policy
+    // This will create the policy JSON object as in this document
+    // https://cloud.google.com/iam/docs/reference/rest/v1/Policy
 
     policy.setETag("BwWWja0YfJA=");
     policy.setVersion(3);

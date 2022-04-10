@@ -40,7 +40,6 @@
 #include "FB_Utils.h"
 #include "QueryFilter.h"
 
-
 struct QueueItem
 {
     fb_esp_data_type dataType = fb_esp_data_type::d_any;
@@ -87,4 +86,4 @@ private:
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

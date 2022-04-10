@@ -165,7 +165,7 @@ public:
         {
             if (sent + toSend > len)
                 toSend = len - sent;
-                
+
 #if defined(ESP8266)
             delay(0);
 #endif

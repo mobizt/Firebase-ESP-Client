@@ -1,55 +1,55 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 /** Prerequisites
- * 
+ *
  * Cloud Functions deployment requires the pay-as-you-go (Blaze) billing plan.
- * 
+ *
  * IAM owner permission required for service account used and Cloud Build API must be enabled,
  * https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
-*/
+ */
 
 /* Cloud Functions deployment requires the pay-as-you-go (Blaze) billing plan. */
 
-/** This example shows how to create (deploy) the Cloud Function with event trigger was set. 
- * 
+/** This example shows how to create (deploy) the Cloud Function with event trigger was set.
+ *
  * This operation required OAUth2.0 authentication.
- * 
+ *
  * You need to upload the zip file "firestoreImageDownloadTrigger.zip" in the data folder to the falsh memory at "/firestoreImageDownloadTrigger.zip".
- * 
+ *
  * After the firestoreImageDownloadTrigger function deployed successfully, create the collection "ImageList" and try to add the document in it which contains the field url and name fields.
  * The "url" field's value is the string type to specify the remore file url to download and upload to the storage bucket.
  * The "name" fiel's  value is string type to specify the name of remote file (without extenssion).
- * 
+ *
  * When the document created in "ImageList" collection with url and name fields inside, the Cloud Function, firestoreImageDownloadTrigger will be called,
  * and file will be downloaded from the specified filed "url" and upload to the Storage bucket at path "Images" with the name asssiggnd by the filed "name".
-*/
+ */
 
 /** The pointer, points to the operation info assigned to the create function will provide the progress of deployment that can be accessed later.
- * 
+ *
  * The Cloud Function source code files to deploy with this example will be compress as a single zip archive.
- * 
+ *
  * This zip file can be stored in the Firebase Storage data bucket or the repository or in local device storage e.g. flash and SD memory.
- * 
+ *
  * In case the archive file in the local memory was choosn, the file will be upload to the Google Cloud Storage bucket automatically in the creation process.
-*/
+ */
 
 /** Due to the processing power in ESP8266 is weaker than ESP32, the OAuth2.0 token generation takes time then this example
  * will check for token to be ready in loop prior to create the Cloud Function.
- * 
+ *
  * The Cloud Function creation (deploy) is the long running operation,
  * the final result may fail due to bugs in the user function, missing dependencies,
  * and incorrect configurations.
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -59,7 +59,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -67,18 +67,18 @@
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /** 2. Define the Service Account credentials (required for token generation)
- * 
+ *
  * This information can be taken from the service account JSON file.
- * 
- * To download service account file, from the Firebase console, goto project settings, 
+ *
+ * To download service account file, from the Firebase console, goto project settings,
  * select "Service accounts" tab and click at "Generate new private key" button
-*/
+ */
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
 #define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
 
 /* 3. Define the project location e.g. us-central1 or asia-northeast1 */
-//https://firebase.google.com/docs/projects/locations
+// https://firebase.google.com/docs/projects/locations
 #define PROJECT_LOCATION "PROJECT_LOCATION"
 
 /* 4. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
@@ -87,14 +87,14 @@ const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----
 /* 5. If work with RTDB, define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
 
-//We need to define the FunctionsConfig, PolicyBuilder and Binding data to keep the function and triggers configuaration and IAM policy.
-//These objects should declare as global objects or static to prevent the stack overflow.
+// We need to define the FunctionsConfig, PolicyBuilder and Binding data to keep the function and triggers configuaration and IAM policy.
+// These objects should declare as global objects or static to prevent the stack overflow.
 PolicyBuilder policy;
 Binding binding;
 FunctionsConfig function_config(FIREBASE_PROJECT_ID /* project id */, PROJECT_LOCATION /* location id */, STORAGE_BUCKET_ID /* bucket id */);
@@ -137,15 +137,17 @@ void setup()
     config.database_url = DATABASE_URL;
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
-    
+
     Firebase.reconnectWiFi(true);
 }
 
 void loop()
 {
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (Firebase.ready() && !taskCompleted)
     {
         creatFunction();
@@ -165,23 +167,23 @@ void creatFunction()
     function_config.setAvailableMemoryMb(256);
     function_config.setMaxInstances(10);
 
-    //Prepare the resource data
+    // Prepare the resource data
     String resource = "projects/";
     resource += FIREBASE_PROJECT_ID;
     resource += "/databases/(default)/documents/";
-    //The collection id that will trig the function when document created,
-    //if you change this, the collection id in the source code (index.js) must be changed too.
+    // The collection id that will trig the function when document created,
+    // if you change this, the collection id in the source code (index.js) must be changed too.
     resource += "ImageList";
     resource += "/{id}";
 
     function_config.setEventTrigger("providers/cloud.firestore/eventTypes/document.create", resource);
 
-    //if firestoreImageDownloadTrigger.zip is already upload to flash memory
+    // if firestoreImageDownloadTrigger.zip is already upload to flash memory
     function_config.setSource("/firestoreImageDownloadTrigger.zip" /* relative file path in the Firebase Storage data bucket */, functions_sources_type_local_archive /* source type */);
 
     function_config.setIngressSettings("ALLOW_ALL");
 
-    //Set up the IAM policy
+    // Set up the IAM policy
     binding.setRole("roles/cloudfunctions.invoker");
     binding.addMember("allUsers");
     policy.addBinding(&binding);

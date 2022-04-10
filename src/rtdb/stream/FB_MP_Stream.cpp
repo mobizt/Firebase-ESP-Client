@@ -37,7 +37,6 @@
 #ifndef FIREBASE_MULTIPATH_STREAM_SESSION_CPP
 #define FIREBASE_MULTIPATH_STREAM_SESSION_CPP
 
-
 #include "FB_MP_Stream.h"
 
 FIREBASE_MP_STREAM_CLASS::FIREBASE_MP_STREAM_CLASS()
@@ -82,7 +81,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
         {
             MB_String root = path.c_str();
             MB_String branch = sif->path;
-            //check for the steam data path is matched or under the root (child path)
+            // check for the steam data path is matched or under the root (child path)
             if (checkPath(root, branch))
             {
                 sif->m_json->toString(value, true);
@@ -97,7 +96,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
     {
         MB_String root = path.c_str();
         MB_String branch = sif->path;
-        //check for the steam data path is matched or under the root (child path)
+        // check for the steam data path is matched or under the root (child path)
         if (checkPath(root, branch))
         {
             value = sif->data.c_str();
@@ -148,4 +147,4 @@ int FIREBASE_MP_STREAM_CLASS::maxPayloadLength()
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

@@ -1,15 +1,15 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to backup and restore database data
+// This example shows how to backup and restore database data
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -18,7 +18,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -35,7 +35,7 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -62,7 +62,7 @@ void setup()
 
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-  //For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+  // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
   /* Assign the api key (required) */
   config.api_key = API_KEY;
@@ -75,25 +75,25 @@ void setup()
   config.database_url = DATABASE_URL;
 
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-  //Or use legacy authenticate method
-  //config.database_url = DATABASE_URL;
-  //config.signer.tokens.legacy_token = "<database secret>";
+  // Or use legacy authenticate method
+  // config.database_url = DATABASE_URL;
+  // config.signer.tokens.legacy_token = "<database secret>";
 
-  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+  // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
-  //required for large file data, increase Rx size as needed.
+  // required for large file data, increase Rx size as needed.
   fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
 }
 
-//The Firebase download callback function
+// The Firebase download callback function
 void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
 {
   if (info.status == fb_esp_rtdb_download_status_init)
@@ -114,7 +114,7 @@ void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
   }
 }
 
-//The Firebase upload callback function
+// The Firebase upload callback function
 void rtdbUploadCallback(RTDB_UploadStatusInfo info)
 {
   if (info.status == fb_esp_rtdb_upload_status_init)
@@ -138,14 +138,16 @@ void rtdbUploadCallback(RTDB_UploadStatusInfo info)
 void loop()
 {
 
+  // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
 
-    //Download and save data to Flash memory.
+    // Download and save data to Flash memory.
     //<target node> is the full path of database to backup and restore.
     //<file name> is file name included path to save to Flash meory
-    //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+    // The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
 
     if (Firebase.RTDB.backup(&fbdo, mem_storage_type_flash, "/<target node>" /* node path to backup*/, "/<file name>" /* file name included path to save */, rtdbDownloadCallback /* callback function */))
     {
@@ -155,10 +157,10 @@ void loop()
     else
       fbdo.fileTransferError().c_str();
 
-    //Restore data to defined database path using backup file on Flash memory.
+    // Restore data to defined database path using backup file on Flash memory.
     //<target node> is the full path of database to restore
     //<file name> is file name included path of backed up file.
-    //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+    // The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
 
     Serial.println("\nRestore... \n");
 

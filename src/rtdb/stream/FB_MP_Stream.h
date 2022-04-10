@@ -52,7 +52,7 @@ using namespace mb_string;
 class FIREBASE_MP_STREAM_CLASS
 {
     friend class FB_RTDB;
-    
+
 public:
     FIREBASE_MP_STREAM_CLASS();
     ~FIREBASE_MP_STREAM_CLASS();
@@ -65,7 +65,6 @@ public:
     String eventType;
 
 private:
-
     UtilsClass *ut = nullptr;
     struct fb_esp_stream_info_t *sif = nullptr;
     void begin(UtilsClass *u, struct fb_esp_stream_info_t *s);
@@ -75,4 +74,4 @@ private:
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

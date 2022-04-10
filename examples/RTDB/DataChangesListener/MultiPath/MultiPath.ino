@@ -1,13 +1,13 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -17,17 +17,17 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-//For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+// For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
 /* 2. Define the API Key */
 #define API_KEY "API_KEY"
@@ -39,7 +39,7 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 FirebaseData stream;
 
@@ -69,15 +69,15 @@ void streamCallback(MultiPathStream stream)
 
   Serial.println();
 
-  //This is the size of stream payload received (current and max value)
-  //Max payload size is the payload size under the stream path since the stream connected
-  //and read once and will not update until stream reconnection takes place.
-  //This max value will be zero as no payload received in case of ESP8266 which
-  //BearSSL reserved Rx buffer size is less than the actual stream payload.
+  // This is the size of stream payload received (current and max value)
+  // Max payload size is the payload size under the stream path since the stream connected
+  // and read once and will not update until stream reconnection takes place.
+  // This max value will be zero as no payload received in case of ESP8266 which
+  // BearSSL reserved Rx buffer size is less than the actual stream payload.
   Serial.printf("Received stream payload size: %d (Max. %d)\n\n", stream.payloadLength(), stream.maxPayloadLength());
 
-  //Due to limited of stack memory, do not perform any task that used large memory here especially starting connect to server.
-  //Just set this flag and check it status later.
+  // Due to limited of stack memory, do not perform any task that used large memory here especially starting connect to server.
+  // Just set this flag and check it status later.
   dataChanged = true;
 }
 
@@ -120,27 +120,27 @@ void setup()
   config.database_url = DATABASE_URL;
 
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-  //Or use legacy authenticate method
-  //config.database_url = DATABASE_URL;
-  //config.signer.tokens.legacy_token = "<database secret>";
+  // Or use legacy authenticate method
+  // config.database_url = DATABASE_URL;
+  // config.signer.tokens.legacy_token = "<database secret>";
 
-  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+  // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
 
-  //Recommend for ESP8266 stream, adjust the buffer size to match your stream data size
+  // Recommend for ESP8266 stream, adjust the buffer size to match your stream data size
 #if defined(ESP8266)
   stream.setBSSLBufferSize(2048 /* Rx in bytes, 512 - 16384 */, 512 /* Tx in bytes, 512 - 16384 */);
 #endif
 
-  //The data under the node being stream (parent path) should keep small
-  //Large stream payload leads to the parsing error due to memory allocation.
+  // The data under the node being stream (parent path) should keep small
+  // Large stream payload leads to the parsing error due to memory allocation.
 
-  //The MultiPathStream works as normal stream with the payload parsing function.
+  // The MultiPathStream works as normal stream with the payload parsing function.
 
   if (!Firebase.RTDB.beginMultiPathStream(&stream, parentPath))
     Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
@@ -177,6 +177,8 @@ void setup()
 void loop()
 {
 
+  // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
@@ -191,8 +193,8 @@ void loop()
       json.set("node1/num", count);
       json.set("node2/data", "v2");
       json.set("node2/num", count * 3);
-      //The response is ignored in this async function, it may return true as long as the connection is established.
-      //The purpose for this async function is to set, push and update data instantly.
+      // The response is ignored in this async function, it may return true as long as the connection is established.
+      // The purpose for this async function is to set, push and update data instantly.
       Firebase.RTDB.setJSONAsync(&fbdo, parentPath, &json);
       count++;
     }
@@ -203,6 +205,6 @@ void loop()
   if (dataChanged)
   {
     dataChanged = false;
-    //When stream data is available, do anything here...
+    // When stream data is available, do anything here...
   }
 }

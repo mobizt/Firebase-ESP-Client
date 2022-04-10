@@ -103,7 +103,6 @@ public:
   bool connect();
 
 private:
-
   std::unique_ptr<FB_WCS> wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
   char *cert = NULL;
 

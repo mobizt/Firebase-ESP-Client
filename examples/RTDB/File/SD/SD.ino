@@ -1,18 +1,18 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to store and read binary data from file on SD card to database.
+// This example shows how to store and read binary data from file on SD card to database.
 
-//If SD Card used for storage, assign SD card type and FS used in src/FirebaseFS.h and
-//change the config for that card interfaces in src/addons/SDHelper.h
+// If SD Card used for storage, assign SD card type and FS used in src/FirebaseFS.h and
+// change the config for that card interfaces in src/addons/SDHelper.h
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -22,13 +22,13 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-//Provide the SD card interfaces setting and mounting
+// Provide the SD card interfaces setting and mounting
 #include <addons/SDHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -45,14 +45,13 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
 
 bool taskCompleted = false;
-
 
 void setup()
 {
@@ -75,7 +74,7 @@ void setup()
 
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-  //For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+  // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
   /* Assign the api key (required) */
   config.api_key = API_KEY;
@@ -88,27 +87,27 @@ void setup()
   config.database_url = DATABASE_URL;
 
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
 #if defined(ESP8266)
-      //required for large file data, increase Rx size as needed.
+                                                      // required for large file data, increase Rx size as needed.
   fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 512 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
 
-  //Or use legacy authenticate method
-  //config.database_url = DATABASE_URL;
-  //config.signer.tokens.legacy_token = "<database secret>";
+  // Or use legacy authenticate method
+  // config.database_url = DATABASE_URL;
+  // config.signer.tokens.legacy_token = "<database secret>";
 
-  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+  // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
 
-  //Mount SD card.
-  SD_Card_Mounting();//See src/addons/SDHelper.h
+  // Mount SD card.
+  SD_Card_Mounting(); // See src/addons/SDHelper.h
 
-  //Delete demo files
+  // Delete demo files
   if (DEFAULT_SD_FS.exists("/file1.txt"))
     DEFAULT_SD_FS.remove("/file1.txt");
 
@@ -117,9 +116,9 @@ void setup()
 
 #if defined(USE_SD_FAT_ESP32)
 
-  //Write demo data to file
+  // Write demo data to file
   SdFile file;
-  //Write demo data to file
+  // Write demo data to file
   file.open("/file1.txt", O_RDWR | O_CREAT);
 
 #else
@@ -138,7 +137,7 @@ void setup()
   file.close();
 }
 
-//The Firebase download callback function
+// The Firebase download callback function
 void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
 {
   if (info.status == fb_esp_rtdb_download_status_init)
@@ -159,7 +158,7 @@ void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
   }
 }
 
-//The Firebase upload callback function
+// The Firebase upload callback function
 void rtdbUploadCallback(RTDB_UploadStatusInfo info)
 {
   if (info.status == fb_esp_rtdb_upload_status_init)
@@ -183,11 +182,13 @@ void rtdbUploadCallback(RTDB_UploadStatusInfo info)
 void loop()
 {
 
+  // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
 
-    //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+    // File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
     Serial.println("\nSet file...");
     if (!Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, "test/file/data", "/file1.txt", rtdbUploadCallback /* callback function*/))
       Serial.println(fbdo.errorReason());
@@ -200,9 +201,9 @@ void loop()
     {
 
 #if defined(USE_SD_FAT_ESP32)
-      //Write demo data to file
+      // Write demo data to file
       SdFile file;
-      //Write demo data to file
+      // Write demo data to file
       file.open("/file2.txt", O_RDONLY);
 
 #else

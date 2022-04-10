@@ -58,7 +58,7 @@ public:
     ~FB_Firestore();
 
     /** Export the documents in the database to the Firebase Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -66,18 +66,18 @@ public:
      * @param storagePath The path in the Firebase Storage data bucket to store the exported database.
      * @param collectionIds Which collection ids to export. Unspecified means all collections. Use comma (,) to separate between the collection ids.
      * .
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
     bool exportDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 bucketID, T4 storagePath, T5 collectionIds = "") { return mExportDocuments(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(bucketID), toStringPtr(storagePath), toStringPtr(collectionIds)); }
 
     /** Import the exported documents stored in the Firebase Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -85,18 +85,18 @@ public:
      * @param storagePath The path in the Firebase Storage data bucket that stores the exported database.
      * @param collectionIds Which collection ids to import. Unspecified means all collections included in the import. Use comma (,) to separate between the collection ids.
      * .
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
     bool importDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 bucketID, T4 storagePath, T5 collectionIds = "") { return mImportDocuments(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(bucketID), toStringPtr(storagePath), toStringPtr(collectionIds)); }
 
     /** Create a document at the defined document path.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -104,18 +104,18 @@ public:
      * @param content A Firestore document. See https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases.documents#Document
      * @param mask The fields to return. If not set, returns all fields. Use comma (,) to separate between the field names.
      * .
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires Email/password, Custom token or OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
     bool createDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 content, T5 mask = "") { return mCreateDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(content), toStringPtr(mask)); }
 
     /** Create a document in the defined collection id.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -124,61 +124,61 @@ public:
      * @param content A Firestore document. See https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases.documents#Document
      * @param mask The fields to return. If not set, returns all fields. Use comma (,) to separate between the field names.
      * .
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires Email/password, Custom token or OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *, typename T6 = const char *>
     bool createDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 documentId, T5 content, T6 mask = "") { return mCreateDocument2(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId), toStringPtr(documentId), toStringPtr(content), toStringPtr(mask)); }
 
     /** Patch or update a document at the defined path.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
      * @param documentPath The relative path of document to patch with the input document.
      * @param content A Firestore document. See https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases.documents#Document
-     * @param updateMask The fields to update. If the document exists on the server and has fields not referenced in the mask, they are left unchanged. 
-     * Fields referenced in the mask, but not present in the input document (content), are deleted from the document on the server. 
+     * @param updateMask The fields to update. If the document exists on the server and has fields not referenced in the mask, they are left unchanged.
+     * Fields referenced in the mask, but not present in the input document (content), are deleted from the document on the server.
      * Use comma (,) to separate between the field names.
-     * @param mask The fields to return. If not set, returns all fields. If the document has a field that is not present in this mask, that field 
+     * @param mask The fields to return. If not set, returns all fields. If the document has a field that is not present in this mask, that field
      * will not be returned in the response. Use comma (,) to separate between the field names.
      * @param exists When set to true, the target document must exist. When set to false, the target document must not exist.
-     * @param updateTime When set, the target document must exist and have been last updated at that time. 
-     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits. 
+     * @param updateTime When set, the target document must exist and have been last updated at that time.
+     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.
      * Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires Email/password, Custom token or OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *, typename T6 = const char *, typename T7 = const char *, typename T8 = const char *>
     bool patchDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 content, T5 updateMask, T6 mask = "", T7 exists = "", T8 updateTime = "") { return mPatchDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(content), toStringPtr(updateMask), toStringPtr(mask), toStringPtr(exists), toStringPtr(updateTime)); }
 
     /** Commits a transaction, while optionally updating documents.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
      * @param writes The dyamic array of write object fb_esp_firestore_document_write_t.
-     * 
+     *
      * For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
-     * 
+     *
      * @param transaction A base64-encoded string. If set, applies all writes in this transaction, and commits it.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires Email/password, Custom token or OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool commitDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), false); }
 
@@ -186,7 +186,7 @@ public:
     bool commitDocumentAsync(FirebaseData *fbdo, T1 projectId, T2 databaseId, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "") { return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, toStringPtr(transaction), true); }
 
     /** Get a document at the defined path.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -195,69 +195,69 @@ public:
      * that field will not be returned in the response. Use comma (,) to separate between the field names.
      * @param transaction Reads the document in a transaction. A base64-encoded string.
      * @param readTime Reads the version of the document at the given time. This may not be older than 270 seconds.
-     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits. 
+     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.
      * Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires Email/password, Custom token or OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *, typename T6 = const char *>
     bool getDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 mask = "", T5 transaction = "", T6 readTime = "") { return mGetDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(mask), toStringPtr(transaction), toStringPtr(readTime)); }
 
     /** Starts a new transaction.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
      * @param transactionOptions Optional. The TransactionOptions type data that represents the options for creating a new transaction.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires OAuth2.0 authentication.
-     * 
+     *
      * The TransactionOptions struct contains two properties i.e.
      * readOnly and readWrite.
-     * 
+     *
      * Use readOnly for options for a transaction that can only be used to read documents.
      * Use readWrite for options for a transaction that can be used to read and write documents.
-     * 
+     *
      * The readOnly property contains one property, readTime.
      * The readTime is for reading the documents at the given time. This may not be older than 60 seconds.
-     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits. 
-     * Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z". 
-     * 
+     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.
+     * Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
+     *
      * The readWrite property contains one property, retryTransaction.
      * The retryTransaction is a base64-encoded string represents a transaction that can be used to read and write documents.
-     * 
+     *
      * See https://cloud.google.com/firestore/docs/reference/rest/v1/TransactionOptions for transaction options.
-    */
+     */
     template <typename T1 = const char *, typename T2 = const char *>
     bool beginTransaction(FirebaseData *fbdo, T1 projectId, T2 databaseId, TransactionOptions *transactionOptions = nullptr) { return mBeginTransaction(fbdo, toStringPtr(projectId), toStringPtr(databaseId), transactionOptions); }
 
     /** Rolls back a transaction.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
      * @param transaction Required. A base64-encoded string of the transaction to roll back.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires OAuth2.0 authentication.
-    */
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool rollback(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 transaction) { return mRollback(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(transaction)); }
 
     /** Runs a query.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -266,20 +266,20 @@ public:
      * @param consistencyMode Optional. The consistency mode for this transaction e.g. fb_esp_firestore_consistency_mode_transaction,fb_esp_firestore_consistency_mode_newTransaction
      * and fb_esp_firestore_consistency_mode_readTime
      * @param consistency Optional. The value based on consistency mode e.g. transaction string, TransactionOptions (JSON) and date time string.
-     * 
+     *
      * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/runQuery#body.request_body.FIELDS
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
-     * 
-    */
+     *
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
     bool runQuery(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode = fb_esp_firestore_consistency_mode_undefined, T4 consistency = "") { return mRunQuery(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), structuredQuery, consistencyMode, toStringPtr(consistency)); }
 
     /** Delete a document at the defined path.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -288,18 +288,18 @@ public:
      * @param updateTime When set, the target document must exist and have been last updated at that time.
      * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.
      * Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     *
      * This function requires Email/password, Custom token or OAuth2.0 authentication.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *, typename T5 = const char *>
     bool deleteDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 exists = "", T5 updateTime = "") { return mDeleteDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(exists), toStringPtr(updateTime)); }
 
     /** List the documents in the defined documents collection.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
@@ -309,33 +309,33 @@ public:
      * @param orderBy The order to sort results by. For example: priority desc, name.
      * @param mask The fields to return. If not set, returns all fields.
      * If a document has a field that is not present in this mask, that field will not be returned in the response.
-     * @param showMissing If the list should show missing documents. 
-     * A missing document is a document that does not exist but has sub-documents. 
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     * @param showMissing If the list should show missing documents.
+     * A missing document is a document that does not exist but has sub-documents.
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
+     *
      * This function requires Email/password, Custom token or OAuth2.0 authentication (when showMissing is true).
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = size_t, typename T5 = const char *, typename T6 = const char *, typename T7 = const char *>
     bool listDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 pageSize, T5 pageToken, T6 orderBy, T7 mask, bool showMissing) { return mListDocuments(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId), toStringPtr(pageSize, -1), toStringPtr(pageToken), toStringPtr(orderBy), toStringPtr(mask), showMissing); }
 
     /** List the document collection ids in the defined document path.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
      * @param documentPath The relative path of document to get its collections' id.
      * @param pageSize The maximum number of results to return.
      * @param pageToken The nextPageToken value returned from a previous List request, if any.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.payload() to get the returned payload.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = size_t, typename T5 = const char *>
     bool listCollectionIds(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, T4 pageSize, T5 pageToken) { return mListCollectionIds(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath), toStringPtr(pageSize, -1), toStringPtr(pageToken)); }
 
@@ -368,4 +368,4 @@ private:
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

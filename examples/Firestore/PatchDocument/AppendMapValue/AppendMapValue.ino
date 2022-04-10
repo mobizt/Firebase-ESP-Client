@@ -83,6 +83,8 @@ void setup()
 void loop()
 {
 
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (Firebase.ready() && (millis() - dataMillis > 60000 || dataMillis == 0))
     {
         dataMillis = millis();
@@ -94,7 +96,7 @@ void loop()
         // aa is the collection id, bb is the document id.
         String documentPath = "test_collection/test_document";
 
-                content.set("fields/myMap/mapValue/fields/key" + String(count) + "/stringValue", "value" + String(count));
+        content.set("fields/myMap/mapValue/fields/key" + String(count) + "/stringValue", "value" + String(count));
 
         Serial.print("Update a document... ");
 

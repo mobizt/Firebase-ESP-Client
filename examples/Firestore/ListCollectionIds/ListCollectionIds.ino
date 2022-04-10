@@ -1,21 +1,21 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 /** Prerequisite
  * IAM owner permission required for service account,
  * https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
-*/
+ */
 
-//This example shows how to list the CollectionIds from a document. This operation required OAUth2.0 authentication.
+// This example shows how to list the CollectionIds from a document. This operation required OAUth2.0 authentication.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -25,7 +25,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -33,18 +33,17 @@
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /** 2. Define the Service Account credentials (required for token generation)
- * 
+ *
  * This information can be taken from the service account JSON file.
- * 
- * To download service account file, from the Firebase console, goto project settings, 
+ *
+ * To download service account file, from the Firebase console, goto project settings,
  * select "Service accounts" tab and click at "Generate new private key" button
-*/
+ */
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
 #define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
 
-
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -77,21 +76,23 @@ void setup()
     config.service_account.data.private_key = PRIVATE_KEY;
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
-    
+
     Firebase.reconnectWiFi(true);
 }
 
 void loop()
 {
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (Firebase.ready() && !taskCompleted)
     {
         taskCompleted = true;
-        //Should run the Create_Documents.ino prior to test this example to create the documents in the collection Id at a0/b0/c0
+        // Should run the Create_Documents.ino prior to test this example to create the documents in the collection Id at a0/b0/c0
 
-        //root collection
+        // root collection
         String documentPath = "/";
 
         Serial.print("List CollectionIds in a document... ");

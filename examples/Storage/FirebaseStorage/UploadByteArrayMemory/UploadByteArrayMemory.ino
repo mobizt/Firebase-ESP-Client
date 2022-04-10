@@ -1,15 +1,15 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to upload byte array from flash or ram to Firebase storage bucket.
+// This example shows how to upload byte array from flash or ram to Firebase storage bucket.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -19,7 +19,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -36,7 +36,7 @@
 /* 4. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -73,27 +73,26 @@ void setup()
     auth.user.password = USER_PASSWORD;
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
-
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
 #if defined(ESP8266)
-    //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+    // Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
     fbdo.setBSSLBufferSize(1024, 1024);
 #endif
 
     /* Assign upload buffer size in byte */
-    //Data to be uploaded will send as multiple chunks with this size, to compromise between speed and memory used for buffering.
-    //The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
+    // Data to be uploaded will send as multiple chunks with this size, to compromise between speed and memory used for buffering.
+    // The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
     config.fcs.upload_buffer_size = 512;
 
-    //Set the size of HTTP response buffers in the case where we want to work with large data.
+    // Set the size of HTTP response buffers in the case where we want to work with large data.
     fbdo.setResponseSize(1024);
 
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
 }
 
-//The Firebase Storage upload callback function
+// The Firebase Storage upload callback function
 void fcsUploadCallback(FCS_UploadStatusInfo info)
 {
     if (info.status == fb_esp_fcs_upload_status_init)
@@ -127,6 +126,9 @@ void fcsUploadCallback(FCS_UploadStatusInfo info)
 
 void loop()
 {
+
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (Firebase.ready() && !taskCompleted)
     {
         taskCompleted = true;
@@ -137,8 +139,8 @@ void loop()
 
         Serial.println("\nUpload byte array...\n");
 
-        //MIME type should be valid to avoid the download problem.
-        //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+        // MIME type should be valid to avoid the download problem.
+        // The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
         if (!Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, test_data /* byte array from ram or flash */, 256 /*  size of data in bytes */, "test.dat" /* path of remote file stored in the bucket */, "application/octet-stream" /* mime type */, fcsUploadCallback /* callback function */))
             Serial.println(fbdo.errorReason());
     }

@@ -11,8 +11,7 @@
 
 /** This example shows the RTDB data changed notification with external Client.
  * This example used SAMD21 device and WiFiNINA as the client.
-*/
-
+ */
 
 #if defined(ARDUINO_ARCH_SAMD)
 #include <WiFiNINA.h>
@@ -220,6 +219,8 @@ void loop()
 
     // Process the stream repeatedly in loop
     Firebase.RTDB.readStream(&stream);
+
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
     if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
     {

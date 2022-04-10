@@ -1,32 +1,32 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 /** Prerequisites
- * 
+ *
  * Cloud Functions deployment requires the pay-as-you-go (Blaze) billing plan.
- * 
+ *
  * IAM owner permission required for service account used and Cloud Build API must be enabled,
  * https://github.com/mobizt/Firebase-ESP-Client#iam-permission-and-api-enable
-*/
+ */
 
-/** This example shows how to call the Cloud Function. 
+/** This example shows how to call the Cloud Function.
  * This operation required OAUth2.0 authentication.
-*/
+ */
 
 /** Due to the processing power in ESP8266 is weaker than ESP32, the OAuth2.0 token generation takes time then this example
  * will check for token to be ready in loop prior to call the Cloud Function.
-*/
+ */
 
-//This call example is for test only, do not use in the production due to quota limit of calls.
+// This call example is for test only, do not use in the production due to quota limit of calls.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -36,7 +36,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -44,24 +44,24 @@
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /** 2. Define the Service Account credentials (required for token generation)
- * 
+ *
  * This information can be taken from the service account JSON file.
- * 
- * To download service account file, from the Firebase console, goto project settings, 
+ *
+ * To download service account file, from the Firebase console, goto project settings,
  * select "Service accounts" tab and click at "Generate new private key" button
-*/
+ */
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
 #define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
 
 /* 3. Define the project location e.g. us-central1 or asia-northeast1 */
-//https://firebase.google.com/docs/projects/locations
+// https://firebase.google.com/docs/projects/locations
 #define PROJECT_LOCATION "PROJECT_LOCATION"
 
 /* 4. If work with RTDB, define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -102,7 +102,7 @@ void setup()
     config.database_url = DATABASE_URL;
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
 
@@ -111,6 +111,8 @@ void setup()
 
 void loop()
 {
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (Firebase.ready() && !taskCompleted)
     {
         callFunction();
@@ -120,17 +122,17 @@ void loop()
 
 void callFunction()
 {
-    //Assumed that the function named helloWorld is already created and deployed for project.
+    // Assumed that the function named helloWorld is already created and deployed for project.
 
-    //In the function script file, values can be obtained from http trigger function request e.g. req as following.
-    //req.body.info.name
-    //req.body.info.age
+    // In the function script file, values can be obtained from http trigger function request e.g. req as following.
+    // req.body.info.name
+    // req.body.info.age
 
-    //See the index.js in helloWorld.zip in CreateFunctionWithCallback
+    // See the index.js in helloWorld.zip in CreateFunctionWithCallback
 
     Serial.print("Call the Cloud Function... ");
 
-    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+    // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
     FirebaseJson payload;
     payload.set("info/name", "Paul");
     payload.set("info/age", 30);

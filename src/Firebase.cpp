@@ -254,7 +254,7 @@ void Firebase_ESP_Client::setFloatDigits(uint8_t digits)
 {
     if (!cfg)
         return;
-        
+
     if (digits < 7 && cfg)
         cfg->internal.fb_float_digits = digits;
 }

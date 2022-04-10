@@ -1,13 +1,13 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
-*/
+ */
 
 #include <Arduino.h>
 #if defined(ESP32)
@@ -16,10 +16,9 @@
 #include <ESP8266WiFi.h>
 #endif
 
-//This example is for ESP8266 and ESP32
+// This example is for ESP8266 and ESP32
 
 #include <WiFiClient.h>
-
 
 #include <FirebaseJson.h>
 
@@ -82,7 +81,7 @@ void loop()
 
             Serial.print("Read response...");
 
-            //Automatically parsing for response (w or w/o header) with chunk encoding supported.
+            // Automatically parsing for response (w or w/o header) with chunk encoding supported.
             if (json.readFrom(client))
             {
                 Serial.println();

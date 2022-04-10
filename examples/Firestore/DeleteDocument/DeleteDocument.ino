@@ -1,16 +1,16 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to delete a document from a document collection. This operation required Email/password, custom or OAUth2.0 authentication.
+// This example shows how to delete a document from a document collection. This operation required Email/password, custom or OAUth2.0 authentication.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -20,7 +20,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -37,7 +37,7 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -73,28 +73,30 @@ void setup()
     auth.user.password = USER_PASSWORD;
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
-    
+
     Firebase.reconnectWiFi(true);
 }
 
 void loop()
 {
 
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (Firebase.ready() && !taskCompleted)
     {
         taskCompleted = true;
 
-        //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
         FirebaseJson content;
 
-        //aa is the collection id, bb is the document id in collection aa.
+        // aa is the collection id, bb is the document id in collection aa.
         String documentPath = "aa/bb";
 
-        //If the document path contains space e.g. "a b c/d e f"
-        //It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
+        // If the document path contains space e.g. "a b c/d e f"
+        // It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
 
         content.set("fields/v1/integerValue", "12345");
         content.set("fields/v2/doubleValue", 123.456);

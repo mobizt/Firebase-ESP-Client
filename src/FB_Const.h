@@ -44,7 +44,6 @@
 #include "FirebaseFS.h"
 #include "./mbfs/MB_FS.h"
 
-
 #if defined(FIREBASE_USE_PSRAM)
 #define FIREBASEJSON_USE_PSRAM
 #endif

@@ -1,16 +1,16 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to delete file from Firebase and Google Cloud Storage bucket via Google Cloud Storage JSON API.
-//The Google Cloud Storage JSON API function required OAuth2.0 authen.
+// This example shows how to delete file from Firebase and Google Cloud Storage bucket via Google Cloud Storage JSON API.
+// The Google Cloud Storage JSON API function required OAuth2.0 authen.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -20,7 +20,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -35,7 +35,7 @@
 #define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -70,7 +70,7 @@ void setup()
     config.service_account.data.private_key = PRIVATE_KEY;
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
 
@@ -79,14 +79,17 @@ void setup()
 
 void loop()
 {
+
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (Firebase.ready() && !taskCompleted)
     {
         taskCompleted = true;
 
         Serial.print("Delete file with Google Cloud Storage JSON API... ");
 
-        //DeleteOptions option;
-        //For query parameters description of DeleteOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/delete#optional-parameters
+        // DeleteOptions option;
+        // For query parameters description of DeleteOptions, see https://cloud.google.com/storage/docs/json_api/v1/objects/delete#optional-parameters
 
         if (Firebase.GCStorage.deleteFile(&fbdo, STORAGE_BUCKET_ID /* The Firebase or Google Cloud Storage bucket id */, "path/to/file/filename" /* remote file path stored in the Storage bucket*/, nullptr /* DeleteOptions data */))
             Serial.println("ok");

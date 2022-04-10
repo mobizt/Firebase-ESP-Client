@@ -1,28 +1,28 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to create registration tokens for iOS APNs tokens.
+// This example shows how to create registration tokens for iOS APNs tokens.
 
-//Library allows your ESP device to interact with FCM server through FCM Server protocols.
-//https://firebase.google.com/docs/cloud-messaging/server#choose
+// Library allows your ESP device to interact with FCM server through FCM Server protocols.
+// https://firebase.google.com/docs/cloud-messaging/server#choose
 
-//This means your device now is not a FCM app client and unable to get the notification messages.
+// This means your device now is not a FCM app client and unable to get the notification messages.
 
-//The device registration tokens used in this example were taken from the FCM mobile app (Android or iOS)
-//or web app that athenticated to your project.
+// The device registration tokens used in this example were taken from the FCM mobile app (Android or iOS)
+// or web app that athenticated to your project.
 
-//For FCM client app quick start
-//https://github.com/firebase/quickstart-android/tree/master/messaging
-//https://github.com/firebase/quickstart-ios
-//https://github.com/firebase/quickstart-js
+// For FCM client app quick start
+// https://github.com/firebase/quickstart-android/tree/master/messaging
+// https://github.com/firebase/quickstart-ios
+// https://github.com/firebase/quickstart-js
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -38,9 +38,9 @@
 
 /** 2 Define the Firebase project Server Key which must be taken from
  * https://console.firebase.google.com/u/0/project/_/settings/cloudmessaging
- * 
+ *
  * The API, Android, iOS, and browser keys are rejected by FCM
- * 
+ *
  */
 #define FIREBASE_FCM_SERVER_KEY "FIREBASE_PROJECT_CLOUD_MESSAGING_SERVER_KEY"
 
@@ -48,7 +48,7 @@
 #define APN_TOKEN_1 "APNs_TOKEN_1"
 #define APN_TOKEN_2 "APNs_TOKEN_2"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 unsigned long lastTime = 0;

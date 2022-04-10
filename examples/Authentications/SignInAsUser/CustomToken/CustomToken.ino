@@ -1,26 +1,26 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-/** This example will show how to authenticate as user using 
+/** This example will show how to authenticate as user using
  * the hard coded Service Account to create the custom token to sign in.
- * 
- * From this example, the user will be granted to access the specific location that matches 
+ *
+ * From this example, the user will be granted to access the specific location that matches
  * the unique user ID (uid) assigned in the token.
- * 
+ *
  * The anonymous user with user UID will be created if not existed.
- * 
- * This example will modify the database rules to set up the security rule which need to 
+ *
+ * This example will modify the database rules to set up the security rule which need to
  * guard the unauthorized access with the uid and custom claims assigned in the token.
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -30,10 +30,10 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -41,24 +41,24 @@
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /** 2. Define the API key
- * 
- * The API key can be obtained since you created the project and set up 
+ *
+ * The API key can be obtained since you created the project and set up
  * the Authentication in Firebase console.
- * 
- * You may need to enable the Identity provider at https://console.cloud.google.com/customer-identity/providers 
+ *
+ * You may need to enable the Identity provider at https://console.cloud.google.com/customer-identity/providers
  * Select your project, click at ENABLE IDENTITY PLATFORM button.
  * The API key also available by click at the link APPLICATION SETUP DETAILS.
- * 
-*/
+ *
+ */
 #define API_KEY "API_KEY"
 
 /** 3. Define the Service Account credentials (required for token generation)
- * 
+ *
  * This information can be taken from the service account JSON file.
- * 
- * To download service account file, from the Firebase console, goto project settings, 
+ *
+ * To download service account file, from the Firebase console, goto project settings,
  * select "Service accounts" tab and click at "Generate new private key" button
-*/
+ */
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
 #define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
@@ -71,8 +71,8 @@ const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----
 /** From the test on July 2021, GlobalSign Root CA was missing from Google server
  * when checking with https://www.sslchecker.com/sslchecker.
  * The certificate chain, GTS Root R1 can be used instead.
- * 
-*/
+ *
+ */
 
 /*
 const char rootCACert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
@@ -110,11 +110,11 @@ const char rootCACert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
 */
 
 /** 4. Define the database secret (optional)
- * 
+ *
  * This database secret needed only for this example to modify the database rules
- * 
+ *
  * If you edit the database rules yourself, this is not required.
-*/
+ */
 #define DATABASE_SECRET "DATABASE_SECRET"
 
 /* 5. Define the Firebase Data object */
@@ -149,7 +149,7 @@ void setup()
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
     /* Assign the certificate data (optional) */
-    //config.cert.data = rootCACert;
+    // config.cert.data = rootCACert;
 
     /* Assign the api key (required) */
     config.api_key = API_KEY;
@@ -161,22 +161,22 @@ void setup()
 
     /** Assign the unique user ID (uid) (required)
      * This uid will be compare to the auth.uid variable in the database rules.
-     * 
+     *
      * If the assigned uid (user UID) was not existed, the new user will be created.
-     * 
-     * If the uid is empty or not assigned, the library will create the OAuth2.0 access token 
+     *
+     * If the uid is empty or not assigned, the library will create the OAuth2.0 access token
      * instead.
-     * 
-     * With OAuth2.0 access token, the device will be signed in as admin which has 
+     *
+     * With OAuth2.0 access token, the device will be signed in as admin which has
      * the full ggrant access and no database rules and custom claims are applied.
      * This similar to sign in using the database secret but no admin rights.
-    */
+     */
     auth.token.uid = "Node1";
 
     /** Assign the custom claims (optional)
      * This uid will be compare to the auth.token.premium_account variable
      * (for this case) in the database rules.
-    */
+     */
     FirebaseJson claims;
     claims.add("premium_account", true);
     claims.add("admin", true);
@@ -192,7 +192,7 @@ void setup()
     String base_path = "/UsersData/";
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     /** Assign the maximum retry of token generation */
     config.max_token_generation_retry = 5;
@@ -200,54 +200,55 @@ void setup()
     /* Now we start to signin using custom token */
 
     /** Initialize the library with the Firebase authen and config.
-     *  
-     * The device time will be set by sending request to the NTP server 
+     *
+     * The device time will be set by sending request to the NTP server
      * befor token generation and exchanging.
-     * 
+     *
      * The signed RSA256 jwt token will be created and used for id token exchanging.
-     * 
+     *
      * Theses process may take time to complete.
-    */
+     */
     Firebase.begin(&config, &auth);
 
     /** Now modify the database rules (if not yet modified)
      *
      * The user, Node1 in this case will be granted to read and write
-     * at the curtain location i.e. "/UsersData/Node1" and we will also check the 
+     * at the curtain location i.e. "/UsersData/Node1" and we will also check the
      * custom claims in the rules which must be matched.
-     * 
+     *
      * If you database rules has been modified, please comment this code out.
-     * 
-     * The character $ is to make a wildcard variable (can be any name) represents any node key 
+     *
+     * The character $ is to make a wildcard variable (can be any name) represents any node key
      * which located at some level in the rule structure and use as reference variable
      * in .read, .write and .validate rules
-     * 
+     *
      * For this case $userId represents any <user uid> node that places under UsersData node i.e.
      * /UsersData/<user uid> which <user uid> is user UID or "Node1" in this case.
-     * 
+     *
      * Please check your the database rules to see the changes after run the below code.
-    */
+     */
     String var = "$userId";
     String val = "($userId === auth.uid && auth.token.premium_account === true && auth.token.admin === true)";
     Firebase.RTDB.setReadWriteRules(&fbdo, base_path, var, val, val, DATABASE_SECRET);
 
-    /** 
-     * The custom token which created internally in this library will use 
+    /**
+     * The custom token which created internally in this library will use
      * to exchange with the id token returns from the server.
-     * 
+     *
      * The id token is the token which used to sign in as a user.
-     * 
-     * The id token was already saved to the config data (FirebaseConfig data variable) that 
+     *
+     * The id token was already saved to the config data (FirebaseConfig data variable) that
      * passed to the Firebase.begin function.
-     *  
+     *
      * The id token can be accessed from Firebase.getToken().
-    */
+     */
 }
 
 void loop()
 {
-    //Firebase.ready works for authentication management and should be called repeatedly in the loop.
-    
+
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (millis() - dataMillis > 5000 && Firebase.ready())
     {
         dataMillis = millis();

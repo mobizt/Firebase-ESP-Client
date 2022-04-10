@@ -8,7 +8,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-//include definitions file
+// include definitions file
 #include "./FirebaseFS.h"
 
 //
@@ -58,11 +58,10 @@
 #endif
 #endif
 
-//For MB_String
+// For MB_String
 #if defined(FIREBASE_USE_PSRAM)
 #define MB_STRING_USE_PSRAM
 #endif
-
 
 //
 #if defined(MBFS_SD_FS)

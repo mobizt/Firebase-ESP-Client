@@ -503,7 +503,6 @@ void Firebase_Signer::tokenProcessingTask()
                             ret = true;
                         }
                     }
-
                 }
             }
         }

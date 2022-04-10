@@ -1,18 +1,18 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-/** This example will show how to authenticate using 
+/** This example will show how to authenticate using
  * the legacy token or database secret with the new APIs (using config and auth data).
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -22,7 +22,7 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -65,8 +65,8 @@ void setup()
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
     /* Assign the certificate file (optional) */
-    //config.cert.file = "/cert.cer";
-    //config.cert.file_storage = StorageType::FLASH;
+    // config.cert.file = "/cert.cer";
+    // config.cert.file_storage = StorageType::FLASH;
 
     /* Assign the database URL and database secret(required) */
     config.database_url = DATABASE_URL;
@@ -77,8 +77,8 @@ void setup()
     /* Initialize the library with the Firebase authen and config */
     Firebase.begin(&config, &auth);
 
-    //Or use legacy authenticate method
-    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+    // Or use legacy authenticate method
+    // Firebase.begin(DATABASE_URL, DATABASE_SECRET);
 }
 
 void loop()

@@ -1,17 +1,17 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP-Client
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 /** This example will show how to re-authenticate after signed in with Email and password.
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -21,10 +21,10 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -32,17 +32,17 @@
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /** 2. Define the API key
- * 
- * The API key (required) can be obtained since you created the project and set up 
+ *
+ * The API key (required) can be obtained since you created the project and set up
  * the Authentication in Firebase console. Then you will get the API key from
  * Firebase project Web API key in Project settings, on General tab should show the
  * Web API Key.
- * 
- * You may need to enable the Identity provider at https://console.cloud.google.com/customer-identity/providers 
+ *
+ * You may need to enable the Identity provider at https://console.cloud.google.com/customer-identity/providers
  * Select your project, click at ENABLE IDENTITY PLATFORM button.
  * The API key also available by click at the link APPLICATION SETUP DETAILS.
- * 
-*/
+ *
+ */
 #define API_KEY "API_KEY"
 
 /* 3. Define the user Email and password that already registerd or added in your project */
@@ -107,7 +107,7 @@ void setup()
     fbdo.setResponseSize(4096);
 
     /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     /** Assign the maximum retry of token generation */
     config.max_token_generation_retry = 5;
@@ -118,11 +118,12 @@ void setup()
 
 void loop()
 {
+    
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
     if (millis() - dataMillis > 5000)
     {
         dataMillis = millis();
-        
-        //Firebase.ready works for authentication management and should be called repeatedly in the loop.
 
         if (Firebase.ready())
         {
@@ -132,7 +133,7 @@ void loop()
             Serial.printf("Current UID: %s\n", auth.token.uid.c_str());
             Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
 
-            //Swap users every 5 times
+            // Swap users every 5 times
             if (count % 5 == 0)
             {
                 Serial.println();

@@ -53,7 +53,7 @@ public:
     ~FB_Storage();
 
     /** Upload file to the Firebase Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param localFileName The file path includes its name to upload.
@@ -62,16 +62,16 @@ public:
      * @param mime The file MIME type
      * @param callback Optional. The callback function that accept FCS_UploadStatusInfo data.
      * .
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.downloadURL() to get the download link.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
     bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType, T3 remotetFileName, T4 mime, FCS_UploadProgressCallback callback = NULL) { return mUpload(fbdo, toStringPtr(bucketID), toStringPtr(localFileName), storageType, toStringPtr(remotetFileName), toStringPtr(mime), callback); }
 
     /** Upload byte array to the Firebase Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param data The byte array of data.
@@ -80,80 +80,80 @@ public:
      * @param mime The file MIME type
      * @param callback Optional. The callback function that accept FCS_UploadStatusInfo data.
      * .
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use FirebaseData.downloadURL() to get the download link.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool upload(FirebaseData *fbdo, T1 bucketID, const uint8_t *data, size_t len, T2 remoteFileName, T3 mime, FCS_UploadProgressCallback callback = NULL) { return mUpload(fbdo, toStringPtr(bucketID), data, len, toStringPtr(remoteFileName), toStringPtr(mime), callback); }
 
     /** Download file from the Firebase Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param remotetFileName The file path includes its name of file in the data bucket to download.
      * @param localFileName The file path includes its name to save.
      * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
      * @param callback Optional. The callback function that accept FCS_DownloadStatusInfo data.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
-    */
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName, fb_esp_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL) { return mDownload(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), toStringPtr(localFileName), storageType, callback); }
 
     /** Download a firmware file from the Firebase Storage data bucket for OTA updates.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param remotetFileName The firmware file path includes its name of file in the data bucket to download.
      * @param callback Optional. The callback function that accept FCS_DownloadStatusInfo data.
      * @return Boolean value, indicates the success of the operation.
-     * 
+     *
      * @note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *>
     bool downloadOTA(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, FCS_DownloadProgressCallback callback = NULL) { return mDownloadOTA(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), callback); }
 
     /** Get the meta data of file in Firebase Storage data bucket
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param remotetFileName The file path includes its name of file in the data bucket.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
-     * @note Use the FileMetaInfo type data to get name, bucket, contentType, size, 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use the FileMetaInfo type data to get name, bucket, contentType, size,
      * generation, etag, crc32, downloadTokens properties from file.
-     * 
-    */
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *>
     bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName) { return mGetMetadata(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName)); }
 
     /** Delete file from Firebase Storage data bucket
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
      * @param remotetFileName The file path includes its name of file in the data bucket.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
-    */
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     */
     template <typename T1 = const char *, typename T2 = const char *>
     bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName) { return mDeleteFile(fbdo, toStringPtr(bucketID), toStringPtr(fileName)); }
 
     /** List all files in the Firebase Storage data bucket.
-     * 
+     *
      * @param fbdo The pointer to Firebase Data Object.
      * @param bucketID The Firebase storage bucket ID in the project.
-     * 
-     * @return Boolean value, indicates the success of the operation. 
-     * 
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
      * @note Use the FileList type data to get name and bucket properties for each item.
-     * 
-    */
+     *
+     */
     template <typename T = const char *>
     bool listFiles(FirebaseData *fbdo, T bucketID) { return mListFiles(fbdo, toStringPtr(bucketID)); }
 
@@ -181,4 +181,4 @@ private:
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

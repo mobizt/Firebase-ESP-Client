@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 /** This example will show how to authenticate as admin using
  * the Service Account file to create the access token to sign in internally.
@@ -21,7 +21,7 @@
  * OAuth2.0 acces tokens generation will fail
  * because of invalid expiration time in JWT token that used in the id/access
  * token request.
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -31,10 +31,10 @@
 
 #include <Firebase_ESP_Client.h>
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
@@ -79,58 +79,58 @@ void setup()
   /** From the test as of July 2021, GlobalSign Root CA was missing from Google server
    * when checking with https://www.sslchecker.com/sslchecker.
    * The certificate chain, GTS Root R1 can be used instead.
-   * 
+   *
    * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
-  */
+   */
   config.cert.file = "/gtsr1.pem";
-  config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
+  config.cert.file_storage = mem_storage_type_flash; // or mem_storage_type_sd
 
   /* The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. */
 
   /* Assign the sevice account JSON file and the file storage type (required) */
-  config.service_account.json.path = "/service_account_file.json"; //change this for your json file
-  config.service_account.json.storage_type = mem_storage_type_flash; //or mem_storage_type_sd
-  
+  config.service_account.json.path = "/service_account_file.json";   // change this for your json file
+  config.service_account.json.storage_type = mem_storage_type_flash; // or mem_storage_type_sd
+
   /** The user UID set to empty to sign in as admin */
-  //auth.token.uid.clear();
+  // auth.token.uid.clear();
 
   /* Assign the RTDB URL */
   config.database_url = DATABASE_URL;
 
-  /** The scope of the OAuth2.0 authentication 
-     * If you wan't this access token for others Google Cloud Services.
-    */
-  //config.signer.tokens.scope = "Google Scope 1 Url, Google Scope 2 Url,..";
+  /** The scope of the OAuth2.0 authentication
+   * If you wan't this access token for others Google Cloud Services.
+   */
+  // config.signer.tokens.scope = "Google Scope 1 Url, Google Scope 2 Url,..";
 
   Firebase.reconnectWiFi(true);
 
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
   /** Assign the maximum retry of token generation */
   config.max_token_generation_retry = 5;
 
   /** To set system time with the timestamp from RTC
-     * The internal NTP server time acquisition
-     * of token generation process will be skipped, 
-     * if the system time is already set. 
-     * 
-     * sec is the seconds from midnight Jan 1, 1970
-    */
-  //Firebase.setSystemTime(sec);
+   * The internal NTP server time acquisition
+   * of token generation process will be skipped,
+   * if the system time is already set.
+   *
+   * sec is the seconds from midnight Jan 1, 1970
+   */
+  // Firebase.setSystemTime(sec);
 
   /* Now we start to signin using access token */
 
   /** Initialize the library with the Firebase authen and config.
-     *  
-     * The device time will be set by sending request to the NTP server 
-     * befor token generation and exchanging.
-     * 
-     * The signed RSA256 jwt token will be created and used for access token exchanging.
-     * 
-     * Theses process may take time to complete.
-    */
+   *
+   * The device time will be set by sending request to the NTP server
+   * befor token generation and exchanging.
+   *
+   * The signed RSA256 jwt token will be created and used for access token exchanging.
+   *
+   * Theses process may take time to complete.
+   */
   Firebase.begin(&config, &auth);
 
   /* The access token can be accessed from Firebase.getToken(). */
@@ -138,8 +138,9 @@ void setup()
 
 void loop()
 {
-  //Firebase.ready works for authentication management and should be called repeatedly in the loop.
-  
+
+  // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
   if (Firebase.ready() && millis() - dataMillis > 5000)
   {
     dataMillis = millis();
