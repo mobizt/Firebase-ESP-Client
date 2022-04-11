@@ -121,7 +121,7 @@ If you ever installed this library in Global storage in PlatformIO version prior
 
 
 
-### Manual installation in Arduino IDE
+### Manual installation
 
 For Arduino IDE, download zip file from the repository (Github page) by select **Code** dropdown at the top of repository, select **Download ZIP** 
 
