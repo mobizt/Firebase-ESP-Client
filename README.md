@@ -117,7 +117,7 @@ For PlatformIO IDE, using the following command.
 Or at **PIO Home** -> **Library** -> **Registry** then search **Firebase ESP Client**.
 
 
-If you ever installed this library in Global storage in PlatformIO version prior to v2.0.0 and you have updated the PlatformIO to v2.0.0 and later, the global library installation was not available, the sources files of old library version still be able to search by the library dependency finder (LDF), you needed to remove the library from folder **C:\Users\\<UserName>\\.platformio\lib** to prevent unexpected behavior when compile and run.
+If you ever installed this library in Global storage in PlatformIO version prior to v2.0.0 and you have updated the PlatformIO to v2.0.0 and later, the global library installation was not available, the sources files of old library version still be able to search by the library dependency finder (LDF), you needed to remove the library from folder **C:\Users\\<UserName\>\\.platformio\lib** to prevent unexpected behavior when compile and run.
 
 
 
@@ -133,7 +133,7 @@ Rename **Firebase-ESP-Client-main** folder to **Firebase_Arduino_Client_Library_
 
 Go to menu **Files** -> **Examples** -> **Firebase-ESP-Client-main** and choose one from examples.
 
-### Important Note for Manual Installation
+### Important Note for Manual Installation in Arduino IDE
 
 Folder renaming to **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** was required for making the library can be updated via Library Manager without problems.
 
