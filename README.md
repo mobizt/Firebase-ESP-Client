@@ -135,7 +135,7 @@ Go to menu **Files** -> **Examples** -> **Firebase-ESP-Client-main** and choose 
 
 ### Important Note for Manual Installation
 
-Foldder renaming to **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** was required for making the library can be updated via Library Manager without problems.
+Folder renaming to **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** was required for making the library can be updated via Library Manager without problems.
 
 Without folder renaming, when you update the library via Library Manager, library will be updated to the another folder named  **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** which leads to compilation error when there are two different versions of library found in the libraries folder and can cause the conflicts when file structures and functions changed in the newer version. 
 
