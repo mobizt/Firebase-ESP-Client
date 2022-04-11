@@ -121,7 +121,7 @@ If you ever installed this library in Global storage in PlatformIO version prior
 
 
 
-### Manual installation
+### Manual installation in Arduino IDE
 
 For Arduino IDE, download zip file from the repository (Github page) by select **Code** dropdown at the top of repository, select **Download ZIP** 
 
@@ -139,7 +139,7 @@ Folder renaming to **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** was
 
 Without folder renaming, when you update the library via Library Manager, library will be updated to the another folder named  **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** which leads to compilation error when there are two different versions of library found in the libraries folder and can cause the conflicts when file structures and functions changed in the newer version. 
 
-For example, the version 2.7.7 and earlier version was installed manually by downloading ZIP file and extracted to **Firebase-ESP-Client-main** folder. If the library was later updated (v2.8.2 and newer) via Library Manager, the compilation error will take place because the newer version files structures and functions changed and compiler is trying to compile these two versions of source files together. 
+For example, the library version 2.7.7 and earlier were installed manually by downloading ZIP file and extracted to **Firebase-ESP-Client-main** folder. If the library was later updated to v2.8.2 and newer via Library Manager, the compilation error will take place because the newer version files structures and functions changed and compiler is trying to compile these two versions of source files together. 
 
 In this case, you need to delete **Firebase-ESP-Client-main** folder from libraries folder.
 
