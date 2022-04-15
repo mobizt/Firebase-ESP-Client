@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, FB_Utils.h version 1.1.16
+ * Google's Firebase Util class, FB_Utils.h version 1.1.17
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 7, 2022
+ * Created April 15, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -35,6 +35,9 @@
 
 #include <Arduino.h>
 #include "FB_Const.h"
+#if defined(ESP8266)
+#include <Schedule.h>
+#endif
 using namespace mb_string;
 
 class UtilsClass
@@ -1154,12 +1157,12 @@ public:
 
 #if defined(ESP32) || defined(ESP8266)
 
-        if (time(nullptr) > default_ts && gmtOffset == config->internal.fb_gmt_offset)
+        if ((unsigned long)time(nullptr) > default_ts && gmtOffset == config->internal.fb_gmt_offset)
             return true;
 
         time_t now = time(nullptr);
 
-        config->internal.fb_clock_rdy = now > default_ts;
+        config->internal.fb_clock_rdy = (unsigned long)now > default_ts;
 
         if (!config->internal.fb_clock_rdy || gmtOffset != config->internal.fb_gmt_offset)
         {
@@ -1174,10 +1177,10 @@ public:
 
             now = time(nullptr);
             unsigned long timeout = millis();
-            while (now < default_ts)
+            while ((unsigned long)now < default_ts)
             {
                 now = time(nullptr);
-                if (now > default_ts || millis() - timeout > ntpTimeout)
+                if ((unsigned long)now > default_ts || millis() - timeout > ntpTimeout)
                     break;
                 delay(0);
             }
@@ -1185,7 +1188,7 @@ public:
             idle();
         }
 
-        config->internal.fb_clock_rdy = now > default_ts;
+        config->internal.fb_clock_rdy = (unsigned long)now > default_ts;
         if (config->internal.fb_clock_rdy)
             config->internal.fb_gmt_offset = gmtOffset;
 

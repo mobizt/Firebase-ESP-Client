@@ -1,16 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.1.5"
+#define FIREBASE_CLIENT_VERSION "3.1.6"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.5
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.6
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created March 5, 2022
+ * Created April 15, 2022
  *
  *   Updates:
- * - Fixed compile error for FirebaseJsonArray remove.
+ * - Fixed ESP8266 core v2.x.x compilation error.
  *
  *
  * This work is a part of Firebase ESP Client library

@@ -2,7 +2,7 @@
   MB_JSON.c v1.0.1 based on the modified version of cJSON.c v1.7.14 (Sept 3, 2020)
 
   All original static cJSON functions and static variables will be prefixed with MB_JSON_.
-
+  
   Created December 20, 2022
 
   Copyright (c) 2022 Mobizt (K. Suwatchai)
@@ -1685,11 +1685,11 @@ MB_JSON_bool MB_JSON_get_array_buffer_length(const MB_JSON *const item, MB_JSON_
 
     buf_len->depth++;
 
-    // add newline and tab after [
+    //add newline and tab after [
     if (buf_len->format)
     {
         // '\n';
-        buf_len->size += 1;
+        buf_len->size+= 1;
         //'\t';
         buf_len->size += buf_len->depth;
     }
@@ -1714,7 +1714,7 @@ MB_JSON_bool MB_JSON_get_array_buffer_length(const MB_JSON *const item, MB_JSON_
 
     buf_len->depth--;
 
-    // add newline and tab before ]
+    //add newline and tab before ]
     if (buf_len->format)
     {
         //'\n';
@@ -1754,7 +1754,7 @@ static MB_JSON_bool MB_JSON_print_array(const MB_JSON *const item, MB_JSON_print
     output_buffer->offset++;
     output_buffer->depth++;
 
-    // add newline and tab after [
+    //add newline and tab after [
     if (output_buffer->format)
     {
         output_pointer = MB_JSON_ensure(output_buffer, 2);
@@ -1794,7 +1794,7 @@ static MB_JSON_bool MB_JSON_print_array(const MB_JSON *const item, MB_JSON_print
                 return false;
             }
             *output_pointer++ = ',';
-            // add newline and tab after ,
+            //add newline and tab after ,
             if (output_buffer->format)
             {
                 *output_pointer++ = '\n';
@@ -1828,7 +1828,7 @@ static MB_JSON_bool MB_JSON_print_array(const MB_JSON *const item, MB_JSON_print
     }
     output_buffer->depth--;
 
-    // add newline and tab before ]
+    //add newline and tab before ]
     if (output_buffer->format)
     {
         output_pointer = MB_JSON_ensure(output_buffer, 2);
@@ -1977,9 +1977,9 @@ static MB_JSON_bool MB_JSON_get_object_buffer_length(const MB_JSON *const item, 
     MB_JSON *current_item = item->child;
 
     //'{' or "{\n"
-    length = (size_t)(buf_len->format && current_item != NULL ? 2 : 1);
+    length = (size_t)(buf_len->format && current_item != NULL ? 2 : 1); 
 
-    // do nothing for empty object
+    //do nothing for empty object
     if (current_item != NULL)
     {
         buf_len->depth++;
@@ -2047,7 +2047,7 @@ static MB_JSON_bool MB_JSON_print_object(const MB_JSON *const item, MB_JSON_prin
 
     *output_pointer++ = '{';
 
-    // do nothing for empty object
+    //do nothing for empty object
     if (current_item != NULL)
     {
         output_buffer->depth++;
@@ -2668,9 +2668,9 @@ MB_JSON_ReplaceItemViaPointer(MB_JSON *const parent, MB_JSON *const item, MB_JSO
     }
     else
     { /*
-       * To find the last item in array quickly, we use prev in array.
-       * We can't modify the last item's next pointer where this item was the parent's child
-       */
+         * To find the last item in array quickly, we use prev in array.
+         * We can't modify the last item's next pointer where this item was the parent's child
+         */
         if (replacement->prev != NULL)
         {
             replacement->prev->next = replacement;
@@ -3476,7 +3476,7 @@ MB_JSON_Compare(const MB_JSON *const a, const MB_JSON *const b, const MB_JSON_bo
         }
 
         /* doing this twice, once on a and b to prevent true comparison if a subset of b
-         * TODO: Do this the proper way, this is just a fix for now */
+             * TODO: Do this the proper way, this is just a fix for now */
         MB_JSON_ArrayForEach(b_element, b)
         {
             a_element = MB_JSON_get_object_item(a, b_element->string, case_sensitive);
@@ -3511,4 +3511,4 @@ MB_JSON_free(void *object)
     MB_JSON_global_hooks.deallocate(object);
 }
 
-#endif // MB_JSON_C
+#endif //MB_JSON_C

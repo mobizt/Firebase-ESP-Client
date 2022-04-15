@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.19
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.20
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created April 15, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -320,7 +320,7 @@ bool Firebase_Signer::handleToken()
     {
         ut->idle();
         time_t now = getTime();
-        config->internal.fb_clock_rdy = now > ut->default_ts;
+        config->internal.fb_clock_rdy = (unsigned long)now > ut->default_ts;
 
         if (!config->internal.fb_clock_rdy)
         {
