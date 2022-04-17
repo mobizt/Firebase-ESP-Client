@@ -73,7 +73,6 @@ void FB_TCP_Client::setCACert(const char *caCert)
     setInsecure();
     baseSetCertType(fb_cert_type_none);
   }
-  // wcs->setNoDelay(true);
 }
 
 bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
