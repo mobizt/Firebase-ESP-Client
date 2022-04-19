@@ -1,14 +1,14 @@
 /*
- * FirebaseJson, version 2.6.15
+ * FirebaseJson, version 2.6.17
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created April 15, 2022
+ * Created April 19, 2022
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
- * - Serializing to writable objects e.g. String, C/C++ string, Client (WiFi and Ethernet), File and Hardware Serial.
- * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and
+ * - Serializing to writable objects e.g. String, C/C++ string, Clients (WiFi, Ethernet, and GSM), File and Hardware Serial.
+ * - Deserializing from const char, char array, string literal and stream e.g. Clients (WiFi, Ethernet, and GSM), File and
  *   Hardware Serial.
  * - Use managed class, FirebaseJsonData to keep the deserialized result, which can be casted to any primitive data types.
  *
@@ -77,7 +77,27 @@ void FirebaseJsonBase::mCopy(FirebaseJsonBase &other)
 bool FirebaseJsonBase::setRaw(const char *raw)
 {
     mClear();
-    root = parse(raw);
+
+    if (raw)
+    {
+        size_t i = 0;
+        while (i < strlen(raw) && raw[i] == ' ')
+        {
+            i++;
+        }
+
+        if (raw[i] == '{' || raw[i] == '[')
+        {
+            this->root_type = (raw[i] == '{') ? Root_Type_JSON : Root_Type_JSONArray;
+            root = parse(raw);
+        }
+        else
+        {
+            this->root_type = Root_Type_Raw;
+            root = MB_JSON_CreateRaw(raw);
+        }
+    }
+
     return root != NULL;
 }
 
@@ -768,6 +788,13 @@ void FirebaseJsonBase::mSetElementType(FirebaseJsonData *result)
 
         strcpy(buf, (const char *)MBSTRING_FLASH_MCR("string"));
         result->typeNum = JSON_STRING;
+
+        // try casting the string to numbers
+        if (result->stringValue.length() <= 32)
+        {
+            mSetResInt(result, result->stringValue.c_str());
+            mSetResFloat(result, result->stringValue.c_str());
+        }
     }
     else if (result->type_num == MB_JSON_NULL)
     {
@@ -931,6 +958,11 @@ FirebaseJsonArray::FirebaseJsonArray(FirebaseJsonArray &other)
 
 FirebaseJsonArray &FirebaseJsonArray::nAdd(MB_JSON *value)
 {
+    if (root_type != Root_Type_JSONArray)
+        mClear();
+
+    root_type = Root_Type_JSONArray;
+
     prepareRoot();
 
     if (value == NULL)
@@ -967,6 +999,13 @@ bool FirebaseJsonArray::mGetIdx(FirebaseJsonData *result, int index, bool pretti
 
 bool FirebaseJsonArray::mSetIdx(int index, MB_JSON *value)
 {
+    if (root_type != Root_Type_JSONArray)
+        mClear();
+
+    root_type = Root_Type_JSONArray;
+
+    prepareRoot();
+
     int size = MB_JSON_GetArraySize(root);
     if (index < size)
         return MB_JSON_ReplaceItemInArray(root, index, value);

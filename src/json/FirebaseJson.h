@@ -1,14 +1,14 @@
 /*
- * FirebaseJson, version 2.6.15
+ * FirebaseJson, version 2.6.17
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created April 15, 2022
+ * Created April 19, 2022
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
- * - Serializing to writable objects e.g. String, C/C++ string, Client (WiFi and Ethernet), File and Hardware Serial.
- * - Deserializing from const char, char array, string literal and stream e.g. Client (WiFi and Ethernet), File and
+ * - Serializing to writable objects e.g. String, C/C++ string, Clients (WiFi, Ethernet, and GSM), File and Hardware Serial.
+ * - Deserializing from const char, char array, string literal and stream e.g. Clients (WiFi, Ethernet, and GSM), File and
  *   Hardware Serial.
  * - Use managed class, FirebaseJsonData to keep the deserialized result, which can be casted to any primitive data types.
  *
@@ -613,6 +613,7 @@ public:
     {
         Root_Type_JSON = 0,
         Root_Type_JSONArray = 1,
+        Root_Type_Raw = 2
     };
 
     FirebaseJsonBase();
@@ -652,6 +653,27 @@ protected:
     MB_JSON *root = NULL;
     MB_JSON_Hooks *hooks = NULL;
     MB_String buf;
+
+    template <typename T>
+    auto getStr(T val, uint32_t &addr) -> typename MB_ENABLE_IF<is_bool<T>::value || is_num_int<T>::value || MB_IS_SAME<T, float>::value || MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value, const char *>::type
+    {
+        MB_String t;
+
+        if (is_bool<T>::value)
+            t.appendNum(val, 0);
+        else if (is_num_int<T>::value)
+            t.appendNum(val, -1);
+        else if (MB_IS_SAME<T, float>::value)
+            t.appendNum(val, floatDigits);
+        else if (MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value)
+            t.appendNum(val, doubleDigits);
+
+        char *out = (char *)newP(t.length() + 1);
+        strcpy(out, t.c_str());
+
+        addr = toAddr(*out);
+        return (const char *)out;
+    }
 
     template <typename T>
     auto getStr(const T &val, uint32_t &addr) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, const char *>::type
@@ -2047,6 +2069,11 @@ private:
     template <typename T>
     auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_bool<T>::value, FirebaseJsonArray &>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         nAdd(MB_JSON_CreateBool(arg));
         return *this;
     }
@@ -2054,6 +2081,11 @@ private:
     template <typename T>
     auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_num_int<T>::value, FirebaseJsonArray &>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         nAdd(MB_JSON_CreateRaw(num2Str(arg, -1)));
         return *this;
     }
@@ -2061,13 +2093,23 @@ private:
     template <typename T>
     auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<MB_IS_SAME<T, float>::value, FirebaseJsonArray &>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         nAdd(MB_JSON_CreateRaw(num2Str(arg, floatDigits)));
         return *this;
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<MB_IS_SAME<T, double>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value, FirebaseJsonArray &>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         nAdd(MB_JSON_CreateRaw(num2Str(arg, doubleDigits)));
         return *this;
     }
@@ -2075,6 +2117,11 @@ private:
     template <typename T>
     auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJsonArray &>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         uint32_t addr = 0;
         nAdd(MB_JSON_CreateString(getStr(arg, addr)));
         delAddr(addr);
@@ -2085,13 +2132,18 @@ private:
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, std::nullptr_t>::value>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         uint32_t addr = 0;
         mSet(getStr(arg1, addr), MB_JSON_CreateNull());
         delAddr(addr);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, std::nullptr_t>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, std::nullptr_t>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateNull);
     }
@@ -2100,13 +2152,18 @@ private:
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_bool<T2>::value>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         uint32_t addr = 0;
         mSet(getStr(arg1, addr), MB_JSON_CreateBool(arg2));
         delAddr(addr);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && is_bool<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_bool<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateBool(arg2));
     }
@@ -2114,13 +2171,18 @@ private:
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_num_int<T2>::value>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         uint32_t addr = 0;
         mSet(getStr(arg1, addr), MB_JSON_CreateRaw(num2Str(arg2, -1)));
         delAddr(addr);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && is_num_int<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_num_int<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, -1)));
     }
@@ -2128,27 +2190,37 @@ private:
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, float>::value>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         uint32_t addr = 0;
         mSet(getStr(arg1, addr), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
         delAddr(addr);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, float>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, float>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, double>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && (MB_IS_SAME<T2, double>::value || MB_IS_SAME<T2, long double>::value)>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         uint32_t addr = 0;
         mSet(getStr(arg1, addr), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
         delAddr(addr);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, double>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && (MB_IS_SAME<T2, double>::value || MB_IS_SAME<T2, long double>::value)>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
     }
@@ -2156,6 +2228,11 @@ private:
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_string<T2>::value>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         uint32_t addr1 = 0;
         uint32_t addr2 = 0;
         mSet(getStr(arg1, addr1), MB_JSON_CreateString(getStr(arg2, addr2)));
@@ -2164,7 +2241,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && is_string<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_string<T2>::value>::type
     {
         uint32_t addr = 0;
         mSetIdx(arg1, MB_JSON_CreateString(getStr(arg2, addr)));
@@ -2174,6 +2251,11 @@ private:
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, FirebaseJson>::value>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         uint32_t addr = 0;
         mSet(getStr(arg1, addr), e);
@@ -2181,7 +2263,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, FirebaseJson>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, FirebaseJson>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
@@ -2190,6 +2272,11 @@ private:
     template <typename T1, typename T2>
     auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, FirebaseJsonArray>::value>::type
     {
+        if (root_type != Root_Type_JSONArray)
+            mClear();
+
+        root_type = Root_Type_JSONArray;
+
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         uint32_t addr = 0;
         mSet(getStr(arg1, addr), e);
@@ -2197,7 +2284,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_num_int<T1>::value && MB_IS_SAME<T2, FirebaseJsonArray>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, FirebaseJsonArray>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
@@ -2320,13 +2407,28 @@ public:
      * @return instance of an object.
      */
     template <typename T1, typename T2>
-    FirebaseJson &add(T1 key, T2 value) { return dataHandler(key, value, fb_json_func_type_add); }
+    FirebaseJson &add(T1 key, T2 value)
+    {
+        uint32_t addr = 0;
+        dataHandler(getStr(key, addr), value, fb_json_func_type_add);
+        return *this;
+    }
 
     template <typename T>
-    FirebaseJson &add(T key, FirebaseJson &value) { return dataHandler(key, value, fb_json_func_type_add); }
+    FirebaseJson &add(T key, FirebaseJson &value)
+    {
+        uint32_t addr = 0;
+        dataHandler(getStr(key, addr), value, fb_json_func_type_add);
+        return *this;
+    }
 
     template <typename T>
-    FirebaseJson &add(T key, FirebaseJsonArray &value) { return dataHandler(key, value, fb_json_func_type_add); }
+    FirebaseJson &add(T key, FirebaseJsonArray &value)
+    {
+        uint32_t addr = 0;
+        dataHandler(getStr(key, addr), value, fb_json_func_type_add);
+        return *this;
+    }
 
     /**
      * Get the FirebaseJson object serialized string.
@@ -2464,13 +2566,31 @@ public:
      * boolean, FirebaseJson object and array.
      */
     template <typename T1, typename T2>
-    void set(T1 key, T2 value) { dataHandler(key, value, fb_json_func_type_set); }
+    FirebaseJson &set(T1 key, T2 value)
+    {
+        uint32_t addr = 0;
+        dataHandler(getStr(key, addr), value, fb_json_func_type_set);
+        delAddr(addr);
+        return *this;
+    }
 
     template <typename T>
-    FirebaseJson &set(T key, FirebaseJson &value) { return dataHandler(key, value, fb_json_func_type_set); }
+    FirebaseJson &set(T key, FirebaseJson &value)
+    {
+        uint32_t addr = 0;
+        dataHandler(getStr(key, addr), value, fb_json_func_type_set);
+        delAddr(addr);
+        return *this;
+    }
 
     template <typename T>
-    FirebaseJson &set(T key, FirebaseJsonArray &value) { return dataHandler(key, value, fb_json_func_type_set); }
+    FirebaseJson &set(T key, FirebaseJsonArray &value)
+    {
+        uint32_t addr = 0;
+        dataHandler(getStr(key, addr), value, fb_json_func_type_set);
+        delAddr(addr);
+        return *this;
+    }
 
     /**
      * Remove the specified node and its content.
@@ -2530,6 +2650,11 @@ private:
     template <typename T1, typename T2>
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_bool<T2>::value, FirebaseJson &>::type
     {
+        if (root_type != Root_Type_JSON)
+            mClear();
+
+        root_type = Root_Type_JSON;
+
         uint32_t addr = 0;
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg1, addr), MB_JSON_CreateBool(arg2));
@@ -2542,6 +2667,11 @@ private:
     template <typename T1, typename T2>
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_num_int<T2>::value, FirebaseJson &>::type
     {
+        if (root_type != Root_Type_JSON)
+            mClear();
+
+        root_type = Root_Type_JSON;
+
         uint32_t addr = 0;
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg1, addr), MB_JSON_CreateRaw(num2Str(arg2, -1)));
@@ -2554,6 +2684,11 @@ private:
     template <typename T1, typename T2>
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, float>::value, FirebaseJson &>::type
     {
+        if (root_type != Root_Type_JSON)
+            mClear();
+
+        root_type = Root_Type_JSON;
+
         uint32_t addr = 0;
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg1, addr), MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
@@ -2564,8 +2699,13 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, double>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && (MB_IS_SAME<T2, double>::value || MB_IS_SAME<T2, long double>::value), FirebaseJson &>::type
     {
+        if (root_type != Root_Type_JSON)
+            mClear();
+
+        root_type = Root_Type_JSON;
+
         uint32_t addr = 0;
         if (type == fb_json_func_type_add)
             nAdd(getStr(arg1, addr), MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
@@ -2578,6 +2718,11 @@ private:
     template <typename T1, typename T2>
     auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_string<T2>::value, FirebaseJson &>::type
     {
+        if (root_type != Root_Type_JSON)
+            mClear();
+
+        root_type = Root_Type_JSON;
+
         uint32_t addr1 = 0;
         uint32_t addr2 = 0;
         if (type == fb_json_func_type_add)
@@ -2592,6 +2737,11 @@ private:
     template <typename T>
     auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJson &>::type
     {
+        if (root_type != Root_Type_JSON)
+            mClear();
+
+        root_type = Root_Type_JSON;
+
         MB_JSON *e = MB_JSON_Duplicate(json.root, true);
         uint32_t addr = 0;
         if (type == fb_json_func_type_add)
@@ -2605,6 +2755,11 @@ private:
     template <typename T>
     auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJson &>::type
     {
+        if (root_type != Root_Type_JSON)
+            mClear();
+
+        root_type = Root_Type_JSON;
+
         MB_JSON *e = MB_JSON_Duplicate(arr.root, true);
         uint32_t addr = 0;
         if (type == fb_json_func_type_add)

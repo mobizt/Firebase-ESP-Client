@@ -1,10 +1,13 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.4
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.5
  *
- * Created February 28, 2022
+ * Created April 19, 2022
  *
  * Changes Log
+ *
+ * v1.2.5
+ * - Fixed double string issue and add support long double
  *
  * v1.2.4
  * - Check PSRAM availability before allocating the memory
@@ -71,7 +74,7 @@
 
 #define MB_STRING_MAJOR 1
 #define MB_STRING_MINOR 2
-#define MB_STRING_PATCH 4
+#define MB_STRING_PATCH 5
 
 #if defined(ESP8266) && defined(MMU_EXTERNAL_HEAP) && defined(MB_STRING_USE_PSRAM)
 #include <umm_malloc/umm_malloc.h>
@@ -239,7 +242,7 @@ namespace mb_string
     template <typename T>
     struct is_num_float
     {
-        static bool const value = MB_IS_SAME<T, float>::value || MB_IS_SAME<T, double>::value;
+        static bool const value = MB_IS_SAME<T, float>::value || MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value;
     };
 
     template <typename T>
@@ -563,15 +566,45 @@ public:
     {
         reserve(33);
         if (bufLen > 0)
-            dtostrf(value, (decimalPlaces + 2), decimalPlaces, buf);
+        {
+            char *v = toFloatStr(value, 0, decimalPlaces);
+            if (v)
+            {
+                strcpy(buf, v);
+                delP(&v);
+            }
+        }
     }
 
     MB_String(double value, unsigned char decimalPlaces = 3)
     {
         reserve(33);
+
         if (bufLen > 0)
-            dtostrf(value, (decimalPlaces + 2), decimalPlaces, buf);
+        {
+            char *v = toFloatStr(value, 1, decimalPlaces);
+            if (v)
+            {
+                strcpy(buf, v);
+                delP(&v);
+            }
+        }
     }
+
+    MB_String(long double value, unsigned char decimalPlaces = 3)
+    {
+        reserve(65);
+        if (bufLen > 0)
+        {
+            char *v = toFloatStr(value, 2, decimalPlaces);
+            if (v)
+            {
+                strcpy(buf, v);
+                delP(&v);
+            }
+        }
+    }
+
 #if !defined(__AVR__)
     MB_String &operator=(const std::string &rhs)
     {
@@ -832,7 +865,7 @@ public:
         if (precision < 0)
             precision = 5;
 
-        char *s = floatStr(value, precision);
+        char *s = toFloatStr(value, 0, precision);
         if (s)
         {
             *this += s;
@@ -846,7 +879,21 @@ public:
         if (precision < 0)
             precision = 9;
 
-        char *s = doubleStr(value, precision);
+        char *s = toFloatStr(value, 1, precision);
+        if (s)
+        {
+            *this += s;
+            delP(&s);
+        }
+        return (*this);
+    }
+
+    MB_String &appendNum(long double value, int precision = 9)
+    {
+        if (precision < 0)
+            precision = 9;
+
+        char *s = toFloatStr(value, 2, precision);
         if (s)
         {
             *this += s;
@@ -1370,136 +1417,6 @@ public:
     static const size_t npos = -1;
 
 private:
-    /*** dtostrf function is taken from
-     * https://github.com/stm32duino/Arduino_Core_STM32/blob/master/cores/arduino/avr/dtostrf.c
-     */
-
-    /***
-     * dtostrf - Emulation for dtostrf function from avr-libc
-     * Copyright (c) 2013 Arduino.  All rights reserved.
-     * Written by Cristian Maglie <c.maglie@arduino.cc>
-     * This library is free software; you can redistribute it and/or
-     * modify it under the terms of the GNU Lesser General Public
-     * License as published by the Free Software Foundation; either
-     * version 2.1 of the License, or (at your option) any later version.
-     * This library is distributed in the hope that it will be useful,
-     * but WITHOUT ANY WARRANTY; without even the implied warranty of
-     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     * Lesser General Public License for more details.
-     * You should have received a copy of the GNU Lesser General Public
-     * License along with this library; if not, write to the Free Software
-     * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-     */
-
-    char *dtostrf(double val, signed char width, unsigned char prec, char *sout)
-    {
-        // Commented code is the original version
-        /***
-          char fmt[20];
-          sprintf(fmt, "%%%d.%df", width, prec);
-          sprintf(sout, fmt, val);
-          return sout;
-        */
-
-        // Handle negative numbers
-        uint8_t negative = 0;
-        if (val < 0.0)
-        {
-            negative = 1;
-            val = -val;
-        }
-
-        // Round correctly so that print(1.999, 2) prints as "2.00"
-        double rounding = 0.5;
-        for (int i = 0; i < prec; ++i)
-        {
-            rounding /= 10.0;
-        }
-
-        val += rounding;
-
-        // Extract the integer part of the number
-        unsigned long int_part = (unsigned long)val;
-        double remainder = val - (double)int_part;
-
-        if (prec > 0)
-        {
-            // Extract digits from the remainder
-            unsigned long dec_part = 0;
-            double decade = 1.0;
-            for (int i = 0; i < prec; i++)
-            {
-                decade *= 10.0;
-            }
-            remainder *= decade;
-            dec_part = (int)remainder;
-
-            if (negative)
-            {
-                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("-%ld.%0*ld"), int_part, prec, dec_part);
-            }
-            else
-            {
-                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("%ld.%0*ld"), int_part, prec, dec_part);
-            }
-        }
-        else
-        {
-            if (negative)
-            {
-                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("-%ld"), int_part);
-            }
-            else
-            {
-                sprintf(sout, (const char *)MBSTRING_FLASH_MCR("%ld"), int_part);
-            }
-        }
-        // Handle minimum field width of the output string
-        // width is signed value, negative for left adjustment.
-        // Range -128,127
-
-        char *fmt = (char *)newP(129);
-        unsigned int w = width;
-        if (width < 0)
-        {
-            negative = 1;
-            w = -width;
-        }
-        else
-        {
-            negative = 0;
-        }
-
-        if (strlen(sout) < w)
-        {
-            memset(fmt, ' ', 128);
-            fmt[w - strlen(sout)] = '\0';
-            if (negative == 0)
-            {
-                char *tmp = (char *)newP(strlen(sout) + 1);
-                strcpy(tmp, sout);
-                strcpy(sout, fmt);
-                strcat(sout, tmp);
-                delP(&tmp);
-            }
-            else
-            {
-                // left adjustment
-                strcat(sout, fmt);
-            }
-        }
-
-        delP(&fmt);
-
-        return sout;
-    }
-
-    char *intStr(int value)
-    {
-        char *t = (char *)newP(36);
-        sprintf(t, (const char *)MBSTRING_FLASH_MCR("%d"), value);
-        return t;
-    }
 
 #if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
 
@@ -1540,19 +1457,23 @@ private:
         return t;
     }
 
-    char *floatStr(float value, int precision)
+    char *toFloatStr(long double value, int type, int precision)
     {
-        char *t = (char *)newP(32);
-        dtostrf(value, (precision + 2), precision, t);
-        trim(t);
-        return t;
-    }
+        int width = type == 0 ? 32 : 64;
 
-    char *doubleStr(double value, int precision)
-    {
-        char *t = (char *)newP(64);
-        dtostrf(value, (precision + 2), precision, t);
-        trim(t);
+        char *t = (char *)newP(width);
+
+        if (t)
+        {
+            MB_String fmt = MBSTRING_FLASH_MCR("%.");
+            fmt += precision;
+            if (type == 2)
+                fmt += MBSTRING_FLASH_MCR("L");
+            fmt += MBSTRING_FLASH_MCR("f");
+            sprintf(t, fmt.c_str(), value);
+            trim(t);
+        }
+
         return t;
     }
 
