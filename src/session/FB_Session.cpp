@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.19
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.20
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 1, 2022
+ * Created April 22, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -101,6 +101,7 @@ void FirebaseData::addSO()
     {
         so_addr = toAddr(*this);
         Signer.getCfg()->internal.so_addr_list.push_back(so_addr);
+        session.con_mode = fb_esp_con_mode_rtdb_stream;
     }
 }
 
@@ -115,6 +116,7 @@ void FirebaseData::removeSO()
         {
             if (so_addr > 0 && Signer.getCfg()->internal.so_addr_list[i] == so_addr)
             {
+                session.con_mode = fb_esp_con_mode_undefined;
                 Signer.getCfg()->internal.so_addr_list.erase(Signer.getCfg()->internal.so_addr_list.begin() + i);
                 so_addr = 0;
                 break;
@@ -155,7 +157,6 @@ bool FirebaseData::init()
 {
     if (!Signer.getCfg())
         return false;
-
     if (so_addr > 0 && session.con_mode != fb_esp_con_mode_rtdb_stream)
         removeSO();
 

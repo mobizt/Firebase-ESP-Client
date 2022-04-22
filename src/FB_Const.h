@@ -1,6 +1,6 @@
 
 /**
- * Created February 28, 2022
+ * Created April 22, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -99,6 +99,8 @@ class QueryFilter;
 #define MIN_TOKEN_GENERATION_BEGIN_STEP_INTERVAL 300
 
 #define MIN_TOKEN_GENERATION_ERROR_INTERVAL 5 * 1000
+
+#define MIN_NTP_SERVER_REQUEST_TIME_OUT 30 * 1000
 
 #define SD_CS_PIN 15
 
@@ -824,8 +826,9 @@ struct fb_esp_cfg_int_t
     unsigned long fb_last_jwt_generation_error_cb_millis = 0;
     unsigned long fb_last_request_token_cb_millis = 0;
     unsigned long fb_last_stream_timeout_cb_millis = 0;
+    unsigned long fb_last_clock_set_millis = 0;
     bool fb_clock_rdy = false;
-    bool fb_clock_checked = false;
+    bool fb_clock_set = false;
     float fb_gmt_offset = 0;
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
@@ -1024,6 +1027,9 @@ struct fb_esp_client_timeout_t
     uint16_t tokenGenerationBeginStep = MIN_TOKEN_GENERATION_BEGIN_STEP_INTERVAL;
 
     uint16_t tokenGenerationError = MIN_TOKEN_GENERATION_ERROR_INTERVAL;
+    
+    // NTP server request timeout in ms
+    uint16_t ntpServerRequest = MIN_NTP_SERVER_REQUEST_TIME_OUT;
 };
 
 struct fb_esp_cfg_t
@@ -2341,6 +2347,7 @@ static const char fb_esp_pgm_str_594[] PROGMEM = "The device time was not set.";
 static const char fb_esp_pgm_str_595[] PROGMEM = "Response read failed.";
 static const char fb_esp_pgm_str_596[] PROGMEM = "Custom Client is not yet enabled";
 static const char fb_esp_pgm_str_597[] PROGMEM = "Client is not yet initialized";
+static const char fb_esp_pgm_str_598[] PROGMEM = "NTP server sending request timed out";
 
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

@@ -1,5 +1,5 @@
 /**
- * Created February 10, 2022
+ * Created April 22, 2022
  */
 
 #ifndef FB_Error_H
@@ -95,5 +95,6 @@
 #define FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED/*          */ (FB_ERROR_RANGE - 33)
 #define FIREBASE_ERROR_FW_UPDATE_END_FAILED/*          */ (FB_ERROR_RANGE - 34)
 #define FIREBASE_ERROR_SYS_TIME_IS_NOT_READY /*          */ (FB_ERROR_RANGE - 35)
+#define FIREBASE_ERROR_NTP_REQUEST_TIMED_OUT /*          */ (FB_ERROR_RANGE - 36)
 
 #endif

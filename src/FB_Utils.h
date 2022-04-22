@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, FB_Utils.h version 1.1.17
+ * Google's Firebase Util class, FB_Utils.h version 1.1.18
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 15, 2022
+ * Created April 22, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -47,7 +47,7 @@ class UtilsClass
 
 public:
     unsigned long default_ts = ESP_DEFAULT_TS;
-    uint16_t ntpTimeout = 20;
+
 #if defined(ESP8266)
     callback_function_t _callback_function = nullptr;
 #endif
@@ -1167,23 +1167,16 @@ public:
         if (!config->internal.fb_clock_rdy || gmtOffset != config->internal.fb_gmt_offset)
         {
             if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
-                config->internal.fb_clock_checked = false;
+                config->internal.fb_clock_set = false;
 
-            if (!config->internal.fb_clock_checked)
+            if (!config->internal.fb_clock_set)
             {
-                config->internal.fb_clock_checked = true;
+                config->internal.fb_last_clock_set_millis = millis();
+                config->internal.fb_clock_set = true;
                 configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
             }
 
             now = time(nullptr);
-            unsigned long timeout = millis();
-            while ((unsigned long)now < default_ts)
-            {
-                now = time(nullptr);
-                if ((unsigned long)now > default_ts || millis() - timeout > ntpTimeout)
-                    break;
-                delay(0);
-            }
 
             idle();
         }

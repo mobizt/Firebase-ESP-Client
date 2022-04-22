@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.20
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.21
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 15, 2022
+ * Created April 22, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -428,6 +428,22 @@ void Firebase_Signer::tokenProcessingTask()
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
         delay(0);
+
+        if (!config->internal.fb_clock_rdy && config->internal.fb_clock_set && config->signer.tokens.status == token_status_on_initialize)
+        {
+            if (millis() - config->internal.fb_last_clock_set_millis > config->timeout.ntpServerRequest)
+            {
+
+                config->signer.tokens.error.message.clear();
+                setTokenError(FIREBASE_ERROR_NTP_REQUEST_TIMED_OUT);
+                sendTokenStatusCB();
+                config->signer.tokens.status = token_status_on_initialize;
+                config->internal.fb_last_jwt_generation_error_cb_millis = 0;
+                config->internal.fb_last_clock_set_millis = millis();
+                config->internal.fb_clock_set = false;
+                ut->setClock(config->time_zone);
+            }
+        }
 
         if (config->signer.tokens.token_type == token_type_id_token)
         {
@@ -2059,6 +2075,9 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
         return;
     case FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED:
         buff += fb_esp_pgm_str_597;
+        return;
+    case FIREBASE_ERROR_NTP_REQUEST_TIMED_OUT:
+        buff += fb_esp_pgm_str_598;
         return;
 
     default:
