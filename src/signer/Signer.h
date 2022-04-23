@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.2.23
+ * Google's Firebase Token Generation class, Signer.h version 1.2.24
  *
  * This library supports Espressif ESP8266 and ESP32
  *

@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.23
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.24
  *
  * This library supports Espressif ESP8266 and ESP32
  *
@@ -307,16 +307,6 @@ bool Firebase_Signer::handleToken()
         return true;
     }
 
-#if defined(ESP8266)
-    if ((config->cert.data != NULL || config->cert.file.length() > 0) && !config->internal.fb_clock_rdy)
-    {
-        // time must be set first
-        ut->syncClock(config->time_zone);
-        if (!config->internal.fb_clock_rdy)
-            return false;
-    }
-#endif
-
     if (isAuthToken(true) && isExpired())
     {
         if (config->signer.tokens.expires > 0 && isAuthToken(false))
@@ -403,12 +393,19 @@ void Firebase_Signer::tokenProcessingTask()
 
     config->signer.tokenTaskRunning = true;
 
+    bool sslValidTime = false;
+
+#if defined(ESP8266)
+    if (config->cert.data != NULL || config->cert.file.length() > 0)
+        sslValidTime = true;
+#endif
+
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
         delay(0);
 
         // check time if clock synching once set
-        if (!config->internal.fb_clock_rdy && config->internal.fb_clock_synched)
+        if (!config->internal.fb_clock_rdy && (config->internal.fb_clock_synched && sslValidTime))
         {
             if (millis() - config->internal.fb_last_time_sync_millis > FB_TIME_SYNC_INTERVAL)
             {
@@ -423,7 +420,7 @@ void Firebase_Signer::tokenProcessingTask()
                     config->signer.tokens.status = token_status_on_initialize;
                     config->internal.fb_last_jwt_generation_error_cb_millis = 0;
                 }
-                
+
                 // set clock again if timed out
                 config->internal.fb_clock_synched = false;
             }
