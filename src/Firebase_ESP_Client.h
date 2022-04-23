@@ -11,7 +11,7 @@
  *
  *   Updates:
  * - Remove token generation retry.
- * - Fixed NTP time synchiing blocking issue.
+ * - Fixed NTP time synching blocking issue.
  *
  *
  * This work is a part of Firebase ESP Client library
