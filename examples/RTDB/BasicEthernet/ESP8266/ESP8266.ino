@@ -91,8 +91,6 @@ void setupFirebase()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    config.max_token_generation_retry = 30;
-
     /* Assign the pointer to Ethernet module lwip interface */
     config.spi_ethernet_module.enc28j60 = &eth;
     // config.spi_ethernet_module.w5100 = &eth;

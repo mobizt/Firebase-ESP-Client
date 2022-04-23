@@ -205,8 +205,6 @@ void setupFirebase()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    config.max_token_generation_retry = 30;
-
     // Or use legacy authenticate method
     // config.database_url = DATABASE_URL;
     // config.signer.tokens.legacy_token = "<database secret>";

@@ -1045,6 +1045,8 @@ struct fb_esp_cfg_t
     struct fb_esp_token_signer_resources_t signer;
     struct fb_esp_cfg_int_t internal;
     TokenStatusCallback token_status_callback = NULL;
+    // deprecated
+    int8_t max_token_generation_retry = 0;
     struct fb_esp_rtdb_config_t rtdb;
 #if defined(ENABLE_GC_STORAGE)
     struct fb_esp_gcs_config_t gcs;

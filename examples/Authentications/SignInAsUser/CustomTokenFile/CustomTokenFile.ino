@@ -143,9 +143,6 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    /** Assign the maximum retry of token generation */
-    config.max_token_generation_retry = 5;
-
     /** To set system time with the timestamp from RTC
      * The internal NTP server time acquisition
      * of token generation process will be skipped,
