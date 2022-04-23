@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.20
+ * The Firebase class, Firebase.cpp v1.0.21
  *
- *  Created February 28, 2022
+ *  Created April 23, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -156,7 +156,6 @@ void Firebase_ESP_Client::mSetIdToken(FirebaseConfig *config, MB_StringPtr idTok
         config->signer.tokens.expires += Signer.getTime() + expire;
 
         config->signer.tokens.status = token_status_ready;
-        config->signer.attempts = 0;
         config->signer.step = fb_esp_jwt_generation_step_begin;
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         config->signer.tokens.token_type = token_type_id_token;
@@ -453,7 +452,6 @@ void FIREBASE_CLASS::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, s
         config->signer.tokens.expires += Signer.getTime() + expire;
 
         config->signer.tokens.status = token_status_ready;
-        config->signer.attempts = 0;
         config->signer.step = fb_esp_jwt_generation_step_begin;
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         config->signer.tokens.token_type = token_type_id_token;

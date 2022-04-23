@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.22
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.23
  *
  * This library supports Espressif ESP8266 and ESP32
  *
@@ -254,17 +254,7 @@ bool Firebase_Signer::authChanged(FirebaseConfig *config, FirebaseAuth *auth)
 
 time_t Firebase_Signer::getTime()
 {
-
-    time_t tm = ts;
-
-#if defined(ESP8266) || defined(ESP32)
-    if (tm < ESP_DEFAULT_TS)
-        tm = time(nullptr);
-#else
-    tm += millis() / 1000;
-#endif
-
-    return tm;
+    return ut->getTime();
 }
 
 bool Firebase_Signer::setTime(time_t ts)
@@ -275,12 +265,14 @@ bool Firebase_Signer::setTime(time_t ts)
     if (ut->setTimestamp(ts) == 0)
     {
         this->ts = time(nullptr);
+        ut->ts = this->ts;
         return true;
     }
 
 #else
     if (ts > ESP_DEFAULT_TS)
         this->ts = ts - millis() / 1000;
+    ut->ts = this->ts;
 #endif
 
     return false;
@@ -318,24 +310,10 @@ bool Firebase_Signer::handleToken()
 #if defined(ESP8266)
     if ((config->cert.data != NULL || config->cert.file.length() > 0) && !config->internal.fb_clock_rdy)
     {
-        ut->idle();
-        time_t now = getTime();
-        config->internal.fb_clock_rdy = (unsigned long)now > ut->default_ts;
-
+        // time must be set first
+        ut->syncClock(config->time_zone);
         if (!config->internal.fb_clock_rdy)
-        {
-            ut->setClock(config->time_zone);
-
-            if (config->signer.tokens.status == token_status_uninitialized)
-            {
-                config->signer.tokens.status = token_status_on_initialize;
-                config->signer.tokens.error.code = 0;
-                config->signer.tokens.error.message.clear();
-                config->internal.fb_last_jwt_generation_error_cb_millis = 0;
-                sendTokenStatusCB();
-            }
             return false;
-        }
     }
 #endif
 
@@ -429,23 +407,35 @@ void Firebase_Signer::tokenProcessingTask()
     {
         delay(0);
 
-        if (!config->internal.fb_clock_rdy &&config->internal.fb_clock_set && config->signer.tokens.status == token_status_on_initialize)
+        // check time if clock synching once set
+        if (!config->internal.fb_clock_rdy && config->internal.fb_clock_synched)
         {
-            if (millis() - config->internal.fb_last_clock_set_millis > config->timeout.ntpServerRequest)
+            if (millis() - config->internal.fb_last_time_sync_millis > FB_TIME_SYNC_INTERVAL)
             {
+                config->internal.fb_last_time_sync_millis = millis();
 
-                config->signer.tokens.error.message.clear();
-                setTokenError(FIREBASE_ERROR_NTP_REQUEST_TIMED_OUT);
-                sendTokenStatusCB();
-                config->signer.tokens.status = token_status_on_initialize;
-                config->internal.fb_last_jwt_generation_error_cb_millis = 0;
-                config->internal.fb_last_clock_set_millis = millis();
-                config->internal.fb_clock_set = false;
-                ut->setClock(config->time_zone);
+                if (millis() - config->internal.fb_last_ntp_sync_timeout_millis > config->timeout.ntpServerRequest)
+                {
+                    config->internal.fb_last_ntp_sync_timeout_millis = millis();
+                    config->signer.tokens.error.message.clear();
+                    setTokenError(FIREBASE_ERROR_NTP_SYNC_TIMED_OUT);
+                    sendTokenStatusCB();
+                    config->signer.tokens.status = token_status_on_initialize;
+                    config->internal.fb_last_jwt_generation_error_cb_millis = 0;
+                }
+                
+                // set clock again if timed out
+                config->internal.fb_clock_synched = false;
             }
 
-            config->signer.tokenTaskRunning = false;
-            return;
+            // check or set time again
+            ut->syncClock(config->time_zone);
+
+            if (!config->internal.fb_clock_rdy)
+            {
+                config->signer.tokenTaskRunning = false;
+                return;
+            }
         }
 
         if (config->signer.tokens.token_type == token_type_id_token)
@@ -455,17 +445,15 @@ void Firebase_Signer::tokenProcessingTask()
             getIdToken(false, toStringPtr(_EMPTY_STR), toStringPtr(_EMPTY_STR));
 
             _token_processing_task_enable = false;
-            config->signer.attempts = 0;
             ret = true;
         }
         else
         {
             if (config->signer.step == fb_esp_jwt_generation_step_begin && (millis() - config->internal.fb_last_jwt_begin_step_millis > config->timeout.tokenGenerationBeginStep || config->internal.fb_last_jwt_begin_step_millis == 0))
             {
+                // time must be set first
+                ut->syncClock(config->time_zone);
                 config->internal.fb_last_jwt_begin_step_millis = millis();
-                ut->setClock(config->time_zone);
-                time_t now = getTime();
-                config->internal.fb_clock_rdy = (unsigned long)now > ut->default_ts;
 
                 if (config->internal.fb_clock_rdy)
                     config->signer.step = fb_esp_jwt_generation_step_encode_header_payload;
@@ -486,11 +474,9 @@ void Firebase_Signer::tokenProcessingTask()
                 {
                     requestTokens();
 
-                    config->signer.attempts = 0;
                     _token_processing_task_enable = false;
                     config->signer.step = fb_esp_jwt_generation_step_begin;
                     ret = true;
-                   
                 }
             }
         }
@@ -689,7 +675,6 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
     {
         config->signer.tokens.error.message.clear();
         config->signer.tokens.status = token_status_ready;
-        config->signer.attempts = 0;
         config->signer.step = fb_esp_jwt_generation_step_begin;
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         if (code == 0)
@@ -1399,7 +1384,6 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
                 config->internal.atok_len = 0;
                 config->internal.ltok_len = 0;
                 config->signer.tokens.expires = 0;
-                config->signer.attempts = 0;
                 config->signer.step = fb_esp_jwt_generation_step_begin;
                 config->internal.fb_last_jwt_generation_error_cb_millis = 0;
                 config->signer.tokens.token_type = token_type_undefined;
@@ -1528,7 +1512,7 @@ bool Firebase_Signer::requestTokens()
 {
     time_t now = getTime();
 
-    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || (unsigned long)now < ut->default_ts || config->internal.fb_processing)
+    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || (unsigned long)now < ESP_DEFAULT_TS || config->internal.fb_processing)
         return false;
 
     if (!initClient(fb_esp_pgm_str_193, token_status_on_request))
@@ -2045,8 +2029,8 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
     case FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED:
         buff += fb_esp_pgm_str_597;
         return;
-    case FIREBASE_ERROR_NTP_REQUEST_TIMED_OUT:
-        buff += fb_esp_pgm_str_547;
+    case FIREBASE_ERROR_NTP_SYNC_TIMED_OUT:
+        buff += fb_esp_pgm_str_230;
         return;
 
     default:

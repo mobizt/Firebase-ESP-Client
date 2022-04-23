@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.20
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.21
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 22, 2022
+ * Created April 23, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -962,16 +962,8 @@ void FirebaseData::setSecure()
 
         if (!Signer.getCfg()->internal.fb_clock_rdy && (Signer.getCAFile().length() > 0 || Signer.getCfg()->cert.data != NULL || session.cert_addr > 0) && init())
         {
-
-#if defined(ESP8266)
-            int retry = 0;
-            while (!tcpClient.clockReady && retry < 5)
-            {
-                ut->setClock(Signer.getCfg()->internal.fb_gmt_offset);
-                tcpClient.clockReady = Signer.getCfg()->internal.fb_clock_rdy;
-                retry++;
-            }
-#endif
+            ut->syncClock(Signer.getCfg()->internal.fb_gmt_offset);
+            tcpClient.clockReady = Signer.getCfg()->internal.fb_clock_rdy;
         }
 
         if (Signer.getCAFile().length() == 0)

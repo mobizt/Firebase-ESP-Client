@@ -100,7 +100,9 @@ class QueryFilter;
 
 #define MIN_TOKEN_GENERATION_ERROR_INTERVAL 5 * 1000
 
-#define MIN_NTP_SERVER_REQUEST_TIME_OUT 30 * 1000
+#define MIN_NTP_SERVER_SYNC_TIME_OUT 15 * 1000
+
+#define FB_TIME_SYNC_INTERVAL 1500
 
 #define SD_CS_PIN 15
 
@@ -752,7 +754,6 @@ struct fb_esp_auth_signin_provider_t
 struct fb_esp_token_signer_resources_t
 {
     int step = 0;
-    int attempts = 0;
     bool test_mode = false;
     bool signup = false;
     bool anonymous = false;
@@ -825,9 +826,10 @@ struct fb_esp_cfg_int_t
     unsigned long fb_last_jwt_generation_error_cb_millis = 0;
     unsigned long fb_last_request_token_cb_millis = 0;
     unsigned long fb_last_stream_timeout_cb_millis = 0;
-    unsigned long fb_last_clock_set_millis = 0;
+    unsigned long fb_last_time_sync_millis = 0;
+    unsigned long fb_last_ntp_sync_timeout_millis = 0;
     bool fb_clock_rdy = false;
-    bool fb_clock_set = false;
+    bool fb_clock_synched = false;
     float fb_gmt_offset = 0;
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
@@ -1027,8 +1029,8 @@ struct fb_esp_client_timeout_t
 
     uint16_t tokenGenerationError = MIN_TOKEN_GENERATION_ERROR_INTERVAL;
 
-    // NTP server request timeout in ms
-    uint16_t ntpServerRequest = MIN_NTP_SERVER_REQUEST_TIME_OUT;
+    // NTP server sync timeout in ms
+    uint16_t ntpServerRequest = MIN_NTP_SERVER_SYNC_TIME_OUT;
 };
 
 struct fb_esp_cfg_t
@@ -1953,7 +1955,7 @@ static const char fb_esp_pgm_str_226[] PROGMEM = "firestore";
 static const char fb_esp_pgm_str_227[] PROGMEM = "grant_type";
 static const char fb_esp_pgm_str_228[] PROGMEM = "urn:ietf:params:oauth:grant-type:jwt-bearer";
 static const char fb_esp_pgm_str_229[] PROGMEM = "assertion";
-static const char fb_esp_pgm_str_230[] PROGMEM = "could not get time from NTP server";
+static const char fb_esp_pgm_str_230[] PROGMEM = "NTP server time synching failed";
 static const char fb_esp_pgm_str_231[] PROGMEM = "/google.identity.identitytoolkit.v1.IdentityToolkit";
 static const char fb_esp_pgm_str_232[] PROGMEM = "verifyCustomToken?key=";
 static const char fb_esp_pgm_str_233[] PROGMEM = "token";
@@ -2278,7 +2280,7 @@ static const char fb_esp_pgm_str_543[] PROGMEM = "The ID token or registration t
 
 static const char fb_esp_pgm_str_545[] PROGMEM = "create message digest";
 static const char fb_esp_pgm_str_546[] PROGMEM = "tokenProcessingTask";
-static const char fb_esp_pgm_str_547[] PROGMEM = "NTP server sending request timed out";
+// static const char fb_esp_pgm_str_547[] PROGMEM = "";
 static const char fb_esp_pgm_str_548[] PROGMEM = "0.0.0.0";
 static const char fb_esp_pgm_str_549[] PROGMEM = "error";
 static const char fb_esp_pgm_str_550[] PROGMEM = "rules";

@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.20
+ * The Firebase class, Firebase.h v1.0.21
  *
- *  Created February 28, 2022
+ *  Created April 23, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -503,7 +503,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      ut->setClock(_gmtOffset);
+      ut->syncClock(_gmtOffset);
 #endif
     }
     begin(cfg, auth);
@@ -524,7 +524,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      ut->setClock(_gmtOffset);
+      ut->syncClock(_gmtOffset);
 #endif
     }
     begin(cfg, auth);

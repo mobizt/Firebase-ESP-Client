@@ -46,13 +46,12 @@ class UtilsClass
     friend class Firebase_ESP_Client;
 
 public:
-    unsigned long default_ts = ESP_DEFAULT_TS;
-
 #if defined(ESP8266)
     callback_function_t _callback_function = nullptr;
 #endif
     FirebaseConfig *config = nullptr;
     MB_FS *mbfs = nullptr;
+    time_t ts = 0;
 
     ~UtilsClass(){};
 
@@ -1149,43 +1148,53 @@ public:
         return ret;
     }
 
-    bool setClock(float gmtOffset)
+    time_t getTime()
+    {
+
+        time_t tm = ts;
+
+#if defined(ESP8266) || defined(ESP32)
+        if (tm < ESP_DEFAULT_TS)
+            tm = time(nullptr);
+#else
+        tm += millis() / 1000;
+#endif
+
+        return tm;
+    }
+
+    bool syncClock(float gmtOffset)
     {
 
         if (!config)
             return false;
 
-#if defined(ESP32) || defined(ESP8266)
+        time_t now = getTime();
 
-        if ((unsigned long)time(nullptr) > default_ts && gmtOffset == config->internal.fb_gmt_offset)
+        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
+
+        if (config->internal.fb_clock_rdy && gmtOffset == config->internal.fb_gmt_offset)
             return true;
-
-        time_t now = time(nullptr);
-
-        config->internal.fb_clock_rdy = (unsigned long)now > default_ts;
 
         if (!config->internal.fb_clock_rdy || gmtOffset != config->internal.fb_gmt_offset)
         {
             if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
-                config->internal.fb_clock_set = false;
+                config->internal.fb_clock_synched = false;
 
-            if (!config->internal.fb_clock_set)
+#if defined(ESP32) || defined(ESP8266)
+            if (!config->internal.fb_clock_synched)
             {
-                config->internal.fb_last_clock_set_millis = millis();
-                config->internal.fb_clock_set = true;
+                config->internal.fb_clock_synched = true;
                 configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
             }
-
-            now = time(nullptr);
-
-            idle();
+#endif
         }
 
-        config->internal.fb_clock_rdy = (unsigned long)now > default_ts;
+        now = getTime();
+
+        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
         if (config->internal.fb_clock_rdy)
             config->internal.fb_gmt_offset = gmtOffset;
-
-#endif
 
         return config->internal.fb_clock_rdy;
     }
