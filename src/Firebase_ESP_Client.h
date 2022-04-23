@@ -1,18 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.1.8"
+#define FIREBASE_CLIENT_VERSION "3.1.9"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.8
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.1.9
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created April 22, 2022
+ * Created April 23, 2022
  *
  *   Updates:
- * - Fixed token initialization blocking loop issue caused by NTP server time synching.
- * - Add support token initialization resuming and error info debugging.
- * - Fixed RTDB stream can't begin while setting the callback when authentication is not ready due to connection lost.
+ * - Remove token generation retry.
+ * - Fixed NTP time synchiing blocking issue.
  *
  *
  * This work is a part of Firebase ESP Client library

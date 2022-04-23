@@ -1,6 +1,6 @@
 
 /**
- * Created April 22, 2022
+ * Created April 23, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -107,7 +107,6 @@ class QueryFilter;
 #define STREAM_TASK_STACK_SIZE 8192
 #define QUEUE_TASK_STACK_SIZE 8192
 #define MAX_BLOB_PAYLOAD_SIZE 1024
-#define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
 #define ESP_DEFAULT_TS 1618971013
 #define ESP_REPORT_PROGRESS_INTERVAL 2
 
@@ -1027,7 +1026,7 @@ struct fb_esp_client_timeout_t
     uint16_t tokenGenerationBeginStep = MIN_TOKEN_GENERATION_BEGIN_STEP_INTERVAL;
 
     uint16_t tokenGenerationError = MIN_TOKEN_GENERATION_ERROR_INTERVAL;
-    
+
     // NTP server request timeout in ms
     uint16_t ntpServerRequest = MIN_NTP_SERVER_REQUEST_TIME_OUT;
 };
@@ -1046,7 +1045,6 @@ struct fb_esp_cfg_t
     struct fb_esp_token_signer_resources_t signer;
     struct fb_esp_cfg_int_t internal;
     TokenStatusCallback token_status_callback = NULL;
-    int8_t max_token_generation_retry = MAX_EXCHANGE_TOKEN_ATTEMPTS;
     struct fb_esp_rtdb_config_t rtdb;
 #if defined(ENABLE_GC_STORAGE)
     struct fb_esp_gcs_config_t gcs;
@@ -2278,7 +2276,7 @@ static const char fb_esp_pgm_str_543[] PROGMEM = "The ID token or registration t
 
 static const char fb_esp_pgm_str_545[] PROGMEM = "create message digest";
 static const char fb_esp_pgm_str_546[] PROGMEM = "tokenProcessingTask";
-static const char fb_esp_pgm_str_547[] PROGMEM = "max token generation retry reached";
+static const char fb_esp_pgm_str_547[] PROGMEM = "NTP server sending request timed out";
 static const char fb_esp_pgm_str_548[] PROGMEM = "0.0.0.0";
 static const char fb_esp_pgm_str_549[] PROGMEM = "error";
 static const char fb_esp_pgm_str_550[] PROGMEM = "rules";
@@ -2347,7 +2345,6 @@ static const char fb_esp_pgm_str_594[] PROGMEM = "The device time was not set.";
 static const char fb_esp_pgm_str_595[] PROGMEM = "Response read failed.";
 static const char fb_esp_pgm_str_596[] PROGMEM = "Custom Client is not yet enabled";
 static const char fb_esp_pgm_str_597[] PROGMEM = "Client is not yet initialized";
-static const char fb_esp_pgm_str_598[] PROGMEM = "NTP server sending request timed out";
 
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
