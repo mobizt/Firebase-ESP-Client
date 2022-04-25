@@ -157,62 +157,62 @@ See [function description](/src/README.md) for all available functions.
 
 ```cpp
 
-//Include WiFi library
+// Include WiFi library
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif
 
-//Include Firebase library (this library)
+// Include Firebase library (this library)
 #include <Firebase_ESP_Client.h>
 
-//Define the Firebase Data object
+// Define the Firebase Data object
 FirebaseData fbdo;
 
-//Define the FirebaseAuth data for authentication data
+// Define the FirebaseAuth data for authentication data
 FirebaseAuth auth;
 
 // Define the FirebaseConfig data for config data
 FirebaseConfig config;
 
-//Assign the project host and api key 
+// Assign the project host and api key 
 config.host = FIREBASE_HOST;
 
 config.api_key = API_KEY;
 
-//Assign the user sign in credentials
+// Assign the user sign in credentials
 auth.user.email = USER_EMAIL;
 auth.user.password = USER_PASSWORD;
 
-//Initialize the library with the Firebase authen and config.
+// Initialize the library with the Firebase authen and config.
 Firebase.begin(&config, &auth);
 
-//Optional, set AP reconnection in setup()
+// Optional, set AP reconnection in setup()
 Firebase.reconnectWiFi(true);
 
-//Optional, set number of error retry
+// Optional, set number of error retry
 Firebase.RTDB.setMaxRetry(&fbdo, 3);
 
-//Optional, set number of error resumable queues
+// Optional, set number of error resumable queues
 Firebase.RTDB.setMaxErrorQueue(&fbdo, 30);
 
-//Optional, use classic HTTP GET and POST requests.
-//This option allows get and delete functions (PUT and DELETE HTTP requests) works for
-//device connected behind the Firewall that allows only GET and POST requests.
+// Optional, use classic HTTP GET and POST requests.
+// This option allows get and delete functions (PUT and DELETE HTTP requests) works for
+// device connected behind the Firewall that allows only GET and POST requests.
 Firebase.RTDB.enableClassicRequest(&fbdo, true);
 
 #if defined(ESP8266)
-//Optional, set the size of BearSSL WiFi to receive and transmit buffers
-//Firebase may not support the data transfer fragmentation, you may need to reserve the buffer to match
-//the data to transport.
-fbdo.setBSSLBufferSize(1024, 1024); //minimum size is 512 bytes, maximum size is 16384 bytes
+// Optional, set the size of BearSSL WiFi to receive and transmit buffers
+// Firebase may not support the data transfer fragmentation, you may need to reserve the buffer to match
+// the data to transport.
+fbdo.setBSSLBufferSize(1024, 1024); // minimum size is 512 bytes, maximum size is 16384 bytes
 #endif
 
 
-//Optional, set the size of HTTP response buffer
-//Prevent out of memory for large payload but data may be truncated and can't determine its type.
-fbdo.setResponseSize(1024); //minimum size is 1024 bytes
+// Optional, set the size of HTTP response buffer
+// Prevent out of memory for large payload but data may be truncated and can't determine its type.
+fbdo.setResponseSize(1024); // minimum size is 1024 bytes
 ```
 See [other authentication examples](/examples/Authentications) for more sign in methods.
 
@@ -526,7 +526,7 @@ Below is how to assign the certificate data for server verification.
   /* In case the certificate data was used  */
   config.cert.data = rootCACert;
 
-  //Or custom set the root certificate for each FirebaseData object
+  // Or custom set the root certificate for each FirebaseData object
   fbdo.setCert(rootCACert);
 
   /* Or assign the certificate file */
@@ -536,8 +536,8 @@ Below is how to assign the certificate data for server verification.
    * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
   */
-  //config.cert.file = "/gsr1.pem";
-  //config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
+  // config.cert.file = "/gsr1.pem";
+  // config.cert.file_storage = mem_storage_type_flash; // or mem_storage_type_sd
 ```
 
 
@@ -734,7 +734,7 @@ The following example showed how to store file data to flash memory at node "/te
 
 if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_flash, "/test/file_data", "/test.txt"))
 {
-  //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+  // The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
   File file = DEFAULT_FLASH_FS.open("/test.txt", "r");
 
   while (file.available())
@@ -886,36 +886,36 @@ The above `orderBy` parameter can be combined with the following parameters for 
 The following example showed how to use queries parameter in QueryFilter class to filter the data at node "/test/data"
 
 ```cpp
-//Assume that children that have key "sensor" are under "/test/data"
+// Assume that children that have key "sensor" are under "/test/data"
 
-//Instantiate the QueryFilter class
+// Instantiate the QueryFilter class
 QueryFilter query;
 
-//Build query using specified child node key "sensor" under "/test/data"
+// Build query using specified child node key "sensor" under "/test/data"
 query.orderBy("sensor");
 
-//Query any child that its value begins with 2 (number), assumed that its data type is float or integer
+// Query any child that its value begins with 2 (number), assumed that its data type is float or integer
 query.startAt(2);
 
-//Query any child that its value ends with 8 (number), assumed that its data type is float or integer
+// Query any child that its value ends with 8 (number), assumed that its data type is float or integer
 query.endAt(8);
 
-//Limit the maximum query result to return only the last 5 nodes
+// Limit the maximum query result to return only the last 5 nodes
 query.limitToLast(5);
 
 
 if (Firebase.RTDB.getJSON(&fbdo, "/test/data", &query))
 {
-  //Success, then try to read the JSON payload value
+  // Success, then try to read the JSON payload value
   Serial.println(fbdo.jsonString());
 }
 else
 {
-  //Failed to get JSON data at defined node, print out the error reason
+  // Failed to get JSON data at defined node, print out the error reason
   Serial.println(fbdo.errorReason());
 }
 
-//Clear all query parameters
+// Clear all query parameters
 query.clear();
 ```
 
@@ -970,35 +970,35 @@ The following example showed how to subscribe to the data changes at node "/test
 
 ```cpp
 
-//In setup(), set the stream callback function to handle data
-//streamCallback is the function that called when database data changes or updates occurred
-//streamTimeoutCallback is the function that called when the connection between the server 
-//and client was timeout during HTTP stream
+// In setup(), set the stream callback function to handle data
+// streamCallback is the function that called when database data changes or updates occurred
+// streamTimeoutCallback is the function that called when the connection between the server 
+// and client was timeout during HTTP stream
 
 Firebase.RTDB.setStreamCallback(&fbdo, streamCallback, streamTimeoutCallback);
 
-//In setup(), set the streaming path to "/test/data" and begin stream connection
+// In setup(), set the streaming path to "/test/data" and begin stream connection
 
 if (!Firebase.RTDB.beginStream(&fbdo, "/test/data"))
 {
-  //Could not begin stream connection, then print out the error detail
+  // Could not begin stream connection, then print out the error detail
   Serial.println(fbdo.errorReason());
 }
 
   
-  //Global function that handles stream data
+  // Global function that handles stream data
 void streamCallback(FirebaseStream data)
 {
 
-  //Print out all information
+  // Print out all information
 
   Serial.println("Stream Data...");
   Serial.println(data.streamPath());
   Serial.println(data.dataPath());
   Serial.println(data.dataType());
 
-  //Print out the value
-  //Stream data can be many types which can be determined from function dataType
+  // Print out the value
+  // Stream data can be many types which can be determined from function dataType
 
   if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
       Serial.println(data.to<int>());
@@ -1024,17 +1024,18 @@ void streamCallback(FirebaseStream data)
 
 }
 
-//Global function that notifies when stream connection lost
-//The library will resume the stream connection automatically
+// Global function that notifies when stream connection lost
+// The library will resume the stream connection automatically
 void streamTimeoutCallback(bool timeout)
 {
   if(timeout){
-    //Stream timeout occurred
+    // Stream timeout occurred
     Serial.println("Stream timeout, resume streaming...");
   }  
 }
 
-//For authentication except for legacy token, Firebase.ready() should be called repeatedly in loop() to handle authentication tasks.
+// For authentication except for legacy token, Firebase.ready() should be called repeatedly 
+// in loop() to handle authentication tasks.
 
 void loop()
 {
@@ -1055,13 +1056,13 @@ For multiple paths streaming, see the MultiPath example.
 The following example showed how to subscribe to the data changes at "/test/data" and polling the stream manually.
 
 ```cpp
-//In setup(), set the streaming path to "/test/data" and begin stream connection
+// In setup(), set the streaming path to "/test/data" and begin stream connection
 if (!Firebase.RTDB.beginStream(&fbdo, "/test/data"))
 {
   Serial.println(fbdo.errorReason());
 }
 
-//Place this in loop()
+// Place this in loop()
 if (!Firebase.RTDB.readStream(&fbdo))
 {
   Serial.println(fbdo.errorReason());
@@ -1097,7 +1098,8 @@ if (fbdo.streamAvailable())
   }
 }
 
-//For authentication except for legacy token, Firebase.ready() should be called repeatedly in loop() to handle authentication tasks.
+// For authentication except for legacy token, Firebase.ready() should be called repeatedly 
+// in loop() to handle authentication tasks.
 
 void loop()
 {
@@ -1145,7 +1147,7 @@ The following example showed how to backup all database data at "/" and restore.
   }
 
 
-  //Begin restore backed dup data back to database
+  // Begin restore backed dup data back to database
   if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_sd, "/", backupFileName.c_str()))
   {
     Serial.println(fbdo.errorReason());
@@ -1164,7 +1166,7 @@ When read store, append and update operations were failed due to buffer overflow
 These operations can retry and queued after the retry amount was reached the maximum retry set in function `setMaxRetry`.
 
 ```cpp
-//set maximum retry amount to 3
+// set maximum retry amount to 3
  Firebase.RTDB.setMaxRetry(&fbdo, 3);
 ```
 
@@ -1174,10 +1176,10 @@ The full of queue collection can be checked through function `isErrorQueueFull`.
 
 
 ```cpp
- //set maximum queues to 10
+ // set maximum queues to 10
  Firebase.RTDB.setMaxErrorQueue(&fbdo, 10);
 
- //determine whether Error Queue collection is full or not
+ // determine whether Error Queue collection is full or not
  Firebase.RTDB.isErrorQueueFull(&fbdo);
 ```
 
@@ -1206,19 +1208,19 @@ The following example showed how to run Error Queues automatically and track the
 
 ```cpp
 
-//In setup()
+// In setup()
 
-//Set the maximum Firebase Error Queues in collection (0 - 255).
-//Firebase read/store operation causes by network problems and buffer overflow will be 
-//added to Firebase Error Queues collection.
+// Set the maximum Firebase Error Queues in collection (0 - 255).
+// Firebase read/store operation causes by network problems and buffer overflow will be 
+// added to Firebase Error Queues collection.
 Firebase.RTDB.setMaxErrorQueue(&fbdo, 10);
 
-//Begin to run Error Queues in Error Queue collection  
+// Begin to run Error Queues in Error Queue collection  
 Firebase.RTDB.beginAutoRunErrorQueue(&fbdo, callback);
 
 
-//Use to stop the auto run queues
-//Firebase.endAutoRunErrorQueue(fbdo);
+// Use to stop the auto run queues
+// Firebase.endAutoRunErrorQueue(fbdo);
 
 void errorQueueCallback (QueueInfo queueinfo){
 
@@ -1251,30 +1253,30 @@ void errorQueueCallback (QueueInfo queueinfo){
 The following example showed how to run Error Queues and track its status manually.
 
 ```cpp
-//In setup()
+// In setup()
 
-//Set the maximum Firebase Error Queues in collection (0 - 255).
-//Firebase read/store operation causes by network problems and buffer overflow will be added to 
-//Firebase Error Queues collection.
+// Set the maximum Firebase Error Queues in collection (0 - 255).
+// Firebase read/store operation causes by network problems and buffer overflow will be added to 
+// Firebase Error Queues collection.
 Firebase.RTDB.setMaxErrorQueue(&fbdo, 10);
 
 
-//All of the following are in loop()
+// All of the following are in loop()
 
 Firebase.RTDB.processErrorQueue(&fbdo);
 
-//Detrnine the queue status
+// Detrnine the queue status
 if (Firebase.RTDB.isErrorQueueFull(&fbdo))
 {
   Serial.println("Queue is full");
 }
 
-//Remaining Error Queues in Error Queue collection
+// Remaining Error Queues in Error Queue collection
 Serial.print("Remaining queues: ");
 Serial.println(Firebase.RTDB.errorQueueCount(&fbdo));
 
-//Assumed that queueID is unsigned integer array of queue that added to Error Queue collection 
-//when error and use Firebase.getErrorQueueID to get this Error Queue id.
+// Assumed that queueID is unsigned integer array of queue that added to Error Queue collection 
+// when error and use Firebase.getErrorQueueID to get this Error Queue id.
 
 for (uint8_t i = 0; i < LENGTH_OF_QUEUEID_ARRAY; i++)
 {
@@ -1301,7 +1303,7 @@ Two types of storage can be assigned with these functions, `mem_storage_type_fla
 The following example showed how to restore and save Error Queues in /test.txt file.
 
 ```cpp
-//To restore Error Queues
+// To restore Error Queues
 
 if (Firebase.RTDB.errorQueueCount(&fbdo, "/test.txt", mem_storage_type_flash) > 0)
 {
@@ -1309,7 +1311,7 @@ if (Firebase.RTDB.errorQueueCount(&fbdo, "/test.txt", mem_storage_type_flash) > 
     Firebase.deleteStorageFile("/test.txt", mem_storage_type_flash);
 }
 
-//To save Error Queues to file
+// To save Error Queues to file
 Firebase.RTDB.saveErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
 
 ```
@@ -1361,29 +1363,29 @@ The HTTPv1 APIs requires OAUth2.0 authentication using the Service Account crede
 The following example showed how to send FCM message.
 
 ```cpp
-//Provide your Firebase project's server key to send messsage using the legacy protocols
+// Provide your Firebase project's server key to send messsage using the legacy protocols
 Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY);
 
-//Construct the legacy message
+// Construct the legacy message
 FCM_HTTPv1_JSON_Message msg;
 
-//Assign the device registration token
+// Assign the device registration token
 msg.token = DEVICE_REGISTRATION_ID_TOKEN;
 
-//Assign the notification payload
+// Assign the notification payload
 msg.notification.body = "Notification body";
 msg.notification.title = "Notification title";
 
 FirebaseJson json;
 String payload;
 
-//Assign the data payload
-//all data key-values should be in string
+// Assign the data payload
+// all data key-values should be in string
 json.add("humidity", "70");
 json.toString(payload);
 msg.data = payload.c_str();
 
-//Send message
+// Send message
 if (Firebase.FCM.send(&fbdo, &msg))
 {
    erial.println("Message sent to FCM backend.");
@@ -1613,21 +1615,21 @@ For FirebaseJson function description, see [FirebaseJSON object Functions](src#f
 The following example shows how to use FirebaseJson.
 
 ```cpp
-//Declare FirebaseJson object (global or local)
+// Declare FirebaseJson object (global or local)
 FirebaseJson json;
 
-//Add name with value Living Room to JSON object
+// Add name with value Living Room to JSON object
 json.add("name", "Living Room");
 
-//Add temp1 with value 120 and temp1 with 40 to JSON object
-//Note: temp2 is not the child of temp1 as in previous version.
+// Add temp1 with value 120 and temp1 with 40 to JSON object
+// Note: temp2 is not the child of temp1 as in previous version.
 json.add("temp1", 120).add("temp2", 40);
 
-//Add nested child contents directly
+// Add nested child contents directly
 json.set("unit/temp1", "Farenheit");
 json.set("unit/temp2", "Celcius");
 
-//Deserialize to serial with prettify option
+// Deserialize to serial with prettify option
 json.toString(Serial, true);
 Serial.println();
 Serial.println();
@@ -1646,15 +1648,15 @@ This is the result of the above code
 }
 */
 
-//To set array to the above JSON using FirebaseJson directly
-//Set (add) array indexes 0,1,2,5,7 under temp1, the original value will be replaced with new one.
+// To set array to the above JSON using FirebaseJson directly
+// Set (add) array indexes 0,1,2,5,7 under temp1, the original value will be replaced with new one.
 json.set("temp1/[0]", 47);
 json.set("temp1/[1]", 28);
 json.set("temp1/[2]", 34);
-json.set("temp1/[5]", 23); //null will be created at array index 3,4 due to it's not yet assigned
-json.set("temp1/[7]", 25); //null will be created at array index 6
+json.set("temp1/[5]", 23); // null will be created at array index 3,4 due to it's not yet assigned
+json.set("temp1/[7]", 25); // null will be created at array index 6
 
-//Print out as prettify string
+// Print out as prettify string
 json.toString(Serial, true);
 Serial.println();
 Serial.println();
@@ -1682,13 +1684,13 @@ The result of the above code
  }
 */
 
-//Try to remove temp1 array at index 1
+// Try to remove temp1 array at index 1
 json.remove("temp1/[1]");
 
-//Try to remove temp2
+// Try to remove temp2
 json.remove("temp2");
 
-//Print out as prettify string
+// Print out as prettify string
 json.toString(Serial, true);
 Serial.println();
 Serial.println();
@@ -1714,47 +1716,47 @@ The result of the above code
 }
 */
 
-//Now parse/read the contents from specific node unit/temp2
-//FirebaseJsonData is required to keep the parse results which can be accessed later
+// Now parse/read the contents from specific node unit/temp2
+// FirebaseJsonData is required to keep the parse results which can be accessed later
 FirebaseJsonData result;
 
 json.get(result, "unit/temp2");
 
 if (result.success)
 {
-  //Print type of parsed data e.g string, int, double, bool, object, array, null and undefined
+  // Print type of parsed data e.g string, int, double, bool, object, array, null and undefined
   Serial.println(result.type);
-  //Print its content e.g.string, int, double, bool whereas object, array and null also can access as string
+  // Print its content e.g.string, int, double, bool whereas object, array and null also can access as string
   Serial.println(result.to<String>());
-  //Serial.println(result.to<int>());
-  //Serial.println(result.to<bool>());
-  //Serial.println(result.to<float>());
-  //Serial.println(result.to<double>());
+  // Serial.println(result.to<int>());
+  // Serial.println(result.to<bool>());
+  // Serial.println(result.to<float>());
+  // Serial.println(result.to<double>());
 }
 
-//The above code will show
+// The above code will show
 /**
 string
 Celcius
 */
 
-//To get the array temp from FirebaseJson
+// To get the array temp from FirebaseJson
 
 json.get(result, "temp1");
 
-//Prepare FirebaseJsonArray to take the array from FirebaseJson
+// Prepare FirebaseJsonArray to take the array from FirebaseJson
 FirebaseJsonArray arr;
 
-//Get array data
+// Get array data
 result.get<FirebaseJsonArray>(arr);
 
-//Call get with FirebaseJsonData to parse the array at defined index i
+// Call get with FirebaseJsonData to parse the array at defined index i
 for (size_t i = 0; i < arr.size(); i++)
 {
-  //result now used as temporary object to get the parse results
+  // result now used as temporary object to get the parse results
   arr.get(result, i);
 
-  //Print its value
+  // Print its value
   Serial.print("Array index: ");
   Serial.print(i);
   Serial.print(", type: ");
@@ -1782,23 +1784,23 @@ Array index: 6, type: int, value: 25
 The following example shows how to use FirebaseJsonArray.
 
 ```cpp
-//Declare FirebaseJsonArray object (global or local)
+// Declare FirebaseJsonArray object (global or local)
 FirebaseJsonArray arr;
 
-//Add some data
+// Add some data
 arr.add("banana");
 arr.add("mango");
 arr.add("coconut");
 
 
-//Change the array contents
+// Change the array contents
 arr.set("[1]/food", "salad");
 arr.set("[1]/sweet", "cake");
 arr.set("[1]/appetizer", "snack");
 arr.set("[2]", "apple"); // or arr.set(2, "apple");
 arr.set("[4]/[0]/[1]/amount", 20);
 
-//Print out array as prettify string
+// Print out array as prettify string
 arr.toString(Serial, true);
 Serial.println();
 Serial.println();
@@ -1826,10 +1828,10 @@ This is the result of the above code
 ]
 */
 
-//Remove array content at /4/0/1/amount
+// Remove array content at /4/0/1/amount
 arr.remove("[4]/[0]/[1]/amount");
 
-//Print out as prettify string
+// Print out as prettify string
 arr.toString(Serial, true);
 Serial.println();
 Serial.println();
@@ -1854,7 +1856,7 @@ The result of the above code
 
 */
 
-//Now parse/read the array contents at some index
+// Now parse/read the array contents at some index
 
 FirebaseJsonData result;
 
@@ -1862,35 +1864,35 @@ arr.get(result, "[1]/food");
 
 if(result.success)
 {
-  //Type of parsed data
+  // Type of parsed data
   Serial.println(result.type);
-  //Its value
+  // Its value
   Serial.println(result.to<String>());
-  //Serial.println(result.to<int>());
-  //Serial.println(result.to<bool>());
-  //Serial.println(result.to<float>());
-  //Serial.println(result.to<double>());
+  // Serial.println(result.to<int>());
+  // Serial.println(result.to<bool>());
+  // Serial.println(result.to<float>());
+  // Serial.println(result.to<double>());
 
 }
 
-//The above code will show
+// The above code will show
 /**
 string
 salad
 */
 
 
-//To get the JSON object at array index 1 from FirebaseJsonArray
+// To get the JSON object at array index 1 from FirebaseJsonArray
 arr.get(result, "[1]");// or arr.get(result, 1);
 
-//Prepare FirebaseJson to take the JSON object from FirebaseJsonArray
+// Prepare FirebaseJson to take the JSON object from FirebaseJsonArray
 FirebaseJson json;
 
-//Get FirebaseJson data
+// Get FirebaseJson data
 result.get<FirebaseJson>(json);
 
-//Parse the JSON object as list
-//Get the number of items
+// Parse the JSON object as list
+// Get the number of items
 size_t len = json.iteratorBegin();
 FirebaseJson::IteratorValue value;
 for (size_t i = 0; i < len; i++)
@@ -1899,7 +1901,7 @@ for (size_t i = 0; i < len; i++)
     Serial.printf("%d, Type: %s, Name: %s, Value: %s\n", i, value.type == FirebaseJson::JSON_OBJECT ? "object" : "array", value.key.c_str(), value.value.c_str());
 }
 
-//Clear all list to free memory
+// Clear all list to free memory
 json.iteratorEnd();
 
 
