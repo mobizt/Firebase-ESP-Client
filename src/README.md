@@ -40,11 +40,16 @@ param **`param`** idToken The ID Token.
 
 param **`param`** expire The expired interval in seeconds (max.3600 sec).
 
+param **`param`** refreshToken The refresh token for token refreshment.
+
 note For FirebaseConfig and FirebaseAuth data usage, see the examples.
 
 ```cpp
-void setIdToken(FirebaseConfig *config, const char *idToken, size_t expire = 3600);
+void setIdToken(FirebaseConfig *config, <string> idToken, size_t expire = 3600, <string> refreshToken = "");
 ```
+
+
+
 
 
 #### Check for token expiry status.

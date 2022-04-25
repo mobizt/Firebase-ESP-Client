@@ -1,16 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.2.0"
+#define FIREBASE_CLIENT_VERSION "3.2.1"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.2.0
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.2.1
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created April 23, 2022
+ * Created April 25, 2022
  *
  *   Updates:
- * - Fixed time synching issue.
+ * - Add support refresh token in Firebase.setIdToken function.
+ * - Add RTDB data retaining example.
  *
  *
  * This work is a part of Firebase ESP Client library

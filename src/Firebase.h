@@ -138,11 +138,12 @@ public:
    * @param config The pointer to FirebaseConfig data.
    * @param idToken The ID Token.
    * @param expire The expired interval in seeconds (max.3600 sec).
+   * @param refreshToken The refresh token for token refreshment.
    *
    * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
-  */
-  template <typename T = const char *>
-  void setIdToken(FirebaseConfig *config, T idToken, size_t expire = 3600) { return mSetIdToken(config, toStringPtr(idToken), expire); }
+   */
+  template <typename T1 = const char *, typename T2 = const char *>
+  void setIdToken(FirebaseConfig *config, T1 idToken, size_t expire = 3600, T2 refreshToken = "") { return mSetIdToken(config, toStringPtr(idToken), expire, toStringPtr(refreshToken)); }
 
   /** Check for token expiry status.
    *
@@ -370,7 +371,7 @@ public:
 
 private:
   void init(FirebaseConfig *config, FirebaseAuth *auth);
-  void mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire = 3600);
+  void mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire, MB_StringPtr refreshToken);
   bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
   bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
   bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
@@ -421,11 +422,12 @@ public:
    * @param config The pointer to FirebaseConfig data.
    * @param idToken The ID Token.
    * @param expire The expired interval in seeconds (max.3600 sec).
+   * @param refreshToken The refresh token for token refreshment.
    *
    * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
-  */
-  template <typename T = const char *>
-  void setIdToken(FirebaseConfig *config, T idToken, size_t expire = 3600) { return mSetIdToken(config, toStringPtr(idToken), expire); }
+   */
+  template <typename T1 = const char *, typename T2 = const char *>
+  void setIdToken(FirebaseConfig *config, T1 idToken, size_t expire = 3600, T2 refreshToken = "") { return mSetIdToken(config, toStringPtr(idToken), expire, toStringPtr(refreshToken)); }
 
   /** Check for token expiry status.
    *
@@ -2562,7 +2564,7 @@ private:
   fb_esp_mem_storage_type getMemStorageType(uint8_t old_type);
   void init(FirebaseConfig *config, FirebaseAuth *auth);
   bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
-  void mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire = 3600);
+  void mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire, MB_StringPtr refreshToken);
   bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
   bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
   bool mSendResetPassword(FirebaseConfig *config, MB_StringPtr email);

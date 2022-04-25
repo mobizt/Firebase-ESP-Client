@@ -132,12 +132,14 @@ bool Firebase_ESP_Client::mSendResetPassword(FirebaseConfig *config, MB_StringPt
     return Signer.handleEmailSending(email, fb_esp_user_email_sending_type_reset_psw);
 }
 
-void Firebase_ESP_Client::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire)
+void Firebase_ESP_Client::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire, MB_StringPtr refreshToken)
 {
     if (!config)
         return;
 
     MB_String _idToken = idToken;
+    config->internal.refresh_token.clear();
+    config->internal.refresh_token = refreshToken;
 
     if (_idToken.length() > 0)
     {
@@ -428,12 +430,14 @@ bool FIREBASE_CLASS::mSendResetPassword(FirebaseConfig *config, MB_StringPtr ema
     return Signer.handleEmailSending(email, fb_esp_user_email_sending_type_reset_psw);
 }
 
-void FIREBASE_CLASS::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire)
+void FIREBASE_CLASS::mSetIdToken(FirebaseConfig *config, MB_StringPtr idToken, size_t expire, MB_StringPtr refreshToken)
 {
     if (!config)
         return;
 
     MB_String _idToken = idToken;
+    config->internal.refresh_token.clear();
+    config->internal.refresh_token = refreshToken;
 
     if (_idToken.length() > 0)
     {
