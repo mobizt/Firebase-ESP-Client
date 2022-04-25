@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.21
+ * The Firebase class, Firebase.h v1.0.22
  *
- *  Created April 23, 2022
+ *  Created April 25, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -176,6 +176,8 @@ public:
   struct token_info_t authTokenInfo();
 
   /** Provide the ready status of token generation.
+   * 
+   * This function should be called repeatedly to handle authentication tasks.
    * 
    * @return Boolean type status indicates the token generation is completed.
   */
@@ -457,9 +459,11 @@ public:
   struct token_info_t authTokenInfo();
 
   /** Provide the ready status of token generation.
-   * 
+   *
+   * This function should be called repeatedly to handle authentication tasks.
+   *
    * @return Boolean type status indicates the token generation is completed.
-  */
+   */
   bool ready();
 
   /** Provide the grant access status for Firebase Services.

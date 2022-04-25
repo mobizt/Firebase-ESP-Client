@@ -99,7 +99,7 @@ struct token_info_t authTokenInfo();
 
 return **`Boolean`** type status indicates the token generation is completed.
 
-This returns false if ready() returns false (token generation is not ready).
+This function should be called repeatedly to handle authentication tasks.
 
 ```cpp
 bool ready();
@@ -110,6 +110,8 @@ bool ready();
 #### Provide the grant access status for Firebase Services.
 
 return **`Boolean`** type status indicates the device can access to the services.
+
+This returns false if ready() returns false (token generation is not ready).
 
 ```cpp
 bool authenticated();
