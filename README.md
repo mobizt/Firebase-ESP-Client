@@ -721,7 +721,7 @@ ETag at any node can be read through `Firebase.RTDB.getETag`.  ETag value change
 
 The server's **Timestamp** can be stored in the database through `Firebase.RTDB.setTimestamp`. 
 
-The returned **Timestamp** value can get from `fbdo.fbdo.to<int>()`. 
+The returned **Timestamp** value can get from `fbdo.to<int>()`. 
 
 The file systems for flash and sd memory can be changed in [**FirebaseFS.h**](/src/FirebaseFS.h).
 
