@@ -1530,30 +1530,6 @@ Function `FirebaseJson.get` is used for parsing or deserializee the JSON object 
 The casting from FirebaseJsonData to FirebaseJson and FirebaseJsonArray objects is different, by using `FirebaseJsonData.getJSON(FirebaseJson)` and `FirebaseJsonData.getArray(FirebaseJsonArray)`.
 
 
-Function `FirebaseJson.search` is used for searching the elements in JSON object and array. The search function supports criterias which can be set using FirebaseJson::SearchCriteria data.
-
-The search function returns the number of items or elements found.
-
-The SearchCriteria data consisted of the properties e.g. path, value, depth, endDepth, and searchAll.
-
-The path property is the key name or path to search which can use the wildcard * for path to be any key or name at that depth and so on.
-
-The value property can be used with or without path assignment.
-
-The depth property is begin depth to search, default value is 0.
-
-The endDepth property is the end depth to search, default value is -1 for unlimited end depth.
-
-The searchAll property, when set to true, is to search all occurrences of elements found and search result stores in FirebaseJsonData object will be array of all items found. The actual full path of search can be obtained by `FirebaseJsonData.searchPath` which will be serialized array string of all paths for all elements found from search.
-
-When searchAll property is false (default), the first occurrence will be set to the result which can be any value type.
-
-The search path from `FirebaseJsonData.searchPath` will be string of the element or item full path.
-
-
-The search result will keep in FirebaseJsonData object which later can cast to any type (always be an array in case of searchAll property is true) by using `FirebaseJsonData.to<type>`.
-
-
 Function `FirebaseJson.remove` is used to remove the node and all its children's contents at the defined relative path and node. 
 
 
