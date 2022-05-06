@@ -1386,7 +1386,7 @@ public:
         }
         s = _str.substr(previous, current - previous);
         tk.push_back(s);
-        MB_String().swap(s);
+        s.clear();
     }
 
     void getCustomHeaders(MB_String &header)
