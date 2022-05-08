@@ -1292,7 +1292,7 @@ Call `<FirebaseData>.dataType` or `<FirebaseData>.dataTypeNum` to get the type o
 Call `<FirebaseData>.to<double>()` to get the double value that stored on the defined node.
 
 Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
-use printf("%.9lf\n", firebaseData.to<double>()); for print the returned double value up to 9 decimal places.
+use `Serial.printf("%.9lf\n", firebaseData.to<double>());` for print the returned double value up to 9 decimal places.
 
 ```cpp
 bool setDouble(FirebaseData *fbdo, <string> path, double value);
@@ -1784,7 +1784,7 @@ Call `<FirebaseData>.to<int>()` will return the integer value of timestamp in se
 or `<FirebaseData>.to<double>()` to get millisecond timestamp. 
 
 Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
-use printf("%.0lf\n", firebaseData.to<double>());.
+use `Serial.printf("%.0lf\n", firebaseData.to<double>());`.
 
 ```cpp
 bool setTimestamp(FirebaseData *fbdo, <string> path);
@@ -1972,7 +1972,7 @@ If the payload returned from server is not integer, float and double,
 the function `<FirebaseData>.to<double>()` will return zero (0).
 
 Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
-use printf("%.9lf\n", firebaseData.to<double>()); for print value up to 9 decimal places.
+use `Serial.printf("%.9lf\n", firebaseData.to<double>());` for print value up to 9 decimal places.
 
 ```cpp
 bool getDouble(FirebaseData *fbdo, <string> path);
