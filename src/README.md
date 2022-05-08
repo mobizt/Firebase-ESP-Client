@@ -2436,7 +2436,7 @@ param **`timestampNode`** The sub-child node that keep the timestamp.
 
 param **`limit`** The maximum number of children nodes to delete at once, 30 is maximum.
 
-param **`dataRetentionPeriod`**The period in seconds of data in the past which will be retained.
+param **`dataRetentionPeriod`** The period in seconds of data in the past which will be retained.
 
 return **`Boolean`** value, indicates the success of the operation.*
 
