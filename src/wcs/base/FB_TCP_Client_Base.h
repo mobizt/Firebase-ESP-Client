@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.2
+ * TCP Client Base class, version 1.0.3
  *
- * Created February 28, 2022
+ * Created May 10, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -136,7 +136,6 @@ public:
 
             if (!ret)
             {
-                setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
                 client->stop();
                 client->flush();
             }
