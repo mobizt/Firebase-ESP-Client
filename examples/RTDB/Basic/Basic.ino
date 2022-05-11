@@ -100,6 +100,8 @@ void setup()
 
   Firebase.setDoubleDigits(5);
 
+  config.timeout.serverResponse = 10 * 1000;
+
   /** Timeout options.
 
   //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.

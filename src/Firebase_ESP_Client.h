@@ -1,16 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.3.1"
+#define FIREBASE_CLIENT_VERSION "3.3.2"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.3.1
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.3.2
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created May 10, 2022
+ * Created May 11, 2022
  *
  *   Updates:
- * - Fixed FirebaseData.httpCode() returns connection refused after session closed.
+ * - Fixed serverResponse timeout config issue.
  *
  *
  * This work is a part of Firebase ESP Client library

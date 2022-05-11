@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.21
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.22
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 23, 2022
+ * Created May 11, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -831,7 +831,7 @@ bool FirebaseData::reconnect(unsigned long dataTime)
         unsigned long tmo = DEFAULT_SERVER_RESPONSE_TIMEOUT;
         if (init())
         {
-            if (Signer.getCfg()->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT || Signer.getCfg()->timeout.serverResponse > MIN_SERVER_RESPONSE_TIMEOUT)
+            if (Signer.getCfg()->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT || Signer.getCfg()->timeout.serverResponse > MAX_SERVER_RESPONSE_TIMEOUT)
                 Signer.getCfg()->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
             tmo = Signer.getCfg()->timeout.serverResponse;
         }
