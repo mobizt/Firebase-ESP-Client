@@ -1,9 +1,9 @@
 /**
- * The MB_FS, file wrapper class v1.0.3.
+ * The MB_FS, file wrapper class v1.0.4.
  *
  * This wrapper class is for SD and Flash file interfaces which support SdFat in ESP32 (//https://github.com/greiman/SdFat)
  *
- *  Created February 28, 2022
+ *  Created May 14, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -95,6 +95,7 @@ struct mbfs_sd_config_info_t
     int sck = -1;
     int miso = -1;
     int mosi = -1;
+    uint32_t frequency = 4000000;
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
     SdSpiConfig *sdFatSPIConfig = nullptr;
@@ -138,7 +139,7 @@ public:
     struct mbfs_sd_config_info_t sd_config;
 
     // Assign the SD card interfaces with GPIO pins.
-    bool sdBegin(int ss = -1, int sck = -1, int miso = -1, int mosi = -1)
+    bool sdBegin(int ss = -1, int sck = -1, int miso = -1, int mosi = -1, uint32_t frequency = 4000000)
     {
         if (sd_rdy)
             return true;
@@ -150,7 +151,8 @@ public:
         sd_config.miso = miso;
         sd_config.mosi = mosi;
         SPI.begin(sck, miso, mosi, ss);
-        return sdSPIBegin(ss, &SPI);
+        sd_config.frequency = frequency;
+        return sdSPIBegin(ss, &SPI, frequency);
 #elif defined(ESP8266) || defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
         sd_rdy = MBFS_SD_FS.begin(ss);
         return sd_rdy;
@@ -163,11 +165,13 @@ public:
 #if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 
     // Assign the SD card interfaces with SPIClass object pointer (ESP32 only).
-    bool sdSPIBegin(int ss, SPIClass *spiConfig)
+    bool sdSPIBegin(int ss, SPIClass *spiConfig, uint32_t frequency)
     {
 
         if (sd_rdy)
             return true;
+
+        sd_config.frequency = frequency;
 
 #if defined(ESP32)
 
@@ -180,7 +184,7 @@ public:
 
 #if !defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
         if (ss > -1)
-            sd_rdy = MBFS_SD_FS.begin(ss, *sd_config.spiConfig);
+            sd_rdy = MBFS_SD_FS.begin(ss, *sd_config.spiConfig, frequency);
         else
             sd_rdy = MBFS_SD_FS.begin();
 #endif
@@ -320,7 +324,7 @@ public:
             sd_rdy = MBFS_SD_FS.begin(*sd_config.sdFatSPIConfig);
 #else
         if (!sd_rdy)
-            sd_rdy = sdSPIBegin(sd_config.ss, sd_config.spiConfig);
+            sd_rdy = sdSPIBegin(sd_config.ss, sd_config.spiConfig, sd_config.frequency);
 
 #endif
 
@@ -783,14 +787,14 @@ public:
         return (size_t)newlen;
     }
 
-    void createDirs(MB_String dirs)
+    void createDirs(MB_String dirs, mbfs_file_type type)
     {
         if (!longNameSupported())
             return;
 
-#if defined(MBFS_SD_FS)
         MB_String dir;
         int count = 0;
+        int lastPos = 0;
         for (size_t i = 0; i < dirs.length(); i++)
         {
             dir.append(1, dirs[i]);
@@ -798,15 +802,37 @@ public:
             if (dirs[i] == '/' && i > 0)
             {
                 if (dir.length() > 0)
-                    MBFS_SD_FS.mkdir(dir.substr(0, dir.length() - 1).c_str());
+                {
+
+                    lastPos = dir.length() - 1;
+
+#if defined(MBFS_FLASH_FS)
+                    if (type == mbfs_flash)
+                        MBFS_FLASH_FS.mkdir(dir.substr(0, dir.length() - 1).c_str());
+#elif defined(MBFS_SD_FS)
+                    if (type == mbfs_sd)
+                        MBFS_SD_FS.mkdir(dir.substr(0, dir.length() - 1).c_str());
+#endif
+                }
                 count = 0;
             }
         }
 
         if (count > 0)
-            MBFS_SD_FS.mkdir(dir.c_str());
-        dir.clear();
+        {
+            if (dir.find('.', lastPos) == MB_String::npos)
+            {
+#if defined(MBFS_FLASH_FS)
+                if (type == mbfs_flash)
+                    MBFS_FLASH_FS.mkdir(dir.c_str());
+#elif defined(MBFS_SD_FS)
+                if (type == mbfs_sd)
+                    MBFS_SD_FS.mkdir(dir.c_str());
 #endif
+            }
+        }
+
+        dir.clear();
     }
 
     bool longNameSupported()
@@ -889,6 +915,7 @@ private:
         else if (mode == mb_fs_open_mode_write)
         {
             remove(filename, mb_fs_mem_storage_type_sd);
+            createDirs(filename.c_str(), mb_fs_mem_storage_type_sd);
             if (mb_sdFs.open(filename.c_str(), O_RDWR | O_CREAT | O_APPEND))
             {
                 sd_file = filename;
@@ -961,6 +988,8 @@ private:
         else if (mode == mb_fs_open_mode_write)
         {
             remove(filename, mb_fs_mem_storage_type_flash);
+
+            createDirs(filename.c_str(), mb_fs_mem_storage_type_flash);
             mb_flashFs = MBFS_FLASH_FS.open(filename.c_str(), "w");
             if (mb_flashFs)
             {

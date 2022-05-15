@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.16
+ * Google's Cloud Storage class, GCS.cpp version 1.1.17
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 18, 2022
+ * Created May 13, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -321,23 +321,19 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     int ret = 0;
 
-    if (req->requestType == fb_esp_gcs_request_type_download)
-    {
-        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
-        if (ret < 0)
-        {
-            fbdo->session.response.code = ret;
-            return false;
-        }
-    }
-    else
+    if (req->requestType != fb_esp_gcs_request_type_download)
     {
         if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
         {
 
             ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
 
-            if (ret < 0)
+            // Close file and open later. 
+            // This is inefficient unless less memory usage than keep file opened
+            // which causes the issue in ESP32 core 2.0.x
+            if (ret > 0)
+                ut->mbfs->close(mbfs_type req->storageType);
+            else if (ret < 0)
             {
                 fbdo->session.response.code = ret;
                 return false;
@@ -681,6 +677,10 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             int read = 0;
 
+            // This is inefficient unless less memory usage than keep file opened
+            // which causes the issue in ESP32 core 2.0.x
+            ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
+
             while (available)
             {
                 if (available > bufLen)
@@ -724,6 +724,10 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             size_t totalBytes = req->fileSize;
             if (req->chunkRange != -1 || req->location.length() > 0)
             {
+                // This is inefficient unless less memory usage than keep file opened
+                // which causes the issue in ESP32 core 2.0.x
+                ut->mbfs->close(mbfs_type req->storageType);
+                ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
                 byteRead = req->chunkPos;
                 ut->mbfs->seek(mbfs_type req->storageType, req->chunkPos);
                 totalBytes = req->chunkPos + req->chunkLen;
@@ -1627,6 +1631,16 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
     if (!fbdo->tcpClient.connected())
         fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
+
+    if (req->requestType == fb_esp_gcs_request_type_download && strlen(ut->mbfs->name(mbfs_type req->storageType)) == 0)
+    {
+        int ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
+        if (ret < 0)
+        {
+            fbdo->session.response.code = ret;
+            return false;
+        }
+    }
 
     int availablePayload = chunkBufSize;
 

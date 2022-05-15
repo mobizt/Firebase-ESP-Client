@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.12
+ * Google's Cloud Functions class, Functions.cpp version 1.1.13
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 7, 2022
+ * Created May 13, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -152,6 +152,11 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
                 return false;
             }
         }
+        
+        // Close file and open later.
+        // This is inefficient unless less memory usage than keep file opened
+        // which causes the issue in ESP32 core 2.0.x
+        ut->mbfs->close(mbfs_type config->_uploadArchiveStorageType);
 
         addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_gen_upload_url, fb_esp_functions_creation_step_upload_zip_file, cb, info);
         return true;
@@ -810,6 +815,12 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_functions_request_type_upload)
         {
+            // This is inefficient unless less memory usage than keep file opened
+            // which causes the issue in ESP32 core 2.0.x
+            MB_String filename = ut->mbfs->name(mbfs_type req->storageType);
+            ut->mbfs->open(filename.c_str(), mbfs_type req->storageType, mb_fs_open_mode_read);
+
+           
             int available = ut->mbfs->available(mbfs_type req->storageType);
             int bufLen = 512;
             uint8_t *buf = new uint8_t[bufLen + 1];

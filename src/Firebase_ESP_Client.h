@@ -1,16 +1,18 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.3.2"
+#define FIREBASE_CLIENT_VERSION "3.3.3"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.3.2
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.3.3
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created May 11, 2022
+ * Created May 15, 2022
  *
  *   Updates:
- * - Fixed serverResponse timeout config issue.
+ * - Fixed filesystems memory related issue in ESP32 core v2.0.x.
+ * - Fixed missing directory creation issue in flash filesystems.
+ * - Fixed Google RTDB silent printing bugs.
  *
  *
  * This work is a part of Firebase ESP Client library

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.19
+ * Google's Firebase Storage class, FCS.cpp version 1.1.20
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 18, 2022
+ * Created May 13, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -108,6 +108,7 @@ bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
         }
     }
 
+    
     bool ret = fcs_sendRequest(fbdo, req);
 
     if (!ret)
@@ -356,20 +357,26 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
     int ret = 0;
 
-    if (req->requestType == fb_esp_fcs_request_type_download)
-        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
-    else if (req->requestType == fb_esp_fcs_request_type_upload)
+    if (req->requestType == fb_esp_fcs_request_type_upload)
         ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
 
-    if (ret < 0)
+    // Close file and open later.
+    // This is inefficient unless less memory usage than keep file opened
+    // which causes the issue in ESP32 core 2.0.x
+    if (ret > 0)
+        ut->mbfs->close(mbfs_type req->storageType); // fixed for ESP32 core v2.0.2, SPIFFS file
+    else if (ret < 0)
     {
         fbdo->session.response.code = ret;
         return false;
     }
 
+
     req->fileSize = ret;
 
     MB_String header;
+
+    size_t len = 0;
 
     ret = -1;
 
@@ -413,7 +420,6 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
         header += fb_esp_pgm_str_12;
 
-        size_t len = 0;
         if (req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
             len = req->pgmArcLen;
         else if (req->requestType == fb_esp_fcs_request_type_upload)
@@ -479,7 +485,12 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_fcs_request_type_upload)
         {
-            int available = ut->mbfs->available(mbfs_type req->storageType);
+            int available = len;
+
+            // This is inefficient unless less memory usage than keep file opened
+            // which causes the issue in ESP32 core 2.0.x
+            ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
+
             int bufLen = Signer.getCfg()->fcs.upload_buffer_size;
             if (bufLen < 512)
                 bufLen = 512;
@@ -494,14 +505,20 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             {
                 if (available > bufLen)
                     available = bufLen;
+
                 read = ut->mbfs->read(mbfs_type req->storageType, buf, available);
+
                 if (fbdo->tcpClient.write(buf, read) != read)
                     break;
+
                 readCount += read;
                 reportUploadProgress(fbdo, req, readCount);
+
                 available = ut->mbfs->available(mbfs_type req->storageType);
             }
+
             ut->delP(&buf);
+
             ut->mbfs->close(mbfs_type req->storageType);
             reportUploadProgress(fbdo, req, req->fileSize);
         }
@@ -651,6 +668,18 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
 #ifdef ENABLE_FB_FUNCTIONS
     fbdo->session.cfn.payload.clear();
 #endif
+
+    int ret = 0;
+
+    if (req->requestType == fb_esp_fcs_request_type_download)
+        ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
+
+    if (ret < 0)
+    {
+        fbdo->tcpClient.flush();
+        fbdo->session.response.code = ret;
+        return false;
+    }
 
     if (chunkBufSize > 1)
     {

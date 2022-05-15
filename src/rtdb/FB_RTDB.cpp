@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.10
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.11
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 22, 2022
+ * Created May 13, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1203,10 +1203,17 @@ bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_
         return false;
     }
 
+    // Close file and open later.
+    ut->mbfs->close(mbfs_type storageType);
+
     if ((storageType == mem_storage_type_flash || storageType == mem_storage_type_sd) && !ut->mbfs->ready(mbfs_type storageType))
         return false;
 
     FirebaseJsonArray arr;
+
+    // This is inefficient unless less memory usage than keep file opened
+    // which causes the issue in ESP32 core 2.0.x
+    ut->mbfs->open(_filename, mbfs_type storageType, mb_fs_open_mode_write);
 
     for (uint8_t i = 0; i < fbdo->_qMan.size(); i++)
     {
@@ -2102,7 +2109,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         ret = sendHeader(fbdo, req);
     }
 
-    if (req->method == m_get_nocontent || req->method == m_patch_nocontent || (req->method == m_put_nocontent && req->data.type == d_blob))
+    if (req->method == m_get_nocontent || req->method == m_patch_nocontent || (req->method == m_put_nocontent && (req->data.type == d_blob || req->data.type == d_file)))
         fbdo->session.rtdb.no_content_req = true;
 
     if (req->data.type == d_blob)
@@ -2224,6 +2231,12 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         }
         else
         {
+            // This is inefficient unless less memory usage than keep file opened
+            // which causes the issue in ESP32 core 2.0.x
+            MB_String filenme = ut->mbfs->name(mbfs_type req->storageType);
+            ut->mbfs->close(mbfs_type req->storageType);
+            ut->mbfs->open(filenme.c_str(), mbfs_type req->storageType, mb_fs_open_mode_read);
+
             while (len)
             {
                 if (!fbdo->reconnect())
@@ -2287,6 +2300,12 @@ void FB_RTDB::sendBase64File(FirebaseData *fbdo, size_t bufSize, const MB_String
     size_t fbuffIndex = 0;
     unsigned char *fbuff = (unsigned char *)ut->newP(3);
     int readLen = 0;
+
+    // This is inefficient unless less memory usage than keep file opened
+    // which causes the issue in ESP32 core 2.0.x
+    MB_String filenme = ut->mbfs->name(mbfs_type req->storageType);
+    ut->mbfs->close(mbfs_type req->storageType);
+    ut->mbfs->open(filenme.c_str(), mbfs_type req->storageType, mb_fs_open_mode_read);
 
     while (ut->mbfs->available(mbfs_type storageType))
     {
@@ -2549,6 +2568,15 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
     dataTime = millis();
 
+    if (req->task_type == fb_esp_rtdb_task_download_rules || req->method == m_download)
+    {
+        // This is inefficient unless less memory usage than keep file opened
+        // which causes the issue in ESP32 core 2.0.x
+        MB_String filenme = ut->mbfs->name(mbfs_type req->storageType);
+        ut->mbfs->close(mbfs_type req->storageType);
+        ut->mbfs->open(filenme.c_str(), mbfs_type req->storageType, mb_fs_open_mode_write);
+    }
+
     while (chunkBufSize > 0)
     {
         ut->idle();
@@ -2659,6 +2687,38 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
                         fbdo->session.rtdb.resp_etag = response.etag;
 
+                        if (response.httpCode == 401)
+                            Signer.authenticated = false;
+                        else if (response.httpCode < 300)
+                            Signer.authenticated = true;
+
+                        // Fixed for silent print query bugs (&print=silent)
+                        // Currently returning 404 instead of 204
+
+                        if (fbdo->session.rtdb.no_content_req && response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
+                        {
+                            fbdo->session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
+                            fbdo->session.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
+
+                            if (req->method == m_get || req->method == m_get_nocontent)
+                            {
+                                if (ut->stringCompare(fbdo->session.rtdb.resp_etag.c_str(), 0, fb_esp_pgm_str_151))
+                                {
+                                    fbdo->session.response.code = FIREBASE_ERROR_PATH_NOT_EXIST;
+                                    fbdo->session.rtdb.path_not_found = true;
+                                    response.httpCode = FIREBASE_ERROR_HTTP_CODE_NO_CONTENT;
+                                    response.noContent = true;
+                                }
+                            }
+
+                            if (tmp)
+                                ut->delP(&tmp);
+
+                            fbdo->closeSession();
+
+                            return true;
+                        }
+
                         if (ut->strposP(response.contentType.c_str(), fb_esp_pgm_str_9, 0) > -1)
                         {
                             chunkBufSize = fbdo->tcpClient.available();
@@ -2686,11 +2746,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                         }
 
                         header.clear();
-
-                        if (response.httpCode == 401)
-                            Signer.authenticated = false;
-                        else if (response.httpCode < 300)
-                            Signer.authenticated = true;
 
                         // error in request or server
                         if (response.httpCode >= 400)
@@ -2756,7 +2811,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                     // the next chuunk data is the payload
                     if (!response.noContent && !fbdo->session.buffer_ovf)
                     {
-
                         pChunkIdx++;
 
                         pChunk = (char *)ut->newP(chunkBufSize + 10);

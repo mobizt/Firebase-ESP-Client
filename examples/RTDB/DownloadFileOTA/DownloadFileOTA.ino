@@ -157,8 +157,8 @@ void loop()
         // Assume you use the following code to upload the firmware file stored on SD card to RTDB at path test/firmware/bin
 
         /*
-        Serial.println("\nUpload firmware to database...\n");
-        if (!Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, "test/firmware/bin", "<firmware.bin>", rtdbUploadCallback))
+          Serial.println("\nUpload firmware to database...\n");
+          if (!Firebase.RTDB.setFile(&fbdo, mem_storage_type_sd, "test/firmware/bin", "<firmware.bin>", rtdbUploadCallback))
             Serial.println(fbdo.errorReason());
         */
 

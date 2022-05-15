@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.22
+ * The Firebase class, Firebase.h v1.0.23
  *
- *  Created April 25, 2022
+ *  Created May 15, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -297,9 +297,10 @@ public:
    * @param sck SPI Clock pin.
    * @param miso SPI MISO pin.
    * @param mosi SPI MOSI pin.
+   * @param frequency The SPI frequency
    * @return Boolean type status indicates the success of the operation.
    */
-  bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+  bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
 
 #if defined(ESP8266)
 
@@ -318,9 +319,10 @@ public:
    *
    * @param ss SPI Chip/Slave Select pin.
    * @param spiConfig The pointer to SPIClass object for SPI configuartion (ESP32 only).
+   * @param frequency The SPI frequency (ESP32 only)
    * @return Boolean type status indicates the success of the operation.
    */
-  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
+  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr, uint32_t frequency = 4000000);
 #endif
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
@@ -2342,9 +2344,10 @@ public:
    * @param sck SPI Clock pin.
    * @param miso SPI MISO pin.
    * @param mosi SPI MOSI pin.
+   * @param frequency The SPI frequency
    * @return Boolean type status indicates the success of the operation.
    */
-  bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+  bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
 
 #if defined(ESP8266)
 
@@ -2362,10 +2365,10 @@ public:
   /** SD card config with chip select and SPI configuration (ESP32 only).
    *
    * @param ss SPI Chip/Slave Select pin.
-   * @param spiConfig The pointer to SPIClass object for SPI configuartion (ESP32 only).
+   * @param frequency The SPI frequency (ESP32 only)
    * @return Boolean type status indicates the success of the operation.
    */
-  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
+  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr, uint32_t frequency = 4000000);
 #endif
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)

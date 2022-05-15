@@ -1,6 +1,6 @@
 
 /**
- * Created April 23, 2022
+ * Created May 15, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1754,7 +1754,11 @@ static const char fb_esp_pgm_str_25[] PROGMEM = "GET";
 static const char fb_esp_pgm_str_26[] PROGMEM = "PATCH";
 static const char fb_esp_pgm_str_27[] PROGMEM = "DELETE";
 static const char fb_esp_pgm_str_28[] PROGMEM = "&download=";
-static const char fb_esp_pgm_str_29[] PROGMEM = "&print=silent";
+
+
+// We can't trust this feature anymore
+static const char fb_esp_pgm_str_29[] PROGMEM = ""; // &print=silent
+
 static const char fb_esp_pgm_str_30[] PROGMEM = " HTTP/1.1\r\n";
 static const char fb_esp_pgm_str_31[] PROGMEM = "Host: ";
 static const char fb_esp_pgm_str_32[] PROGMEM = "User-Agent: ESP\r\n";
