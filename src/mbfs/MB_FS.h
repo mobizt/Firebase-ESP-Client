@@ -1,9 +1,9 @@
 /**
- * The MB_FS, file wrapper class v1.0.4.
+ * The MB_FS, file wrapper class v1.0.6.
  *
  * This wrapper class is for SD and Flash file interfaces which support SdFat in ESP32 (//https://github.com/greiman/SdFat)
  *
- *  Created May 14, 2022
+ *  Created May 16, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -35,7 +35,8 @@
 #include <FS.h>
 #endif
 #include "MB_FS_Interfaces.h"
-#include "json/FirebaseJson.h"
+#include MB_STRING_INCLUDE_CLASS
+#include "SPI.h"
 
 using namespace mb_string;
 
@@ -330,7 +331,7 @@ public:
 
 #elif defined(MBFS_CARD_TYPE_SD_MMC)
         if (!sd_rdy)
-            sd_rdy = sdMMCBegin(sd_config.sd_mmc_mountpoint, sd_config.sd_mmc_mode1bit, sd_config.sd_mmc_format_if_mount_failed);
+            sd_rdy = sdMMCBegin(sd_config.sdMMCConfig.mountpoint, sd_config.sdMMCConfig.mode1bit, sd_config.sdMMCConfig.format_if_mount_failed);
 #endif
 
 #elif defined(ESP8266)
@@ -809,7 +810,9 @@ public:
 #if defined(MBFS_FLASH_FS)
                     if (type == mbfs_flash)
                         MBFS_FLASH_FS.mkdir(dir.substr(0, dir.length() - 1).c_str());
-#elif defined(MBFS_SD_FS)
+#endif
+
+#if defined(MBFS_SD_FS)
                     if (type == mbfs_sd)
                         MBFS_SD_FS.mkdir(dir.substr(0, dir.length() - 1).c_str());
 #endif
@@ -825,7 +828,9 @@ public:
 #if defined(MBFS_FLASH_FS)
                 if (type == mbfs_flash)
                     MBFS_FLASH_FS.mkdir(dir.c_str());
-#elif defined(MBFS_SD_FS)
+#endif
+
+#if defined(MBFS_SD_FS)
                 if (type == mbfs_sd)
                     MBFS_SD_FS.mkdir(dir.c_str());
 #endif
@@ -915,7 +920,7 @@ private:
         else if (mode == mb_fs_open_mode_write)
         {
             remove(filename, mb_fs_mem_storage_type_sd);
-            createDirs(filename.c_str(), mb_fs_mem_storage_type_sd);
+            createDirs(filename, mb_fs_mem_storage_type_sd);
             if (mb_sdFs.open(filename.c_str(), O_RDWR | O_CREAT | O_APPEND))
             {
                 sd_file = filename;
@@ -941,6 +946,7 @@ private:
         else if (mode == mb_fs_open_mode_write)
         {
             remove(filename, mb_fs_mem_storage_type_sd);
+            createDirs(filename, mb_fs_mem_storage_type_sd);
             mb_sdFs = MBFS_SD_FS.open(filename.c_str(), FILE_WRITE);
             if (mb_sdFs)
             {
@@ -988,8 +994,7 @@ private:
         else if (mode == mb_fs_open_mode_write)
         {
             remove(filename, mb_fs_mem_storage_type_flash);
-
-            createDirs(filename.c_str(), mb_fs_mem_storage_type_flash);
+            createDirs(filename, mb_fs_mem_storage_type_flash);
             mb_flashFs = MBFS_FLASH_FS.open(filename.c_str(), "w");
             if (mb_flashFs)
             {
