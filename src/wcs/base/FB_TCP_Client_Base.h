@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.3
+ * TCP Client Base class, version 1.0.4
  *
- * Created May 10, 2022
+ * Created May 22, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -153,6 +153,9 @@ public:
 
         if (len == 0)
             return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
+
+        if (!networkReady())
+            return setError(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
 
         // call base or derived connect.
         if (!connect())
