@@ -365,7 +365,7 @@ The authenticate using the legacy token (database secret) does not have these de
 This library focuses on the user privacy and user data protection which follows Google authentication processes. Setting the security rules to allow public access read and write, is not recommended even the data transmision time in this case was significantly reduced as it does not require any auth token then the overall data size was reduced, but anyone can steal, modify, or delete data in your database.
 
 
-Once the auth token is importance and when it was created and ready for authentication process, the data transmission time will depend on the time used in SSL/TLS handshake process (only for new session opening), the size of http header (included auth token size) and payload to be transmitted and the SSL client buffer reserved size especially in ESP8266.
+Once the auth token is important and when it was created and ready for authentication process, the data transmission time will depend on the time used in SSL/TLS handshake process (only for new session opening), the size of http header (included auth token size) and payload to be transmitted and the SSL client buffer reserved size especially in ESP8266.
 
 
 The legacy token size is relatively small, only 40 bytes, result in smallest header to send, while the size of id token generated using Email/Password is quite large, approx. 900 bytes. result in larger header to send.
