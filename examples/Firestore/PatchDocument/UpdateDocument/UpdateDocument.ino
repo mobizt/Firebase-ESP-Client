@@ -132,7 +132,7 @@ void loop()
         Serial.print("Update a document... ");
 
         /** if updateMask contains the field name that exists in the remote document and
-         * this field name does not exist in the document (content), that field will be delete from remote document
+         * this field name does not exist in the document (content), that field will be deleted from remote document
          */
 
         if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.raw(), "count,status" /* updateMask */))
