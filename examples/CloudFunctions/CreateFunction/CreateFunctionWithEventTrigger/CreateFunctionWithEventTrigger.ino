@@ -24,14 +24,18 @@
  *
  * This operation required OAUth2.0 authentication.
  *
- * You need to upload the zip file "firestoreImageDownloadTrigger.zip" in the data folder to the falsh memory at "/firestoreImageDownloadTrigger.zip".
+ * You need to upload the zip file "gcf.zip" in the data folder to the falsh memory at "/gcf.zip".
  *
- * After the firestoreImageDownloadTrigger function deployed successfully, create the collection "ImageList" and try to add the document in it which contains the field url and name fields.
+ * File gcf.zip contains the sources of function firestoreImageDownloadTrigger.
+ * 
+ * The name of zip file should be short to avoid long file name image data upload error in IDE.
+ *
+ * After the firestoreImageDownloadTrigger function in gcf.zip was deployed successfully, create the collection "ImageList" and try to add the document in it which contains the field url and name fields.
  * The "url" field's value is the string type to specify the remore file url to download and upload to the storage bucket.
- * The "name" fiel's  value is string type to specify the name of remote file (without extenssion).
+ * The "name" field's  value is the string type to specify the name of remote file (without extenssion).
  *
  * When the document created in "ImageList" collection with url and name fields inside, the Cloud Function, firestoreImageDownloadTrigger will be called,
- * and file will be downloaded from the specified filed "url" and upload to the Storage bucket at path "Images" with the name asssiggnd by the filed "name".
+ * and file will be downloaded from the specified field "url" and upload to the Storage bucket at path "Images" with the name asssiggnd by the filed "name".
  */
 
 /** The pointer, points to the operation info assigned to the create function will provide the progress of deployment that can be accessed later.
@@ -178,8 +182,8 @@ void creatFunction()
 
     function_config.setEventTrigger("providers/cloud.firestore/eventTypes/document.create", resource);
 
-    // if firestoreImageDownloadTrigger.zip is already upload to flash memory
-    function_config.setSource("/firestoreImageDownloadTrigger.zip" /* relative file path in the Firebase Storage data bucket */, functions_sources_type_local_archive /* source type */);
+    // if gcf.zip is already upload to flash memory
+    function_config.setSource("/gcf.zip" /* relative file path in the Firebase Storage data bucket */, functions_sources_type_local_archive /* source type */, mem_storage_type_flash /* type of memory storage e.g. mem_storage_type_flash or mem_storage_type_sd */);
 
     function_config.setIngressSettings("ALLOW_ALL");
 

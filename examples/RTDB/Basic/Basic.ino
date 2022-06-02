@@ -115,7 +115,7 @@ void setup()
   //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
   config.timeout.wifiReconnect = 10 * 1000;
 
-  //Socket connection and SSL handshake timeout in ms (1 sec - 1 min).
+  //Socket connection and SSL handshake timeout in ms (1 sec - 3 min).
   config.timeout.socketConnection = 10 * 1000;
 
   //Server response read timeout in ms (1 sec - 1 min).

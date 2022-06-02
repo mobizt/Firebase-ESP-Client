@@ -175,7 +175,7 @@ void creatFunction()
     function_config.setSource("/helloWorld.zip" /* relative file path in the Firebase Storage data bucket */, functions_sources_type_storage_bucket_archive /* source type */);
 
     // or if it in the local memory storage i.e. flash or SD
-    // function_config.setSource("/helloWorld.zip" /* file path */, functions_sources_type_local_archive /* source type */,  mem_storage_type_flash /* type of memory storage */);
+    // function_config.setSource("/helloWorld.zip" /* file path */, functions_sources_type_local_archive /* source type */,  mem_storage_type_flash /* type of memory storage e.g. mem_storage_type_flash or mem_storage_type_sd */);
 
     // or the source code archive is hosted in the Cloud Storage repo
     // function_config.setSource("PATH to zip file hosted on the repo", functions_sources_type_repository /* source type */);

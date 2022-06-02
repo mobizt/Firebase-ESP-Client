@@ -1,6 +1,6 @@
 
 /**
- * Created May 15, 2022
+ * Created June 2, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -80,7 +80,7 @@ class QueryFilter;
 
 #define MIN_SOCKET_CONN_TIMEOUT 1 * 1000
 #define DEFAULT_SOCKET_CONN_TIMEOUT 10 * 1000
-#define MAX_SOCKET_CONN_TIMEOUT 60 * 1000
+#define MAX_SOCKET_CONN_TIMEOUT 180 * 1000
 
 #define MIN_SERVER_RESPONSE_TIMEOUT 1 * 1000
 #define DEFAULT_SERVER_RESPONSE_TIMEOUT 10 * 1000
@@ -1178,6 +1178,9 @@ struct fb_esp_functions_info_t
     fb_esp_functions_operation_status last_status = fb_esp_functions_operation_status_unknown;
     FunctionsOperationStatusInfo cbInfo;
     MB_String payload;
+    MB_String filepath;
+    fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
+    uint32_t fileSize = 0;
 };
 
 struct fb_esp_functions_https_trigger_t
@@ -1813,7 +1816,7 @@ static const char fb_esp_pgm_str_80[] PROGMEM = "Content-Disposition: ";
 static const char fb_esp_pgm_str_81[] PROGMEM = "application/octet-stream";
 static const char fb_esp_pgm_str_82[] PROGMEM = "attachment";
 static const char fb_esp_pgm_str_83[] PROGMEM = "unknown error";
-// static const char fb_esp_pgm_str_84[] PROGMEM = "";
+static const char fb_esp_pgm_str_84[] PROGMEM = "operations/[0]/error/code";
 static const char fb_esp_pgm_str_85[] PROGMEM = "The SD card is not available";
 static const char fb_esp_pgm_str_86[] PROGMEM = "Could not read/write the backup file";
 static const char fb_esp_pgm_str_87[] PROGMEM = "Transmission error, ";
@@ -2199,7 +2202,7 @@ static const char fb_esp_pgm_str_459[] PROGMEM = "nodejs12";
 static const char fb_esp_pgm_str_460[] PROGMEM = "ALLOW_ALL";
 static const char fb_esp_pgm_str_461[] PROGMEM = "roles/cloudfunctions.invoker";
 static const char fb_esp_pgm_str_462[] PROGMEM = "allUsers";
-static const char fb_esp_pgm_str_463[] PROGMEM = "\"sourceUploadUrl\":";
+//static const char fb_esp_pgm_str_463[] PROGMEM = "\"sourceUploadUrl\":";
 static const char fb_esp_pgm_str_464[] PROGMEM = "\",";
 static const char fb_esp_pgm_str_465[] PROGMEM = ":getIamPolicy";
 static const char fb_esp_pgm_str_466[] PROGMEM = "options.requestedPolicyVersion";

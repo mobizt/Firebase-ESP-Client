@@ -687,7 +687,7 @@ protected:
     // In esp8266, this is actually Arduino base Stream (char read) timeout.
     //  This will override internally by WiFiClientSecureCtx::_connectSSL
     //  to 5000 after SSL handshake was done with success.
-    int timeoutMs = 40000; // 40 sec
+    int timeoutMs = 120000; // 120 sec
     bool clockReady = false;
     time_t now = 0;
     int *response_code = nullptr;
