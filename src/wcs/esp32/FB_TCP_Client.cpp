@@ -162,7 +162,7 @@ void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
   if (wcs)
     wcs->setTimeout(timeoutmSec / 1000);
 
-  baseSetTimeout(timeoutmSec);
+  baseSetTimeout(timeoutmSec / 1000);
 }
 
 bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
