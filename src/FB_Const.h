@@ -1,6 +1,6 @@
 
 /**
- * Created June 2, 2022
+ * Created June 3, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1759,8 +1759,11 @@ static const char fb_esp_pgm_str_27[] PROGMEM = "DELETE";
 static const char fb_esp_pgm_str_28[] PROGMEM = "&download=";
 
 
-// We can't trust this feature anymore
-static const char fb_esp_pgm_str_29[] PROGMEM = ""; // &print=silent
+#if defined(FIXED_PRINT_SILENT_REQ_PARAM_ISSUE)
+static const char fb_esp_pgm_str_29[] PROGMEM = ""; 
+#else
+static const char fb_esp_pgm_str_29[] PROGMEM = "&print=silent"; // &print=silent
+#endif
 
 static const char fb_esp_pgm_str_30[] PROGMEM = " HTTP/1.1\r\n";
 static const char fb_esp_pgm_str_31[] PROGMEM = "Host: ";
@@ -2188,7 +2191,7 @@ static const char fb_esp_pgm_str_446[] PROGMEM = "%[^&]";
 #if defined(FIREBASE_ESP_CLIENT)
 static const char fb_esp_pgm_str_447[] PROGMEM = "application/zip";
 static const char fb_esp_pgm_str_448[] PROGMEM = "x-goog-content-length-range: 0,104857600";
-// static const char fb_esp_pgm_str_449[] PROGMEM = "";
+static const char fb_esp_pgm_str_449[] PROGMEM = "GCLOUD_PROJECT";
 static const char fb_esp_pgm_str_450[] PROGMEM = "Archive not found";
 static const char fb_esp_pgm_str_451[] PROGMEM = "iam";
 static const char fb_esp_pgm_str_452[] PROGMEM = "autozip";

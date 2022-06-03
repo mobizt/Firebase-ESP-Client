@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.11
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.12
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 13, 2022
+ * Created June 3, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -2692,8 +2692,10 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                         else if (response.httpCode < 300)
                             Signer.authenticated = true;
 
-                        // Fixed for silent print query bugs (&print=silent)
-                        // Currently returning 404 instead of 204
+                            // Fixed for silent print query bugs (&print=silent)
+                            // Currently returning 404 instead of 204
+
+#if defined(FIXED_PRINT_SILENT_REQ_PARAM_ISSUE)
 
                         if (fbdo->session.rtdb.no_content_req && response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
                         {
@@ -2718,6 +2720,8 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
                             return true;
                         }
+
+#endif
 
                         if (ut->strposP(response.contentType.c_str(), fb_esp_pgm_str_9, 0) > -1)
                         {

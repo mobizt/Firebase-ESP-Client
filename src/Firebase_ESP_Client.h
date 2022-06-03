@@ -1,16 +1,21 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.3.6"
+#define FIREBASE_CLIENT_VERSION "3.3.7"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.3.6
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v3.3.7
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created May 22, 2022
+ * Created June 3, 2022
  *
  *   Updates:
- * - Fixed network interface is not ready issue which causes ESP32 crashed.
+ * - Fixed Cloud Functions deployment from local archive issue.
+ * - Fixed Cloud Functions deployment runtime variables issue.
+ * - Fixed Cloud Functions call function issue.
+ * - Fixed socket connection timeout issues in ESP32.
+ * - Due to Google bugs were gone, revert "print=silent" 
+ *   to RTDB API query parameter and allowed it to be disabled/enabled via FirebaseFS.h.
  *
  *
  * This work is a part of Firebase ESP Client library

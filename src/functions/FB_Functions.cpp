@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created June 2, 2022
+ * Created June 3, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -278,7 +278,7 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
     MB_String str = fbdo->session.jsonPtr->raw();
     fbdo->session.jsonPtr->clear();
 
-    ut->replaceAll(str, pgm2Str(fb_esp_pgm_str_3), pgm2Str(fb_esp_pgm_str_396));
+   // ut->replaceAll(str, pgm2Str(fb_esp_pgm_str_3), pgm2Str(fb_esp_pgm_str_396));
 
     t = fb_esp_pgm_str_374;
     t += fb_esp_pgm_str_1;
@@ -286,9 +286,18 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
 
     config->_funcCfg.set(t.c_str(), str.c_str());
 
+    
+
+    t = fb_esp_pgm_str_374;
+    t += fb_esp_pgm_str_1;
+    t += fb_esp_pgm_str_449;
+
+    config->_funcCfg.set(t.c_str(), config->_projectId);
+
     config->_httpsTriggerUrl.clear();
 
     config->_httpsTriggerUrl.clear();
+
     str.clear();
 
     if (config->_triggerType == fb_esp_functions_trigger_type_https)
