@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.3.12
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.0
  *
  * This library supports Espressif ESP8266 and ESP32
  *
@@ -2692,37 +2692,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                         else if (response.httpCode < 300)
                             Signer.authenticated = true;
 
-                            // Fixed for silent print query bugs (&print=silent)
-                            // Currently returning 404 instead of 204
-
-#if defined(FIXED_PRINT_SILENT_REQ_PARAM_ISSUE)
-
-                        if (fbdo->session.rtdb.no_content_req && response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
-                        {
-                            fbdo->session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
-                            fbdo->session.http_code = FIREBASE_ERROR_HTTP_CODE_OK;
-
-                            if (req->method == m_get || req->method == m_get_nocontent)
-                            {
-                                if (ut->stringCompare(fbdo->session.rtdb.resp_etag.c_str(), 0, fb_esp_pgm_str_151))
-                                {
-                                    fbdo->session.response.code = FIREBASE_ERROR_PATH_NOT_EXIST;
-                                    fbdo->session.rtdb.path_not_found = true;
-                                    response.httpCode = FIREBASE_ERROR_HTTP_CODE_NO_CONTENT;
-                                    response.noContent = true;
-                                }
-                            }
-
-                            if (tmp)
-                                ut->delP(&tmp);
-
-                            fbdo->closeSession();
-
-                            return true;
-                        }
-
-#endif
-
                         if (ut->strposP(response.contentType.c_str(), fb_esp_pgm_str_9, 0) > -1)
                         {
                             chunkBufSize = fbdo->tcpClient.available();
@@ -3716,6 +3685,7 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         header += fb_esp_pgm_str_1;
 
     bool appendAuth = false;
+    bool hasQueryParams = false;
 
     if (fbdo->session.rtdb.redirect_url.length() > 0)
     {
@@ -3732,7 +3702,10 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         if (Signer.getTokenType() == token_type_oauth2_access_token || cfg->signer.test_mode)
             header += fb_esp_pgm_str_238;
         else
+        {
             header += fb_esp_pgm_str_2;
+            hasQueryParams = true;
+        }
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -3749,6 +3722,9 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     if (fbdo->session.rtdb.read_tmo > 0)
     {
+        header += hasQueryParams ? fb_esp_pgm_str_172 : fb_esp_pgm_str_173;
+        hasQueryParams = true;
+
         header += fb_esp_pgm_str_158;
         header += fbdo->session.rtdb.read_tmo;
         header += fb_esp_pgm_str_159;
@@ -3756,12 +3732,18 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     if (fbdo->session.rtdb.write_limit.length() > 0)
     {
+        header += hasQueryParams ? fb_esp_pgm_str_172 : fb_esp_pgm_str_173;
+        hasQueryParams = true;
+
         header += fb_esp_pgm_str_160;
         header += fbdo->session.rtdb.write_limit;
     }
 
     if (req->method == m_get_shallow)
     {
+        header += hasQueryParams ? fb_esp_pgm_str_172 : fb_esp_pgm_str_173;
+        hasQueryParams = true;
+
         header += fb_esp_pgm_str_155;
         fbdo->session.rtdb.shallow_flag = true;
     }
@@ -3775,6 +3757,10 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         if (query->_orderBy.length() > 0)
         {
             hasQuery = true;
+
+            header += hasQueryParams ? fb_esp_pgm_str_172 : fb_esp_pgm_str_173;
+            hasQueryParams = true;
+
             header += fb_esp_pgm_str_96;
             header += query->_orderBy;
 
@@ -3815,6 +3801,9 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     if (req->method == m_download)
     {
+        header += hasQueryParams ? fb_esp_pgm_str_172 : fb_esp_pgm_str_173;
+        hasQueryParams = true;
+
         header += fb_esp_pgm_str_162;
         header += fb_esp_pgm_str_28;
         MB_String filename;
@@ -3833,12 +3822,20 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     if (req->method == m_get && req->filename.length() > 0)
     {
+        header += hasQueryParams ? fb_esp_pgm_str_172 : fb_esp_pgm_str_173;
+        hasQueryParams = true;
+
         header += fb_esp_pgm_str_28;
         header += fbdo->session.rtdb.filename;
     }
 
     if (req->async || req->method == m_get_nocontent || req->method == m_restore || req->method == m_put_nocontent || req->method == m_patch_nocontent)
+    {
+        header += hasQueryParams ? fb_esp_pgm_str_172 : fb_esp_pgm_str_173;
+        hasQueryParams = true;
+
         header += fb_esp_pgm_str_29;
+    }
 
     header += fb_esp_pgm_str_30;
     header += fb_esp_pgm_str_31;

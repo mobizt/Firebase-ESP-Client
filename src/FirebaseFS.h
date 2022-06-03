@@ -98,10 +98,4 @@ static SdFat sd_fat_fs;   //should declare as static here
 // This will enable automatically for other devices.
 //#define FB_ENABLE_EXTERNAL_CLIENT
 
-// Uncomment this in case Firebase.RTDB.pathExisted() function returns wrong status.
-// This is because the bugs that Google server returns 404 HTTP code instead of 204 when
-// the query parameter print=silent was set in the API URL endpoint
-
-//#define FIXED_PRINT_SILENT_REQ_PARAM_ISSUE
-
 #endif

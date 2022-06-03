@@ -278,8 +278,6 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
     MB_String str = fbdo->session.jsonPtr->raw();
     fbdo->session.jsonPtr->clear();
 
-   // ut->replaceAll(str, pgm2Str(fb_esp_pgm_str_3), pgm2Str(fb_esp_pgm_str_396));
-
     t = fb_esp_pgm_str_374;
     t += fb_esp_pgm_str_1;
     t += fb_esp_pgm_str_386;

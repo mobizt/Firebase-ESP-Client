@@ -1756,15 +1756,8 @@ static const char fb_esp_pgm_str_24[] PROGMEM = "POST";
 static const char fb_esp_pgm_str_25[] PROGMEM = "GET";
 static const char fb_esp_pgm_str_26[] PROGMEM = "PATCH";
 static const char fb_esp_pgm_str_27[] PROGMEM = "DELETE";
-static const char fb_esp_pgm_str_28[] PROGMEM = "&download=";
-
-
-#if defined(FIXED_PRINT_SILENT_REQ_PARAM_ISSUE)
-static const char fb_esp_pgm_str_29[] PROGMEM = ""; 
-#else
-static const char fb_esp_pgm_str_29[] PROGMEM = "&print=silent"; // &print=silent
-#endif
-
+static const char fb_esp_pgm_str_28[] PROGMEM = "download=";
+static const char fb_esp_pgm_str_29[] PROGMEM = "print=silent";
 static const char fb_esp_pgm_str_30[] PROGMEM = " HTTP/1.1\r\n";
 static const char fb_esp_pgm_str_31[] PROGMEM = "Host: ";
 static const char fb_esp_pgm_str_32[] PROGMEM = "User-Agent: ESP\r\n";
@@ -1831,7 +1824,7 @@ static const char fb_esp_pgm_str_92[] PROGMEM = "\"blob,base64,";
 static const char fb_esp_pgm_str_93[] PROGMEM = "\"file,base64,";
 static const char fb_esp_pgm_str_94[] PROGMEM = "http connection was used by other processes";
 static const char fb_esp_pgm_str_95[] PROGMEM = "Location: ";
-static const char fb_esp_pgm_str_96[] PROGMEM = "&orderBy=";
+static const char fb_esp_pgm_str_96[] PROGMEM = "orderBy=";
 static const char fb_esp_pgm_str_97[] PROGMEM = "&limitToFirst=";
 static const char fb_esp_pgm_str_98[] PROGMEM = "&limitToLast=";
 static const char fb_esp_pgm_str_99[] PROGMEM = "&startAt=";
@@ -1890,14 +1883,14 @@ static const char fb_esp_pgm_str_151[] PROGMEM = "null_etag";
 static const char fb_esp_pgm_str_152[] PROGMEM = "Precondition Failed (ETag does not match)";
 static const char fb_esp_pgm_str_153[] PROGMEM = "X-HTTP-Method-Override: ";
 static const char fb_esp_pgm_str_154[] PROGMEM = "{\".sv\": \"timestamp\"}";
-static const char fb_esp_pgm_str_155[] PROGMEM = "&shallow=true";
+static const char fb_esp_pgm_str_155[] PROGMEM = "shallow=true";
 static const char fb_esp_pgm_str_156[] PROGMEM = "/.priority";
 static const char fb_esp_pgm_str_157[] PROGMEM = ".priority";
-static const char fb_esp_pgm_str_158[] PROGMEM = "&timeout=";
+static const char fb_esp_pgm_str_158[] PROGMEM = "timeout=";
 static const char fb_esp_pgm_str_159[] PROGMEM = "ms";
-static const char fb_esp_pgm_str_160[] PROGMEM = "&writeSizeLimit=";
+static const char fb_esp_pgm_str_160[] PROGMEM = "writeSizeLimit=";
 static const char fb_esp_pgm_str_161[] PROGMEM = ".value";
-static const char fb_esp_pgm_str_162[] PROGMEM = "&format=export";
+static const char fb_esp_pgm_str_162[] PROGMEM = "format=export";
 static const char fb_esp_pgm_str_163[] PROGMEM = "{";
 static const char fb_esp_pgm_str_164[] PROGMEM = "Flash memory was not ready";
 static const char fb_esp_pgm_str_165[] PROGMEM = "array";
@@ -1905,8 +1898,8 @@ static const char fb_esp_pgm_str_166[] PROGMEM = "\".sv\"";
 static const char fb_esp_pgm_str_167[] PROGMEM = "Transfer-Encoding: ";
 static const char fb_esp_pgm_str_168[] PROGMEM = "chunked";
 static const char fb_esp_pgm_str_169[] PROGMEM = "Maximum Redirection reached";
-static const char fb_esp_pgm_str_170[] PROGMEM = "?auth=";
-static const char fb_esp_pgm_str_171[] PROGMEM = "&auth=";
+// static const char fb_esp_pgm_str_170[] PROGMEM = "";
+// static const char fb_esp_pgm_str_171[] PROGMEM = "";
 static const char fb_esp_pgm_str_172[] PROGMEM = "&";
 static const char fb_esp_pgm_str_173[] PROGMEM = "?";
 static const char fb_esp_pgm_str_174[] PROGMEM = "#";
@@ -2205,7 +2198,7 @@ static const char fb_esp_pgm_str_459[] PROGMEM = "nodejs12";
 static const char fb_esp_pgm_str_460[] PROGMEM = "ALLOW_ALL";
 static const char fb_esp_pgm_str_461[] PROGMEM = "roles/cloudfunctions.invoker";
 static const char fb_esp_pgm_str_462[] PROGMEM = "allUsers";
-//static const char fb_esp_pgm_str_463[] PROGMEM = "\"sourceUploadUrl\":";
+// static const char fb_esp_pgm_str_463[] PROGMEM = "\"sourceUploadUrl\":";
 static const char fb_esp_pgm_str_464[] PROGMEM = "\",";
 static const char fb_esp_pgm_str_465[] PROGMEM = ":getIamPolicy";
 static const char fb_esp_pgm_str_466[] PROGMEM = "options.requestedPolicyVersion";
