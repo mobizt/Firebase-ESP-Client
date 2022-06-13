@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.20
+ * Firebase TCP Client v1.1.21
  *
- * Created June 2, 2022
+ * Created June 13, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -95,10 +95,12 @@ bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type s
 
       if (storageType == mb_fs_mem_storage_type_flash)
       {
+#if defined(MBFS_FLASH_FS)
         fs::File file = mbfs->getFlashFile();
         wcs->loadCACert(file, len);
-        mbfs->close(storageType);
         baseSetCertType(fb_cert_type_file);
+#endif
+        mbfs->close(storageType);
       }
       else if (storageType == mb_fs_mem_storage_type_sd)
       {
@@ -112,17 +114,15 @@ bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type s
         if (mbfs->available(storageType))
           mbfs->read(storageType, (uint8_t *)cert, len);
 
-        mbfs->close(storageType);
         wcs->setCACert((const char *)cert);
         baseSetCertType(fb_cert_type_file);
 
 #elif defined(MBFS_SD_FS)
         fs::File file = mbfs->getSDFile();
         wcs->loadCACert(file, len);
-        mbfs->close(storageType);
         baseSetCertType(fb_cert_type_file);
-
 #endif
+        mbfs->close(storageType);
       }
     }
   }
