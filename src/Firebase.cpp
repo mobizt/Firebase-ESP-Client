@@ -1,5 +1,5 @@
 /**
- * The Firebase class, Firebase.cpp v1.1.1
+ * The Firebase class, Firebase.cpp v1.1.2
  *
  *  Created July 10, 2022
  *
@@ -663,15 +663,19 @@ bool FIREBASE_CLASS::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t sck,
 {
     return mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
 }
+
+bool FIREBASE_CLASS::sdBegin(SdioConfig *sdFatSDIOConfig)
+{
+    return mbfs->sdFatBegin(sdFatSDIOConfig);
+}
 #endif
 
 #endif
 
-#if defined(ESP8266) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
+#if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
 
 bool FIREBASE_CLASS::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
 {
-
     return mbfs->sdMMCBegin(mountpoint, mode1bit, format_if_mount_failed);
 }
 
