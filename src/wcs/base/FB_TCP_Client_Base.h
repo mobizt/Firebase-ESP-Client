@@ -334,7 +334,7 @@ public:
         if (!client)
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
-        char *tmp = nullptr;
+        char *temp = nullptr;
         char *buf = nullptr;
         int p1 = 0;
         int olen = 0;
@@ -356,10 +356,10 @@ public:
 
                 if (p1 != -1)
                 {
-                    tmp = (char *)mbfs->newP(p1 + 1);
-                    memcpy(tmp, buf, p1);
-                    chunkedSize = hex2int(tmp);
-                    mbfs->delP(&tmp);
+                    temp = (char *)mbfs->newP(p1 + 1);
+                    memcpy(temp, buf, p1);
+                    chunkedSize = hex2int(temp);
+                    mbfs->delP(&temp);
                 }
 
                 // last chunk
@@ -427,7 +427,7 @@ public:
         unsigned char *buf = (unsigned char *)mbfs->newP(chunkSize);
         memset(buf, 0, chunkSize);
 
-        unsigned char *tmp = (unsigned char *)mbfs->newP(3);
+        unsigned char *temp = (unsigned char *)mbfs->newP(3);
 
         while (end - in >= 3)
         {
@@ -436,16 +436,16 @@ public:
             delay(0);
 #endif
 
-            memset(tmp, 0, 3);
+            memset(temp, 0, 3);
             if (flashMem)
-                memcpy_P(tmp, in, 3);
+                memcpy_P(temp, in, 3);
             else
-                memcpy(tmp, in, 3);
+                memcpy(temp, in, 3);
 
-            buf[byteAdded++] = fb_esp_base64_table[tmp[0] >> 2];
-            buf[byteAdded++] = fb_esp_base64_table[((tmp[0] & 0x03) << 4) | (tmp[1] >> 4)];
-            buf[byteAdded++] = fb_esp_base64_table[((tmp[1] & 0x0f) << 2) | (tmp[2] >> 6)];
-            buf[byteAdded++] = fb_esp_base64_table[tmp[2] & 0x3f];
+            buf[byteAdded++] = fb_esp_base64_table[temp[0] >> 2];
+            buf[byteAdded++] = fb_esp_base64_table[((temp[0] & 0x03) << 4) | (temp[1] >> 4)];
+            buf[byteAdded++] = fb_esp_base64_table[((temp[1] & 0x0f) << 2) | (temp[2] >> 6)];
+            buf[byteAdded++] = fb_esp_base64_table[temp[2] & 0x3f];
 
             if (byteAdded >= chunkSize - 4)
             {
@@ -473,32 +473,32 @@ public:
         {
             memset(buf, 0, chunkSize);
             byteAdded = 0;
-            memset(tmp, 0, 3);
+            memset(temp, 0, 3);
             if (flashMem)
             {
                 if (end - in == 1)
-                    memcpy_P(tmp, in, 1);
+                    memcpy_P(temp, in, 1);
                 else
-                    memcpy_P(tmp, in, 2);
+                    memcpy_P(temp, in, 2);
             }
             else
             {
                 if (end - in == 1)
-                    memcpy(tmp, in, 1);
+                    memcpy(temp, in, 1);
                 else
-                    memcpy(tmp, in, 2);
+                    memcpy(temp, in, 2);
             }
 
-            buf[byteAdded++] = fb_esp_base64_table[tmp[0] >> 2];
+            buf[byteAdded++] = fb_esp_base64_table[temp[0] >> 2];
             if (end - in == 1)
             {
-                buf[byteAdded++] = fb_esp_base64_table[(tmp[0] & 0x03) << 4];
+                buf[byteAdded++] = fb_esp_base64_table[(temp[0] & 0x03) << 4];
                 buf[byteAdded++] = '=';
             }
             else
             {
-                buf[byteAdded++] = fb_esp_base64_table[((tmp[0] & 0x03) << 4) | (tmp[1] >> 4)];
-                buf[byteAdded++] = fb_esp_base64_table[(tmp[1] & 0x0f) << 2];
+                buf[byteAdded++] = fb_esp_base64_table[((temp[0] & 0x03) << 4) | (temp[1] >> 4)];
+                buf[byteAdded++] = fb_esp_base64_table[(temp[1] & 0x0f) << 2];
             }
             buf[byteAdded++] = '=';
             size_t sz = strlen((const char *)buf);
@@ -510,7 +510,7 @@ public:
         ret = true;
     ex:
 
-        mbfs->delP(&tmp);
+        mbfs->delP(&temp);
         mbfs->delP(&buf);
         return ret;
     }
@@ -520,7 +520,7 @@ public:
         if (!client)
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
-        char *tmp = nullptr;
+        char *temp = nullptr;
         int p1 = 0;
         int olen = 0;
 
@@ -541,10 +541,10 @@ public:
 
                 if (p1 != -1)
                 {
-                    tmp = (char *)mbfs->newP(p1 + 1);
-                    memcpy(tmp, s.c_str(), p1);
-                    chunkedSize = hex2int(tmp);
-                    mbfs->delP(&tmp);
+                    temp = (char *)mbfs->newP(p1 + 1);
+                    memcpy(temp, s.c_str(), p1);
+                    chunkedSize = hex2int(temp);
+                    mbfs->delP(&temp);
                 }
 
                 // last chunk

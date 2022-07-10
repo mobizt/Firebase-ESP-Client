@@ -1240,7 +1240,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
     unsigned long dataTime = millis();
 
     char *pChunk = nullptr;
-    char *tmp = nullptr;
+    char *temp = nullptr;
     char *header = nullptr;
     char *payload = nullptr;
     bool isHeader = false;
@@ -1305,17 +1305,17 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     int readLen = fbdo->tcpClient.readLine(header, chunkBufSize);
                     int pos = 0;
 
-                    tmp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
+                    temp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
                     ut->idle();
                     dataTime = millis();
-                    if (tmp)
+                    if (temp)
                     {
                         // http response header with http response code
                         isHeader = true;
                         hBufPos = readLen;
-                        response.httpCode = atoi(tmp);
+                        response.httpCode = atoi(temp);
                         fbdo->session.response.code = response.httpCode;
-                        ut->delP(&tmp);
+                        ut->delP(&temp);
                     }
                     else
                     {
@@ -1335,17 +1335,17 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     if (isHeader)
                     {
                         // read one line of next header field until the empty header has found
-                        tmp = (char *)ut->newP(chunkBufSize);
-                        int readLen = fbdo->tcpClient.readLine(tmp, chunkBufSize);
+                        temp = (char *)ut->newP(chunkBufSize);
+                        int readLen = fbdo->tcpClient.readLine(temp, chunkBufSize);
                         bool headerEnded = false;
 
                         // check is it the end of http header (\n or \r\n)?
                         if (readLen == 1)
-                            if (tmp[0] == '\r')
+                            if (temp[0] == '\r')
                                 headerEnded = true;
 
                         if (readLen == 2)
-                            if (tmp[0] == '\r' && tmp[1] == '\n')
+                            if (temp[0] == '\r' && temp[1] == '\n')
                                 headerEnded = true;
 
                         if (headerEnded)
@@ -1371,11 +1371,11 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                         else
                         {
                             // accumulate the remaining header field
-                            memcpy(header + hBufPos, tmp, readLen);
+                            memcpy(header + hBufPos, temp, readLen);
                             hBufPos += readLen;
                         }
 
-                        ut->delP(&tmp);
+                        ut->delP(&temp);
                     }
                     else
                     {

@@ -2484,7 +2484,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
     unsigned long dataTime = millis();
 
     char *pChunk = nullptr;
-    char *tmp = nullptr;
+    char *temp = nullptr;
     MB_String header;
     MB_String payload;
     bool isHeader = false;
@@ -2626,16 +2626,16 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
                 response.noEvent = fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream;
 
-                tmp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
+                temp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
                 ut->idle();
                 dataTime = millis();
-                if (tmp)
+                if (temp)
                 {
                     // http response header with http response code
                     isHeader = true;
-                    response.httpCode = atoi(tmp);
+                    response.httpCode = atoi(temp);
                     fbdo->session.response.code = response.httpCode;
-                    ut->delP(&tmp);
+                    ut->delP(&temp);
                 }
                 else
                 {
@@ -2654,26 +2654,26 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                 if (isHeader)
                 {
                     // read one line of next header field until the empty header has found
-                    tmp = (char *)ut->newP(chunkBufSize + 10);
+                    temp = (char *)ut->newP(chunkBufSize + 10);
                     bool headerEnded = false;
                     int readLen = 0;
-                    if (tmp)
+                    if (temp)
                     {
                         if (!fbdo->tcpClient.connected())
                         {
-                            ut->delP(&tmp);
+                            ut->delP(&temp);
                             break;
                         }
 
-                        readLen = fbdo->tcpClient.readLine(tmp, chunkBufSize);
+                        readLen = fbdo->tcpClient.readLine(temp, chunkBufSize);
 
                         // check is it the end of http header (\n or \r\n)?
                         if (readLen == 1)
-                            if (tmp[0] == '\r')
+                            if (temp[0] == '\r')
                                 headerEnded = true;
 
                         if (readLen == 2)
-                            if (tmp[0] == '\r' && tmp[1] == '\n')
+                            if (temp[0] == '\r' && temp[1] == '\n')
                                 headerEnded = true;
                     }
 
@@ -2698,8 +2698,8 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
                             if (chunkBufSize == 0)
                             {
-                                if (tmp)
-                                    ut->delP(&tmp);
+                                if (temp)
+                                    ut->delP(&temp);
                                 header.clear();
                                 while (chunkBufSize == 0)
                                 {
@@ -2732,14 +2732,14 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
                                     fbdo->tcpClient.flush();
 
-                                    if (tmp)
-                                        ut->delP(&tmp);
+                                    if (temp)
+                                        ut->delP(&temp);
                                     return false;
                                 }
                                 else
                                 {
-                                    if (tmp)
-                                        ut->delP(&tmp);
+                                    if (temp)
+                                        ut->delP(&temp);
                                 }
                             }
                         }
@@ -2769,14 +2769,14 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
                     }
                     else
                     {
-                        if (tmp)
+                        if (temp)
                         {
                             // accumulate the remaining header field
-                            header += tmp;
+                            header += temp;
                         }
                     }
-                    if (tmp)
-                        ut->delP(&tmp);
+                    if (temp)
+                        ut->delP(&temp);
                 }
                 else
                 {
@@ -3461,12 +3461,12 @@ void FB_RTDB::splitStreamPayload(const char *payloads, MB_VECTOR<MB_String> &pay
                     pos3 = strlen(payloads);
 
                 size_t len = pos3 - pos1;
-                char *tmp = (char *)ut->newP(len + 10);
-                if (tmp)
+                char *temp = (char *)ut->newP(len + 10);
+                if (temp)
                 {
-                    strncpy(tmp, payloads + pos1, len);
-                    MB_String s = tmp;
-                    ut->delP(&tmp);
+                    strncpy(temp, payloads + pos1, len);
+                    MB_String s = temp;
+                    ut->delP(&temp);
                     payload.push_back(s);
                 }
             }

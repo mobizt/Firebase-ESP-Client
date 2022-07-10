@@ -62,7 +62,7 @@ bool Firebase_Signer::parseSAFile()
         clearSA();
         jsonPtr = new FirebaseJson();
         resultPtr = new FirebaseJsonData();
-        char *tmp = nullptr;
+        char *temp = nullptr;
 
         size_t len = sz;
         char *buf = (char *)ut->newP(len + 10);
@@ -86,22 +86,22 @@ bool Firebase_Signer::parseSAFile()
 
                 if (parseJsonResponse(fb_esp_pgm_str_247))
                 {
-                    tmp = (char *)ut->newP(strlen(resultPtr->to<const char *>()));
+                    temp = (char *)ut->newP(strlen(resultPtr->to<const char *>()));
                     size_t c = 0;
                     for (size_t i = 0; i < strlen(resultPtr->to<const char *>()); i++)
                     {
                         if (resultPtr->to<const char *>()[i] == '\\')
                         {
                             ut->idle();
-                            tmp[c++] = '\n';
+                            temp[c++] = '\n';
                             i++;
                         }
                         else
-                            tmp[c++] = resultPtr->to<const char *>()[i];
+                            temp[c++] = resultPtr->to<const char *>()[i];
                     }
-                    config->signer.pk = tmp;
+                    config->signer.pk = temp;
                     resultPtr->clear();
-                    ut->delP(&tmp);
+                    ut->delP(&temp);
                 }
 
                 if (parseJsonResponse(fb_esp_pgm_str_248))
@@ -771,28 +771,28 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
                     {
                         tcpClient->readLine(header);
                         int pos = 0;
-                        char *tmp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
-                        if (tmp)
+                        char *temp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
+                        if (temp)
                         {
                             isHeader = true;
-                            response.httpCode = atoi(tmp);
-                            ut->delP(&tmp);
+                            response.httpCode = atoi(temp);
+                            ut->delP(&temp);
                         }
                     }
                     else
                     {
                         if (isHeader)
                         {
-                            char *tmp = (char *)ut->newP(chunkBufSize);
-                            int readLen = tcpClient->readLine(tmp, chunkBufSize);
+                            char *temp = (char *)ut->newP(chunkBufSize);
+                            int readLen = tcpClient->readLine(temp, chunkBufSize);
                             bool headerEnded = false;
 
                             if (readLen == 1)
-                                if (tmp[0] == '\r')
+                                if (temp[0] == '\r')
                                     headerEnded = true;
 
                             if (readLen == 2)
-                                if (tmp[0] == '\r' && tmp[1] == '\n')
+                                if (temp[0] == '\r' && temp[1] == '\n')
                                     headerEnded = true;
 
                             if (headerEnded)
@@ -802,9 +802,9 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
                                 header.clear();
                             }
                             else
-                                header += tmp;
+                                header += temp;
 
-                            ut->delP(&tmp);
+                            ut->delP(&temp);
                         }
                         else
                         {
@@ -818,13 +818,13 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
                                     if (tcpClient->available() < chunkBufSize)
                                         chunkBufSize = tcpClient->available();
 
-                                    char *tmp = (char *)ut->newP(chunkBufSize + 1);
-                                    int readLen = tcpClient->readBytes(tmp, chunkBufSize);
+                                    char *temp = (char *)ut->newP(chunkBufSize + 1);
+                                    int readLen = tcpClient->readBytes(temp, chunkBufSize);
 
                                     if (readLen > 0)
-                                        payload += tmp;
+                                        payload += temp;
 
-                                    ut->delP(&tmp);
+                                    ut->delP(&temp);
                                     complete = tcpClient->available() <= 0;
                                 }
                             }
@@ -1005,11 +1005,11 @@ bool Firebase_Signer::createJWT()
         int ret = mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), (const unsigned char *)config->signer.encHeadPayload.c_str(), config->signer.encHeadPayload.length(), config->signer.hash);
         if (ret != 0)
         {
-            char *tmp = (char *)ut->newP(100);
-            mbedtls_strerror(ret, tmp, 100);
-            config->signer.tokens.error.message = tmp;
+            char *temp = (char *)ut->newP(100);
+            mbedtls_strerror(ret, temp, 100);
+            config->signer.tokens.error.message = temp;
             config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_md: "));
-            ut->delP(&tmp);
+            ut->delP(&temp);
             setTokenError(FIREBASE_ERROR_TOKEN_CREATE_HASH);
             sendTokenStatusCB();
             ut->delP(&config->signer.hash);
@@ -1047,11 +1047,11 @@ bool Firebase_Signer::createJWT()
 
         if (ret != 0)
         {
-            char *tmp = (char *)ut->newP(100);
-            mbedtls_strerror(ret, tmp, 100);
-            config->signer.tokens.error.message = tmp;
+            char *temp = (char *)ut->newP(100);
+            mbedtls_strerror(ret, temp, 100);
+            config->signer.tokens.error.message = temp;
             config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_pk_parse_key: "));
-            ut->delP(&tmp);
+            ut->delP(&temp);
             setTokenError(FIREBASE_ERROR_TOKEN_PARSE_PK);
             sendTokenStatusCB();
             mbedtls_pk_free(config->signer.pk_ctx);
@@ -1072,11 +1072,11 @@ bool Firebase_Signer::createJWT()
         ret = mbedtls_pk_sign(config->signer.pk_ctx, MBEDTLS_MD_SHA256, (const unsigned char *)config->signer.hash, config->signer.hashSize, config->signer.signature, &sigLen, mbedtls_ctr_drbg_random, config->signer.ctr_drbg_ctx);
         if (ret != 0)
         {
-            char *tmp = (char *)ut->newP(100);
-            mbedtls_strerror(ret, tmp, 100);
-            config->signer.tokens.error.message = tmp;
+            char *temp = (char *)ut->newP(100);
+            mbedtls_strerror(ret, temp, 100);
+            config->signer.tokens.error.message = temp;
             config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_pk_sign: "));
-            ut->delP(&tmp);
+            ut->delP(&temp);
             setTokenError(FIREBASE_ERROR_TOKEN_SIGN);
             sendTokenStatusCB();
         }

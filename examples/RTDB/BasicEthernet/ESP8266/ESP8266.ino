@@ -33,6 +33,14 @@
 //#include <W5100lwIP.h>
 //#include <W5500lwIP.h>
 
+/** For W5100 ethernet module, uncomment this line in FirebaseFS.h
+  #define ENABLE_ESP8266_W5100_ETH
+*/
+
+/** For W5100 ethernet module and PlatformIO IDE, please set the lib_ldf_mode in platformio.ini as this
+  lib_ldf_mode = chain+
+*/
+
 #include <Firebase_ESP_Client.h>
 
 // Provide the token generation process info.

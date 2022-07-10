@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.10
+ * FireSense v1.0.11
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 10, 2022
+ * Created July 10, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -73,10 +73,10 @@
 
 using namespace mb_string;
 
-class MillisTimer
+class MB_MillisTimer
 {
 public:
-    MillisTimer(){};
+    MB_MillisTimer(){};
 
     void setTo(uint32_t timeout)
     {
@@ -581,7 +581,7 @@ private:
         struct channel_info_t *channel = nullptr;
         struct function_info_t function;
         int tmo = -1;
-        MillisTimer timer;
+        MB_MillisTimer timer;
     };
 
     struct stm_right_operand_item_t
@@ -3739,8 +3739,6 @@ void FireSenseClass::trim(const char *s, MB_String &d, bool isExpression, const 
         p1 = p3;
         p2++;
     }
-
-    MB_String tmp;
 
     int i = 0;
     while (i < p2 - p1 + 1)

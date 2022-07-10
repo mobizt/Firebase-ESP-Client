@@ -67,8 +67,8 @@ static const char esp_idf_branch_str[] PROGMEM = "release/v";
 #include <ENC28J60lwIP.h>
 #endif
 
-#if __has_include(<W5100lwIP.h>)
-#define INC_W5100_LWIP
+#if __has_include(<W5100lwIP.h>) && defined(ENABLE_ESP8266_W5100_ETH)
+#define INC_W5100_LWIP 
 #include <W5100lwIP.h>
 #endif
 

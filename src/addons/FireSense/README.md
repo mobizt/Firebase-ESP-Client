@@ -3,7 +3,7 @@
 
 <br/>
 
-# The Programmable Data Logging and IO Control library v1.0.10
+# The Programmable Data Logging and IO Control library v1.0.11
 
 
 This library supports ESP8266 and ESP32 MCU from Espressif. 

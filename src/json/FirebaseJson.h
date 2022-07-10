@@ -1050,20 +1050,20 @@ protected:
     char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
     {
 
-        char *tmp = strP(beginH);
-        int p1 = strpos(buf, tmp, beginPos);
+        char *temp = strP(beginH);
+        int p1 = strpos(buf, temp, beginPos);
         int ofs = 0;
-        delP(&tmp);
+        delP(&temp);
         if (p1 != -1)
         {
-            tmp = strP(endH);
+            temp = strP(endH);
             int p2 = -1;
             if (endPos > 0)
                 p2 = endPos;
             else if (endPos == 0)
             {
                 ofs = strlen_P(endH);
-                p2 = strpos(buf, tmp, p1 + strlen_P(beginH) + 1);
+                p2 = strpos(buf, temp, p1 + strlen_P(beginH) + 1);
             }
             else if (endPos == -1)
             {
@@ -1073,15 +1073,15 @@ protected:
             if (p2 == -1)
                 p2 = strlen(buf);
 
-            delP(&tmp);
+            delP(&temp);
 
             if (p2 != -1)
             {
                 beginPos = p2 + ofs;
                 int len = p2 - p1 - strlen_P(beginH);
-                tmp = (char *)newP(len + 1);
-                memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
-                return tmp;
+                temp = (char *)newP(len + 1);
+                memcpy(temp, &buf[p1 + strlen_P(beginH)], len);
+                return temp;
             }
         }
 
@@ -1092,58 +1092,58 @@ protected:
     {
         int beginPos = 0, pmax = 0, payloadPos = 0;
 
-        char *tmp = nullptr;
+        char *temp = nullptr;
 
         if (response.httpCode != -1)
         {
             payloadPos = beginPos;
             pmax = beginPos;
-            tmp = getHeader(buf, fb_json_str_1, fb_json_str_7, beginPos, 0);
-            if (tmp)
+            temp = getHeader(buf, fb_json_str_1, fb_json_str_7, beginPos, 0);
+            if (temp)
             {
-                response.connection = tmp;
-                delP(&tmp);
+                response.connection = temp;
+                delP(&temp);
             }
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_json_str_3, fb_json_str_7, beginPos, 0);
-            if (tmp)
+            temp = getHeader(buf, fb_json_str_3, fb_json_str_7, beginPos, 0);
+            if (temp)
             {
-                response.contentType = tmp;
-                delP(&tmp);
-            }
-
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            tmp = getHeader(buf, fb_json_str_6, fb_json_str_7, beginPos, 0);
-            if (tmp)
-            {
-                response.contentLen = atoi(tmp);
-                delP(&tmp);
+                response.contentType = temp;
+                delP(&temp);
             }
 
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_json_str_8, fb_json_str_7, beginPos, 0);
-            if (tmp)
+            temp = getHeader(buf, fb_json_str_6, fb_json_str_7, beginPos, 0);
+            if (temp)
             {
-                response.transferEnc = tmp;
-                if (strcmp(tmp, (const char *)MBSTRING_FLASH_MCR("chunked")) == 0)
+                response.contentLen = atoi(temp);
+                delP(&temp);
+            }
+
+            if (pmax < beginPos)
+                pmax = beginPos;
+            beginPos = payloadPos;
+            temp = getHeader(buf, fb_json_str_8, fb_json_str_7, beginPos, 0);
+            if (temp)
+            {
+                response.transferEnc = temp;
+                if (strcmp(temp, (const char *)MBSTRING_FLASH_MCR("chunked")) == 0)
                     response.isChunkedEnc = true;
-                delP(&tmp);
+                delP(&temp);
             }
 
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_json_str_4, fb_json_str_7, beginPos, 0);
-            if (tmp)
+            temp = getHeader(buf, fb_json_str_4, fb_json_str_7, beginPos, 0);
+            if (temp)
             {
-                response.connection = tmp;
-                delP(&tmp);
+                response.connection = temp;
+                delP(&temp);
             }
 
             if (response.httpCode == FBJS_ERROR_HTTP_CODE_OK || response.httpCode == FBJS_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FBJS_ERROR_HTTP_CODE_FOUND)
@@ -1151,11 +1151,11 @@ protected:
                 if (pmax < beginPos)
                     pmax = beginPos;
                 beginPos = payloadPos;
-                tmp = getHeader(buf, fb_json_str_9, fb_json_str_7, beginPos, 0);
-                if (tmp)
+                temp = getHeader(buf, fb_json_str_9, fb_json_str_7, beginPos, 0);
+                if (temp)
                 {
-                    response.location = tmp;
-                    delP(&tmp);
+                    response.location = temp;
+                    delP(&temp);
                 }
             }
 
@@ -1214,7 +1214,7 @@ protected:
 
     int readChunkedData(Client *stream, char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen)
     {
-        char *tmp = nullptr;
+        char *temp = nullptr;
         char *buf = nullptr;
         int p1 = 0;
         int olen = 0;
@@ -1231,17 +1231,17 @@ protected:
                 p1 = strpos(buf, ';', 0);
                 if (p1 == -1)
                 {
-                    tmp = strP(fb_json_str_7);
-                    p1 = strpos(buf, tmp, 0);
-                    delP(&tmp);
+                    temp = strP(fb_json_str_7);
+                    p1 = strpos(buf, temp, 0);
+                    delP(&temp);
                 }
 
                 if (p1 != -1)
                 {
-                    tmp = (char *)newP(p1 + 1);
-                    memcpy(tmp, buf, p1);
-                    chunkedSize = hex2int(tmp);
-                    delP(&tmp);
+                    temp = (char *)newP(p1 + 1);
+                    memcpy(temp, buf, p1);
+                    chunkedSize = hex2int(temp);
+                    delP(&temp);
                 }
 
                 // last chunk
@@ -1293,7 +1293,7 @@ protected:
 
     int readChunkedData(Client *stream, MB_String &out, int &chunkState, int &chunkedSize, int &dataLen)
     {
-        char *tmp = nullptr;
+        char *temp = nullptr;
         int p1 = 0;
         int olen = 0;
 
@@ -1309,17 +1309,17 @@ protected:
                 p1 = strpos(s.c_str(), ';', 0);
                 if (p1 == -1)
                 {
-                    tmp = strP(fb_json_str_7);
-                    p1 = strpos(s.c_str(), tmp, 0);
-                    delP(&tmp);
+                    temp = strP(fb_json_str_7);
+                    p1 = strpos(s.c_str(), temp, 0);
+                    delP(&temp);
                 }
 
                 if (p1 != -1)
                 {
-                    tmp = (char *)newP(p1 + 1);
-                    memcpy(tmp, s.c_str(), p1);
-                    chunkedSize = hex2int(tmp);
-                    delP(&tmp);
+                    temp = (char *)newP(p1 + 1);
+                    memcpy(temp, s.c_str(), p1);
+                    chunkedSize = hex2int(temp);
+                    delP(&temp);
                 }
 
                 // last chunk
@@ -1370,7 +1370,7 @@ protected:
         int ret = -1;
 
         char *pChunk = nullptr;
-        char *tmp = nullptr;
+        char *temp = nullptr;
         char *header = nullptr;
         bool isHeader = false;
 
@@ -1423,17 +1423,17 @@ protected:
                             int readLen = readLine(client, header, chunkBufSize);
                             int pos = 0;
 
-                            tmp = getHeader(header, fb_json_str_1, fb_json_str_2, pos, 0);
+                            temp = getHeader(header, fb_json_str_1, fb_json_str_2, pos, 0);
                             idle();
                             dataTime = millis();
-                            if (tmp)
+                            if (temp)
                             {
                                 // http response header with http response code
                                 isHeader = true;
                                 hBufPos = readLen;
-                                response.httpCode = atoi(tmp);
+                                response.httpCode = atoi(temp);
                                 httpCode = response.httpCode;
-                                delP(&tmp);
+                                delP(&temp);
                             }
                         }
                         else
@@ -1444,17 +1444,17 @@ protected:
                             if (isHeader)
                             {
                                 // read one line of next header field until the empty header has found
-                                tmp = (char *)newP(chunkBufSize);
-                                int readLen = readLine(client, tmp, chunkBufSize);
+                                temp = (char *)newP(chunkBufSize);
+                                int readLen = readLine(client, temp, chunkBufSize);
                                 bool headerEnded = false;
 
                                 // check is it the end of http header (\n or \r\n)?
                                 if (readLen == 1)
-                                    if (tmp[0] == '\r')
+                                    if (temp[0] == '\r')
                                         headerEnded = true;
 
                                 if (readLen == 2)
-                                    if (tmp[0] == '\r' && tmp[1] == '\n')
+                                    if (temp[0] == '\r' && temp[1] == '\n')
                                         headerEnded = true;
 
                                 if (headerEnded)
@@ -1470,17 +1470,17 @@ protected:
 
                                     if (response.contentLen == 0)
                                     {
-                                        delP(&tmp);
+                                        delP(&temp);
                                         break;
                                     }
                                 }
                                 else
                                 {
                                     // accumulate the remaining header field
-                                    memcpy(header + hBufPos, tmp, readLen);
+                                    memcpy(header + hBufPos, temp, readLen);
                                     hBufPos += readLen;
                                 }
-                                delP(&tmp);
+                                delP(&temp);
                             }
                             else
                             {

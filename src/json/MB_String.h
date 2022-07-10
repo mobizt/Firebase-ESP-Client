@@ -1262,8 +1262,8 @@ public:
 
     MB_String &insert(size_t pos, char c)
     {
-        char tmp[2]{c, '\0'};
-        return insert(pos, tmp);
+        char temp[2]{c, '\0'};
+        return insert(pos, temp);
     }
 
     size_t find_first_of(const char *cstr, size_t pos = 0) const
@@ -1367,8 +1367,8 @@ public:
         int repLen = strlen(replace);
         int findLen = strlen(find);
 
-        MB_String tmp = buf;
-        char *s = tmp.buf;
+        MB_String temp = buf;
+        char *s = temp.buf;
         clear();
 
         for (i = 0; s[i] != '\0'; i++)
@@ -1398,7 +1398,7 @@ public:
             buf[i] = '\0';
         }
 
-        tmp.clear();
+        temp.clear();
     }
 
     void replaceAll(const MB_String &find, const MB_String &replace)

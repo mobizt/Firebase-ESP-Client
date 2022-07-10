@@ -1,7 +1,7 @@
 /*
- * Just a simple dynamic array implementation, MB_List v1.0.2
+ * Just a simple dynamic array implementation, MB_List v1.0.3
  *
- * Created July 9, 2022
+ * Created July 10, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -117,6 +117,22 @@ public:
         return arr[0];
     }
 
+    void swap(MB_List &item)
+    {
+        MB_List temp;
+        temp.arr = this->arr;
+        temp.current = this->current;
+        temp.capacity = this->capacity;
+        clear();
+        this->arr = item.arr;
+        this->current = item.current;
+        this->capacity = item.capacity;
+        item.clear();
+        item.arr = temp.arr;
+        item.current = temp.current;
+        item.capacity = temp.capacity;
+    }
+
 private:
     T *arr = NULL;
     int current = 0;
@@ -142,12 +158,12 @@ private:
         {
             if (current + size >= capacity)
             {
-                T *tmp = new T[current];
+                T *temp = new T[current];
 
-                if (tmp)
+                if (temp)
                 {
                     for (int i = 0; i < current; i++)
-                        tmp[i] = arr[i];
+                        temp[i] = arr[i];
 
                     delete[] arr;
 
@@ -158,18 +174,18 @@ private:
                     if (arr)
                     {
                         for (int i = 0; i < index; i++)
-                            arr[i] = tmp[i];
+                            arr[i] = temp[i];
 
                         for (int i = index; i < index + size; i++)
                             arr[i] = *data;
 
                         for (int i = index; i < current; i++)
-                            arr[i + size] = tmp[i];
+                            arr[i + size] = temp[i];
 
                         current += size;
                     }
 
-                    delete[] tmp;
+                    delete[] temp;
                 }
             }
             else
@@ -190,13 +206,13 @@ private:
         if (index + size > current)
             size = current - index;
 
-        T *tmp = new T[current];
+        T *temp = new T[current];
 
-        if (tmp)
+        if (temp)
         {
 
             for (int i = 0; i < current; i++)
-                tmp[i] = arr[i];
+                temp[i] = arr[i];
 
             delete[] arr;
 
@@ -207,15 +223,15 @@ private:
             if (arr)
             {
                 for (int i = 0; i < index; i++)
-                    arr[i] = tmp[i];
+                    arr[i] = temp[i];
 
                 for (int i = index; i < current - size; i++)
-                    arr[i] = tmp[i + size];
+                    arr[i] = temp[i + size];
 
                 current -= size;
             }
 
-            delete[] tmp;
+            delete[] temp;
         }
     }
 };
