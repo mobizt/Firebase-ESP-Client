@@ -1,9 +1,9 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.0.1"
+#define FIREBASE_CLIENT_VERSION "4.0.2"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.0.1
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.0.2
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *

@@ -22,7 +22,6 @@
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>
 #endif
-static const char esp_idf_branch_str[] PROGMEM = "release/v";
 #endif
 
 
