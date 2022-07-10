@@ -38,6 +38,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install --upgrade platformio
+    - name: Unstall 3rd party dependecies
+      run: | 
+        pio lib --global uninstall \
+        https://github.com/mobizt/Firebase-ESP-Client
     - name: Install 3rd party dependecies
       run: | 
         pio lib -g install \
