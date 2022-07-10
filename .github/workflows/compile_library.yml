@@ -27,7 +27,6 @@ jobs:
           - "mkrwifi1010"
           - "bluepill_f103c8_128k"
           - "mkr1000USB"
-          - "teensy36"
           - "teensy41"
     steps:
     - uses: actions/checkout@v2
