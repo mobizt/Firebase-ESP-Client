@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.1.0
+ * The Firebase class, Firebase.cpp v1.1.1
  *
- *  Created May 17, 2022
+ *  Created July 10, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -296,6 +296,11 @@ bool Firebase_ESP_Client::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t
 {
     return mbfs->sdFatBegin(sdFatSPIConfig, ss, sck, miso, mosi);
 }
+
+bool Firebase_ESP_Client::sdBegin(SdioConfig *sdFatSDIOConfig)
+{
+    return mbfs->sdFatBegin(sdFatSDIOConfig);
+}
 #endif
 
 #endif
@@ -304,7 +309,6 @@ bool Firebase_ESP_Client::sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss, int8_t
 
 bool Firebase_ESP_Client::sdMMCBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
 {
-
     return mbfs->sdMMCBegin(mountpoint, mode1bit, format_if_mount_failed);
 }
 

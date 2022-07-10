@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.1.0
+ * The Firebase class, Firebase.h v1.1.1
  *
- *  Created May 17, 2022
+ *  Created July 10, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -288,10 +288,9 @@ public:
   */
   void setDoubleDigits(uint8_t digits);
 
-
 #if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 
-  /** SD card config with GPIO pins.
+  /** Initiate SD card with SPI port configuration.
    *
    * @param ss SPI Chip/Slave Select pin.
    * @param sck SPI Clock pin.
@@ -304,7 +303,7 @@ public:
 
 #if defined(ESP8266)
 
-  /** SD card config with SD FS configurations (ESP8266 only).
+  /** Initiate SD card with SD FS configurations (ESP8266 only).
    *
    * @param ss SPI Chip/Slave Select pin.
    * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 only).
@@ -315,18 +314,18 @@ public:
 #endif
 
 #if defined(ESP32)
-  /** SD card config with chip select and SPI configuration (ESP32 only).
+  /** Initiate SD card with chip select and SPI configuration (ESP32 only).
    *
    * @param ss SPI Chip/Slave Select pin.
-   * @param spiConfig The pointer to SPIClass object for SPI configuartion (ESP32 only).
-   * @param frequency The SPI frequency (ESP32 only)
+   * @param spiConfig The pointer to SPIClass object for SPI configuartion.
+   * @param frequency The SPI frequency.
    * @return Boolean type status indicates the success of the operation.
    */
   bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr, uint32_t frequency = 4000000);
 #endif
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
-  /** SD card config with SdFat SPI and pins configurations (ESP32 with SdFat included only).
+  /** Initiate SD card with SdFat SPI and pins configurations (with SdFat included only).
    *
    * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
    * @param ss SPI Chip/Slave Select pin.
@@ -336,6 +335,14 @@ public:
    * @return Boolean type status indicates the success of the operation.
    */
   bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+
+  /** Initiate SD card with SdFat SDIO configuration (with SdFat included only).
+   *
+   * @param sdFatSDIOConfig The pointer to SdioConfig object for SdFat SDIO configuration.
+   * @return Boolean type status indicates the success of the operation.
+   */
+  bool sdBegin(SdioConfig *sdFatSDIOConfig);
+
 #endif
 
 #endif
@@ -350,7 +357,6 @@ public:
    */
   bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 #endif
-
 
   /** Set system time with timestamp.
    * 

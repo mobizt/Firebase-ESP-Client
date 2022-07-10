@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.4
+ * TCP Client Base class, version 1.0.5
  *
- * Created May 22, 2022
+ * Created July 10, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -282,9 +282,9 @@ public:
             if (!client)
                 break;
 
-#if defined(ESP8266)
-            delay(0);
-#endif
+            if (mbfs)
+                mbfs->feed();
+
             res = client->read();
             if (res > -1)
             {
@@ -313,9 +313,9 @@ public:
             if (!client)
                 break;
 
-#if defined(ESP8266)
-            delay(0);
-#endif
+            if (mbfs)
+                mbfs->feed();
+
             res = client->read();
             if (res > -1)
             {

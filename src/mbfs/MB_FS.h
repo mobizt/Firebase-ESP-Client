@@ -1,9 +1,9 @@
 /**
- * The MB_FS, file wrapper class v1.0.6.
+ * The MB_FS, filesystems wrapper class v1.0.7.
  *
- * This wrapper class is for SD and Flash file interfaces which support SdFat in ESP32 (//https://github.com/greiman/SdFat)
+ * This wrapper class is for SD and Flash filesystems interface which supports SdFat (//https://github.com/greiman/SdFat)
  *
- *  Created May 16, 2022
+ *  Created July 5, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -99,7 +99,10 @@ struct mbfs_sd_config_info_t
     uint32_t frequency = 4000000;
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
+
     SdSpiConfig *sdFatSPIConfig = nullptr;
+    SdioConfig *sdFatSDIOConfig = nullptr;
+
 #endif
 
 #if defined(ESP32)
@@ -207,7 +210,7 @@ public:
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
 
-    // Assign the SD card interfaces with SdSpiConfig object pointer and SPI pins assignment (ESP32 only).
+    // Assign the SD card interfaces with SdSpiConfig object pointer and SPI pins assignment.
     bool sdFatBegin(SdSpiConfig *sdFatSPIConfig, int ss, int sck, int miso, int mosi)
     {
 
@@ -228,6 +231,31 @@ public:
             sd_rdy = MBFS_SD_FS.begin(*sd_config.sdFatSPIConfig);
             return sd_rdy;
         }
+
+        return false;
+    }
+
+    // Assign the SD card interfaces with SdioConfig object pointer.
+    bool sdFatBegin(SdioConfig *sdFatSDIOConfig)
+    {
+
+        if (sd_rdy)
+            return true;
+
+#if defined(HAS_SDIO_CLASS) // Default is 0 (no SDIO) in SdFatConfig.h
+
+#if HAS_SDIO_CLASS
+
+        if (sdFatSDIOConfig)
+        {
+            sd_config.sdFatSDIOConfig = sdFatSDIOConfig;
+
+            sd_rdy = MBFS_SD_FS.begin(*sd_config.sdFatSDIOConfig);
+            return sd_rdy;
+        }
+#endif
+
+#endif
 
         return false;
     }
@@ -321,8 +349,14 @@ public:
 
 #if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
 
-        if (sd_config.sdFatSPIConfig && !sd_rdy)
-            sd_rdy = MBFS_SD_FS.begin(*sd_config.sdFatSPIConfig);
+        if (!sd_rdy)
+        {
+            if (sd_config.sdFatSPIConfig)
+                sd_rdy = MBFS_SD_FS.begin(*sd_config.sdFatSPIConfig);
+            else if (sd_config.sdFatSDIOConfig)
+                sd_rdy = MBFS_SD_FS.begin(*sd_config.sdFatSDIOConfig);
+        }
+
 #else
         if (!sd_rdy)
             sd_rdy = sdSPIBegin(sd_config.ss, sd_config.spiConfig, sd_config.frequency);
@@ -854,6 +888,13 @@ public:
         return false;
     }
 
+    void feed()
+    {
+        if (loopCount % 128 == 0)
+            delay(0);
+        loopCount++;
+    }
+
 private:
     uint16_t flash_filename_crc = 0;
     uint16_t sd_filename_crc = 0;
@@ -864,6 +905,7 @@ private:
     bool sd_opened = false;
     bool sd_rdy = false;
     bool flash_rdy = false;
+    uint16_t loopCount = 0;
 
 #if defined(MBFS_FLASH_FS)
     fs::File mb_flashFs;
