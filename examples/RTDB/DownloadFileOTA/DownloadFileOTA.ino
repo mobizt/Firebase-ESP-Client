@@ -108,7 +108,7 @@ void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
     }
     else if (info.status == fb_esp_rtdb_download_status_download)
     {
-        Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
+        Serial.printf("Downloaded %d%s, Elapsed time %d ms\n", (int)info.progress, "%", info.elapsedTime);
     }
     else if (info.status == fb_esp_rtdb_download_status_complete)
     {

@@ -101,7 +101,7 @@ void fcsUploadCallback(FCS_UploadStatusInfo info)
     }
     else if (info.status == fb_esp_fcs_upload_status_upload)
     {
-        Serial.printf("Uploaded %d%s\n", (int)info.progress, "%");
+        Serial.printf("Uploaded %d%s, Elapsed time %d ms\n", (int)info.progress, "%", info.elapsedTime);
     }
     else if (info.status == fb_esp_fcs_upload_status_complete)
     {

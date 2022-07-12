@@ -1,6 +1,6 @@
 
 /**
- * Created June 3, 2022
+ * Created July 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -567,6 +567,7 @@ typedef struct fb_esp_rtdb_upload_status_info_t
     MB_String localFileName;
     MB_String remotePath;
     int size = 0;
+    int elapsedTime = 0;
     MB_String errorMsg;
 
 } RTDB_UploadStatusInfo;
@@ -578,6 +579,7 @@ typedef struct fb_esp_rtdb_download_status_info_t
     MB_String localFileName;
     MB_String remotePath;
     int size = 0;
+    int elapsedTime = 0;
     MB_String errorMsg;
 
 } RTDB_DownloadStatusInfo;
@@ -888,6 +890,7 @@ typedef struct fb_esp_cfs_upload_status_info_t
     size_t progress = 0;
     fb_esp_cfs_upload_status status = fb_esp_cfs_upload_status_unknown;
     int size = 0;
+    int elapsedTime = 0;
     MB_String errorMsg;
 
 } CFS_UploadStatusInfo;
@@ -928,6 +931,7 @@ typedef struct fb_esp_gcs_upload_status_info_t
     MB_String localFileName;
     MB_String remoteFileName;
     int fileSize = 0;
+    int elapsedTime = 0;
     MB_String errorMsg;
 
 } UploadStatusInfo;
@@ -939,12 +943,23 @@ typedef struct fb_esp_gcs_download_status_info_t
     MB_String localFileName;
     MB_String remoteFileName;
     int fileSize = 0;
+    int elapsedTime = 0;
     MB_String errorMsg;
 
 } DownloadStatusInfo;
 
 typedef void (*UploadProgressCallback)(UploadStatusInfo);
 typedef void (*DownloadProgressCallback)(DownloadStatusInfo);
+
+#endif
+
+#ifdef ENABLE_FB_FUNCTIONS
+
+struct fb_esp_functions_config_t
+{
+    size_t upload_buffer_size = 2048;
+    size_t download_buffer_size = 2048;
+};
 
 #endif
 
@@ -962,6 +977,7 @@ typedef struct fb_esp_fcs_upload_status_info_t
     MB_String localFileName;
     MB_String remoteFileName;
     int fileSize = 0;
+    int elapsedTime = 0;
     MB_String errorMsg;
 
 } FCS_UploadStatusInfo;
@@ -973,6 +989,7 @@ typedef struct fb_esp_fcs_download_status_info_t
     MB_String localFileName;
     MB_String remoteFileName;
     int fileSize = 0;
+    int elapsedTime = 0;
     MB_String errorMsg;
 
 } FCS_DownloadStatusInfo;
@@ -1059,7 +1076,12 @@ struct fb_esp_cfg_t
 #if defined(ENABLE_FB_STORAGE)
     struct fb_esp_fcs_config_t fcs;
 #endif
-    SPI_ETH_Module spi_ethernet_module;
+
+#if defined(ENABLE_FB_FUNCTIONS)
+    struct fb_esp_functions_config_t functions;
+#endif
+
+        SPI_ETH_Module spi_ethernet_module;
     struct fb_esp_client_timeout_t timeout;
 };
 
@@ -1139,6 +1161,7 @@ struct fb_esp_rtdb_info_t
 #if defined(FIREBASE_ESP_CLIENT)
 
 #ifdef ENABLE_FB_FUNCTIONS
+
 typedef struct fb_esp_function_operation_info_t
 {
     fb_esp_functions_operation_status status = fb_esp_functions_operation_status_unknown;

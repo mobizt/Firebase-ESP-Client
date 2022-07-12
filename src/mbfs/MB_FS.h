@@ -775,7 +775,7 @@ public:
     }
 
     // Allocate memory
-    void *newP(size_t len)
+    void *newP(size_t len, bool clear = true)
     {
         void *p;
         size_t newLen = getReservedLen(len);
@@ -806,7 +806,8 @@ public:
             return NULL;
 
 #endif
-        memset(p, 0, newLen);
+        if (clear)
+            memset(p, 0, newLen);
         return p;
     }
 

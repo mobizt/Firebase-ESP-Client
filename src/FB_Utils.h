@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, FB_Utils.h version 1.1.18
+ * Google's Firebase Util class, FB_Utils.h version 1.1.19
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 22, 2022
+ * Created July 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -273,11 +273,11 @@ public:
         return mbfs->getReservedLen(len);
     }
 
-    void *newP(size_t len)
+    void *newP(size_t len, bool clear = true)
     {
         if (!mbfs)
             return NULL;
-        return mbfs->newP(len);
+        return mbfs->newP(len, clear);
     }
 
     void substr(MB_String &str, const char *s, int offset, size_t len)

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.20
+ * Google's Firebase Storage class, FCS.cpp version 1.1.21
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 13, 2022
+ * Created July 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -108,7 +108,6 @@ bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
         }
     }
 
-    
     bool ret = fcs_sendRequest(fbdo, req);
 
     if (!ret)
@@ -260,6 +259,7 @@ void FB_Storage::sendUploadCallback(FirebaseData *fbdo, FCS_UploadStatusInfo &in
     fbdo->session.fcs.cbUploadInfo.localFileName = in.localFileName;
     fbdo->session.fcs.cbUploadInfo.remoteFileName = in.remoteFileName;
     fbdo->session.fcs.cbUploadInfo.fileSize = in.fileSize;
+    fbdo->session.fcs.cbUploadInfo.elapsedTime = in.elapsedTime;
 
     if (cb)
         cb(fbdo->session.fcs.cbUploadInfo);
@@ -282,6 +282,7 @@ void FB_Storage::sendDownloadCallback(FirebaseData *fbdo, FCS_DownloadStatusInfo
     fbdo->session.fcs.cbDownloadInfo.localFileName = in.localFileName;
     fbdo->session.fcs.cbDownloadInfo.remoteFileName = in.remoteFileName;
     fbdo->session.fcs.cbDownloadInfo.fileSize = in.fileSize;
+    fbdo->session.fcs.cbDownloadInfo.elapsedTime = in.elapsedTime;
 
     if (cb)
         cb(fbdo->session.fcs.cbDownloadInfo);
@@ -310,11 +311,16 @@ void FB_Storage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_fcs_req_
     if (req->fileSize == 0)
         return;
 
-    int p = 100 * readBytes / req->fileSize;
+    int p = (float)readBytes / req->fileSize * 100;
+
+    if (readBytes == 0)
+        fbdo->tcpClient.dataStart = millis();
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         req->progress = p;
+
+        fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
 
         fbdo->session.fcs.cbUploadInfo.status = fb_esp_fcs_upload_status_upload;
         FCS_UploadStatusInfo in;
@@ -322,6 +328,7 @@ void FB_Storage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_fcs_req_
         in.remoteFileName = req->remoteFileName;
         in.status = fb_esp_fcs_upload_status_upload;
         in.progress = p;
+        in.elapsedTime = fbdo->tcpClient.dataTime;
         sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
     }
 }
@@ -331,11 +338,13 @@ void FB_Storage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_fcs_re
     if (req->fileSize == 0)
         return;
 
-    int p = 100 * readBytes / req->fileSize;
+    int p = (float)readBytes / req->fileSize * 100;
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         req->progress = p;
+
+        fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
 
         fbdo->session.fcs.cbDownloadInfo.status = fb_esp_fcs_download_status_download;
         FCS_DownloadStatusInfo in;
@@ -344,6 +353,7 @@ void FB_Storage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_fcs_re
         in.status = fb_esp_fcs_download_status_download;
         in.progress = p;
         in.fileSize = req->fileSize;
+        in.elapsedTime = fbdo->tcpClient.dataTime;
         sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
     }
 }
@@ -370,7 +380,6 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         fbdo->session.response.code = ret;
         return false;
     }
-
 
     req->fileSize = ret;
 
@@ -498,9 +507,10 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             if (bufLen > 1024 * 16)
                 bufLen = 1024 * 16;
 
-            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
+            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
             int read = 0;
             int readCount = 0;
+
             while (available)
             {
                 if (available > bufLen)
@@ -512,6 +522,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                     break;
 
                 readCount += read;
+
                 reportUploadProgress(fbdo, req, readCount);
 
                 available = ut->mbfs->available(mbfs_type req->storageType);
@@ -520,6 +531,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             ut->delP(&buf);
 
             ut->mbfs->close(mbfs_type req->storageType);
+
             reportUploadProgress(fbdo, req, req->fileSize);
         }
         else if (req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
@@ -535,8 +547,9 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
             if (bufLen > 1024 * 16)
                 bufLen = 1024 * 16;
 
-            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
+            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
             size_t pos = 0;
+
             while (available)
             {
                 if (available > bufLen)
@@ -544,11 +557,13 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
                 memcpy_P(buf, req->pgmArc + pos, available);
                 if (fbdo->tcpClient.write(buf, available) != available)
                     break;
+
                 reportUploadProgress(fbdo, req, pos);
                 pos += available;
                 len -= available;
                 available = len;
             }
+
             ut->delP(&buf);
             reportUploadProgress(fbdo, req, pos);
         }
@@ -780,7 +795,6 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
 
                                 size_t available = fbdo->tcpClient.available();
                                 dataTime = millis();
-                                uint8_t *buf = (uint8_t *)ut->newP(defaultChunkSize + 1);
 
                                 req->fileSize = response.contentLen;
                                 error.code = 0;
@@ -814,6 +828,8 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
                                 if (bufLen > 1024 * 16)
                                     bufLen = 1024 * 16;
 
+                                uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
+
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.connected() && payloadRead < response.contentLen)
                                 {
 
@@ -823,6 +839,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
                                         if (fbdo->session.max_payload_length < fbdo->session.payload_length)
                                             fbdo->session.max_payload_length = fbdo->session.payload_length;
                                         dataTime = millis();
+
                                         if ((int)available > bufLen)
                                             available = bufLen;
 

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.14
+ * Google's Cloud Functions class, Functions.cpp version 1.1.15
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created June 3, 2022
+ * Created July 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -825,6 +825,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
     if (fbdo->session.response.code > 0)
     {
+        
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_functions_request_type_upload)
         {
@@ -836,8 +837,15 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             fbdo->session.cfn.filepath.clear();
 
             int available = ut->mbfs->available(mbfs_type fbdo->session.cfn.storageType);
-            int bufLen = 512;
-            uint8_t *buf = new uint8_t[bufLen + 1];
+
+            int bufLen = Signer.getCfg()->functions.upload_buffer_size;
+            if (bufLen < 512)
+                bufLen = 512;
+
+            if (bufLen > 1024 * 16)
+                bufLen = 1024 * 16;
+
+            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
             int read = 0;
 
             while (available)
@@ -852,6 +860,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
                 available = ut->mbfs->available(mbfs_type fbdo->session.cfn.storageType);
             }
+
             ut->delP(&buf);
 
             ut->mbfs->close(mbfs_type fbdo->session.cfn.storageType);
@@ -860,9 +869,17 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
         {
             int len = req->pgmArcLen;
             int available = len;
-            int bufLen = 512;
-            uint8_t *buf = new uint8_t[bufLen + 1];
+            
+            int bufLen = Signer.getCfg()->functions.upload_buffer_size;
+            if (bufLen < 512)
+                bufLen = 512;
+
+            if (bufLen > 1024 * 16)
+                bufLen = 1024 * 16;
+
+            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
             size_t pos = 0;
+
             while (available)
             {
                 if (available > bufLen)
@@ -874,6 +891,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 len -= available;
                 available = len;
             }
+
             ut->delP(&buf);
         }
 

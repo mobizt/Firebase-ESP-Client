@@ -45,8 +45,8 @@
  * To use SdFat on ESP32
 
 #if defined(ESP32)
-#include <SdFat.h> //https://github.com/greiman/SdFat
-static SdFat sd_fat_fs;   //should declare as static here
+#include <SdFat.h> // https://github.com/greiman/SdFat
+static SdFat sd_fat_fs;   // should declare as static here
 #define DEFAULT_SD_FS sd_fat_fs
 #define CARD_TYPE_SD 1
 #define SD_FS_FILE SdFile

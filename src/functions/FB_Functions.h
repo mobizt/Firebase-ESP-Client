@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.h version 1.1.14
+ * Google's Cloud Functions class, Functions.h version 1.1.15
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created June 3, 2022
+ * Created July 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)

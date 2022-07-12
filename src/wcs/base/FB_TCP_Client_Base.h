@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.5
+ * TCP Client Base class, version 1.0.6
  *
- * Created July 10, 2022
+ * Created July 12, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -58,6 +58,11 @@ class FB_TCP_Client_Base
     friend class FirebaseESP32;
     friend class FirebaseESP8266;
     friend class FCMObject;
+    friend class FB_Functions;
+    friend class FB_Storage;
+    friend class GG_CloudStorage;
+    friend class FB_RTDB;
+    friend class FB_Firestore;
     friend class FIREBASE_CLASS;
 
 public:
@@ -106,10 +111,7 @@ public:
             return false;
 
         if (connected())
-        {
-            flush();
             return true;
-        }
 
         client->setTimeout(timeoutMs);
 
@@ -161,23 +163,10 @@ public:
         if (!connect())
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
-        int toSend = chunkSize;
-        int sent = 0;
-        while (sent < len)
-        {
-            if (sent + toSend > len)
-                toSend = len - sent;
+            int res = client->write(data, len);
 
-#if defined(ESP8266)
-            delay(0);
-#endif
-            int res = client->write(data + sent, toSend);
-
-            if (res != toSend)
+            if (res != len)
                 return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
-
-            sent += toSend;
-        }
 
         setError(FIREBASE_ERROR_HTTP_CODE_OK);
 
@@ -682,7 +671,8 @@ protected:
     uint16_t port = 0;
     MB_FS *mbfs = nullptr;
     Client *client = nullptr;
-    int chunkSize = 1024;
+    unsigned long dataStart = 0;
+    unsigned long dataTime = 0;
 
     // In esp8266, this is actually Arduino base Stream (char read) timeout.
     //  This will override internally by WiFiClientSecureCtx::_connectSSL

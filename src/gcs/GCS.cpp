@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.17
+ * Google's Cloud Storage class, GCS.cpp version 1.1.18
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 13, 2022
+ * Created July 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -277,17 +277,21 @@ void GG_CloudStorage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_gcs
     if (req->fileSize == 0)
         return;
 
-    int p = 100 * readBytes / req->fileSize;
+    int p = (float)readBytes / req->fileSize * 100;
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         req->progress = p;
+
+        fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
+
         fbdo->session.gcs.cbUploadInfo.status = fb_esp_gcs_upload_status_upload;
         UploadStatusInfo in;
         in.localFileName = req->localFileName;
         in.remoteFileName = req->remoteFileName;
         in.status = fb_esp_gcs_upload_status_upload;
         in.progress = p;
+        in.elapsedTime = fbdo->tcpClient.dataTime;
         sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
     }
 }
@@ -297,11 +301,13 @@ void GG_CloudStorage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_g
     if (req->fileSize == 0)
         return;
 
-    int p = 100 * readBytes / req->fileSize;
+    int p = (float)readBytes / req->fileSize * 100;
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         req->progress = p;
+
+        fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
 
         fbdo->session.gcs.cbDownloadInfo.status = fb_esp_gcs_download_status_download;
         DownloadStatusInfo in;
@@ -310,6 +316,7 @@ void GG_CloudStorage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_g
         in.status = fb_esp_gcs_download_status_download;
         in.progress = p;
         in.fileSize = req->fileSize;
+        in.elapsedTime = fbdo->tcpClient.dataTime;
         sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
     }
 }
@@ -650,6 +657,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     if (fbdo->session.response.code > 0)
     {
+        
         fbdo->session.gcs.storage_type = req->storageType;
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart)
@@ -674,7 +682,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             if (bufLen > 1024 * 16)
                 bufLen = 1024 * 16;
 
-            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
+            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
             int read = 0;
 
             // This is inefficient unless less memory usage than keep file opened
@@ -686,8 +694,11 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 if (available > bufLen)
                     available = bufLen;
                 read = ut->mbfs->read(mbfs_type req->storageType, buf, available);
+
                 byteRead += read;
+
                 reportUploadProgress(fbdo, req, byteRead);
+
                 if (fbdo->tcpClient.write(buf, read) != read)
                 {
                     fbdo->session.response.code = FIREBASE_ERROR_UPLOAD_DATA_ERRROR;
@@ -697,6 +708,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
                 available = ut->mbfs->available(mbfs_type req->storageType);
             }
+
             ut->delP(&buf);
             fbdo->session.long_running_task--;
 
@@ -718,10 +730,18 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             size_t byteRead = 0;
             int available = 0;
 
-            int bufLen = 2048;
+            int bufLen = Signer.getCfg()->gcs.upload_buffer_size;
+            if (bufLen < 512)
+                bufLen = 512;
+
+            if (bufLen > 1024 * 16)
+                bufLen = 1024 * 16;
+
             uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             int read = 0;
             size_t totalBytes = req->fileSize;
+
+
             if (req->chunkRange != -1 || req->location.length() > 0)
             {
                 // This is inefficient unless less memory usage than keep file opened
@@ -760,11 +780,14 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 }
 
                 byteRead += read;
+
                 reportUploadProgress(fbdo, req, byteRead);
+
                 available = ut->mbfs->available(mbfs_type req->storageType);
                 if (byteRead + available > totalBytes)
                     available = totalBytes - byteRead;
             }
+
             ut->delP(&buf);
 
             if (ut->mbfs->available(mbfs_type req->storageType) == 0)
@@ -1440,6 +1463,7 @@ void GG_CloudStorage::sendUploadCallback(FirebaseData *fbdo, UploadStatusInfo &i
     fbdo->session.gcs.cbUploadInfo.localFileName = in.localFileName;
     fbdo->session.gcs.cbUploadInfo.remoteFileName = in.remoteFileName;
     fbdo->session.gcs.cbUploadInfo.fileSize = in.fileSize;
+    fbdo->session.gcs.cbUploadInfo.elapsedTime = in.elapsedTime;
 
     if (cb)
         cb(fbdo->session.gcs.cbUploadInfo);
@@ -1462,6 +1486,7 @@ void GG_CloudStorage::sendDownloadCallback(FirebaseData *fbdo, DownloadStatusInf
     fbdo->session.gcs.cbDownloadInfo.localFileName = in.localFileName;
     fbdo->session.gcs.cbDownloadInfo.remoteFileName = in.remoteFileName;
     fbdo->session.gcs.cbDownloadInfo.fileSize = in.fileSize;
+    fbdo->session.gcs.cbDownloadInfo.elapsedTime = in.elapsedTime;
 
     if (cb)
         cb(fbdo->session.gcs.cbDownloadInfo);
@@ -1727,6 +1752,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                             if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init || req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
                             {
+                                    
                                 if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT) // resume incomplete
                                 {
                                     int p1 = ut->strposP(header, fb_esp_pgm_str_481, 0);
@@ -1826,8 +1852,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                                 size_t available = fbdo->tcpClient.available();
                                 dataTime = millis();
-                                uint8_t *buf = (uint8_t *)ut->newP(defaultChunkSize + 1);
-
+                                
                                 req->fileSize = response.contentLen;
                                 error.code = 0;
 
@@ -1859,6 +1884,8 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                 if (bufLen > 1024 * 16)
                                     bufLen = 1024 * 16;
 
+                                uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
+
                                 while (fbdo->reconnect(dataTime) && fbdo->tcpClient.connected() && payloadRead < response.contentLen)
                                 {
                                     if (available)
@@ -1871,6 +1898,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                         if (read == available)
                                         {
                                             reportDownloadProgress(fbdo, req, payloadRead);
+                                            
                                             if (fbdo->session.gcs.requestType == fb_esp_gcs_request_type_download_ota)
                                             {
 #if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)

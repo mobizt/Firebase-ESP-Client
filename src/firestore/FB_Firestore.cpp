@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.14
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.15
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created March 7, 2022
+ * Created July 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1225,16 +1225,19 @@ void FB_Firestore::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_firest
     if (req->size == 0)
         return;
 
-    int p = 100 * readBytes / req->size;
+    int p = (float)readBytes / req->size * 100;
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         req->progress = p;
 
+        fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
+
         fbdo->session.cfs.cbUploadInfo.status = fb_esp_cfs_upload_status_upload;
         CFS_UploadStatusInfo in;
         in.status = fb_esp_cfs_upload_status_upload;
         in.progress = p;
+        in.elapsedTime = fbdo->tcpClient.dataTime;
         sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
     }
 }
@@ -1246,6 +1249,7 @@ void FB_Firestore::sendUploadCallback(FirebaseData *fbdo, CFS_UploadStatusInfo &
     fbdo->session.cfs.cbUploadInfo.errorMsg = in.errorMsg;
     fbdo->session.cfs.cbUploadInfo.progress = in.progress;
     fbdo->session.cfs.cbUploadInfo.size = in.size;
+    fbdo->session.cfs.cbUploadInfo.elapsedTime = in.elapsedTime;
 
     if (cb)
         cb(fbdo->session.cfs.cbUploadInfo);
