@@ -113,10 +113,10 @@ public:
         if (connected())
             return true;
 
-        client->setTimeout(timeoutMs);
-
         if (!client->connect(host.c_str(), port))
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
+
+        client->setTimeout(timeoutMs);
 
         return connected();
     }
@@ -163,10 +163,10 @@ public:
         if (!connect())
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
-            int res = client->write(data, len);
+        int res = client->write(data, len);
 
-            if (res != len)
-                return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
+        if (res != len)
+            return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
 
         setError(FIREBASE_ERROR_HTTP_CODE_OK);
 

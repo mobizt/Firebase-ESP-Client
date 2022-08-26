@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.1.2
+ * The Firebase class, Firebase.h v1.1.3
  *
- *  Created July 10, 2022
+ *  Created August 25, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1784,7 +1784,7 @@ public:
    * the target String object's value will be empty.
   */
   template <typename T1 = const char *, typename T2>
-  bool getString(FirebaseData &fbdo, T1 path, T2 target) { return RTDB.getString(&fbdo, path, &target); }
+  bool getString(FirebaseData &fbdo, T1 path, T2 target) { return RTDB.getString(&fbdo, path, target); }
 
   /** Read the JSON string at the defined database path. 
    * The returned payload JSON string represents the child nodes and their value.

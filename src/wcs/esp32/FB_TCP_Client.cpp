@@ -159,9 +159,6 @@ int FB_TCP_Client::hostByName(const char *name, IPAddress &ip)
 
 void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
 {
-  if (wcs)
-    wcs->setTimeout(timeoutmSec / 1000);
-
   baseSetTimeout(timeoutmSec / 1000);
 }
 
@@ -182,10 +179,10 @@ bool FB_TCP_Client::connect()
     return true;
   }
 
-  wcs->setTimeout(timeoutMs);
-
   if (!wcs->_connect(host.c_str(), port, timeoutMs))
     return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
+
+  wcs->setTimeout(timeoutMs);
 
   return connected();
 }
