@@ -25,6 +25,8 @@
 // https://github.com/firebase/quickstart-ios
 // https://github.com/firebase/quickstart-js
 
+// Thanks Peter De Leeuw for addressing the issue of topic name that causes "Invalid registration token" error and his solution.
+
 #if defined(ESP32)
 #include <WiFi.h>
 #elif defined(ESP8266)
@@ -120,8 +122,8 @@ void sendMessage()
 
     // Read more details about HTTP v1 API here https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages
     FCM_HTTPv1_JSON_Message msg;
-
-    msg.topic = "/topics/myTopic";
+    
+    msg.topic = "myTopic"; //Topic name to send a message to, e.g. "weather". Note: "/topics/" prefix should not be provided.
     msg.notification.body = "Notification body";
     msg.notification.title = "Notification title";
 
@@ -134,8 +136,7 @@ void sendMessage()
     payload.add("timestamp", "1609815454");
     msg.data = payload.raw();
 
-    // As tested on June 22, 2021, FCM server returns error "Request contains an invalid argument" which is a bug on server side.
-    // The error descrpipttion is "Invalid registration token" which message.token is not required when message.topic was used.
+    
     if (Firebase.FCM.send(&fbdo, &msg)) // send message to recipient
         Serial.printf("ok\n%s\n\n", Firebase.FCM.payload(&fbdo).c_str());
     else
