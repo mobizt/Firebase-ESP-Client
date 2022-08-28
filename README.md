@@ -1893,6 +1893,13 @@ The result of the above code
 
 ```
 
+## Open Sourcs Contribution Awards
+
+This project **Firebase Arduino Client Library for ESP8266 and ESP32** wins the [Google Open Source Peer Bonus program](https://opensource.google/documentation/reference/growing/peer-bonus).
+
+This project would not have been possible without support from all users.
+
+Thanks for all contributions and Google Open Source.
 
 
 ## License
