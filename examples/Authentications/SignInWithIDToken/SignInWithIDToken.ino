@@ -108,7 +108,7 @@ void setup()
     Firebase.setIdToken(&config, "<ID Token>", 3600 /* expiry time */, "<Refresh Token>" /* refresh token */);
 
     // To refresh the token 5 minutes before expired
-    config.signer.preRefreshSeconds = 3600 - 5 * 60;
+    config.signer.preRefreshSeconds = 5 * 60;
 
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
