@@ -173,7 +173,7 @@ public:
   /** Reset stored config and auth credentials.
    *
    * @param config The pointer to FirebaseConfig data.
-   * 
+   *
    */
   void reset(FirebaseConfig *config);
 
@@ -489,7 +489,7 @@ public:
    */
   bool isTokenExpired();
 
-    /** Force the token to expire immediately and refresh.
+  /** Force the token to expire immediately and refresh.
    *
    * @param config The pointer to FirebaseConfig data.
    */
@@ -498,7 +498,7 @@ public:
   /** Reset stored config authentiocation credentials.
    *
    * @param config The pointer to FirebaseConfig data.
-   * 
+   *
    */
   void reset(FirebaseConfig *config);
 

@@ -589,8 +589,8 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
 
     if (!config)
         return;
-        
-     this->reset(config);
+
+    this->reset(config);
 
     bool refresh = false;
 
