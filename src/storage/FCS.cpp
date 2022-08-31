@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.21
+ * Google's Firebase Storage class, FCS.cpp version 1.1.22
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created July 12, 2022
+ * Created August 31, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -450,7 +450,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         if (type == token_type_id_token || type == token_type_custom_token)
             header += fb_esp_pgm_str_270;
         else if (type == token_type_oauth2_access_token)
-            header += fb_esp_pgm_str_271;
+            header += fb_esp_pgm_str_209;
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();

@@ -196,6 +196,8 @@ void setup()
      * passed to the Firebase.begin function.
      *
      * The id token can be accessed from Firebase.getToken().
+     * 
+     * The refresh token can be accessed from Firebase.getRefreshToken().
      */
 }
 

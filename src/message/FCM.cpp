@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.20
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.21
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created August 31, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -280,7 +280,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
     if (Signer.getTokenType() == token_type_oauth2_access_token && mode == fb_esp_fcm_msg_mode_httpv1)
     {
         header += fb_esp_pgm_str_237;
-        header += fb_esp_pgm_str_271;
+        header += fb_esp_pgm_str_209;
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();

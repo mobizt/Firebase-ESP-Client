@@ -1,6 +1,6 @@
 
 /**
- * Created July 12, 2022
+ * Created August 31, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -639,7 +639,7 @@ typedef struct fb_esp_spi_ethernet_module_t
 #ifdef INC_ENC28J60_LWIP
     ENC28J60lwIP *enc28j60;
 #endif
-#ifdef INC_W5100_LWIP 
+#ifdef INC_W5100_LWIP
     Wiznet5100lwIP *w5100;
 #endif
 #ifdef INC_W5500_LWIP
@@ -759,7 +759,8 @@ struct fb_esp_token_signer_resources_t
     bool test_mode = false;
     bool signup = false;
     bool anonymous = false;
-    bool idTokenCutomSet = false;
+    bool idTokenCustomSet = false;
+    bool accessTokenCustomSet = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
     unsigned long preRefreshSeconds = 60;
@@ -820,6 +821,7 @@ struct fb_esp_cfg_int_t
 {
     bool fb_multiple_requests = false;
     bool fb_processing = false;
+    bool fb_rtoken_requested = false;
     uint8_t fb_stream_idx = 0;
 
     bool fb_reconnect_wifi = false;
@@ -842,6 +844,8 @@ struct fb_esp_cfg_int_t
 
     MB_String auth_token;
     MB_String refresh_token;
+    MB_String client_id;
+    MB_String client_secret;
     uint16_t rtok_len = 0;
     uint16_t atok_len = 0;
     uint16_t ltok_len = 0;
@@ -1081,7 +1085,7 @@ struct fb_esp_cfg_t
     struct fb_esp_functions_config_t functions;
 #endif
 
-        SPI_ETH_Module spi_ethernet_module;
+    SPI_ETH_Module spi_ethernet_module;
     struct fb_esp_client_timeout_t timeout;
 };
 
@@ -1939,7 +1943,7 @@ static const char fb_esp_pgm_str_184[] PROGMEM = "/fb_bin_0.tmp";
 static const char fb_esp_pgm_str_185[] PROGMEM = "The backup data should be the JSON object";
 static const char fb_esp_pgm_str_186[] PROGMEM = "object";
 static const char fb_esp_pgm_str_187[] PROGMEM = "user_id";
-// static const char fb_esp_pgm_str_188[] PROGMEM = "";
+static const char fb_esp_pgm_str_188[] PROGMEM = "client_secret";
 static const char fb_esp_pgm_str_189[] PROGMEM = "payload too large";
 static const char fb_esp_pgm_str_190[] PROGMEM = "cannot config time";
 static const char fb_esp_pgm_str_191[] PROGMEM = "incomplete SSL client data";
@@ -1960,7 +1964,7 @@ static const char fb_esp_pgm_str_205[] PROGMEM = "grantType";
 static const char fb_esp_pgm_str_206[] PROGMEM = "refresh_token";
 static const char fb_esp_pgm_str_207[] PROGMEM = "refreshToken";
 static const char fb_esp_pgm_str_208[] PROGMEM = "id_token";
-static const char fb_esp_pgm_str_209[] PROGMEM = "refresh_token";
+static const char fb_esp_pgm_str_209[] PROGMEM = "Bearer ";
 static const char fb_esp_pgm_str_210[] PROGMEM = "expires_in";
 static const char fb_esp_pgm_str_211[] PROGMEM = "system time was not set";
 static const char fb_esp_pgm_str_212[] PROGMEM = "iss";
@@ -1979,6 +1983,7 @@ static const char fb_esp_pgm_str_224[] PROGMEM = "firebase.database";
 static const char fb_esp_pgm_str_225[] PROGMEM = "cloud-platform";
 static const char fb_esp_pgm_str_226[] PROGMEM = "firestore";
 static const char fb_esp_pgm_str_227[] PROGMEM = "grant_type";
+// rfc 7523, JWT Bearer Token Grant Type Profile for OAuth 2.0
 static const char fb_esp_pgm_str_228[] PROGMEM = "urn:ietf:params:oauth:grant-type:jwt-bearer";
 static const char fb_esp_pgm_str_229[] PROGMEM = "assertion";
 static const char fb_esp_pgm_str_230[] PROGMEM = "NTP server time synching failed";
@@ -2023,7 +2028,7 @@ static const char fb_esp_pgm_str_267[] PROGMEM = "/o";
 static const char fb_esp_pgm_str_268[] PROGMEM = "name=";
 static const char fb_esp_pgm_str_269[] PROGMEM = "alt=media";
 static const char fb_esp_pgm_str_270[] PROGMEM = "Firebase ";
-static const char fb_esp_pgm_str_271[] PROGMEM = "Bearer ";
+// static const char fb_esp_pgm_str_271[] PROGMEM = "";
 static const char fb_esp_pgm_str_272[] PROGMEM = "downloadTokens";
 static const char fb_esp_pgm_str_273[] PROGMEM = "token=";
 static const char fb_esp_pgm_str_274[] PROGMEM = "name";

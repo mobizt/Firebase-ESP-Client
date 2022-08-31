@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.15
+ * Google's Cloud Functions class, Functions.cpp version 1.1.16
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created July 12, 2022
+ * Created August 31, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -799,7 +799,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             {
                 header += fb_esp_pgm_str_237;
                 if (Signer.getTokenType() == token_type_oauth2_access_token)
-                    header += fb_esp_pgm_str_271;
+                    header += fb_esp_pgm_str_209;
 
                 header += Signer.getToken();
                 header += fb_esp_pgm_str_21;

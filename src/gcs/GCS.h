@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.1.18
+ * Google's Cloud Storage class, GCS.h version 1.1.19
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created July 12, 2022
+ * Created August 31, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)

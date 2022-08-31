@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.1
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.2
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created July 12, 2022
+ * Created August 31, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -2239,7 +2239,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
                 }
 
                 toRead = len;
-                if (toRead > bufSize)
+                if ((int)toRead > bufSize)
                     toRead = bufSize - 1;
 
                 buf = (char *)ut->newP(bufSize);
@@ -2341,7 +2341,7 @@ void FB_RTDB::sendBase64File(FirebaseData *fbdo, size_t bufSize, const MB_String
                 if (r > -1)
                     fbuff[0] = (uint8_t)r;
                 readLen++;
-                
+
                 reportUploadProgress(fbdo, req, readLen);
             }
             else if (len - fbuffIndex == 2)
@@ -2353,7 +2353,7 @@ void FB_RTDB::sendBase64File(FirebaseData *fbdo, size_t bufSize, const MB_String
                 if (r > -1)
                     fbuff[1] = (uint8_t)r;
                 readLen += 2;
-                
+
                 reportUploadProgress(fbdo, req, readLen);
             }
 
@@ -2574,7 +2574,6 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
         ut->mbfs->close(mbfs_type req->storageType);
         ut->mbfs->open(filenme.c_str(), mbfs_type req->storageType, mb_fs_open_mode_write);
     }
-
 
     while (chunkBufSize > 0)
     {
@@ -2898,7 +2897,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
                                 if (req && downloadByteLen == 0)
                                 {
-                                   
+
                                     req->fileSize = response.contentLen;
                                     RTDB_DownloadStatusInfo in;
                                     in.localFileName = ut->mbfs->name(mbfs_type req->storageType);
@@ -3077,7 +3076,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
             chunkIdx++;
         }
-    }  
+    }
 
     header.clear();
 
@@ -3851,7 +3850,12 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     {
         header += fb_esp_pgm_str_237;
         header += cfg->signer.tokens.auth_type;
-        header += fb_esp_pgm_str_6;
+
+        if (cfg->signer.tokens.auth_type.length() > 0)
+        {
+            if (cfg->signer.tokens.auth_type[cfg->signer.tokens.auth_type.length() - 1] != ' ')
+                header += fb_esp_pgm_str_6;
+        }
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();

@@ -84,34 +84,17 @@ void setup()
 
     Firebase.reconnectWiFi(true);
 
-    /** To sign in as anonymous user, just sign up as anonymous user
-     * with blank email and password.
-     *
-     * The Anonymous provider must be enabled.
-     *
-     * To enable Anonymous provider,
-     * from Firebase console, select Authentication, select Sign-in method tab,
-     * under the Sign-in providers list, enable Anonymous provider.
-     *
-     * Warning: this will create anonymous user everytime you called this function and your user list
-     * will grow up and the anonymous users stay in the user list after it created and can be garbage user
-     * after the generated id token from this anonymous user will not use anymore.
-     *
-     * https://stackoverflow.com/questions/38694015/what-happens-to-firebase-anonymous-users
-     * https://stackoverflow.com/questions/39640574/how-to-bulk-delete-firebase-anonymous-users
-     */
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
+
+    // To refresh the token 5 minutes before expired
+    config.signer.preRefreshSeconds = 5 * 60;
 
     /* Set ID token */
     // The ID token obtained from other apps e.g. Firebase Admin.
     // The Refresh token for token refreshment which used when token was expired.
     // If Refresh token was not assigned or empty string, the ID token will not refresh when it expired.
     Firebase.setIdToken(&config, "<ID Token>", 3600 /* expiry time */, "<Refresh Token>" /* refresh token */);
-
-    // To refresh the token 5 minutes before expired
-    config.signer.preRefreshSeconds = 5 * 60;
-
-    /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
 }

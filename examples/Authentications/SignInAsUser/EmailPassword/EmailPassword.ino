@@ -143,7 +143,10 @@ void setup()
     Firebase.RTDB.setReadWriteRules(&fbdo, base_path, var, val, val, DATABASE_SECRET);
 
     /** path for user data is now "/UsersData/<user uid>"
-     * The user UID can be taken from auth.token.uid
+     * 
+     * The id token can be accessed from Firebase.getToken().
+     * 
+     * The refresh token can be accessed from Firebase.getRefreshToken().
      */
 }
 
@@ -159,5 +162,8 @@ void loop()
         path += auth.token.uid.c_str(); //<- user uid of current user that sign in with Emal/Password
         path += "/test/int";
         Serial.printf("Set int... %s\n", Firebase.RTDB.setInt(&fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
+
+        // You can use refresh token from Firebase.getRefreshToken() to sign in next time without providing Email and Password.
+        // See SignInWithRefreshIDToken example.
     }
 }

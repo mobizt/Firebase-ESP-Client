@@ -21,6 +21,9 @@
  * OAuth2.0 acces tokens generation will fail
  * because of invalid expiration time in JWT token that used in the id/access
  * token request.
+ * 
+ * This library used RFC 7523, JWT Bearer Token Grant Type Profile for OAuth 2.0
+ * which no refresh token is available for access token exchanging.
  */
 
 #if defined(ESP32)
@@ -132,6 +135,8 @@ void setup()
   Firebase.begin(&config, &auth);
 
   /* The access token can be accessed from Firebase.getToken(). */
+
+  /* No refresh token is available for OAuth2.0 authentication method used in this library i.e. JWT Bearer Token Grant Type Profile */
 }
 
 void loop()

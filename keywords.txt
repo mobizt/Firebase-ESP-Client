@@ -43,7 +43,10 @@ FunctionsOperationStatusInfo    KEYWORD1
 
 begin   KEYWORD2
 setIdToken  KEYWORD2
+setAccessToken    KEYWORD2
 isTokenExpired  KEYWORD2
+refreshToken    KEYWORD2
+reset   KEYWORD2
 deleteUser  KEYWORD2
 reconnectWiFi   KEYWORD2
 setFloatDigits  KEYWORD2
@@ -227,6 +230,7 @@ removeQueryIndex
 authenticated   KEYWORD2
 ready   KEYWORD2
 getToken    KEYWORD2
+getRefreshToken KEYWORD2
 
 upload  KEYWORD2
 download    KEYWORD2
