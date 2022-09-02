@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.1.4
+ * The Firebase class, Firebase.cpp v1.1.5
  *
- *  Created August 30, 2022
+ *  Created September 1, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -175,13 +175,8 @@ void Firebase_ESP_Client::mSetAuthToken(FirebaseConfig *config, MB_StringPtr aut
     bool refresh = false;
 
     MB_String _authToken = authToken;
-    config->internal.refresh_token.clear();
     config->internal.refresh_token = refreshToken;
-
-    config->internal.client_id.clear();
     config->internal.client_id = clientId;
-
-    config->internal.client_secret.clear();
     config->internal.client_secret = clientSecret;
 
     if (config->internal.refresh_token.length() == 0 && _authToken.length() == 0)
@@ -202,7 +197,6 @@ void Firebase_ESP_Client::mSetAuthToken(FirebaseConfig *config, MB_StringPtr aut
     config->internal.auth_token = authToken;
     config->internal.atok_len = config->internal.auth_token.length();
     config->internal.rtok_len = config->internal.refresh_token.length();
-    config->internal.ltok_len = 0;
 
     if (expire > 3600)
         expire = 3600;
@@ -211,20 +205,13 @@ void Firebase_ESP_Client::mSetAuthToken(FirebaseConfig *config, MB_StringPtr aut
 
     config->signer.tokens.status = token_status_ready;
     config->signer.step = fb_esp_jwt_generation_step_begin;
-    config->internal.fb_last_jwt_generation_error_cb_millis = 0;
     config->signer.tokens.token_type = type;
     config->signer.anonymous = true;
 
     if (type == token_type_id_token)
-    {
         config->signer.idTokenCustomSet = true;
-        config->signer.accessTokenCustomSet = true;
-    }
     else if (type == token_type_oauth2_access_token)
-    {
         config->signer.accessTokenCustomSet = true;
-        config->signer.idTokenCustomSet = false;
-    }
 
     if (refresh)
         this->refreshToken(config);
@@ -263,15 +250,17 @@ void Firebase_ESP_Client::reset(FirebaseConfig *config)
         config->internal.client_id.clear();
         config->internal.client_secret.clear();
         config->internal.auth_token.clear();
-        config->internal.atok_len = 0;
         config->internal.refresh_token.clear();
+        config->internal.atok_len = 0;
         config->internal.rtok_len = 0;
         config->internal.ltok_len = 0;
         config->signer.lastReqMillis = 0;
+        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         config->signer.tokens.expires = 0;
         config->internal.fb_rtoken_requested = false;
         config->signer.accessTokenCustomSet = false;
         config->signer.idTokenCustomSet = false;
+        config->signer.anonymous = false;
 
         config->internal.client_email_crc = 0;
         config->internal.project_id_crc = 0;
@@ -595,13 +584,8 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
     bool refresh = false;
 
     MB_String _authToken = authToken;
-    config->internal.refresh_token.clear();
     config->internal.refresh_token = refreshToken;
-
-    config->internal.client_id.clear();
     config->internal.client_id = clientId;
-
-    config->internal.client_secret.clear();
     config->internal.client_secret = clientSecret;
 
     if (config->internal.refresh_token.length() == 0 && _authToken.length() == 0)
@@ -622,7 +606,6 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
     config->internal.auth_token = authToken;
     config->internal.atok_len = config->internal.auth_token.length();
     config->internal.rtok_len = config->internal.refresh_token.length();
-    config->internal.ltok_len = 0;
 
     if (expire > 3600)
         expire = 3600;
@@ -631,20 +614,13 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
 
     config->signer.tokens.status = token_status_ready;
     config->signer.step = fb_esp_jwt_generation_step_begin;
-    config->internal.fb_last_jwt_generation_error_cb_millis = 0;
     config->signer.tokens.token_type = type;
     config->signer.anonymous = true;
 
     if (type == token_type_id_token)
-    {
         config->signer.idTokenCustomSet = true;
-        config->signer.accessTokenCustomSet = true;
-    }
     else if (type == token_type_oauth2_access_token)
-    {
         config->signer.accessTokenCustomSet = true;
-        config->signer.idTokenCustomSet = false;
-    }
 
     if (refresh)
         this->refreshToken(config);
@@ -683,15 +659,17 @@ void FIREBASE_CLASS::reset(FirebaseConfig *config)
         config->internal.client_id.clear();
         config->internal.client_secret.clear();
         config->internal.auth_token.clear();
-        config->internal.atok_len = 0;
         config->internal.refresh_token.clear();
+        config->internal.atok_len = 0;
         config->internal.rtok_len = 0;
         config->internal.ltok_len = 0;
         config->signer.lastReqMillis = 0;
+        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         config->signer.tokens.expires = 0;
         config->internal.fb_rtoken_requested = false;
         config->signer.accessTokenCustomSet = false;
         config->signer.idTokenCustomSet = false;
+        config->signer.anonymous = false;
 
         config->internal.client_email_crc = 0;
         config->internal.project_id_crc = 0;

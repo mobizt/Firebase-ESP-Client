@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.1.4
+ * The Firebase class, Firebase.h v1.1.5
  *
- *  Created August 30, 2022
+ *  Created September 1, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
