@@ -1409,6 +1409,15 @@ The support functions for Cloud Firestore are export, import, create, patch, get
 
 See the [Firestore examples](/examples/Firestore) for the usages.
 
+If you see that some useful applications are missed from this library, you can contribute the code examples that can be usefull for other users.
+
+The Cloud Firestore REST APIs are different than the APIs that used in Firebase SDK clients.
+
+If you don't see the examples that can be applied for your works or you don't know how to use Firestore functions in this library, for better understanding the Cloud Firestore RESt APIs please see the [REST API reference document](https://firebase.google.com/docs/firestore/reference/rest/v1beta2/projects.databases/importDocuments) which you can test with its API Explorer. 
+
+For Cloud Firestore REST API features which are not available in this API, you can request the features [here](https://firebase.google.com/support/troubleshooter/report/features). 
+
+
 The unsecured security rules that allows the public usage of Firestore is
 
 ```
