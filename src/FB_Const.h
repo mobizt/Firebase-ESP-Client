@@ -1,6 +1,6 @@
 
 /**
- * Created August 31, 2022
+ * Created September 18, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -103,6 +103,12 @@ class QueryFilter;
 #define MIN_NTP_SERVER_SYNC_TIME_OUT 15 * 1000
 
 #define FB_TIME_SYNC_INTERVAL 1500
+
+#define DEFAULT_AUTH_TOKEN_PRE_REFRESH_SECONDS 5 * 60
+
+#define DEFAULT_AUTH_TOKEN_EXPIRED_SECONDS 3600
+
+#define DEFAULT_REQUEST_TIMEOUT 2000
 
 #define SD_CS_PIN 15
 
@@ -763,9 +769,9 @@ struct fb_esp_token_signer_resources_t
     bool accessTokenCustomSet = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
-    unsigned long preRefreshSeconds = 60;
-    unsigned long expiredSeconds = 3600;
-    unsigned long reqTO = 2000;
+    unsigned long preRefreshSeconds = DEFAULT_AUTH_TOKEN_PRE_REFRESH_SECONDS;
+    unsigned long expiredSeconds = DEFAULT_AUTH_TOKEN_EXPIRED_SECONDS;
+    unsigned long reqTO = DEFAULT_REQUEST_TIMEOUT;
     MB_String customHeaders;
     MB_String pk;
     size_t hashSize = 32; // SHA256 size (256 bits or 32 bytes)
@@ -838,8 +844,7 @@ struct fb_esp_cfg_int_t
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
-
-    MB_VECTOR<uint32_t> so_addr_list;
+    MB_VECTOR<uint32_t> fbdo_addr_list;
     MB_VECTOR<uint32_t> queue_addr_list;
 
     MB_String auth_token;

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.22
+ * Google's Firebase Data class, FB_Session.h version 1.2.23
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created May 11, 2022
+ * Created September 18, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -950,8 +950,8 @@ private:
 #endif
 
   bool init();
-  void addSO();
-  void removeSO();
+  void addPtrList(fb_esp_con_mode mode);
+  void removePtrList();
   void addQueueAddr();
   void removeQueueAddr();
   void setRaw(bool trim);

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.27
+ * Google's Firebase Token Generation class, Signer.cpp version 1.2.28
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created August 31, 2022
+ * Created September 18, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1440,6 +1440,10 @@ void Firebase_Signer::setNetworkStatusCallback(FB_NetworkStatusRequestCallback n
 void Firebase_Signer::setNetworkStatus(bool status)
 {
     networkStatus = status;
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
+    if (tcpClient)
+        tcpClient->setNetworkStatus(networkStatus);
+#endif
 }
 
 bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status status)
@@ -1481,11 +1485,7 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
     tcpClient->setCACert(nullptr);
 #endif
 
-#if defined(FB_ENABLE_EXTERNAL_CLIENT)
-    tcpClient->networkReady();
-#else
     networkStatus = tcpClient->networkReady();
-#endif
 
     if (!networkStatus)
     {
@@ -1807,6 +1807,7 @@ bool Firebase_Signer::tokenReady()
         return false;
 
     checkToken();
+
     return config->signer.tokens.status == token_status_ready;
 };
 

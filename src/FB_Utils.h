@@ -298,6 +298,7 @@ public:
         for (int i = offset; i < last; i++)
             str += s[i];
     }
+    
     void splitString(const char *str, MB_VECTOR<MB_String> out, const char delim)
     {
         int current = 0, previous = 0;

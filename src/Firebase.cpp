@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.1.5
+ * The Firebase class, Firebase.cpp v1.1.6
  *
- *  Created September 1, 2022
+ *  Created September 18, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -59,7 +59,7 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
 
     if (cfg)
     {
-        cfg->internal.so_addr_list.clear();
+        cfg->internal.fbdo_addr_list.clear();
         cfg->internal.queue_addr_list.clear();
         delete cfg;
     }
@@ -132,7 +132,25 @@ struct token_info_t Firebase_ESP_Client::authTokenInfo()
 
 bool Firebase_ESP_Client::ready()
 {
-    return Signer.tokenReady();
+    bool status = Signer.tokenReady();
+    
+    // We need to close all data object TCP sessions when token is not ready.
+    if (!status)
+    {
+        if (Signer.getCfg())
+        {
+            for (size_t id = 0; id < Signer.getCfg()->internal.fbdo_addr_list.size(); id++)
+            {
+
+                FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.getCfg()->internal.fbdo_addr_list[id]);
+
+                if (fbdo)
+                    fbdo->closeSession();
+            }
+        }
+    }
+
+    return status;
 }
 
 bool Firebase_ESP_Client::authenticated()
@@ -450,7 +468,7 @@ FIREBASE_CLASS::~FIREBASE_CLASS()
 
     if (cfg)
     {
-        cfg->internal.so_addr_list.clear();
+        cfg->internal.fbdo_addr_list.clear();
         cfg->internal.queue_addr_list.clear();
     }
 
@@ -540,7 +558,25 @@ struct token_info_t FIREBASE_CLASS::authTokenInfo()
 
 bool FIREBASE_CLASS::ready()
 {
-    return Signer.tokenReady();
+    bool status = Signer.tokenReady();
+    
+    // We need to close all data object TCP sessions when token is not ready.
+    if (!status)
+    {
+        if (Signer.getCfg())
+        {
+            for (size_t id = 0; id < Signer.getCfg()->internal.fbdo_addr_list.size(); id++)
+            {
+
+                FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.getCfg()->internal.fbdo_addr_list[id]);
+
+                if (fbdo)
+                    fbdo->closeSession();
+            }
+        }
+    }
+
+    return status;
 }
 
 bool FIREBASE_CLASS::authenticated()

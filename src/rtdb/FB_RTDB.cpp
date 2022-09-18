@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.2
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.3
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created August 31, 2022
+ * Created September 18, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -764,7 +764,7 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
     fbdo->_dataAvailableCallback = dataAvailableCallback;
     fbdo->_timeoutCallback = timeoutCallback;
 
-    fbdo->addSO();
+    fbdo->addPtrList(fb_esp_con_mode_rtdb_stream);
 
 #if defined(ESP32)
     MB_String taskName = fb_esp_pgm_str_72;
@@ -809,7 +809,7 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
     fbdo->_multiPathDataCallback = multiPathDataCallback;
     fbdo->_timeoutCallback = timeoutCallback;
 
-    fbdo->addSO();
+    fbdo->addPtrList(fb_esp_con_mode_rtdb_stream);
 
 #if defined(ESP32)
     MB_String taskName = fb_esp_pgm_str_72;
@@ -844,10 +844,10 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
 
     fbdo->_multiPathDataCallback = NULL;
     fbdo->_timeoutCallback = NULL;
-    fbdo->removeSO();
+    fbdo->removePtrList();
 
 #if defined(ESP32)
-    if (cfg->internal.so_addr_list.size() == 0)
+    if (cfg->internal.fbdo_addr_list.size() == 0)
     {
         if (cfg->internal.stream_task_handle)
             vTaskDelete(cfg->internal.stream_task_handle);
@@ -877,9 +877,9 @@ void FB_RTDB::runStreamTask()
 
         for (;;)
         {
-            for (size_t i = 0; i < Signer.getCfg()->internal.so_addr_list.size(); i++)
+            for (size_t i = 0; i < Signer.getCfg()->internal.fbdo_addr_list.size(); i++)
             {
-                FirebaseData *_fbdo = addrTo<FirebaseData *>(Signer.getCfg()->internal.so_addr_list[i]);
+                FirebaseData *_fbdo = addrTo<FirebaseData *>(Signer.getCfg()->internal.fbdo_addr_list[i]);
 
                 if (_fbdo)
                 {
@@ -921,10 +921,10 @@ void FB_RTDB::stream()
     if (!cfg)
         return;
 
-    for (size_t id = 0; id < cfg->internal.so_addr_list.size(); id++)
+    for (size_t id = 0; id < cfg->internal.fbdo_addr_list.size(); id++)
     {
 
-        FirebaseData *fbdo = addrTo<FirebaseData *>(cfg->internal.so_addr_list[id]);
+        FirebaseData *fbdo = addrTo<FirebaseData *>(cfg->internal.fbdo_addr_list[id]);
 
         if (fbdo)
         {
@@ -3547,6 +3547,10 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const char *payload)
             // make stream available status
             fbdo->session.rtdb.stream_data_changed = true;
             fbdo->session.rtdb.data_available = true;
+
+             // We need to close the current session due to the token was already expired.
+            if (ut->stringCompare(response.eventType.c_str(), 0, fb_esp_pgm_str_110))
+                fbdo->closeSession();
         }
     }
 }
@@ -3943,12 +3947,12 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return;
     }
-    fbdo->removeSO();
+    fbdo->removePtrList();
 
     fbdo->_dataAvailableCallback = NULL;
     fbdo->_timeoutCallback = NULL;
 
-    if (cfg->internal.so_addr_list.size() == 0)
+    if (cfg->internal.fbdo_addr_list.size() == 0)
     {
 #if defined(ESP32)
         if (cfg->internal.stream_task_handle)

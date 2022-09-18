@@ -96,7 +96,7 @@ static SdFat sd_fat_fs;   // should declare as static here
 
 // To enable external Client for ESP8266 and ESP32.
 // This will enable automatically for other devices.
-//#define FB_ENABLE_EXTERNAL_CLIENT
+// #define FB_ENABLE_EXTERNAL_CLIENT
 
 // For ESP8266 W5100 Ethernet module
 // #define ENABLE_ESP8266_W5100_ETH
