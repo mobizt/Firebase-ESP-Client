@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.23
+ * Google's Firebase Data class, FB_Session.h version 1.2.24
  *
  * This library supports Espressif ESP8266 and ESP32
  *

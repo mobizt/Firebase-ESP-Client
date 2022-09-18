@@ -1,6 +1,6 @@
 
 /**
- * The Firebase class, Firebase.h v1.1.6
+ * The Firebase class, Firebase.h v1.1.7
  *
  *  Created September 18, 2022
  *

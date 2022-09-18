@@ -1,5 +1,5 @@
 /**
- * The Firebase class, Firebase.cpp v1.1.6
+ * The Firebase class, Firebase.cpp v1.1.7
  *
  *  Created September 18, 2022
  *
@@ -132,10 +132,9 @@ struct token_info_t Firebase_ESP_Client::authTokenInfo()
 
 bool Firebase_ESP_Client::ready()
 {
-    bool status = Signer.tokenReady();
-    
-    // We need to close all data object TCP sessions when token is not ready.
-    if (!status)
+
+    // We need to close all data object TCP sessions when token was expired.
+    if (Signer.isExpired())
     {
         if (Signer.getCfg())
         {
@@ -150,7 +149,7 @@ bool Firebase_ESP_Client::ready()
         }
     }
 
-    return status;
+    return Signer.tokenReady();
 }
 
 bool Firebase_ESP_Client::authenticated()
@@ -558,10 +557,8 @@ struct token_info_t FIREBASE_CLASS::authTokenInfo()
 
 bool FIREBASE_CLASS::ready()
 {
-    bool status = Signer.tokenReady();
-    
-    // We need to close all data object TCP sessions when token is not ready.
-    if (!status)
+    // We need to close all data object TCP sessions when token was expired.
+    if (Signer.isExpired())
     {
         if (Signer.getCfg())
         {
@@ -576,7 +573,7 @@ bool FIREBASE_CLASS::ready()
         }
     }
 
-    return status;
+    return Signer.tokenReady();
 }
 
 bool FIREBASE_CLASS::authenticated()

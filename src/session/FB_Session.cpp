@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.23
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.24
  *
  * This library supports Espressif ESP8266 and ESP32
  *
@@ -39,11 +39,9 @@
 
 FirebaseData::FirebaseData()
 {
-    addPtrList(fb_esp_con_mode_undefined);
 }
 FirebaseData::FirebaseData(Client *client)
 {
-    addPtrList(fb_esp_con_mode_undefined);
     setExternalClient(client);
 }
 
@@ -162,8 +160,8 @@ bool FirebaseData::init()
     if (!Signer.getCfg())
         return false;
 
-    if (so_addr > 0 && session.con_mode != fb_esp_con_mode_rtdb_stream)
-        removePtrList();
+    if (so_addr == 0)
+        addPtrList(fb_esp_con_mode_undefined);
 
     this->ut = Signer.getUtils();
 
