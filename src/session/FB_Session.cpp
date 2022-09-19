@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.24
+ * Google's Firebase Data class, FB_Session.cpp version 1.2.25
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created September 18, 2022
+ * Created September 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -92,35 +92,35 @@ void FirebaseData::setNetworkStatus(bool status)
 #endif
 }
 
-void FirebaseData::addPtrList(fb_esp_con_mode mode)
+void FirebaseData::addAddr(fb_esp_con_mode mode)
 {
     if (!Signer.getCfg())
         return;
 
-    removePtrList();
+    removeAddr();
 
-    if (so_addr == 0)
+    if (addr == 0)
     {
-        so_addr = toAddr(*this);
-        Signer.getCfg()->internal.fbdo_addr_list.push_back(so_addr);
+        addr = toAddr(*this);
+        Signer.getCfg()->internal.fbdo_addr_list.push_back(addr);
         session.con_mode = mode;
     }
 }
 
-void FirebaseData::removePtrList()
+void FirebaseData::removeAddr()
 {
     if (!Signer.getCfg())
         return;
 
-    if (so_addr > 0)
+    if (addr > 0)
     {
         for (size_t i = 0; i < Signer.getCfg()->internal.fbdo_addr_list.size(); i++)
         {
-            if (so_addr > 0 && Signer.getCfg()->internal.fbdo_addr_list[i] == so_addr)
+            if (addr > 0 && Signer.getCfg()->internal.fbdo_addr_list[i] == addr)
             {
                 session.con_mode = fb_esp_con_mode_undefined;
                 Signer.getCfg()->internal.fbdo_addr_list.erase(Signer.getCfg()->internal.fbdo_addr_list.begin() + i);
-                so_addr = 0;
+                addr = 0;
                 break;
             }
         }
@@ -159,9 +159,6 @@ bool FirebaseData::init()
 {
     if (!Signer.getCfg())
         return false;
-
-    if (so_addr == 0)
-        addPtrList(fb_esp_con_mode_undefined);
 
     this->ut = Signer.getUtils();
 
@@ -935,6 +932,9 @@ void FirebaseData::setTimeout()
 
 void FirebaseData::setSecure()
 {
+    if (addr == 0)
+        addAddr(fb_esp_con_mode_undefined);
+
     setTimeout();
 
     tcpClient.setMBFS(mbfs);

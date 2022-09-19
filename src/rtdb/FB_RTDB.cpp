@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.3
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.4
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created September 18, 2022
+ * Created September 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -764,12 +764,12 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
     fbdo->_dataAvailableCallback = dataAvailableCallback;
     fbdo->_timeoutCallback = timeoutCallback;
 
-    fbdo->addPtrList(fb_esp_con_mode_rtdb_stream);
+    fbdo->addAddr(fb_esp_con_mode_rtdb_stream);
 
 #if defined(ESP32)
     MB_String taskName = fb_esp_pgm_str_72;
     taskName += fb_esp_pgm_str_113;
-    taskName += fbdo->so_addr;
+    taskName += fbdo->addr;
 
     if (streamTaskStackSize > STREAM_TASK_STACK_SIZE)
         cfg->internal.stream_task_stack_size = streamTaskStackSize;
@@ -809,12 +809,12 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
     fbdo->_multiPathDataCallback = multiPathDataCallback;
     fbdo->_timeoutCallback = timeoutCallback;
 
-    fbdo->addPtrList(fb_esp_con_mode_rtdb_stream);
+    fbdo->addAddr(fb_esp_con_mode_rtdb_stream);
 
 #if defined(ESP32)
     MB_String taskName = fb_esp_pgm_str_72;
     taskName += fb_esp_pgm_str_113;
-    taskName += fbdo->so_addr;
+    taskName += fbdo->addr;
 
     if (streamTaskStackSize > STREAM_TASK_STACK_SIZE)
         cfg->internal.stream_task_stack_size = streamTaskStackSize;
@@ -844,7 +844,7 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
 
     fbdo->_multiPathDataCallback = NULL;
     fbdo->_timeoutCallback = NULL;
-    fbdo->removePtrList();
+    fbdo->removeAddr();
 
 #if defined(ESP32)
     if (cfg->internal.fbdo_addr_list.size() == 0)
@@ -1097,7 +1097,7 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
 
     MB_String taskName = fb_esp_pgm_str_72;
     taskName += fb_esp_pgm_str_114;
-    taskName += fbdo->so_addr;
+    taskName += fbdo->addr;
 
     if (queueTaskStackSize > QUEUE_TASK_STACK_SIZE)
         cfg->internal.queue_task_stack_size = queueTaskStackSize;
@@ -3947,7 +3947,7 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return;
     }
-    fbdo->removePtrList();
+    fbdo->removeAddr();
 
     fbdo->_dataAvailableCallback = NULL;
     fbdo->_timeoutCallback = NULL;
