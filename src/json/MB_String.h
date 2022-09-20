@@ -1,10 +1,13 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.6
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.7
  *
- * Created May 18, 2022
+ * Created September 20, 2022
  *
  * Changes Log
+ * 
+ * v1.2.7
+ * - Fix string sub type checking issue
  * 
  * v1.2.6
  * - Update trim() function
@@ -416,11 +419,11 @@ namespace mb_string
             return mb_string_sub_type_double;
         else if (is_arduino_string<T>::value)
             return mb_string_sub_type_arduino_string;
-        else if (is_std_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value)
+        else if (is_std_string<T>::value)
             return mb_string_sub_type_std_string;
         else if (is_mb_string<T>::value)
             return mb_string_sub_type_mb_string;
-        else if (is_arduino_flash_string_helper<T>::value)
+        else if (is_arduino_flash_string_helper<T>::value || MB_IS_SAME<T, StringSumHelper>::value)
             return mb_string_sub_type_fptr;
         else if (ccs_t<T>::value)
             return mb_string_sub_type_cstring;
