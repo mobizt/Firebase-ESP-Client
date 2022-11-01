@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.1.7
+ * The Firebase class, Firebase.cpp v1.1.8
  *
- *  Created September 18, 2022
+ *  Created November 1, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -50,18 +50,22 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
 {
     if (ut)
         delete ut;
+    ut = nullptr;
 
     if (mbfs)
         delete mbfs;
+    mbfs = nullptr;
 
     if (auth)
         delete auth;
+    auth = nullptr;
 
     if (cfg)
     {
         cfg->internal.fbdo_addr_list.clear();
         cfg->internal.queue_addr_list.clear();
         delete cfg;
+        cfg = nullptr;
     }
 }
 
@@ -132,7 +136,6 @@ struct token_info_t Firebase_ESP_Client::authTokenInfo()
 
 bool Firebase_ESP_Client::ready()
 {
-
     // We need to close all data object TCP sessions when token was expired.
     if (Signer.isExpired())
     {
@@ -143,8 +146,10 @@ bool Firebase_ESP_Client::ready()
 
                 FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.getCfg()->internal.fbdo_addr_list[id]);
 
-                if (fbdo)
+                if (fbdo && !fbdo->tcpClient.reserved)
+                {
                     fbdo->closeSession();
+                }
             }
         }
     }
@@ -461,9 +466,11 @@ FIREBASE_CLASS::~FIREBASE_CLASS()
 {
     if (ut)
         delete ut;
+    ut = nullptr;
 
     if (mbfs)
         delete mbfs;
+    mbfs = nullptr;
 
     if (cfg)
     {
@@ -478,6 +485,9 @@ FIREBASE_CLASS::~FIREBASE_CLASS()
 
         if (auth)
             delete auth;
+
+        cfg = nullptr;
+        auth = nullptr;
     }
 }
 

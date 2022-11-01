@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.19
+ * Google's Cloud Storage class, GCS.cpp version 1.1.20
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created August 31, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -80,6 +80,9 @@ bool GG_CloudStorage::mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_Stri
 
 bool GG_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     fbdo->session.http_code = 0;
 
     if (!Signer.getCfg())
@@ -335,7 +338,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
             ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
 
-            // Close file and open later. 
+            // Close file and open later.
             // This is inefficient unless less memory usage than keep file opened
             // which causes the issue in ESP32 core 2.0.x
             if (ret > 0)
@@ -657,7 +660,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     if (fbdo->session.response.code > 0)
     {
-        
+
         fbdo->session.gcs.storage_type = req->storageType;
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart)
@@ -740,7 +743,6 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1);
             int read = 0;
             size_t totalBytes = req->fileSize;
-
 
             if (req->chunkRange != -1 || req->location.length() > 0)
             {
@@ -1752,7 +1754,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                             if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init || req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
                             {
-                                    
+
                                 if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT) // resume incomplete
                                 {
                                     int p1 = ut->strposP(header, fb_esp_pgm_str_481, 0);
@@ -1852,7 +1854,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                                 size_t available = fbdo->tcpClient.available();
                                 dataTime = millis();
-                                
+
                                 req->fileSize = response.contentLen;
                                 error.code = 0;
 
@@ -1898,7 +1900,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                         if (read == available)
                                         {
                                             reportDownloadProgress(fbdo, req, payloadRead);
-                                            
+
                                             if (fbdo->session.gcs.requestType == fb_esp_gcs_request_type_download_ota)
                                             {
 #if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)

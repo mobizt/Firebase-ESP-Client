@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.1.16
+ * Google's Cloud Firestore class, Forestore.cpp version 1.1.17
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created August 31, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -422,6 +422,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
         }
 
         delete[] writesArr;
+        writesArr = nullptr;
 
         fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_555), *fbdo->session.arrPtr);
         fbdo->session.arrPtr->clear();
@@ -610,6 +611,9 @@ void FB_Firestore::begin(UtilsClass *u)
 
 bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     fbdo->session.http_code = 0;
 
     if (!Signer.getCfg())

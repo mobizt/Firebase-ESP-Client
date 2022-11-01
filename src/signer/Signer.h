@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.2.28
+ * Google's Firebase Token Generation class, Signer.h version 1.3.0
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created Sptember 18, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -79,11 +79,7 @@ public:
     ~Firebase_Signer();
 
 private:
-    FB_TCPConnectionRequestCallback tcpConnectionCB = NULL;
-    FB_NetworkConnectionRequestCallback networkConnectionCB = NULL;
-    FB_NetworkStatusRequestCallback networkStatusCB = NULL;
 
-    Client *extClient = nullptr;
     UtilsClass *ut = nullptr;
     FirebaseConfig *config = nullptr;
     FirebaseAuth *auth = nullptr;
@@ -97,6 +93,7 @@ private:
     unsigned long unauthen_millis = 0;
     unsigned long unauthen_pause_duration = 3000;
     FB_TCP_CLIENT *tcpClient = nullptr;
+    bool intTCPClient = false;
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonData *resultPtr = nullptr;
     int response_code = 0;
@@ -142,10 +139,7 @@ private:
     MB_FS *getMBFS();
     UtilsClass *getUtils();
     bool initClient(PGM_P subDomain, fb_esp_auth_token_status status = token_status_uninitialized);
-    void setClient(Client *client);
-    void setTCPConnectionCallback(FB_TCPConnectionRequestCallback tcpConnectionCB);
-    void setNetworkConnectionCallback(FB_NetworkConnectionRequestCallback networkConnectionCB);
-    void setNetworkStatusCallback(FB_NetworkStatusRequestCallback networkStatusCB);
+    void setTCPClient(FB_TCP_CLIENT *tcpClient);
     void setNetworkStatus(bool status);
     time_t getTime();
     bool setTime(time_t ts);

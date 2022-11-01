@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.21
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.22
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created August 31, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -73,6 +73,9 @@ void FB_CM::mSetServerKey(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_m
 
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     if (!prepareUtil())
         return false;
 
@@ -90,6 +93,9 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 
 bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     if (!prepareUtil())
         return false;
 
@@ -109,6 +115,9 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 
 bool FB_CM::mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     if (!prepareUtil())
         return false;
 
@@ -130,6 +139,9 @@ bool FB_CM::mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *
 
 bool FB_CM::mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     if (!prepareUtil())
         return false;
 
@@ -151,6 +163,9 @@ bool FB_CM::mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char
 
 bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     if (!prepareUtil())
         return false;
 
@@ -168,6 +183,9 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 
 bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, MB_StringPtr application, bool sandbox, const char *APNs[], size_t numToken)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     if (!prepareUtil())
         return false;
 
@@ -1556,7 +1574,10 @@ void FB_CM::clear()
     raw.clear();
     server_key.clear();
     if (ut && intUt)
+    {
         delete ut;
+        ut = nullptr;
+    }
 }
 
 #endif

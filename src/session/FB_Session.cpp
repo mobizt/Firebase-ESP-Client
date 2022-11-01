@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.2.25
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.0
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created September 19, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -48,38 +48,45 @@ FirebaseData::FirebaseData(Client *client)
 FirebaseData::~FirebaseData()
 {
     if (ut && intCfg)
+    {
         delete ut;
+        ut = nullptr;
+    }
 
     clear();
 
     if (session.dataPtr)
+    {
         delete session.dataPtr;
+        session.dataPtr = nullptr;
+    }
 
     if (session.arrPtr)
+    {
         delete session.arrPtr;
+        session.arrPtr = nullptr;
+    }
 
     if (session.jsonPtr)
+    {
         delete session.jsonPtr;
+        session.jsonPtr = nullptr;
+    }
 }
 
 void FirebaseData::setExternalClient(Client *client)
 {
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)
-    Signer.setClient(client);
     this->tcpClient.setClient(client);
+    Signer.setTCPClient(&(this->tcpClient));
 #endif
 }
 
 void FirebaseData::setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB, FB_NetworkConnectionRequestCallback networkConnectionCB, FB_NetworkStatusRequestCallback networkStatusCB)
 {
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)
-    Signer.setTCPConnectionCallback(tcpConnectionCB);
     tcpClient.tcpConnectionRequestCallback(tcpConnectionCB);
-
-    Signer.setNetworkConnectionCallback(networkConnectionCB);
     tcpClient.networkConnectionRequestCallback(networkConnectionCB);
-
-    Signer.setNetworkStatusCallback(networkStatusCB);
     tcpClient.networkStatusRequestCallback(networkStatusCB);
 #endif
 }
@@ -265,9 +272,7 @@ bool FirebaseData::pauseFirebase(bool pause)
 
     if (pause)
     {
-        if (tcpClient.connected())
-            tcpClient.stop();
-        session.connected = false;
+        closeSession();
     }
 
     return true;
@@ -589,9 +594,7 @@ void FirebaseData::setResponseSize(uint16_t len)
 
 void FirebaseData::stopWiFiClient()
 {
-    if (tcpClient.connected())
-        tcpClient.stop();
-    session.connected = false;
+    closeSession();
 }
 
 #if (defined(ESP32) || defined(ESP8266)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
@@ -782,7 +785,7 @@ void FirebaseData::closeSession()
 
     if (status)
     {
-        // close the socket and free the resources used by the BearSSL data
+        // close the socket and free the resources used by the SSL engine
         if (session.connected || tcpClient.connected())
         {
             if (Signer.getCfg())
@@ -1036,9 +1039,7 @@ void FirebaseData::checkOvf(size_t len, struct server_response_data_t &resp)
 
 void FirebaseData::clear()
 {
-    if (tcpClient.connected())
-        tcpClient.stop();
-    session.connected = false;
+    closeSession();
 
     if (session.arrPtr)
         session.arrPtr->clear();
@@ -1068,6 +1069,7 @@ void FirebaseData::clear()
     {
         session.rtdb.isBlobPtr = false;
         delete session.rtdb.blob;
+        session.rtdb.blob = nullptr;
     }
 
 #endif
@@ -1132,6 +1134,7 @@ void FCMObject::mBegin(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_modu
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mAddDeviceToken(MB_StringPtr deviceToken)
@@ -1147,6 +1150,7 @@ void FCMObject::mAddDeviceToken(MB_StringPtr deviceToken)
     idTokens = arr->raw();
     arr->clear();
     delete arr;
+    arr = nullptr;
 }
 
 void FCMObject::removeDeviceToken(uint16_t index)
@@ -1160,6 +1164,7 @@ void FCMObject::removeDeviceToken(uint16_t index)
     idTokens = arr->raw();
     arr->clear();
     delete arr;
+    arr = nullptr;
 }
 
 bool FCMObject::prepareUtil()
@@ -1210,6 +1215,7 @@ void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body)
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon)
@@ -1233,6 +1239,7 @@ void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_Stri
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon, MB_StringPtr click_action)
@@ -1256,6 +1263,7 @@ void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_Stri
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mAddCustomNotifyMessage(MB_StringPtr key, MB_StringPtr value)
@@ -1278,6 +1286,7 @@ void FCMObject::mAddCustomNotifyMessage(MB_StringPtr key, MB_StringPtr value)
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::clearNotifyMessage()
@@ -1296,6 +1305,7 @@ void FCMObject::clearNotifyMessage()
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mSetDataMessage(MB_StringPtr jsonString)
@@ -1316,11 +1326,13 @@ void FCMObject::mSetDataMessage(MB_StringPtr jsonString)
     json->set(s.c_str(), *js);
     js->clear();
     delete js;
+    js = nullptr;
     s.clear();
     raw.clear();
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::setDataMessage(FirebaseJson &json)
@@ -1339,6 +1351,7 @@ void FCMObject::setDataMessage(FirebaseJson &json)
     raw = js->raw();
     js->clear();
     delete js;
+    js = nullptr;
 }
 
 void FCMObject::clearDataMessage()
@@ -1357,6 +1370,7 @@ void FCMObject::clearDataMessage()
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mSetPriority(MB_StringPtr priority)
@@ -1376,6 +1390,7 @@ void FCMObject::mSetPriority(MB_StringPtr priority)
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mSetCollapseKey(MB_StringPtr key)
@@ -1396,6 +1411,7 @@ void FCMObject::mSetCollapseKey(MB_StringPtr key)
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::setTimeToLive(uint32_t seconds)
@@ -1419,6 +1435,7 @@ void FCMObject::setTimeToLive(uint32_t seconds)
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 void FCMObject::mSetTopic(MB_StringPtr topic)
@@ -1438,6 +1455,7 @@ void FCMObject::mSetTopic(MB_StringPtr topic)
     raw = json->raw();
     json->clear();
     delete json;
+    json = nullptr;
 }
 
 const char *FCMObject::getSendResult()
@@ -1498,12 +1516,14 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     {
         server_key->clear();
         delete server_key;
+        server_key = nullptr;
         return false;
     }
 
     fbdo.tcpClient.send(server_key->to<const char *>());
     server_key->clear();
     delete server_key;
+    server_key = nullptr;
 
     if (fbdo.session.response.code < 0)
         return false;
@@ -1874,6 +1894,9 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
 bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
+    if (fbdo.tcpClient.reserved)
+        return false;
+
     prepareUtil();
 
     FirebaseJsonData *msg = fbdo.to<FirebaseJsonData *>();
@@ -1945,7 +1968,10 @@ void FCMObject::clear()
     clearDeviceToken();
 
     if (intUt && ut)
+    {
         delete ut;
+        ut = nullptr;
+    }
 }
 #endif
 #endif

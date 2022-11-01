@@ -1,17 +1,18 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.1.0"
+#define FIREBASE_CLIENT_VERSION "4.2.0"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.1.0
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.2.0
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created September 18, 2022
+ * Created November 1, 2022
  *
  *   Updates:
- * - Fix external Client connection issue.
- * - Fix auth_revoked in RTDB stream issue in case no stream callback assigned.
+ * - Fix redundant TCP connections issue.
+ * - Fix possible memory errors.
+ * - Using share TCP client for authentication process.
  *
  *
  * This work is a part of Firebase ESP Client library

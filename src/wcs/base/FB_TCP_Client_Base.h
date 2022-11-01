@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.6
+ * TCP Client Base class, version 1.0.7
  *
- * Created July 12, 2022
+ * Created November 1, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -64,6 +64,7 @@ class FB_TCP_Client_Base
     friend class FB_RTDB;
     friend class FB_Firestore;
     friend class FIREBASE_CLASS;
+    friend class Firebase_ESP_Client;
 
 public:
     FB_TCP_Client_Base()
@@ -160,7 +161,7 @@ public:
             return setError(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
 
         // call base or derived connect.
-        if (!connect())
+        if (!connected() && !connect())
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
         int res = client->write(data, len);
@@ -671,6 +672,7 @@ protected:
     uint16_t port = 0;
     MB_FS *mbfs = nullptr;
     Client *client = nullptr;
+    bool reserved = false;
     unsigned long dataStart = 0;
     unsigned long dataTime = 0;
 

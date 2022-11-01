@@ -1,7 +1,7 @@
 /*
- * Just a simple dynamic array implementation, MB_List v1.0.3
+ * Just a simple dynamic array implementation, MB_List v1.0.4
  *
- * Created July 10, 2022
+ * Created November 1, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -166,6 +166,7 @@ private:
                         temp[i] = arr[i];
 
                     delete[] arr;
+                    arr = NULL;
 
                     capacity = current + size;
                     capacity *= 2;
@@ -186,6 +187,7 @@ private:
                     }
 
                     delete[] temp;
+                    temp = NULL;
                 }
             }
             else
@@ -215,6 +217,7 @@ private:
                 temp[i] = arr[i];
 
             delete[] arr;
+            arr = NULL;
 
             capacity = current - size;
             capacity *= 2;
@@ -232,6 +235,7 @@ private:
             }
 
             delete[] temp;
+            temp = NULL;
         }
     }
 };

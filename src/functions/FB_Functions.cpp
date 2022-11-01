@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.16
+ * Google's Cloud Functions class, Functions.cpp version 1.1.17
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created August 31, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -155,7 +155,7 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
                 sendCallback(fbdo, fb_esp_functions_operation_status_error, fbdo->errorReason().c_str(), cb, info);
                 return false;
             }
-            
+
             fbdo->session.cfn.fileSize = sz;
         }
 
@@ -283,8 +283,6 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
     t += fb_esp_pgm_str_386;
 
     config->_funcCfg.set(t.c_str(), str.c_str());
-
-    
 
     t = fb_esp_pgm_str_374;
     t += fb_esp_pgm_str_1;
@@ -557,6 +555,9 @@ void FB_Functions::begin(UtilsClass *u)
 
 bool FB_Functions::sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t *req)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     fbdo->session.http_code = 0;
 
     if (!Signer.getCfg())
@@ -825,7 +826,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
     if (fbdo->session.response.code > 0)
     {
-        
+
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_functions_request_type_upload)
         {
@@ -869,7 +870,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
         {
             int len = req->pgmArcLen;
             int available = len;
-            
+
             int bufLen = Signer.getCfg()->functions.upload_buffer_size;
             if (bufLen < 512)
                 bufLen = 512;

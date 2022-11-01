@@ -1,6 +1,6 @@
 
 /**
- * Created September 18, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1690,6 +1690,7 @@ struct fb_esp_session_info_t
     int jsonAddr = 0;
     int arrAddr = 0;
     fb_esp_con_mode con_mode = fb_esp_con_mode_undefined;
+    bool streaming = false;
     bool buffer_ovf = false;
     bool chunked_encoding = false;
     bool connected = false;

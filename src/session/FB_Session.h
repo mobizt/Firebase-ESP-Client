@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.2.25
+ * Google's Firebase Data class, FB_Session.h version 1.3.0
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created September 19, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -298,13 +298,13 @@ public:
 
   /** Assign external Arduino Client.
    *
-   * @param client The pointer to Arduino Client derived class e.g. WiFiClient, WiFiClientSecure, EthernetClient or GSMClient.
+   * @param client The pointer to Arduino Client derived class of SSL Client.
    */
   FirebaseData(Client *client);
 
   /** Assign external Arduino Client.
    *
-   * @param client The pointer to Arduino Client derived class e.g. WiFiClient, WiFiClientSecure, EthernetClient or GSMClient.
+   * @param client The pointer to Arduino Client derived class of SSL Client.
    */
   void setExternalClient(Client *client);
 
@@ -370,9 +370,9 @@ public:
   WiFiClientSecure *getWiFiClient();
 #endif
 
-  /** Close the keep-alive connection of the internal WiFi client.
+  /** Close the keep-alive connection of the internal SSL client.
    *
-   * @note This will release the memory used by internal WiFi client.
+   * @note This will release the memory used by internal SSL client.
    */
   void stopWiFiClient();
 

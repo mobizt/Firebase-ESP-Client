@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.4
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.5
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created September 19, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1824,6 +1824,7 @@ private:
   bool handleStreamRequest(FirebaseData *fbdo, const MB_String &path);
   bool connectionError(FirebaseData *fbdo);
   bool handleStreamRead(FirebaseData *fbdo);
+  bool exitStream(FirebaseData *fbdo, bool status);
   void sendCB(FirebaseData *fbdo);
   void splitStreamPayload(const char *payloads, MB_VECTOR<MB_String> &payload);
   void parseStreamPayload(FirebaseData *fbdo, const char *payload);

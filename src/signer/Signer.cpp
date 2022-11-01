@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.2.28
+ * Google's Firebase Token Generation class, Signer.cpp version 1.3.0
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created September 18, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -111,12 +111,19 @@ bool Firebase_Signer::parseSAFile()
 
                 delete jsonPtr;
                 delete resultPtr;
+
+                jsonPtr = nullptr;
+                resultPtr = nullptr;
+
                 return true;
             }
         }
 
         delete jsonPtr;
         delete resultPtr;
+
+        jsonPtr = nullptr;
+        resultPtr = nullptr;
     }
 
     return false;
@@ -283,6 +290,9 @@ bool Firebase_Signer::setTime(time_t ts)
 bool Firebase_Signer::isExpired()
 {
     if (!config || !auth)
+        return false;
+
+    if (config->signer.tokens.token_type == token_type_legacy_token)
         return false;
 
     time_t now = getTime();
@@ -549,6 +559,7 @@ bool Firebase_Signer::refreshToken()
     req += s.c_str();
 
     tcpClient->send(req.c_str());
+
     req.clear();
     if (response_code < 0)
         return handleSignerError(2);
@@ -668,8 +679,14 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
         break;
     }
 
-    if (tcpClient)
+    tcpClient->reserved = false;
+
+    if (tcpClient && intTCPClient)
+    {
         delete tcpClient;
+        tcpClient = nullptr;
+        intTCPClient = false;
+    }
 
     if (jsonPtr)
         delete jsonPtr;
@@ -677,15 +694,12 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
     if (resultPtr)
         delete resultPtr;
 
+    jsonPtr = nullptr;
+    resultPtr = nullptr;
+
     config->internal.fb_processing = false;
 
-    if (code > 0 && code < 4)
-    {
-        config->signer.tokens.status = token_status_error;
-        config->signer.tokens.error.code = code;
-        return false;
-    }
-    else if (code <= 0)
+    if (code <= 0)
     {
         config->signer.tokens.error.message.clear();
         config->signer.tokens.status = token_status_ready;
@@ -1046,6 +1060,8 @@ bool Firebase_Signer::createJWT()
 
         delete jsonPtr;
         delete resultPtr;
+        jsonPtr = nullptr;
+        resultPtr = nullptr;
     }
     else if (config->signer.step == fb_esp_jwt_generation_step_sign)
     {
@@ -1074,6 +1090,7 @@ bool Firebase_Signer::createJWT()
             mbedtls_pk_free(config->signer.pk_ctx);
             ut->delP(&config->signer.hash);
             delete config->signer.pk_ctx;
+            config->signer.pk_ctx = nullptr;
             return false;
         }
 
@@ -1120,6 +1137,10 @@ bool Firebase_Signer::createJWT()
         delete config->signer.entropy_ctx;
         delete config->signer.ctr_drbg_ctx;
 
+        config->signer.pk_ctx = nullptr;
+        config->signer.entropy_ctx = nullptr;
+        config->signer.ctr_drbg_ctx = nullptr;
+
         if (ret != 0)
             return false;
 #elif defined(ESP8266)
@@ -1146,6 +1167,7 @@ bool Firebase_Signer::createJWT()
             config->signer.tokens.error.message.insert(0, (const char *)FPSTR("BearSSL, isRSA: "));
             sendTokenStatusCB();
             delete pk;
+            pk = nullptr;
             return false;
         }
 
@@ -1166,6 +1188,8 @@ bool Firebase_Signer::createJWT()
         ut->delP(&buf);
         ut->delP(&config->signer.signature);
         delete pk;
+        pk = nullptr;
+
         // get the signed JWT
         if (ret > 0)
         {
@@ -1252,8 +1276,11 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     tcpClient->send(req.c_str());
 
     req.clear();
+
     if (response_code < 0)
+    {
         return handleSignerError(2);
+    }
 
     jsonPtr->clear();
 
@@ -1417,24 +1444,9 @@ void Firebase_Signer::setAutoReconnectWiFi(bool reconnect)
     autoReconnectWiFi = reconnect;
 }
 
-void Firebase_Signer::setClient(Client *client)
+void Firebase_Signer::setTCPClient(FB_TCP_CLIENT *tcpClient)
 {
-    this->extClient = client;
-    this->ts = ts;
-}
-
-void Firebase_Signer::setTCPConnectionCallback(FB_TCPConnectionRequestCallback tcpConnectionCB)
-{
-    this->tcpConnectionCB = tcpConnectionCB;
-}
-
-void Firebase_Signer::setNetworkConnectionCallback(FB_NetworkConnectionRequestCallback networkConnectionCB)
-{
-    this->networkConnectionCB = networkConnectionCB;
-}
-void Firebase_Signer::setNetworkStatusCallback(FB_NetworkStatusRequestCallback networkStatusCB)
-{
-    this->networkStatusCB = networkStatusCB;
+    this->tcpClient = tcpClient;
 }
 
 void Firebase_Signer::setNetworkStatus(bool status)
@@ -1462,30 +1474,38 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
         sendTokenStatusCB();
     }
 
-    tcpClient = new FB_TCP_CLIENT();
-
-    tcpClient->setMBFS(mbfs);
-    tcpClient->setConfig(config);
-
-#if defined(FB_ENABLE_EXTERNAL_CLIENT)
-    if (extClient)
+    if (tcpClient && intTCPClient)
     {
-        tcpClient->setClient(extClient);
-
-        if (tcpConnectionCB)
-            tcpClient->tcpConnectionRequestCallback(tcpConnectionCB);
-
-        if (networkConnectionCB)
-            tcpClient->networkConnectionRequestCallback(networkConnectionCB);
-
-        if (networkStatusCB)
-            tcpClient->networkStatusRequestCallback(networkStatusCB);
+        delete tcpClient;
+        tcpClient = nullptr;
+        intTCPClient = false;
     }
-#else
-    tcpClient->setCACert(nullptr);
+
+    // No FirebaseData Object declared globally?
+    if (!tcpClient)
+    {
+        tcpClient = new FB_TCP_CLIENT();
+
+        if (tcpClient)
+            intTCPClient = true;
+
+        tcpClient->setMBFS(mbfs);
+        tcpClient->setConfig(config);
+
+        // No callbacks i.e., tcpConnectionCB, networkConnectionCB and networkStatusCB for external Client are available
+        // when FirebaseData Object was not declared globally
+    }
+
+    // stop the TCP session
+    tcpClient->stop();
+
+#if !defined(FB_ENABLE_EXTERNAL_CLIENT)
+    if (tcpClient->client)
+        tcpClient->setCACert(nullptr);
 #endif
 
-    networkStatus = tcpClient->networkReady();
+    if (tcpClient->client)
+        networkStatus = tcpClient->networkReady();
 
     if (!networkStatus)
     {
@@ -1493,11 +1513,7 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
         {
             if (millis() - last_reconnect_millis > reconnect_tmo)
             {
-#if defined(ESP32) || defined(ESP8266)
-                WiFi.reconnect();
-#else
                 tcpClient->networkReconnect();
-#endif
                 last_reconnect_millis = millis();
             }
         }
@@ -1516,8 +1532,17 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
     host += fb_esp_pgm_str_4;
     host += fb_esp_pgm_str_120;
 
+    // use for authentication task
+    tcpClient->reserved = true;
+
     ut->idle();
     tcpClient->begin(host.c_str(), 443, &response_code);
+
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
+
+    tcpClient->tcp_connection_cb(host.c_str(), 443);
+
+#endif
 
     return true;
 }

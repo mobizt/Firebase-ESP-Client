@@ -1,7 +1,7 @@
 /**
- * The custom TCP Client Class v1.0.0
+ * The custom TCP Client Class v1.0.1
  *
- * Created February 10, 2022
+ * Created November 1, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -144,6 +144,7 @@ public:
     }
 
 private:
+    friend class Firebase_Signer;
     FB_TCPConnectionRequestCallback tcp_connection_cb = NULL;
     FB_NetworkConnectionRequestCallback network_connection_cb = NULL;
     FB_NetworkStatusRequestCallback network_status_cb = NULL;

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.4
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.5
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created September 19, 2022
+ * Created November 1, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -579,6 +579,7 @@ bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, MB_StringPtr path, MB_
             }
 
             delete[] nodes;
+            nodes = nullptr;
         }
     }
 
@@ -603,7 +604,9 @@ bool FB_RTDB::mBeginStream(FirebaseData *fbdo, MB_StringPtr path)
     if (!fbdo->reconnect())
         return false;
 
-    fbdo->closeSession();
+    if (!fbdo->tcpClient.reserved)
+        fbdo->closeSession();
+
     fbdo->session.rtdb.stream_stop = false;
     fbdo->session.rtdb.data_tmo = false;
 
@@ -611,7 +614,7 @@ bool FB_RTDB::mBeginStream(FirebaseData *fbdo, MB_StringPtr path)
 
     ut->replaceFirebasePath(fbdo->session.rtdb.stream_path);
 
-    if (!handleStreamRequest(fbdo, fbdo->session.rtdb.stream_path))
+    if (!fbdo->tcpClient.reserved && !handleStreamRequest(fbdo, fbdo->session.rtdb.stream_path))
     {
         if (!fbdo->tokenReady())
             return true;
@@ -648,24 +651,34 @@ bool FB_RTDB::endStream(FirebaseData *fbdo)
 
 bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
 {
+    // if the client used by authentication task
+    if (fbdo->tcpClient.reserved)
+        return false;
+
+    // prevent redundant calling
+    if (fbdo->session.streaming)
+        return false;
+
+    fbdo->session.streaming = true;
+
     FirebaseConfig *cfg = Signer.getCfg();
     if (!cfg)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
-        return false;
+        return exitStream(fbdo, false);
     }
 
     if (fbdo->session.rtdb.pause || fbdo->session.rtdb.stream_stop)
-        return true;
+        return exitStream(fbdo, true);
 
     if (!fbdo->reconnect())
     {
         fbdo->session.rtdb.data_tmo = true;
-        return true;
+        return exitStream(fbdo, true);
     }
 
     if (!fbdo->tokenReady())
-        return false;
+        return exitStream(fbdo, false);
 
     bool ret = false;
     bool reconnectStream = false;
@@ -680,16 +693,13 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
 
         if (fbdo->session.rtdb.data_tmo)
         {
-            fbdo->closeSession();
+            reconnectStream = true;
             fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
         }
         fbdo->session.rtdb.stream_resume_millis = millis();
     }
     else
         ret = true;
-
-    if (!fbdo->tcpClient.connected())
-        reconnectStream = true;
 
     // Stream timed out
 
@@ -700,20 +710,21 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     {
         fbdo->session.rtdb.data_millis = millis();
         fbdo->session.rtdb.data_tmo = true;
-        fbdo->closeSession();
+        reconnectStream = true;
         fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
     }
 
     if (reconnectStream)
     {
         fbdo->session.rtdb.new_stream = true;
+
         if (!ut->waitIdle(fbdo->session.response.code))
-            return false;
+            return exitStream(fbdo, false);
 
         fbdo->closeSession();
 
         if (!fbdo->tokenReady())
-            return false;
+            return exitStream(fbdo, false);
 
         MB_String path = fbdo->session.rtdb.stream_path;
         if (fbdo->session.rtdb.redirect_url.length() > 0)
@@ -730,7 +741,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
         {
             fbdo->session.rtdb.data_tmo = true;
             fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
-            return ret;
+            return exitStream(fbdo, ret);
         }
 
         fbdo->session.con_mode = fb_esp_con_mode_rtdb_stream;
@@ -739,9 +750,15 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     fb_esp_rtdb_request_info_t req;
 
     if (!waitResponse(fbdo, &req))
-        return ret;
+        return exitStream(fbdo, ret);
 
-    return true;
+    return exitStream(fbdo, true);
+}
+
+bool FB_RTDB::exitStream(FirebaseData *fbdo, bool status)
+{
+    fbdo->session.streaming = false;
+    return status;
 }
 
 #if defined(ESP32)
@@ -949,7 +966,10 @@ void FB_RTDB::setMaxRetry(FirebaseData *fbdo, uint8_t num)
 void FB_RTDB::setBlobRef(FirebaseData *fbdo, int addr)
 {
     if (fbdo->session.rtdb.blob && fbdo->session.rtdb.isBlobPtr)
+    {
         delete fbdo->session.rtdb.blob;
+        fbdo->session.rtdb.blob = nullptr;
+    }
 
     fbdo->session.rtdb.isBlobPtr = addr == 0;
     addr > 0 ? fbdo->session.rtdb.blob = addrTo<MB_VECTOR<uint8_t> *>(addr) : fbdo->session.rtdb.blob = new MB_VECTOR<uint8_t>();
@@ -2000,6 +2020,9 @@ int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 
 bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
+    if (fbdo->tcpClient.reserved)
+        return false;
+
     fbdo->session.http_code = 0;
 
     FirebaseConfig *cfg = Signer.getCfg();
@@ -3548,7 +3571,7 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const char *payload)
             fbdo->session.rtdb.stream_data_changed = true;
             fbdo->session.rtdb.data_available = true;
 
-             // We need to close the current session due to the token was already expired.
+            // We need to close the current session due to the token was already expired.
             if (ut->stringCompare(response.eventType.c_str(), 0, fb_esp_pgm_str_110))
                 fbdo->closeSession();
         }
