@@ -217,9 +217,6 @@ void setup()
 void loop()
 {
 
-    // Process the stream repeatedly in loop
-    Firebase.RTDB.readStream(&stream);
-
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
     if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
