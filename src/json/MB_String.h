@@ -8,7 +8,7 @@
  *
  * v1.2.8
  * - Add support StringSumHelper class in Arduino
- * 
+ *
  * v1.2.7
  * - Fix string sub type checking issue
  *
@@ -458,7 +458,12 @@ namespace mb_string
     template <typename T>
     auto toStringPtr(const T &val) -> typename MB_ENABLE_IF<MB_IS_SAME<T, StringSumHelper>::value, MB_StringPtr>::type
     {
+#if defined(ESP8266)
+        return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val), -1);
+
+#else
         return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val), -1, &val);
+#endif
     }
 
     template <typename T>
@@ -519,12 +524,19 @@ public:
         *this = str;
     }
 
+#if !defined(ESP8266)
     MB_String(StringSumHelper rval)
     {
         *this = rval;
     }
+#endif
 
     MB_String(MB_StringPtr value)
+    {
+        *this = value;
+    }
+
+    MB_String(String value)
     {
         *this = value;
     }
@@ -662,6 +674,7 @@ public:
         return *this;
     }
 
+#if !defined(ESP8266)
     MB_String &operator=(StringSumHelper rval)
     {
         String temp = rval;
@@ -675,6 +688,7 @@ public:
         *this += temp;
         return *this;
     }
+#endif
 
     MB_String &operator+=(const __FlashStringHelper *str)
     {
@@ -837,7 +851,11 @@ public:
         else if (src.type() == mb_string_sub_type_arduino_string)
             *this += *addrTo<String *>(src.address());
         else if (src.type() == mb_string_sub_type_string_sum_helper)
+#if !defined(ESP8266)
             *this += *src.stringsumhelper();
+#else
+            *this += *addrTo<String *>(src.address());
+#endif
 #if !defined(__AVR__)
         else if (src.type() == mb_string_sub_type_std_string)
             *this += *addrTo<std::string *>(src.address());
