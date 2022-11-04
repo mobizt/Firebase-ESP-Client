@@ -2,13 +2,16 @@
 /**
  * Mobizt's SRAM/PSRAM supported String, version 1.2.7
  *
- * Created September 20, 2022
+ * Created November 4, 2022
  *
  * Changes Log
+ *
+ * v1.2.8
+ * - Add support StringSumHelper class in Arduino
  * 
  * v1.2.7
  * - Fix string sub type checking issue
- * 
+ *
  * v1.2.6
  * - Update trim() function
  *
@@ -130,27 +133,32 @@ namespace mb_string
         mb_string_sub_type_mb_string,
         mb_string_sub_type_arduino_string,
         mb_string_sub_type_std_string,
-        mb_string_sub_type_fptr
+        mb_string_sub_type_fptr,
+        mb_string_sub_type_string_sum_helper
+
     };
 
     typedef struct mb_string_ptr_t
     {
 
     public:
-        mb_string_ptr_t(uint32_t addr = 0, mb_string_sub_type type = mb_string_sub_type_cstring, int precision = -1)
+        mb_string_ptr_t(uint32_t addr = 0, mb_string_sub_type type = mb_string_sub_type_cstring, int precision = -1, const StringSumHelper *s = nullptr)
         {
             _addr = addr;
             _type = type;
             _precision = precision;
+            _ssh = s;
         }
         int precision() { return _precision; }
         mb_string_sub_type type() { return _type; }
         uint32_t address() { return _addr; }
+        const StringSumHelper *stringsumhelper() { return _ssh; }
 
     private:
         mb_string_sub_type _type = mb_string_sub_type_none;
         int _precision = -1;
         uint32_t _addr = 0;
+        const StringSumHelper *_ssh = nullptr;
 
     } MB_StringPtr;
 
@@ -423,8 +431,10 @@ namespace mb_string
             return mb_string_sub_type_std_string;
         else if (is_mb_string<T>::value)
             return mb_string_sub_type_mb_string;
-        else if (is_arduino_flash_string_helper<T>::value || MB_IS_SAME<T, StringSumHelper>::value)
+        else if (is_arduino_flash_string_helper<T>::value)
             return mb_string_sub_type_fptr;
+        else if (MB_IS_SAME<T, StringSumHelper>::value)
+            return mb_string_sub_type_string_sum_helper;
         else if (ccs_t<T>::value)
             return mb_string_sub_type_cstring;
         else if (cs_t<T>::value)
@@ -440,9 +450,15 @@ namespace mb_string
     }
 
     template <typename T>
-    auto toStringPtr(const T &val) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, MB_StringPtr>::type
+    auto toStringPtr(const T &val) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, MB_StringPtr>::type
     {
         return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val));
+    }
+
+    template <typename T>
+    auto toStringPtr(const T &val) -> typename MB_ENABLE_IF<MB_IS_SAME<T, StringSumHelper>::value, MB_StringPtr>::type
+    {
+        return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val), -1, &val);
     }
 
     template <typename T>
@@ -501,6 +517,11 @@ public:
     MB_String(const __FlashStringHelper *str)
     {
         *this = str;
+    }
+
+    MB_String(StringSumHelper rval)
+    {
+        *this = rval;
     }
 
     MB_String(MB_StringPtr value)
@@ -638,6 +659,20 @@ public:
         if (str)
             appendF(str, true);
 
+        return *this;
+    }
+
+    MB_String &operator=(StringSumHelper rval)
+    {
+        String temp = rval;
+        *this = temp;
+        return *this;
+    }
+
+    MB_String &operator+=(StringSumHelper rval)
+    {
+        String temp = rval;
+        *this += temp;
         return *this;
     }
 
@@ -801,6 +836,8 @@ public:
             *this += addrTo<const char *>(src.address());
         else if (src.type() == mb_string_sub_type_arduino_string)
             *this += *addrTo<String *>(src.address());
+        else if (src.type() == mb_string_sub_type_string_sum_helper)
+            *this += *src.stringsumhelper();
 #if !defined(__AVR__)
         else if (src.type() == mb_string_sub_type_std_string)
             *this += *addrTo<std::string *>(src.address());

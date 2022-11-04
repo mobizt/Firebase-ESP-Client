@@ -11,10 +11,10 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used ESP32 and WIZnet W5500 (Etherner) devices which built-in SSL Client will be used as the external Client.
- *
- * For other non-espressif (ESP32 and ESP8266) devices, this SSL Client library can be used
- * https://github.com/OPEnSLab-OSU/SSLClient
+ * This example used your Arduino device and WIZnet W5500 (Ethernet) device which SSLClient https://github.com/OPEnSLab-OSU/SSLClient 
+ * will be used as the external Client.
+ * 
+ * This SSLClient, https://github.com/OPEnSLab-OSU/SSLClient can't use in ESP8266 device due to wdt reset error.
  *
  * Don't gorget to define this in FirebaseFS.h
  * #define FB_ENABLE_EXTERNAL_CLIENT
@@ -30,37 +30,44 @@
 
 #include <Ethernet.h>
 
-// Include built-in SSL Client which supports other network interfaces
-#include "sslclient/esp32/MB_ESP32_SSLClient.h"
+/* 1. Install SSLClient library */
+// https://github.com/OPEnSLab-OSU/SSLClient
+#include <SSLClient.h>
 
-// You can use MB_ESP32_SSLClient.h in your ESP32 project in the same way as normal WiFiClientSecure
+/* 2. Create Trus anchors for the server i.e. www.google.com */
+// https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md
+// or generate using this site https://openslab-osu.github.io/bearssl-certificate-utility/
+#include "trust_anchors.h"
 
 // For NTP time client
 #include "MB_NTP.h"
 
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
-/* 1. Define the API Key */
+/* 3. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 2. Define the RTDB URL */
+/* 4. Define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-/* 3. Define the user Email and password that alreadey registerd or added in your project */
+/* 5. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-/* 4. Defined the Ethernet module connection */
+/* 6. Defined the Ethernet module connection */
 #define WIZNET_RESET_PIN 26 // Connect W5500 Reset pin to GPIO 26 of ESP32
 #define WIZNET_CS_PIN 5     // Connect W5500 CS pin to GPIO 5 of ESP32
 #define WIZNET_MISO_PIN 19  // Connect W5500 MISO pin to GPIO 19 of ESP32
 #define WIZNET_MOSI_PIN 23  // Connect W5500 MOSI pin to GPIO 23 of ESP32
 #define WIZNET_SCLK_PIN 18  // Connect W5500 SCLK pin to GPIO 18 of ESP32
 
-/* 5. Define MAC */
+/* 7. Define the analog GPIO pin to pull random bytes from, used in seeding the RNG for SSLClient */
+const int analog_pin = 34; // ESP32 GPIO 34 (Analog pin)
+
+/* 8. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
-/* 6. Define IP (Optional) */
+/* 9. Define IP (Optional) */
 IPAddress Eth_IP(192, 168, 1, 104);
 
 // Define Firebase Data object
@@ -77,7 +84,7 @@ volatile bool dataChanged = false;
 
 EthernetClient basic_client;
 
-MB_ESP32_SSLClient ssl_client;
+SSLClient ssl_client(basic_client, TAs, (size_t)TAs_NUM, analog_pin);
 
 // For NTP client
 EthernetUDP udpClient;
@@ -164,12 +171,6 @@ void setup()
     networkConnection();
 
     Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-
-    /* Assign the basic Client (Ethernet) pointer to the SSL Client */
-    ssl_client.setClient(&basic_client);
-
-    /* Similar to WiFiClientSecure */
-    ssl_client.setInsecure();
 
     /* Assign the api key (required) */
     config.api_key = API_KEY;

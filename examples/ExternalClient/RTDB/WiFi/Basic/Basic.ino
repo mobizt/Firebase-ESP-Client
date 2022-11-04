@@ -11,7 +11,7 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used SAMD21 device and WiFiNINA as the client.
+ * This example used SAMD21 device and WiFiNINA as the external Client.
  */
 
 #if defined(ARDUINO_ARCH_SAMD)
@@ -52,7 +52,7 @@ unsigned long sendDataPrevMillis = 0;
 
 unsigned long count = 0;
 
-WiFiSSLClient client;
+WiFiSSLClient ssl_client;
 
 void networkConnection()
 {
@@ -95,7 +95,7 @@ void tcpConnectionRequestCallback(const char *host, int port)
     Firebase.setSystemTime(WiFi.getTime());
 
     Serial.print("Connecting to server via external Client... ");
-    if (!client.connect(host, port))
+    if (!ssl_client.connect(host, port))
     {
         Serial.println("failed.");
         return;
@@ -133,7 +133,7 @@ void setup()
     /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
 
     /* Assign the pointer to global defined external SSL Client object */
-    fbdo.setExternalClient(&client);
+    fbdo.setExternalClient(&ssl_client);
 
     /* Assign the required callback functions */
     fbdo.setExternalClientCallbacks(tcpConnectionRequestCallback, networkConnection, networkStatusRequestCallback);

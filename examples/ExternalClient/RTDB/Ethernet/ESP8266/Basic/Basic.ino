@@ -11,7 +11,14 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used ESP8266 and WIZnet W5500 devices which built-in SSL Client will be used as the external Client.
+ * This example used ESP8266 and WIZnet W5500 (Ethernet) devices which built-in SSL Client will be used as the external Client.
+ *
+ * Even the example for Ethernet that supports ENC28J60 and WIZnet W55xx is available at RTB/BasicEthernet/ESP8266/ESP8266.ino,
+ * this example will show how to use external SSL Client that supports other network interfaces e.g. GSMClient and especially
+ * EthernetClient in this example.
+ *
+ * For other non-espressif (ESP32 and ESP8266) devices, this SSL Client library can be used
+ * https://github.com/OPEnSLab-OSU/SSLClient
  *
  * Don't gorget to define this in FirebaseFS.h
  * #define FB_ENABLE_EXTERNAL_CLIENT
@@ -25,8 +32,13 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-// Built-in ESP8266 SSL Client
+// Include built-in SSL Client which supports other network interfaces
 #include "sslclient/esp8266/MB_ESP8266_SSLClient.h"
+
+// You can use MB_ESP8266_SSLClient.h in your ESP8266 project in the same way as normal WiFiClientSecure
+// You can't use this SSL Client library https://github.com/OPEnSLab-OSU/SSLClient in your ESP8266 project because of wdt reset error,
+// and you should not install it in Arduino libraries folder because it can cause the conflicts in ESP8266 WiFiClientSecure class because
+// the different BearSSL library sources were installed.
 
 #include <Ethernet.h>
 
@@ -47,13 +59,10 @@
 
 /* 4. Defined the Ethernet module connection */
 #define WIZNET_RESET_PIN 5 // Connect W5500 Reset pin to GPIO 5 (D1) of ESP8266
-#define WIZNET_CS_PIN 4   // Connect W5500 CS pin to GPIO 4 (D2) of ESP8266 
-// If GPIO 15 (D8) of ESP8266 is used as WiZnet CS pin, the modification is needed, otherwise 
-// ESP8266 will not boot, see https://esp8266hints.files.wordpress.com/2018/02/emitter-follower-pnp1.jpg
+#define WIZNET_CS_PIN 4    // Connect W5500 CS pin to GPIO 4 (D2) of ESP8266
 #define WIZNET_MISO_PIN 12 // Connect W5500 MISO pin to GPIO 12 (D6) of ESP8266
 #define WIZNET_MOSI_PIN 13 // Connect W5500 MOSI pin to GPIO 13 (D7) of ESP8266
 #define WIZNET_SCLK_PIN 14 // Connect W5500 SCLK pin to GPIO 14 (D5) of ESP8266
-
 
 /* 5. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
@@ -161,9 +170,11 @@ void setup()
 
     Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
+    /* Assign the basic Client (Ethernet) pointer to the SSL Client */
     ssl_client.setClient(&basic_client);
 
-    ssl_client.setInSecure();
+    /* Similar to WiFiClientSecure */
+    ssl_client.setInsecure();
 
     /* Assign the api key (required) */
     config.api_key = API_KEY;

@@ -10,7 +10,7 @@
  */
 
 /** This example shows the RTDB data changed notification with external Client.
- * This example used SAMD21 device and WiFiNINA as the client.
+ * This example used SAMD21 device and WiFiNINA as the external Client.
  */
 
 #if defined(ARDUINO_ARCH_SAMD)
@@ -54,9 +54,9 @@ int count = 0;
 
 volatile bool dataChanged = false;
 
-WiFiSSLClient client1;
+WiFiSSLClient ssl_client1;
 
-WiFiSSLClient client2;
+WiFiSSLClient ssl_client2;
 
 void networkConnection()
 {
@@ -100,7 +100,7 @@ void tcpConnectionRequestCallback1(const char *host, int port)
     Firebase.setSystemTime(WiFi.getTime());
 
     Serial.print("Connecting to server via external Client... ");
-    if (!client1.connect(host, port))
+    if (!ssl_client1.connect(host, port))
     {
         Serial.println("failed.");
         return;
@@ -118,7 +118,7 @@ void tcpConnectionRequestCallback2(const char *host, int port)
     Firebase.setSystemTime(WiFi.getTime());
 
     Serial.print("Connecting to server via external Client... ");
-    if (!client2.connect(host, port))
+    if (!ssl_client2.connect(host, port))
     {
         Serial.println("failed.");
         return;
@@ -193,13 +193,13 @@ void setup()
     /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
 
     /* Assign the pointer to global defined external SSL Client object */
-    fbdo.setExternalClient(&client1);
+    fbdo.setExternalClient(&ssl_client1);
 
     /* Assign the required callback functions */
     fbdo.setExternalClientCallbacks(tcpConnectionRequestCallback1, networkConnection, networkStatusRequestCallback);
 
     /* Assign the pointer to global defined external SSL Client object */
-    stream.setExternalClient(&client2);
+    stream.setExternalClient(&ssl_client2);
 
     /* Assign the required callback functions */
     stream.setExternalClientCallbacks(tcpConnectionRequestCallback2, networkConnection, networkStatusRequestCallback);
