@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.23
+ * Google's Firebase Storage class, FCS.cpp version 1.1.24
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 1, 2022
+ * Created November 7, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -84,8 +84,6 @@ bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
     if (Signer.getCfg()->internal.fb_processing)
         return false;
 
-    Signer.getCfg()->internal.fb_processing = true;
-
     fcs_connect(fbdo);
     fbdo->session.fcs.meta.name.clear();
     fbdo->session.fcs.meta.bucket.clear();
@@ -111,7 +109,11 @@ bool FB_Storage::sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req)
         }
     }
 
+    Signer.getCfg()->internal.fb_processing = true;
+
     bool ret = fcs_sendRequest(fbdo, req);
+
+    Signer.getCfg()->internal.fb_processing = false;
 
     if (!ret)
     {

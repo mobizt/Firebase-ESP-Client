@@ -1,17 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.2.1"
+#define FIREBASE_CLIENT_VERSION "4.2.2"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.2.1
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.2.2
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created November 4, 2022
+ * Created November 7, 2022
  *
  *   Updates:
- * - Add suuport Arduino StringSumHelper class for Arduino String concatenation used in function arguments and config.
- * - Update external Client examples to use built-in SSL Client.
+ * - Fix FirebaseData object issue that refuse to connect in FCS and GCS classes.
  *
  *
  * This work is a part of Firebase ESP Client library
