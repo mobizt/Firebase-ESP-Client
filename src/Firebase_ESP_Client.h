@@ -10,7 +10,7 @@
  * Created November 7, 2022
  *
  *   Updates:
- * - Fix FirebaseData object issue that refuse to connect in FCS and GCS classes.
+ * - Fix FirebaseData object issue that refused to connect in FCS and GCS classes.
  *
  *
  * This work is a part of Firebase ESP Client library
