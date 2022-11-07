@@ -1,5 +1,5 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.1.21
+ * Google's Cloud Storage class, GCS.cpp version 1.1.22
  *
  * This library supports Espressif ESP8266 and ESP32
  *
@@ -285,6 +285,9 @@ void GG_CloudStorage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_gcs
 
     int p = (float)readBytes / req->fileSize * 100;
 
+    if (readBytes == 0)
+        fbdo->tcpClient.dataStart = millis();
+
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         req->progress = p;
@@ -308,6 +311,9 @@ void GG_CloudStorage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_g
         return;
 
     int p = (float)readBytes / req->fileSize * 100;
+
+    if (readBytes == 0)
+        fbdo->tcpClient.dataStart = millis();
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {

@@ -1,5 +1,5 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.1.21
+ * Google's Cloud Storage class, GCS.h version 1.1.22
  *
  * This library supports Espressif ESP8266 and ESP32
  *

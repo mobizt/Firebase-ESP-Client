@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.5
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.6
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 1, 2022
+ * Created November 7, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1899,6 +1899,9 @@ void FB_RTDB::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_reques
 
     int p = (float)readBytes / req->fileSize * 100;
 
+    if (readBytes == 0)
+        fbdo->tcpClient.dataStart = millis();
+
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
@@ -1925,6 +1928,9 @@ void FB_RTDB::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_requ
         return;
 
     int p = (float)readBytes / req->fileSize * 100;
+
+     if (readBytes == 0)
+        fbdo->tcpClient.dataStart = millis();
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {

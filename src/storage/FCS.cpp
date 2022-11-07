@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.24
+ * Google's Firebase Storage class, FCS.cpp version 1.1.25
  *
  * This library supports Espressif ESP8266 and ESP32
  *
@@ -344,6 +344,9 @@ void FB_Storage::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_fcs_re
         return;
 
     int p = (float)readBytes / req->fileSize * 100;
+
+    if (readBytes == 0)
+        fbdo->tcpClient.dataStart = millis();
 
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {

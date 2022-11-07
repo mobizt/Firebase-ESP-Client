@@ -1,5 +1,5 @@
 /**
- * Google's Firebase Storage class, FCS.h version 1.1.24
+ * Google's Firebase Storage class, FCS.h version 1.1.25
  *
  * This library supports Espressif ESP8266 and ESP32
  *
