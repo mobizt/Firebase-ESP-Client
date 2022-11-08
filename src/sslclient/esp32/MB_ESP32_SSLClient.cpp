@@ -1,7 +1,7 @@
 /*
- * The Mobizt ESP32 SSL Client Class, MB_ESP32_SSLClient.cpp v1.0.0
+ * The Mobizt ESP32 SSL Client Class, MB_ESP32_SSLClient.cpp v1.0.1
  *
- * Created November 3, 2022
+ * Created November 8, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)

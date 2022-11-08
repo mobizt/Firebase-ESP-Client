@@ -1,7 +1,7 @@
 /*
- * ESP32 SSL Client v2.0.1
+ * ESP32 SSL Client v2.0.2
  *
- * Created July 26, 2022
+ * Created November 8, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -34,6 +34,7 @@
 
 #ifdef ESP32
 #include <Arduino.h>
+#include <string>
 
 #include "mbedtls/platform.h"
 #include "mbedtls/net.h"

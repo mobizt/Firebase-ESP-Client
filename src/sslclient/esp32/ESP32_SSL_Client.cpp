@@ -1,7 +1,7 @@
 /*
- * ESP32 SSL Client v2.0.1
+ * ESP32 SSL Client v2.0.2
  *
- * Created July 24, 2022
+ * Created November 8, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)

@@ -30,7 +30,7 @@ const char *getTokenType(struct token_info_t info)
         return "legacy token";
 
     case token_type_id_token:
-        return "id token";
+        return "id token (GITKit token)";
 
     case token_type_custom_token:
         return "custom token";
