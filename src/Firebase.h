@@ -498,6 +498,24 @@ public:
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
   void setAccessToken(FirebaseConfig *config, T1 accessToken, size_t expire = 3600, T2 refreshToken = "", T3 clientId = "", T4 clientSecret = "") { return mSetAuthToken(config, toStringPtr(accessToken), expire, toStringPtr(refreshToken), token_type_oauth2_access_token, toStringPtr(clientId), toStringPtr(clientSecret)); }
 
+  
+  /** Setup the custom token for authentication.
+   *
+   * @param config The pointer to FirebaseConfig data.
+   * @param customToken The Identity Platform custom token.
+   * 
+   * If the refresh token from Custom token verification or sign in, was assigned here instead of 
+   * custom token (signed JWT token), the token refresh process will be performed immediately.
+   * 
+   * Any token that is not in the form header.payload.signature i.e., xxxxx.yyyyy.zzzzz will be treated as refresh token.
+   *
+   * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
+   */
+  template <typename T1 = const char *>
+  void setCustomToken(FirebaseConfig *config, T1 customToken) { return mSetAuthToken(config, toStringPtr(customToken), 0, toStringPtr(""), token_type_custom_token, toStringPtr(""), toStringPtr("")); }
+
+  
+  
   /** Check for token expiry status.
    *
    * @return bool of expiry status.

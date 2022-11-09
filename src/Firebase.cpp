@@ -650,7 +650,7 @@ bool FIREBASE_CLASS::mSendResetPassword(FirebaseConfig *config, MB_StringPtr ema
 void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToken, size_t expire, MB_StringPtr refreshToken, fb_esp_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret)
 {
 
-    if (!config)
+     if (!config)
         return;
 
     this->reset(config);
@@ -711,7 +711,7 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
         config->signer.idTokenCustomSet = true;
     else if (type == token_type_oauth2_access_token)
         config->signer.accessTokenCustomSet = true;
-    else if (type == token_type_custom_token)
+    else if (type == token_type_custom_token && !refresh)
         config->signer.customTokenCustomSet = true;
 
     if (refresh)
