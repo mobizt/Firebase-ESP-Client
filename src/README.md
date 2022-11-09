@@ -293,7 +293,7 @@ const char *getToken();
 
 #### Get refresh token string.
 
-param **`constant char*`** of refresh token.
+return **`constant char*`** of refresh token.
 
 ```cpp
 const char *getRefreshToken();
@@ -303,7 +303,7 @@ const char *getRefreshToken();
 
 #### Get free Heap memory.
 
-param **`int *`** of free Heap memory size.
+return **`int *`** of free Heap memory size.
 
 ```cpp
 int getFreeHeap();
@@ -313,7 +313,7 @@ int getFreeHeap();
 
 #### Get current timestamp.
 
-param **`time_t *`** of current timestamp.
+return **`time_t *`** of current timestamp.
 
 ```cpp
 time_t getCurrentTime();
