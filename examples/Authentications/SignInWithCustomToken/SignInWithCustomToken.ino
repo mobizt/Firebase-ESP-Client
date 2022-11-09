@@ -26,20 +26,33 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-/* 1. Define the WiFi credentials */
+
+/** 1. Define the API key
+ *
+ * The API key can be obtained since you created the project and set up
+ * the Authentication in Firebase console.
+ *
+ * You may need to enable the Identity provider at https://console.cloud.google.com/customer-identity/providers
+ * Select your project, click at ENABLE IDENTITY PLATFORM button.
+ * The API key also available by click at the link APPLICATION SETUP DETAILS.
+ *
+ */
+#define API_KEY "API_KEY"
+
+/* 2. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. If work with RTDB, define the RTDB URL */
+/* 3. If work with RTDB, define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-/* 3. Define the Firebase Data object */
+/* 4. Define the Firebase Data object */
 FirebaseData fbdo;
 
-/* 4. Define the FirebaseAuth data for authentication data */
+/* 5. Define the FirebaseAuth data for authentication data */
 FirebaseAuth auth;
 
-/* 5. Define the FirebaseConfig data for config data */
+/* 6. Define the FirebaseConfig data for config data */
 FirebaseConfig config;
 
 unsigned long dataMillis = 0;
