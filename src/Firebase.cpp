@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.1.8
+ * The Firebase class, Firebase.cpp v1.2.0
  *
- *  Created November 1, 2022
+ *  Created November 9, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -80,6 +80,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
 
         bool itoken_set = config->signer.idTokenCustomSet;
         bool atoken_set = config->signer.accessTokenCustomSet;
+        bool ctoken_set = config->signer.customTokenCustomSet;
         uint32_t exp = config->signer.tokens.expires;
 
         Signer.authChanged(config, auth);
@@ -97,6 +98,11 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
         {
             config->signer.idTokenCustomSet = itoken_set;
             config->signer.tokens.expires = exp;
+        }
+
+        if (ctoken_set)
+        {
+            config->signer.customTokenCustomSet = ctoken_set;
         }
 
         struct fb_esp_url_info_t uinfo;
@@ -204,6 +210,19 @@ void Firebase_ESP_Client::mSetAuthToken(FirebaseConfig *config, MB_StringPtr aut
     if (config->internal.refresh_token.length() == 0 && _authToken.length() == 0)
         return;
 
+    if (type == token_type_custom_token)
+    {
+        if (_authToken.length() > 0)
+        {
+            size_t p1 = _authToken.find('.');
+            if (p1 == MB_String::npos || _authToken.find('.', p1 + 1) == MB_String::npos)
+            {
+                _authToken.clear();
+                config->internal.refresh_token = authToken;
+            }
+        }
+    }
+
     // in case refresh token was assigned and id token is empty
     if (_authToken.length() == 0 && config->internal.refresh_token.length() > 0)
     {
@@ -223,7 +242,10 @@ void Firebase_ESP_Client::mSetAuthToken(FirebaseConfig *config, MB_StringPtr aut
     if (expire > 3600)
         expire = 3600;
 
-    config->signer.tokens.expires += Signer.getTime() + expire;
+    if (expire > 0)
+        config->signer.tokens.expires += Signer.getTime() + expire;
+    else
+        config->signer.tokens.expires = 0;
 
     config->signer.tokens.status = token_status_ready;
     config->signer.step = fb_esp_jwt_generation_step_begin;
@@ -234,6 +256,8 @@ void Firebase_ESP_Client::mSetAuthToken(FirebaseConfig *config, MB_StringPtr aut
         config->signer.idTokenCustomSet = true;
     else if (type == token_type_oauth2_access_token)
         config->signer.accessTokenCustomSet = true;
+    else if (type == token_type_custom_token && !refresh)
+        config->signer.customTokenCustomSet = true;
 
     if (refresh)
         this->refreshToken(config);
@@ -282,6 +306,7 @@ void Firebase_ESP_Client::reset(FirebaseConfig *config)
         config->internal.fb_rtoken_requested = false;
         config->signer.accessTokenCustomSet = false;
         config->signer.idTokenCustomSet = false;
+        config->signer.customTokenCustomSet = false;
         config->signer.anonymous = false;
 
         config->internal.client_email_crc = 0;
@@ -502,6 +527,7 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
 
         bool itoken_set = config->signer.idTokenCustomSet;
         bool atoken_set = config->signer.accessTokenCustomSet;
+        bool ctoken_set = config->signer.customTokenCustomSet;
         uint32_t exp = config->signer.tokens.expires;
 
         Signer.authChanged(config, auth);
@@ -519,6 +545,11 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
         {
             config->signer.idTokenCustomSet = itoken_set;
             config->signer.tokens.expires = exp;
+        }
+
+        if (ctoken_set)
+        {
+            config->signer.customTokenCustomSet = ctoken_set;
         }
 
         struct fb_esp_url_info_t uinfo;
@@ -634,6 +665,19 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
     if (config->internal.refresh_token.length() == 0 && _authToken.length() == 0)
         return;
 
+    if (type == token_type_custom_token)
+    {
+        if (_authToken.length() > 0)
+        {
+            size_t p1 = _authToken.find('.');
+            if (p1 == MB_String::npos || _authToken.find('.', p1 + 1) == MB_String::npos)
+            {
+                _authToken.clear();
+                config->internal.refresh_token = authToken;
+            }
+        }
+    }
+
     // in case refresh token was assigned and id token is empty
     if (_authToken.length() == 0 && config->internal.refresh_token.length() > 0)
     {
@@ -653,7 +697,10 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
     if (expire > 3600)
         expire = 3600;
 
-    config->signer.tokens.expires += Signer.getTime() + expire;
+    if (expire > 0)
+        config->signer.tokens.expires += Signer.getTime() + expire;
+    else
+        config->signer.tokens.expires = 0;
 
     config->signer.tokens.status = token_status_ready;
     config->signer.step = fb_esp_jwt_generation_step_begin;
@@ -664,6 +711,8 @@ void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToke
         config->signer.idTokenCustomSet = true;
     else if (type == token_type_oauth2_access_token)
         config->signer.accessTokenCustomSet = true;
+    else if (type == token_type_custom_token)
+        config->signer.customTokenCustomSet = true;
 
     if (refresh)
         this->refreshToken(config);
@@ -712,6 +761,7 @@ void FIREBASE_CLASS::reset(FirebaseConfig *config)
         config->internal.fb_rtoken_requested = false;
         config->signer.accessTokenCustomSet = false;
         config->signer.idTokenCustomSet = false;
+        config->signer.customTokenCustomSet = false;
         config->signer.anonymous = false;
 
         config->internal.client_email_crc = 0;

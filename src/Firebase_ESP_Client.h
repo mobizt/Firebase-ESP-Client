@@ -7,11 +7,12 @@
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created November 8, 2022
+ * Created November 9, 2022
  *
  *   Updates:
  * - Fix ESP32 core v2.0.x filesystems issue.
  * - Fix Arduino IDE compilation error for ESP32.
+ * - Add support Sign In with custom token.
  *
  *
  * This work is a part of Firebase ESP Client library

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.3.0
+ * Google's Firebase Token Generation class, Signer.cpp version 1.3.1
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 1, 2022
+ * Created November 9, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -211,6 +211,7 @@ bool Firebase_Signer::authChanged(FirebaseConfig *config, FirebaseAuth *auth)
         {
             config->signer.idTokenCustomSet = false;
             config->signer.accessTokenCustomSet = false;
+            config->signer.customTokenCustomSet = false;
 
             if (auth->token.uid.length() == 0)
                 Signer.setTokenType(token_type_oauth2_access_token);
@@ -255,6 +256,7 @@ bool Firebase_Signer::authChanged(FirebaseConfig *config, FirebaseAuth *auth)
             config->signer.tokens.expires = 0;
             config->signer.idTokenCustomSet = false;
             config->signer.accessTokenCustomSet = false;
+            config->signer.customTokenCustomSet = false;
         }
     }
 
@@ -295,7 +297,16 @@ bool Firebase_Signer::isExpired()
     if (config->signer.tokens.token_type == token_type_legacy_token)
         return false;
 
-    time_t now = getTime();
+    time_t now = 0;
+
+    adjustTime(now);
+
+    return (now > (int)(config->signer.tokens.expires - config->signer.preRefreshSeconds) || config->signer.tokens.expires == 0);
+}
+
+void Firebase_Signer::adjustTime(time_t &now)
+{
+    now = getTime();
 
     // if the time was set (changed) after token has been generated, update its expiration
     if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && now > ESP_DEFAULT_TS)
@@ -303,8 +314,6 @@ bool Firebase_Signer::isExpired()
 
     if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
         config->signer.preRefreshSeconds = 60;
-
-    return (now > (int)(config->signer.tokens.expires - config->signer.preRefreshSeconds) || config->signer.tokens.expires == 0);
 }
 
 bool Firebase_Signer::handleToken()
@@ -319,14 +328,41 @@ bool Firebase_Signer::handleToken()
         return true;
     }
 
-    if (config->signer.accessTokenCustomSet && !isExpired())
+    bool exp = isExpired();
+
+    if (config->signer.customTokenCustomSet)
+    {
+        if (exp)
+        {
+            config->signer.tokens.status = token_status_uninitialized;
+            config->signer.tokens.token_type = token_type_custom_token;
+
+            bool ret = false;
+
+            if (millis() - config->signer.lastReqMillis > config->signer.reqTO || config->signer.lastReqMillis == 0)
+            {
+                config->signer.lastReqMillis = millis();
+                
+                ret = requestTokens(false);
+
+                if (ret)
+                    config->signer.customTokenCustomSet = false;
+            }
+            
+            return ret;
+        }
+
+        config->signer.tokens.status = token_status_ready;
+        return true;
+    }
+    else if (config->signer.accessTokenCustomSet && !exp)
     {
         config->signer.tokens.auth_type = fb_esp_pgm_str_209;
         config->signer.tokens.status = token_status_ready;
         return true;
     }
 
-    if (isAuthToken(true) && isExpired())
+    if (isAuthToken(true) && exp)
     {
         if (config->signer.tokens.expires > 0 && isAuthToken(false))
         {
@@ -1551,7 +1587,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
 {
     time_t now = getTime();
 
-    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || ((unsigned long)now < ESP_DEFAULT_TS && !refresh) || config->internal.fb_processing)
+    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || ((unsigned long)now < ESP_DEFAULT_TS && !refresh && !config->signer.customTokenCustomSet) || config->internal.fb_processing)
         return false;
 
     if (!initClient(fb_esp_pgm_str_193, refresh ? token_status_on_refresh : token_status_on_request))
@@ -1562,8 +1598,11 @@ bool Firebase_Signer::requestTokens(bool refresh)
 
     if (config->signer.tokens.token_type == token_type_custom_token)
     {
+        if (config->signer.customTokenCustomSet)
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_233), config->internal.auth_token.c_str());
+        else
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_233), config->signer.tokens.jwt.c_str());
 
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_233), config->signer.tokens.jwt.c_str());
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_198), true);
 
         req += fb_esp_pgm_str_194;
@@ -1614,6 +1653,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
     req += jsonPtr->raw();
 
     tcpClient->send(req.c_str());
+
     req.clear();
 
     if (response_code < 0)
@@ -1642,7 +1682,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
                 error.message = resultPtr->to<const char *>();
         }
 
-        if (error.code != 0 && (config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token))
+        if (error.code != 0 && !config->signer.customTokenCustomSet && (config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token))
         {
             // new jwt needed as it is already cleared
             config->signer.step = fb_esp_jwt_generation_step_encode_header_payload;
@@ -1658,6 +1698,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
 
         if (error.code == 0)
         {
+
             if (config->signer.tokens.token_type == token_type_custom_token)
             {
 
@@ -1813,16 +1854,7 @@ void Firebase_Signer::checkToken()
     if (!config || !auth)
         return;
 
-    time_t now = getTime();
-
-    // if the time was set (changed) after token has been generated, update its expiration
-    if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && now > ESP_DEFAULT_TS)
-        config->signer.tokens.expires += now - (millis() - config->signer.tokens.last_millis) / 1000 - 60;
-
-    if (config->signer.preRefreshSeconds > config->signer.tokens.expires && config->signer.tokens.expires > 0)
-        config->signer.preRefreshSeconds = 60;
-
-    if (isAuthToken(true) && ((unsigned long)now > config->signer.tokens.expires - config->signer.preRefreshSeconds || config->signer.tokens.expires == 0))
+    if (isAuthToken(true) && isExpired())
         handleToken();
 }
 

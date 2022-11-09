@@ -10,7 +10,7 @@
  *
  */
 
-/* This example shows how to re-authenticate using the refresh token generated from other app via OAuth2.0 authentication. */
+/* This example shows how to authenticate using the Identity Platform custom token (custom claims signed JWT token) generated from other app. */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -64,6 +64,9 @@ void setup()
 
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
+    /* Assign the api key (required) */
+    config.api_key = API_KEY;
+
     /* Assign the RTDB URL */
     config.database_url = DATABASE_URL;
 
@@ -75,14 +78,12 @@ void setup()
     // To refresh the token 5 minutes before expired
     config.signer.preRefreshSeconds = 5 * 60;
 
-    // Use refresh token and force token to refresh immediately
-    // Refresh token, Client ID and Client Secret are required for OAuth2.0 token refreshing.
-    // The Client ID and Client Secret can be taken from https://console.developers.google.com/apis/credentials
+    /* Set custom token */
+    // If the refresh token from Custom token verification or sign in, was assigned here instead of
+    // custom token (signed JWT token), the token refresh process will be performed immediately.
 
-    Firebase.setAccessToken(&config, "" /* set access token to empty to refresh token immediately */, 3600 /* expiry time */, "<Refresh Token>" /* refresh token */, "<Client ID>" /* client id */, "<Client Secret>" /* client secret */);
-    
-    // Or refresh token manually
-    // Firebase.refreshToken(&config);
+    // Any token that is not in the form header.payload.signature i.e., xxxxx.yyyyy.zzzzz will be treated as refresh token.
+    Firebase.setCustomToken(&config, "<Custom Token>" /* custom token */);
 
     Firebase.begin(&config, &auth);
 }

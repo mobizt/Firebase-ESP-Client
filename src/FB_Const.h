@@ -1,6 +1,6 @@
 
 /**
- * Created November 1, 2022
+ * Created November 9, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -767,6 +767,7 @@ struct fb_esp_token_signer_resources_t
     bool anonymous = false;
     bool idTokenCustomSet = false;
     bool accessTokenCustomSet = false;
+    bool customTokenCustomSet = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
     unsigned long preRefreshSeconds = DEFAULT_AUTH_TOKEN_PRE_REFRESH_SECONDS;

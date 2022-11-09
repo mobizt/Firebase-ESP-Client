@@ -43,7 +43,8 @@ FunctionsOperationStatusInfo    KEYWORD1
 
 begin   KEYWORD2
 setIdToken  KEYWORD2
-setAccessToken    KEYWORD2
+setAccessToken  KEYWORD2
+setCustomToken  KEYWORD2
 isTokenExpired  KEYWORD2
 refreshToken    KEYWORD2
 reset   KEYWORD2
