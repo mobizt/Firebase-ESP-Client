@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.3.1
+ * Google's Firebase Token Generation class, Signer.cpp version 1.3.2
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 9, 2022
+ * Created November 10, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -342,13 +342,13 @@ bool Firebase_Signer::handleToken()
             if (millis() - config->signer.lastReqMillis > config->signer.reqTO || config->signer.lastReqMillis == 0)
             {
                 config->signer.lastReqMillis = millis();
-                
+
                 ret = requestTokens(false);
 
                 if (ret)
                     config->signer.customTokenCustomSet = false;
             }
-            
+
             return ret;
         }
 
@@ -598,7 +598,7 @@ bool Firebase_Signer::refreshToken()
 
     req.clear();
     if (response_code < 0)
-        return handleSignerError(2);
+        return handleSignerError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
 
     struct fb_esp_auth_token_error_t error;
 
@@ -644,13 +644,13 @@ bool Firebase_Signer::refreshToken()
             if (parseJsonResponse(fb_esp_pgm_str_187))
                 auth->token.uid = resultPtr->to<const char *>();
 
-            return handleSignerError(0);
+            return handleSignerError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
         }
 
-        return handleSignerError(4);
+        return handleSignerError(FIREBASE_ERROR_TOKEN_ERROR_UNNOTIFY);
     }
 
-    return handleSignerError(3, httpCode);
+    return handleSignerError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
 }
 
 void Firebase_Signer::setTokenError(int code)
@@ -674,38 +674,38 @@ void Firebase_Signer::setTokenError(int code)
 
 bool Firebase_Signer::handleSignerError(int code, int httpCode)
 {
+    // Close TCP connection and unlock use flag
+    tcpClient->stop();
+    tcpClient->reserved = false;
+    config->internal.fb_processing = false;
+
     switch (code)
     {
 
-    case 1:
+    case FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST:
+
+        // Show error based on connection status
         config->signer.tokens.error.message.clear();
-        setTokenError(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
+        setTokenError(code);
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         sendTokenStatusCB();
         break;
-    case 2:
+    case FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT:
 
-        tcpClient->stop();
-
-        config->signer.tokens.error.message.clear();
-        setTokenError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
-        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
-        sendTokenStatusCB();
-        break;
-    case 3:
-
-        tcpClient->stop();
-
+        // Request time out?
         if (httpCode == 0)
-        {
-            setTokenError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT);
+        {  
+            // Show error based on request time out
+            setTokenError(code);
             config->signer.tokens.error.message.clear();
         }
         else
         {
+            // Show error from response http code
             errorToString(httpCode, config->signer.tokens.error.message);
             setTokenError(httpCode);
         }
+
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         sendTokenStatusCB();
 
@@ -715,8 +715,7 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
         break;
     }
 
-    tcpClient->reserved = false;
-
+    // Free memory
     if (tcpClient && intTCPClient)
     {
         delete tcpClient;
@@ -733,15 +732,15 @@ bool Firebase_Signer::handleSignerError(int code, int httpCode)
     jsonPtr = nullptr;
     resultPtr = nullptr;
 
-    config->internal.fb_processing = false;
+    
 
-    if (code <= 0)
+    if (code == FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY || code == FIREBASE_ERROR_TOKEN_COMPLETE_UNNOTIFY)
     {
         config->signer.tokens.error.message.clear();
         config->signer.tokens.status = token_status_ready;
         config->signer.step = fb_esp_jwt_generation_step_begin;
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
-        if (code == 0)
+        if (code == FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY)
             sendTokenStatusCB();
 
         return true;
@@ -1315,7 +1314,7 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
     if (response_code < 0)
     {
-        return handleSignerError(2);
+        return handleSignerError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
     }
 
     jsonPtr->clear();
@@ -1379,13 +1378,13 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
                 auth->token.uid = resultPtr->to<const char *>();
 
             if (!createUser)
-                return handleSignerError(0);
+                return handleSignerError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
             else
-                return handleSignerError(-1);
+                return handleSignerError(FIREBASE_ERROR_TOKEN_COMPLETE_UNNOTIFY);
         }
     }
 
-    return handleSignerError(3, httpCode);
+    return handleSignerError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
 }
 
 bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
@@ -1435,7 +1434,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     tcpClient->send(req.c_str());
     req.clear();
     if (response_code < 0)
-        return handleSignerError(2);
+        return handleSignerError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
 
     jsonPtr->clear();
 
@@ -1472,7 +1471,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
         }
     }
 
-    return handleSignerError(4, httpCode);
+    return handleSignerError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
 }
 
 void Firebase_Signer::setAutoReconnectWiFi(bool reconnect)
@@ -1556,7 +1555,7 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
     }
 
     if (!tcpClient->isInitialized())
-        return handleSignerError(3, FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED);
+        return handleSignerError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED);
 
 #if defined(ESP8266) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
     tcpClient->setBufferSizes(1024, 1024);
@@ -1657,7 +1656,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
     req.clear();
 
     if (response_code < 0)
-        return handleSignerError(2);
+        return handleSignerError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
 
     struct fb_esp_auth_token_error_t error;
 
@@ -1693,6 +1692,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
         tokenInfo.type = config->signer.tokens.token_type;
         tokenInfo.error = config->signer.tokens.error;
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
+
         if (error.code != 0)
             sendTokenStatusCB();
 
@@ -1733,12 +1733,12 @@ bool Firebase_Signer::requestTokens(bool refresh)
                 if (parseJsonResponse(fb_esp_pgm_str_210))
                     getExpiration(resultPtr->to<const char *>());
             }
-            return handleSignerError(0);
+            return handleSignerError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
         }
-        return handleSignerError(4);
+        return handleSignerError(FIREBASE_ERROR_TOKEN_ERROR_UNNOTIFY);
     }
 
-    return handleSignerError(3, httpCode);
+    return handleSignerError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
 }
 
 void Firebase_Signer::getExpiration(const char *exp)
@@ -1817,7 +1817,7 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     tcpClient->send(req.c_str());
     req.clear();
     if (response_code < 0)
-        return handleSignerError(2);
+        return handleSignerError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
 
     jsonPtr->clear();
 
@@ -1840,13 +1840,13 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
         if (error.code == 0)
         {
             jsonPtr->clear();
-            return handleSignerError(0);
+            return handleSignerError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
         }
 
-        return handleSignerError(4);
+        return handleSignerError(FIREBASE_ERROR_TOKEN_ERROR_UNNOTIFY);
     }
 
-    return handleSignerError(3, httpCode);
+    return handleSignerError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
 }
 
 void Firebase_Signer::checkToken()

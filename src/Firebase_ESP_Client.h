@@ -1,18 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.2.4"
+#define FIREBASE_CLIENT_VERSION "4.2.5"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.2.4
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.2.5
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created November 9, 2022
+ * Created November 10, 2022
  *
  *   Updates:
- * - Fix ESP32 core v2.0.x filesystems issue.
- * - Fix Arduino IDE compilation error for ESP32.
- * - Add support Sign In with custom token.
+ * - Fix filesystem was not mount before file removing issue.
  *
  *
  * This work is a part of Firebase ESP Client library

@@ -110,6 +110,9 @@ class QueryFilter;
 
 #define DEFAULT_REQUEST_TIMEOUT 2000
 
+// The TCP session will be closed when time out reached
+#define DEFAULT_TCP_CONNECTION_TIMEOUT 3 * 60 * 1000
+
 #define SD_CS_PIN 15
 
 #define STREAM_TASK_STACK_SIZE 8192
@@ -1700,7 +1703,7 @@ struct fb_esp_session_info_t
     unsigned long last_conn_ms = 0;
     int cert_addr = 0;
     bool cert_updated = false;
-    uint32_t conn_timeout = 3 * 60 * 1000;
+    uint32_t conn_timeout = DEFAULT_TCP_CONNECTION_TIMEOUT;
 
     uint16_t resp_size = 2048;
     fb_esp_response_t response;
@@ -2015,7 +2018,7 @@ static const char fb_esp_pgm_str_248[] PROGMEM = "client_email";
 static const char fb_esp_pgm_str_249[] PROGMEM = "fcm";
 static const char fb_esp_pgm_str_250[] PROGMEM = "identitytoolkit";
 static const char fb_esp_pgm_str_251[] PROGMEM = "oauth2";
-static const char fb_esp_pgm_str_252[] PROGMEM = "token is not ready";
+static const char fb_esp_pgm_str_252[] PROGMEM = "token is not ready (revoked or expired)";
 static const char fb_esp_pgm_str_253[] PROGMEM = "client_id";
 static const char fb_esp_pgm_str_254[] PROGMEM = "uid";
 static const char fb_esp_pgm_str_255[] PROGMEM = "claims";

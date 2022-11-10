@@ -1,9 +1,9 @@
 /**
- * The MB_FS, filesystems wrapper class v1.0.8.
+ * The MB_FS, filesystems wrapper class v1.0.9.
  *
  * This wrapper class is for SD and Flash filesystems interface which supports SdFat (//https://github.com/greiman/SdFat)
  *
- *  Created November 8, 2022
+ *  Created November 10, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -692,6 +692,17 @@ public:
 
     bool remove(const MB_String &filename, mbfs_file_type type)
     {
+
+#if defined(MBFS_FLASH_FS)
+        if (type == mbfs_flash && !flashReady())
+            return false;
+#endif
+
+#if defined(MBFS_SD_FS)
+        if (type == mbfs_sd && !sdReady())
+            return false;
+#endif
+
         if (!existed(filename, type))
             return true;
 
