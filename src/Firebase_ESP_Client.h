@@ -11,6 +11,7 @@
  *
  *   Updates:
  * - Fix filesystem was not mount before file removing issue.
+ * - Update TCP client.
  *
  *
  * This work is a part of Firebase ESP Client library

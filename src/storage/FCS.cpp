@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.1.25
+ * Google's Firebase Storage class, FCS.cpp version 1.2.1
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 7, 2022
+ * Created November 10, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -701,7 +701,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
         // We have to remove existing file
         ut->mbfs->remove(req->localFileName, mbfs_type req->storageType);
 #else
- int ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
+        int ret = ut->mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_write);
 
         if (ret < 0)
         {
@@ -918,6 +918,9 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
 
                                         payloadRead += available;
                                     }
+
+                                    if (payloadRead == response.contentLen)
+                                        break;
 
                                     available = fbdo->tcpClient.available();
                                 }

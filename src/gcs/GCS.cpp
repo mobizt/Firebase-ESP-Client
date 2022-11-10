@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.0
+ * Google's Cloud Storage class, GCS.cpp version 1.2.1
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 8, 2022
+ * Created November 10, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1969,6 +1969,9 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                                         payloadRead += available;
                                     }
+
+                                    if (payloadRead == response.contentLen)
+                                        break;
 
                                     available = fbdo->tcpClient.available();
                                 }

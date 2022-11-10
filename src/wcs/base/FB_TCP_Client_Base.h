@@ -1,7 +1,7 @@
 /*
- * TCP Client Base class, version 1.0.7
+ * TCP Client Base class, version 1.0.8
  *
- * Created November 1, 2022
+ * Created November 10, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -127,24 +127,13 @@ public:
         if (!client)
             return;
 
-        if (connected())
-            return client->stop();
+        return client->stop();
     };
 
     virtual bool connected()
     {
         if (client)
-        {
-            bool ret = client->connected();
-
-            if (!ret)
-            {
-                client->stop();
-                client->flush();
-            }
-
-            return ret;
-        }
+            return client->connected();
 
         return false;
     }

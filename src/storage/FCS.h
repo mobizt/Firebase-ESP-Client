@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.h version 1.2.0
+ * Google's Firebase Storage class, FCS.h version 1.2.1
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 8, 2022
+ * Created November 10, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
