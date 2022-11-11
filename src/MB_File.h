@@ -1,9 +1,9 @@
 /**
- * The MB_File, file wrapper class v1.0.0.
+ * The MB_File, file wrapper class v1.0.1.
  * 
  * This wrapper class is for SD and Flash file interfaces which support SdFat in ESP32 (//https://github.com/greiman/SdFat)
  * 
- *  Created January 16, 2022
+ *  Created November 11, 2022
  * 
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -36,8 +36,6 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include "FirebaseFS.h"
-
-#include "addons/fastcrc/FastCRC.h"
 
 #define FS_NO_GLOBALS
 #include <FS.h>
