@@ -10,7 +10,7 @@
  * Created November 11, 2022
  *
  *   Updates:
- * - Fix fastCRC file inclusion error (on Arduino Web IDE).
+ * - Remove unused file 'MB_File.h'.
  *
  *
  * This work is a part of Firebase ESP Client library
