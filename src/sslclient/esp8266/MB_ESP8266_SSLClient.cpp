@@ -1,8 +1,8 @@
 /**
  *
- * The Mobizt ESP8266 SSL Client Class, MB_ESP8266_SSLClient.cpp v1.0.0
+ * The Mobizt ESP8266 SSL Client Class, MB_ESP8266_SSLClient.cpp v1.0.1
  *
- * Created November 2, 2022
+ * Created November 15, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -120,7 +120,6 @@ void MB_ESP8266_SSLClient::setTimeout(unsigned long timeout)
 
 void MB_ESP8266_SSLClient::stop()
 {
-  _host.clear();
   WCS_CLASS::stop();
 }
 

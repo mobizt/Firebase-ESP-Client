@@ -27,6 +27,7 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
+//https://github.com/arduino-libraries/Ethernet
 #include <Ethernet.h>
 
 // Include built-in SSL Client which supports other network interfaces
@@ -225,13 +226,13 @@ void setup()
 
   Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-  /* Assign the basic Client (Ethernet) pointer to the SSL Client */
+  /* Assign the basic Client (Ethernet) pointer to the basic Client */
   ssl_client1.setClient(&basic_client1);
 
   /* Similar to WiFiClientSecure */
   ssl_client1.setInsecure();
 
-  /* Assign the basic Client (Ethernet) pointer to the SSL Client */
+  /* Assign the basic Client (Ethernet) pointer to the basic Client */
   ssl_client2.setClient(&basic_client2);
 
   /* Similar to WiFiClientSecure */

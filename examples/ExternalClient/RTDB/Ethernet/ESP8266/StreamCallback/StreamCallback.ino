@@ -232,7 +232,7 @@ void setup()
 
   Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-  /* Assign the basic Client (Ethernet) pointer to the SSL Client */
+  /* Assign the basic Client (Ethernet) pointer to the basic Client */
   ssl_client1.setClient(&basic_client1);
 
   /* Similar to WiFiClientSecure */

@@ -1,6 +1,6 @@
 
 /**
- * Created November 9, 2022
+ * Created November 15, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -57,6 +57,15 @@
 #endif
 #define OTA_UPDATE_ENABLED
 #endif
+
+#if defined(ESP32)
+#if defined(ESP_ARDUINO_VERSION)
+#if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 1)
+#define ESP32_GT_2_0_1_FS_MEMORY_FIX
+#endif
+#endif
+#endif
+
 
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_STREAM_CLASS FirebaseStream

@@ -1,8 +1,8 @@
 /**
  *
- * The Mobizt ESP8266 SSL Client Class, MB_ESP8266_SSLClient.h v1.0.0
+ * The Mobizt ESP8266 SSL Client Class, MB_ESP8266_SSLClient.h v1.0.1
  *
- * Created November 2, 2022
+ * Created November 15, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -33,12 +33,9 @@
 
 #include <vector>
 #include <WiFiClient.h>
-
 #include "MB_BearSSL.h"
-
-#if defined(ESP8266)
 #include <StackThunk.h>
-#endif
+
 
 #include "ESP8266_SSL_Client.h"
 

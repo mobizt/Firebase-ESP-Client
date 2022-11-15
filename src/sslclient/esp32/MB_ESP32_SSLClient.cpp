@@ -1,7 +1,7 @@
 /*
- * The Mobizt ESP32 SSL Client Class, MB_ESP32_SSLClient.cpp v1.0.1
+ * The Mobizt ESP32 SSL Client Class, MB_ESP32_SSLClient.cpp v1.0.2
  *
- * Created November 8, 2022
+ * Created November 15, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -102,8 +102,6 @@ void MB_ESP32_SSLClient::stop()
 {
     if (!_ssl->basic_client)
         return;
-
-    _host.clear();
 
     stop_tcp_connection(_ssl, _CA_cert, _cert, _private_key);
 
