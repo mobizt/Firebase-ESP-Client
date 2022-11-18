@@ -95,7 +95,7 @@ For PlatfoemIO IDE, ESP8266 Core SDK can be installed through **PIO Home** > **P
 
 ## Migrate from Firebase-ESP8266 or Firebase-ESP32 to Firebase-ESP-Client
 
-All function for Realtime database between these libraries are compattible.  [See this guide](/examples/README.md) for migrating.
+All functions for Realtime database between these libraries are compattible.  [See this guide](/examples/README.md) for migrating.
 
 
 
