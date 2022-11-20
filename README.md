@@ -357,7 +357,7 @@ You can set the system time using the RTC chip or manually by calling **`Firebas
 
 While authenticate using Email and password, the process will be perform faster because no token generation and time setup required. 
 
-The authenticate using the legacy token (database secret) does not have these delay time because the token is ready to use.
+The authenticate using the legacy token (database secret) does not have these delay times because the token is ready to use.
 
 
 
@@ -399,10 +399,10 @@ In ESP8266, when the free memory and speed are concerned, the legacy token shoul
 When the session was reused (in this library), the SSL handshake process will be ignored in the subsequence requests.
 
 
-The session was close when the host or ip changes or server closed or the session timed out in 3 minutes. 
+The session was closed when the host or ip changes or server closed or the session timed out in 3 minutes. 
 
 
-When the new session need to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
+When the new session is needed to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
 
 
 For post (push) or put (set) request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
