@@ -1482,7 +1482,7 @@ See [Cloud Functions examples](/examples/CloudFunctions) for complete usages.
 ### IAM Permission and API Enable
 
 
-Some Firestore functions and all Cloud Functions functions requires the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
+Some Firestore functions and all Cloud Functions functions require the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
 
 You may still get the error permission denined error even using OAuth2.0 authen with Service Account credentials, because the client in the Service Account does not have the Owner and Editor permissions.
 
