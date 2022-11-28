@@ -423,7 +423,7 @@ bool Firebase_Signer::handleToken()
     // if access token was set and unexpired, set the ready status
     else if (config->signer.accessTokenCustomSet && !exp)
     {
-        config->signer.tokens.auth_type = fb_esp_pgm_str_209;
+        config->signer.tokens.auth_type = fb_esp_pgm_str_209; // "Bearer "
         config->signer.tokens.status = token_status_ready;
         return true;
     }
@@ -660,11 +660,11 @@ bool Firebase_Signer::refreshToken()
     if (config->internal.ltok_len > 0 || (config->internal.rtok_len == 0 && config->internal.atok_len == 0))
         return false;
 
-    if (!initClient(fb_esp_pgm_str_203, token_status_on_refresh))
+    if (!initClient(fb_esp_pgm_str_203 /* "securetoken" */, token_status_on_refresh))
         return false;
 
-    jsonPtr->add(pgm2Str(fb_esp_pgm_str_205), pgm2Str(fb_esp_pgm_str_206));
-    jsonPtr->add(pgm2Str(fb_esp_pgm_str_207), config->internal.refresh_token.c_str());
+    jsonPtr->add(pgm2Str(fb_esp_pgm_str_205 /* "grantType" */), pgm2Str(fb_esp_pgm_str_206 /* "refresh_token" */));
+    jsonPtr->add(pgm2Str(fb_esp_pgm_str_207 /* "refreshToken" */), config->internal.refresh_token.c_str());
 
     MB_String s;
     jsonPtr->toString(s);
@@ -704,12 +704,12 @@ bool Firebase_Signer::refreshToken()
     int httpCode = 0;
     if (handleTokenResponse(httpCode))
     {
-        if (parseJsonResponse(fb_esp_pgm_str_257)) // error/code
+        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
             config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_258)) // error/message
+            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
 
@@ -724,23 +724,23 @@ bool Firebase_Signer::refreshToken()
         if (error.code == 0)
         {
 
-            if (parseJsonResponse(fb_esp_pgm_str_208)) // id_token
+            if (parseJsonResponse(fb_esp_pgm_str_208 /* "id_token" */))
             {
                 config->internal.auth_token = resultPtr->to<const char *>();
                 config->internal.atok_len = strlen(resultPtr->to<const char *>());
                 config->internal.ltok_len = 0;
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_206)) // refresh_token
+            if (parseJsonResponse(fb_esp_pgm_str_206 /* "refresh_token" */))
             {
                 config->internal.refresh_token = resultPtr->to<const char *>();
                 config->internal.rtok_len = strlen(resultPtr->to<const char *>());
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_210)) // expires_in
+            if (parseJsonResponse(fb_esp_pgm_str_210 /* "expires_in" */))
                 getExpiration(resultPtr->to<const char *>());
 
-            if (parseJsonResponse(fb_esp_pgm_str_187)) // user_id
+            if (parseJsonResponse(fb_esp_pgm_str_187 /* "user_id" */))
                 auth->token.uid = resultPtr->to<const char *>();
 
             return handleTaskError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
@@ -932,7 +932,7 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
                     {
                         tcpClient->readLine(header);
                         int pos = 0;
-                        char *temp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
+                        char *temp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5 /* "HTTP/1.1 " */, fb_esp_pgm_str_6 /* " " */, pos, 0);
                         if (temp)
                         {
                             isHeader = true;
@@ -1040,9 +1040,9 @@ bool Firebase_Signer::createJWT()
         config->signer.tokens.jwt.clear();
 
         // header
-        // {"alg":"RS256","type":"JWT"}
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_239), pgm2Str(fb_esp_pgm_str_242));
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_240), pgm2Str(fb_esp_pgm_str_234));
+        // {"alg":"RS256","typ":"JWT"}
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_239 /* "alg" */), pgm2Str(fb_esp_pgm_str_242 /* "RS256" */));
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_240 /* "typ" */), pgm2Str(fb_esp_pgm_str_234 /* "JWT" */));
 
         MB_String hdr;
         jsonPtr->toString(hdr);
@@ -1058,8 +1058,8 @@ bool Firebase_Signer::createJWT()
         // {"iss":"<email>","sub":"<email>","aud":"<audience>","iat":<timstamp>,"exp":<expire>,"scope":"<scope>"}
         // {"iss":"<email>","sub":"<email>","aud":"<audience>","iat":<timstamp>,"exp":<expire>,"uid":"<uid>","claims":"<claims>"}
         jsonPtr->clear();
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_212), config->service_account.data.client_email.c_str());
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_213), config->service_account.data.client_email.c_str());
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_212 /* "iss" */), config->service_account.data.client_email.c_str());
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_213 /* "sub" */), config->service_account.data.client_email.c_str());
 
         MB_String t = fb_esp_pgm_str_112; // "https://"
         if (config->signer.tokens.token_type == token_type_custom_token)
@@ -1078,14 +1078,14 @@ bool Firebase_Signer::createJWT()
             t += fb_esp_pgm_str_233; // "token"
         }
 
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_214), t.c_str());
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_214 /* "aud" */), t.c_str());
 
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_218), (int)now);
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_218 /* "iat" */), (int)now);
 
         if (config->signer.expiredSeconds > 3600)
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_215), (int)(now + 3600));
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_215 /* "exp" */), (int)(now + 3600));
         else
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_215), (int)(now + config->signer.expiredSeconds));
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_215 /* "exp" */), (int)(now + config->signer.expiredSeconds));
 
         if (config->signer.tokens.token_type == token_type_oauth2_access_token)
         {
@@ -1134,16 +1134,16 @@ bool Firebase_Signer::createJWT()
                 scopes.clear();
             }
 
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_220), s.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_220 /* "scope" */), s.c_str());
         }
         else if (config->signer.tokens.token_type == token_type_custom_token)
         {
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_254), auth->token.uid.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_254 /* "uid" */), auth->token.uid.c_str());
 
             if (auth->token.claims.length() > 2)
             {
                 FirebaseJson claims(auth->token.claims.c_str());
-                jsonPtr->add(pgm2Str(fb_esp_pgm_str_255), claims);
+                jsonPtr->add(pgm2Str(fb_esp_pgm_str_255 /* "claims" */), claims);
             }
         }
 
@@ -1351,7 +1351,7 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->internal.fb_processing)
         return false;
 
-    if (!initClient(createUser ? fb_esp_pgm_str_250 : fb_esp_pgm_str_193, createUser ? token_status_uninitialized : token_status_on_request))
+    if (!initClient(createUser ? fb_esp_pgm_str_250 /* "identitytoolkit" */ : fb_esp_pgm_str_193 /* "www" */, createUser ? token_status_uninitialized : token_status_on_request))
         return false;
 
     if (createUser)
@@ -1361,17 +1361,17 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
         if (_email.length() > 0 && _password.length() > 0)
         {
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_196), _email);
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_197), _password);
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_196 /* "email" */), _email);
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_197 /* "password" */), _password);
         }
     }
     else
     {
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_196), auth->user.email.c_str());
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_197), auth->user.password.c_str());
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_196 /* "email" */), auth->user.email.c_str());
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_197 /* "password" */), auth->user.password.c_str());
     }
 
-    jsonPtr->add(pgm2Str(fb_esp_pgm_str_198), true);
+    jsonPtr->add(pgm2Str(fb_esp_pgm_str_198 /* "returnSecureToken" */), true);
 
     MB_String req = fb_esp_pgm_str_24; // "POST"
     req += fb_esp_pgm_str_6;           // " "
@@ -1422,13 +1422,13 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     {
         struct fb_esp_auth_token_error_t error;
 
-        if (parseJsonResponse(fb_esp_pgm_str_257)) // error/code
+        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
             if (!createUser)
                 config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_258)) // error/message
+            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
 
@@ -1456,23 +1456,23 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
                 config->signer.anonymous = auth->user.email.length() == 0 && auth->user.password.length() == 0;
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_200)) // idToken
+            if (parseJsonResponse(fb_esp_pgm_str_200 /* "idToken" */))
             {
                 config->internal.auth_token = resultPtr->to<const char *>();
                 config->internal.atok_len = strlen(resultPtr->to<const char *>());
                 config->internal.ltok_len = 0;
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_201)) // refreshToken
+            if (parseJsonResponse(fb_esp_pgm_str_201 /* "refreshToken" */))
             {
                 config->internal.refresh_token = resultPtr->to<const char *>();
                 config->internal.rtok_len = strlen(resultPtr->to<const char *>());
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_202)) // expiresIn
+            if (parseJsonResponse(fb_esp_pgm_str_202 /* "expiresIn" */))
                 getExpiration(resultPtr->to<const char *>());
 
-            if (parseJsonResponse(fb_esp_pgm_str_175)) // localId
+            if (parseJsonResponse(fb_esp_pgm_str_175 /* "localId" */))
                 auth->token.uid = resultPtr->to<const char *>();
 
             if (!createUser)
@@ -1491,7 +1491,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->internal.fb_processing)
         return false;
 
-    if (!initClient(fb_esp_pgm_str_250, token_status_uninitialized))
+    if (!initClient(fb_esp_pgm_str_250 /* "identitytoolkit" */, token_status_uninitialized))
         return false;
 
     config->signer.signup = false;
@@ -1500,9 +1500,9 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
 
     MB_String _idToken = idToken;
     if (_idToken.length() > 0)
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_200), _idToken);
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_200 /* "idToken" */), _idToken);
     else
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_200), config->internal.auth_token);
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_200 /* "idToken" */), config->internal.auth_token);
 
     MB_String req = fb_esp_pgm_str_24; // "POST"
     req += fb_esp_pgm_str_6;           // " "
@@ -1541,10 +1541,10 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     {
         struct fb_esp_auth_token_error_t error;
 
-        if (parseJsonResponse(fb_esp_pgm_str_257)) // error/code
+        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
-            if (parseJsonResponse(fb_esp_pgm_str_258)) // error/message
+            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
 
@@ -1662,8 +1662,8 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
     resultPtr = new FirebaseJsonData();
 
     MB_String host = subDomain;
-    host += fb_esp_pgm_str_4;
-    host += fb_esp_pgm_str_120;
+    host += fb_esp_pgm_str_4;   // "."
+    host += fb_esp_pgm_str_120; // "googleapis.com"
 
     // use for authentication task
     tcpClient->reserved = true;
@@ -1687,7 +1687,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
     if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || ((unsigned long)now < ESP_DEFAULT_TS && !refresh && !config->signer.customTokenCustomSet) || config->internal.fb_processing)
         return false;
 
-    if (!initClient(fb_esp_pgm_str_193, refresh ? token_status_on_refresh : token_status_on_request))
+    if (!initClient(fb_esp_pgm_str_193 /* "www" */, refresh ? token_status_on_refresh : token_status_on_request))
         return false;
 
     MB_String req = fb_esp_pgm_str_24; // "POST"
@@ -1697,11 +1697,11 @@ bool Firebase_Signer::requestTokens(bool refresh)
     {
         // {"token":"<sutom or signed jwt token>","returnSecureToken":true}
         if (config->signer.customTokenCustomSet)
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_233), config->internal.auth_token.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_233 /* "token" */), config->internal.auth_token.c_str());
         else
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_233), config->signer.tokens.jwt.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_233 /* "token" */), config->signer.tokens.jwt.c_str());
 
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_198), true);
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_198 /* "returnSecureToken" */), true);
 
         req += fb_esp_pgm_str_194; // "/identitytoolkit/v3/relyingparty/"
         req += fb_esp_pgm_str_232; // "verifyCustomToken?key="
@@ -1715,11 +1715,11 @@ bool Firebase_Signer::requestTokens(bool refresh)
         if (refresh)
         {
             // {"client_id":"<client id>","client_secret":"<client secret>","grant_type":"refresh_token","refresh_token":"<refresh token>"}
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_253), config->internal.client_id.c_str());
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_188), config->internal.client_secret.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_253 /* "client_id" */), config->internal.client_id.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_188 /* "client_secret" */), config->internal.client_secret.c_str());
 
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_227), pgm2Str(fb_esp_pgm_str_206));
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_206), config->internal.refresh_token.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_227 /* "grant_type" */), pgm2Str(fb_esp_pgm_str_206 /* "refresh_token" */));
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_206 /* "refresh_token" */), config->internal.refresh_token.c_str());
         }
         else
         {
@@ -1727,8 +1727,8 @@ bool Firebase_Signer::requestTokens(bool refresh)
             // rfc 7523, JWT Bearer Token Grant Type Profile for OAuth 2.0
 
             // {"grant_type":"urn:ietf:params:oauth:grant-type:jwt-bearer","assertion":"<signed jwt token>"}
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_227), pgm2Str(fb_esp_pgm_str_228));
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_229), config->signer.tokens.jwt.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_227 /* "grant_type" */), pgm2Str(fb_esp_pgm_str_228 /* "urn:ietf:params:oauth:grant-type:jwt-bearer" */));
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_229 /* "assertion" */), config->signer.tokens.jwt.c_str());
         }
 
         req += fb_esp_pgm_str_1;   // "/"
@@ -1766,20 +1766,20 @@ bool Firebase_Signer::requestTokens(bool refresh)
     if (handleTokenResponse(httpCode))
     {
         config->signer.tokens.jwt.clear();
-        if (parseJsonResponse(fb_esp_pgm_str_257)) // error/code
+        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
             config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_258)) // error/message
+            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
-        else if (parseJsonResponse(fb_esp_pgm_str_549)) // error
+        else if (parseJsonResponse(fb_esp_pgm_str_549 /* "error" */))
         {
             error.code = -1;
             config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_583)) // error_description
+            if (parseJsonResponse(fb_esp_pgm_str_583 /* "error_description" */))
                 error.message = resultPtr->to<const char *>();
         }
 
@@ -1804,35 +1804,35 @@ bool Firebase_Signer::requestTokens(bool refresh)
             if (config->signer.tokens.token_type == token_type_custom_token)
             {
 
-                if (parseJsonResponse(fb_esp_pgm_str_200)) // idToken
+                if (parseJsonResponse(fb_esp_pgm_str_200 /* "idToken" */))
                 {
                     config->internal.auth_token = resultPtr->to<const char *>();
                     config->internal.atok_len = strlen(resultPtr->to<const char *>());
                     config->internal.ltok_len = 0;
                 }
 
-                if (parseJsonResponse(fb_esp_pgm_str_201)) // refreshToken
+                if (parseJsonResponse(fb_esp_pgm_str_201 /* "refreshToken" */))
                 {
                     config->internal.refresh_token = resultPtr->to<const char *>();
                     config->internal.rtok_len = strlen(resultPtr->to<const char *>());
                 }
 
-                if (parseJsonResponse(fb_esp_pgm_str_202)) // expiresIn
+                if (parseJsonResponse(fb_esp_pgm_str_202 /* "expiresIn" */))
                     getExpiration(resultPtr->to<const char *>());
             }
             else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
             {
-                if (parseJsonResponse(fb_esp_pgm_str_235)) // access_token
+                if (parseJsonResponse(fb_esp_pgm_str_235 /* "access_token" */))
                 {
                     config->internal.auth_token = resultPtr->to<const char *>();
                     config->internal.atok_len = strlen(resultPtr->to<const char *>());
                     config->internal.ltok_len = 0;
                 }
 
-                if (parseJsonResponse(fb_esp_pgm_str_236)) // token_type
+                if (parseJsonResponse(fb_esp_pgm_str_236 /* "token_type" */))
                     config->signer.tokens.auth_type = resultPtr->to<const char *>();
 
-                if (parseJsonResponse(fb_esp_pgm_str_210)) // expires_in
+                if (parseJsonResponse(fb_esp_pgm_str_210 /* "expires_in" */))
                     getExpiration(resultPtr->to<const char *>());
             }
             return handleTaskError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
@@ -1857,7 +1857,7 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     if (config->internal.fb_processing)
         return false;
 
-    if (!initClient(fb_esp_pgm_str_193, token_status_uninitialized))
+    if (!initClient(fb_esp_pgm_str_193 /* "www" */, token_status_uninitialized))
         return false;
 
     MB_String _payload = payload;
@@ -1868,25 +1868,25 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     {
         config->signer.verificationError.message.clear();
         // {"requestType":"VERIFY_EMAIL","idToken":"<id token>"}
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_260), pgm2Str(fb_esp_pgm_str_261));
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_260 /* "requestType" */), pgm2Str(fb_esp_pgm_str_261 /* "VERIFY_EMAIL" */));
     }
     else if (type == fb_esp_user_email_sending_type_reset_psw)
     {
         config->signer.resetPswError.message.clear();
         // {"requestType":"PASSWORD_RESET","email":"<email>"}
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_260), pgm2Str(fb_esp_pgm_str_263));
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_260 /* "requestType" */), pgm2Str(fb_esp_pgm_str_263 /* "PASSWORD_RESET" */));
     }
 
     if (type == fb_esp_user_email_sending_type_verify)
     {
         if (_payload.length() > 0)
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_200), _payload);
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_200 /* "idToken" */), _payload);
         else
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_200), config->internal.auth_token.c_str());
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_200 /* "idToken" */), config->internal.auth_token.c_str());
     }
     else if (type == fb_esp_user_email_sending_type_reset_psw)
     {
-        jsonPtr->add(pgm2Str(fb_esp_pgm_str_196), _payload);
+        jsonPtr->add(pgm2Str(fb_esp_pgm_str_196 /* "email" */), _payload);
     }
 
     MB_String s;
@@ -1930,10 +1930,10 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     {
         struct fb_esp_auth_token_error_t error;
 
-        if (parseJsonResponse(fb_esp_pgm_str_257)) // error/code
+        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
-            if (parseJsonResponse(fb_esp_pgm_str_258)) // error/message
+            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
         if (type == fb_esp_user_email_sending_type_verify)
@@ -1988,236 +1988,236 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
     switch (httpCode)
     {
     case FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED:
-        buff += fb_esp_pgm_str_39;
+        buff += fb_esp_pgm_str_39; // "connection refused"
         return;
     case FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED:
-        buff += fb_esp_pgm_str_40;
+        buff += fb_esp_pgm_str_40; // "send request failed"
         return;
     case FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED:
-        buff += fb_esp_pgm_str_42;
+        buff += fb_esp_pgm_str_42; // "not connected"
         return;
     case FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST:
-        buff += fb_esp_pgm_str_43;
+        buff += fb_esp_pgm_str_43; // "connection lost"
         return;
     case FIREBASE_ERROR_TCP_ERROR_NO_HTTP_SERVER:
-        buff += fb_esp_pgm_str_44;
+        buff += fb_esp_pgm_str_44; // "no HTTP server"
         return;
     case FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST:
-        buff += fb_esp_pgm_str_45;
+        buff += fb_esp_pgm_str_45; // "bad request"
         return;
     case FIREBASE_ERROR_HTTP_CODE_NON_AUTHORITATIVE_INFORMATION:
-        buff += fb_esp_pgm_str_46;
+        buff += fb_esp_pgm_str_46; // "non-authoriative information"
         return;
     case FIREBASE_ERROR_HTTP_CODE_NO_CONTENT:
-        buff += fb_esp_pgm_str_47;
+        buff += fb_esp_pgm_str_47; // "no content"
         return;
     case FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY:
-        buff += fb_esp_pgm_str_48;
+        buff += fb_esp_pgm_str_48; // "moved permanently"
         return;
     case FIREBASE_ERROR_HTTP_CODE_USE_PROXY:
-        buff += fb_esp_pgm_str_49;
+        buff += fb_esp_pgm_str_49; // "use proxy"
         return;
     case FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT:
-        buff += fb_esp_pgm_str_50;
+        buff += fb_esp_pgm_str_50; // "temporary redirect"
         return;
     case FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT:
-        buff += fb_esp_pgm_str_51;
+        buff += fb_esp_pgm_str_51; // "permanent redirect"
         return;
     case FIREBASE_ERROR_HTTP_CODE_UNAUTHORIZED:
-        buff += fb_esp_pgm_str_52;
+        buff += fb_esp_pgm_str_52; // "unauthorized"
         return;
     case FIREBASE_ERROR_HTTP_CODE_FORBIDDEN:
-        buff += fb_esp_pgm_str_53;
+        buff += fb_esp_pgm_str_53; // "forbidden"
         return;
     case FIREBASE_ERROR_HTTP_CODE_NOT_FOUND:
-        buff += fb_esp_pgm_str_54;
+        buff += fb_esp_pgm_str_54; // "not found"
         return;
     case FIREBASE_ERROR_HTTP_CODE_METHOD_NOT_ALLOWED:
-        buff += fb_esp_pgm_str_55;
+        buff += fb_esp_pgm_str_55; // "method not allow"
         return;
     case FIREBASE_ERROR_HTTP_CODE_NOT_ACCEPTABLE:
-        buff += fb_esp_pgm_str_56;
+        buff += fb_esp_pgm_str_56; // "not acceptable"
         return;
     case FIREBASE_ERROR_HTTP_CODE_PROXY_AUTHENTICATION_REQUIRED:
-        buff += fb_esp_pgm_str_57;
+        buff += fb_esp_pgm_str_57; // "proxy authentication required"
         return;
     case FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT:
-        buff += fb_esp_pgm_str_58;
+        buff += fb_esp_pgm_str_58; // "request timed out"
         return;
     case FIREBASE_ERROR_HTTP_CODE_LENGTH_REQUIRED:
-        buff += fb_esp_pgm_str_59;
+        buff += fb_esp_pgm_str_59; // "length required"
         return;
     case FIREBASE_ERROR_HTTP_CODE_TOO_MANY_REQUESTS:
-        buff += fb_esp_pgm_str_60;
+        buff += fb_esp_pgm_str_60; // "too many requests"
         return;
     case FIREBASE_ERROR_HTTP_CODE_REQUEST_HEADER_FIELDS_TOO_LARGE:
-        buff += fb_esp_pgm_str_61;
+        buff += fb_esp_pgm_str_61; // "request header fields too larg"
         return;
     case FIREBASE_ERROR_HTTP_CODE_INTERNAL_SERVER_ERROR:
-        buff += fb_esp_pgm_str_62;
+        buff += fb_esp_pgm_str_62; // "internal server error"
         return;
     case FIREBASE_ERROR_HTTP_CODE_BAD_GATEWAY:
-        buff += fb_esp_pgm_str_63;
+        buff += fb_esp_pgm_str_63; // "bad gateway"
         return;
     case FIREBASE_ERROR_HTTP_CODE_SERVICE_UNAVAILABLE:
-        buff += fb_esp_pgm_str_64;
+        buff += fb_esp_pgm_str_64; // "service unavailable"
         return;
     case FIREBASE_ERROR_HTTP_CODE_GATEWAY_TIMEOUT:
-        buff += fb_esp_pgm_str_65;
+        buff += fb_esp_pgm_str_65; // "gateway timeout"
         return;
     case FIREBASE_ERROR_HTTP_CODE_HTTP_VERSION_NOT_SUPPORTED:
-        buff += fb_esp_pgm_str_66;
+        buff += fb_esp_pgm_str_66; // "http version not support"
         return;
     case FIREBASE_ERROR_HTTP_CODE_NETWORK_AUTHENTICATION_REQUIRED:
-        buff += fb_esp_pgm_str_67;
+        buff += fb_esp_pgm_str_67; // "network authentication required"
         return;
     case FIREBASE_ERROR_HTTP_CODE_PRECONDITION_FAILED:
-        buff += fb_esp_pgm_str_152;
+        buff += fb_esp_pgm_str_152; // "Precondition Failed (ETag does not match)"
         return;
     case FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT:
-        buff += fb_esp_pgm_str_69;
+        buff += fb_esp_pgm_str_69; // "response payload read timed out due to network issue or too large data size"
         return;
     case FIREBASE_ERROR_TCP_RESPONSE_READ_FAILED:
-        buff += fb_esp_pgm_str_595;
+        buff += fb_esp_pgm_str_595; // "Response read failed."
         return;
     case FIREBASE_ERROR_DATA_TYPE_MISMATCH:
-        buff += fb_esp_pgm_str_70;
+        buff += fb_esp_pgm_str_70; // "data type mismatch"
         return;
     case FIREBASE_ERROR_PATH_NOT_EXIST:
-        buff += fb_esp_pgm_str_71;
+        buff += fb_esp_pgm_str_71; // "path not exist"
         return;
     case FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED:
-        buff += fb_esp_pgm_str_94;
+        buff += fb_esp_pgm_str_94; // "http connection was used by other processes"
         return;
     case FIREBASE_ERROR_TCP_MAX_REDIRECT_REACHED:
-        buff += fb_esp_pgm_str_169;
+        buff += fb_esp_pgm_str_169; // "Maximum Redirection reached"
         return;
     case FIREBASE_ERROR_BUFFER_OVERFLOW:
-        buff += fb_esp_pgm_str_68;
+        buff += fb_esp_pgm_str_68; // "data buffer overflow"
         return;
     case FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED:
-        buff += fb_esp_pgm_str_145;
+        buff += fb_esp_pgm_str_145; // "No ID token or registration token provided"
         return;
     case FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED:
-        buff += fb_esp_pgm_str_146;
+        buff += fb_esp_pgm_str_146; // "No server key provided"
         return;
     case FIREBASE_ERROR_NO_FCM_TOPIC_PROVIDED:
-        buff += fb_esp_pgm_str_542;
+        buff += fb_esp_pgm_str_542; // "No topic provided"
         return;
     case FIREBASE_ERROR_FCM_ID_TOKEN_AT_INDEX_NOT_FOUND:
-        buff += fb_esp_pgm_str_543;
+        buff += fb_esp_pgm_str_543; // "The ID token or registration token was not not found at index"
         return;
     case FIREBASE_ERROR_EXPECTED_JSON_DATA:
-        buff += fb_esp_pgm_str_185;
+        buff += fb_esp_pgm_str_185; // "The backup data should be the JSON object"
         return;
     case FIREBASE_ERROR_HTTP_CODE_PAYLOAD_TOO_LARGE:
-        buff += fb_esp_pgm_str_189;
+        buff += fb_esp_pgm_str_189; // "payload too large"
         return;
     case FIREBASE_ERROR_CANNOT_CONFIG_TIME:
-        buff += fb_esp_pgm_str_190;
+        buff += fb_esp_pgm_str_190; // "cannot config time"
         return;
     case FIREBASE_ERROR_SSL_RX_BUFFER_SIZE_TOO_SMALL:
-        buff += fb_esp_pgm_str_191;
+        buff += fb_esp_pgm_str_191; // "incomplete SSL client data"
         return;
     case MB_FS_ERROR_FILE_IO_ERROR:
-        buff += fb_esp_pgm_str_192;
+        buff += fb_esp_pgm_str_192; // "File I/O error"
         return;
 #if defined(FIREBASE_ESP_CLIENT)
     case FIREBASE_ERROR_ARCHIVE_NOT_FOUND:
-        buff += fb_esp_pgm_str_450;
+        buff += fb_esp_pgm_str_450; // "Archive not found"
         return;
     case FIREBASE_ERROR_LONG_RUNNING_TASK:
-        buff += fb_esp_pgm_str_534;
+        buff += fb_esp_pgm_str_534; // "operation ignored due to long running task is being processed."
         return;
     case FIREBASE_ERROR_UPLOAD_TIME_OUT:
-        buff += fb_esp_pgm_str_540;
+        buff += fb_esp_pgm_str_540; // "upload timed out"
         return;
     case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
-        buff += fb_esp_pgm_str_541;
+        buff += fb_esp_pgm_str_541; // "upload data sent error"
         return;
     case FIREBASE_ERROR_OAUTH2_REQUIRED:
-        buff += fb_esp_pgm_str_328;
+        buff += fb_esp_pgm_str_328; // "OAuth2.0 authentication required"
         return;
     case FIREBASE_ERROR_FW_UPDATE_INVALID_FIRMWARE:
-        buff += fb_esp_pgm_str_584;
+        buff += fb_esp_pgm_str_584; // "Invalid Firmware"
         return;
     case FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE:
-        buff += fb_esp_pgm_str_585;
+        buff += fb_esp_pgm_str_585; // "Too low free sketch space"
         return;
     case FIREBASE_ERROR_FW_UPDATE_BIN_SIZE_NOT_MATCH_SPI_FLASH_SPACE:
-        buff += fb_esp_pgm_str_586;
+        buff += fb_esp_pgm_str_586; // "Bin size does not fit the free flash space"
         return;
     case FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED:
-        buff += fb_esp_pgm_str_587;
+        buff += fb_esp_pgm_str_587; // "Updater begin() failed"
         return;
     case FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED:
-        buff += fb_esp_pgm_str_588;
+        buff += fb_esp_pgm_str_588; // "Updater write() failed."
         return;
     case FIREBASE_ERROR_FW_UPDATE_END_FAILED:
-        buff += fb_esp_pgm_str_589;
+        buff += fb_esp_pgm_str_589; // "Updater end() failed."
         return;
 #endif
     case FIREBASE_ERROR_TOKEN_NOT_READY:
-        buff += fb_esp_pgm_str_252;
+        buff += fb_esp_pgm_str_252; // "token is not ready (revoked or expired)"
         return;
     case FIREBASE_ERROR_UNINITIALIZED:
-        buff += fb_esp_pgm_str_256;
+        buff += fb_esp_pgm_str_256; // "Firebase authentication was not initialized"
         return;
     case FIREBASE_ERROR_MISSING_DATA:
-        buff += fb_esp_pgm_str_579;
+        buff += fb_esp_pgm_str_579; // "Missing data."
         return;
     case FIREBASE_ERROR_MISSING_CREDENTIALS:
-        buff += fb_esp_pgm_str_580;
+        buff += fb_esp_pgm_str_580; // "Missing required credentials."
         return;
     case FIREBASE_ERROR_INVALID_JSON_RULES:
-        buff += fb_esp_pgm_str_581;
+        buff += fb_esp_pgm_str_581; // "Security rules is not a valid JSON"
         return;
     case FIREBASE_ERROR_TOKEN_SET_TIME:
-        buff += fb_esp_pgm_str_211;
+        buff += fb_esp_pgm_str_211; // "system time was not set"
         break;
     case FIREBASE_ERROR_TOKEN_PARSE_PK:
-        buff += fb_esp_pgm_str_179;
+        buff += fb_esp_pgm_str_179; // "RSA private key parsing failed"
         break;
     case FIREBASE_ERROR_TOKEN_CREATE_HASH:
-        buff += fb_esp_pgm_str_545;
+        buff += fb_esp_pgm_str_545; // "create message digest"
         break;
     case FIREBASE_ERROR_TOKEN_SIGN:
-        buff += fb_esp_pgm_str_178;
+        buff += fb_esp_pgm_str_178; // "JWT token signing failed"
         break;
     case FIREBASE_ERROR_TOKEN_EXCHANGE:
-        buff += fb_esp_pgm_str_177;
+        buff += fb_esp_pgm_str_177; // "token exchange failed"
         break;
 
 #if defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)
 
     case MB_FS_ERROR_FLASH_STORAGE_IS_NOT_READY:
-        buff += fb_esp_pgm_str_590;
+        buff += fb_esp_pgm_str_590; // "Flash Storage is not ready."
         return;
 
     case MB_FS_ERROR_SD_STORAGE_IS_NOT_READY:
-        buff += fb_esp_pgm_str_591;
+        buff += fb_esp_pgm_str_591; // "SD Storage is not ready."
         return;
 
     case MB_FS_ERROR_FILE_STILL_OPENED:
-        buff += fb_esp_pgm_str_592;
+        buff += fb_esp_pgm_str_592; // "File is still opened."
         return;
 
     case MB_FS_ERROR_FILE_NOT_FOUND:
-        buff += fb_esp_pgm_str_593;
+        buff += fb_esp_pgm_str_593; // "File not found."
         return;
 #endif
 
     case FIREBASE_ERROR_SYS_TIME_IS_NOT_READY:
-        buff += fb_esp_pgm_str_594;
+        buff += fb_esp_pgm_str_594; // "The device time was not set."
         return;
     case FIREBASE_ERROR_EXTERNAL_CLIENT_DISABLED:
-        buff += fb_esp_pgm_str_596;
+        buff += fb_esp_pgm_str_596; // "Custom Client is not yet enabled"
         return;
     case FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED:
-        buff += fb_esp_pgm_str_597;
+        buff += fb_esp_pgm_str_597; // "Client is not yet initialized"
         return;
     case FIREBASE_ERROR_NTP_SYNC_TIMED_OUT:
-        buff += fb_esp_pgm_str_230;
+        buff += fb_esp_pgm_str_230; // "NTP server time synching failed"
         return;
 
     default:
