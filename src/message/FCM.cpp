@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 1, 2022
+ * Created November 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -225,11 +225,11 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
 
     MB_String host;
     if (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1)
-        host += fb_esp_pgm_str_249;
+        host += fb_esp_pgm_str_249; // "fcm"
     else
-        host += fb_esp_pgm_str_329;
-    host += fb_esp_pgm_str_4;
-    host += fb_esp_pgm_str_120;
+        host += fb_esp_pgm_str_329; // "iid"
+    host += fb_esp_pgm_str_4;       // "."
+    host += fb_esp_pgm_str_120;     // "googleapis.com"
 
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), port, &fbdo->session.response.code);
@@ -243,62 +243,62 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
     MB_String header;
 
     if (mode == fb_esp_fcm_msg_mode_app_instance_info)
-        header = fb_esp_pgm_str_25;
+        header = fb_esp_pgm_str_25; // "GET"
     else
-        header = fb_esp_pgm_str_24;
-    header += fb_esp_pgm_str_6;
+        header = fb_esp_pgm_str_24; // "POST"
+    header += fb_esp_pgm_str_6;     // " "
 
     if (msgMode)
     {
         if (Signer.getTokenType() != token_type_oauth2_access_token || mode == fb_esp_fcm_msg_mode_legacy_http)
-            header += fb_esp_pgm_str_121;
+            header += fb_esp_pgm_str_121; // "fcm/send"
         else
         {
-            header += fb_esp_pgm_str_326;
+            header += fb_esp_pgm_str_326; // "/v1/projects/"
             header += Signer.getCfg()->service_account.data.project_id;
-            header += fb_esp_pgm_str_327;
+            header += fb_esp_pgm_str_327; // "/messages:send"
         }
     }
     else
     {
         if (mode == fb_esp_fcm_msg_mode_subscribe)
         {
-            header += fb_esp_pgm_str_330;
-            header += fb_esp_pgm_str_331;
+            header += fb_esp_pgm_str_330; // "/iid/v1"
+            header += fb_esp_pgm_str_331; // ":batchAdd"
         }
         else if (mode == fb_esp_fcm_msg_mode_unsubscribe)
         {
-            header += fb_esp_pgm_str_330;
-            header += fb_esp_pgm_str_332;
+            header += fb_esp_pgm_str_330; // "/iid/v1"
+            header += fb_esp_pgm_str_332; // ":batchRemove"
         }
         else if (mode == fb_esp_fcm_msg_mode_app_instance_info)
         {
-            header += fb_esp_pgm_str_335;
+            header += fb_esp_pgm_str_335; //  "/iid/info/"
             header += payload;
-            header += fb_esp_pgm_str_336;
+            header += fb_esp_pgm_str_336; // "?details=true"
         }
         else if (mode == fb_esp_fcm_msg_mode_apn_token_registration)
         {
-            header += fb_esp_pgm_str_330;
-            header += fb_esp_pgm_str_333;
+            header += fb_esp_pgm_str_330; // "/iid/v1"
+            header += fb_esp_pgm_str_333; // ":batchImport"
         }
     }
 
-    header += fb_esp_pgm_str_30;
+    header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
 
-    header += fb_esp_pgm_str_31;
+    header += fb_esp_pgm_str_31; // "Host: "
     if (msgMode)
-        header += fb_esp_pgm_str_249;
+        header += fb_esp_pgm_str_249; // "fcm"
     else
-        header += fb_esp_pgm_str_329;
-    header += fb_esp_pgm_str_4;
-    header += fb_esp_pgm_str_120;
-    header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_329; // "iid"
+    header += fb_esp_pgm_str_4;       // "."
+    header += fb_esp_pgm_str_120;     // "googleapis.com"
+    header += fb_esp_pgm_str_21;      // "\r\n"
 
     if (Signer.getTokenType() == token_type_oauth2_access_token && mode == fb_esp_fcm_msg_mode_httpv1)
     {
-        header += fb_esp_pgm_str_237;
-        header += fb_esp_pgm_str_209;
+        header += fb_esp_pgm_str_237; // "Authorization: "
+        header += fb_esp_pgm_str_209; // "Bearer "
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -313,7 +313,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
     }
     else
     {
-        header += fb_esp_pgm_str_131;
+        header += fb_esp_pgm_str_131; // "Authorization: key="
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -327,23 +327,23 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
             return false;
     }
 
-    header += fb_esp_pgm_str_21;
+    header += fb_esp_pgm_str_21; // "\r\n"
 
-    header += fb_esp_pgm_str_32;
+    header += fb_esp_pgm_str_32; // "User-Agent: ESP\r\n"
 
     if (mode != fb_esp_fcm_msg_mode_app_instance_info)
     {
-        header += fb_esp_pgm_str_8;
-        header += fb_esp_pgm_str_129;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_8;   // "Content-Type: "
+        header += fb_esp_pgm_str_129; // "application/json"
+        header += fb_esp_pgm_str_21;  // "\r\n"
 
-        header += fb_esp_pgm_str_12;
+        header += fb_esp_pgm_str_12; // "Content-Length: "
         header += strlen(payload);
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
     }
 
-    header += fb_esp_pgm_str_36;
-    header += fb_esp_pgm_str_21;
+    header += fb_esp_pgm_str_36; // "Connection: keep-alive\r\n";
+    header += fb_esp_pgm_str_21; // "\r\n"
 
     fbdo->tcpClient.send(header.c_str());
     header.clear();
@@ -365,7 +365,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
     if (msg->targets.to.length() > 0)
     {
-        s = fb_esp_pgm_str_128;
+        s = fb_esp_pgm_str_128; // "to"
         json.add(s.c_str(), msg->targets.to);
     }
 
@@ -375,61 +375,61 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         arr.clear();
         arr.setJsonArrayData(msg->targets.registration_ids);
 
-        s = fb_esp_pgm_str_130;
+        s = fb_esp_pgm_str_130; // "registration_ids"
         json.add(s.c_str(), arr);
     }
 
     if (msg->targets.condition.length() > 0)
     {
-        s = fb_esp_pgm_str_282;
+        s = fb_esp_pgm_str_282; // "condition"
         json.add(s.c_str(), msg->targets.condition);
     }
 
     if (msg->options.collapse_key.length() > 0)
     {
-        s = fb_esp_pgm_str_138;
+        s = fb_esp_pgm_str_138; // "collapse_key"
         json.add(s.c_str(), msg->options.collapse_key);
     }
 
     if (msg->options.priority.length() > 0)
     {
-        s = fb_esp_pgm_str_136;
+        s = fb_esp_pgm_str_136; // "priority"
         json.add(s.c_str(), msg->options.priority);
     }
 
     if (msg->options.content_available.length() > 0)
     {
-        s = fb_esp_pgm_str_283;
+        s = fb_esp_pgm_str_283; // "content_available"
         json.add(s.c_str(), ut->boolVal(msg->options.content_available.c_str()));
     }
 
     if (msg->options.mutable_content.length() > 0)
     {
-        s = fb_esp_pgm_str_284;
+        s = fb_esp_pgm_str_284; // "mutable_content"
         json.add(s.c_str(), ut->boolVal(msg->options.mutable_content.c_str()));
     }
 
     if (msg->options.time_to_live.length() > 0)
     {
-        s = fb_esp_pgm_str_137;
+        s = fb_esp_pgm_str_137; // "time_to_live"
         json.add(s.c_str(), atoi(msg->options.time_to_live.c_str()));
     }
 
     if (msg->options.restricted_package_name.length() > 0)
     {
-        s = fb_esp_pgm_str_147;
+        s = fb_esp_pgm_str_147; // "restricted_package_name"
         json.add(s.c_str(), msg->options.restricted_package_name);
     }
 
     if (msg->options.dry_run.length() > 0)
     {
-        s = fb_esp_pgm_str_281;
+        s = fb_esp_pgm_str_281; // "dry_run"
         json.add(s.c_str(), msg->options.dry_run);
     }
 
     if (msg->options.direct_boot_ok.length() > 0)
     {
-        s = fb_esp_pgm_str_323;
+        s = fb_esp_pgm_str_323; // "direct_boot_ok"
         json.add(s.c_str(), ut->boolVal(msg->options.direct_boot_ok.c_str()));
     }
 
@@ -437,71 +437,71 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
     {
         FirebaseJson js;
         js.setJsonData(msg->payloads.data);
-        s = fb_esp_pgm_str_135;
+        s = fb_esp_pgm_str_135; // "data"
         json.add(s.c_str(), js);
     }
 
     if (msg->payloads.notification.title.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_285;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_285; // "title"
         json.set(s.c_str(), msg->payloads.notification.title);
     }
 
     if (msg->payloads.notification.body.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_123;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_123; // "body"
         json.set(s.c_str(), msg->payloads.notification.body);
     }
 
     if (msg->payloads.notification.sound.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_126;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_126; // "sound"
         json.set(s.c_str(), msg->payloads.notification.sound);
     }
 
     if (msg->payloads.notification.badge.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_286;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_286; // "badge"
         json.set(s.c_str(), msg->payloads.notification.badge);
     }
 
     if (msg->payloads.notification.click_action.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_125;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_125; // "click_action"
         json.set(s.c_str(), msg->payloads.notification.click_action);
     }
 
     if (msg->payloads.notification.subtitle.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_287;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_287; // "subtitle"
         json.set(s.c_str(), msg->payloads.notification.subtitle);
     }
 
     if (msg->payloads.notification.body_loc_key.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_288;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_288; // "body_loc_key"
         json.set(s.c_str(), msg->payloads.notification.body_loc_key);
     }
 
     if (msg->payloads.notification.body_loc_args.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_289;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_289; // "body_loc_args"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->payloads.notification.body_loc_args);
         json.set(s.c_str(), arr);
@@ -509,17 +509,17 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
     if (msg->payloads.notification.title_loc_key.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_290;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_290; // "title_loc_key"
         json.set(s.c_str(), msg->payloads.notification.title_loc_key);
     }
 
     if (msg->payloads.notification.title_loc_args.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_291;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_291; // "title_loc_args"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->payloads.notification.title_loc_args);
         json.set(s.c_str(), arr);
@@ -527,33 +527,33 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
     if (msg->payloads.notification.android_channel_id.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_292;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_292; // "android_channel_id"
         json.set(s.c_str(), msg->payloads.notification.android_channel_id);
     }
 
     if (msg->payloads.notification.icon.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_124;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_124; // "icon"
         json.set(s.c_str(), msg->payloads.notification.icon);
     }
 
     if (msg->payloads.notification.tag.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_293;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_293; // "tag"
         json.set(s.c_str(), msg->payloads.notification.tag);
     }
 
     if (msg->payloads.notification.color.length() > 0)
     {
-        s = fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_294;
+        s = fb_esp_pgm_str_122;  // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_294; // "color"
         json.set(s.c_str(), msg->payloads.notification.color);
     }
     s.clear();
@@ -567,9 +567,9 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
     raw.clear();
     FirebaseJson json;
 
-    base = fb_esp_pgm_str_128;
+    base = fb_esp_pgm_str_128; // "to"
 
-    s += fb_esp_pgm_str_134;
+    s += fb_esp_pgm_str_134; // "/topics/"
     s += topic;
 
     json.add(base.c_str(), s.c_str());
@@ -586,7 +586,7 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
         }
     }
 
-    base = fb_esp_pgm_str_334;
+    base = fb_esp_pgm_str_334; // "registration_tokens"
 
     json.add(base.c_str(), arr);
 
@@ -602,11 +602,11 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
     raw.clear();
     FirebaseJson json;
 
-    base = fb_esp_pgm_str_337;
+    base = fb_esp_pgm_str_337; // "application"
 
     json.add(base.c_str(), application);
 
-    base = fb_esp_pgm_str_338;
+    base = fb_esp_pgm_str_338; // "sandbox"
     json.add(base.c_str(), sandbox);
 
     FirebaseJsonArray arr;
@@ -620,7 +620,7 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
         }
     }
 
-    base = fb_esp_pgm_str_339;
+    base = fb_esp_pgm_str_339; // "apns_tokens"
     json.add(base.c_str(), arr);
 
     base.clear();
@@ -636,26 +636,26 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     FirebaseJson json;
     raw.clear();
 
-    base = fb_esp_pgm_str_295;
-    base += fb_esp_pgm_str_1;
+    base = fb_esp_pgm_str_295; // "message"
+    base += fb_esp_pgm_str_1;  // "/"
     _base = base;
 
     if (msg->token.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_233;
+        s += fb_esp_pgm_str_233; // "token"
         json.set(s.c_str(), msg->token);
     }
     else if (msg->topic.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_296;
+        s += fb_esp_pgm_str_296; // "topic"
         json.set(s.c_str(), msg->topic);
     }
     else if (msg->condition.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_282;
+        s += fb_esp_pgm_str_282; // "condition"
         json.set(s.c_str(), msg->condition);
     }
 
@@ -664,43 +664,43 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         FirebaseJson js;
         js.setJsonData(msg->data);
         s = base;
-        s += fb_esp_pgm_str_135;
+        s += fb_esp_pgm_str_135; // "data"
         json.set(s.c_str(), js);
     }
 
     if (msg->notification.title.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_285;
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_285; // "title"
         json.set(s.c_str(), msg->notification.title);
     }
 
     if (msg->notification.body.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_123;
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_123; // "body"
         json.set(s.c_str(), msg->notification.body);
     }
 
     if (msg->notification.image.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_297;
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_297; // "image"
         json.set(s.c_str(), msg->notification.image);
     }
 
     if (msg->fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_298;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_299;
+        s += fb_esp_pgm_str_298; // "fcm_options"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_299; // "analytics_label"
         json.set(s.c_str(), msg->fcm_options.analytics_label);
     }
 
@@ -709,36 +709,36 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->android.collapse_key.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_138;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_138; // "collapse_key"
         json.set(s.c_str(), msg->android.collapse_key);
     }
 
     if (msg->android.priority.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_136;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_136; // "priority"
         json.set(s.c_str(), msg->android.priority);
     }
 
     if (msg->android.ttl.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_303;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_303; // "ttl"
         json.set(s.c_str(), msg->android.ttl);
     }
 
     if (msg->android.restricted_package_name.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_147;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_147; // "restricted_package_name"
         json.set(s.c_str(), msg->android.restricted_package_name);
     }
 
@@ -747,125 +747,125 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         FirebaseJson js;
         js.setJsonData(msg->android.data);
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_135;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_135; // "data"
         json.set(s.c_str(), js);
     }
 
     if (msg->android.fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_298;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_299;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_298; // "fcm_options"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_299; // "analytics_label"
         json.set(s.c_str(), msg->android.fcm_options.analytics_label);
     }
 
     if (msg->android.direct_boot_ok.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_323;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_323; // "direct_boot_ok"
         json.set(s.c_str(), msg->android.direct_boot_ok);
     }
 
     if (msg->android.notification.title.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_285;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_285; // "title"
         json.set(s.c_str(), msg->android.notification.title);
     }
     if (msg->android.notification.body.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_123;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_123; // "body"
         json.set(s.c_str(), msg->android.notification.body);
     }
 
     if (msg->android.notification.icon.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_124;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_124; // "icon"
         json.set(s.c_str(), msg->android.notification.icon);
     }
 
     if (msg->android.notification.color.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_294;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_294; // "color"
         json.set(s.c_str(), msg->android.notification.color);
     }
 
     if (msg->android.notification.sound.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_126;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_126; // "sound"
         json.set(s.c_str(), msg->android.notification.sound);
     }
     if (msg->android.notification.tag.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_293;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_293; // "tag"
         json.set(s.c_str(), msg->android.notification.tag);
     }
     if (msg->android.notification.click_action.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_125;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_125; // "click_action"
         json.set(s.c_str(), msg->android.notification.click_action);
     }
 
     if (msg->android.notification.body_loc_key.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_288;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_288; // "body_loc_key"
         json.set(s.c_str(), msg->android.notification.body_loc_key);
     }
 
     if (msg->android.notification.body_loc_args.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_289;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_289; // "body_loc_args"
         static FirebaseJsonArray arr;
         arr.clear();
         arr.setJsonArrayData(msg->android.notification.body_loc_args);
@@ -875,22 +875,22 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->android.notification.title_loc_key.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_290;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_290; // "title_loc_key"
         json.set(s.c_str(), msg->android.notification.title_loc_key);
     }
 
     if (msg->android.notification.title_loc_args.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_291;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_291; // "title_loc_args"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->android.notification.title_loc_args);
         json.set(s.c_str(), arr);
@@ -899,101 +899,101 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->android.notification.channel_id.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_304;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_304; // "channel_id"
         json.set(s.c_str(), msg->android.notification.channel_id);
     }
     if (msg->android.notification.ticker.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_305;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_305; // "ticker"
         json.set(s.c_str(), msg->android.notification.ticker);
     }
     if (msg->android.notification.sticky.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_306;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_306; // "sticky"
         json.set(s.c_str(), ut->boolVal(msg->android.notification.sticky.c_str()));
     }
     if (msg->android.notification.event_time.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_307;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_307; // "event_time"
         json.set(s.c_str(), msg->android.notification.event_time);
     }
     if (msg->android.notification.local_only.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_308;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_308; // "local_only"
         json.set(s.c_str(), ut->boolVal(msg->android.notification.local_only.c_str()));
     }
     if (msg->android.notification.notification_priority.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_309;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_309; // "notification_priority"
         json.set(s.c_str(), msg->android.notification.notification_priority);
     }
     if (msg->android.notification.default_sound.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_310;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_310; // "default_sound"
         json.set(s.c_str(), ut->boolVal(msg->android.notification.default_sound.c_str()));
     }
     if (msg->android.notification.default_vibrate_timings.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_311;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_311; // "default_vibrate_timings"
         json.set(s.c_str(), ut->boolVal(msg->android.notification.default_vibrate_timings.c_str()));
     }
     if (msg->android.notification.default_light_settings.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_312;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_312; // "default_light_settings"
         json.set(s.c_str(), ut->boolVal(msg->android.notification.default_light_settings.c_str()));
     }
     if (msg->android.notification.vibrate_timings.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_313;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_313; // "vibrate_timings"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->android.notification.vibrate_timings);
         json.set(s.c_str(), arr);
@@ -1002,86 +1002,86 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->android.notification.visibility.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_314;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_314; // "visibility"
         json.set(s.c_str(), msg->android.notification.visibility);
     }
     if (msg->android.notification.notification_count.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_315;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_315; // "notification_count"
         json.set(s.c_str(), atoi(msg->android.notification.notification_count.c_str()));
     }
 
     if (msg->android.notification.image.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_300;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_297;
+        s += fb_esp_pgm_str_300; // "android"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_297; // "image"
         json.set(s.c_str(), msg->android.notification.image);
     }
 
     s = base;
-    s += fb_esp_pgm_str_300;
-    s += fb_esp_pgm_str_1;
-    s += fb_esp_pgm_str_122;
-    s += fb_esp_pgm_str_1;
-    s += fb_esp_pgm_str_316;
-    s += fb_esp_pgm_str_1;
+    s += fb_esp_pgm_str_300; // "android"
+    s += fb_esp_pgm_str_1;   // "/"
+    s += fb_esp_pgm_str_122; // "notification"
+    s += fb_esp_pgm_str_1;   // "/"
+    s += fb_esp_pgm_str_316; // "light_settings"
+    s += fb_esp_pgm_str_1;   // "/"
     base = s;
 
     if (msg->android.notification.light_settings.color.red.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_294;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_317;
+        s += fb_esp_pgm_str_294; // "color"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_317; // "red"
         json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.red.c_str()));
     }
     if (msg->android.notification.light_settings.color.green.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_294;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_318;
+        s += fb_esp_pgm_str_294; // "color"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_318; // "green"
         json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.green.c_str()));
     }
     if (msg->android.notification.light_settings.color.blue.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_294;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_319;
+        s += fb_esp_pgm_str_294; // "color"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_319; // "blue"
         json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.blue.c_str()));
     }
     if (msg->android.notification.light_settings.color.alpha.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_294;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_320;
+        s += fb_esp_pgm_str_294; // "color"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_320; // "alpha"
         json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.alpha.c_str()));
     }
     if (msg->android.notification.light_settings.light_on_duration.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_321;
+        s += fb_esp_pgm_str_321; // "light_on_duration"
         json.set(s.c_str(), msg->android.notification.light_settings.light_on_duration);
     }
     if (msg->android.notification.light_settings.light_off_duration.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_322;
+        s += fb_esp_pgm_str_322; // "light_off_duration"
         json.set(s.c_str(), msg->android.notification.light_settings.light_off_duration);
     }
 
@@ -1093,9 +1093,9 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->webpush.headers.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_301;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_324;
+        s += fb_esp_pgm_str_301; // "webpush";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_324; // "headers"
         js.setJsonData(msg->webpush.headers);
         json.set(s.c_str(), js);
     }
@@ -1103,9 +1103,9 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->webpush.data.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_301;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_135;
+        s += fb_esp_pgm_str_301; // "webpush";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_135; // "data"
         js.setJsonData(msg->webpush.data);
         json.set(s.c_str(), js);
     }
@@ -1113,9 +1113,9 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->webpush.notification.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_301;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_122;
+        s += fb_esp_pgm_str_301; // "webpush";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_122; // "notification"
         js.setJsonData(msg->webpush.notification);
         json.set(s.c_str(), js);
     }
@@ -1123,22 +1123,22 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->webpush.fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_301;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_298;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_299;
+        s += fb_esp_pgm_str_301; // "webpush";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_298; // "fcm_options"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_299; // "analytics_label"
         json.set(s.c_str(), msg->webpush.fcm_options.analytics_label);
     }
 
     if (msg->webpush.fcm_options.link.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_301;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_298;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_325;
+        s += fb_esp_pgm_str_301; // "webpush";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_298; // "fcm_options"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_325; // "link"
         json.set(s.c_str(), msg->webpush.fcm_options.link);
     }
 
@@ -1147,9 +1147,9 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->apns.headers.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_302;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_324;
+        s += fb_esp_pgm_str_302; // "apns";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_324; // "headers"
         js.setJsonData(msg->apns.headers);
         json.set(s.c_str(), js);
     }
@@ -1157,9 +1157,9 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->apns.payload.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_302;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_135;
+        s += fb_esp_pgm_str_302; // "apns";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_135; // "data"
         js.setJsonData(msg->apns.payload);
         json.set(s.c_str(), js);
     }
@@ -1167,22 +1167,22 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     if (msg->apns.fcm_options.analytics_label.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_302;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_298;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_299;
+        s += fb_esp_pgm_str_302; // "apns";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_298; // "fcm_options"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_299; // "analytics_label"
         json.set(s.c_str(), msg->apns.fcm_options.analytics_label);
     }
 
     if (msg->apns.fcm_options.image.length() > 0)
     {
         s = base;
-        s += fb_esp_pgm_str_302;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_298;
-        s += fb_esp_pgm_str_1;
-        s += fb_esp_pgm_str_297;
+        s += fb_esp_pgm_str_302; // "apns";
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_298; // "fcm_options"
+        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_297; // "image"
         json.set(s.c_str(), msg->apns.fcm_options.image);
     }
 
@@ -1323,7 +1323,7 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     int readLen = fbdo->tcpClient.readLine(header, chunkBufSize);
                     int pos = 0;
 
-                    temp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
+                    temp = ut->getHeader(header, fb_esp_pgm_str_5 /* "HTTP/1.1 " */, fb_esp_pgm_str_6 /* " " */, pos, 0);
                     ut->idle();
                     dataTime = millis();
                     if (temp)
@@ -1491,12 +1491,12 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
                     FirebaseJsonData data;
                     json.setJsonData(t.c_str());
 
-                    json.get(data, pgm2Str(fb_esp_pgm_str_257));
+                    json.get(data, pgm2Str(fb_esp_pgm_str_257 /* "error/code" */));
 
                     if (data.success)
                     {
                         error.code = data.to<int>();
-                        json.get(data, pgm2Str(fb_esp_pgm_str_258));
+                        json.get(data, pgm2Str(fb_esp_pgm_str_258 /* "error/message" */));
                         if (data.success)
                             fbdo->session.error = data.to<const char *>();
                     }

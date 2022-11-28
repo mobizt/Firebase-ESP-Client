@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 7, 2022
+ * Created November 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -468,10 +468,10 @@ public:
    * call [FirebaseData object].pushName() to get the key.
    */
   template <typename T = const char *>
-  bool pushTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
+  bool pushTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
 
   template <typename T = const char *>
-  bool pushTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
+  bool pushTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
 
   /** Set (put) the integer value at the defined node.
    *
@@ -959,10 +959,10 @@ public:
    * use printf("%.0lf\n", firebaseData.to<double>());.
    */
   template <typename T = const char *>
-  bool setTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
+  bool setTimestamp(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
 
   template <typename T = const char *>
-  bool setTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
+  bool setTimestampAsync(FirebaseData *fbdo, T path) { return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)), d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE)); }
 
   /** Update (patch) the child (s) nodes to the defined node.
    *

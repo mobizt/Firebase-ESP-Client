@@ -1,6 +1,6 @@
 
 /**
- * Created November 15, 2022
+ * Created November 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -711,6 +711,7 @@ struct fb_esp_auth_token_info_t
     MB_String jwt;
     MB_String scope;
     unsigned long expires = 0;
+    /* milliseconds count when last expiry time was set */
     unsigned long last_millis = 0;
     fb_esp_auth_token_type token_type = token_type_undefined;
     fb_esp_auth_token_status status = token_status_uninitialized;
@@ -781,9 +782,11 @@ struct fb_esp_token_signer_resources_t
     bool accessTokenCustomSet = false;
     bool customTokenCustomSet = false;
     bool tokenTaskRunning = false;
+    /* last token request milliseconds count */
     unsigned long lastReqMillis = 0;
     unsigned long preRefreshSeconds = DEFAULT_AUTH_TOKEN_PRE_REFRESH_SECONDS;
     unsigned long expiredSeconds = DEFAULT_AUTH_TOKEN_EXPIRED_SECONDS;
+    /* request time out period (interval) */
     unsigned long reqTO = DEFAULT_REQUEST_TIMEOUT;
     MB_String customHeaders;
     MB_String pk;
@@ -852,6 +855,7 @@ struct fb_esp_cfg_int_t
     unsigned long fb_last_time_sync_millis = 0;
     unsigned long fb_last_ntp_sync_timeout_millis = 0;
     bool fb_clock_rdy = false;
+    /* flag set when NTP time server synching has been started */
     bool fb_clock_synched = false;
     float fb_gmt_offset = 0;
     uint8_t fb_float_digits = 5;
@@ -2280,11 +2284,11 @@ static const char fb_esp_pgm_str_494[] PROGMEM = "ifGenerationMatch=";
 static const char fb_esp_pgm_str_495[] PROGMEM = "ifGenerationNotMatch=";
 static const char fb_esp_pgm_str_496[] PROGMEM = "ifMetagenerationMatch=";
 static const char fb_esp_pgm_str_497[] PROGMEM = "ifMetagenerationNotMatch=";
-static const char fb_esp_pgm_str_498[] PROGMEM = "projection=";
+//static const char fb_esp_pgm_str_498[] PROGMEM = "";
 static const char fb_esp_pgm_str_499[] PROGMEM = "contentEncoding=";
 static const char fb_esp_pgm_str_500[] PROGMEM = "kmsKeyName=";
 static const char fb_esp_pgm_str_501[] PROGMEM = "predefinedAcl=";
-static const char fb_esp_pgm_str_502[] PROGMEM = "projection=";
+//static const char fb_esp_pgm_str_502[] PROGMEM = "";
 static const char fb_esp_pgm_str_503[] PROGMEM = "metageneration";
 static const char fb_esp_pgm_str_504[] PROGMEM = "acl";
 static const char fb_esp_pgm_str_505[] PROGMEM = "cacheControl";

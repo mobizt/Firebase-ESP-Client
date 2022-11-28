@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 1, 2022
+ * Created November 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -43,6 +43,11 @@
 #include "rtdb/QueueManager.h"
 
 #include "signer/Signer.h"
+
+/**
+ * Simple Queue implemented in this library is for error retry only.
+ * Other QueueTask management e.g., FreeRTOS Queue is not necessary.
+*/
 
 using namespace mb_string;
 
@@ -737,7 +742,7 @@ public:
   {
     if (session.rtdb.resp_data_type == fb_esp_data_type::d_file && init())
     {
-      int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184), mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
+      int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184 /* "/fb_bin_0.tmp" */), mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
       if (ret < 0)
         session.response.code = ret;
     }

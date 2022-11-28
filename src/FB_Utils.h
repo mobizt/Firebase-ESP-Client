@@ -337,26 +337,26 @@ public:
         char *auth = (char *)newP(url.length() + 5);
 
         int p1 = 0;
-        int x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_441), host, uri);
-        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_442), host, uri);
-        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_443), host, uri);
+        int x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_441 /* "https://%[^/]/%s" */), host, uri);
+        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_442 /* "http://%[^/]/%s" */), host, uri);
+        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_443 /* "%[^/]/%s" */), host, uri);
 
         int p2 = 0;
         if (x > 0)
         {
-            p2 = strpos(host, pgm2Str(fb_esp_pgm_str_173), 0);
+            p2 = strpos(host, pgm2Str(fb_esp_pgm_str_173 /* "?" */), 0);
             if (p2 > -1)
             {
-                x = sscanf(url.c_str() + p1, pgm2Str(fb_esp_pgm_str_444), host, uri);
+                x = sscanf(url.c_str() + p1, pgm2Str(fb_esp_pgm_str_444 /* "%[^?]?%s" */), host, uri);
             }
         }
 
         if (strlen(uri) > 0)
         {
-            p2 = strpos(uri, pgm2Str(fb_esp_pgm_str_445), 0);
+            p2 = strpos(uri, pgm2Str(fb_esp_pgm_str_445 /* "auth=" */), 0);
             if (p2 > -1)
             {
-                x = sscanf(uri + p2 + 5, pgm2Str(fb_esp_pgm_str_446), auth);
+                x = sscanf(uri + p2 + 5, pgm2Str(fb_esp_pgm_str_446 /* "%[^&]" */), auth);
             }
         }
 
@@ -426,7 +426,7 @@ public:
         {
             payloadPos = beginPos;
             pmax = beginPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_10, fb_esp_pgm_str_21, beginPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_10 /* "Connection: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
             if (tmp)
             {
                 response.connection = tmp;
@@ -435,7 +435,7 @@ public:
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_8, fb_esp_pgm_str_21, beginPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_8 /* "Content-Type: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
             if (tmp)
             {
                 response.contentType = tmp;
@@ -445,7 +445,7 @@ public:
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_12, fb_esp_pgm_str_21, beginPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_12 /* "Content-Length: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
             if (tmp)
             {
                 response.contentLen = atoi(tmp);
@@ -455,11 +455,11 @@ public:
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_167, fb_esp_pgm_str_21, beginPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_167 /* "Transfer-Encoding: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
             if (tmp)
             {
                 response.transferEnc = tmp;
-                if (stringCompare(tmp, 0, fb_esp_pgm_str_168))
+                if (stringCompare(tmp, 0, fb_esp_pgm_str_168 /* "chunked" */))
                     response.isChunkedEnc = true;
                 delP(&tmp);
             }
@@ -467,7 +467,7 @@ public:
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_150, fb_esp_pgm_str_21, beginPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_150 /* "ETag: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
             if (tmp)
             {
                 response.etag = tmp;
@@ -477,7 +477,7 @@ public:
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_10, fb_esp_pgm_str_21, beginPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_10 /* "Connection: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
             if (tmp)
             {
                 response.connection = tmp;
@@ -487,7 +487,7 @@ public:
             if (pmax < beginPos)
                 pmax = beginPos;
             beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_12, fb_esp_pgm_str_21, beginPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_12 /* "Content-Length: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
             if (tmp)
             {
 
@@ -500,7 +500,7 @@ public:
                 if (pmax < beginPos)
                     pmax = beginPos;
                 beginPos = payloadPos;
-                tmp = getHeader(buf, fb_esp_pgm_str_95, fb_esp_pgm_str_21, beginPos, 0);
+                tmp = getHeader(buf, fb_esp_pgm_str_95 /* "Location: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
                 if (tmp)
                 {
                     response.location = tmp;
@@ -595,7 +595,7 @@ public:
         if (!response.isEvent && !response.noEvent)
         {
 
-            tmp = getHeader(buf, fb_esp_pgm_str_13, fb_esp_pgm_str_180, payloadPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_13 /* "event: " */, fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0);
             if (tmp)
             {
                 response.isEvent = true;
@@ -604,30 +604,30 @@ public:
 
                 payloadOfs = payloadPos;
 
-                tmp = getHeader(buf, fb_esp_pgm_str_14, fb_esp_pgm_str_180, payloadPos, 0);
+                tmp = getHeader(buf, fb_esp_pgm_str_14 /* "data: " */, fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0);
                 if (tmp)
                 {
-                    payloadOfs += strlen_P(fb_esp_pgm_str_14);
+                    payloadOfs += strlen_P(fb_esp_pgm_str_14 /* "data: " */);
                     payloadPos = payloadOfs;
                     response.hasEventData = true;
 
                     delP(&tmp);
 
-                    tmp = getHeader(buf, fb_esp_pgm_str_17, fb_esp_pgm_str_3, payloadPos, 0);
+                    tmp = getHeader(buf, fb_esp_pgm_str_17 /* "\"path\":\"" */, fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0);
 
                     if (tmp)
                     {
                         payloadOfs = payloadPos;
                         response.eventPath = tmp;
                         delP(&tmp);
-                        tmp = getHeader(buf, fb_esp_pgm_str_18, fb_esp_pgm_str_180, payloadPos, 0);
+                        tmp = getHeader(buf, fb_esp_pgm_str_18 /* "\"data\":" */, fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0);
 
                         if (tmp)
                         {
                             tmp[strlen(tmp) - 1] = 0;
                             response.payloadLen = strlen(tmp);
                             response.eventData = tmp;
-                            payloadOfs += strlen_P(fb_esp_pgm_str_18) + 1;
+                            payloadOfs += strlen_P(fb_esp_pgm_str_18 /* "\"data\":" */) + 1;
                             response.payloadOfs = payloadOfs;
                             delP(&tmp);
                         }
@@ -641,26 +641,26 @@ public:
 
         if (response.dataType == 0)
         {
-            tmp = getHeader(buf, fb_esp_pgm_str_20, fb_esp_pgm_str_3, payloadPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_20 /* "{\"name\":\"" */, fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0);
             if (tmp)
             {
                 response.pushName = tmp;
                 delP(&tmp);
             }
 
-            tmp = getHeader(buf, fb_esp_pgm_str_102, fb_esp_pgm_str_3, payloadPos, 0);
+            tmp = getHeader(buf, fb_esp_pgm_str_102 /* "\"error\" : " */, fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0);
             if (tmp)
             {
                 delP(&tmp);
                 FirebaseJson js;
                 FirebaseJsonData d;
                 js.setJsonData(buf);
-                js.get(d, pgm2Str(fb_esp_pgm_str_176));
+                js.get(d, pgm2Str(fb_esp_pgm_str_176 /* "error" */));
                 if (d.success)
                     response.fbError = d.stringValue.c_str();
             }
 
-            if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_92, true))
+            if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_92 /* "\"blob,base64," */, true))
             {
                 response.dataType = fb_esp_data_type::d_blob;
                 if ((response.isEvent && response.hasEventData) || getOfs)
@@ -674,7 +674,7 @@ public:
                     response.eventData.clear();
                 }
             }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_93, true))
+            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_93 /* "\"file,base64," */, true))
             {
                 response.dataType = fb_esp_data_type::d_file;
                 if ((response.isEvent && response.hasEventData) || getOfs)
@@ -689,30 +689,30 @@ public:
                     response.eventData.clear();
                 }
             }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_3))
+            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_3 /* "\"" */))
             {
                 response.dataType = fb_esp_data_type::d_string;
             }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_163))
+            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_163 /* "{" */))
             {
                 response.dataType = fb_esp_data_type::d_json;
             }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_182))
+            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_182 /* "[" */))
             {
                 response.dataType = fb_esp_data_type::d_array;
             }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_106) || stringCompare(buf, payloadOfs, fb_esp_pgm_str_107))
+            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_106 /* "false" */) || stringCompare(buf, payloadOfs, fb_esp_pgm_str_107 /* "true" */))
             {
                 response.dataType = fb_esp_data_type::d_boolean;
-                response.boolData = stringCompare(buf, payloadOfs, fb_esp_pgm_str_107);
+                response.boolData = stringCompare(buf, payloadOfs, fb_esp_pgm_str_107 /* "trye" */);
             }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_19))
+            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_19 /* "null" */))
             {
                 response.dataType = fb_esp_data_type::d_null;
             }
             else
             {
-                int p1 = strpos(buf, pgm2Str(fb_esp_pgm_str_4), payloadOfs);
+                int p1 = strpos(buf, pgm2Str(fb_esp_pgm_str_4 /* "." */), payloadOfs);
                 setNumDataType(buf, payloadOfs, response, p1 != -1);
             }
         }
@@ -1346,7 +1346,7 @@ public:
 
     bool boolVal(const char *v)
     {
-        return strposP(v, fb_esp_pgm_str_107, 0) > -1;
+        return strposP(v, fb_esp_pgm_str_107 /* "true" */, 0) > -1;
     }
 
     bool waitIdle(int &httpCode)
@@ -1408,7 +1408,7 @@ public:
                 if (p1 != MB_String::npos && p2 != MB_String::npos && p2 > p1 && p3 == MB_String::npos)
                 {
                     header += headers[i];
-                    header += fb_esp_pgm_str_21;
+                    header += fb_esp_pgm_str_21; // "\r\n"
                 }
                 headers[i].clear();
             }

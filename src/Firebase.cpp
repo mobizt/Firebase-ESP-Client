@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.2.0
+ * The Firebase class, Firebase.cpp v1.2.1
  *
- *  Created November 9, 2022
+ *  Created November 28, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -83,7 +83,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
         bool ctoken_set = config->signer.customTokenCustomSet;
         uint32_t exp = config->signer.tokens.expires;
 
-        Signer.authChanged(config, auth);
+        Signer.checkAuthTypeChanged(config, auth);
 
         if (cfg->internal.fb_rtoken_requested || atoken_set)
             config->signer.tokens.token_type = type;
@@ -530,7 +530,7 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
         bool ctoken_set = config->signer.customTokenCustomSet;
         uint32_t exp = config->signer.tokens.expires;
 
-        Signer.authChanged(config, auth);
+        Signer.checkAuthTypeChanged(config, auth);
 
         if (cfg->internal.fb_rtoken_requested || atoken_set)
             config->signer.tokens.token_type = type;
@@ -876,7 +876,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
-    MB_String s = fb_esp_pgm_str_577;
+    MB_String s = fb_esp_pgm_str_577; // "server_key"
 
     json->get(data, s.c_str());
 
@@ -901,7 +901,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
         return false;
     }
 
-    s = fb_esp_pgm_str_576;
+    s = fb_esp_pgm_str_576; // "topic"
 
     json->get(data, s.c_str());
 

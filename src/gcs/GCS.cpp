@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 15, 2022
+ * Created November 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -259,7 +259,7 @@ bool GG_CloudStorage::mGetMetadata(FirebaseData *fbdo, MB_StringPtr bucketID, MB
 
 bool GG_CloudStorage::gcs_connect(FirebaseData *fbdo)
 {
-    MB_String host = fb_esp_pgm_str_120;
+    MB_String host = fb_esp_pgm_str_120; // "googleapis.com"
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), 443, &fbdo->session.response.code);
     fbdo->session.max_payload_length = 0;
@@ -396,118 +396,118 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     }
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
-        header += fb_esp_pgm_str_24;
+        header += fb_esp_pgm_str_24; // "POST"
     else if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota || req->requestType == fb_esp_gcs_request_type_list || req->requestType == fb_esp_gcs_request_type_get_metadata)
-        header += fb_esp_pgm_str_25;
+        header += fb_esp_pgm_str_25; // "GET"
     else if (req->requestType == fb_esp_gcs_request_type_delete)
-        header += fb_esp_pgm_str_27;
+        header += fb_esp_pgm_str_27; // "DELETE"
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
-        header += fb_esp_pgm_str_23;
+        header += fb_esp_pgm_str_23; // "PUT"
 
-    header += fb_esp_pgm_str_6;
+    header += fb_esp_pgm_str_6; // " "
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple || req->requestType == fb_esp_gcs_request_type_upload_multipart || req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
-        header += fb_esp_pgm_str_521;
+        header += fb_esp_pgm_str_521; // "/upload"
 
     if (req->requestType != fb_esp_gcs_request_type_upload_resumable_run)
     {
-        header += fb_esp_pgm_str_520;
+        header += fb_esp_pgm_str_520; // "/storage/v1/b/"
         header += req->bucketID;
-        header += fb_esp_pgm_str_522;
+        header += fb_esp_pgm_str_522; // "/o"
     }
 
     if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota)
     {
-        header += fb_esp_pgm_str_1;
+        header += fb_esp_pgm_str_1; // "/"
         header += ut->url_encode(req->remoteFileName);
-        header += fb_esp_pgm_str_523;
+        header += fb_esp_pgm_str_523; // "?alt=media"
         setGetOptions(req, header, true);
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_simple)
     {
-        header += fb_esp_pgm_str_524;
+        header += fb_esp_pgm_str_524; // "?uploadType=media&name="
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
         setUploadOptions(req, header, true);
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
     {
-        header += fb_esp_pgm_str_525;
+        header += fb_esp_pgm_str_525; // "?uploadType=multipart"
         setUploadOptions(req, header, true);
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
     {
-        header += fb_esp_pgm_str_526;
+        header += fb_esp_pgm_str_526; // "?uploadType=resumable&name="
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
         setUploadOptions(req, header, true);
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
     {
         fb_esp_url_info_t urlInfo;
         ut->getUrlInfo(req->location, urlInfo);
-        header += fb_esp_pgm_str_1;
+        header += fb_esp_pgm_str_1; // "/"
         header += urlInfo.uri;
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
 
-        header += fb_esp_pgm_str_31;
+        header += fb_esp_pgm_str_31; // "Host: "
         header += urlInfo.host;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_delete)
     {
-        header += fb_esp_pgm_str_1;
+        header += fb_esp_pgm_str_1; // "/"
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
         setDeleteOptions(req, header, true);
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_list)
     {
         setListOptions(req, header, false);
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_get_metadata)
     {
-        header += fb_esp_pgm_str_1;
+        header += fb_esp_pgm_str_1; // "/"
         if (req->remoteFileName[0] == '/')
             header += ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
             header += ut->url_encode(req->remoteFileName);
 
-        header += fb_esp_pgm_str_527;
+        header += fb_esp_pgm_str_527; //"?alt=json"
 
         setGetOptions(req, header, true);
-        header += fb_esp_pgm_str_30;
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
     }
 
     if (req->requestType != fb_esp_gcs_request_type_upload_resumable_run)
     {
-        header += fb_esp_pgm_str_31;
-        header += fb_esp_pgm_str_193;
-        header += fb_esp_pgm_str_4;
-        header += fb_esp_pgm_str_120;
+        header += fb_esp_pgm_str_31;  // "Host: "
+        header += fb_esp_pgm_str_193; // "www"
+        header += fb_esp_pgm_str_4;   // "."
+        header += fb_esp_pgm_str_120; // "googleapis.com"
 
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
 
         if (!Signer.getCfg()->signer.test_mode)
         {
-            header += fb_esp_pgm_str_237;
+            header += fb_esp_pgm_str_237; // "Authorization: "
             if (Signer.getTokenType() == token_type_oauth2_access_token)
-                header += fb_esp_pgm_str_209;
+                header += fb_esp_pgm_str_209; // "Bearer "
 
             fbdo->tcpClient.send(header.c_str());
             header.clear();
@@ -520,93 +520,93 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             if (fbdo->session.response.code < 0)
                 return false;
 
-            header += fb_esp_pgm_str_21;
+            header += fb_esp_pgm_str_21; // "\r\n"
         }
     }
 
-    header += fb_esp_pgm_str_32;
-    header += fb_esp_pgm_str_34;
+    header += fb_esp_pgm_str_32; // "User-Agent: ESP\r\n"
+    header += fb_esp_pgm_str_34; // "Connection: close\r\n"
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple)
     {
 
-        header += fb_esp_pgm_str_8;
+        header += fb_esp_pgm_str_8; // "Content-Type: "
         header += req->mime;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
 
-        header += fb_esp_pgm_str_12;
+        header += fb_esp_pgm_str_12; // "Content-Length: "
         header += req->fileSize;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
     {
-        multipart_header += fb_esp_pgm_str_529;
+        multipart_header += fb_esp_pgm_str_529; // "--"
         multipart_header += boundary;
-        multipart_header += fb_esp_pgm_str_21;
-        multipart_header += fb_esp_pgm_str_528;
-        multipart_header += fb_esp_pgm_str_21;
+        multipart_header += fb_esp_pgm_str_21;  // "\r\n"
+        multipart_header += fb_esp_pgm_str_528; // "Content-Type: application/json; charset=UTF-8\r\n"
+        multipart_header += fb_esp_pgm_str_21;  // "\r\n"
 
         fbdo->session.jsonPtr->clear();
 
         if (req->remoteFileName[0] == '/')
-            fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_274), ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1)).c_str());
+            fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_274 /* "name" */), ut->url_encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1)).c_str());
         else
-            fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_274), ut->url_encode(req->remoteFileName).c_str());
+            fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_274 /* "name" */), ut->url_encode(req->remoteFileName).c_str());
 
-        fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_277), req->mime.c_str());
+        fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_277 /* "contentType" */), req->mime.c_str());
 
         bool hasProps = false;
         setRequestproperties(req, fbdo->session.jsonPtr, hasProps);
 
         multipart_header += fbdo->session.jsonPtr->raw();
-        multipart_header += fb_esp_pgm_str_21;
-        multipart_header += fb_esp_pgm_str_21;
+        multipart_header += fb_esp_pgm_str_21; // "\r\n"
+        multipart_header += fb_esp_pgm_str_21; // "\r\n"
 
-        multipart_header += fb_esp_pgm_str_529;
+        multipart_header += fb_esp_pgm_str_529; // "--"
         multipart_header += boundary;
-        multipart_header += fb_esp_pgm_str_21;
-        multipart_header += fb_esp_pgm_str_21;
+        multipart_header += fb_esp_pgm_str_21; // "\r\n"
+        multipart_header += fb_esp_pgm_str_21; // "\r\n"
 
-        multipart_header2 += fb_esp_pgm_str_21;
-        multipart_header2 += fb_esp_pgm_str_529;
+        multipart_header2 += fb_esp_pgm_str_21;  // "\r\n"
+        multipart_header2 += fb_esp_pgm_str_529; // "--"
         multipart_header2 += boundary;
-        multipart_header2 += fb_esp_pgm_str_529;
+        multipart_header2 += fb_esp_pgm_str_529; // "--"
 
-        header += fb_esp_pgm_str_8;
-        header += fb_esp_pgm_str_533;
+        header += fb_esp_pgm_str_8;   // "Content-Type: "
+        header += fb_esp_pgm_str_533; // "multipart/related; boundary="
         header += boundary;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
 
-        header += fb_esp_pgm_str_12;
+        header += fb_esp_pgm_str_12; // "Content-Length: "
         header += req->fileSize + multipart_header.length() + multipart_header2.length();
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
     {
-        header += fb_esp_pgm_str_530;
+        header += fb_esp_pgm_str_530; //"X-Upload-Content-Type: "
         header += req->mime;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
 
-        header += fb_esp_pgm_str_531;
+        header += fb_esp_pgm_str_531; // "X-Upload-Content-Length: "
         header += req->fileSize;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
 
-        header += fb_esp_pgm_str_528;
+        header += fb_esp_pgm_str_528; // "Content-Type: application/json; charset=UTF-8\r\n"
 
         fbdo->session.jsonPtr->clear();
 
         bool hasProps = false;
         setRequestproperties(req, fbdo->session.jsonPtr, hasProps);
 
-        header += fb_esp_pgm_str_12;
+        header += fb_esp_pgm_str_12; // "Content-Length: "
 
         header += strlen(fbdo->session.jsonPtr->raw());
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_run)
     {
 
-        header += fb_esp_pgm_str_12;
+        header += fb_esp_pgm_str_12; // "Content-Length: "
 
         req->chunkPos = req->chunkRange + 1;
         if (req->chunkRange == -1 && req->fileSize <= gcs_chunkSize)
@@ -623,24 +623,24 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         }
 
         header += req->chunkLen;
-        header += fb_esp_pgm_str_21;
+        header += fb_esp_pgm_str_21; // "\r\n"
 
         if (req->chunkRange != -1 || req->location.length() > 0)
         {
-            header += fb_esp_pgm_str_532;
+            header += fb_esp_pgm_str_532; // "Content-Range: bytes "
             header += req->chunkPos;
-            header += fb_esp_pgm_str_397;
+            header += fb_esp_pgm_str_397; // "-"
 
             header += req->chunkPos + req->chunkLen - 1;
 
-            header += fb_esp_pgm_str_1;
+            header += fb_esp_pgm_str_1; // "/"
             header += req->fileSize;
 
-            header += fb_esp_pgm_str_21;
+            header += fb_esp_pgm_str_21; // "\r\n"
         }
     }
 
-    header += fb_esp_pgm_str_21;
+    header += fb_esp_pgm_str_21; // "\r\n"
 
     if (req->requestType == fb_esp_gcs_request_type_download || req->requestType == fb_esp_gcs_request_type_download_ota)
     {
@@ -890,15 +890,15 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &hea
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_493;
+            header += fb_esp_pgm_str_493; // "generation="
 
             header += atoi(req->getOptions->generation.c_str());
         }
@@ -907,15 +907,15 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &hea
             if (hasParams)
             {
 
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_494;
+            header += fb_esp_pgm_str_494; // "ifGenerationMatch="
 
             header += atoi(req->getOptions->ifGenerationMatch.c_str());
         }
@@ -924,15 +924,15 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &hea
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_495;
+            header += fb_esp_pgm_str_495; // "ifGenerationNotMatch="
 
             header += atoi(req->getOptions->ifGenerationNotMatch.c_str());
         }
@@ -941,15 +941,15 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &hea
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_496;
+            header += fb_esp_pgm_str_496; // "ifMetagenerationMatch="
 
             header += atoi(req->getOptions->ifMetagenerationMatch.c_str());
         }
@@ -958,15 +958,15 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &hea
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_497;
+            header += fb_esp_pgm_str_497; // "ifMetagenerationNotMatch="
 
             header += atoi(req->getOptions->ifMetagenerationNotMatch.c_str());
         }
@@ -975,15 +975,15 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &hea
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_498;
+            header += fb_esp_pgm_str_489; // "projection="
             header += req->getOptions->projection;
         }
     }
@@ -997,15 +997,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_499;
+            header += fb_esp_pgm_str_499; // "contentEncoding="
             header += req->uploadOptions->contentEncoding;
         }
 
@@ -1013,15 +1013,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_494;
+            header += fb_esp_pgm_str_494; // "ifGenerationMatch="
 
             header += atoi(req->uploadOptions->ifGenerationMatch.c_str());
         }
@@ -1030,15 +1030,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_495;
+            header += fb_esp_pgm_str_495; // "ifGenerationNotMatch="
 
             header += atoi(req->uploadOptions->ifGenerationNotMatch.c_str());
         }
@@ -1047,15 +1047,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_496;
+            header += fb_esp_pgm_str_496; // "ifMetagenerationMatch="
 
             header += atoi(req->uploadOptions->ifMetagenerationMatch.c_str());
         }
@@ -1064,15 +1064,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_497;
+            header += fb_esp_pgm_str_497; // "ifMetagenerationNotMatch="
 
             header += atoi(req->uploadOptions->ifMetagenerationNotMatch.c_str());
         }
@@ -1081,15 +1081,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_500;
+            header += fb_esp_pgm_str_500; // "kmsKeyName="
             header += req->uploadOptions->kmsKeyName;
         }
 
@@ -1097,15 +1097,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_501;
+            header += fb_esp_pgm_str_501; // predefinedAcl="
             header += req->uploadOptions->predefinedAcl;
         }
 
@@ -1113,15 +1113,15 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_498;
+            header += fb_esp_pgm_str_489; // "projection="
 
             header += req->uploadOptions->projection;
         }
@@ -1143,8 +1143,8 @@ void GG_CloudStorage::setRequestproperties(struct fb_esp_gcs_req_t *req, Firebas
         }
     }
 
-    js.add(pgm2Str(fb_esp_pgm_str_518), pgm2Str(fb_esp_pgm_str_519));
-    json->add(pgm2Str(fb_esp_pgm_str_514), js);
+    js.add(pgm2Str(fb_esp_pgm_str_518 /* "firebaseStorageDownloadTokens" */), pgm2Str(fb_esp_pgm_str_519 /* "a82781ce-a115-442f-bac6-a52f7f63b3e8" */));
+    json->add(pgm2Str(fb_esp_pgm_str_514 /* "metadata" */), js);
 
     if (req->requestProps)
     {
@@ -1153,78 +1153,78 @@ void GG_CloudStorage::setRequestproperties(struct fb_esp_gcs_req_t *req, Firebas
             static FirebaseJsonArray arr;
             arr.clear();
             arr.setJsonArrayData(req->requestProps->acl);
-            json->add(pgm2Str(fb_esp_pgm_str_504), arr);
+            json->add(pgm2Str(fb_esp_pgm_str_504 /* "acl" */), arr);
             hasProps = true;
         }
         if (req->requestProps->cacheControl.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_505), req->requestProps->cacheControl);
+            json->add(pgm2Str(fb_esp_pgm_str_505 /* "cacheControl" */), req->requestProps->cacheControl);
             hasProps = true;
         }
         if (req->requestProps->contentDisposition.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_506), req->requestProps->contentDisposition);
+            json->add(pgm2Str(fb_esp_pgm_str_506 /* "contentDisposition" */), req->requestProps->contentDisposition);
             hasProps = true;
         }
         if (req->requestProps->contentEncoding.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_507), req->requestProps->contentEncoding);
+            json->add(pgm2Str(fb_esp_pgm_str_507 /* "contentEncoding" */), req->requestProps->contentEncoding);
             hasProps = true;
         }
         if (req->requestProps->contentLanguage.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_508), req->requestProps->contentLanguage);
+            json->add(pgm2Str(fb_esp_pgm_str_508 /* "contentLanguage" */), req->requestProps->contentLanguage);
             hasProps = true;
         }
         if (req->requestProps->contentType.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_509), req->requestProps->contentType);
+            json->add(pgm2Str(fb_esp_pgm_str_509 /* "contentType" */), req->requestProps->contentType);
             hasProps = true;
         }
         if (req->requestProps->crc32c.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_510), req->requestProps->crc32c);
+            json->add(pgm2Str(fb_esp_pgm_str_510 /* "crc32c" */), req->requestProps->crc32c);
             hasProps = true;
         }
         if (req->requestProps->customTime.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_511), req->requestProps->customTime);
+            json->add(pgm2Str(fb_esp_pgm_str_511 /* "customTime" */), req->requestProps->customTime);
             hasProps = true;
         }
 
         if (req->requestProps->eventBasedHold.length() > 0)
         {
             if (strcmp(req->requestProps->eventBasedHold.c_str(), pgm2Str(fb_esp_pgm_str_107)))
-                json->add(pgm2Str(fb_esp_pgm_str_512), true);
+                json->add(pgm2Str(fb_esp_pgm_str_512 /* "eventBasedHold" */), true);
             else
-                json->add(pgm2Str(fb_esp_pgm_str_512), false);
+                json->add(pgm2Str(fb_esp_pgm_str_512 /* "eventBasedHold" */), false);
 
             hasProps = true;
         }
 
         if (req->requestProps->md5Hash.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_513), req->requestProps->md5Hash);
+            json->add(pgm2Str(fb_esp_pgm_str_513 /* "md5Hash" */), req->requestProps->md5Hash);
             hasProps = true;
         }
 
         if (req->requestProps->name.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_515), req->requestProps->name);
+            json->add(pgm2Str(fb_esp_pgm_str_515 /* "name" */), req->requestProps->name);
             hasProps = true;
         }
         if (req->requestProps->storageClass.length() > 0)
         {
-            json->add(pgm2Str(fb_esp_pgm_str_516), req->requestProps->storageClass);
+            json->add(pgm2Str(fb_esp_pgm_str_516 /* "storageClass" */), req->requestProps->storageClass);
             hasProps = true;
         }
 
         if (req->requestProps->temporaryHold.length() > 0)
         {
-            if (strcmp(req->requestProps->temporaryHold.c_str(), pgm2Str(fb_esp_pgm_str_107)))
-                json->add(pgm2Str(fb_esp_pgm_str_517), true);
+            if (strcmp(req->requestProps->temporaryHold.c_str(), pgm2Str(fb_esp_pgm_str_107 /* "true" */)))
+                json->add(pgm2Str(fb_esp_pgm_str_517 /* "temporaryHold" */), true);
             else
-                json->add(pgm2Str(fb_esp_pgm_str_517), false);
+                json->add(pgm2Str(fb_esp_pgm_str_517 /* "temporaryHold" */), false);
             hasProps = true;
         }
     }
@@ -1238,15 +1238,15 @@ void GG_CloudStorage::setDeleteOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_494;
+            header += fb_esp_pgm_str_494; // "ifGenerationMatch="
 
             header += atoi(req->deleteOptions->ifGenerationMatch.c_str());
         }
@@ -1255,15 +1255,15 @@ void GG_CloudStorage::setDeleteOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_495;
+            header += fb_esp_pgm_str_495; // "ifGenerationNotMatch="
 
             header += atoi(req->deleteOptions->ifGenerationNotMatch.c_str());
         }
@@ -1272,15 +1272,15 @@ void GG_CloudStorage::setDeleteOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_496;
+            header += fb_esp_pgm_str_496; // "ifMetagenerationMatch="
 
             header += atoi(req->deleteOptions->ifMetagenerationMatch.c_str());
         }
@@ -1289,15 +1289,15 @@ void GG_CloudStorage::setDeleteOptions(struct fb_esp_gcs_req_t *req, MB_String &
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_497;
+            header += fb_esp_pgm_str_497; // "ifMetagenerationNotMatch="
 
             header += atoi(req->deleteOptions->ifMetagenerationNotMatch.c_str());
         }
@@ -1313,15 +1313,15 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_485;
+            header += fb_esp_pgm_str_485; // "delimiter="
             header += req->listOptions->delimiter;
         }
 
@@ -1329,15 +1329,15 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_486;
+            header += fb_esp_pgm_str_486; // "endOffset="
             header += req->listOptions->endOffset;
         }
 
@@ -1345,35 +1345,35 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_487;
+            header += fb_esp_pgm_str_487; // "includeTrailingDelimiter="
 
-            if (strcmp(req->listOptions->includeTrailingDelimiter.c_str(), pgm2Str(fb_esp_pgm_str_107)))
-                header += fb_esp_pgm_str_107;
+            if (strcmp(req->listOptions->includeTrailingDelimiter.c_str(), pgm2Str(fb_esp_pgm_str_107 /* "true" */)))
+                header += fb_esp_pgm_str_107; // "true"
             else
-                header += fb_esp_pgm_str_106;
+                header += fb_esp_pgm_str_106; // "false"
         }
 
         if (req->listOptions->maxResults.length() > 0)
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_484;
+            header += fb_esp_pgm_str_484; // "maxResults="
 
             header += atoi(req->listOptions->maxResults.c_str());
         }
@@ -1382,16 +1382,16 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_358;
-            header += fb_esp_pgm_str_361;
+            header += fb_esp_pgm_str_358; // "pageToken"
+            header += fb_esp_pgm_str_361; // "="
             header += req->listOptions->pageToken;
         }
 
@@ -1399,15 +1399,15 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_488;
+            header += fb_esp_pgm_str_488; // "prefix="
             header += req->listOptions->prefix;
         }
 
@@ -1415,15 +1415,15 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_489;
+            header += fb_esp_pgm_str_489; // "projection="
             header += req->listOptions->projection;
         }
 
@@ -1431,15 +1431,15 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_490;
+            header += fb_esp_pgm_str_490; // "startOffset="
             header += req->listOptions->startOffset;
         }
 
@@ -1447,20 +1447,20 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
         {
             if (hasParams)
             {
-                header += fb_esp_pgm_str_172;
+                header += fb_esp_pgm_str_172; // "&"
             }
             else
             {
                 hasParams = true;
-                header += fb_esp_pgm_str_173;
+                header += fb_esp_pgm_str_173; // "?"
             }
 
-            header += fb_esp_pgm_str_491;
+            header += fb_esp_pgm_str_491; // "versions="
 
-            if (strcmp(req->listOptions->versions.c_str(), pgm2Str(fb_esp_pgm_str_107)))
-                header += fb_esp_pgm_str_107;
+            if (strcmp(req->listOptions->versions.c_str(), pgm2Str(fb_esp_pgm_str_107 /* "true" */)))
+                header += fb_esp_pgm_str_107; // "true"
             else
-                header += fb_esp_pgm_str_106;
+                header += fb_esp_pgm_str_106; // "false"
         }
     }
 }
@@ -1639,11 +1639,11 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
     if (req->requestType == fb_esp_gcs_request_type_list)
     {
-        tmp1 = fb_esp_pgm_str_476;
-        tmp2 = fb_esp_pgm_str_477;
-        tmp3 = fb_esp_pgm_str_482;
-        tmp4 = fb_esp_pgm_str_483;
-        tmp5 = fb_esp_pgm_str_3;
+        tmp1 = fb_esp_pgm_str_476; // "\"name\": \""
+        tmp2 = fb_esp_pgm_str_477; // "\"bucket\": \""
+        tmp3 = fb_esp_pgm_str_482; //  "\"contentType\": \""
+        tmp4 = fb_esp_pgm_str_483; // "\"size\": \""
+        tmp5 = fb_esp_pgm_str_3;   // "\""
     }
 
     MB_String payload;
@@ -1714,7 +1714,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                     int readLen = fbdo->tcpClient.readLine(header, chunkBufSize);
                     int pos = 0;
 
-                    temp = ut->getHeader(header, fb_esp_pgm_str_5, fb_esp_pgm_str_6, pos, 0);
+                    temp = ut->getHeader(header, fb_esp_pgm_str_5/* "HTTP/1.1 " */, fb_esp_pgm_str_6/* " " */, pos, 0);
                     ut->idle();
                     dataTime = millis();
                     if (temp)
@@ -1774,7 +1774,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
                                 if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT) // resume incomplete
                                 {
-                                    int p1 = ut->strposP(header, fb_esp_pgm_str_481, 0);
+                                    int p1 = ut->strposP(header, fb_esp_pgm_str_481/* "Range: bytes=0-" */, 0);
                                     if (p1 > -1)
                                     {
                                         if (_resumableUploadTasks.size() > 0)
@@ -1789,7 +1789,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                             ruTask.req.requestType = fb_esp_gcs_request_type_upload_resumable_run;
 
                                             char *tmp6 = (char *)ut->newP(strlen(header));
-                                            strncpy(tmp6, header + p1 + strlen_P(fb_esp_pgm_str_481), strlen(header) - p1 - strlen_P(fb_esp_pgm_str_481));
+                                            strncpy(tmp6, header + p1 + strlen_P(fb_esp_pgm_str_481/* "Range: bytes=0-" */), strlen(header) - p1 - strlen_P(fb_esp_pgm_str_481/* "Range: bytes=0-" */));
                                             ruTask.req.chunkRange = atoi(tmp6);
                                             ut->delP(&tmp6);
 
@@ -1804,7 +1804,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                             if (_resumableUploadTasks.size() == 1)
                                             {
 #if defined(ESP32)
-                                                runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480));
+                                                runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480/* "resumableUploadTask" */));
 #elif defined(ESP8266)
                                                 runResumableUploadTask();
 #endif
@@ -1835,7 +1835,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                                     if (_resumableUploadTasks.size() == 1)
                                     {
 #if defined(ESP32)
-                                        runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480));
+                                        runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480/* "resumableUploadTask" */));
 #elif defined(ESP8266)
                                         runResumableUploadTask();
 #endif
@@ -1946,7 +1946,6 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 #endif
                                                     if (ut->mbfs->write(mbfs_type req->storageType, buf, read) != (int)read)
                                                         error.code = MB_FS_ERROR_FILE_IO_ERROR;
-
 
 #if defined(ESP32_GT_2_0_1_FS_MEMORY_FIX)
                                                     // We close file here after append
@@ -2105,11 +2104,11 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                 fbdo->session.jsonPtr->setJsonData(payload.c_str());
                 payload.clear();
 
-                fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_257));
+                fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_257/* "error/code" */));
                 if (fbdo->session.dataPtr->success)
                 {
                     error.code = fbdo->session.dataPtr->to<int>();
-                    fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_258));
+                    fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_258/* "error/message" */));
                     if (fbdo->session.dataPtr->success)
                         fbdo->session.error = fbdo->session.dataPtr->to<const char *>();
                 }
@@ -2117,34 +2116,34 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                 {
                     error.code = 0;
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_274))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_274/* "name" */))
                         fbdo->session.gcs.meta.name = fbdo->session.dataPtr->to<const char *>();
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_275))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_275/* "bucket" */))
                         fbdo->session.gcs.meta.bucket = fbdo->session.dataPtr->to<const char *>();
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_276))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_276/* "generation" */))
                         fbdo->session.gcs.meta.generation = atoi(fbdo->session.dataPtr->to<const char *>());
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_503))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_503/* "metageneration" */))
                         fbdo->session.gcs.meta.metageneration = atoi(fbdo->session.dataPtr->to<const char *>());
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_277))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_277/* "contentType" */))
                         fbdo->session.gcs.meta.contentType = fbdo->session.dataPtr->to<const char *>();
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_278))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_278/* "size" */))
                         fbdo->session.gcs.meta.size = atoi(fbdo->session.dataPtr->to<const char *>());
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_279))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_279/* "etag" */))
                         fbdo->session.gcs.meta.etag = fbdo->session.dataPtr->to<const char *>();
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_478))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_478/* "crc32c" */))
                         fbdo->session.gcs.meta.crc32 = fbdo->session.dataPtr->to<const char *>();
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_479))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_479/* "metadata/firebaseStorageDownloadTokens" */))
                         fbdo->session.gcs.meta.downloadTokens = fbdo->session.dataPtr->to<const char *>();
 
-                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_492))
+                    if (parseJsonResponse(fbdo, fb_esp_pgm_str_492/* "mediaLink" */))
                         fbdo->session.gcs.meta.mediaLink = fbdo->session.dataPtr->to<const char *>();
                 }
 

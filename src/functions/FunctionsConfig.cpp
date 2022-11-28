@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created November 28, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -98,14 +98,14 @@ void FunctionsConfig::mSetName(MB_StringPtr name)
         ut = Signer.ut;
     if (ut)
     {
-        MB_String t = fb_esp_pgm_str_395;
+        MB_String t = fb_esp_pgm_str_395; // "projects/"
         t += _projectId;
-        t += fb_esp_pgm_str_364;
+        t += fb_esp_pgm_str_364; // "/locations/"
         t += _locationId;
-        t += fb_esp_pgm_str_365;
-        t += fb_esp_pgm_str_1;
+        t += fb_esp_pgm_str_365; // "/functions"
+        t += fb_esp_pgm_str_1;   // "/"
         t += name;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_274), t.c_str());
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_274 /* "name" */), t.c_str());
         _name = name;
     }
 }
@@ -117,8 +117,8 @@ void FunctionsConfig::mSetDescription(MB_StringPtr description)
     if (ut)
     {
         MB_String _description = description;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_367), _description);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_367));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_367 /* "description" */), _description);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_367 /* "description" */));
     }
 }
 
@@ -129,8 +129,8 @@ void FunctionsConfig::mSetEntryPoint(MB_StringPtr entry)
     if (ut)
     {
         MB_String _entry = entry;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_368), _entry);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_368));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_368 /* "entryPoint" */), _entry);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_368 /* "entryPoint" */));
     }
     _entryPoint = entry;
 }
@@ -142,8 +142,8 @@ void FunctionsConfig::mSetRuntime(MB_StringPtr runtime)
     if (ut)
     {
         MB_String _runtime = runtime;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_369), _runtime);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_369));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_369 /* "runtime" */), _runtime);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_369 /* "runtime" */));
     }
 }
 
@@ -154,9 +154,9 @@ void FunctionsConfig::mSetTimeout(MB_StringPtr seconds)
     if (ut)
     {
         MB_String s = seconds;
-        s += fb_esp_pgm_str_417;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_370), s.c_str());
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_370));
+        s += fb_esp_pgm_str_417; // "s"
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_370 /* "timeout" */), s.c_str());
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_370 /* "timeout" */));
     }
 }
 
@@ -184,8 +184,8 @@ void FunctionsConfig::mSetAvailableMemoryMb(MB_StringPtr mb)
         else
             _mb = 128;
 
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_371), _mb);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_371));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_371 /* "availableMemoryMb" */), _mb);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_371 /* "availableMemoryMb" */));
     }
 }
 
@@ -197,8 +197,8 @@ void FunctionsConfig::mSetMaxInstances(MB_StringPtr maxInstances)
     {
         MB_String _maxInstances = maxInstances;
         int m = atoi(_maxInstances.c_str());
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_377), m);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_377));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_377 /* "maxInstances"*/), m);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_377 /* "maxInstances" */));
     }
 }
 
@@ -214,14 +214,14 @@ void FunctionsConfig::mSetSource(MB_StringPtr path, fb_esp_functions_sources_typ
         {
         case functions_sources_type_storage_bucket_archive:
 
-            t += fb_esp_pgm_str_350;
+            t += fb_esp_pgm_str_350; // "gs://"
             t += _bucketId;
             if (_path[0] != '/')
-                t += fb_esp_pgm_str_1;
+                t += fb_esp_pgm_str_1; // "/"
             t += path;
 
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_381), t.c_str());
-            addUpdateMasks(pgm2Str(fb_esp_pgm_str_381));
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_381 /* "sourceArchiveUrl" */), t.c_str());
+            addUpdateMasks(pgm2Str(fb_esp_pgm_str_381 /* "sourceArchiveUrl" */));
 
             _sourceType = sourceType;
             break;
@@ -239,8 +239,8 @@ void FunctionsConfig::mSetSource(MB_StringPtr path, fb_esp_functions_sources_typ
             break;
 
         case functions_sources_type_repository:
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_382), _path);
-            addUpdateMasks(pgm2Str(fb_esp_pgm_str_382));
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_382 /* "sourceRepository" */), _path);
+            addUpdateMasks(pgm2Str(fb_esp_pgm_str_382 /* "sourceRepository" */));
             _sourceType = sourceType;
             break;
 
@@ -263,8 +263,8 @@ void FunctionsConfig::mSetIngressSettings(MB_StringPtr settings)
     if (ut)
     {
         MB_String _settings = settings;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_380), _settings);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_380));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_380 /* "ingressSettings" */), _settings);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_380 /* "ingressSettings" */));
     }
 }
 
@@ -275,9 +275,9 @@ void FunctionsConfig::mAddLabel(MB_StringPtr key, MB_StringPtr value)
     if (ut)
     {
         MB_String _value = value;
-        MB_String t = fb_esp_pgm_str_373;
+        MB_String t = fb_esp_pgm_str_373; // "labels"
         addUpdateMasks(t.c_str());
-        t += fb_esp_pgm_str_1;
+        t += fb_esp_pgm_str_1; // "/"
         t += key;
         _funcCfg.set(t.c_str(), _value);
     }
@@ -288,8 +288,8 @@ void FunctionsConfig::clearLabels()
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_373));
-        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_373));
+        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_373 /* "labels" */));
+        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_373 /* labels */));
     }
 }
 void FunctionsConfig::mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
@@ -299,9 +299,9 @@ void FunctionsConfig::mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr val
     if (ut)
     {
         MB_String _value = value;
-        MB_String t = fb_esp_pgm_str_374;
+        MB_String t = fb_esp_pgm_str_374; // "environmentVariables"
         addUpdateMasks(t.c_str());
-        t += fb_esp_pgm_str_1;
+        t += fb_esp_pgm_str_1; // "/"
         t += key;
         _funcCfg.set(t.c_str(), _value);
     }
@@ -312,8 +312,8 @@ void FunctionsConfig::clearEnvironmentVariables()
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_374));
-        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_374));
+        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_374 /* "environmentVariables" */));
+        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_374 /* "environmentVariables" */));
     }
 }
 void FunctionsConfig::mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
@@ -323,9 +323,9 @@ void FunctionsConfig::mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPt
     if (ut)
     {
         MB_String _value = value;
-        MB_String t = fb_esp_pgm_str_375;
+        MB_String t = fb_esp_pgm_str_375; // "buildEnvironmentVariables"
         addUpdateMasks(t.c_str());
-        t += fb_esp_pgm_str_1;
+        t += fb_esp_pgm_str_1; // "/"
         t += key;
         _funcCfg.set(t.c_str(), _value);
     }
@@ -337,8 +337,8 @@ void FunctionsConfig::clearBuildEnvironmentVariables()
         ut = Signer.ut;
     if (ut)
     {
-        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_375));
-        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_375));
+        _funcCfg.remove(pgm2Str(fb_esp_pgm_str_375 /* "buildEnvironmentVariables" */));
+        removeUpdateMasks(pgm2Str(fb_esp_pgm_str_375 /* "buildEnvironmentVariables" */));
     }
 }
 void FunctionsConfig::mSetNetwork(MB_StringPtr network)
@@ -348,8 +348,8 @@ void FunctionsConfig::mSetNetwork(MB_StringPtr network)
     if (ut)
     {
         MB_String _network = network;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_376), _network);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_376));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_376 /* "network" */), _network);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_376 /* "network" */));
     }
 }
 void FunctionsConfig::mSetVpcConnector(MB_StringPtr vpcConnector)
@@ -359,8 +359,8 @@ void FunctionsConfig::mSetVpcConnector(MB_StringPtr vpcConnector)
     if (ut)
     {
         MB_String _vpcConnector = vpcConnector;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_378), _vpcConnector);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_378));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_378 /* "vpcConnector" */), _vpcConnector);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_378 /* "vpcConnector" */));
     }
 }
 void FunctionsConfig::mSetVpcConnectorEgressSettings(MB_StringPtr e)
@@ -370,8 +370,8 @@ void FunctionsConfig::mSetVpcConnectorEgressSettings(MB_StringPtr e)
     if (ut)
     {
         MB_String _e = e;
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_379), _e);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_379));
+        _funcCfg.set(pgm2Str(fb_esp_pgm_str_379 /* "vpcConnectorEgressSettings" */), _e);
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_379 /* "vpcConnectorEgressSettings" */));
     }
 }
 
@@ -385,24 +385,24 @@ void FunctionsConfig::mSetEventTrigger(MB_StringPtr eventType, MB_StringPtr reso
         _triggerType = fb_esp_functions_trigger_type_event;
 
         if (_eventType.length() > 0)
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_385), _eventType);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_385 /* "eventTrigger/eventType" */), _eventType);
 
         if (_resource.length() > 0)
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_391), _resource);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_391 /* "eventTrigger/resource" */), _resource);
 
         if (_service.length() > 0)
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_392), _service);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_392 /* "eventTrigger/service" */), _service);
 
         if (_failurePolicy.length() > 0)
         {
 
-            MB_String t = fb_esp_pgm_str_394;
+            MB_String t = fb_esp_pgm_str_394; // "{\"retry\":{}}"
             static FirebaseJson js;
             js.clear();
             js.setJsonData(t.c_str());
-            _funcCfg.set(pgm2Str(fb_esp_pgm_str_393), js);
+            _funcCfg.set(pgm2Str(fb_esp_pgm_str_393 /* "eventTrigger/failurePolicy" */), js);
         }
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_472));
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_472 /* "eventTrigger" */));
     }
 }
 
@@ -413,7 +413,7 @@ void FunctionsConfig::setIamPolicy(PolicyBuilder *policy)
     if (ut)
     {
         _policy = policy;
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_473));
+        addUpdateMasks(pgm2Str(fb_esp_pgm_str_473 /* "policy" */));
     }
 }
 
