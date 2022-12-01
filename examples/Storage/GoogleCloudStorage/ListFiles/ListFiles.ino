@@ -27,7 +27,7 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
+/* 2. Define the Firebase storage bucket ID e.g bucket-name.appspot.com or Google Cloud Storage bucket name*/
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
 
 /* 3 The following Service Account credentials required for OAuth2.0 authen in Google Cloud Storage JSON API list files */
@@ -102,7 +102,7 @@ void loop()
             Serial.println("ok");
             FileList *files = fbdo.fileList();
             for (size_t i = 0; i < files->items.size(); i++)
-                Serial.printf("name: %s, bucket: %s, contentType: %s, size: %d\n", files->items[i].name.c_str(), files->items[i].bucket.c_str(), files->items[i].contentType.c_str(), files->items[i].size);
+                Serial.printf("name: %s, bucket: %s, timestamp: %d, contentType: %s, size: %d\n", files->items[i].name.c_str(), files->items[i].bucket.c_str(), files->items[i].timestamp, files->items[i].contentType.c_str(), files->items[i].size);
         }
         else
             Serial.println(fbdo.errorReason());

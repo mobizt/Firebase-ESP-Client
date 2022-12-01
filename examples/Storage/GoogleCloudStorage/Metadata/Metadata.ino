@@ -27,7 +27,7 @@
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase storage bucket ID e.g bucket-name.appspot.com */
+/* 2. Define the Firebase storage bucket ID e.g bucket-name.appspot.com or Google Cloud Storage bucket name */
 #define STORAGE_BUCKET_ID "BUCKET-NAME.appspot.com"
 
 /* 3 The following Service Account credentials required for OAuth2.0 authen in Google Cloud Storage JSON API upload */

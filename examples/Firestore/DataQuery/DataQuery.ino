@@ -99,7 +99,7 @@ void loop()
 
         Serial.print("Query a Firestore database... ");
 
-        // If you have run the Create_Documents example, the document b0 (in collection a0) contains the document collection c0, and
+        // If you have run the CreateDocuments example, the document b0 (in collection a0) contains the document collection c0, and
         // c0 contains the collections d?.
 
         // The following query will query at collection c0 to get the 3 documents in the payload result with descending order.
@@ -107,13 +107,13 @@ void loop()
         // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
         FirebaseJson query;
 
-        query.set("select/fields/[0]/fieldPath", "count");
-        query.set("select/fields/[1]/fieldPath", "random");
-        // query.set("select/fields/[2]/fieldPath", "status");
+        query.set("select/fields/[0]/fieldPath", "myDouble");
+        query.set("select/fields/[1]/fieldPath", "myInteger");
+        // query.set("select/fields/[2]/fieldPath", "myTimestamp");
 
         query.set("from/collectionId", "c0");
         query.set("from/allDescendants", false);
-        query.set("orderBy/field/fieldPath", "count");
+        query.set("orderBy/field/fieldPath", "myInteger");
         query.set("orderBy/direction", "DESCENDING");
         query.set("limit", 3);
 

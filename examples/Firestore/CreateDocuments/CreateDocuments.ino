@@ -104,7 +104,7 @@ void setup()
     // In ESP8266 required for BearSSL rx/tx buffer for large data handle, increase Rx size as needed.
     fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 2048 /* Tx buffer size in bytes from 512 - 16384 */);
 #endif
-    
+
     // Limit the size of response payload to be collected in FirebaseData
     fbdo.setResponseSize(2048);
 
@@ -137,13 +137,13 @@ void loop()
         // It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
 
         // double
-        content.set("fields/myDouble/doubleValue", 123.45678);
+        content.set("fields/myDouble/doubleValue", random(1, 500) / 100.0);
 
         // boolean
         content.set("fields/myBool/booleanValue", true);
 
         // integer
-        content.set("fields/myInteger/integerValue", "911");
+        content.set("fields/myInteger/integerValue", String(random(500, 1000)));
 
         // null
         content.set("fields/myNull/nullValue"); // no value set
