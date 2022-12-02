@@ -159,7 +159,7 @@ void loop()
 
         // Set the transformation content, server value for this case.
         // See https://firebase.google.com/docs/firestore/reference/rest/v1/Write#servervalue
-        field_transforms.transform_content = "REQUEST_TIME"; // set timestamp to "test_collection/test_document/server_time"
+        field_transforms.transform_content = "REQUEST_TIME"; // set timestamp to timestamp field
 
         // Add a field transformation object to a write object.
         transform_write.document_transform.field_transforms.push_back(field_transforms);
