@@ -1617,9 +1617,6 @@ namespace Base64Helper
 
 namespace OtaHelper
 {
-
-#if defined(ESP32) || defined(ESP8266)
-
     // trim double quotes and return pad length
     inline int trimLastChunkBase64(MB_String &s, int len)
     {
@@ -1662,8 +1659,6 @@ namespace OtaHelper
         MemoryHelper::freeBuffer(mbfs, base64DecBuf);
         return ret;
     }
-
-#endif
 
 };
 
