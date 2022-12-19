@@ -102,7 +102,7 @@ void loop()
             Serial.println("ok");
             FileList *files = fbdo.fileList();
             for (size_t i = 0; i < files->items.size(); i++)
-                Serial.printf("name: %s, bucket: %s, timestamp: %d, contentType: %s, size: %d\n", files->items[i].name.c_str(), files->items[i].bucket.c_str(), files->items[i].timestamp, files->items[i].contentType.c_str(), files->items[i].size);
+                Serial.printf("name: %s, bucket: %s, generation: %d, contentType: %s, size: %d\n", files->items[i].name.c_str(), files->items[i].bucket.c_str(), files->items[i].generation, files->items[i].contentType.c_str(), files->items[i].size);
         }
         else
             Serial.println(fbdo.errorReason());

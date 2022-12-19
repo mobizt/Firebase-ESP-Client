@@ -177,10 +177,10 @@ public:
 
     virtual int print(int data)
     {
-        char *buf = (char *)mbfs->newP(64);
+        char *buf = MemoryHelper::createBuffer<char *>(mbfs, 64);
         sprintf(buf, (const char *)MBSTRING_FLASH_MCR("%d"), data);
         int ret = send(buf);
-        mbfs->delP(&buf);
+        MemoryHelper::freeBuffer(mbfs, buf);
         return ret;
     }
 
@@ -197,10 +197,10 @@ public:
 
     virtual int println(int data)
     {
-        char *buf = (char *)mbfs->newP(64);
+        char *buf = MemoryHelper::createBuffer<char *>(mbfs, 64);
         sprintf(buf, (const char *)MBSTRING_FLASH_MCR("%d\r\n"), data);
         int ret = send(buf);
-        mbfs->delP(&buf);
+        MemoryHelper::freeBuffer(mbfs, buf);
         return ret;
     }
 
@@ -246,329 +246,6 @@ public:
 
     void baseSetTimeout(uint32_t timeoutSec) { timeoutMs = timeoutSec * 1000; }
 
-    int readLine(char *buf, int bufLen)
-    {
-        if (!client)
-            return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
-
-        int res = -1;
-        char c = 0;
-        int idx = 0;
-        if (!client)
-            return idx;
-        while (client->available() && idx <= bufLen)
-        {
-            if (!client)
-                break;
-
-            if (mbfs)
-                mbfs->feed();
-
-            res = client->read();
-            if (res > -1)
-            {
-                c = (char)res;
-                strcat_c(buf, c);
-                idx++;
-                if (c == '\n')
-                    return idx;
-            }
-        }
-        return idx;
-    }
-
-    int readLine(MB_String &buf)
-    {
-        if (!client)
-            return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
-
-        int res = -1;
-        char c = 0;
-        int idx = 0;
-        if (!client)
-            return idx;
-        while (client->available())
-        {
-            if (!client)
-                break;
-
-            if (mbfs)
-                mbfs->feed();
-
-            res = client->read();
-            if (res > -1)
-            {
-                c = (char)res;
-                buf += c;
-                idx++;
-                if (c == '\n')
-                    return idx;
-            }
-        }
-        return idx;
-    }
-
-    int readChunkedData(char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen)
-    {
-        if (!client)
-            return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
-
-        char *temp = nullptr;
-        char *buf = nullptr;
-        int p1 = 0;
-        int olen = 0;
-
-        if (chunkState == 0)
-        {
-            chunkState = 1;
-            chunkedSize = -1;
-            dataLen = 0;
-            buf = (char *)mbfs->newP(bufLen);
-            int readLen = readLine(buf, bufLen);
-            if (readLen)
-            {
-                p1 = strpos(buf, (const char *)MBSTRING_FLASH_MCR(";"), 0);
-                if (p1 == -1)
-                {
-                    p1 = strpos(buf, (const char *)MBSTRING_FLASH_MCR("\r\n"), 0);
-                }
-
-                if (p1 != -1)
-                {
-                    temp = (char *)mbfs->newP(p1 + 1);
-                    memcpy(temp, buf, p1);
-                    chunkedSize = hex2int(temp);
-                    mbfs->delP(&temp);
-                }
-
-                // last chunk
-                if (chunkedSize < 1)
-                    olen = -1;
-            }
-            else
-                chunkState = 0;
-
-            mbfs->delP(&buf);
-        }
-        else
-        {
-
-            if (chunkedSize > -1)
-            {
-                buf = (char *)mbfs->newP(bufLen);
-                int readLen = readLine(buf, bufLen);
-
-                if (readLen > 0)
-                {
-                    // chunk may contain trailing
-                    if (dataLen + readLen - 2 < chunkedSize)
-                    {
-                        dataLen += readLen;
-                        memcpy(out, buf, readLen);
-                        olen = readLen;
-                    }
-                    else
-                    {
-                        if (chunkedSize - dataLen > 0)
-                            memcpy(out, buf, chunkedSize - dataLen);
-                        dataLen = chunkedSize;
-                        chunkState = 0;
-                        olen = readLen;
-                    }
-                }
-                else
-                {
-                    olen = -1;
-                }
-
-                mbfs->delP(&buf);
-            }
-        }
-
-        return olen;
-    }
-
-    bool sendBase64(size_t bufSize, uint8_t *data, size_t len, bool flashMem)
-    {
-        if (!client)
-            return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
-
-        bool ret = false;
-        const unsigned char *end, *in;
-
-        end = data + len;
-        in = data;
-
-        size_t chunkSize = bufSize;
-        size_t byteAdded = 0;
-        size_t byteSent = 0;
-
-        unsigned char *buf = (unsigned char *)mbfs->newP(chunkSize);
-        memset(buf, 0, chunkSize);
-
-        unsigned char *temp = (unsigned char *)mbfs->newP(3);
-
-        while (end - in >= 3)
-        {
-
-#if defined(ESP8266)
-            delay(0);
-#endif
-
-            memset(temp, 0, 3);
-            if (flashMem)
-                memcpy_P(temp, in, 3);
-            else
-                memcpy(temp, in, 3);
-
-            buf[byteAdded++] = fb_esp_base64_table[temp[0] >> 2];
-            buf[byteAdded++] = fb_esp_base64_table[((temp[0] & 0x03) << 4) | (temp[1] >> 4)];
-            buf[byteAdded++] = fb_esp_base64_table[((temp[1] & 0x0f) << 2) | (temp[2] >> 6)];
-            buf[byteAdded++] = fb_esp_base64_table[temp[2] & 0x3f];
-
-            if (byteAdded >= chunkSize - 4)
-            {
-                byteSent += byteAdded;
-
-                size_t sz = strlen((const char *)buf);
-
-                if (client->write((uint8_t *)buf, sz) != sz)
-                    goto ex;
-                memset(buf, 0, chunkSize);
-                byteAdded = 0;
-            }
-
-            in += 3;
-        }
-
-        if (byteAdded > 0)
-        {
-            size_t sz = strlen((const char *)buf);
-            if (client->write((uint8_t *)buf, sz) != sz)
-                goto ex;
-        }
-
-        if (end - in)
-        {
-            memset(buf, 0, chunkSize);
-            byteAdded = 0;
-            memset(temp, 0, 3);
-            if (flashMem)
-            {
-                if (end - in == 1)
-                    memcpy_P(temp, in, 1);
-                else
-                    memcpy_P(temp, in, 2);
-            }
-            else
-            {
-                if (end - in == 1)
-                    memcpy(temp, in, 1);
-                else
-                    memcpy(temp, in, 2);
-            }
-
-            buf[byteAdded++] = fb_esp_base64_table[temp[0] >> 2];
-            if (end - in == 1)
-            {
-                buf[byteAdded++] = fb_esp_base64_table[(temp[0] & 0x03) << 4];
-                buf[byteAdded++] = '=';
-            }
-            else
-            {
-                buf[byteAdded++] = fb_esp_base64_table[((temp[0] & 0x03) << 4) | (temp[1] >> 4)];
-                buf[byteAdded++] = fb_esp_base64_table[(temp[1] & 0x0f) << 2];
-            }
-            buf[byteAdded++] = '=';
-            size_t sz = strlen((const char *)buf);
-            if (client->write((uint8_t *)buf, sz) != sz)
-                goto ex;
-            memset(buf, 0, chunkSize);
-        }
-
-        ret = true;
-    ex:
-
-        mbfs->delP(&temp);
-        mbfs->delP(&buf);
-        return ret;
-    }
-
-    int readChunkedData(MB_String &out, int &chunkState, int &chunkedSize, int &dataLen)
-    {
-        if (!client)
-            return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
-
-        char *temp = nullptr;
-        int p1 = 0;
-        int olen = 0;
-
-        if (chunkState == 0)
-        {
-            chunkState = 1;
-            chunkedSize = -1;
-            dataLen = 0;
-            MB_String s;
-            int readLen = readLine(s);
-            if (readLen)
-            {
-                p1 = strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR(";"), 0);
-                if (p1 == -1)
-                {
-                    p1 = strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR("\r\n"), 0);
-                }
-
-                if (p1 != -1)
-                {
-                    temp = (char *)mbfs->newP(p1 + 1);
-                    memcpy(temp, s.c_str(), p1);
-                    chunkedSize = hex2int(temp);
-                    mbfs->delP(&temp);
-                }
-
-                // last chunk
-                if (chunkedSize < 1)
-                    olen = -1;
-            }
-            else
-                chunkState = 0;
-        }
-        else
-        {
-
-            if (chunkedSize > -1)
-            {
-                MB_String s;
-                int readLen = readLine(s);
-
-                if (readLen > 0)
-                {
-                    // chunk may contain trailing
-                    if (dataLen + readLen - 2 < chunkedSize)
-                    {
-                        dataLen += readLen;
-                        out += s;
-                        olen = readLen;
-                    }
-                    else
-                    {
-                        if (chunkedSize - dataLen > 0)
-                            out += s;
-                        dataLen = chunkedSize;
-                        chunkState = 0;
-                        olen = readLen;
-                    }
-                }
-                else
-                {
-                    olen = -1;
-                }
-            }
-        }
-
-        return olen;
-    }
-
     virtual void flush()
     {
         if (!client)
@@ -581,76 +258,16 @@ public:
     fb_cert_type getCertType() { return certType; }
 
 private:
-    void strcat_c(char *str, char c)
-    {
-        for (; *str; str++)
-            ;
-        *str++ = c;
-        *str++ = 0;
-    }
-
-    int strpos(const char *haystack, const char *needle, int offset)
-    {
-        if (!haystack || !needle)
-            return -1;
-
-        int hlen = strlen(haystack);
-        int nlen = strlen(needle);
-
-        if (hlen == 0 || nlen == 0)
-            return -1;
-
-        int hidx = offset, nidx = 0;
-        while ((*(haystack + hidx) != '\0') && (*(needle + nidx) != '\0') && hidx < hlen)
-        {
-            if (*(needle + nidx) != *(haystack + hidx))
-            {
-                hidx++;
-                nidx = 0;
-            }
-            else
-            {
-                nidx++;
-                hidx++;
-                if (nidx == nlen)
-                    return hidx - nidx;
-            }
-        }
-
-        return -1;
-    }
-
-    uint32_t hex2int(const char *hex)
-    {
-        uint32_t val = 0;
-        while (*hex)
-        {
-            // get current character then increment
-            uint8_t byte = *hex++;
-            // transform hex character to the 4bit equivalent number, using the ascii table indexes
-            if (byte >= '0' && byte <= '9')
-                byte = byte - '0';
-            else if (byte >= 'a' && byte <= 'f')
-                byte = byte - 'a' + 10;
-            else if (byte >= 'A' && byte <= 'F')
-                byte = byte - 'A' + 10;
-            // shift 4 to make space for new digit, and add the 4 bits of the new digit
-            val = (val << 4) | (byte & 0xF);
-        }
-        return val;
-    }
-
-    void setConfig(FirebaseConfig *config)
+    void setConfig(FirebaseConfig *config, MB_FS *mbfs)
     {
         this->config = config;
+        this->mbfs = mbfs;
     }
 
     int tcpTimeout()
     {
         return timeoutMs;
     }
-
-    void setMBFS(MB_FS *mbfs) { this->mbfs = mbfs; }
 
     void setSPIEthernet(SPI_ETH_Module *eth) { this->eth = eth; }
 
@@ -659,11 +276,11 @@ private:
 protected:
     MB_String host;
     uint16_t port = 0;
-    MB_FS *mbfs = nullptr;
     Client *client = nullptr;
     bool reserved = false;
     unsigned long dataStart = 0;
     unsigned long dataTime = 0;
+    MB_FS *mbfs = nullptr;
 
     // In esp8266, this is actually Arduino base Stream (char read) timeout.
     //  This will override internally by WiFiClientSecureCtx::_connectSSL

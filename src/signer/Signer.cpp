@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.3
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.4
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -42,12 +42,12 @@ Firebase_Signer::~Firebase_Signer()
 {
 }
 
-void Firebase_Signer::begin(UtilsClass *utils, MB_FS *mbfs, FirebaseConfig *cfg, FirebaseAuth *authen)
+void Firebase_Signer::begin(FirebaseConfig *cfg, FirebaseAuth *authen, MB_FS *mbfs, uint32_t *mb_ts)
 {
-    ut = utils;
-    this->mbfs = mbfs;
     config = cfg;
     auth = authen;
+    this->mbfs = mbfs;
+    this->mb_ts = mb_ts;
 }
 
 bool Firebase_Signer::parseSAFile()
@@ -55,44 +55,44 @@ bool Firebase_Signer::parseSAFile()
     if (config->signer.pk.length() > 0)
         return false;
 
-    int sz = ut->mbfs->open(config->service_account.json.path, mbfs_type config->service_account.json.storage_type, mb_fs_open_mode_read);
+    int res = mbfs->open(config->service_account.json.path,
+                         mbfs_type config->service_account.json.storage_type,
+                         mb_fs_open_mode_read);
 
-    if (sz >= 0)
+    if (res >= 0)
     {
-        clearServiceAccounCreds();
-        jsonPtr = new FirebaseJson();
-        resultPtr = new FirebaseJsonData();
-        char *temp = nullptr;
+        clearServiceAccountCreds();
+        initJson();
 
-        size_t len = sz;
-        char *buf = (char *)ut->newP(len + 10);
-        if (ut->mbfs->available(mbfs_type config->service_account.json.storage_type))
+        size_t len = res;
+        char *buf = MemoryHelper::createBuffer<char *>(mbfs, len + 10);
+        if (mbfs->available(mbfs_type config->service_account.json.storage_type))
         {
-            if ((int)len == ut->mbfs->read(mbfs_type config->service_account.json.storage_type, (uint8_t *)buf, len))
+            if ((int)len == mbfs->read(mbfs_type config->service_account.json.storage_type, (uint8_t *)buf, len))
                 jsonPtr->setJsonData(buf);
         }
-        ut->mbfs->close(mbfs_type config->service_account.json.storage_type);
-        ut->delP(&buf);
 
-        if (parseJsonResponse(fb_esp_pgm_str_243)) // type
+        mbfs->close(mbfs_type config->service_account.json.storage_type);
+
+        if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_243)) // type
         {
-            if (ut->strposP(resultPtr->to<const char *>(), fb_esp_pgm_str_244 /* service_account */, 0) > -1)
+            if (resultPtr->to<MB_String>().find(pgm2Str(fb_esp_pgm_str_244 /* service_account */), 0) != MB_String::npos)
             {
-                if (parseJsonResponse(fb_esp_pgm_str_245)) // project_id
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_245)) // project_id
                     config->service_account.data.project_id = resultPtr->to<const char *>();
 
-                if (parseJsonResponse(fb_esp_pgm_str_246)) // private_key_id
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_246)) // private_key_id
                     config->service_account.data.private_key_id = resultPtr->to<const char *>();
 
-                if (parseJsonResponse(fb_esp_pgm_str_247)) // private_key
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_247)) // private_key
                 {
-                    temp = (char *)ut->newP(strlen(resultPtr->to<const char *>()));
+                    char *temp = MemoryHelper::createBuffer<char *>(mbfs, strlen(resultPtr->to<const char *>()));
                     size_t c = 0;
                     for (size_t i = 0; i < strlen(resultPtr->to<const char *>()); i++)
                     {
                         if (resultPtr->to<const char *>()[i] == '\\')
                         {
-                            ut->idle();
+                            Utils::idle();
                             temp[c++] = '\n';
                             i++;
                         }
@@ -101,35 +101,31 @@ bool Firebase_Signer::parseSAFile()
                     }
                     config->signer.pk = temp;
                     resultPtr->clear();
-                    ut->delP(&temp);
+                    MemoryHelper::freeBuffer(mbfs, temp);
                 }
 
-                if (parseJsonResponse(fb_esp_pgm_str_248)) // client_email
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_248)) // client_email
                     config->service_account.data.client_email = resultPtr->to<const char *>();
-                if (parseJsonResponse(fb_esp_pgm_str_253)) // client_id
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_253)) // client_id
                     config->service_account.data.client_id = resultPtr->to<const char *>();
 
-                delete jsonPtr;
-                delete resultPtr;
+                freeJson();
 
-                jsonPtr = nullptr;
-                resultPtr = nullptr;
+                MemoryHelper::freeBuffer(mbfs, buf);
 
                 return true;
             }
         }
 
-        delete jsonPtr;
-        delete resultPtr;
+        freeJson();
 
-        jsonPtr = nullptr;
-        resultPtr = nullptr;
+        MemoryHelper::freeBuffer(mbfs, buf);
     }
 
     return false;
 }
 
-void Firebase_Signer::clearServiceAccounCreds()
+void Firebase_Signer::clearServiceAccountCreds()
 {
     config->service_account.data.private_key = "";
     config->service_account.data.project_id.clear();
@@ -138,17 +134,16 @@ void Firebase_Signer::clearServiceAccounCreds()
     config->signer.pk.clear();
 }
 
-bool Firebase_Signer::serviceAccounCredsReady()
+bool Firebase_Signer::serviceAccountCredsReady()
 {
-    if (!config)
-        return false;
-    return (strlen_P(config->service_account.data.private_key) > 0 || config->signer.pk.length() > 0) && config->service_account.data.client_email.length() > 0 && config->service_account.data.project_id.length() > 0;
+    return (strlen_P(config->service_account.data.private_key) > 0 || config->signer.pk.length() > 0) &&
+           config->service_account.data.client_email.length() > 0 &&
+           config->service_account.data.project_id.length() > 0;
 }
 
 void Firebase_Signer::setTokenType(fb_esp_auth_token_type type)
 {
     config->signer.tokens.token_type = type;
-
     if (type == token_type_legacy_token)
         config->signer.tokens.status = token_status_ready;
 }
@@ -161,13 +156,14 @@ bool Firebase_Signer::userAccountCredsReady()
     return config->api_key.length() > 0 && auth->user.email.length() > 0 && auth->user.password.length() > 0;
 }
 
-bool Firebase_Signer::isAuthToken(bool admin)
+bool Firebase_Signer::isAuthToken(bool oauth)
 {
     if (!config || !auth)
         return false;
 
-    bool ret = config->signer.tokens.token_type == token_type_id_token || config->signer.tokens.token_type == token_type_custom_token;
-    if (admin)
+    bool ret = config->signer.tokens.token_type == token_type_id_token ||
+               config->signer.tokens.token_type == token_type_custom_token;
+    if (oauth)
         ret |= config->signer.tokens.token_type == token_type_oauth2_access_token;
     return ret;
 }
@@ -187,7 +183,7 @@ bool Firebase_Signer::checkAuthTypeChanged(FirebaseConfig *config, FirebaseAuth 
         }
 
         // set token type to oauth2 or custom token based on service account credentials
-        if (serviceAccounCredsReady())
+        if (serviceAccountCredsReady())
         {
             config->signer.idTokenCustomSet = false;
             config->signer.accessTokenCustomSet = false;
@@ -212,9 +208,12 @@ bool Firebase_Signer::checkAuthTypeChanged(FirebaseConfig *config, FirebaseAuth 
         }
 
         // check if user account credentials changed
-        if (config->signer.tokens.token_type == token_type_id_token && auth->user.email.length() > 0 && auth->user.password.length() > 0)
+        if (config->signer.tokens.token_type == token_type_id_token &&
+            auth->user.email.length() > 0 &&
+            auth->user.password.length() > 0)
         {
-            uint16_t crc1 = ut->calCRC(auth->user.email.c_str()), crc2 = ut->calCRC(auth->user.password.c_str());
+            uint16_t crc1 = Utils::calCRC(mbfs, auth->user.email.c_str()),
+                     crc2 = Utils::calCRC(mbfs, auth->user.password.c_str());
 
             auth_changed = config->internal.email_crc != crc1 || config->internal.password_crc != crc2;
 
@@ -222,16 +221,20 @@ bool Firebase_Signer::checkAuthTypeChanged(FirebaseConfig *config, FirebaseAuth 
             config->internal.password_crc = crc2;
         }
         // check if service account credentials changed
-        else if (config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token)
+        else if (config->signer.tokens.token_type == token_type_custom_token ||
+                 config->signer.tokens.token_type == token_type_oauth2_access_token)
         {
-            uint16_t crc1 = ut->calCRC(config->service_account.data.client_email.c_str()), crc2 = ut->calCRC(config->service_account.data.project_id.c_str());
-            uint16_t crc3 = crc2 = ut->calCRC(config->service_account.data.private_key);
+            uint16_t crc1 = Utils::calCRC(mbfs, config->service_account.data.client_email.c_str()),
+                     crc2 = Utils::calCRC(mbfs, config->service_account.data.project_id.c_str());
+            uint16_t crc3 = crc2 = Utils::calCRC(mbfs, config->service_account.data.private_key);
 
-            auth_changed = config->internal.client_email_crc != crc1 || config->internal.project_id_crc != crc2 || config->internal.priv_key_crc != crc3;
+            auth_changed = config->internal.client_email_crc != crc1 ||
+                           config->internal.project_id_crc != crc2 ||
+                           config->internal.priv_key_crc != crc3;
 
             if (config->signer.tokens.token_type == token_type_custom_token)
             {
-                uint16_t crc4 = auth->token.uid.length() > 0 ? ut->calCRC(auth->token.uid.c_str()) : 0;
+                uint16_t crc4 = auth->token.uid.length() > 0 ? Utils::calCRC(mbfs, auth->token.uid.c_str()) : 0;
                 auth_changed |= config->internal.uid_crc != crc4;
                 config->internal.uid_crc = crc4;
             }
@@ -257,7 +260,7 @@ bool Firebase_Signer::checkAuthTypeChanged(FirebaseConfig *config, FirebaseAuth 
 
 time_t Firebase_Signer::getTime()
 {
-    return ut->getTime();
+    return TimeHelper::getTime(mb_ts);
 }
 
 bool Firebase_Signer::setTime(time_t ts)
@@ -265,17 +268,17 @@ bool Firebase_Signer::setTime(time_t ts)
 
 #if defined(ESP8266) || defined(ESP32)
 
-    if (ut->setTimestamp(ts) == 0)
+    if (TimeHelper::setTimestamp(ts) == 0)
     {
         this->ts = time(nullptr);
-        ut->ts = this->ts;
+        *mb_ts = this->ts;
         return true;
     }
 
 #else
     if (ts > ESP_DEFAULT_TS)
         this->ts = ts - millis() / 1000;
-    ut->ts = this->ts;
+    mb_ts = this->ts;
 #endif
 
     return false;
@@ -364,7 +367,9 @@ bool Firebase_Signer::isErrorCBTimeOut()
 {
     bool ret = false;
 
-    if (config && millis() - config->internal.fb_last_jwt_generation_error_cb_millis > config->timeout.tokenGenerationError || config->internal.fb_last_jwt_generation_error_cb_millis == 0)
+    if (config &&
+        (millis() - config->internal.fb_last_jwt_generation_error_cb_millis > config->timeout.tokenGenerationError ||
+         config->internal.fb_last_jwt_generation_error_cb_millis == 0))
     {
         config->internal.fb_last_jwt_generation_error_cb_millis = millis();
         ret = true;
@@ -439,7 +444,11 @@ bool Firebase_Signer::handleToken()
             if (readyToRequest())
             {
                 // if id token was set without refresh token, we can't do anything further
-                if (config->signer.idTokenCustomSet && config->internal.refresh_token.length() == 0 && auth->user.email.length() == 0 && auth->user.password.length() == 0 && config->signer.anonymous)
+                if (config->signer.idTokenCustomSet &&
+                    config->internal.refresh_token.length() == 0 &&
+                    auth->user.email.length() == 0 &&
+                    auth->user.password.length() == 0 &&
+                    config->signer.anonymous)
                     return true;
 
                 // return when tcp client was used by other processes
@@ -469,7 +478,8 @@ bool Firebase_Signer::handleToken()
             // if auth request using OAuth 2.0 and custom token
             else
             {
-                // refresh the token when refresh token was assigned via setCustomToken (with non jwt token) and setAccessToken (fourth argument)
+                // refresh the token when refresh token was assigned via setCustomToken (with non jwt token)
+                // and setAccessToken (fourth argument)
                 if (config->internal.refresh_token.length() > 0)
                     return requestTokens(true);
 
@@ -527,6 +537,24 @@ bool Firebase_Signer::handleToken()
     return config->signer.tokens.status == token_status_ready;
 }
 
+void Firebase_Signer::initJson()
+{
+    if (!jsonPtr)
+        jsonPtr = new FirebaseJson();
+    if (!resultPtr)
+        resultPtr = new FirebaseJsonData();
+}
+
+void Firebase_Signer::freeJson()
+{
+    if (jsonPtr)
+        delete jsonPtr;
+    if (resultPtr)
+        delete resultPtr;
+    jsonPtr = nullptr;
+    resultPtr = nullptr;
+}
+
 void Firebase_Signer::tokenProcessingTask()
 {
     // We don't have to use memory reserved tasks e.g., RTOS task in ESP32 for this JWT
@@ -552,7 +580,6 @@ void Firebase_Signer::tokenProcessingTask()
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
         delay(0);
-
         // check time if clock synching once set in the JWT token generating process (during beginning step)
         // or valid time required for SSL handshake in ESP8266
         if (!config->internal.fb_clock_rdy && (config->internal.fb_clock_synched || sslValidTime))
@@ -573,7 +600,7 @@ void Firebase_Signer::tokenProcessingTask()
             }
 
             // check or set time again
-            ut->syncClock(config->time_zone);
+            TimeHelper::syncClock(mb_ts, config->time_zone, config);
 
             // exit task immediately if time is not ready synched
             // which handleToken function should run repeatedly to enter this function again.
@@ -598,10 +625,12 @@ void Firebase_Signer::tokenProcessingTask()
         else
         {
             // create signed JWT token and exchange with auth token
-            if (config->signer.step == fb_esp_jwt_generation_step_begin && (millis() - config->internal.fb_last_jwt_begin_step_millis > config->timeout.tokenGenerationBeginStep || config->internal.fb_last_jwt_begin_step_millis == 0))
+            if (config->signer.step == fb_esp_jwt_generation_step_begin &&
+                (millis() - config->internal.fb_last_jwt_begin_step_millis > config->timeout.tokenGenerationBeginStep ||
+                 config->internal.fb_last_jwt_begin_step_millis == 0))
             {
                 // time must be set first
-                ut->syncClock(config->time_zone);
+                TimeHelper::syncClock(mb_ts, config->time_zone, config);
                 config->internal.fb_last_jwt_begin_step_millis = millis();
 
                 if (config->internal.fb_clock_rdy)
@@ -636,16 +665,8 @@ void Firebase_Signer::tokenProcessingTask()
         }
     }
 
-    // reset task running flag
+    // reset task running status
     config->signer.tokenTaskRunning = false;
-}
-
-bool Firebase_Signer::parseJsonResponse(PGM_P key_path)
-{
-    // parse the simple JSON response
-    resultPtr->clear();
-    jsonPtr->get(*resultPtr, pgm2Str(key_path));
-    return resultPtr->success;
 }
 
 bool Firebase_Signer::refreshToken()
@@ -654,7 +675,9 @@ bool Firebase_Signer::refreshToken()
     if (!config)
         return false;
 
-    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->internal.fb_processing)
+    if (config->signer.tokens.status == token_status_on_request ||
+        config->signer.tokens.status == token_status_on_refresh ||
+        config->internal.fb_processing)
         return false;
 
     if (config->internal.ltok_len > 0 || (config->internal.rtok_len == 0 && config->internal.atok_len == 0))
@@ -666,32 +689,20 @@ bool Firebase_Signer::refreshToken()
     jsonPtr->add(pgm2Str(fb_esp_pgm_str_205 /* "grantType" */), pgm2Str(fb_esp_pgm_str_206 /* "refresh_token" */));
     jsonPtr->add(pgm2Str(fb_esp_pgm_str_207 /* "refreshToken" */), config->internal.refresh_token.c_str());
 
-    MB_String s;
-    jsonPtr->toString(s);
-
     MB_String req;
-    req += fb_esp_pgm_str_24; // "POST"
-    req += fb_esp_pgm_str_6;  // " "
+    HttpHelper::addRequestHeaderFirst(req, m_post);
 
     req += fb_esp_pgm_str_204; // "/v1/token?Key=""
     req += config->api_key;
-    req += fb_esp_pgm_str_30; // "HTTP/1.1\r\n"
+    HttpHelper::addRequestHeaderLast(req);
 
-    req += fb_esp_pgm_str_31;  // "Host: "
-    req += fb_esp_pgm_str_203; // "securetoken"
-    req += fb_esp_pgm_str_4;   // "."
-    req += fb_esp_pgm_str_120; // "googleapis.com"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_32;  // "User-Agent: ESP\r\n"
-    req += fb_esp_pgm_str_12;  // "Content-Length: "
-    req += s.length();
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_8;   // "Content-Type: "
-    req += fb_esp_pgm_str_129; // "application/json"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_21;  // "\r\n"
+    HttpHelper::addGAPIsHostHeader(req, fb_esp_pgm_str_203 /* "securetoken" */);
+    HttpHelper::addUAHeader(req);
+    HttpHelper::addContentLengthHeader(req, strlen(jsonPtr->raw()));
+    HttpHelper::addContentTypeHeader(req, fb_esp_pgm_str_129 /* "application/json" */);
+    HttpHelper::addNewLine(req);
 
-    req += s.c_str(); // {"grantType":"refresh_token","refreshToken":"<refresh token>"}
+    req += jsonPtr->raw(); // {"grantType":"refresh_token","refreshToken":"<refresh token>"}
 
     tcpClient->send(req.c_str());
 
@@ -704,12 +715,12 @@ bool Firebase_Signer::refreshToken()
     int httpCode = 0;
     if (handleTokenResponse(httpCode))
     {
-        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
+        if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
             config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
 
@@ -724,23 +735,23 @@ bool Firebase_Signer::refreshToken()
         if (error.code == 0)
         {
 
-            if (parseJsonResponse(fb_esp_pgm_str_208 /* "id_token" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_208 /* "id_token" */))
             {
                 config->internal.auth_token = resultPtr->to<const char *>();
                 config->internal.atok_len = strlen(resultPtr->to<const char *>());
                 config->internal.ltok_len = 0;
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_206 /* "refresh_token" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_206 /* "refresh_token" */))
             {
                 config->internal.refresh_token = resultPtr->to<const char *>();
                 config->internal.rtok_len = strlen(resultPtr->to<const char *>());
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_210 /* "expires_in" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_210 /* "expires_in" */))
                 getExpiration(resultPtr->to<const char *>());
 
-            if (parseJsonResponse(fb_esp_pgm_str_187 /* "user_id" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_187 /* "user_id" */))
                 auth->token.uid = resultPtr->to<const char *>();
 
             return handleTaskError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
@@ -822,14 +833,7 @@ bool Firebase_Signer::handleTaskError(int code, int httpCode)
         intTCPClient = false;
     }
 
-    if (jsonPtr)
-        delete jsonPtr;
-
-    if (resultPtr)
-        delete resultPtr;
-
-    jsonPtr = nullptr;
-    resultPtr = nullptr;
+    freeJson();
 
     // reset token processing state
     if (code == FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY || code == FIREBASE_ERROR_TOKEN_COMPLETE_UNNOTIFY)
@@ -853,11 +857,8 @@ void Firebase_Signer::sendTokenStatusCB()
     tokenInfo.type = config->signer.tokens.token_type;
     tokenInfo.error = config->signer.tokens.error;
 
-    if (config->token_status_callback)
-    {
-        if (isErrorCBTimeOut())
-            config->token_status_callback(tokenInfo);
-    }
+    if (config->token_status_callback && isErrorCBTimeOut())
+        config->token_status_callback(tokenInfo);
 }
 
 bool Firebase_Signer::handleTokenResponse(int &httpCode)
@@ -872,15 +873,12 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
     if (!networkStatus)
         return false;
 
-    struct server_response_data_t response;
-
-    int chunkIdx = 0;
-    int chunkBufSize = 0;
-    int chunkedDataState = 0;
-    int chunkedDataSize = 0;
-    int chunkedDataLen = 0;
     MB_String header, payload;
-    bool isHeader = false;
+
+    struct server_response_data_t response;
+    struct fb_esp_tcp_response_handler_t tcpHandler;
+
+    HttpHelper::intTCPHandler(tcpClient->client, tcpHandler, 2048, 2048, nullptr, false);
 
     while (tcpClient->connected() && tcpClient->available() == 0)
     {
@@ -896,11 +894,10 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
             tcpClient->stop();
             return false;
         }
-        ut->idle();
+        Utils::idle();
     }
 
     bool complete = false;
-    unsigned long datatime = millis();
     while (!complete)
     {
 
@@ -916,90 +913,70 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
             return false;
         }
 
-        chunkBufSize = tcpClient->available();
-
-        if (chunkBufSize > 1 || !complete)
+        if (tcpHandler.available() > 0 || !complete)
         {
-            while (!complete)
+            while (tcpHandler.available() || !complete)
             {
-                ut->idle();
+                Utils::idle();
 
-                chunkBufSize = tcpClient->available();
-
-                if (chunkBufSize > 0)
+                if (tcpHandler.available() > 0)
                 {
-                    if (chunkIdx == 0)
+                    tcpHandler.chunkBufSize = tcpHandler.defaultChunkSize;
+
+                    if (!HttpHelper::readStatusLine(mbfs, tcpClient->client, tcpHandler, response))
                     {
-                        tcpClient->readLine(header);
-                        int pos = 0;
-                        char *temp = ut->getHeader(header.c_str(), fb_esp_pgm_str_5 /* "HTTP/1.1 " */, fb_esp_pgm_str_6 /* " " */, pos, 0);
-                        if (temp)
+                        Utils::idle();
+                        // the next chunk data can be the remaining http header
+                        if (tcpHandler.isHeader)
                         {
-                            isHeader = true;
-                            response.httpCode = atoi(temp);
-                            ut->delP(&temp);
-                        }
-                    }
-                    else
-                    {
-                        if (isHeader)
-                        {
-                            char *temp = (char *)ut->newP(chunkBufSize);
-                            int readLen = tcpClient->readLine(temp, chunkBufSize);
-                            bool headerEnded = false;
-
-                            if (readLen == 1)
-                                if (temp[0] == '\r')
-                                    headerEnded = true;
-
-                            if (readLen == 2)
-                                if (temp[0] == '\r' && temp[1] == '\n')
-                                    headerEnded = true;
-
-                            if (headerEnded)
+                            // read header, complete?
+                            if (HttpHelper::readHeader(mbfs, tcpClient->client, tcpHandler, response))
                             {
-                                isHeader = false;
-                                ut->parseRespHeader(header.c_str(), response);
-                                header.clear();
-                            }
-                            else
-                                header += temp;
+                                if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
+                                    tcpHandler.error.code = 0;
 
-                            ut->delP(&temp);
+                                if (response.contentLen == 0)
+                                    break;
+                            }
                         }
                         else
                         {
                             if (!response.noContent)
                             {
+
+                                char *pChunk = MemoryHelper::createBuffer<char *>(mbfs, tcpHandler.chunkBufSize + 1);
+
                                 if (response.isChunkedEnc)
-                                    complete = tcpClient->readChunkedData(payload, chunkedDataState, chunkedDataSize, chunkedDataLen) < 0;
+                                    delay(1);
+
+                                // read the avilable data
+                                // chunk transfer encoding?
+                                if (response.isChunkedEnc)
+                                    tcpHandler.bufferAvailable = HttpHelper::readChunkedData(mbfs, tcpClient->client,
+                                                                                        pChunk, nullptr, tcpHandler);
                                 else
+                                    tcpHandler.bufferAvailable = HttpHelper::readLine(tcpClient->client,
+                                                                                 pChunk, tcpHandler.chunkBufSize);
+
+                                if (tcpHandler.bufferAvailable > 0)
                                 {
-                                    chunkBufSize = 1024;
-                                    if (tcpClient->available() < chunkBufSize)
-                                        chunkBufSize = tcpClient->available();
-
-                                    char *temp = (char *)ut->newP(chunkBufSize + 1);
-                                    int readLen = tcpClient->readBytes(temp, chunkBufSize);
-
-                                    if (readLen > 0)
-                                        payload += temp;
-
-                                    ut->delP(&temp);
-                                    complete = tcpClient->available() <= 0;
+                                    tcpHandler.payloadRead += tcpHandler.bufferAvailable;
+                                    payload += pChunk;
                                 }
+
+                                MemoryHelper::freeBuffer(mbfs, pChunk);
+
+                                if (tcpHandler.bufferAvailable < 0 ||
+                                    (tcpHandler.payloadRead >= response.contentLen && !response.isChunkedEnc))
+                                    break;
                             }
-                            else
-                            {
-                                tcpClient->flush();
-                                break;
-                            }
+
+                            break;
                         }
                     }
-                    chunkIdx++;
                 }
 
-                if (millis() - datatime > 5000)
+                if (millis() - tcpHandler.dataTime > 5000)
                     complete = true;
             }
         }
@@ -1032,8 +1009,7 @@ bool Firebase_Signer::createJWT()
         config->internal.fb_last_jwt_generation_error_cb_millis = 0;
         sendTokenStatusCB();
 
-        jsonPtr = new FirebaseJson();
-        resultPtr = new FirebaseJsonData();
+        initJson();
 
         time_t now = getTime();
 
@@ -1044,15 +1020,12 @@ bool Firebase_Signer::createJWT()
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_239 /* "alg" */), pgm2Str(fb_esp_pgm_str_242 /* "RS256" */));
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_240 /* "typ" */), pgm2Str(fb_esp_pgm_str_234 /* "JWT" */));
 
-        MB_String hdr;
-        jsonPtr->toString(hdr);
-        size_t len = ut->base64EncLen(hdr.length());
-        char *buf = (char *)ut->newP(len);
-        ut->encodeBase64Url(buf, (unsigned char *)hdr.c_str(), hdr.length());
+        size_t len = Base64Helper::encodedLength(strlen(jsonPtr->raw()));
+        char *buf = MemoryHelper::createBuffer<char *>(mbfs, len);
+        Base64Helper::encodeUrl(mbfs, buf, (unsigned char *)jsonPtr->raw(), strlen(jsonPtr->raw()));
         config->signer.encHeader = buf;
-        ut->delP(&buf);
+        MemoryHelper::freeBuffer(mbfs, buf);
         config->signer.encHeadPayload = config->signer.encHeader;
-        hdr.clear();
 
         // payload
         // {"iss":"<email>","sub":"<email>","aud":"<audience>","iat":<timstamp>,"exp":<expire>,"scope":"<scope>"}
@@ -1064,22 +1037,17 @@ bool Firebase_Signer::createJWT()
         MB_String t = fb_esp_pgm_str_112; // "https://"
         if (config->signer.tokens.token_type == token_type_custom_token)
         {
-            t += fb_esp_pgm_str_250; // "identitytoolkit"
-            t += fb_esp_pgm_str_4;   // "."
-            t += fb_esp_pgm_str_120; // "googleapis.com"
+            HttpHelper::addGAPIsHost(t, fb_esp_pgm_str_250 /* "identitytoolkit" */);
             t += fb_esp_pgm_str_231; // "/google.identity.identitytoolkit.v1.IdentityToolkit"
         }
         else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
         {
-            t += fb_esp_pgm_str_251; // "oauth2"
-            t += fb_esp_pgm_str_4;   //"."
-            t += fb_esp_pgm_str_120; // "googleapis.com"
+            HttpHelper::addGAPIsHost(t, fb_esp_pgm_str_251 /* "oauth2" */);
             t += fb_esp_pgm_str_1;   // "/"
             t += fb_esp_pgm_str_233; // "token"
         }
 
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_214 /* "aud" */), t.c_str());
-
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_218 /* "iat" */), (int)now);
 
         if (config->signer.expiredSeconds > 3600)
@@ -1089,13 +1057,13 @@ bool Firebase_Signer::createJWT()
 
         if (config->signer.tokens.token_type == token_type_oauth2_access_token)
         {
-            MB_String buri = fb_esp_pgm_str_112; // "https://"
-            buri += fb_esp_pgm_str_193;          // "www"
-            buri += fb_esp_pgm_str_4;            // "."
-            buri += fb_esp_pgm_str_120;          // "googleapis.com"
-            buri += fb_esp_pgm_str_1;            // "/"
-            buri += fb_esp_pgm_str_219;          // "auth"
-            buri += fb_esp_pgm_str_1;            // "/"
+            MB_String buri;
+            MB_String host;
+            HttpHelper::addGAPIsHost(host, fb_esp_pgm_str_193 /* "www" */);
+            URLHelper::host2Url(buri, host);
+            buri += fb_esp_pgm_str_1;   // "/"
+            buri += fb_esp_pgm_str_219; // "auth"
+            buri += fb_esp_pgm_str_1;   // "/"
 
             MB_String s = buri;      // https://www.googleapis.com/auth/
             s += fb_esp_pgm_str_221; // "devstorage.full_control"
@@ -1124,7 +1092,7 @@ bool Firebase_Signer::createJWT()
             if (config->signer.tokens.scope.length() > 0)
             {
                 MB_VECTOR<MB_String> scopes;
-                ut->splitTk(config->signer.tokens.scope, scopes, ",");
+                StringHelper::splitTk(config->signer.tokens.scope, scopes, ",");
                 for (size_t i = 0; i < scopes.size(); i++)
                 {
                     s += fb_esp_pgm_str_6; // " "
@@ -1147,15 +1115,11 @@ bool Firebase_Signer::createJWT()
             }
         }
 
-        MB_String payload;
-        jsonPtr->toString(payload);
-
-        len = ut->base64EncLen(payload.length());
-        buf = (char *)ut->newP(len);
-        ut->encodeBase64Url(buf, (unsigned char *)payload.c_str(), payload.length());
+        len = Base64Helper::encodedLength(strlen(jsonPtr->raw()));
+        buf = MemoryHelper::createBuffer<char *>(mbfs, len);
+        Base64Helper::encodeUrl(mbfs, buf, (unsigned char *)jsonPtr->raw(), strlen(jsonPtr->raw()));
         config->signer.encPayload = buf;
-        ut->delP(&buf);
-        payload.clear();
+        MemoryHelper::freeBuffer(mbfs, buf);
 
         config->signer.encHeadPayload += fb_esp_pgm_str_4; // "."
         config->signer.encHeadPayload += config->signer.encPayload;
@@ -1165,22 +1129,24 @@ bool Firebase_Signer::createJWT()
 
 // create message digest from encoded header and payload
 #if defined(ESP32)
-        config->signer.hash = (uint8_t *)ut->newP(config->signer.hashSize);
-        int ret = mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), (const unsigned char *)config->signer.encHeadPayload.c_str(), config->signer.encHeadPayload.length(), config->signer.hash);
+        config->signer.hash = MemoryHelper::createBuffer<uint8_t *>(mbfs, config->signer.hashSize);
+        int ret = mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
+                             (const unsigned char *)config->signer.encHeadPayload.c_str(),
+                             config->signer.encHeadPayload.length(), config->signer.hash);
         if (ret != 0)
         {
-            char *temp = (char *)ut->newP(100);
+            char *temp = MemoryHelper::createBuffer<char *>(mbfs, 100);
             mbedtls_strerror(ret, temp, 100);
             config->signer.tokens.error.message = temp;
             config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_md: "));
-            ut->delP(&temp);
+            MemoryHelper::freeBuffer(mbfs, temp);
             setTokenError(FIREBASE_ERROR_TOKEN_CREATE_HASH);
             sendTokenStatusCB();
-            ut->delP(&config->signer.hash);
+            MemoryHelper::freeBuffer(mbfs, config->signer.hash);
             return false;
         }
 #elif defined(ESP8266)
-        config->signer.hash = (char *)ut->newP(config->signer.hashSize);
+        config->signer.hash = MemoryHelper::createBuffer<char *>(Signer.mbfs, config->signer.hashSize);
         br_sha256_context mc;
         br_sha256_init(&mc);
         br_sha256_update(&mc, config->signer.encHeadPayload.c_str(), config->signer.encHeadPayload.length());
@@ -1191,10 +1157,7 @@ bool Firebase_Signer::createJWT()
         config->signer.tokens.jwt += fb_esp_pgm_str_4; // "."
         config->signer.encHeadPayload.clear();
 
-        delete jsonPtr;
-        delete resultPtr;
-        jsonPtr = nullptr;
-        resultPtr = nullptr;
+        freeJson();
     }
     else if (config->signer.step == fb_esp_jwt_generation_step_sign)
     {
@@ -1207,28 +1170,32 @@ bool Firebase_Signer::createJWT()
         // parse priv key
         int ret = 0;
         if (config->signer.pk.length() > 0)
-            ret = mbedtls_pk_parse_key(config->signer.pk_ctx, (const unsigned char *)config->signer.pk.c_str(), config->signer.pk.length() + 1, NULL, 0);
+            ret = mbedtls_pk_parse_key(config->signer.pk_ctx,
+                                       (const unsigned char *)config->signer.pk.c_str(),
+                                       config->signer.pk.length() + 1, NULL, 0);
         else if (strlen_P(config->service_account.data.private_key) > 0)
-            ret = mbedtls_pk_parse_key(config->signer.pk_ctx, (const unsigned char *)config->service_account.data.private_key, strlen_P(config->service_account.data.private_key) + 1, NULL, 0);
+            ret = mbedtls_pk_parse_key(config->signer.pk_ctx,
+                                       (const unsigned char *)config->service_account.data.private_key,
+                                       strlen_P(config->service_account.data.private_key) + 1, NULL, 0);
 
         if (ret != 0)
         {
-            char *temp = (char *)ut->newP(100);
+            char *temp = MemoryHelper::createBuffer<char *>(mbfs, 100);
             mbedtls_strerror(ret, temp, 100);
             config->signer.tokens.error.message = temp;
             config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_pk_parse_key: "));
-            ut->delP(&temp);
+            MemoryHelper::freeBuffer(mbfs, temp);
             setTokenError(FIREBASE_ERROR_TOKEN_PARSE_PK);
             sendTokenStatusCB();
             mbedtls_pk_free(config->signer.pk_ctx);
-            ut->delP(&config->signer.hash);
+            MemoryHelper::freeBuffer(mbfs, config->signer.hash);
             delete config->signer.pk_ctx;
             config->signer.pk_ctx = nullptr;
             return false;
         }
 
         // generate RSA signature from private key and message digest
-        config->signer.signature = (unsigned char *)ut->newP(config->signer.signatureSize);
+        config->signer.signature = MemoryHelper::createBuffer<unsigned char *>(mbfs, config->signer.signatureSize);
         size_t sigLen = 0;
         config->signer.entropy_ctx = new mbedtls_entropy_context();
         config->signer.ctr_drbg_ctx = new mbedtls_ctr_drbg_context();
@@ -1236,33 +1203,36 @@ bool Firebase_Signer::createJWT()
         mbedtls_ctr_drbg_init(config->signer.ctr_drbg_ctx);
         mbedtls_ctr_drbg_seed(config->signer.ctr_drbg_ctx, mbedtls_entropy_func, config->signer.entropy_ctx, NULL, 0);
 
-        ret = mbedtls_pk_sign(config->signer.pk_ctx, MBEDTLS_MD_SHA256, (const unsigned char *)config->signer.hash, config->signer.hashSize, config->signer.signature, &sigLen, mbedtls_ctr_drbg_random, config->signer.ctr_drbg_ctx);
+        ret = mbedtls_pk_sign(config->signer.pk_ctx, MBEDTLS_MD_SHA256,
+                              (const unsigned char *)config->signer.hash, config->signer.hashSize,
+                              config->signer.signature, &sigLen,
+                              mbedtls_ctr_drbg_random, config->signer.ctr_drbg_ctx);
         if (ret != 0)
         {
-            char *temp = (char *)ut->newP(100);
+            char *temp = MemoryHelper::createBuffer<char *>(mbfs, 100);
             mbedtls_strerror(ret, temp, 100);
             config->signer.tokens.error.message = temp;
             config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_pk_sign: "));
-            ut->delP(&temp);
+            MemoryHelper::freeBuffer(mbfs, temp);
             setTokenError(FIREBASE_ERROR_TOKEN_SIGN);
             sendTokenStatusCB();
         }
         else
         {
             config->signer.encSignature.clear();
-            size_t len = ut->base64EncLen(config->signer.signatureSize);
-            char *buf = (char *)ut->newP(len);
-            ut->encodeBase64Url(buf, config->signer.signature, config->signer.signatureSize);
+            size_t len = Base64Helper::encodedLength(config->signer.signatureSize);
+            char *buf = MemoryHelper::createBuffer<char *>(mbfs, len);
+            Base64Helper::encodeUrl(mbfs, buf, config->signer.signature, config->signer.signatureSize);
             config->signer.encSignature = buf;
-            ut->delP(&buf);
+            MemoryHelper::freeBuffer(mbfs, buf);
 
             config->signer.tokens.jwt += config->signer.encSignature;
             config->signer.pk.clear();
             config->signer.encSignature.clear();
         }
 
-        ut->delP(&config->signer.signature);
-        ut->delP(&config->signer.hash);
+        MemoryHelper::freeBuffer(mbfs, config->signer.signature);
+        MemoryHelper::freeBuffer(mbfs, config->signer.hash);
         mbedtls_pk_free(config->signer.pk_ctx);
         mbedtls_entropy_free(config->signer.entropy_ctx);
         mbedtls_ctr_drbg_free(config->signer.ctr_drbg_ctx);
@@ -1279,7 +1249,7 @@ bool Firebase_Signer::createJWT()
 #elif defined(ESP8266)
         // RSA private key
         BearSSL::PrivateKey *pk = nullptr;
-        ut->idle();
+        Utils::idle();
         // parse priv key
         if (config->signer.pk.length() > 0)
             pk = new BearSSL::PrivateKey((const char *)config->signer.pk.c_str());
@@ -1309,17 +1279,18 @@ bool Firebase_Signer::createJWT()
         // generate RSA signature from private key and message digest
         config->signer.signature = new unsigned char[config->signer.signatureSize];
 
-        ut->idle();
-        int ret = br_rsa_i15_pkcs1_sign(BR_HASH_OID_SHA256, (const unsigned char *)config->signer.hash, br_sha256_SIZE, br_rsa_key, config->signer.signature);
-        ut->idle();
-        ut->delP(&config->signer.hash);
+        Utils::idle();
+        int ret = br_rsa_i15_pkcs1_sign(BR_HASH_OID_SHA256, (const unsigned char *)config->signer.hash,
+                                        br_sha256_SIZE, br_rsa_key, config->signer.signature);
+        Utils::idle();
+        MemoryHelper::freeBuffer(mbfs, config->signer.hash);
 
-        size_t len = ut->base64EncLen(config->signer.signatureSize);
-        char *buf = (char *)ut->newP(len);
-        ut->encodeBase64Url(buf, config->signer.signature, config->signer.signatureSize);
+        size_t len = Base64Helper::encodedLength(config->signer.signatureSize);
+        char *buf = MemoryHelper::createBuffer<char *>(mbfs, len);
+        Base64Helper::encodeUrl(mbfs, buf, config->signer.signature, config->signer.signatureSize);
         config->signer.encSignature = buf;
-        ut->delP(&buf);
-        ut->delP(&config->signer.signature);
+        MemoryHelper::freeBuffer(mbfs, buf);
+        MemoryHelper::freeBuffer(mbfs, config->signer.signature);
         delete pk;
         pk = nullptr;
 
@@ -1348,10 +1319,17 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
     config->signer.signup = false;
 
-    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->internal.fb_processing)
+    if (config->signer.tokens.status == token_status_on_request ||
+        config->signer.tokens.status == token_status_on_refresh ||
+        config->internal.fb_processing)
         return false;
 
-    if (!initClient(createUser ? fb_esp_pgm_str_250 /* "identitytoolkit" */ : fb_esp_pgm_str_193 /* "www" */, createUser ? token_status_uninitialized : token_status_on_request))
+    if (!initClient(createUser
+                        ? fb_esp_pgm_str_250 /* "identitytoolkit" */
+                        : fb_esp_pgm_str_193 /* "www" */,
+                    createUser
+                        ? token_status_uninitialized
+                        : token_status_on_request))
         return false;
 
     if (createUser)
@@ -1373,8 +1351,8 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
     jsonPtr->add(pgm2Str(fb_esp_pgm_str_198 /* "returnSecureToken" */), true);
 
-    MB_String req = fb_esp_pgm_str_24; // "POST"
-    req += fb_esp_pgm_str_6;           // " "
+    MB_String req;
+    HttpHelper::addRequestHeaderFirst(req, m_post);
 
     if (createUser)
         req += fb_esp_pgm_str_259; // "/v1/accounts:signUp?key="
@@ -1385,25 +1363,17 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     }
 
     req += config->api_key;
-    req += fb_esp_pgm_str_30; // " HTTP/1.1\r\n";
+    HttpHelper::addRequestHeaderLast(req);
 
-    req += fb_esp_pgm_str_31; // "Host: "
     if (createUser)
-        req += fb_esp_pgm_str_250; // "identitytoolkit";
+        HttpHelper::addGAPIsHostHeader(req, fb_esp_pgm_str_250 /* "identitytoolkit" */);
     else
-        req += fb_esp_pgm_str_193; // "www"
-    req += fb_esp_pgm_str_4;       //"."
-    req += fb_esp_pgm_str_120;     // "googleapis.com"
-    req += fb_esp_pgm_str_21;      // "\r\n"
-    req += fb_esp_pgm_str_32;      //"User-Agent: ESP\r\n";
-    req += fb_esp_pgm_str_12;      // "Content-Length: "
-    req += strlen(jsonPtr->raw()); // {"email":"<email>","password":"<password>","returnSecureToken":true}
-    req += fb_esp_pgm_str_21;      // "\r\n"
-    req += fb_esp_pgm_str_8;       // "Content-Type: "
-    req += fb_esp_pgm_str_129;     // "application/json"
-    req += fb_esp_pgm_str_21;      // "\r\n"
-    req += fb_esp_pgm_str_21;      // "\r\n"
+        HttpHelper::addGAPIsHostHeader(req, fb_esp_pgm_str_193 /* "www" */);
 
+    HttpHelper::addUAHeader(req);
+    HttpHelper::addContentLengthHeader(req, strlen(jsonPtr->raw())); // {"email":"<email>","password":"<password>","returnSecureToken":true}
+    HttpHelper::addContentTypeHeader(req, fb_esp_pgm_str_129 /* "application/json" */);
+    HttpHelper::addNewLine(req);
     req += jsonPtr->raw();
 
     tcpClient->send(req.c_str());
@@ -1411,9 +1381,7 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     req.clear();
 
     if (response_code < 0)
-    {
         return handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
-    }
 
     jsonPtr->clear();
 
@@ -1422,13 +1390,13 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     {
         struct fb_esp_auth_token_error_t error;
 
-        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
+        if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
             if (!createUser)
                 config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
 
@@ -1456,23 +1424,23 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
                 config->signer.anonymous = auth->user.email.length() == 0 && auth->user.password.length() == 0;
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_200 /* "idToken" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_200 /* "idToken" */))
             {
                 config->internal.auth_token = resultPtr->to<const char *>();
                 config->internal.atok_len = strlen(resultPtr->to<const char *>());
                 config->internal.ltok_len = 0;
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_201 /* "refreshToken" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_201 /* "refreshToken" */))
             {
                 config->internal.refresh_token = resultPtr->to<const char *>();
                 config->internal.rtok_len = strlen(resultPtr->to<const char *>());
             }
 
-            if (parseJsonResponse(fb_esp_pgm_str_202 /* "expiresIn" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_202 /* "expiresIn" */))
                 getExpiration(resultPtr->to<const char *>());
 
-            if (parseJsonResponse(fb_esp_pgm_str_175 /* "localId" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_175 /* "localId" */))
                 auth->token.uid = resultPtr->to<const char *>();
 
             if (!createUser)
@@ -1487,15 +1455,15 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
 bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
 {
-
-    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || config->internal.fb_processing)
+    if (config->signer.tokens.status == token_status_on_request ||
+        config->signer.tokens.status == token_status_on_refresh ||
+        config->internal.fb_processing)
         return false;
 
     if (!initClient(fb_esp_pgm_str_250 /* "identitytoolkit" */, token_status_uninitialized))
         return false;
 
     config->signer.signup = false;
-
     config->internal.fb_processing = true;
 
     MB_String _idToken = idToken;
@@ -1504,28 +1472,16 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     else
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_200 /* "idToken" */), config->internal.auth_token);
 
-    MB_String req = fb_esp_pgm_str_24; // "POST"
-    req += fb_esp_pgm_str_6;           // " "
-
+    MB_String req;
+    HttpHelper::addRequestHeaderFirst(req, m_post);
     req += fb_esp_pgm_str_582; //"/v1/accounts:delete?key="
-
     req += config->api_key;
-    req += fb_esp_pgm_str_30; // " HTTP/1.1\r\n";
-
-    req += fb_esp_pgm_str_31;  // "Host: "
-    req += fb_esp_pgm_str_250; // "identitytoolkit";
-
-    req += fb_esp_pgm_str_4;   // "."
-    req += fb_esp_pgm_str_120; // "googleapis.com"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_32;  //"User-Agent: ESP\r\n";
-    req += fb_esp_pgm_str_12;  // "Content-Length: "
-    req += strlen(jsonPtr->raw());
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_8;   // "Content-Type: "
-    req += fb_esp_pgm_str_129; // "application/json"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_21;  // "\r\n"
+    HttpHelper::addRequestHeaderLast(req);
+    HttpHelper::addGAPIsHostHeader(req, fb_esp_pgm_str_250 /* "identitytoolkit" */);
+    HttpHelper::addUAHeader(req);
+    HttpHelper::addContentLengthHeader(req, strlen(jsonPtr->raw()));
+    HttpHelper::addContentTypeHeader(req, fb_esp_pgm_str_129 /* "application/json" */);
+    HttpHelper::addNewLine(req);
 
     req += jsonPtr->raw(); // {"idToken":"<id token>"}
 
@@ -1541,10 +1497,10 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     {
         struct fb_esp_auth_token_error_t error;
 
-        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
+        if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
-            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
 
@@ -1594,7 +1550,7 @@ void Firebase_Signer::setNetworkStatus(bool status)
 bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status status)
 {
 
-    ut->idle();
+    Utils::idle();
 
     if (status != token_status_uninitialized)
     {
@@ -1622,8 +1578,7 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
         if (tcpClient)
             intTCPClient = true;
 
-        tcpClient->setMBFS(mbfs);
-        tcpClient->setConfig(config);
+        tcpClient->setConfig(config, mbfs);
 
         // No callbacks i.e., tcpConnectionCB, networkConnectionCB and networkStatusCB for external Client are available
         // when FirebaseData Object was not declared globally
@@ -1658,17 +1613,16 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
 #if defined(ESP8266) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
     tcpClient->setBufferSizes(1024, 1024);
 #endif
-    jsonPtr = new FirebaseJson();
-    resultPtr = new FirebaseJsonData();
 
-    MB_String host = subDomain;
-    host += fb_esp_pgm_str_4;   // "."
-    host += fb_esp_pgm_str_120; // "googleapis.com"
+    initJson();
+
+    MB_String host;
+    HttpHelper::addGAPIsHost(host, subDomain);
 
     // use for authentication task
     tcpClient->reserved = true;
 
-    ut->idle();
+    Utils::idle();
     tcpClient->begin(host.c_str(), 443, &response_code);
 
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)
@@ -1684,14 +1638,17 @@ bool Firebase_Signer::requestTokens(bool refresh)
 {
     time_t now = getTime();
 
-    if (config->signer.tokens.status == token_status_on_request || config->signer.tokens.status == token_status_on_refresh || ((unsigned long)now < ESP_DEFAULT_TS && !refresh && !config->signer.customTokenCustomSet) || config->internal.fb_processing)
+    if (config->signer.tokens.status == token_status_on_request ||
+        config->signer.tokens.status == token_status_on_refresh ||
+        ((unsigned long)now < ESP_DEFAULT_TS && !refresh && !config->signer.customTokenCustomSet) ||
+        config->internal.fb_processing)
         return false;
 
     if (!initClient(fb_esp_pgm_str_193 /* "www" */, refresh ? token_status_on_refresh : token_status_on_request))
         return false;
 
-    MB_String req = fb_esp_pgm_str_24; // "POST"
-    req += fb_esp_pgm_str_6;           // " "
+    MB_String req;
+    HttpHelper::addRequestHeaderFirst(req, m_post);
 
     if (config->signer.tokens.token_type == token_type_custom_token)
     {
@@ -1706,15 +1663,15 @@ bool Firebase_Signer::requestTokens(bool refresh)
         req += fb_esp_pgm_str_194; // "/identitytoolkit/v3/relyingparty/"
         req += fb_esp_pgm_str_232; // "verifyCustomToken?key="
         req += config->api_key;
-        req += fb_esp_pgm_str_30;  // " HTTP/1.1\r\n"
-        req += fb_esp_pgm_str_31;  // "Host: "
-        req += fb_esp_pgm_str_193; // "www"
+        HttpHelper::addRequestHeaderLast(req);
+        HttpHelper::addGAPIsHostHeader(req, fb_esp_pgm_str_193 /* "www" */);
     }
     else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
     {
         if (refresh)
         {
-            // {"client_id":"<client id>","client_secret":"<client secret>","grant_type":"refresh_token","refresh_token":"<refresh token>"}
+            // {"client_id":"<client id>","client_secret":"<client secret>","grant_type":"refresh_token",
+            // "refresh_token":"<refresh token>"}
             jsonPtr->add(pgm2Str(fb_esp_pgm_str_253 /* "client_id" */), config->internal.client_id.c_str());
             jsonPtr->add(pgm2Str(fb_esp_pgm_str_188 /* "client_secret" */), config->internal.client_secret.c_str());
 
@@ -1727,29 +1684,21 @@ bool Firebase_Signer::requestTokens(bool refresh)
             // rfc 7523, JWT Bearer Token Grant Type Profile for OAuth 2.0
 
             // {"grant_type":"urn:ietf:params:oauth:grant-type:jwt-bearer","assertion":"<signed jwt token>"}
-            jsonPtr->add(pgm2Str(fb_esp_pgm_str_227 /* "grant_type" */), pgm2Str(fb_esp_pgm_str_228 /* "urn:ietf:params:oauth:grant-type:jwt-bearer" */));
+            jsonPtr->add(pgm2Str(fb_esp_pgm_str_227 /* "grant_type" */),
+                         pgm2Str(fb_esp_pgm_str_228 /* "urn:ietf:params:oauth:grant-type:jwt-bearer" */));
             jsonPtr->add(pgm2Str(fb_esp_pgm_str_229 /* "assertion" */), config->signer.tokens.jwt.c_str());
         }
 
         req += fb_esp_pgm_str_1;   // "/"
         req += fb_esp_pgm_str_233; // "token"
-        req += fb_esp_pgm_str_30;  // " HTTP/1.1\r\n"
-        req += fb_esp_pgm_str_31;  // "Host: "
-        req += fb_esp_pgm_str_251; // "aouth2"
+        HttpHelper::addRequestHeaderLast(req);
+        HttpHelper::addGAPIsHostHeader(req, fb_esp_pgm_str_251 /* "aouth2" */);
     }
 
-    req += fb_esp_pgm_str_4;   //"."
-    req += fb_esp_pgm_str_120; //"googleapis.com"
-
-    req += fb_esp_pgm_str_21; // "\r\n"
-    req += fb_esp_pgm_str_32; // "User-Agent: ESP\r\n"
-    req += fb_esp_pgm_str_12; //"Content-Length: "
-    req += strlen(jsonPtr->raw());
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_8;   //"Content-Type: "
-    req += fb_esp_pgm_str_129; //"application/json"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_21;  // "\r\n"
+    HttpHelper::addUAHeader(req);
+    HttpHelper::addContentLengthHeader(req, strlen(jsonPtr->raw()));
+    HttpHelper::addContentTypeHeader(req, fb_esp_pgm_str_129 /* "application/json" */);
+    HttpHelper::addNewLine(req);
 
     req += jsonPtr->raw();
 
@@ -1766,24 +1715,26 @@ bool Firebase_Signer::requestTokens(bool refresh)
     if (handleTokenResponse(httpCode))
     {
         config->signer.tokens.jwt.clear();
-        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
+        if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
             config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
-        else if (parseJsonResponse(fb_esp_pgm_str_549 /* "error" */))
+        else if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_549 /* "error" */))
         {
             error.code = -1;
             config->signer.tokens.status = token_status_error;
 
-            if (parseJsonResponse(fb_esp_pgm_str_583 /* "error_description" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_583 /* "error_description" */))
                 error.message = resultPtr->to<const char *>();
         }
 
-        if (error.code != 0 && !config->signer.customTokenCustomSet && (config->signer.tokens.token_type == token_type_custom_token || config->signer.tokens.token_type == token_type_oauth2_access_token))
+        if (error.code != 0 && !config->signer.customTokenCustomSet &&
+            (config->signer.tokens.token_type == token_type_custom_token ||
+             config->signer.tokens.token_type == token_type_oauth2_access_token))
         {
             // new jwt needed as it is already cleared
             config->signer.step = fb_esp_jwt_generation_step_encode_header_payload;
@@ -1800,39 +1751,37 @@ bool Firebase_Signer::requestTokens(bool refresh)
 
         if (error.code == 0)
         {
-
             if (config->signer.tokens.token_type == token_type_custom_token)
             {
-
-                if (parseJsonResponse(fb_esp_pgm_str_200 /* "idToken" */))
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_200 /* "idToken" */))
                 {
                     config->internal.auth_token = resultPtr->to<const char *>();
                     config->internal.atok_len = strlen(resultPtr->to<const char *>());
                     config->internal.ltok_len = 0;
                 }
 
-                if (parseJsonResponse(fb_esp_pgm_str_201 /* "refreshToken" */))
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_201 /* "refreshToken" */))
                 {
                     config->internal.refresh_token = resultPtr->to<const char *>();
                     config->internal.rtok_len = strlen(resultPtr->to<const char *>());
                 }
 
-                if (parseJsonResponse(fb_esp_pgm_str_202 /* "expiresIn" */))
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_202 /* "expiresIn" */))
                     getExpiration(resultPtr->to<const char *>());
             }
             else if (config->signer.tokens.token_type == token_type_oauth2_access_token)
             {
-                if (parseJsonResponse(fb_esp_pgm_str_235 /* "access_token" */))
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_235 /* "access_token" */))
                 {
                     config->internal.auth_token = resultPtr->to<const char *>();
                     config->internal.atok_len = strlen(resultPtr->to<const char *>());
                     config->internal.ltok_len = 0;
                 }
 
-                if (parseJsonResponse(fb_esp_pgm_str_236 /* "token_type" */))
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_236 /* "token_type" */))
                     config->signer.tokens.auth_type = resultPtr->to<const char *>();
 
-                if (parseJsonResponse(fb_esp_pgm_str_210 /* "expires_in" */))
+                if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_210 /* "expires_in" */))
                     getExpiration(resultPtr->to<const char *>());
             }
             return handleTaskError(FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY);
@@ -1853,7 +1802,6 @@ void Firebase_Signer::getExpiration(const char *exp)
 
 bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email_sending_type type)
 {
-
     if (config->internal.fb_processing)
         return false;
 
@@ -1889,34 +1837,19 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_196 /* "email" */), _payload);
     }
 
-    MB_String s;
-    jsonPtr->toString(s);
-
-    MB_String req = fb_esp_pgm_str_24; // "POST"
-    req += fb_esp_pgm_str_6;           // " "
-
+    MB_String req;
+    HttpHelper::addRequestHeaderFirst(req, m_post);
     req += fb_esp_pgm_str_194; // "/identitytoolkit/v3/relyingparty/"
     req += fb_esp_pgm_str_262; // "getOobConfirmationCode?key="
-
     req += config->api_key;
-    req += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
+    HttpHelper::addRequestHeaderLast(req);
+    HttpHelper::addGAPIsHostHeader(req, fb_esp_pgm_str_193 /* "www" */);
+    HttpHelper::addUAHeader(req);
+    HttpHelper::addContentLengthHeader(req, strlen(jsonPtr->raw()));
+    HttpHelper::addContentTypeHeader(req, fb_esp_pgm_str_129 /* "application/json" */);
+    HttpHelper::addNewLine(req);
 
-    req += fb_esp_pgm_str_31; // "Host: "
-
-    req += fb_esp_pgm_str_193; // "www"
-    req += fb_esp_pgm_str_4;   // "."
-    req += fb_esp_pgm_str_120; // "googleapis.com"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_32;  // "User-Agent: ESP\r\n"
-    req += fb_esp_pgm_str_12;  // "Content-Length: "
-    req += s.length();
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_8;   // "Content-Type: "
-    req += fb_esp_pgm_str_129; // "application/json"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-    req += fb_esp_pgm_str_21;  // "\r\n"
-
-    req += s.c_str();
+    req += jsonPtr->raw();
 
     tcpClient->send(req.c_str());
     req.clear();
@@ -1930,10 +1863,10 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     {
         struct fb_esp_auth_token_error_t error;
 
-        if (parseJsonResponse(fb_esp_pgm_str_257 /* "error/code" */))
+        if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_257 /* "error/code" */))
         {
             error.code = resultPtr->to<int>();
-            if (parseJsonResponse(fb_esp_pgm_str_258 /* "error/message" */))
+            if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_258 /* "error/message" */))
                 error.message = resultPtr->to<const char *>();
         }
         if (type == fb_esp_user_email_sending_type_verify)
@@ -1978,7 +1911,8 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
 
     if (config)
     {
-        if (&config->signer.tokens.error.message != &buff && (config->signer.tokens.status == token_status_error || config->signer.tokens.error.code != 0))
+        if (&config->signer.tokens.error.message != &buff &&
+            (config->signer.tokens.status == token_status_error || config->signer.tokens.error.code != 0))
         {
             buff = config->signer.tokens.error.message;
             return;
@@ -2234,8 +2168,9 @@ fb_esp_auth_token_type Firebase_Signer::getTokenType()
 
 const char *Firebase_Signer::getToken()
 {
-    if (!config || config->internal.auth_token[0] == '?' /* return empty string if refresh token assigned when id token is empty via Firebase.setIdToken */)
-        return "";
+    if (!config || config->internal.auth_token[0] == '?'
+        /* return empty string if refresh token assigned when id token is empty via Firebase.setIdToken */)
+        return MB_String().c_str();
 
     return config->internal.auth_token.c_str();
 }
@@ -2243,7 +2178,7 @@ const char *Firebase_Signer::getToken()
 const char *Firebase_Signer::getRefreshToken()
 {
     if (!config)
-        return "";
+        return MB_String().c_str();
     return config->internal.refresh_token.c_str();
 }
 
@@ -2252,25 +2187,25 @@ FirebaseConfig *Firebase_Signer::getCfg()
     return config;
 }
 
-FirebaseAuth *Firebase_Signer::getAuth()
-{
-    return auth;
-}
-
 MB_FS *Firebase_Signer::getMBFS()
 {
     return mbfs;
 }
 
-UtilsClass *Firebase_Signer::getUtils()
+uint32_t *Firebase_Signer::getTS()
 {
-    return ut;
+    return mb_ts;
+}
+
+FirebaseAuth *Firebase_Signer::getAuth()
+{
+    return auth;
 }
 
 MB_String Firebase_Signer::getCAFile()
 {
     if (!config)
-        return "";
+        return MB_String();
     return config->cert.file;
 }
 fb_esp_mem_storage_type Firebase_Signer::getCAFileStorage()

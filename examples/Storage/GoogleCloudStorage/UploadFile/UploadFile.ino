@@ -122,7 +122,7 @@ void gcsUploadCallback(UploadStatusInfo info)
         Serial.printf("Generation: %lu\n", meta.generation);
         Serial.printf("ETag: %s\n", meta.etag.c_str());
         Serial.printf("CRC32: %s\n", meta.crc32.c_str());
-        Serial.printf("Token: %s\n", meta.downloadTokens.c_str());       // only gcs_upload_type_multipart and gcs_upload_type_resumable upload types.
+        Serial.printf("Tokens: %s\n", meta.downloadTokens.c_str());       // only gcs_upload_type_multipart and gcs_upload_type_resumable upload types.
         Serial.printf("Download URL: %s\n", fbdo.downloadURL().c_str()); // only gcs_upload_type_multipart and gcs_upload_type_resumable upload types.
     }
     else if (info.status == fb_esp_gcs_upload_status_error)

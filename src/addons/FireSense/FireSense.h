@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.12
+ * FireSense v1.0.11
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 1, 2022
+ * Created July 10, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -4662,7 +4662,6 @@ void FireSenseClass::split(MB_VECTOR<MB_String> &out, const char *str, const cha
     }
 
     delete[] buf;
-    buf = nullptr;
 }
 
 void FireSenseClass::setLogQueryIndex()

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.17
+ * Google's Cloud Functions class, Functions.cpp version 1.1.18
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -47,27 +47,35 @@ FB_Functions::~FB_Functions()
 {
 }
 
-bool FB_Functions::mCallFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId, MB_StringPtr data)
+void FB_Functions::makeRequest(struct fb_esp_functions_req_t &req, fb_esp_functions_request_type type,
+                               MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId)
 {
-    struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_call;
+    req.requestType = type;
     req.projectId = projectId;
     req.locationId = locationId;
     req.functionId = functionId;
+}
+
+bool FB_Functions::mCallFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId,
+                                 MB_StringPtr functionId, MB_StringPtr data)
+{
+    struct fb_esp_functions_req_t req;
+
+    makeRequest(req, fb_esp_functions_request_type_call, projectId, locationId, functionId);
 
     req.payload = data;
+    fbdo->initJson();
 
-    if (!fbdo->session.jsonPtr)
-        fbdo->session.jsonPtr = new FirebaseJson();
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_135 /* "data" */, req.payload);
 
-    fbdo->session.jsonPtr->clear();
-    fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_135 /* "data" */), req.payload.c_str());
-    req.payload = fbdo->session.jsonPtr->raw();
-    fbdo->session.jsonPtr->clear();
+    JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
+
     return sendRequest(fbdo, &req);
 }
 
-void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, bool patch, fb_esp_functions_creation_step step, fb_esp_functions_creation_step nextStep, FunctionsOperationCallback callback, FunctionsOperationStatusInfo *statusInfo)
+void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, bool patch,
+                                   fb_esp_functions_creation_step step, fb_esp_functions_creation_step nextStep,
+                                   FunctionsOperationCallback callback, FunctionsOperationStatusInfo *statusInfo)
 {
     struct fb_esp_deploy_task_info_t taskInfo;
     taskInfo.step = step;
@@ -121,13 +129,13 @@ bool FB_Functions::mPatchFunction(FirebaseData *fbdo, MB_StringPtr functionId, F
     return createFunctionInt(fbdo, functionId, patchData, true, NULL, nullptr);
 }
 
-bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId, FunctionsConfig *config, bool patch, FunctionsOperationCallback cb, FunctionsOperationStatusInfo *info)
+bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId,
+                                     FunctionsConfig *config, bool patch, FunctionsOperationCallback cb,
+                                     FunctionsOperationStatusInfo *info)
 {
 
     if (patch)
-    {
         fbdo->session.cfn.cbInfo.functionId = functionId;
-    }
     else
     {
         MB_String _functionId = functionId;
@@ -137,7 +145,8 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
             fbdo->session.cfn.cbInfo.functionId = config->_entryPoint;
     }
 
-    if (config->_sourceType == functions_sources_type_local_archive || config->_sourceType == functions_sources_type_flash_data)
+    if (config->_sourceType == functions_sources_type_local_archive ||
+        config->_sourceType == functions_sources_type_flash_data)
     {
         if (config->_sourceType == functions_sources_type_local_archive)
         {
@@ -147,12 +156,15 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
             fbdo->session.cfn.filepath = config->_uploadArchiveFile;
             fbdo->session.cfn.storageType = config->_uploadArchiveStorageType;
 
-            int sz = ut->mbfs->open(config->_uploadArchiveFile, mbfs_type config->_uploadArchiveStorageType, mb_fs_open_mode_read);
+            int sz = Signer.mbfs->open(config->_uploadArchiveFile, mbfs_type config->_uploadArchiveStorageType,
+                                       mb_fs_open_mode_read);
 
             if (sz < 0)
             {
                 fbdo->session.response.code = MB_FS_ERROR_FILE_IO_ERROR;
-                sendCallback(fbdo, fb_esp_functions_operation_status_error, fbdo->errorReason().c_str(), cb, info);
+                fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                fbdo->session.cfn.cbInfo.errorMsg = fbdo->errorReason().c_str();
+                sendCallback(fbdo, cb, info);
                 return false;
             }
 
@@ -162,30 +174,44 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
         // Close file and open later.
         // This is inefficient unless less memory usage than keep file opened
         // which causes the issue in ESP32 core 2.0.x
-        ut->mbfs->close(mbfs_type config->_uploadArchiveStorageType);
+        Signer.mbfs->close(mbfs_type config->_uploadArchiveStorageType);
 
-        addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_gen_upload_url, fb_esp_functions_creation_step_upload_zip_file, cb, info);
+        addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_gen_upload_url,
+                        fb_esp_functions_creation_step_upload_zip_file, cb, info);
         return true;
     }
     else if (config->_sourceType == functions_sources_type_storage_bucket_sources)
     {
 
-        addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_upload_source_files, fb_esp_functions_creation_step_deploy, cb, info);
+        addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_upload_source_files,
+                        fb_esp_functions_creation_step_deploy, cb, info);
         return true;
     }
     else
     {
         bool ret = false;
         fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_deploy_in_progress;
-        sendCallback(fbdo, fbdo->session.cfn.cbInfo.status, "", cb, info);
+        fbdo->session.cfn.cbInfo.errorMsg.clear();
+        sendCallback(fbdo, cb, info);
         MB_String _functionId = functionId;
         ret = deploy(fbdo, _functionId.c_str(), config, patch);
         fbdo->session.cfn.cbInfo.triggerUrl = config->_httpsTriggerUrl;
+        if (info)
+            info->triggerUrl = config->_httpsTriggerUrl;
+
+        if (!ret)
+        {
+            fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+            fbdo->session.cfn.cbInfo.errorMsg = fbdo->session.error.c_str();
+            sendCallback(fbdo, cb, info);
+        }
 
         if (ret && config->_policy)
-            addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_polling_status, fb_esp_functions_creation_step_set_iam_policy, cb, info);
+            addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_polling_status,
+                            fb_esp_functions_creation_step_set_iam_policy, cb, info);
         else if (ret)
-            addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_polling_status, fb_esp_functions_creation_step_idle, cb, info);
+            addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_polling_status,
+                            fb_esp_functions_creation_step_idle, cb, info);
         return ret;
     }
 
@@ -194,38 +220,22 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
 
 bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
 {
-    if (!fbdo->session.jsonPtr)
-        fbdo->session.jsonPtr = new FirebaseJson();
+    fbdo->initJson();
 
-    if (!fbdo->session.jsonPtr)
-        fbdo->session.jsonPtr = new FirebaseJson();
-
-    fbdo->session.jsonPtr->clear();
-
-    fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_387 /* "projectId" */), config->_projectId.c_str());
-
-    fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_409 /* "location" */), config->_locationId.c_str());
-
-    fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_453 /* "zip" */), pgm2Str(fb_esp_pgm_str_456 /* "tmp.zip" */));
-
-    fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_454 /* "accessToken" */), Signer.getToken());
-
-    fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_455 /* "path" */), config->_bucketSourcesPath.c_str());
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_387 /* "projectId" */, config->_projectId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_409 /* "location" */, config->_locationId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_453 /* "zip" */, MB_String(fb_esp_pgm_str_456 /* "tmp.zip" */));
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_454 /* "accessToken" */, Signer.getToken());
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_455 /* "path" */, config->_bucketSourcesPath);
 
     struct fb_esp_functions_req_t req;
+
     req.requestType = fb_esp_functions_request_type_upload_bucket_sources;
 
-    req.payload = fbdo->session.jsonPtr->raw();
+    JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
 
-    fbdo->session.jsonPtr->clear();
-
-    req.host += config->_locationId.c_str();
-    req.host += fb_esp_pgm_str_397; // "-"
-    req.host += config->_projectId.c_str();
-    req.host += fb_esp_pgm_str_398; // ".cloudfunctions.net"
-
-    req.uri += fb_esp_pgm_str_1;   // "/"
-    req.uri += fb_esp_pgm_str_452; // "autozip"
+    URLHelper::addFunctionsHost(req.host, config->_locationId, config->_projectId,
+                                MB_String(fb_esp_pgm_str_452) /* "autozip" */, false);
 
     return sendRequest(fbdo, &req);
 }
@@ -234,98 +244,61 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
 {
 
     struct fb_esp_functions_req_t req;
+
     if (patch)
-    {
-        req.requestType = fb_esp_functions_request_type_patch;
         req.updateMask = &config->_updateMask;
-    }
-    else
-        req.requestType = fb_esp_functions_request_type_create;
 
-    req.projectId = config->_projectId.c_str();
-    req.locationId = config->_locationId.c_str();
-    req.functionId = functionId;
+    makeRequest(req, patch ? fb_esp_functions_request_type_patch : fb_esp_functions_request_type_create,
+                toStringPtr(config->_projectId), toStringPtr(config->_locationId),
+                toStringPtr(functionId));
 
-    MB_String path;
-    MB_String t;
+    MB_String str;
 
-    if (!fbdo->session.jsonPtr)
-        fbdo->session.jsonPtr = new FirebaseJson();
+    fbdo->initJson();
 
-    fbdo->session.jsonPtr->clear();
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_387 /* "projectId" */, config->_projectId);
+    URLHelper::host2Url(str, Signer.config->database_url);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_388 /* "databaseURL" */, str);
 
-    path = fb_esp_pgm_str_387; // "projectId"
-    fbdo->session.jsonPtr->add(path.c_str(), config->_projectId.c_str());
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_389 /* "storageBucket" */, config->_bucketId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_390 /* "locationId" */, config->_locationId);
 
-    path = fb_esp_pgm_str_388; // "databaseURL"
-    t += fb_esp_pgm_str_112;   // "https://"
-    t += Signer.getCfg()->database_url.c_str();
-    fbdo->session.jsonPtr->add(path.c_str(), t.c_str());
+    str = fb_esp_pgm_str_374;  // "environmentVariables"
+    str += fb_esp_pgm_str_1;   // "/"
+    str += fb_esp_pgm_str_386; // "FIREBASE_CONFIG"
 
-    if (config->_bucketId.length() > 0)
-    {
-        path = fb_esp_pgm_str_389; // "storageBucket"
-        fbdo->session.jsonPtr->add(path.c_str(), config->_bucketId.c_str());
-    }
+    JsonHelper::addString(&config->_funcCfg, str.c_str(), fbdo->session.jsonPtr->raw());
+    JsonHelper::clear(fbdo->session.jsonPtr);
 
-    if (config->_locationId.length() > 0)
-    {
-        path = fb_esp_pgm_str_390; // "locationId"
-        fbdo->session.jsonPtr->add(path.c_str(), config->_locationId.c_str());
-    }
+    str = fb_esp_pgm_str_374;  // "environmentVariables"
+    str += fb_esp_pgm_str_1;   // "/"
+    str += fb_esp_pgm_str_449; // "GCLOUD_PROJECT"
 
-    t.clear();
-    MB_String str = fbdo->session.jsonPtr->raw();
-    fbdo->session.jsonPtr->clear();
-
-    t = fb_esp_pgm_str_374;  // "environmentVariables"
-    t += fb_esp_pgm_str_1;   // "/"
-    t += fb_esp_pgm_str_386; // "FIREBASE_CONFIG"
-
-    config->_funcCfg.set(t.c_str(), str.c_str());
-
-    t = fb_esp_pgm_str_374;  // "environmentVariables"
-    t += fb_esp_pgm_str_1;   // "/"
-    t += fb_esp_pgm_str_449; // "GCLOUD_PROJECT"
-
-    config->_funcCfg.set(t.c_str(), config->_projectId);
+    JsonHelper::addString(&config->_funcCfg, str.c_str(), config->_projectId);
 
     config->_httpsTriggerUrl.clear();
-
-    config->_httpsTriggerUrl.clear();
-
-    str.clear();
 
     if (config->_triggerType == fb_esp_functions_trigger_type_https)
     {
-        t.clear();
-        t += fb_esp_pgm_str_112; // "https://"
-        t += config->_locationId.c_str();
-        t += fb_esp_pgm_str_397; // "-"
-        t += config->_projectId.c_str();
-        t += fb_esp_pgm_str_398; // ".cloudfunctions.net"
-        t += fb_esp_pgm_str_1;   // "/"
-        t += config->_entryPoint;
-        config->_funcCfg.set(pgm2Str(fb_esp_pgm_str_384 /* "httpsTrigger/url" */), t.c_str());
-        config->_httpsTriggerUrl = t;
-        t.clear();
+        str.clear();
+
+        URLHelper::addFunctionsHost(str, config->_locationId, config->_projectId, config->_entryPoint, true);
+        JsonHelper::addString(&config->_funcCfg, fb_esp_pgm_str_384 /* "httpsTrigger/url" */, str);
+        config->_httpsTriggerUrl = str;
+        str.clear();
     }
 
-    req.payload = config->_funcCfg.raw();
-    config->_funcCfg.clear();
+    JsonHelper::toString(&config->_funcCfg, req.payload, true);
 
     return sendRequest(fbdo, &req);
 }
 
-void FB_Functions::sendCallback(FirebaseData *fbdo, fb_esp_functions_operation_status status, const char *message, FunctionsOperationCallback cb, FunctionsOperationStatusInfo *info)
+void FB_Functions::sendCallback(FirebaseData *fbdo, FunctionsOperationCallback cb, FunctionsOperationStatusInfo *info)
 {
-    if (fbdo->session.cfn.last_status == status)
+    if (fbdo->session.cfn.last_status == fbdo->session.cfn.cbInfo.status)
         return;
 
-    fbdo->session.cfn.last_status = status;
-
-    fbdo->session.cfn.cbInfo.status = status;
-    fbdo->session.cfn.cbInfo.errorMsg = message;
+    fbdo->session.cfn.last_status = fbdo->session.cfn.cbInfo.status;
 
     if (cb)
         cb(fbdo->session.cfn.cbInfo);
@@ -334,54 +307,41 @@ void FB_Functions::sendCallback(FirebaseData *fbdo, fb_esp_functions_operation_s
     {
         info->errorMsg = fbdo->session.cfn.cbInfo.errorMsg;
         info->status = fbdo->session.cfn.cbInfo.status;
+        info->functionId = fbdo->session.cfn.cbInfo.functionId;
+        info->triggerUrl = fbdo->session.cfn.cbInfo.triggerUrl;
     }
 }
 
-bool FB_Functions::mSetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId, PolicyBuilder *policy, MB_StringPtr updateMask)
+bool FB_Functions::mSetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId,
+                                 MB_StringPtr locationId, MB_StringPtr functionId,
+                                 PolicyBuilder *policy, MB_StringPtr updateMask)
 {
     struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_set_iam_policy;
-    req.projectId = projectId;
-    req.locationId = locationId;
-    req.functionId = functionId;
 
-    if (!fbdo->session.jsonPtr)
-        fbdo->session.jsonPtr = new FirebaseJson();
+    makeRequest(req, fb_esp_functions_request_type_set_iam_policy, projectId, locationId, functionId);
 
-    fbdo->session.jsonPtr->clear();
+    fbdo->initJson();
 
     if (policy)
-    {
-        static FirebaseJson js;
-        js.clear();
-        fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_399 /* "policy" */), policy->json);
-    }
+        JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_pgm_str_399 /* "policy" */, &policy->json, true);
 
-    MB_String _updateMask = updateMask;
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_400 /* "updateMask" */, MB_String(updateMask));
 
-    if (_updateMask.length() > 0)
-    {
-        fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_400 /* "updateMask" */), _updateMask);
-    }
-
-    req.payload = fbdo->session.jsonPtr->raw();
-    fbdo->session.jsonPtr->clear();
+    JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
 
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::mGetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId, MB_StringPtr version)
+bool FB_Functions::mGetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId,
+                                 MB_StringPtr locationId, MB_StringPtr functionId, MB_StringPtr version)
 {
     struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_get_iam_policy;
-    req.projectId = projectId;
-    req.locationId = locationId;
-    req.functionId = functionId;
-    req.policyVersion = version;
-    if (!fbdo->session.jsonPtr)
-        fbdo->session.jsonPtr = new FirebaseJson();
 
-    fbdo->session.jsonPtr->clear();
+    makeRequest(req, fb_esp_functions_request_type_get_iam_policy, projectId, locationId, functionId);
+
+    req.policyVersion = version;
+
+    fbdo->initJson();
 
     return sendRequest(fbdo, &req);
 }
@@ -389,63 +349,48 @@ bool FB_Functions::mGetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId, MB_
 bool FB_Functions::mGetFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId)
 {
     struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_get;
-    req.projectId = projectId;
-    req.locationId = locationId;
-    req.functionId = functionId;
+
+    makeRequest(req, fb_esp_functions_request_type_get, projectId, locationId, functionId);
+
     _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
 
     bool ret = sendRequest(fbdo, &req);
     if (ret)
     {
-        if (!fbdo->session.jsonPtr)
-            fbdo->session.jsonPtr = new FirebaseJson();
-
-        if (!fbdo->session.dataPtr)
-            fbdo->session.dataPtr = new FirebaseJsonData();
-
-        fbdo->session.jsonPtr->clear();
-        fbdo->session.jsonPtr->setJsonData(fbdo->session.cfn.payload.c_str());
-        fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_419 /* "status" */));
-
-        if (fbdo->session.dataPtr->success)
+        fbdo->initJson();
+        JsonHelper::setData(fbdo->session.jsonPtr, fbdo->session.cfn.payload, false);
+        if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_419 /* "status" */))
         {
-            MB_String s = fb_esp_pgm_str_420; // "CLOUD_FUNCTION_STATUS_UNSPECIFIED"
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_420 /* "CLOUD_FUNCTION_STATUS_UNSPECIFIED" */) == 0)
                 _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
 
-            s = fb_esp_pgm_str_421; // "ACTIVE"
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_421 /* "ACTIVE" */) == 0)
                 _function_status = fb_esp_functions_status_ACTIVE;
 
-            s = fb_esp_pgm_str_422; // "OFFLINE"
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_422 /* "OFFLINE" */) == 0)
                 _function_status = fb_esp_functions_status_OFFLINE;
 
-            s = fb_esp_pgm_str_423; // "DEPLOY_IN_PROGRESS"
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_423 /* "DEPLOY_IN_PROGRESS" */) == 0)
                 _function_status = fb_esp_functions_status_DEPLOY_IN_PROGRESS;
 
-            s = fb_esp_pgm_str_424; // "DELETE_IN_PROGRESS"
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_424 /* "DELETE_IN_PROGRESS" */) == 0)
                 _function_status = fb_esp_functions_status_DELETE_IN_PROGRESS;
 
-            s = fb_esp_pgm_str_425; //  "UNKNOWN"
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), s.c_str()) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_425 /*  "UNKNOWN" */) == 0)
                 _function_status = fb_esp_functions_status_UNKNOWN;
-            s.clear();
         }
     }
 
     return ret;
 }
 
-bool FB_Functions::mListFunctions(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr pageSize, MB_StringPtr pageToken)
+bool FB_Functions::mListFunctions(FirebaseData *fbdo, MB_StringPtr projectId,
+                                  MB_StringPtr locationId, MB_StringPtr pageSize, MB_StringPtr pageToken)
 {
     struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_list;
-    req.projectId = projectId;
-    req.locationId = locationId;
+
+    makeRequest(req, fb_esp_functions_request_type_list, projectId, locationId, toStringPtr(""));
+
     MB_String _pageSize = pageSize;
     req.pageSize = atoi(_pageSize.c_str());
     req.pageToken = pageToken;
@@ -467,67 +412,45 @@ bool FB_Functions::mListOperations(FirebaseData *fbdo, MB_StringPtr filter, MB_S
 bool FB_Functions::mDeleteFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId)
 {
     struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_delete;
-    req.projectId = projectId;
-    req.locationId = locationId;
-    req.functionId = functionId;
+
+    makeRequest(req, fb_esp_functions_request_type_delete, projectId, locationId, functionId);
 
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::mGenerateDownloadUrl(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId, MB_StringPtr versionId)
+bool FB_Functions::mGenerateDownloadUrl(FirebaseData *fbdo, MB_StringPtr projectId,
+                                        MB_StringPtr locationId, MB_StringPtr functionId, MB_StringPtr versionId)
 {
     struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_gen_download_url;
-    req.projectId = projectId;
-    req.locationId = locationId;
-    req.functionId = functionId;
-    if (!fbdo->session.jsonPtr)
-        fbdo->session.jsonPtr = new FirebaseJson();
 
-    fbdo->session.jsonPtr->clear();
+    makeRequest(req, fb_esp_functions_request_type_gen_download_url, projectId, locationId, functionId);
 
-    MB_String _versionId = versionId;
+    fbdo->initJson();
 
-    if (_versionId.length() > 0)
-    {
-        req.versionId = atoi(_versionId.c_str());
-        fbdo->session.jsonPtr->add(pgm2Str(fb_esp_pgm_str_437 /* "versionId" */), _versionId);
-    }
-
-    req.payload = fbdo->session.jsonPtr->raw();
-    fbdo->session.jsonPtr->clear();
-
+    JsonHelper::addNumberString(fbdo->session.jsonPtr, fb_esp_pgm_str_437 /* "versionId" */, MB_String(versionId));
+    JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     return sendRequest(fbdo, &req);
 }
 
 bool FB_Functions::mGenerateUploadUrl(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId)
 {
     struct fb_esp_functions_req_t req;
-    req.requestType = fb_esp_functions_request_type_gen_upload_url;
-    req.projectId = projectId;
-    req.locationId = locationId;
+    makeRequest(req, fb_esp_functions_request_type_gen_upload_url, projectId, locationId, toStringPtr(""));
     return sendRequest(fbdo, &req);
 }
 
-bool FB_Functions::uploadFile(FirebaseData *fbdo, const char *uploadUrl, const char *filePath, fb_esp_mem_storage_type storageType)
+bool FB_Functions::uploadFile(FirebaseData *fbdo, const char *uploadUrl, const char *filePath,
+                              fb_esp_mem_storage_type storageType)
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_upload;
-
-    if (strlen(filePath) > 0)
-    {
-        if (filePath[0] != '/')
-            req.filePath += fb_esp_pgm_str_1; // "/"
-    }
-
-    req.filePath += filePath;
+    URLHelper::addPath(req.filePath, MB_String(filePath));
     req.storageType = storageType;
 
     struct fb_esp_url_info_t info;
-    ut->getUrlInfo(uploadUrl, info);
+    URLHelper::parse(Signer.mbfs, uploadUrl, info);
     req.host = info.host;
-    req.uri += fb_esp_pgm_str_1; // "/"
+    req.uri = fb_esp_pgm_str_1; // "/"
     req.uri += info.uri;
     return sendRequest(fbdo, &req);
 }
@@ -536,21 +459,15 @@ bool FB_Functions::uploadPGMArchive(FirebaseData *fbdo, const char *uploadUrl, c
 {
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_pgm_upload;
-
     req.pgmArc = pgmArc;
     req.pgmArcLen = pgmArcLen;
 
     struct fb_esp_url_info_t info;
-    ut->getUrlInfo(uploadUrl, info);
+    URLHelper::parse(Signer.mbfs, uploadUrl, info);
     req.host = info.host;
-    req.uri += fb_esp_pgm_str_1; // "/"
+    req.uri = fb_esp_pgm_str_1; // "/"
     req.uri += info.uri;
     return sendRequest(fbdo, &req);
-}
-
-void FB_Functions::begin(UtilsClass *u)
-{
-    ut = u;
 }
 
 bool FB_Functions::sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t *req)
@@ -560,7 +477,7 @@ bool FB_Functions::sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t
 
     fbdo->session.http_code = 0;
 
-    if (!Signer.getCfg())
+    if (!Signer.config)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return false;
@@ -571,21 +488,15 @@ bool FB_Functions::sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t
         return true;
 #endif
 
-    if (!fbdo->reconnect())
+    if (!fbdo->reconnect() || !Signer.tokenReady())
         return false;
 
-    if (!Signer.tokenReady())
+    if (Signer.config->internal.fb_processing)
         return false;
 
-    if (Signer.getCfg()->internal.fb_processing)
-        return false;
-
-    Signer.getCfg()->internal.fb_processing = true;
-
+    Signer.config->internal.fb_processing = true;
     fbdo->clear();
-
     connect(fbdo, req->host.c_str());
-
     return functions_sendRequest(fbdo, req);
 }
 
@@ -595,72 +506,53 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     fbdo->session.cfn.requestType = req->requestType;
 
     MB_String header;
-    if (req->requestType == fb_esp_functions_request_type_get_iam_policy || req->requestType == fb_esp_functions_request_type_list_operations || req->requestType == fb_esp_functions_request_type_get || req->requestType == fb_esp_functions_request_type_get_iam_policy || req->requestType == fb_esp_functions_request_type_list)
-        header += fb_esp_pgm_str_25; // "GET"
-    else if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources || req->requestType == fb_esp_functions_request_type_call || req->requestType == fb_esp_functions_request_type_create || req->requestType == fb_esp_functions_request_type_gen_download_url || req->requestType == fb_esp_functions_request_type_gen_upload_url || req->requestType == fb_esp_functions_request_type_set_iam_policy || req->requestType == fb_esp_functions_request_type_test_iam_policy)
-    {
-        header += fb_esp_pgm_str_24; // "POST"
-        post = true;
-    }
+    fb_esp_method method = m_undefined;
+    if (req->requestType == fb_esp_functions_request_type_get_iam_policy ||
+        req->requestType == fb_esp_functions_request_type_list_operations ||
+        req->requestType == fb_esp_functions_request_type_get ||
+        req->requestType == fb_esp_functions_request_type_get_iam_policy ||
+        req->requestType == fb_esp_functions_request_type_list)
+        method = fb_esp_method::m_get;
+    else if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources ||
+             req->requestType == fb_esp_functions_request_type_call ||
+             req->requestType == fb_esp_functions_request_type_create ||
+             req->requestType == fb_esp_functions_request_type_gen_download_url ||
+             req->requestType == fb_esp_functions_request_type_gen_upload_url ||
+             req->requestType == fb_esp_functions_request_type_set_iam_policy ||
+             req->requestType == fb_esp_functions_request_type_test_iam_policy)
+        method = fb_esp_method::m_post;
     else if (req->requestType == fb_esp_functions_request_type_patch)
-    {
-        header += fb_esp_pgm_str_26; // "PATCH"
-        post = true;
-    }
+        method = fb_esp_method::m_patch;
     else if (req->requestType == fb_esp_functions_request_type_delete)
-        header += fb_esp_pgm_str_27; // "DELETE"
-    else if (req->requestType == fb_esp_functions_request_type_upload || req->requestType == fb_esp_functions_request_type_pgm_upload)
-        header += fb_esp_pgm_str_23; // "PUT"
+        method = fb_esp_method::m_delete;
+    else if (req->requestType == fb_esp_functions_request_type_upload ||
+             req->requestType == fb_esp_functions_request_type_pgm_upload)
+        method = fb_esp_method::m_put;
 
-    header += fb_esp_pgm_str_6; // " "
+    if (method != m_undefined)
+        post = HttpHelper::addRequestHeaderFirst(header, method);
 
-    if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources || req->requestType == fb_esp_functions_request_type_upload || req->requestType == fb_esp_functions_request_type_pgm_upload)
+    if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources ||
+        req->requestType == fb_esp_functions_request_type_upload ||
+        req->requestType == fb_esp_functions_request_type_pgm_upload)
         header += req->uri;
     else if (req->requestType == fb_esp_functions_request_type_list_operations)
     {
         header += fb_esp_pgm_str_426; // "/v1/operations"
         bool hasParam = false;
 
-        if (req->filter.length() > 0)
-        {
-            hasParam = true;
-            header += fb_esp_pgm_str_173; // "?"
-            header += fb_esp_pgm_str_427; // "filter="
-            header += req->filter;
-        }
+        URLHelper::addParam(header, fb_esp_pgm_str_427 /* "filter=" */, req->filter, hasParam);
 
         if (req->pageSize > 0)
-        {
-            if (hasParam)
-                header += fb_esp_pgm_str_172; // "&"
-            else
-                header += fb_esp_pgm_str_173; // "?"
-            header += fb_esp_pgm_str_357;     // "pageSize"
-            header += fb_esp_pgm_str_361;     // "="
-            header += req->pageSize;
-            hasParam = true;
-        }
+            URLHelper::addParam(header, fb_esp_pgm_str_357 /* "pageSize" */, MB_String(req->pageSize), hasParam);
 
-        if (req->pageToken.length() > 0)
-        {
-            if (hasParam)
-                header += fb_esp_pgm_str_172; // "&"
-            else
-                header += fb_esp_pgm_str_173; // "?"
-            header += fb_esp_pgm_str_358;     // "pageToken"
-            header += fb_esp_pgm_str_361;     // "="
-            header += req->pageToken;
-            hasParam = true;
-        }
+        URLHelper::addParam(header, fb_esp_pgm_str_358 /* "pageToken" */, req->pageToken, hasParam);
     }
     else
     {
-        header += fb_esp_pgm_str_326; // "/v1/projects/"
+        URLHelper::addGAPIPath(header);
 
-        if (req->projectId.length() == 0)
-            header += Signer.getCfg()->service_account.data.project_id;
-        else
-            header += req->projectId;
+        header += req->projectId.length() == 0 ? Signer.config->service_account.data.project_id : req->projectId;
 
         header += fb_esp_pgm_str_364; // "/locations/"
         if (req->locationId.length() > 0)
@@ -673,31 +565,18 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             bool hasParam = false;
 
             if (req->pageSize > 0)
-            {
-                if (hasParam)
-                    header += fb_esp_pgm_str_172; // "&"
-                else
-                    header += fb_esp_pgm_str_173; // "?"
-                header += fb_esp_pgm_str_357;     // "pageSize"
-                header += fb_esp_pgm_str_361;     // "="
-                header += req->pageSize;
-                hasParam = true;
-            }
+                URLHelper::addParam(header, fb_esp_pgm_str_357 /* "pageSize" */, MB_String(req->pageSize), hasParam);
 
-            if (req->pageToken.length() > 0)
-            {
-                if (hasParam)
-                    header += fb_esp_pgm_str_172; // "&"
-                else
-                    header += fb_esp_pgm_str_173; // "?"
-                header += fb_esp_pgm_str_358;     // "pageToken"
-                header += fb_esp_pgm_str_361;     // "="
-                header += req->pageToken;
-                hasParam = true;
-            }
+            URLHelper::addParam(header, fb_esp_pgm_str_358 /* "pageToken" */, req->pageToken, hasParam);
         }
 
-        if (req->requestType == fb_esp_functions_request_type_patch || req->requestType == fb_esp_functions_request_type_get_iam_policy || req->requestType == fb_esp_functions_request_type_gen_download_url || req->requestType == fb_esp_functions_request_type_delete || req->requestType == fb_esp_functions_request_type_get || req->requestType == fb_esp_functions_request_type_call || req->requestType == fb_esp_functions_request_type_set_iam_policy)
+        if (req->requestType == fb_esp_functions_request_type_patch ||
+            req->requestType == fb_esp_functions_request_type_get_iam_policy ||
+            req->requestType == fb_esp_functions_request_type_gen_download_url ||
+            req->requestType == fb_esp_functions_request_type_delete ||
+            req->requestType == fb_esp_functions_request_type_get ||
+            req->requestType == fb_esp_functions_request_type_call ||
+            req->requestType == fb_esp_functions_request_type_set_iam_policy)
         {
             header += fb_esp_pgm_str_1; // "/"
             if (req->functionId.length() > 0)
@@ -711,13 +590,9 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             else if (req->requestType == fb_esp_functions_request_type_get_iam_policy)
             {
                 header += fb_esp_pgm_str_465; // ":getIamPolicy"
-                if (req->policyVersion.length() > 0)
-                {
-                    header += fb_esp_pgm_str_173; // "?"
-                    header += fb_esp_pgm_str_466; // "options.requestedPolicyVersion"
-                    header += fb_esp_pgm_str_361; // "="
-                    header += req->policyVersion;
-                }
+                bool hasParam = false;
+                URLHelper::addParam(header, fb_esp_pgm_str_466 /* "options.requestedPolicyVersion" */,
+                                    req->policyVersion, hasParam);
             }
             else if (req->requestType == fb_esp_functions_request_type_patch)
             {
@@ -726,15 +601,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 if (req->updateMask->size() > 0)
                 {
                     for (size_t i = 0; i < req->updateMask->size(); i++)
-                    {
-                        if (!hasParam)
-                            header += fb_esp_pgm_str_173; // "?"
-                        else
-                            header += fb_esp_pgm_str_172; // "&"
-                        header += fb_esp_pgm_str_470;     // "updateMask="
-                        header += (*req->updateMask)[i];
-                        hasParam = true;
-                    }
+                        URLHelper::addParam(header, fb_esp_pgm_str_470 /* "updateMask=" */, (*req->updateMask)[i], hasParam);
                 }
             }
         }
@@ -742,78 +609,53 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             header += fb_esp_pgm_str_439; // :generateUploadUrl"
     }
 
-    header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
+    HttpHelper::addRequestHeaderLast(header);
 
     if (post)
     {
         if (req->payload.length() > 0)
-        {
-            header += fb_esp_pgm_str_8;   // "Content-Type: "
-            header += fb_esp_pgm_str_129; // "application/json"
-            header += fb_esp_pgm_str_21;  // "\r\n"
-        }
-
-        header += fb_esp_pgm_str_12; // "Content-Length: "
-        header += req->payload.length();
-        header += fb_esp_pgm_str_21; // "\r\n"
+            HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_129 /* "application/json" */);
+        HttpHelper::addContentLengthHeader(header, req->payload.length());
     }
 
-    if (req->requestType == fb_esp_functions_request_type_upload || req->requestType == fb_esp_functions_request_type_pgm_upload)
+    if (req->requestType == fb_esp_functions_request_type_upload ||
+        req->requestType == fb_esp_functions_request_type_pgm_upload)
     {
-        header += fb_esp_pgm_str_8;   // "Content-Type: "
-        header += fb_esp_pgm_str_447; // "application/zip"
-        header += fb_esp_pgm_str_21;  // "\r\n"
-
+        HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_447 /* "application/zip" */);
         size_t len = 0;
         if (req->requestType == fb_esp_functions_request_type_pgm_upload)
             len = req->pgmArcLen;
         else if (req->requestType == fb_esp_functions_request_type_upload)
             len = fbdo->session.cfn.fileSize;
 
-        header += fb_esp_pgm_str_12; // "Content-Length: "
-        header += len;
-        header += fb_esp_pgm_str_21; // "\r\n"
-
+        HttpHelper::addContentLengthHeader(header, len);
         header += fb_esp_pgm_str_448; // "x-goog-content-length-range: 0,104857600"
-        header += fb_esp_pgm_str_21;  // "\r\n"
-
-        header += fb_esp_pgm_str_31; // "Host: "
-        header += req->host;
-        header += fb_esp_pgm_str_21; // "\r\n"
+        HttpHelper::addNewLine(header);
+        HttpHelper::addHostHeader(header, req->host.c_str());
     }
     else
     {
-        header += fb_esp_pgm_str_31; // "Host: "
 
         if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources)
-            header += req->host;
+            HttpHelper::addHostHeader(header, req->host.c_str());
         else
-        {
-            header += fb_esp_pgm_str_363; //"cloudfunctions."
-            header += fb_esp_pgm_str_120; // "googleapis.com"
-        }
-        header += fb_esp_pgm_str_21; // "\r\n"
+            HttpHelper::addGAPIsHostHeader(header, fb_esp_pgm_str_363 /* "cloudfunctions." */);
 
         if (req->requestType != fb_esp_functions_request_type_upload_bucket_sources)
         {
-            if (!Signer.getCfg()->signer.test_mode)
+            if (!Signer.config->signer.test_mode)
             {
-                header += fb_esp_pgm_str_237; // "Authorization: "
-                if (Signer.getTokenType() == token_type_oauth2_access_token)
-                    header += fb_esp_pgm_str_209; // "Bearer "
-
+                HttpHelper::addAuthHeaderFirst(header, Signer.getTokenType());
                 header += Signer.getToken();
-                header += fb_esp_pgm_str_21; // "\r\n"
+                HttpHelper::addNewLine(header);
             }
         }
     }
 
-    header += fb_esp_pgm_str_32; // "User-Agent: ESP\r\n"
-    header += fb_esp_pgm_str_34; // "Connection: close\r\n"
-
-    ut->getCustomHeaders(header);
-
-    header += fb_esp_pgm_str_21; // "\r\n"
+    HttpHelper::addUAHeader(header);
+    HttpHelper::addConnectionHeader(header, true);
+    HttpHelper::getCustomHeaders(header, Signer.config->signer.customHeaders);
+    HttpHelper::addNewLine(header);
 
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
@@ -826,27 +668,20 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
     if (fbdo->session.response.code > 0)
     {
-
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_functions_request_type_upload)
         {
             // This is inefficient unless less memory usage than keep file opened
             // which causes the issue in ESP32 core 2.0.x
 
-            ut->mbfs->open(fbdo->session.cfn.filepath, mbfs_type fbdo->session.cfn.storageType, mb_fs_open_mode_read);
+            Signer.mbfs->open(fbdo->session.cfn.filepath, mbfs_type fbdo->session.cfn.storageType, mb_fs_open_mode_read);
 
             fbdo->session.cfn.filepath.clear();
 
-            int available = ut->mbfs->available(mbfs_type fbdo->session.cfn.storageType);
+            int available = Signer.mbfs->available(mbfs_type fbdo->session.cfn.storageType);
 
-            int bufLen = Signer.getCfg()->functions.upload_buffer_size;
-            if (bufLen < 512)
-                bufLen = 512;
-
-            if (bufLen > 1024 * 16)
-                bufLen = 1024 * 16;
-
-            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
+            int bufLen = Utils::getUploadBufSize(Signer.config, fb_esp_con_mode_functions);
+            uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(Signer.mbfs, bufLen + 1, false);
             int read = 0;
 
             while (available)
@@ -854,31 +689,25 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 if (available > bufLen)
                     available = bufLen;
 
-                read = ut->mbfs->read(mbfs_type fbdo->session.cfn.storageType, buf, available);
+                read = Signer.mbfs->read(mbfs_type fbdo->session.cfn.storageType, buf, available);
 
                 if (fbdo->tcpClient.write(buf, read) != read)
                     break;
 
-                available = ut->mbfs->available(mbfs_type fbdo->session.cfn.storageType);
+                available = Signer.mbfs->available(mbfs_type fbdo->session.cfn.storageType);
             }
 
-            ut->delP(&buf);
+            MemoryHelper::freeBuffer(Signer.mbfs, buf);
 
-            ut->mbfs->close(mbfs_type fbdo->session.cfn.storageType);
+            Signer.mbfs->close(mbfs_type fbdo->session.cfn.storageType);
         }
         else if (req->requestType == fb_esp_functions_request_type_pgm_upload)
         {
             int len = req->pgmArcLen;
             int available = len;
 
-            int bufLen = Signer.getCfg()->functions.upload_buffer_size;
-            if (bufLen < 512)
-                bufLen = 512;
-
-            if (bufLen > 1024 * 16)
-                bufLen = 1024 * 16;
-
-            uint8_t *buf = (uint8_t *)ut->newP(bufLen + 1, false);
+            int bufLen = Utils::getUploadBufSize(Signer.config, fb_esp_con_mode_functions);
+            uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(Signer.mbfs, bufLen + 1, false);
             size_t pos = 0;
 
             while (available)
@@ -893,26 +722,28 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 available = len;
             }
 
-            ut->delP(&buf);
+            MemoryHelper::freeBuffer(Signer.mbfs, buf);
         }
 
         if (handleResponse(fbdo))
         {
             fbdo->closeSession();
-            Signer.getCfg()->internal.fb_processing = false;
+            Signer.config->internal.fb_processing = false;
             return true;
         }
     }
     else
         fbdo->session.connected = false;
 
-    Signer.getCfg()->internal.fb_processing = false;
+    Signer.config->internal.fb_processing = false;
     return false;
 }
 
 void FB_Functions::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (fbdo->session.cert_updated || !fbdo->session.connected || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout || fbdo->session.con_mode != fb_esp_con_mode_functions || strcmp(host, fbdo->session.host.c_str()) != 0)
+    if (fbdo->session.cert_updated || !fbdo->session.connected ||
+        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+        fbdo->session.con_mode != fb_esp_con_mode_functions || strcmp(host, fbdo->session.host.c_str()) != 0)
     {
         fbdo->session.last_conn_ms = millis();
         fbdo->closeSession();
@@ -932,8 +763,7 @@ bool FB_Functions::connect(FirebaseData *fbdo, const char *host)
     else
     {
         MB_String host;
-        host += fb_esp_pgm_str_363; // "cloudfunctions."
-        host += fb_esp_pgm_str_120; // "googleapis.com"
+        HttpHelper::addGAPIsHost(host, fb_esp_pgm_str_363 /* "cloudfunctions." */);
         rescon(fbdo, host.c_str());
         fbdo->tcpClient.begin(host.c_str(), 443, &fbdo->session.response.code);
     }
@@ -946,269 +776,81 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
     if (!fbdo->reconnect())
         return false;
 
-    unsigned long dataTime = millis();
-
-    char *pChunk = nullptr;
-    char *temp = nullptr;
-    char *header = nullptr;
-    bool isHeader = false;
-
     struct server_response_data_t response;
+    struct fb_esp_tcp_response_handler_t tcpHandler;
 
-    int chunkIdx = 0;
-    int pChunkIdx = 0;
-    int hBufPos = 0;
-    int chunkBufSize = fbdo->tcpClient.available();
-    int hstate = 0;
-    int chunkedDataState = 0;
-    int chunkedDataSize = 0;
-    int chunkedDataLen = 0;
-    int payloadRead = 0;
-    size_t defaultChunkSize = fbdo->session.resp_size;
-    struct fb_esp_auth_token_error_t error;
-    error.code = -1;
+    HttpHelper::initTCPSession(fbdo->session);
+    HttpHelper::intTCPHandler(fbdo->tcpClient.client, tcpHandler, 2048, fbdo->session.resp_size, nullptr, false);
+
     MB_String js;
 
-    fbdo->session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
-    fbdo->session.content_length = -1;
-    fbdo->session.payload_length = 0;
-    fbdo->session.chunked_encoding = false;
-    fbdo->session.buffer_ovf = false;
+    if (!fbdo->waitResponse(tcpHandler))
+        return false;
 
-    defaultChunkSize = 2048;
-
-    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
+    while (tcpHandler.available() > 0 /* data available to read payload */ ||
+           tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
     {
-        if (!fbdo->reconnect(dataTime))
-            return false;
-        chunkBufSize = fbdo->tcpClient.available();
-        ut->idle();
+        if (!fbdo->readResponse(&fbdo->session.cfn.payload, tcpHandler, response))
+            break;
     }
 
-    chunkBufSize = fbdo->tcpClient.available();
-
-    int availablePayload = chunkBufSize;
-
-    dataTime = millis();
-
-    fbdo->session.cfn.payload.clear();
-
-    if (chunkBufSize > 1)
+    // parse the payload
+    if (fbdo->session.cfn.payload.length() > 0 &&
+        (fbdo->session.cfn.requestType != fb_esp_functions_request_type_upload &&
+         fbdo->session.cfn.requestType != fb_esp_functions_request_type_pgm_upload))
     {
-        while (chunkBufSize > 0 || availablePayload > 0 || payloadRead < response.contentLen)
+        if (fbdo->session.cfn.payload[0] == '{')
         {
-            if (!fbdo->reconnect(dataTime))
-                return false;
+            fbdo->initJson();
+            int errType = 0;
 
-            chunkBufSize = fbdo->tcpClient.available();
+            JsonHelper::setData(fbdo->session.jsonPtr, fbdo->session.cfn.payload, false);
+            if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_257 /* "error/code" */))
+                errType = 1;
+            else if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_84 /* "operations/[0]/error/code" */))
+                errType = 2;
 
-            if (chunkBufSize <= 0 && availablePayload <= 0 && payloadRead >= response.contentLen && response.contentLen > 0)
-                break;
-
-            if (chunkBufSize > 0)
+            if (errType > 0)
             {
-                chunkBufSize = defaultChunkSize;
+                tcpHandler.error.code = fbdo->session.dataPtr->intValue;
 
-                if (chunkIdx == 0)
+                bool success = false;
+
+                if (errType == 1)
+                    success = JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_258 /* "error/message" */);
+                else if (errType == 2)
+                    success = JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_432 /* "operations/[0]/error/message" */);
+
+                if (success)
                 {
-                    // the first chunk can be http response header
-                    header = (char *)ut->newP(chunkBufSize);
-                    hstate = 1;
-                    int readLen = fbdo->tcpClient.readLine(header, chunkBufSize);
-                    int pos = 0;
+                    fbdo->session.error = fbdo->session.dataPtr->to<const char *>();
 
-                    temp = ut->getHeader(header, fb_esp_pgm_str_5 /* "HTTP/1.1 " */, fb_esp_pgm_str_6 /* " " */, pos, 0);
-                    ut->idle();
-                    dataTime = millis();
-                    if (temp)
-                    {
-                        // http response header with http response code
-                        isHeader = true;
-                        hBufPos = readLen;
-                        response.httpCode = atoi(temp);
-                        fbdo->session.response.code = response.httpCode;
-                        ut->delP(&temp);
-                    }
-                }
-                else
-                {
-                    ut->idle();
-                    dataTime = millis();
-                    // the next chunk data can be the remaining http header
-                    if (isHeader)
-                    {
-                        // read one line of next header field until the empty header has found
-                        temp = (char *)ut->newP(chunkBufSize);
-                        int readLen = fbdo->tcpClient.readLine(temp, chunkBufSize);
-                        bool headerEnded = false;
-
-                        // check is it the end of http header (\n or \r\n)?
-                        if (readLen == 1)
-                            if (temp[0] == '\r')
-                                headerEnded = true;
-
-                        if (readLen == 2)
-                            if (temp[0] == '\r' && temp[1] == '\n')
-                                headerEnded = true;
-
-                        if (headerEnded)
-                        {
-                            if (response.httpCode == 401)
-                                Signer.authenticated = false;
-                            else if (response.httpCode < 300)
-                                Signer.authenticated = true;
-
-                            // parse header string to get the header field
-                            isHeader = false;
-                            ut->parseRespHeader(header, response);
-
-                            fbdo->session.http_code = response.httpCode;
-
-                            fbdo->session.chunked_encoding = response.isChunkedEnc;
-
-                            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
-                                error.code = 0;
-
-                            if (hstate == 1)
-                                ut->delP(&header);
-                            hstate = 0;
-
-                            if (response.contentLen == 0)
-                            {
-                                ut->delP(&temp);
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            // accumulate the remaining header field
-                            memcpy(header + hBufPos, temp, readLen);
-                            hBufPos += readLen;
-                        }
-                        ut->delP(&temp);
-                    }
-                    else
-                    {
-                        // the next chuunk data is the payload
-                        if (!response.noContent)
-                        {
-                            pChunkIdx++;
-                            pChunk = (char *)ut->newP(chunkBufSize + 1);
-
-                            if (response.isChunkedEnc)
-                                delay(10);
-                            // read the avilable data
-                            // chunk transfer encoding?
-                            if (response.isChunkedEnc)
-                                availablePayload = fbdo->tcpClient.readChunkedData(pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
-                            else
-                                availablePayload = fbdo->tcpClient.readLine(pChunk, chunkBufSize);
-
-                            if (availablePayload > 0)
-                            {
-                                fbdo->session.payload_length += availablePayload;
-                                if (fbdo->session.max_payload_length < fbdo->session.payload_length)
-                                    fbdo->session.max_payload_length = fbdo->session.payload_length;
-                                payloadRead += availablePayload;
-
-                                fbdo->session.cfn.payload += pChunk;
-                            }
-
-                            ut->delP(&pChunk);
-
-                            if (availablePayload < 0 || (payloadRead >= response.contentLen && !response.isChunkedEnc))
-                            {
-                                fbdo->tcpClient.flush();
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            // read all the rest data
-                            fbdo->tcpClient.flush();
-                            break;
-                        }
-                    }
-                }
-
-                chunkIdx++;
-            }
-        }
-
-        if (hstate == 1)
-            ut->delP(&header);
-
-        // parse the payload
-        if (fbdo->session.cfn.payload.length() > 0 && (fbdo->session.cfn.requestType != fb_esp_functions_request_type_upload && fbdo->session.cfn.requestType != fb_esp_functions_request_type_pgm_upload))
-        {
-            if (fbdo->session.cfn.payload[0] == '{')
-            {
-                if (!fbdo->session.jsonPtr)
-                    fbdo->session.jsonPtr = new FirebaseJson();
-
-                if (!fbdo->session.dataPtr)
-                    fbdo->session.dataPtr = new FirebaseJsonData();
-
-                int errType = 0;
-
-                fbdo->session.jsonPtr->setJsonData(fbdo->session.cfn.payload.c_str());
-                fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_257 /* "error/code" */));
-
-                if (fbdo->session.dataPtr->success)
-                    errType = 1;
-                else
-                {
-                    fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_84 /* "operations/[0]/error/code" */));
-                    if (fbdo->session.dataPtr->success)
-                        errType = 2;
-                }
-
-                if (fbdo->session.dataPtr->success)
-                {
-                    error.code = fbdo->session.dataPtr->intValue;
-
-                    if (errType == 1)
-                        fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_258 /* "error/message" */));
-                    else if (errType == 2)
-                        fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_432 /* "operations/[0]/error/message" */));
-
-                    if (fbdo->session.dataPtr->success)
-                    {
+                    if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_418 /* "error/details" */))
                         fbdo->session.error = fbdo->session.dataPtr->to<const char *>();
 
-                        fbdo->session.jsonPtr->get(*fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_418 /* "error/details" */));
-                        if (fbdo->session.dataPtr->success)
-                        {
-                            fbdo->session.error = fbdo->session.dataPtr->to<const char *>();
-                        }
-
-                        if (_deployTasks.size() > 0)
-                        {
-                            fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                            sendCallback(fbdo, fbdo->session.cfn.cbInfo.status, fbdo->session.error.c_str(), _deployTasks[_deployIndex].callback, _deployTasks[_deployIndex].statusInfo);
-                        }
+                    if (_deployTasks.size() > 0)
+                    {
+                        fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                        fbdo->session.cfn.cbInfo.errorMsg = fbdo->session.error.c_str();
+                        sendCallback(fbdo, _deployTasks[_deployIndex].callback, _deployTasks[_deployIndex].statusInfo);
                     }
                 }
-                else
-                {
-                    error.code = 0;
-                }
-
-                fbdo->session.jsonPtr->clear();
-                fbdo->session.dataPtr->clear();
             }
-            fbdo->session.content_length = response.payloadLen;
+            else
+            {
+                tcpHandler.error.code = 0;
+            }
+
+            fbdo->clearJson();
         }
-    }
-    else
-    {
-        fbdo->tcpClient.flush();
+        fbdo->session.content_length = response.payloadLen;
     }
 
-    if (fbdo->session.cfn.requestType == fb_esp_functions_request_type_upload || fbdo->session.cfn.requestType == fb_esp_functions_request_type_pgm_upload)
+    if (fbdo->session.cfn.requestType == fb_esp_functions_request_type_upload ||
+        fbdo->session.cfn.requestType == fb_esp_functions_request_type_pgm_upload)
         return response.httpCode == 200;
     else
-        return error.code == 0;
+        return tcpHandler.error.code == 0;
 }
 
 #if defined(ESP32)
@@ -1242,128 +884,154 @@ void FB_Functions::runDeployTask()
                 if (taskInfo->step == fb_esp_functions_creation_step_gen_upload_url)
                 {
                     taskInfo->done = true;
-                    _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_generate_upload_url, "", taskInfo->callback, taskInfo->statusInfo);
-                    bool ret = _this->mGenerateUploadUrl(taskInfo->fbdo, toStringPtr(taskInfo->config->_projectId), toStringPtr(taskInfo->config->_locationId));
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_generate_upload_url;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                    bool ret = _this->mGenerateUploadUrl(taskInfo->fbdo, toStringPtr(taskInfo->config->_projectId),
+                                                         toStringPtr(taskInfo->config->_locationId));
 
                     if (ret)
                     {
-                        if (!taskInfo->fbdo->session.jsonPtr)
-                            taskInfo->fbdo->session.jsonPtr = new FirebaseJson();
+                        taskInfo->fbdo->initJson();
 
-                        if (!taskInfo->fbdo->session.arrPtr)
-                            taskInfo->fbdo->session.arrPtr = new FirebaseJsonArray();
-
-                        if (!taskInfo->fbdo->session.dataPtr)
-                            taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
-
-                        taskInfo->fbdo->session.jsonPtr->clear();
-                        taskInfo->fbdo->session.jsonPtr->setJsonData(taskInfo->fbdo->session.cfn.payload.c_str());
-
-                        taskInfo->fbdo->session.jsonPtr->get(*taskInfo->fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_440 /* "uploadUrl" */));
-
-                        taskInfo->fbdo->session.jsonPtr->clear();
-                        taskInfo->fbdo->session.arrPtr->clear();
+                        JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
+                        JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
+                                          fb_esp_pgm_str_440 /* "uploadUrl" */);
+                        JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
+                        JsonHelper::arrayClear(taskInfo->fbdo->session.arrPtr);
                         taskInfo->fbdo->session.cfn.payload.clear();
                         if (taskInfo->fbdo->session.dataPtr->success)
                         {
-                            _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_deploy, taskInfo->callback, taskInfo->statusInfo);
+                            _this->addCreationTask(taskInfo->fbdo, taskInfo->config,
+                                                   taskInfo->patch, taskInfo->nextStep,
+                                                   fb_esp_functions_creation_step_deploy,
+                                                   taskInfo->callback, taskInfo->statusInfo);
                             _this->_deployTasks[_this->_deployIndex + 1].uploadUrl = taskInfo->fbdo->session.dataPtr->to<const char *>();
                         }
                     }
                     else
-                        _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                    {
+                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                    }
                 }
                 else if (taskInfo->step == fb_esp_functions_creation_step_upload_source_files)
                 {
                     taskInfo->done = true;
-
-                    _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_upload_source_file_in_progress, "", taskInfo->callback, taskInfo->statusInfo);
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_upload_source_file_in_progress;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                     bool ret = _this->uploadSources(taskInfo->fbdo, taskInfo->config);
 
                     if (ret)
                     {
-                        if (!taskInfo->fbdo->session.jsonPtr)
-                            taskInfo->fbdo->session.jsonPtr = new FirebaseJson();
+                        taskInfo->fbdo->initJson();
 
-                        if (!taskInfo->fbdo->session.dataPtr)
-                            taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
+                        JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
 
-                        taskInfo->fbdo->session.jsonPtr->clear();
-                        taskInfo->fbdo->session.jsonPtr->setJsonData(taskInfo->fbdo->session.cfn.payload.c_str());
-
-                        taskInfo->fbdo->session.jsonPtr->get(*taskInfo->fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_457 /* "status/uploadUrl" */));
-
-                        if (taskInfo->fbdo->session.dataPtr->success)
+                        if (JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
+                                              fb_esp_pgm_str_457 /* "status/uploadUrl" */))
                         {
-                            const char *t = pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */);
-                            taskInfo->config->_funcCfg.add(t, taskInfo->fbdo->session.dataPtr->to<const char *>());
-                            taskInfo->config->addUpdateMasks(t);
+                            JsonHelper::addString(&taskInfo->config->_funcCfg, fb_esp_pgm_str_383 /* "sourceUploadUrl" */,
+                                                  taskInfo->fbdo->session.dataPtr->to<const char *>());
+                            taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383));
                         }
 
-                        taskInfo->fbdo->session.jsonPtr->clear();
+                        JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
 
-                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
+                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep,
+                                               fb_esp_functions_creation_step_polling_status, taskInfo->callback,
+                                               taskInfo->statusInfo);
                     }
                     else
                     {
                         if (taskInfo->fbdo->session.response.code == 302 || taskInfo->fbdo->session.response.code == 403)
-                            taskInfo->fbdo->session.error += fb_esp_pgm_str_458; // "missing autozip function, please deploy it first"
-
-                        _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                            taskInfo->fbdo->session.error += fb_esp_pgm_str_458;
+                        // "missing autozip function, please deploy it first"
+                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                     }
                 }
                 else if (taskInfo->step == fb_esp_functions_creation_step_upload_zip_file)
                 {
                     taskInfo->done = true;
                     bool ret = false;
-                    _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_upload_source_file_in_progress, "", taskInfo->callback, taskInfo->statusInfo);
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_upload_source_file_in_progress;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
 
                     if (taskInfo->config->_sourceType == functions_sources_type_local_archive)
-                        ret = _this->uploadFile(taskInfo->fbdo, taskInfo->uploadUrl.c_str(), taskInfo->config->_uploadArchiveFile.c_str(), taskInfo->config->_uploadArchiveStorageType);
+                        ret = _this->uploadFile(taskInfo->fbdo, taskInfo->uploadUrl.c_str(),
+                                                taskInfo->config->_uploadArchiveFile.c_str(),
+                                                taskInfo->config->_uploadArchiveStorageType);
                     else if (taskInfo->config->_sourceType == functions_sources_type_flash_data)
-                        ret = _this->uploadPGMArchive(taskInfo->fbdo, taskInfo->uploadUrl.c_str(), taskInfo->config->_pgmArc, taskInfo->config->_pgmArcLen);
+                        ret = _this->uploadPGMArchive(taskInfo->fbdo, taskInfo->uploadUrl.c_str(),
+                                                      taskInfo->config->_pgmArc, taskInfo->config->_pgmArcLen);
 
                     if (ret)
                     {
                         if (!taskInfo->fbdo->session.dataPtr)
                             taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
 
-                        taskInfo->config->_funcCfg.set(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */), taskInfo->uploadUrl.c_str());
+                        taskInfo->config->_funcCfg.set(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */),
+                                                       taskInfo->uploadUrl.c_str());
                         taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */));
 
-                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
+                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
+                                               taskInfo->nextStep, fb_esp_functions_creation_step_polling_status,
+                                               taskInfo->callback, taskInfo->statusInfo);
                     }
                     else
-                        _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                    {
+                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                    }
                 }
                 else if (taskInfo->step == fb_esp_functions_creation_step_deploy)
                 {
                     taskInfo->done = true;
                     bool ret = false;
                     taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_deploy_in_progress;
-                    _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, "", taskInfo->callback, taskInfo->statusInfo);
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
 
                     ret = _this->deploy(taskInfo->fbdo, taskInfo->functionId.c_str(), taskInfo->config, taskInfo->patch);
                     taskInfo->fbdo->session.cfn.cbInfo.triggerUrl = taskInfo->config->_httpsTriggerUrl;
                     if (ret)
-                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_set_iam_policy, taskInfo->callback, taskInfo->statusInfo);
+                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
+                                               taskInfo->nextStep, fb_esp_functions_creation_step_set_iam_policy,
+                                               taskInfo->callback, taskInfo->statusInfo);
                     else
-                        _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                    {
+                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                    }
                 }
                 else if (taskInfo->step == fb_esp_functions_creation_step_set_iam_policy)
                 {
                     taskInfo->done = true;
                     bool ret = false;
                     static PolicyBuilder pol;
-                    pol.json.setJsonData(taskInfo->policy.c_str());
-                    ret = _this->mSetIamPolicy(taskInfo->fbdo, toStringPtr(taskInfo->projectId), toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId), &pol, toStringPtr(_EMPTY_STR));
+                    JsonHelper::setData(&pol.json, taskInfo->policy, false);
+                    ret = _this->mSetIamPolicy(taskInfo->fbdo, toStringPtr(taskInfo->projectId),
+                                               toStringPtr(taskInfo->locationId),
+                                               toStringPtr(taskInfo->functionId), &pol, toStringPtr(_EMPTY_STR));
                     if (ret)
                     {
                         taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_finished;
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, "", taskInfo->callback, taskInfo->statusInfo);
+                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                     }
                     else
-                        _this->sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                    {
+                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                    }
                 }
                 else if (taskInfo->step == fb_esp_functions_creation_step_delete)
                 {
@@ -1373,38 +1041,42 @@ void FB_Functions::runDeployTask()
                     t += fb_esp_pgm_str_428; // "project:"
                     t += taskInfo->projectId;
                     t += fb_esp_pgm_str_431; // ",latest:true"
-                    ret = _this->mListOperations(taskInfo->fbdo, toStringPtr(t.c_str()), toStringPtr("1"), toStringPtr(_EMPTY_STR));
+                    ret = _this->mListOperations(taskInfo->fbdo, toStringPtr(t.c_str()), toStringPtr("1"),
+                                                 toStringPtr(_EMPTY_STR));
                     if (ret)
                     {
+                        taskInfo->fbdo->initJson();
+                        JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
+                        JsonHelper::parse(taskInfo->fbdo->session.jsonPtr,
+                                          taskInfo->fbdo->session.dataPtr, fb_esp_pgm_str_432 /* "operations/[0]/error/message" */);
                         taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                        if (!taskInfo->fbdo->session.dataPtr)
-                            taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
-
-                        if (!taskInfo->fbdo->session.jsonPtr)
-                            taskInfo->fbdo->session.jsonPtr = new FirebaseJson();
-
-                        taskInfo->fbdo->session.jsonPtr->clear();
-                        taskInfo->fbdo->session.jsonPtr->setJsonData(taskInfo->fbdo->session.cfn.payload.c_str());
-                        taskInfo->fbdo->session.jsonPtr->get(*taskInfo->fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_432 /* "operations/[0]/error/message" */));
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, taskInfo->fbdo->session.dataPtr->to<const char *>(), taskInfo->callback, taskInfo->statusInfo);
+                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->session.dataPtr->to<const char *>();
+                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                     }
 
-                    ret = _this->mDeleteFunction(taskInfo->fbdo, toStringPtr(taskInfo->projectId), toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId));
+                    ret = _this->mDeleteFunction(taskInfo->fbdo,
+                                                 toStringPtr(taskInfo->projectId),
+                                                 toStringPtr(taskInfo->locationId),
+                                                 toStringPtr(taskInfo->functionId));
                 }
                 else if (taskInfo->step == fb_esp_functions_creation_step_polling_status)
                 {
-                    if (millis() - _this->_lasPollMs > 5000 || _this->_lasPollMs == 0)
+                    if (millis() - _this->_lastPollMs > 5000 || _this->_lastPollMs == 0)
                     {
-                        _this->_lasPollMs = millis();
+                        _this->_lastPollMs = millis();
 
                         if (!taskInfo->_delete && !taskInfo->active)
                         {
 
-                            bool ret = _this->mGetFunction(taskInfo->fbdo, toStringPtr(taskInfo->projectId), toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId));
+                            bool ret = _this->mGetFunction(taskInfo->fbdo,
+                                                           toStringPtr(taskInfo->projectId),
+                                                           toStringPtr(taskInfo->locationId),
+                                                           toStringPtr(taskInfo->functionId));
 
                             if (ret)
                             {
-                                if (_this->_function_status == fb_esp_functions_status_UNKNOWN || _this->_function_status == fb_esp_functions_status_OFFLINE)
+                                if (_this->_function_status == fb_esp_functions_status_UNKNOWN ||
+                                    _this->_function_status == fb_esp_functions_status_OFFLINE)
                                     taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
                                 else if (_this->_function_status == fb_esp_functions_status_DEPLOY_IN_PROGRESS)
                                     taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_deploy_in_progress;
@@ -1418,21 +1090,33 @@ void FB_Functions::runDeployTask()
                                         taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_finished;
                                 }
 
-                                if (_this->_function_status != fb_esp_functions_status_UNKNOWN && _this->_function_status != fb_esp_functions_status_OFFLINE)
-                                    _this->sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, taskInfo->fbdo->session.error.c_str(), taskInfo->callback, taskInfo->statusInfo);
+                                if (_this->_function_status != fb_esp_functions_status_UNKNOWN &&
+                                    _this->_function_status != fb_esp_functions_status_OFFLINE)
+                                {
+                                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->session.error;
+                                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                                }
                             }
 
-                            if (!ret || _this->_function_status == fb_esp_functions_status_ACTIVE || _this->_function_status == fb_esp_functions_status_UNKNOWN || _this->_function_status == fb_esp_functions_status_OFFLINE)
+                            if (!ret || _this->_function_status == fb_esp_functions_status_ACTIVE ||
+                                _this->_function_status == fb_esp_functions_status_UNKNOWN ||
+                                _this->_function_status == fb_esp_functions_status_OFFLINE)
                             {
                                 taskInfo->done = true;
                                 taskInfo->_delete = true;
                                 taskInfo->active = _this->_function_status == fb_esp_functions_status_ACTIVE;
 
                                 if (_this->_function_status == fb_esp_functions_status_ACTIVE && taskInfo->setPolicy)
-                                    _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_idle, taskInfo->callback, taskInfo->statusInfo);
+                                    _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
+                                                           taskInfo->nextStep, fb_esp_functions_creation_step_idle,
+                                                           taskInfo->callback, taskInfo->statusInfo);
 
-                                if (_this->_function_status == fb_esp_functions_status_UNKNOWN || _this->_function_status == fb_esp_functions_status_OFFLINE)
-                                    _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, fb_esp_functions_creation_step_delete, fb_esp_functions_creation_step_idle, taskInfo->callback, taskInfo->statusInfo);
+                                if (_this->_function_status == fb_esp_functions_status_UNKNOWN ||
+                                    _this->_function_status == fb_esp_functions_status_OFFLINE)
+                                    _this->addCreationTask(taskInfo->fbdo, taskInfo->config,
+                                                           taskInfo->patch, fb_esp_functions_creation_step_delete,
+                                                           fb_esp_functions_creation_step_idle,
+                                                           taskInfo->callback, taskInfo->statusInfo);
                             }
                         }
                     }
@@ -1470,11 +1154,11 @@ void FB_Functions::runDeployTask()
             yield();
         }
 
-        Signer.getCfg()->internal.functions_check_task_handle = NULL;
+        Signer.config->internal.functions_check_task_handle = NULL;
         vTaskDelete(NULL);
     };
 
-    xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Signer.getCfg()->internal.functions_check_task_handle, 1);
+    xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Signer.config->internal.functions_check_task_handle, 1);
 #elif defined(ESP8266)
 
     if (_creation_task_enable)
@@ -1497,75 +1181,74 @@ void FB_Functions::runDeployTask()
             if (taskInfo->step == fb_esp_functions_creation_step_gen_upload_url)
             {
                 taskInfo->done = true;
-                sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_generate_upload_url, "", taskInfo->callback, taskInfo->statusInfo);
-                bool ret = mGenerateUploadUrl(taskInfo->fbdo, toStringPtr(taskInfo->config->_projectId), toStringPtr(taskInfo->config->_locationId));
+                taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_generate_upload_url;
+                taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                bool ret = mGenerateUploadUrl(taskInfo->fbdo,
+                                              toStringPtr(taskInfo->config->_projectId),
+                                              toStringPtr(taskInfo->config->_locationId));
 
                 if (ret)
                 {
-                    if (!taskInfo->fbdo->session.dataPtr)
-                        taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
+                    taskInfo->fbdo->initJson();
+                    JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
+                    JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
+                                      fb_esp_pgm_str_440 /* "uploadUrl" */);
 
-                    if (!taskInfo->fbdo->session.jsonPtr)
-                        taskInfo->fbdo->session.jsonPtr = new FirebaseJson();
-
-                    if (!taskInfo->fbdo->session.arrPtr)
-                        taskInfo->fbdo->session.arrPtr = new FirebaseJsonArray();
-
-                    taskInfo->fbdo->session.jsonPtr->clear();
-                    taskInfo->fbdo->session.jsonPtr->setJsonData(taskInfo->fbdo->session.cfn.payload.c_str());
-
-                    taskInfo->fbdo->session.jsonPtr->get(*taskInfo->fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_440 /* "uploadUrl" */));
-
-                    taskInfo->fbdo->session.jsonPtr->clear();
-                    taskInfo->fbdo->session.arrPtr->clear();
+                    JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
+                    JsonHelper::arrayClear(taskInfo->fbdo->session.arrPtr);
                     taskInfo->fbdo->session.cfn.payload.clear();
                     if (taskInfo->fbdo->session.dataPtr->success)
                     {
-                        addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_deploy, taskInfo->callback, taskInfo->statusInfo);
+                        addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
+                                        taskInfo->nextStep, fb_esp_functions_creation_step_deploy,
+                                        taskInfo->callback, taskInfo->statusInfo);
                         _deployTasks[_deployIndex + 1].uploadUrl = taskInfo->fbdo->session.dataPtr->to<const char *>();
                     }
                 }
                 else
-                    sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                {
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                    sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                }
             }
 
             if (taskInfo->step == fb_esp_functions_creation_step_upload_source_files)
             {
                 taskInfo->done = true;
 
-                sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_upload_source_file_in_progress, "", taskInfo->callback, taskInfo->statusInfo);
+                taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_upload_source_file_in_progress;
+                taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                 bool ret = uploadSources(taskInfo->fbdo, taskInfo->config);
 
                 if (ret)
                 {
-                    if (!taskInfo->fbdo->session.jsonPtr)
-                        taskInfo->fbdo->session.jsonPtr = new FirebaseJson();
-
-                    if (!taskInfo->fbdo->session.dataPtr)
-                        taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
-
-                    taskInfo->fbdo->session.jsonPtr->clear();
-                    taskInfo->fbdo->session.jsonPtr->setJsonData(taskInfo->fbdo->session.cfn.payload.c_str());
-
-                    taskInfo->fbdo->session.jsonPtr->get(*taskInfo->fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_457 /* "status/uploadUrl" */));
-
-                    if (taskInfo->fbdo->session.dataPtr->success)
+                    taskInfo->fbdo->initJson();
+                    JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
+                    if (JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
+                                          fb_esp_pgm_str_457 /* "status/uploadUrl" */))
                     {
 
-                        taskInfo->config->_funcCfg.add(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */), taskInfo->fbdo->session.dataPtr->to<const char *>());
+                        taskInfo->config->_funcCfg.add(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */),
+                                                       taskInfo->fbdo->session.dataPtr->to<const char *>());
                         taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */));
                     }
 
-                    taskInfo->fbdo->session.jsonPtr->clear();
+                    JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
 
-                    addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
+                    addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep,
+                                    fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
                 }
                 else
                 {
                     if (taskInfo->fbdo->session.response.code == 302 || taskInfo->fbdo->session.response.code == 403)
-                        taskInfo->fbdo->session.error += fb_esp_pgm_str_458; // "missing autozip function, please deploy it first"
-
-                    sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                        taskInfo->fbdo->session.error += fb_esp_pgm_str_458;
+                    // "missing autozip function, please deploy it first"
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                    sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                 }
             }
 
@@ -1573,23 +1256,35 @@ void FB_Functions::runDeployTask()
             {
                 taskInfo->done = true;
                 bool ret = false;
-                sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_upload_source_file_in_progress, "", taskInfo->callback, taskInfo->statusInfo);
+                taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_upload_source_file_in_progress;
+                taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
 
                 if (taskInfo->config->_sourceType == functions_sources_type_local_archive)
-                    ret = uploadFile(taskInfo->fbdo, taskInfo->uploadUrl.c_str(), taskInfo->config->_uploadArchiveFile.c_str(), taskInfo->config->_uploadArchiveStorageType);
+                    ret = uploadFile(taskInfo->fbdo, taskInfo->uploadUrl.c_str(),
+                                     taskInfo->config->_uploadArchiveFile.c_str(),
+                                     taskInfo->config->_uploadArchiveStorageType);
                 else if (taskInfo->config->_sourceType == functions_sources_type_flash_data)
-                    ret = uploadPGMArchive(taskInfo->fbdo, taskInfo->uploadUrl.c_str(), taskInfo->config->_pgmArc, taskInfo->config->_pgmArcLen);
+                    ret = uploadPGMArchive(taskInfo->fbdo, taskInfo->uploadUrl.c_str(),
+                                           taskInfo->config->_pgmArc, taskInfo->config->_pgmArcLen);
 
                 if (ret)
                 {
 
-                    taskInfo->config->_funcCfg.set(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */), taskInfo->uploadUrl.c_str());
+                    taskInfo->config->_funcCfg.set(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */),
+                                                   taskInfo->uploadUrl.c_str());
                     taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */));
 
-                    addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_polling_status, taskInfo->callback, taskInfo->statusInfo);
+                    addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
+                                    taskInfo->nextStep, fb_esp_functions_creation_step_polling_status,
+                                    taskInfo->callback, taskInfo->statusInfo);
                 }
                 else
-                    sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                {
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                    sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                }
                 taskInfo->uploadUrl.clear();
             }
 
@@ -1598,14 +1293,21 @@ void FB_Functions::runDeployTask()
                 taskInfo->done = true;
                 bool ret = false;
                 taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_deploy_in_progress;
-                sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, "", taskInfo->callback, taskInfo->statusInfo);
+                taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
 
                 ret = deploy(taskInfo->fbdo, taskInfo->functionId.c_str(), taskInfo->config, taskInfo->patch);
                 taskInfo->fbdo->session.cfn.cbInfo.triggerUrl = taskInfo->config->_httpsTriggerUrl;
                 if (ret)
-                    addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_set_iam_policy, taskInfo->callback, taskInfo->statusInfo);
+                    addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
+                                    taskInfo->nextStep, fb_esp_functions_creation_step_set_iam_policy,
+                                    taskInfo->callback, taskInfo->statusInfo);
                 else
-                    sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                {
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                    sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                }
             }
 
             if (taskInfo->step == fb_esp_functions_creation_step_set_iam_policy)
@@ -1613,15 +1315,22 @@ void FB_Functions::runDeployTask()
                 taskInfo->done = true;
                 bool ret = false;
                 static PolicyBuilder pol;
-                pol.json.setJsonData(taskInfo->policy.c_str());
-                ret = mSetIamPolicy(taskInfo->fbdo, toStringPtr(taskInfo->projectId), toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId), &pol, toStringPtr(_EMPTY_STR));
+                JsonHelper::setData(&pol.json, taskInfo->policy, false);
+                ret = mSetIamPolicy(taskInfo->fbdo, toStringPtr(taskInfo->projectId),
+                                    toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId),
+                                    &pol, toStringPtr(_EMPTY_STR));
                 if (ret)
                 {
                     taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_finished;
-                    sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, "", taskInfo->callback, taskInfo->statusInfo);
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
+                    sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                 }
                 else
-                    sendCallback(taskInfo->fbdo, fb_esp_functions_operation_status_error, taskInfo->fbdo->errorReason().c_str(), taskInfo->callback, taskInfo->statusInfo);
+                {
+                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
+                    sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                }
             }
 
             if (taskInfo->step == fb_esp_functions_creation_step_delete)
@@ -1636,37 +1345,38 @@ void FB_Functions::runDeployTask()
                 if (ret)
                 {
                     taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
+                    taskInfo->fbdo->initJson();
+                    JsonHelper::setData(taskInfo->fbdo->session.jsonPtr,
+                                        taskInfo->fbdo->session.cfn.payload, false);
+                    JsonHelper::parse(taskInfo->fbdo->session.jsonPtr,
+                                      taskInfo->fbdo->session.dataPtr, fb_esp_pgm_str_432 /* "operations/[0]/error/message" */);
 
-                    if (!taskInfo->fbdo->session.jsonPtr)
-                        taskInfo->fbdo->session.jsonPtr = new FirebaseJson();
-
-                    if (!taskInfo->fbdo->session.dataPtr)
-                        taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
-
-                    taskInfo->fbdo->session.jsonPtr->clear();
-                    taskInfo->fbdo->session.jsonPtr->setJsonData(taskInfo->fbdo->session.cfn.payload.c_str());
-                    taskInfo->fbdo->session.jsonPtr->get(*taskInfo->fbdo->session.dataPtr, pgm2Str(fb_esp_pgm_str_432/* "operations/[0]/error/message" */));
-
-                    sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, taskInfo->fbdo->session.dataPtr->to<const char *>(), taskInfo->callback, taskInfo->statusInfo);
+                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->session.dataPtr->to<const char *>();
+                    sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
                 }
 
-                ret = mDeleteFunction(taskInfo->fbdo, toStringPtr(taskInfo->projectId), toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId));
+                ret = mDeleteFunction(taskInfo->fbdo, toStringPtr(taskInfo->projectId),
+                                      toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId));
             }
 
             if (taskInfo->step == fb_esp_functions_creation_step_polling_status)
             {
-                if (millis() - _lasPollMs > 5000 || _lasPollMs == 0)
+                if (millis() - _lastPollMs > 5000 || _lastPollMs == 0)
                 {
-                    _lasPollMs = millis();
+                    _lastPollMs = millis();
 
                     if (!taskInfo->_delete && !taskInfo->active)
                     {
 
-                        bool ret = mGetFunction(taskInfo->fbdo, toStringPtr(taskInfo->projectId), toStringPtr(taskInfo->locationId), toStringPtr(taskInfo->functionId));
+                        bool ret = mGetFunction(taskInfo->fbdo,
+                                                toStringPtr(taskInfo->projectId),
+                                                toStringPtr(taskInfo->locationId),
+                                                toStringPtr(taskInfo->functionId));
 
                         if (ret)
                         {
-                            if (_function_status == fb_esp_functions_status_UNKNOWN || _function_status == fb_esp_functions_status_OFFLINE)
+                            if (_function_status == fb_esp_functions_status_UNKNOWN ||
+                                _function_status == fb_esp_functions_status_OFFLINE)
                                 taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
                             else if (_function_status == fb_esp_functions_status_DEPLOY_IN_PROGRESS)
                                 taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_deploy_in_progress;
@@ -1681,20 +1391,29 @@ void FB_Functions::runDeployTask()
                             }
 
                             if (_function_status != fb_esp_functions_status_UNKNOWN && _function_status != fb_esp_functions_status_OFFLINE)
-                                sendCallback(taskInfo->fbdo, taskInfo->fbdo->session.cfn.cbInfo.status, taskInfo->fbdo->session.error.c_str(), taskInfo->callback, taskInfo->statusInfo);
+                            {
+                                taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->session.error;
+                                sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
+                            }
                         }
 
-                        if (!ret || _function_status == fb_esp_functions_status_ACTIVE || _function_status == fb_esp_functions_status_UNKNOWN || _function_status == fb_esp_functions_status_OFFLINE)
+                        if (!ret || _function_status == fb_esp_functions_status_ACTIVE ||
+                            _function_status == fb_esp_functions_status_UNKNOWN ||
+                            _function_status == fb_esp_functions_status_OFFLINE)
                         {
                             taskInfo->done = true;
                             taskInfo->_delete = true;
                             taskInfo->active = _function_status == fb_esp_functions_status_ACTIVE;
 
                             if (_function_status == fb_esp_functions_status_ACTIVE && taskInfo->setPolicy)
-                                addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep, fb_esp_functions_creation_step_idle, taskInfo->callback, taskInfo->statusInfo);
+                                addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep,
+                                                fb_esp_functions_creation_step_idle, taskInfo->callback, taskInfo->statusInfo);
 
-                            if (_function_status == fb_esp_functions_status_UNKNOWN || _function_status == fb_esp_functions_status_OFFLINE)
-                                addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, fb_esp_functions_creation_step_delete, fb_esp_functions_creation_step_idle, taskInfo->callback, taskInfo->statusInfo);
+                            if (_function_status == fb_esp_functions_status_UNKNOWN ||
+                                _function_status == fb_esp_functions_status_OFFLINE)
+                                addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
+                                                fb_esp_functions_creation_step_delete, fb_esp_functions_creation_step_idle,
+                                                taskInfo->callback, taskInfo->statusInfo);
                         }
                     }
                 }
@@ -1707,7 +1426,7 @@ void FB_Functions::runDeployTask()
                 n++;
 
         if (_deployTasks.size() > 0 && n < _deployTasks.size())
-            ut->set_scheduled_callback(std::bind(&FB_Functions::runDeployTask, this));
+            Signer.set_scheduled_callback(std::bind(&FB_Functions::runDeployTask, this));
 
         if (n == _deployTasks.size())
         {

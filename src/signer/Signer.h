@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.h version 1.3.3
+ * Google's Firebase Token Management class, Signer.h version 1.3.4
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -79,12 +79,12 @@ public:
     ~Firebase_Signer();
 
 private:
-    UtilsClass *ut = nullptr;
     FirebaseConfig *config = nullptr;
     FirebaseAuth *auth = nullptr;
     MB_FS *mbfs = nullptr;
+    uint32_t *mb_ts = nullptr;
 #if defined(ESP8266)
-    callback_function_t _cb = nullptr;
+    callback_function_t esp8266_cb = nullptr;
 #endif
     struct token_info_t tokenInfo;
     bool authenticated = false;
@@ -101,19 +101,19 @@ private:
     volatile bool networkStatus = false;
 
     /* intitialize the class */
-    void begin(UtilsClass *ut, MB_FS *mbfs, FirebaseConfig *config, FirebaseAuth *auth);
+    void begin(FirebaseConfig *config, FirebaseAuth *auth, MB_FS *mbfs, uint32_t *mb_ts);
     /* parse service account json file for private key */
     bool parseSAFile();
     /* clear service account credentials */
-    void clearServiceAccounCreds();
+    void clearServiceAccountCreds();
     /* check for sevice account credentials */
-    bool serviceAccounCredsReady();
+    bool serviceAccountCredsReady();
     /* set token type */
     void setTokenType(fb_esp_auth_token_type type);
     /* check for user account credentials */
     bool userAccountCredsReady();
     /* check for supported tokens */
-    bool isAuthToken(bool admin);
+    bool isAuthToken(bool oauth);
     /* check for time is up or expiry time was reset or unset? */
     bool isExpired();
     /* Adjust the expiry time if system time synched or set. Adjust pre-refresh seconds to not exceed */
@@ -130,8 +130,10 @@ private:
     bool isErrorCBTimeOut();
     /* handle the auth tokens generation */
     bool handleToken();
-    /* parse the JSON response from gooleapis request */
-    bool parseJsonResponse(PGM_P key_path);
+    /* init the temp use Json objects */
+    void initJson();
+    /* free the temp use Json objects */
+    void freeJson();
     /* exchane the auth token with the refresh token */
     bool refreshToken();
     /* set the token status by error code */
@@ -176,12 +178,12 @@ private:
     fb_esp_mem_storage_type getCAFileStorage();
     /* get the pointer to user defined config */
     FirebaseConfig *getCfg();
+    /* get the pointer to MB_FS class object */
+    MB_FS *getMBFS();
+    /* get the pointer to internal timestamp var */
+    uint32_t *getTS();
     /* get the pointer to user defined auth data*/
     FirebaseAuth *getAuth();
-    /* get the pointer to filesystem wrapper object */
-    MB_FS *getMBFS();
-    /* get the pointer to utils object */
-    UtilsClass *getUtils();
     /* prepare or initialize the external/internal TCP client */
     bool initClient(PGM_P subDomain, fb_esp_auth_token_status status = token_status_uninitialized);
     /* set external Client */
@@ -198,9 +200,9 @@ private:
 #if defined(ESP8266)
     void set_scheduled_callback(callback_function_t callback)
     {
-        _cb = std::move([callback]()
+        esp8266_cb = std::move([callback]()
                         { schedule_function(callback); });
-        _cb();
+        esp8266_cb();
     }
 #endif
 };

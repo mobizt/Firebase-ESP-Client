@@ -99,7 +99,8 @@ void sendMessage()
     // Read more details about legacy HTTP API here https://firebase.google.com/docs/cloud-messaging/http-server-ref
     FCM_Legacy_HTTP_Message msg;
 
-    msg.targets.to = "/topics/myTopic";
+    // please change this topic name to your specific topic to prevent TOPICS_MESSAGE_RATE_EXCEEDED error
+    msg.targets.to = "/topics/my_esp_topic";
 
     msg.options.time_to_live = "1000";
     msg.options.priority = "high";

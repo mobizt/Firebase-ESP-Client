@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.22
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.23
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -45,26 +45,6 @@ FB_CM::~FB_CM()
     clear();
 }
 
-bool FB_CM::prepareUtil()
-{
-    if (!ut)
-        ut = Signer.getUtils(); // must be initialized in Firebase class constructor
-
-    if (!ut)
-    {
-        intUt = true;
-        ut = new UtilsClass(Signer.getMBFS());
-        ut->setConfig(Signer.getCfg());
-    }
-
-    return ut != nullptr;
-}
-
-void FB_CM::begin(UtilsClass *u)
-{
-    ut = u;
-}
-
 void FB_CM::mSetServerKey(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_module)
 {
     this->server_key = serverKey;
@@ -74,9 +54,6 @@ void FB_CM::mSetServerKey(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_m
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 {
     if (fbdo->tcpClient.reserved)
-        return false;
-
-    if (!prepareUtil())
         return false;
 
     if (server_key.length() == 0)
@@ -96,11 +73,9 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
     if (fbdo->tcpClient.reserved)
         return false;
 
-    if (!prepareUtil())
-        return false;
-
     Signer.tokenReady();
 
+    // Signer.getTokenType() is required as Signer.config is not set in fcm legacy
     if (Signer.getTokenType() != token_type_oauth2_access_token)
     {
         fbdo->session.response.code = FIREBASE_ERROR_OAUTH2_REQUIRED;
@@ -116,9 +91,6 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 bool FB_CM::mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken)
 {
     if (fbdo->tcpClient.reserved)
-        return false;
-
-    if (!prepareUtil())
         return false;
 
     Signer.tokenReady();
@@ -142,9 +114,6 @@ bool FB_CM::mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char
     if (fbdo->tcpClient.reserved)
         return false;
 
-    if (!prepareUtil())
-        return false;
-
     Signer.tokenReady();
 
     if (server_key.length() == 0)
@@ -166,9 +135,6 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
     if (fbdo->tcpClient.reserved)
         return false;
 
-    if (!prepareUtil())
-        return false;
-
     if (server_key.length() == 0)
     {
         fbdo->session.response.code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
@@ -184,9 +150,6 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, MB_StringPtr application, bool sandbox, const char *APNs[], size_t numToken)
 {
     if (fbdo->tcpClient.reserved)
-        return false;
-
-    if (!prepareUtil())
         return false;
 
     Signer.tokenReady();
@@ -214,8 +177,9 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
 {
     fbdo->tcpClient.setSPIEthernet(_spi_ethernet_module);
 
-    if (Signer.getCfg())
+    if (Signer.config)
     {
+        // Signer.getTokenType() is required as Signer.config is not set in fcm legacy
         if (Signer.getTokenType() != token_type_undefined)
         {
             if (!Signer.tokenReady())
@@ -224,12 +188,11 @@ void FB_CM::fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode)
     }
 
     MB_String host;
-    if (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1)
-        host += fb_esp_pgm_str_249; // "fcm"
-    else
-        host += fb_esp_pgm_str_329; // "iid"
-    host += fb_esp_pgm_str_4;       // "."
-    host += fb_esp_pgm_str_120;     // "googleapis.com"
+    HttpHelper::addGAPIsHost(host,
+                             (mode == fb_esp_fcm_msg_mode_legacy_http ||
+                              mode == fb_esp_fcm_msg_mode_httpv1)
+                                 ? fb_esp_pgm_str_249 /* "fcm" */
+                                 : fb_esp_pgm_str_329 /* "iid" */);
 
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), port, &fbdo->session.response.code);
@@ -241,21 +204,20 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
     bool msgMode = (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1);
 
     MB_String header;
-
     if (mode == fb_esp_fcm_msg_mode_app_instance_info)
-        header = fb_esp_pgm_str_25; // "GET"
+        HttpHelper::addRequestHeaderFirst(header, m_get);
     else
-        header = fb_esp_pgm_str_24; // "POST"
-    header += fb_esp_pgm_str_6;     // " "
+        HttpHelper::addRequestHeaderFirst(header, m_post);
 
     if (msgMode)
     {
+        // Signer.getTokenType() is required as Signer.config is not set in fcm legacy
         if (Signer.getTokenType() != token_type_oauth2_access_token || mode == fb_esp_fcm_msg_mode_legacy_http)
             header += fb_esp_pgm_str_121; // "fcm/send"
         else
         {
-            header += fb_esp_pgm_str_326; // "/v1/projects/"
-            header += Signer.getCfg()->service_account.data.project_id;
+            URLHelper::addGAPIPath(header);
+            header += Signer.config->service_account.data.project_id;
             header += fb_esp_pgm_str_327; // "/messages:send"
         }
     }
@@ -284,21 +246,14 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
         }
     }
 
-    header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
+    HttpHelper::addRequestHeaderLast(header);
 
-    header += fb_esp_pgm_str_31; // "Host: "
-    if (msgMode)
-        header += fb_esp_pgm_str_249; // "fcm"
-    else
-        header += fb_esp_pgm_str_329; // "iid"
-    header += fb_esp_pgm_str_4;       // "."
-    header += fb_esp_pgm_str_120;     // "googleapis.com"
-    header += fb_esp_pgm_str_21;      // "\r\n"
+    HttpHelper::addGAPIsHostHeader(header, msgMode ? fb_esp_pgm_str_249 /* "fcm" */ : fb_esp_pgm_str_329 /* "iid" */);
 
+    // Signer.getTokenType() is required as Signer.config is not set in fcm legacy
     if (Signer.getTokenType() == token_type_oauth2_access_token && mode == fb_esp_fcm_msg_mode_httpv1)
     {
-        header += fb_esp_pgm_str_237; // "Authorization: "
-        header += fb_esp_pgm_str_209; // "Bearer "
+        HttpHelper::addAuthHeaderFirst(header, token_type_oauth2_access_token);
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -313,7 +268,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
     }
     else
     {
-        header += fb_esp_pgm_str_131; // "Authorization: key="
+        HttpHelper::addAuthHeaderFirst(header, token_type_undefined);
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -327,23 +282,21 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
             return false;
     }
 
-    header += fb_esp_pgm_str_21; // "\r\n"
+    HttpHelper::addNewLine(header);
 
-    header += fb_esp_pgm_str_32; // "User-Agent: ESP\r\n"
+    HttpHelper::addUAHeader(header);
 
     if (mode != fb_esp_fcm_msg_mode_app_instance_info)
     {
-        header += fb_esp_pgm_str_8;   // "Content-Type: "
-        header += fb_esp_pgm_str_129; // "application/json"
-        header += fb_esp_pgm_str_21;  // "\r\n"
-
-        header += fb_esp_pgm_str_12; // "Content-Length: "
-        header += strlen(payload);
-        header += fb_esp_pgm_str_21; // "\r\n"
+        HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_129 /* "application/json" */);
+        HttpHelper::addContentLengthHeader(header, strlen(payload));
     }
 
-    header += fb_esp_pgm_str_36; // "Connection: keep-alive\r\n";
-    header += fb_esp_pgm_str_21; // "\r\n"
+    // There is an issue of missing some response at the end of http transaction on ESP32 in case Connection Close header.
+    // This is ESP32 issue only on sdk v2.0.x and may relate to the Client and Stream classes operation.
+    // This library will keep the connection alive instead of close after request sent for the above reason.
+    HttpHelper::addConnectionHeader(header, true);
+    HttpHelper::addNewLine(header);
 
     fbdo->tcpClient.send(header.c_str());
     header.clear();
@@ -366,7 +319,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
     if (msg->targets.to.length() > 0)
     {
         s = fb_esp_pgm_str_128; // "to"
-        json.add(s.c_str(), msg->targets.to);
+        json.add(s, msg->targets.to);
     }
 
     if (msg->targets.registration_ids.length() > 0)
@@ -376,61 +329,61 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         arr.setJsonArrayData(msg->targets.registration_ids);
 
         s = fb_esp_pgm_str_130; // "registration_ids"
-        json.add(s.c_str(), arr);
+        json.add(s, arr);
     }
 
     if (msg->targets.condition.length() > 0)
     {
         s = fb_esp_pgm_str_282; // "condition"
-        json.add(s.c_str(), msg->targets.condition);
+        json.add(s, msg->targets.condition);
     }
 
     if (msg->options.collapse_key.length() > 0)
     {
         s = fb_esp_pgm_str_138; // "collapse_key"
-        json.add(s.c_str(), msg->options.collapse_key);
+        json.add(s, msg->options.collapse_key);
     }
 
     if (msg->options.priority.length() > 0)
     {
         s = fb_esp_pgm_str_136; // "priority"
-        json.add(s.c_str(), msg->options.priority);
+        json.add(s, msg->options.priority);
     }
 
     if (msg->options.content_available.length() > 0)
     {
         s = fb_esp_pgm_str_283; // "content_available"
-        json.add(s.c_str(), ut->boolVal(msg->options.content_available.c_str()));
+        json.add(s, Utils::boolVal(msg->options.content_available));
     }
 
     if (msg->options.mutable_content.length() > 0)
     {
         s = fb_esp_pgm_str_284; // "mutable_content"
-        json.add(s.c_str(), ut->boolVal(msg->options.mutable_content.c_str()));
+        json.add(s, Utils::boolVal(msg->options.mutable_content));
     }
 
     if (msg->options.time_to_live.length() > 0)
     {
         s = fb_esp_pgm_str_137; // "time_to_live"
-        json.add(s.c_str(), atoi(msg->options.time_to_live.c_str()));
+        json.add(s, atoi(msg->options.time_to_live.c_str()));
     }
 
     if (msg->options.restricted_package_name.length() > 0)
     {
         s = fb_esp_pgm_str_147; // "restricted_package_name"
-        json.add(s.c_str(), msg->options.restricted_package_name);
+        json.add(s, msg->options.restricted_package_name);
     }
 
     if (msg->options.dry_run.length() > 0)
     {
         s = fb_esp_pgm_str_281; // "dry_run"
-        json.add(s.c_str(), msg->options.dry_run);
+        json.add(s, msg->options.dry_run);
     }
 
     if (msg->options.direct_boot_ok.length() > 0)
     {
         s = fb_esp_pgm_str_323; // "direct_boot_ok"
-        json.add(s.c_str(), ut->boolVal(msg->options.direct_boot_ok.c_str()));
+        json.add(s, Utils::boolVal(msg->options.direct_boot_ok));
     }
 
     if (msg->payloads.data.length() > 0)
@@ -438,7 +391,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         FirebaseJson js;
         js.setJsonData(msg->payloads.data);
         s = fb_esp_pgm_str_135; // "data"
-        json.add(s.c_str(), js);
+        json.add(s, js);
     }
 
     if (msg->payloads.notification.title.length() > 0)
@@ -446,7 +399,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_285; // "title"
-        json.set(s.c_str(), msg->payloads.notification.title);
+        json.set(s, msg->payloads.notification.title);
     }
 
     if (msg->payloads.notification.body.length() > 0)
@@ -454,7 +407,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_123; // "body"
-        json.set(s.c_str(), msg->payloads.notification.body);
+        json.set(s, msg->payloads.notification.body);
     }
 
     if (msg->payloads.notification.sound.length() > 0)
@@ -462,7 +415,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_126; // "sound"
-        json.set(s.c_str(), msg->payloads.notification.sound);
+        json.set(s, msg->payloads.notification.sound);
     }
 
     if (msg->payloads.notification.badge.length() > 0)
@@ -470,7 +423,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_286; // "badge"
-        json.set(s.c_str(), msg->payloads.notification.badge);
+        json.set(s, msg->payloads.notification.badge);
     }
 
     if (msg->payloads.notification.click_action.length() > 0)
@@ -478,7 +431,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_125; // "click_action"
-        json.set(s.c_str(), msg->payloads.notification.click_action);
+        json.set(s, msg->payloads.notification.click_action);
     }
 
     if (msg->payloads.notification.subtitle.length() > 0)
@@ -486,7 +439,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_287; // "subtitle"
-        json.set(s.c_str(), msg->payloads.notification.subtitle);
+        json.set(s, msg->payloads.notification.subtitle);
     }
 
     if (msg->payloads.notification.body_loc_key.length() > 0)
@@ -494,7 +447,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_288; // "body_loc_key"
-        json.set(s.c_str(), msg->payloads.notification.body_loc_key);
+        json.set(s, msg->payloads.notification.body_loc_key);
     }
 
     if (msg->payloads.notification.body_loc_args.length() > 0)
@@ -504,7 +457,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s += fb_esp_pgm_str_289; // "body_loc_args"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->payloads.notification.body_loc_args);
-        json.set(s.c_str(), arr);
+        json.set(s, arr);
     }
 
     if (msg->payloads.notification.title_loc_key.length() > 0)
@@ -512,7 +465,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_290; // "title_loc_key"
-        json.set(s.c_str(), msg->payloads.notification.title_loc_key);
+        json.set(s, msg->payloads.notification.title_loc_key);
     }
 
     if (msg->payloads.notification.title_loc_args.length() > 0)
@@ -522,7 +475,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s += fb_esp_pgm_str_291; // "title_loc_args"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->payloads.notification.title_loc_args);
-        json.set(s.c_str(), arr);
+        json.set(s, arr);
     }
 
     if (msg->payloads.notification.android_channel_id.length() > 0)
@@ -530,7 +483,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_292; // "android_channel_id"
-        json.set(s.c_str(), msg->payloads.notification.android_channel_id);
+        json.set(s, msg->payloads.notification.android_channel_id);
     }
 
     if (msg->payloads.notification.icon.length() > 0)
@@ -538,7 +491,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_124; // "icon"
-        json.set(s.c_str(), msg->payloads.notification.icon);
+        json.set(s, msg->payloads.notification.icon);
     }
 
     if (msg->payloads.notification.tag.length() > 0)
@@ -546,7 +499,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_293; // "tag"
-        json.set(s.c_str(), msg->payloads.notification.tag);
+        json.set(s, msg->payloads.notification.tag);
     }
 
     if (msg->payloads.notification.color.length() > 0)
@@ -554,7 +507,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
         s = fb_esp_pgm_str_122;  // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_294; // "color"
-        json.set(s.c_str(), msg->payloads.notification.color);
+        json.set(s, msg->payloads.notification.color);
     }
     s.clear();
     raw = json.raw();
@@ -572,7 +525,7 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
     s += fb_esp_pgm_str_134; // "/topics/"
     s += topic;
 
-    json.add(base.c_str(), s.c_str());
+    json.add(base, s);
 
     static FirebaseJsonArray arr;
     arr.clear();
@@ -580,15 +533,16 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
     {
         if (IID[i])
         {
-            s = ut->trim(IID[i]);
+            s = IID[i];
+            s.trim();
             if (s.length() > 0)
-                arr.add(s.c_str());
+                arr.add(s);
         }
     }
 
     base = fb_esp_pgm_str_334; // "registration_tokens"
 
-    json.add(base.c_str(), arr);
+    json.add(base, arr);
 
     base.clear();
     s.clear();
@@ -604,24 +558,25 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
 
     base = fb_esp_pgm_str_337; // "application"
 
-    json.add(base.c_str(), application);
+    json.add(base, application);
 
     base = fb_esp_pgm_str_338; // "sandbox"
-    json.add(base.c_str(), sandbox);
+    json.add(base, sandbox);
 
     FirebaseJsonArray arr;
     for (size_t i = 0; i < numToken; i++)
     {
         if (APNs[i])
         {
-            s = ut->trim(APNs[i]);
+            s = APNs[i];
+            s.trim();
             if (s.length() > 0)
-                arr.add(s.c_str());
+                arr.add(s);
         }
     }
 
     base = fb_esp_pgm_str_339; // "apns_tokens"
-    json.add(base.c_str(), arr);
+    json.add(base, arr);
 
     base.clear();
     s.clear();
@@ -644,19 +599,19 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = base;
         s += fb_esp_pgm_str_233; // "token"
-        json.set(s.c_str(), msg->token);
+        json.set(s, msg->token);
     }
     else if (msg->topic.length() > 0)
     {
         s = base;
         s += fb_esp_pgm_str_296; // "topic"
-        json.set(s.c_str(), msg->topic);
+        json.set(s, msg->topic);
     }
     else if (msg->condition.length() > 0)
     {
         s = base;
         s += fb_esp_pgm_str_282; // "condition"
-        json.set(s.c_str(), msg->condition);
+        json.set(s, msg->condition);
     }
 
     if (msg->data.length() > 0)
@@ -665,7 +620,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         js.setJsonData(msg->data);
         s = base;
         s += fb_esp_pgm_str_135; // "data"
-        json.set(s.c_str(), js);
+        json.set(s, js);
     }
 
     if (msg->notification.title.length() > 0)
@@ -674,7 +629,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_285; // "title"
-        json.set(s.c_str(), msg->notification.title);
+        json.set(s, msg->notification.title);
     }
 
     if (msg->notification.body.length() > 0)
@@ -683,7 +638,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_123; // "body"
-        json.set(s.c_str(), msg->notification.body);
+        json.set(s, msg->notification.body);
     }
 
     if (msg->notification.image.length() > 0)
@@ -692,7 +647,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_297; // "image"
-        json.set(s.c_str(), msg->notification.image);
+        json.set(s, msg->notification.image);
     }
 
     if (msg->fcm_options.analytics_label.length() > 0)
@@ -701,7 +656,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_298; // "fcm_options"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
-        json.set(s.c_str(), msg->fcm_options.analytics_label);
+        json.set(s, msg->fcm_options.analytics_label);
     }
 
     ////// AndroidConfig
@@ -712,7 +667,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_300; // "android"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_138; // "collapse_key"
-        json.set(s.c_str(), msg->android.collapse_key);
+        json.set(s, msg->android.collapse_key);
     }
 
     if (msg->android.priority.length() > 0)
@@ -721,7 +676,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_300; // "android"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_136; // "priority"
-        json.set(s.c_str(), msg->android.priority);
+        json.set(s, msg->android.priority);
     }
 
     if (msg->android.ttl.length() > 0)
@@ -730,7 +685,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_300; // "android"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_303; // "ttl"
-        json.set(s.c_str(), msg->android.ttl);
+        json.set(s, msg->android.ttl);
     }
 
     if (msg->android.restricted_package_name.length() > 0)
@@ -739,7 +694,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_300; // "android"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_147; // "restricted_package_name"
-        json.set(s.c_str(), msg->android.restricted_package_name);
+        json.set(s, msg->android.restricted_package_name);
     }
 
     if (msg->android.data.length() > 0)
@@ -750,7 +705,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_300; // "android"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_135; // "data"
-        json.set(s.c_str(), js);
+        json.set(s, js);
     }
 
     if (msg->android.fcm_options.analytics_label.length() > 0)
@@ -761,7 +716,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_298; // "fcm_options"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
-        json.set(s.c_str(), msg->android.fcm_options.analytics_label);
+        json.set(s, msg->android.fcm_options.analytics_label);
     }
 
     if (msg->android.direct_boot_ok.length() > 0)
@@ -770,7 +725,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_300; // "android"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_323; // "direct_boot_ok"
-        json.set(s.c_str(), msg->android.direct_boot_ok);
+        json.set(s, msg->android.direct_boot_ok);
     }
 
     if (msg->android.notification.title.length() > 0)
@@ -781,7 +736,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_285; // "title"
-        json.set(s.c_str(), msg->android.notification.title);
+        json.set(s, msg->android.notification.title);
     }
     if (msg->android.notification.body.length() > 0)
     {
@@ -791,7 +746,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_123; // "body"
-        json.set(s.c_str(), msg->android.notification.body);
+        json.set(s, msg->android.notification.body);
     }
 
     if (msg->android.notification.icon.length() > 0)
@@ -802,7 +757,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_124; // "icon"
-        json.set(s.c_str(), msg->android.notification.icon);
+        json.set(s, msg->android.notification.icon);
     }
 
     if (msg->android.notification.color.length() > 0)
@@ -813,7 +768,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_294; // "color"
-        json.set(s.c_str(), msg->android.notification.color);
+        json.set(s, msg->android.notification.color);
     }
 
     if (msg->android.notification.sound.length() > 0)
@@ -824,7 +779,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_126; // "sound"
-        json.set(s.c_str(), msg->android.notification.sound);
+        json.set(s, msg->android.notification.sound);
     }
     if (msg->android.notification.tag.length() > 0)
     {
@@ -834,7 +789,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_293; // "tag"
-        json.set(s.c_str(), msg->android.notification.tag);
+        json.set(s, msg->android.notification.tag);
     }
     if (msg->android.notification.click_action.length() > 0)
     {
@@ -844,7 +799,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_125; // "click_action"
-        json.set(s.c_str(), msg->android.notification.click_action);
+        json.set(s, msg->android.notification.click_action);
     }
 
     if (msg->android.notification.body_loc_key.length() > 0)
@@ -855,7 +810,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_288; // "body_loc_key"
-        json.set(s.c_str(), msg->android.notification.body_loc_key);
+        json.set(s, msg->android.notification.body_loc_key);
     }
 
     if (msg->android.notification.body_loc_args.length() > 0)
@@ -869,7 +824,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         static FirebaseJsonArray arr;
         arr.clear();
         arr.setJsonArrayData(msg->android.notification.body_loc_args);
-        json.set(s.c_str(), arr);
+        json.set(s, arr);
     }
 
     if (msg->android.notification.title_loc_key.length() > 0)
@@ -880,7 +835,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_290; // "title_loc_key"
-        json.set(s.c_str(), msg->android.notification.title_loc_key);
+        json.set(s, msg->android.notification.title_loc_key);
     }
 
     if (msg->android.notification.title_loc_args.length() > 0)
@@ -893,7 +848,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_291; // "title_loc_args"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->android.notification.title_loc_args);
-        json.set(s.c_str(), arr);
+        json.set(s, arr);
     }
 
     if (msg->android.notification.channel_id.length() > 0)
@@ -904,7 +859,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_304; // "channel_id"
-        json.set(s.c_str(), msg->android.notification.channel_id);
+        json.set(s, msg->android.notification.channel_id);
     }
     if (msg->android.notification.ticker.length() > 0)
     {
@@ -914,7 +869,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_305; // "ticker"
-        json.set(s.c_str(), msg->android.notification.ticker);
+        json.set(s, msg->android.notification.ticker);
     }
     if (msg->android.notification.sticky.length() > 0)
     {
@@ -924,7 +879,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_306; // "sticky"
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.sticky.c_str()));
+        json.set(s, Utils::boolVal(msg->android.notification.sticky));
     }
     if (msg->android.notification.event_time.length() > 0)
     {
@@ -934,7 +889,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_307; // "event_time"
-        json.set(s.c_str(), msg->android.notification.event_time);
+        json.set(s, msg->android.notification.event_time);
     }
     if (msg->android.notification.local_only.length() > 0)
     {
@@ -944,7 +899,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_308; // "local_only"
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.local_only.c_str()));
+        json.set(s, Utils::boolVal(msg->android.notification.local_only));
     }
     if (msg->android.notification.notification_priority.length() > 0)
     {
@@ -954,7 +909,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_309; // "notification_priority"
-        json.set(s.c_str(), msg->android.notification.notification_priority);
+        json.set(s, msg->android.notification.notification_priority);
     }
     if (msg->android.notification.default_sound.length() > 0)
     {
@@ -964,7 +919,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_310; // "default_sound"
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_sound.c_str()));
+        json.set(s, Utils::boolVal(msg->android.notification.default_sound));
     }
     if (msg->android.notification.default_vibrate_timings.length() > 0)
     {
@@ -974,7 +929,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_311; // "default_vibrate_timings"
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_vibrate_timings.c_str()));
+        json.set(s, Utils::boolVal(msg->android.notification.default_vibrate_timings));
     }
     if (msg->android.notification.default_light_settings.length() > 0)
     {
@@ -984,7 +939,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_312; // "default_light_settings"
-        json.set(s.c_str(), ut->boolVal(msg->android.notification.default_light_settings.c_str()));
+        json.set(s, Utils::boolVal(msg->android.notification.default_light_settings));
     }
     if (msg->android.notification.vibrate_timings.length() > 0)
     {
@@ -996,7 +951,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_313; // "vibrate_timings"
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->android.notification.vibrate_timings);
-        json.set(s.c_str(), arr);
+        json.set(s, arr);
     }
 
     if (msg->android.notification.visibility.length() > 0)
@@ -1007,7 +962,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_314; // "visibility"
-        json.set(s.c_str(), msg->android.notification.visibility);
+        json.set(s, msg->android.notification.visibility);
     }
     if (msg->android.notification.notification_count.length() > 0)
     {
@@ -1017,7 +972,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_315; // "notification_count"
-        json.set(s.c_str(), atoi(msg->android.notification.notification_count.c_str()));
+        json.set(s, atoi(msg->android.notification.notification_count.c_str()));
     }
 
     if (msg->android.notification.image.length() > 0)
@@ -1028,7 +983,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_122; // "notification"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_297; // "image"
-        json.set(s.c_str(), msg->android.notification.image);
+        json.set(s, msg->android.notification.image);
     }
 
     s = base;
@@ -1046,7 +1001,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_294; // "color"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_317; // "red"
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.red.c_str()));
+        json.set(s, atoi(msg->android.notification.light_settings.color.red.c_str()));
     }
     if (msg->android.notification.light_settings.color.green.length() > 0)
     {
@@ -1054,7 +1009,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_294; // "color"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_318; // "green"
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.green.c_str()));
+        json.set(s, atoi(msg->android.notification.light_settings.color.green.c_str()));
     }
     if (msg->android.notification.light_settings.color.blue.length() > 0)
     {
@@ -1062,7 +1017,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_294; // "color"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_319; // "blue"
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.blue.c_str()));
+        json.set(s, atoi(msg->android.notification.light_settings.color.blue.c_str()));
     }
     if (msg->android.notification.light_settings.color.alpha.length() > 0)
     {
@@ -1070,19 +1025,19 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_294; // "color"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_320; // "alpha"
-        json.set(s.c_str(), atoi(msg->android.notification.light_settings.color.alpha.c_str()));
+        json.set(s, atoi(msg->android.notification.light_settings.color.alpha.c_str()));
     }
     if (msg->android.notification.light_settings.light_on_duration.length() > 0)
     {
         s = base;
         s += fb_esp_pgm_str_321; // "light_on_duration"
-        json.set(s.c_str(), msg->android.notification.light_settings.light_on_duration);
+        json.set(s, msg->android.notification.light_settings.light_on_duration);
     }
     if (msg->android.notification.light_settings.light_off_duration.length() > 0)
     {
         s = base;
         s += fb_esp_pgm_str_322; // "light_off_duration"
-        json.set(s.c_str(), msg->android.notification.light_settings.light_off_duration);
+        json.set(s, msg->android.notification.light_settings.light_off_duration);
     }
 
     ////// WebpushConfig
@@ -1097,7 +1052,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_324; // "headers"
         js.setJsonData(msg->webpush.headers);
-        json.set(s.c_str(), js);
+        json.set(s, js);
     }
 
     if (msg->webpush.data.length() > 0)
@@ -1107,7 +1062,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_135; // "data"
         js.setJsonData(msg->webpush.data);
-        json.set(s.c_str(), js);
+        json.set(s, js);
     }
 
     if (msg->webpush.notification.length() > 0)
@@ -1117,7 +1072,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_122; // "notification"
         js.setJsonData(msg->webpush.notification);
-        json.set(s.c_str(), js);
+        json.set(s, js);
     }
 
     if (msg->webpush.fcm_options.analytics_label.length() > 0)
@@ -1128,7 +1083,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_298; // "fcm_options"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
-        json.set(s.c_str(), msg->webpush.fcm_options.analytics_label);
+        json.set(s, msg->webpush.fcm_options.analytics_label);
     }
 
     if (msg->webpush.fcm_options.link.length() > 0)
@@ -1139,7 +1094,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_298; // "fcm_options"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_325; // "link"
-        json.set(s.c_str(), msg->webpush.fcm_options.link);
+        json.set(s, msg->webpush.fcm_options.link);
     }
 
     ////// ApnsConfig
@@ -1151,7 +1106,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_324; // "headers"
         js.setJsonData(msg->apns.headers);
-        json.set(s.c_str(), js);
+        json.set(s, js);
     }
 
     if (msg->apns.payload.length() > 0)
@@ -1161,7 +1116,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_135; // "data"
         js.setJsonData(msg->apns.payload);
-        json.set(s.c_str(), js);
+        json.set(s, js);
     }
 
     if (msg->apns.fcm_options.analytics_label.length() > 0)
@@ -1172,7 +1127,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_298; // "fcm_options"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
-        json.set(s.c_str(), msg->apns.fcm_options.analytics_label);
+        json.set(s, msg->apns.fcm_options.analytics_label);
     }
 
     if (msg->apns.fcm_options.image.length() > 0)
@@ -1183,7 +1138,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
         s += fb_esp_pgm_str_298; // "fcm_options"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_297; // "image"
-        json.set(s.c_str(), msg->apns.fcm_options.image);
+        json.set(s, msg->apns.fcm_options.image);
     }
 
     base.clear();
@@ -1195,15 +1150,27 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *msg)
 {
 
-    if (Signer.getCfg())
+    if (Signer.config)
     {
+        // Signer.getTokenType() is required as Signer.config is not set in fcm legacy
         if (Signer.getTokenType() != token_type_undefined)
             if (!Signer.tokenReady())
             {
-                Signer.getCfg()->internal.fb_processing = false;
+                Signer.config->internal.fb_processing = false;
                 return false;
             }
     }
+
+#if !defined(FB_ENABLE_EXTERNAL_CLIENT) && (defined(ESP32) || defined(ESP8266))
+    // in legacy http fcm, the Signer.config was not set yet, then no SSL certificate is appliable
+    // set the SSL client to skip server SSL certificate verification
+#if defined(ESP32)
+    if (!Signer.config)
+        fbdo->tcpClient.setInsecure();
+#else
+    fbdo->tcpClient.setCACert(nullptr);
+#endif
+#endif
 
     bool ret = sendHeader(fbdo, mode, msg);
 
@@ -1214,7 +1181,8 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *m
     if (fbdo->session.response.code < 0)
     {
         fbdo->closeSession();
-        Signer.getCfg()->internal.fb_processing = false;
+        if (Signer.config)
+            Signer.config->internal.fb_processing = false;
         return false;
     }
     else
@@ -1222,8 +1190,8 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *m
 
     ret = waitResponse(fbdo);
 
-    if (Signer.getCfg())
-        Signer.getCfg()->internal.fb_processing = false;
+    if (Signer.config)
+        Signer.config->internal.fb_processing = false;
 
     bool msgMode = (mode == fb_esp_fcm_msg_mode_legacy_http || mode == fb_esp_fcm_msg_mode_httpv1);
 
@@ -1240,288 +1208,37 @@ bool FB_CM::waitResponse(FirebaseData *fbdo)
 
 bool FB_CM::handleResponse(FirebaseData *fbdo)
 {
-
-#ifdef ENABLE_RTDB
-    if (fbdo->session.rtdb.pause)
-        return true;
-#endif
-
     if (!fbdo->reconnect())
         return false;
 
-    if (!fbdo->session.connected)
-    {
-        fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
-        return false;
-    }
-
-    unsigned long dataTime = millis();
-
-    char *pChunk = nullptr;
-    char *temp = nullptr;
-    char *header = nullptr;
-    char *payload = nullptr;
-    bool isHeader = false;
-
     struct server_response_data_t response;
+    struct fb_esp_tcp_response_handler_t tcpHandler;
 
-    int chunkIdx = 0;
-    int pChunkIdx = 0;
-    int payloadLen = fbdo->session.resp_size;
-    int pBufPos = 0;
-    int hBufPos = 0;
-    int chunkBufSize = fbdo->tcpClient.available();
-    int hstate = 0;
-    int pstate = 0;
-    int chunkedDataState = 0;
-    int chunkedDataSize = 0;
-    int chunkedDataLen = 0;
-    int defaultChunkSize = fbdo->session.resp_size;
-    int payloadRead = 0;
-    struct fb_esp_auth_token_error_t error;
-    error.code = -1;
+    HttpHelper::initTCPSession(fbdo->session);
+    HttpHelper::intTCPHandler(fbdo->tcpClient.client, tcpHandler, 768, fbdo->session.resp_size, nullptr, false);
 
-    fbdo->session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
-    fbdo->session.content_length = -1;
-    fbdo->session.payload_length = 0;
-    fbdo->session.chunked_encoding = false;
-    fbdo->session.buffer_ovf = false;
+    if (!fbdo->waitResponse(tcpHandler))
+        return false;
 
-    defaultChunkSize = 768;
-
-    while (fbdo->tcpClient.connected() && chunkBufSize <= 0)
+    while (tcpHandler.available() > 0 /* data available to read payload */ ||
+           tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
     {
-        if (!fbdo->reconnect(dataTime))
-            return false;
-        chunkBufSize = fbdo->tcpClient.available();
-        ut->idle();
+        if (!fbdo->readResponse(&fbdo->session.fcm.payload, tcpHandler, response))
+            break;
     }
 
-    dataTime = millis();
+    // parse the payload for error
+    fbdo->getError(fbdo->session.fcm.payload, tcpHandler, response, false);
 
-    if (chunkBufSize > 1)
-    {
-        while (chunkBufSize > 0)
-        {
-            if (!fbdo->reconnect())
-                return false;
-
-            chunkBufSize = fbdo->tcpClient.available();
-
-            if (chunkBufSize <= 0 && payloadRead >= response.contentLen && response.contentLen > 0)
-                break;
-
-            if (chunkBufSize > 0)
-            {
-                chunkBufSize = defaultChunkSize;
-
-                if (chunkIdx == 0)
-                {
-                    // the first chunk can be http response header
-                    header = (char *)ut->newP(chunkBufSize);
-                    hstate = 1;
-                    int readLen = fbdo->tcpClient.readLine(header, chunkBufSize);
-                    int pos = 0;
-
-                    temp = ut->getHeader(header, fb_esp_pgm_str_5 /* "HTTP/1.1 " */, fb_esp_pgm_str_6 /* " " */, pos, 0);
-                    ut->idle();
-                    dataTime = millis();
-                    if (temp)
-                    {
-                        // http response header with http response code
-                        isHeader = true;
-                        hBufPos = readLen;
-                        response.httpCode = atoi(temp);
-                        fbdo->session.response.code = response.httpCode;
-                        ut->delP(&temp);
-                    }
-                    else
-                    {
-                        payload = (char *)ut->newP(payloadLen);
-                        pstate = 1;
-                        memcpy(payload, header, readLen);
-                        pBufPos = readLen;
-                        ut->delP(&header);
-                        hstate = 0;
-                    }
-                }
-                else
-                {
-                    ut->idle();
-                    dataTime = millis();
-                    // the next chunk data can be the remaining http header
-                    if (isHeader)
-                    {
-                        // read one line of next header field until the empty header has found
-                        temp = (char *)ut->newP(chunkBufSize);
-                        int readLen = fbdo->tcpClient.readLine(temp, chunkBufSize);
-                        bool headerEnded = false;
-
-                        // check is it the end of http header (\n or \r\n)?
-                        if (readLen == 1)
-                            if (temp[0] == '\r')
-                                headerEnded = true;
-
-                        if (readLen == 2)
-                            if (temp[0] == '\r' && temp[1] == '\n')
-                                headerEnded = true;
-
-                        if (headerEnded)
-                        {
-
-                            if (response.httpCode == 401)
-                                Signer.authenticated = false;
-                            else if (response.httpCode < 300)
-                                Signer.authenticated = true;
-
-                            // parse header string to get the header field
-                            isHeader = false;
-                            ut->parseRespHeader(header, response);
-
-                            fbdo->session.http_code = response.httpCode;
-
-                            if (hstate == 1)
-                                ut->delP(&header);
-                            hstate = 0;
-
-                            fbdo->session.chunked_encoding = response.isChunkedEnc;
-                        }
-                        else
-                        {
-                            // accumulate the remaining header field
-                            memcpy(header + hBufPos, temp, readLen);
-                            hBufPos += readLen;
-                        }
-
-                        ut->delP(&temp);
-                    }
-                    else
-                    {
-                        // the next chuunk data is the payload
-                        if (!response.noContent)
-                        {
-                            pChunkIdx++;
-
-                            pChunk = (char *)ut->newP(chunkBufSize + 1);
-
-                            if (!payload || pstate == 0)
-                            {
-                                pstate = 1;
-                                payload = (char *)ut->newP(payloadLen + 1);
-                            }
-
-                            // read the avilable data
-                            int readLen = 0;
-
-                            // chunk transfer encoding?
-                            if (response.isChunkedEnc)
-                                readLen = fbdo->tcpClient.readChunkedData(pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
-                            else
-                            {
-                                if (fbdo->tcpClient.available() < chunkBufSize)
-                                    chunkBufSize = fbdo->tcpClient.available();
-                                readLen = fbdo->tcpClient.readBytes(pChunk, chunkBufSize);
-                            }
-
-                            if (readLen > 0)
-                            {
-                                fbdo->session.payload_length += readLen;
-                                if (fbdo->session.max_payload_length < fbdo->session.payload_length)
-                                    fbdo->session.max_payload_length = fbdo->session.payload_length;
-                                payloadRead += readLen;
-                                fbdo->checkOvf(pBufPos + readLen, response);
-
-                                if (!fbdo->session.buffer_ovf)
-                                {
-                                    if (pBufPos + readLen <= payloadLen)
-                                        memcpy(payload + pBufPos, pChunk, readLen);
-                                    else
-                                    {
-                                        // in case of the accumulated payload size is bigger than the char array
-                                        // reallocate the char array
-
-                                        char *buf = (char *)ut->newP(pBufPos + readLen + 1);
-                                        memcpy(buf, payload, pBufPos);
-
-                                        memcpy(buf + pBufPos, pChunk, readLen);
-
-                                        payloadLen = pBufPos + readLen;
-                                        ut->delP(&payload);
-                                        payload = (char *)ut->newP(payloadLen + 1);
-                                        memcpy(payload, buf, payloadLen);
-                                        ut->delP(&buf);
-                                    }
-                                }
-                            }
-
-                            ut->delP(&pChunk);
-                            if (readLen < 0 && payloadRead >= response.contentLen)
-                                break;
-                            if (readLen > 0)
-                                pBufPos += readLen;
-                        }
-                        else
-                        {
-                            // read all the rest data
-                            fbdo->tcpClient.flush();
-                        }
-                    }
-                }
-
-                chunkIdx++;
-            }
-        }
-
-        if (hstate == 1)
-            ut->delP(&header);
-
-        if (payload)
-        {
-            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
-                fbdo->session.fcm.payload = payload;
-            else
-            {
-
-                MB_String t = payload;
-                t.trim();
-
-                if (t[0] == '{' && t[t.length() - 1] == '}')
-                {
-                    FirebaseJson json;
-                    FirebaseJsonData data;
-                    json.setJsonData(t.c_str());
-
-                    json.get(data, pgm2Str(fb_esp_pgm_str_257 /* "error/code" */));
-
-                    if (data.success)
-                    {
-                        error.code = data.to<int>();
-                        json.get(data, pgm2Str(fb_esp_pgm_str_258 /* "error/message" */));
-                        if (data.success)
-                            fbdo->session.error = data.to<const char *>();
-                    }
-                    else
-                        error.code = 0;
-                }
-            }
-        }
-
-        if (pstate == 1)
-            ut->delP(&payload);
-
-        return error.code == 0 || response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK;
-    }
-    else
-    {
-        fbdo->tcpClient.flush();
-    }
-
-    return false;
+    return tcpHandler.error.code == 0 || response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK;
 }
 
 void FB_CM::rescon(FirebaseData *fbdo, const char *host)
 {
-    if (fbdo->session.cert_updated || !fbdo->session.connected || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout || fbdo->session.con_mode != fb_esp_con_mode_fcm || strcmp(host, fbdo->session.host.c_str()) != 0)
+    if (fbdo->session.cert_updated || !fbdo->session.connected ||
+        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+        fbdo->session.con_mode != fb_esp_con_mode_fcm ||
+        strcmp(host, fbdo->session.host.c_str()) != 0)
     {
         fbdo->session.last_conn_ms = millis();
         fbdo->closeSession();
@@ -1541,7 +1258,7 @@ bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const
     if (!fbdo->reconnect())
         return false;
 
-    if (!ut->waitIdle(fbdo->session.response.code))
+    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
         return false;
 
 #ifdef ENABLE_RTDB
@@ -1554,12 +1271,12 @@ bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const
         return false;
     }
 
-    if (Signer.getCfg())
+    if (Signer.config)
     {
-        if (Signer.getCfg()->internal.fb_processing)
+        if (Signer.config->internal.fb_processing)
             return false;
 
-        Signer.getCfg()->internal.fb_processing = true;
+        Signer.config->internal.fb_processing = true;
     }
 
     fcm_connect(fbdo, mode);
@@ -1573,11 +1290,6 @@ void FB_CM::clear()
 {
     raw.clear();
     server_key.clear();
-    if (ut && intUt)
-    {
-        delete ut;
-        ut = nullptr;
-    }
 }
 
 #endif

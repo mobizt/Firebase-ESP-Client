@@ -101,4 +101,50 @@ static SdFat sd_fat_fs;   // should declare as static here
 // For ESP8266 W5100 Ethernet module
 // #define ENABLE_ESP8266_W5100_ETH
 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
+// You can create your own header file "CustomFirebaseFS.h" in the same diectory of 
+// "FirebaseFS.h" and put your own custom config to overwrite or 
+// change the default config in "FirebaseFS.h".
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
+
+/** This is an example of "CustomFirebaseFS.h" 
+
+#pragma once
+
+#ifndef CustomFirebaseFS_H
+#define CustomFirebaseFS_H
+
+// Use external client instead of internal client
+#define FB_ENABLE_EXTERNAL_CLIENT // define to use external client
+
+// Use LittleFS instead of SPIFFS
+#include "LittleFS.h"
+#undef DEFAULT_FLASH_FS // remove Flash FS defined macro
+#define DEFAULT_FLASH_FS LittleFS
+
+// Use SD_MMC instead of SD
+#if defined(ESP32)
+#include <SD_MMC.h>
+#undef DEFAULT_SD_FS // remove SD defined macro
+#undef CARD_TYPE_SD // remove SD defined macro
+#define DEFAULT_SD_FS SD_MMC
+#define CARD_TYPE_SD_MMC 1
+#endif
+
+// Disable Error Queue, Firestore, FCM, Firebase Storage, Google Cloud Storage
+// and Functions for Firebase.
+#undef ENABLE_ERROR_QUEUE
+#undef ENABLE_FIRESTORE
+#undef ENABLE_FCM
+#undef ENABLE_FB_STORAGE
+#undef ENABLE_GC_STORAGE
+#undef ENABLE_FB_FUNCTIONS
+
+#endif
+
+*/
+#if __has_include("CustomFirebaseFS.h")
+#include "CustomFirebaseFS.h"
+#endif
+
 #endif

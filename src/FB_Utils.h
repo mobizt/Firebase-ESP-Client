@@ -1,9 +1,8 @@
 /**
- * Google's Firebase Util class, FB_Utils.h version 1.1.19
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created July 12, 2022
+ * Created December 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -40,89 +39,38 @@
 #endif
 using namespace mb_string;
 
-class UtilsClass
+namespace MemoryHelper
 {
-    friend class FirebaseSession;
-    friend class Firebase_ESP_Client;
 
-public:
-#if defined(ESP8266)
-    callback_function_t _callback_function = nullptr;
-#endif
-    FirebaseConfig *config = nullptr;
-    MB_FS *mbfs = nullptr;
-    time_t ts = 0;
-
-    ~UtilsClass(){};
-
-    UtilsClass(MB_FS *mbfs)
+    template <typename T>
+    inline T createBuffer(MB_FS *mbfs, size_t size, bool clear = true)
     {
-        this->mbfs = mbfs;
+        return reinterpret_cast<T>(mbfs->newP(size, clear));
     }
 
-    void setConfig(FirebaseConfig *config)
+    template <typename T>
+    inline T creatDownloadBuffer(MB_FS *mbfs, int &bufLen, bool clear = false)
     {
-        this->config = config;
+        if (bufLen < 512)
+            bufLen = 512;
+
+        if (bufLen > 1024 * 16)
+            bufLen = 1024 * 16;
+
+        return createBuffer<T>(mbfs, bufLen, clear);
     }
 
-    int strposP(const char *buf, PGM_P beginH, int ofs)
+    inline void freeBuffer(MB_FS *mbfs, void *ptr)
     {
-        int p = strpos(buf, pgm2Str(beginH), ofs);
-        return p;
+        mbfs->delP(&ptr);
     }
 
-    bool strcmpP(const char *buf, int ofs, PGM_P beginH)
-    {
+};
 
-        if (ofs < 0)
-        {
-            int p = strposP(buf, beginH, 0);
-            if (p == -1)
-                return false;
-            ofs = p;
-        }
+namespace StringHelper
+{
 
-        char *tmp2 = (char *)newP(strlen_P(beginH) + 1);
-        memcpy(tmp2, &buf[ofs], strlen_P(beginH));
-        tmp2[strlen_P(beginH)] = 0;
-        bool ret = (strcasecmp(pgm2Str(beginH), tmp2) == 0);
-
-        delP(&tmp2);
-        return ret;
-    }
-
-    char *subStr(const char *buf, PGM_P beginH, PGM_P endH, int beginPos, int endPos)
-    {
-
-        char *tmp = nullptr;
-        int p1 = strposP(buf, beginH, beginPos);
-        if (p1 != -1)
-        {
-            int p2 = -1;
-            if (endPos == 0)
-                p2 = strposP(buf, endH, p1 + strlen_P(beginH));
-
-            if (p2 == -1)
-                p2 = strlen(buf);
-
-            int len = p2 - p1 - strlen_P(beginH);
-            tmp = (char *)newP(len + 1);
-            memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
-            return tmp;
-        }
-
-        return nullptr;
-    }
-
-    void strcat_c(char *str, char c)
-    {
-        for (; *str; str++)
-            ;
-        *str++ = c;
-        *str++ = 0;
-    }
-
-    int strpos(const char *haystack, const char *needle, int offset)
+    inline int strpos(const char *haystack, const char *needle, int offset)
     {
         if (!haystack || !needle)
             return -1;
@@ -153,222 +101,284 @@ public:
         return -1;
     }
 
-    int strpos(const char *haystack, char needle, int offset)
+    inline size_t getReservedLen(MB_FS *mbfs, size_t len)
     {
-        if (!haystack || needle == 0)
-            return -1;
-
-        int hlen = strlen(haystack);
-
-        if (hlen == 0)
-            return -1;
-
-        int hidx = offset;
-        while ((*(haystack + hidx) != '\0') && hidx < hlen)
-        {
-            if (needle == *(haystack + hidx))
-                return hidx;
-            hidx++;
-        }
-
-        return -1;
-    }
-
-    int rstrpos(const char *haystack, const char *needle, int offset /* start search from this offset to the left string */)
-    {
-        if (!haystack || !needle)
-            return -1;
-
-        int hlen = strlen(haystack);
-        int nlen = strlen(needle);
-
-        if (hlen == 0 || nlen == 0)
-            return -1;
-
-        int hidx = offset;
-
-        if (hidx >= hlen || offset == -1)
-            hidx = hlen - 1;
-
-        int nidx = nlen - 1;
-
-        while (hidx >= 0)
-        {
-            if (*(needle + nidx) != *(haystack + hidx))
-            {
-                hidx--;
-                nidx = nlen - 1;
-            }
-            else
-            {
-                if (nidx == 0)
-                    return hidx + nidx;
-                nidx--;
-                hidx--;
-            }
-        }
-
-        return -1;
-    }
-
-    int rstrpos(const char *haystack, char needle, int offset /* start search from this offset to the left char */)
-    {
-        if (!haystack || needle == 0)
-            return -1;
-
-        int hlen = strlen(haystack);
-
-        if (hlen == 0)
-            return -1;
-
-        int hidx = offset;
-
-        if (hidx >= hlen || offset == -1)
-            hidx = hlen - 1;
-
-        while (hidx >= 0)
-        {
-            if (needle == *(haystack + hidx))
-                return hidx;
-            hidx--;
-        }
-
-        return -1;
-    }
-
-    void ltrim(MB_String &str, const MB_String &chars = " ")
-    {
-        size_t pos = str.find_first_not_of(chars);
-        if (pos != MB_String::npos)
-            str.erase(0, pos);
-    }
-
-    void rtrim(MB_String &str, const MB_String &chars = " ")
-    {
-        size_t pos = str.find_last_not_of(chars);
-        if (pos != MB_String::npos)
-            str.erase(pos + 1);
-    }
-
-    inline MB_String trim(const MB_String &s)
-    {
-        MB_String chars = " ";
-        MB_String str = s;
-        ltrim(str, chars);
-        rtrim(str, chars);
-        return str;
-    }
-
-    void delP(void *ptr)
-    {
-        if (!mbfs)
-            return;
-        mbfs->delP(ptr);
-    }
-
-    size_t getReservedLen(size_t len)
-    {
-        if (!mbfs)
-            return 0;
         return mbfs->getReservedLen(len);
     }
 
-    void *newP(size_t len, bool clear = true)
+    inline void splitString(const MB_String &str, MB_VECTOR<MB_String> out, const char delim)
     {
-        if (!mbfs)
-            return NULL;
-        return mbfs->newP(len, clear);
-    }
-
-    void substr(MB_String &str, const char *s, int offset, size_t len)
-    {
-        if (!s)
-            return;
-
-        int slen = strlen(s);
-
-        if (slen == 0)
-            return;
-
-        int last = offset + len;
-
-        if (offset >= slen || len == 0 || last > slen)
-            return;
-
-        for (int i = offset; i < last; i++)
-            str += s[i];
-    }
-    
-    void splitString(const char *str, MB_VECTOR<MB_String> out, const char delim)
-    {
-        int current = 0, previous = 0;
-        current = strpos(str, delim, 0);
+        size_t current = 0, previous = 0;
+        current = str.find(delim, 0);
         MB_String s;
-        while (current != -1)
+        while (current != MB_String::npos)
         {
             s.clear();
-            substr(s, str, previous, current - previous);
-            trim(s);
+            str.substr(s, previous, current - previous);
+            s.trim();
             if (s.length() > 0)
                 out.push_back(s);
 
             previous = current + 1;
-            current = strpos(str, delim, previous);
+            current = str.find(delim, previous);
             delay(0);
         }
 
         s.clear();
 
-        if (previous > 0 && current == -1)
-            substr(s, str, previous, strlen(str) - previous);
+        if (previous > 0 && current == MB_String::npos)
+            str.substr(s, previous, str.length() - previous);
         else
             s = str;
-
-        trim(s);
+        s.trim();
         if (s.length() > 0)
             out.push_back(s);
         s.clear();
     }
 
-    void getUrlInfo(const MB_String &url, struct fb_esp_url_info_t &info)
+    inline void pushTk(const MB_String &str, MB_VECTOR<MB_String> &tk)
     {
-        char *host = (char *)newP(url.length() + 5);
-        char *uri = (char *)newP(url.length() + 5);
-        char *auth = (char *)newP(url.length() + 5);
+        MB_String s = str;
+        s.trim();
+        if (s.length() > 0)
+            tk.push_back(s);
+    }
+
+    inline void splitTk(const MB_String &str, MB_VECTOR<MB_String> &tk, const char *delim)
+    {
+        size_t current, previous = 0;
+        current = str.find(delim, previous);
+        while (current != MB_String::npos)
+        {
+            pushTk(str.substr(previous, current - previous), tk);
+            previous = current + strlen(delim);
+            current = str.find(delim, previous);
+        }
+        pushTk(str.substr(previous, current - previous), tk);
+    }
+
+    inline bool find(const MB_String &src, PGM_P token, bool last, size_t offset, int &pos)
+    {
+        size_t ret = last ? src.find_last_of(pgm2Str(token), offset) : src.find(pgm2Str(token), offset);
+
+        if (ret != MB_String::npos)
+        {
+            pos = ret;
+            return true;
+        }
+        pos = -1;
+        return false;
+    }
+
+    inline bool compare(const MB_String &src, int ofs, PGM_P token, bool caseInSensitive = false)
+    {
+        MB_String copy;
+        src.substr(copy, ofs, strlen_P(token));
+        return caseInSensitive ? (strcasecmp(pgm2Str(token), copy.c_str()) == 0) : (strcmp(pgm2Str(token), copy.c_str()) == 0);
+    }
+
+    /* convert string to boolean */
+    inline bool str2Bool(const MB_String &v)
+    {
+        return v.length() > 0 && strcmp(v.c_str(), pgm2Str(fb_esp_pgm_str_107 /* "true" */)) == 0;
+    }
+
+    inline MB_String intStr2Str(const MB_String &v)
+    {
+        return MB_String(atoi(v.c_str()));
+    }
+
+    inline MB_String boolStr2Str(const MB_String &v)
+    {
+        return MB_String(str2Bool(v.c_str()));
+    }
+
+    inline bool tokenSubString(const MB_String &src, MB_String &out, PGM_P token1, PGM_P token2,
+                               int &ofs1, int ofs2, bool advanced)
+    {
+        size_t pos1 = src.find(pgm2Str(token1), ofs1);
+        size_t pos2 = MB_String::npos;
+
+        int len1 = strlen_P(token1);
+        int len2 = 0;
+
+        if (pos1 != MB_String::npos)
+        {
+            if (ofs2 > 0)
+                pos2 = ofs2;
+            else if (ofs2 == 0)
+            {
+                len2 = strlen_P(token2);
+                pos2 = src.find(pgm2Str(token2), pos1 + len1 + 1);
+            }
+            else if (ofs2 == -1)
+                ofs1 = pos1 + len1;
+
+            if (pos2 == MB_String::npos)
+                pos2 = src.length();
+
+            if (pos2 != MB_String::npos)
+            {
+                // advanced the begin position before return
+                if (advanced)
+                    ofs1 = pos2 + len2;
+                out = src.substr(pos1 + len1, pos2 - pos1 - len1);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    inline bool tokenSubStringInt(const MB_String &buf, int &out, PGM_P token1, PGM_P token2, int &ofs1, int ofs2, bool advanced)
+    {
+        MB_String s;
+        if (tokenSubString(buf, s, token1, token2, ofs1, ofs2, advanced))
+        {
+            out = atoi(s.c_str());
+            return true;
+        }
+        return false;
+    }
+
+}
+
+namespace URLHelper
+{
+
+    /* Append a parameter to URL */
+    inline bool addParam(MB_String &url, PGM_P key, const MB_String &val, bool &hasParam, bool allowEmptyValue = false)
+    {
+        if (!allowEmptyValue && val.length() == 0)
+            return false;
+
+        MB_String _key(key);
+
+        if (!hasParam && _key[0] == '&')
+            _key[0] = '?';
+        else if (hasParam && _key[0] == '?')
+            _key[0] = '&';
+
+        if (_key[0] != '?' && _key[0] != '&')
+            url += !hasParam ? fb_esp_pgm_str_173 /* "?" */ : fb_esp_pgm_str_172 /* "&" */;
+
+        if (_key[_key.length() - 1] != '=' && _key.find('=') == MB_String::npos)
+            _key += fb_esp_pgm_str_361; // "="
+
+        url += _key;
+        url += val;
+        hasParam = true;
+        return true;
+    }
+
+    /* Append the comma separated tokens as URL parameters */
+    inline void addParamsTokens(MB_String &url, PGM_P key, MB_String val, bool &hasParam)
+    {
+        if (val.length() == 0)
+            return;
+
+        MB_VECTOR<MB_String> tk;
+        StringHelper::splitTk(val, tk, ",");
+        for (size_t i = 0; i < tk.size(); i++)
+            addParam(url, key, tk[i], hasParam);
+    }
+
+    /* Append the path to URL */
+    inline void addPath(MB_String &url, const MB_String &path)
+    {
+        if (path.length() > 0)
+        {
+            if (path[0] != '/')
+                url += fb_esp_pgm_str_1; // "/"
+        }
+        else
+            url += fb_esp_pgm_str_1; // "/"
+
+        url += path;
+    }
+#if defined(FIREBASE_ESP_CLIENT)
+    /* Append the string with google storage URL */
+    inline void addGStorageURL(MB_String &uri, const MB_String &bucketID, const MB_String &storagePath)
+    {
+        uri += fb_esp_pgm_str_350; // "gs://"
+        uri += bucketID;
+        if (storagePath[0] != '/')
+            uri += fb_esp_pgm_str_1; // "/"
+        uri += storagePath;
+    }
+
+    /* Append the string with cloudfunctions project host */
+    inline void addFunctionsHost(MB_String &uri, const MB_String &locationId, const MB_String &projectId,
+                                 const MB_String &path, bool url)
+    {
+        if (url)
+            uri = fb_esp_pgm_str_112; // "https://"
+        uri += locationId;
+        uri += fb_esp_pgm_str_397; // "-"
+        uri += projectId;
+        uri += fb_esp_pgm_str_398; // ".cloudfunctions.net"
+        if (path.length() > 0)
+        {
+            uri += fb_esp_pgm_str_1; // "/"
+            uri += path;
+        }
+    }
+
+    inline void addGAPIPath(MB_String &uri)
+    {
+        uri += fb_esp_pgm_str_326; // "/v1/projects/"
+    }
+#endif
+
+    inline void host2Url(MB_String &url, MB_String &host)
+    {
+        url = fb_esp_pgm_str_112; // "https://"
+        url += host;
+    }
+
+    inline void parse(MB_FS *mbfs, const MB_String &url, struct fb_esp_url_info_t &info)
+    {
+        char *host = MemoryHelper::createBuffer<char *>(mbfs, url.length());
+        char *uri = MemoryHelper::createBuffer<char *>(mbfs, url.length());
+        char *auth = MemoryHelper::createBuffer<char *>(mbfs, url.length());
 
         int p1 = 0;
-        int x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_441 /* "https://%[^/]/%s" */), host, uri);
-        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_442 /* "http://%[^/]/%s" */), host, uri);
-        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_443 /* "%[^/]/%s" */), host, uri);
+        int x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_441), host, uri);
+        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_442), host, uri);
+        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_443), host, uri);
 
-        int p2 = 0;
+        size_t p2 = 0;
         if (x > 0)
         {
-            p2 = strpos(host, pgm2Str(fb_esp_pgm_str_173 /* "?" */), 0);
-            if (p2 > -1)
-            {
-                x = sscanf(url.c_str() + p1, pgm2Str(fb_esp_pgm_str_444 /* "%[^?]?%s" */), host, uri);
-            }
+            p2 = MB_String(host).find(pgm2Str(fb_esp_pgm_str_173), 0);
+            if (p2 != MB_String::npos)
+                x = sscanf(url.c_str() + p1, pgm2Str(fb_esp_pgm_str_444), host, uri);
         }
 
         if (strlen(uri) > 0)
         {
-            p2 = strpos(uri, pgm2Str(fb_esp_pgm_str_445 /* "auth=" */), 0);
-            if (p2 > -1)
-            {
-                x = sscanf(uri + p2 + 5, pgm2Str(fb_esp_pgm_str_446 /* "%[^&]" */), auth);
-            }
+            p2 = MB_String(uri).find(pgm2Str(fb_esp_pgm_str_445), 0);
+            if (p2 != MB_String::npos)
+                x = sscanf(uri + p2 + 5, pgm2Str(fb_esp_pgm_str_446), auth);
         }
 
         info.uri = uri;
         info.host = host;
         info.auth = auth;
-        delP(&uri);
-        delP(&host);
-        delP(&auth);
+        MemoryHelper::freeBuffer(mbfs, host);
+        MemoryHelper::freeBuffer(mbfs, uri);
+        MemoryHelper::freeBuffer(mbfs, auth);
     }
 
-    MB_String url_encode(const MB_String &s)
+    inline void hexchar(char c, char &hex1, char &hex2)
+    {
+        hex1 = c / 16;
+        hex2 = c % 16;
+        hex1 += hex1 < 10 ? '0' : 'A' - 10;
+        hex2 += hex2 < 10 ? '0' : 'A' - 10;
+    }
+
+    inline MB_String encode(const MB_String &s)
     {
         MB_String ret;
         ret.reserve(s.length() * 3 + 1);
@@ -396,348 +406,414 @@ public:
         return ret;
     }
 
-    inline int ishex(int x)
+};
+
+namespace JsonHelper
+{
+
+    /* check for the JSON path or key */
+    inline bool isJsonPath(PGM_P path)
     {
-        return (x >= '0' && x <= '9') ||
-               (x >= 'a' && x <= 'f') ||
-               (x >= 'A' && x <= 'F');
+        return MB_String(path).find('/') != MB_String::npos;
     }
 
-    void hexchar(char c, char &hex1, char &hex2)
+    inline bool parseChunk(MB_String &val, const MB_String &chunk, const MB_String &key, int &pos)
     {
-        hex1 = c / 16;
-        hex2 = c % 16;
-        hex1 += hex1 < 10 ? '0' : 'A' - 10;
-        hex2 += hex2 < 10 ? '0' : 'A' - 10;
+        if (key.length() == 0)
+            return false;
+
+        MB_String token = fb_esp_pgm_str_3; // "\""
+
+        MB_String _key;
+
+        if (key[0] != '"')
+            _key += token;
+        _key += key;
+        if (key[key.length() - 1] != '"')
+            _key += token;
+
+        size_t p1 = chunk.find(_key, pos);
+        if (p1 != MB_String::npos)
+        {
+            size_t p2 = chunk.find(MB_String(fb_esp_pgm_str_7 /* ":" */).c_str(), p1 + _key.length());
+            if (p2 != MB_String::npos)
+                p2 = chunk.find(token, p2 + 1);
+            if (p2 != MB_String::npos)
+            {
+                size_t p3 = chunk.find(token, p2 + token.length());
+                if (p3 != MB_String::npos)
+                {
+                    pos = p3;
+                    val = chunk.substr(p2 + token.length(), p3 - p2 - token.length());
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    char from_hex(char ch)
+    /* convert comma separated tokens into JSON Array and set/add to JSON object */
+    inline void addTokens(FirebaseJson *json, PGM_P key, const MB_String &tokens)
     {
-        return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+        if (json && tokens.length() > 0)
+        {
+            FirebaseJsonArray arr;
+            MB_VECTOR<MB_String> ta;
+            StringHelper::splitTk(tokens, ta, ",");
+            for (size_t i = 0; i < ta.size(); i++)
+                arr.add(ta[i].c_str());
+
+            if (ta.size() > 0)
+            {
+                if (isJsonPath(key))
+                    json->set(pgm2Str(key), arr);
+                else
+                    json->add(pgm2Str(key), arr);
+            }
+        }
     }
 
-    void parseRespHeader(const char *buf, struct server_response_data_t &response)
+    inline bool addString(FirebaseJson *json, PGM_P key, const MB_String &val)
     {
-        int beginPos = 0, pmax = 0, payloadPos = 0;
+        if (json && val.length() > 0)
+        {
+            if (isJsonPath(key))
+                json->set(pgm2Str(key), val);
+            else
+                json->add(pgm2Str(key), val);
+            return true;
+        }
+        return false;
+    }
 
-        char *tmp = nullptr;
+    inline bool remove(FirebaseJson *json, PGM_P key)
+    {
+        if (json)
+            return json->remove(pgm2Str(key));
+        return false;
+    }
+
+    inline void addString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
+    {
+        if (addString(json, key, val))
+            flag = true;
+    }
+
+    inline void addBoolString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
+    {
+        if (json && val.length() > 0)
+        {
+            if (isJsonPath(key))
+                json->set(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_107)) == 0 ? true : false);
+            else
+                json->add(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_107)) == 0 ? true : false);
+            flag = true;
+        }
+    }
+
+    inline void addArrayString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
+    {
+        if (val.length() > 0)
+        {
+            static FirebaseJsonArray arr;
+            arr.clear();
+            arr.setJsonArrayData(val);
+            if (isJsonPath(key))
+                json->set(pgm2Str(key), arr);
+            else
+                json->add(pgm2Str(key), arr);
+            flag = true;
+        }
+    }
+
+    inline void addObject(FirebaseJson *json, PGM_P key, FirebaseJson *val, bool clearAfterAdded)
+    {
+        if (json)
+        {
+            FirebaseJson js;
+
+            if (!val)
+                val = &js;
+
+            if (isJsonPath(key))
+                json->set(pgm2Str(key), *val);
+            else
+                json->add(pgm2Str(key), *val);
+
+            if (clearAfterAdded && val)
+                val->clear();
+        }
+    }
+
+    inline void addNumberString(FirebaseJson *json, PGM_P key, const MB_String &val)
+    {
+        if (json && val.length() > 0)
+        {
+            if (isJsonPath(key))
+                json->set(pgm2Str(key), atoi(val.c_str()));
+            else
+                json->add(pgm2Str(key), atoi(val.c_str()));
+        }
+    }
+
+    inline void arrayAddObjectString(FirebaseJsonArray *arr, MB_String &val, bool clearAfterAdded)
+    {
+        if (arr && val.length() > 0)
+        {
+            FirebaseJson json(val);
+            arr->add(json);
+            if (clearAfterAdded)
+                val.clear();
+        }
+    }
+
+    inline void arrayAddObject(FirebaseJsonArray *arr, FirebaseJson *val, bool clearAfterAdded)
+    {
+        if (arr && val)
+        {
+            arr->add(*val);
+            if (clearAfterAdded)
+                val->clear();
+        }
+    }
+
+    inline void addArray(FirebaseJson *json, PGM_P key, FirebaseJsonArray *val, bool clearAfterAdded)
+    {
+        if (json && val)
+        {
+            if (isJsonPath(key))
+                json->set(pgm2Str(key), *val);
+            else
+                json->add(pgm2Str(key), *val);
+            if (clearAfterAdded)
+                val->clear();
+        }
+    }
+
+    inline bool parse(FirebaseJson *json, FirebaseJsonData *result, PGM_P key)
+    {
+        bool ret = false;
+        if (json && result)
+        {
+            result->clear();
+            json->get(*result, pgm2Str(key));
+            ret = result->success;
+        }
+        return ret;
+    }
+
+    inline bool setData(FirebaseJson *json, MB_String &val, bool clearAfterAdded)
+    {
+        bool ret = false;
+
+        if (json && val.length() > 0)
+            ret = json->setJsonData(val);
+
+        if (clearAfterAdded)
+            val.clear();
+
+        return ret;
+    }
+
+    inline void toString(FirebaseJson *json, MB_String &out, bool clearSource, bool prettify = false)
+    {
+        if (json)
+        {
+            out.clear();
+            json->toString(out, prettify);
+            if (clearSource)
+                json->clear();
+        }
+    }
+
+    inline void clear(FirebaseJson *json)
+    {
+        if (json)
+            json->clear();
+    }
+
+    inline void arrayClear(FirebaseJsonArray *arr)
+    {
+        if (arr)
+            arr->clear();
+    }
+
+};
+
+namespace HttpHelper
+{
+    inline void addNewLine(MB_String &header)
+    {
+        header += fb_esp_pgm_str_21; // "\r\n"
+    }
+
+    inline void addGAPIsHost(MB_String &str, PGM_P sub)
+    {
+        str += sub;
+        if (str[str.length() - 1] != '.')
+            str += fb_esp_pgm_str_4; // "."
+        str += fb_esp_pgm_str_120;   // "googleapis.com"
+    }
+
+    inline void addGAPIsHostHeader(MB_String &header, PGM_P sub)
+    {
+        header += fb_esp_pgm_str_31; // "Host: "
+        addGAPIsHost(header, sub);
+        addNewLine(header);
+    }
+
+    inline void addHostHeader(MB_String &header, PGM_P host)
+    {
+        header += fb_esp_pgm_str_31; // "Host: "
+        header += host;
+        addNewLine(header);
+    }
+
+    inline void addContentTypeHeader(MB_String &header, PGM_P v)
+    {
+        header += fb_esp_pgm_str_8; // "Content-Type: "
+        header += v;
+        header += fb_esp_pgm_str_21; // "\r\n"
+    }
+
+    inline void addContentLengthHeader(MB_String &header, size_t len)
+    {
+        header += fb_esp_pgm_str_12; // "Content-Length: "
+        header += len;
+        addNewLine(header);
+    }
+
+    inline void addUAHeader(MB_String &header)
+    {
+        header += fb_esp_pgm_str_32; // "User-Agent: ESP\r\n"
+    }
+
+    inline void addConnectionHeader(MB_String &header, bool keepAlive)
+    {
+        header += keepAlive ? fb_esp_pgm_str_36 /* "Connection: keep-alive\r\n" */
+                            : fb_esp_pgm_str_34 /* "Connection: close\r\n" */;
+    }
+
+    /* Append the string with first request line (HTTP method) */
+    inline bool addRequestHeaderFirst(MB_String &header, fb_esp_method method)
+    {
+        bool post = false;
+        switch (method)
+        {
+        case fb_esp_method::m_get:
+            header += fb_esp_pgm_str_25; // "GET"
+            break;
+        case fb_esp_method::m_post:
+            header += fb_esp_pgm_str_24; // "POST"
+            post = true;
+            break;
+
+        case fb_esp_method::m_patch:
+            header += fb_esp_pgm_str_26; // "PATCH"
+            post = true;
+            break;
+
+        case fb_esp_method::m_delete:
+            header += fb_esp_pgm_str_27; // "DELETE"
+            break;
+
+        case fb_esp_method::m_put:
+            header += fb_esp_pgm_str_23; // "PUT"
+            break;
+
+        default:
+            break;
+        }
+
+        if (method == m_get || method == m_post || method == m_patch || method == m_delete || method == m_put)
+            header += fb_esp_pgm_str_6; // " "
+
+        return post;
+    }
+
+    /* Append the string with last request line (HTTP version) */
+    inline void addRequestHeaderLast(MB_String &header)
+    {
+        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
+    }
+
+    /* Append the string with first part of Authorization header */
+    inline void addAuthHeaderFirst(MB_String &header, fb_esp_auth_token_type type)
+    {
+        header += fb_esp_pgm_str_237; // "Authorization: "
+        if (type == token_type_oauth2_access_token)
+            header += fb_esp_pgm_str_209; // "Bearer "
+        else if (type == token_type_id_token || type == token_type_custom_token)
+            header += fb_esp_pgm_str_270; // "Firebase "
+        else
+            header += fb_esp_pgm_str_131; // "key="
+    }
+
+    inline void parseRespHeader(const MB_String &src, struct server_response_data_t &response)
+    {
+        int beginPos = 0;
+
+        MB_String out;
 
         if (response.httpCode != -1)
         {
-            payloadPos = beginPos;
-            pmax = beginPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_10 /* "Connection: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-            if (tmp)
-            {
-                response.connection = tmp;
-                delP(&tmp);
-            }
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_8 /* "Content-Type: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-            if (tmp)
-            {
-                response.contentType = tmp;
-                delP(&tmp);
-            }
 
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_12 /* "Content-Length: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-            if (tmp)
-            {
-                response.contentLen = atoi(tmp);
-                delP(&tmp);
-            }
+            StringHelper::tokenSubString(src, response.connection,
+                                         fb_esp_pgm_str_10 /* "Connection: " */,
+                                         fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+            StringHelper::tokenSubString(src, response.contentType,
+                                         fb_esp_pgm_str_8 /* "Content-Type: " */,
+                                         fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+            StringHelper::tokenSubStringInt(src, response.contentLen,
+                                            fb_esp_pgm_str_12 /* "Content-Length: " */,
+                                            fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+            StringHelper::tokenSubString(src, response.etag,
+                                         fb_esp_pgm_str_150 /* "ETag: " */,
+                                         fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+            response.payloadLen = response.contentLen;
 
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_167 /* "Transfer-Encoding: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-            if (tmp)
-            {
-                response.transferEnc = tmp;
-                if (stringCompare(tmp, 0, fb_esp_pgm_str_168 /* "chunked" */))
-                    response.isChunkedEnc = true;
-                delP(&tmp);
-            }
+            if (StringHelper::tokenSubString(src, response.transferEnc,
+                                             fb_esp_pgm_str_167 /* "Transfer-Encoding: " */,
+                                             fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false) &&
+                StringHelper::compare(response.transferEnc, 0, fb_esp_pgm_str_168 /* "chunked" */))
+                response.isChunkedEnc = true;
 
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_150 /* "ETag: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-            if (tmp)
-            {
-                response.etag = tmp;
-                delP(&tmp);
-            }
-
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_10 /* "Connection: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-            if (tmp)
-            {
-                response.connection = tmp;
-                delP(&tmp);
-            }
-
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            tmp = getHeader(buf, fb_esp_pgm_str_12 /* "Content-Length: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-            if (tmp)
-            {
-
-                response.payloadLen = atoi(tmp);
-                delP(&tmp);
-            }
-
-            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK || response.httpCode == FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
-            {
-                if (pmax < beginPos)
-                    pmax = beginPos;
-                beginPos = payloadPos;
-                tmp = getHeader(buf, fb_esp_pgm_str_95 /* "Location: " */, fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0);
-                if (tmp)
-                {
-                    response.location = tmp;
-                    delP(&tmp);
-                }
-            }
+            if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK ||
+                response.httpCode == FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT ||
+                response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT ||
+                response.httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY ||
+                response.httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
+                StringHelper::tokenSubString(src, response.location,
+                                             fb_esp_pgm_str_95 /* "Location: " */,
+                                             fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
 
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
                 response.noContent = true;
         }
     }
 
-    char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
+    inline int getStatusCode(const MB_String &header, int &pos)
     {
-        char *tmp = nullptr;
-
-        int p1 = strpos(buf, pgm2Str(beginH), beginPos);
-        int ofs = 0;
-        if (p1 != -1)
-        {
-
-            int p2 = -1;
-            if (endPos > 0)
-                p2 = endPos;
-            else if (endPos == 0)
-            {
-                ofs = strlen_P(endH);
-                p2 = strpos(buf, pgm2Str(endH), p1 + strlen_P(beginH) + 1);
-            }
-            else if (endPos == -1)
-            {
-                beginPos = p1 + strlen_P(beginH);
-            }
-
-            if (p2 == -1)
-                p2 = strlen(buf);
-
-            if (p2 != -1)
-            {
-                beginPos = p2 + ofs;
-                int len = p2 - p1 - strlen_P(beginH);
-                tmp = (char *)newP(len + 1);
-                memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
-                return tmp;
-            }
-        }
-
-        return nullptr;
+        int code = 0;
+        StringHelper::tokenSubStringInt(header, code,
+                                        fb_esp_pgm_str_5 /* "HTTP/1.1 " */,
+                                        fb_esp_pgm_str_6 /* " " */, pos, 0, false);
+        return code;
     }
 
-    void getHeaderStr(const MB_String &in, MB_String &out, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
+    inline void setNumDataType(const MB_String &buf, int ofs, struct server_response_data_t &response, bool dec)
     {
-        MB_String _in = in;
-        int p1 = strpos(in.c_str(), pgm2Str(beginH), beginPos);
-        int ofs = 0;
-
-        if (p1 != -1)
-        {
-
-            int p2 = -1;
-            if (endPos > 0)
-                p2 = endPos;
-            else if (endPos == 0)
-            {
-                ofs = strlen_P(endH);
-                p2 = strpos(in.c_str(), pgm2Str(endH), p1 + strlen_P(beginH) + 1);
-            }
-            else if (endPos == -1)
-            {
-                beginPos = p1 + strlen_P(beginH);
-            }
-
-            if (p2 == -1)
-                p2 = in.length();
-
-            if (p2 != -1)
-            {
-                beginPos = p2 + ofs;
-                int len = p2 - p1 - strlen_P(beginH);
-                out = _in.substr(p1 + strlen_P(beginH), len);
-            }
-        }
-    }
-
-    void parseRespPayload(const char *buf, struct server_response_data_t &response, bool getOfs)
-    {
-        int payloadPos = 0;
-        int payloadOfs = 0;
-
-        char *tmp = nullptr;
-
-        if (!response.isEvent && !response.noEvent)
-        {
-
-            tmp = getHeader(buf, fb_esp_pgm_str_13 /* "event: " */, fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0);
-            if (tmp)
-            {
-                response.isEvent = true;
-                response.eventType = tmp;
-                delP(&tmp);
-
-                payloadOfs = payloadPos;
-
-                tmp = getHeader(buf, fb_esp_pgm_str_14 /* "data: " */, fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0);
-                if (tmp)
-                {
-                    payloadOfs += strlen_P(fb_esp_pgm_str_14 /* "data: " */);
-                    payloadPos = payloadOfs;
-                    response.hasEventData = true;
-
-                    delP(&tmp);
-
-                    tmp = getHeader(buf, fb_esp_pgm_str_17 /* "\"path\":\"" */, fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0);
-
-                    if (tmp)
-                    {
-                        payloadOfs = payloadPos;
-                        response.eventPath = tmp;
-                        delP(&tmp);
-                        tmp = getHeader(buf, fb_esp_pgm_str_18 /* "\"data\":" */, fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0);
-
-                        if (tmp)
-                        {
-                            tmp[strlen(tmp) - 1] = 0;
-                            response.payloadLen = strlen(tmp);
-                            response.eventData = tmp;
-                            payloadOfs += strlen_P(fb_esp_pgm_str_18 /* "\"data\":" */) + 1;
-                            response.payloadOfs = payloadOfs;
-                            delP(&tmp);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (strlen(buf) < (size_t)payloadOfs)
+        if (ofs < 0)
             return;
 
-        if (response.dataType == 0)
-        {
-            tmp = getHeader(buf, fb_esp_pgm_str_20 /* "{\"name\":\"" */, fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0);
-            if (tmp)
-            {
-                response.pushName = tmp;
-                delP(&tmp);
-            }
+        int len = (int)buf.length();
 
-            tmp = getHeader(buf, fb_esp_pgm_str_102 /* "\"error\" : " */, fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0);
-            if (tmp)
-            {
-                delP(&tmp);
-                FirebaseJson js;
-                FirebaseJsonData d;
-                js.setJsonData(buf);
-                js.get(d, pgm2Str(fb_esp_pgm_str_176 /* "error" */));
-                if (d.success)
-                    response.fbError = d.stringValue.c_str();
-            }
-
-            if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_92 /* "\"blob,base64," */, true))
-            {
-                response.dataType = fb_esp_data_type::d_blob;
-                if ((response.isEvent && response.hasEventData) || getOfs)
-                {
-                    if (response.eventData.length() > 0)
-                    {
-                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_92) - 1;
-                        response.payloadLen = dlen;
-                    }
-                    response.payloadOfs += strlen_P(fb_esp_pgm_str_92);
-                    response.eventData.clear();
-                }
-            }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_93 /* "\"file,base64," */, true))
-            {
-                response.dataType = fb_esp_data_type::d_file;
-                if ((response.isEvent && response.hasEventData) || getOfs)
-                {
-                    if (response.eventData.length() > 0)
-                    {
-                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_93) - 1;
-                        response.payloadLen = dlen;
-                    }
-
-                    response.payloadOfs += strlen_P(fb_esp_pgm_str_93);
-                    response.eventData.clear();
-                }
-            }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_3 /* "\"" */))
-            {
-                response.dataType = fb_esp_data_type::d_string;
-            }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_163 /* "{" */))
-            {
-                response.dataType = fb_esp_data_type::d_json;
-            }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_182 /* "[" */))
-            {
-                response.dataType = fb_esp_data_type::d_array;
-            }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_106 /* "false" */) || stringCompare(buf, payloadOfs, fb_esp_pgm_str_107 /* "true" */))
-            {
-                response.dataType = fb_esp_data_type::d_boolean;
-                response.boolData = stringCompare(buf, payloadOfs, fb_esp_pgm_str_107 /* "trye" */);
-            }
-            else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_19 /* "null" */))
-            {
-                response.dataType = fb_esp_data_type::d_null;
-            }
-            else
-            {
-                int p1 = strpos(buf, pgm2Str(fb_esp_pgm_str_4 /* "." */), payloadOfs);
-                setNumDataType(buf, payloadOfs, response, p1 != -1);
-            }
-        }
-    }
-
-    void setNumDataType(const char *buf, int ofs, struct server_response_data_t &response, bool dec)
-    {
-
-        if (!buf || ofs < 0)
+        if (ofs >= len)
             return;
 
-        if (ofs >= (int)strlen(buf))
-            return;
-
-        if (response.payloadLen > 0 && response.payloadLen <= (int)strlen(buf) && ofs < (int)strlen(buf) && ofs + response.payloadLen <= (int)strlen(buf))
+        if (response.payloadLen > 0 && response.payloadLen <= len && ofs < len && ofs + response.payloadLen <= len)
         {
-            char *tmp = (char *)newP(response.payloadLen + 1);
-
-            if (!tmp)
-                return;
-
-            memcpy(tmp, &buf[ofs], response.payloadLen);
-            tmp[response.payloadLen] = 0;
-            double d = atof(tmp);
-            delP(&tmp);
+            double d = atof(buf.substr(ofs, response.payloadLen).c_str());
 
             if (dec)
             {
@@ -768,7 +844,906 @@ public:
         }
     }
 
-    void createDirs(MB_String dirs, fb_esp_mem_storage_type storageType)
+    inline void parseRespPayload(const MB_String &src, struct server_response_data_t &response, bool getOfs)
+    {
+        int payloadPos = 0;
+        int payloadOfs = 0;
+
+        MB_String out;
+
+        if (!response.isEvent && !response.noEvent)
+        {
+            if (StringHelper::tokenSubString(src, response.eventType,
+                                             fb_esp_pgm_str_13 /* "event: " */,
+                                             fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0, true))
+            {
+                response.isEvent = true;
+                payloadOfs = payloadPos;
+
+                if (StringHelper::tokenSubString(src, out,
+                                                 fb_esp_pgm_str_14 /* "data: " */,
+                                                 fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0, true))
+                {
+                    payloadOfs += strlen_P(fb_esp_pgm_str_14 /* "data: " */);
+                    payloadPos = payloadOfs;
+                    response.hasEventData = true;
+
+                    if (StringHelper::tokenSubString(src, response.eventPath,
+                                                     fb_esp_pgm_str_17 /* "\"path\":\"" */,
+                                                     fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0, true))
+                    {
+                        payloadOfs = payloadPos;
+
+                        if (StringHelper::tokenSubString(src, response.eventData,
+                                                         fb_esp_pgm_str_18 /* "\"data\":" */,
+                                                         fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0, true))
+                        {
+                            response.eventData[response.eventData.length() - 1] = 0;
+                            response.payloadLen = response.eventData.length();
+                            payloadOfs += strlen_P(fb_esp_pgm_str_18 /* "\"data\":" */) + 1;
+                            response.payloadOfs = payloadOfs;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (src.length() < (size_t)payloadOfs)
+            return;
+
+        if (response.dataType == 0)
+        {
+            StringHelper::tokenSubString(src, response.pushName,
+                                         fb_esp_pgm_str_20 /* "{\"name\":\"" */,
+                                         fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0, true);
+
+            if (StringHelper::tokenSubString(src, out,
+                                             fb_esp_pgm_str_102 /* "\"error\" : " */,
+                                             fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0, true))
+            {
+                FirebaseJson js;
+                FirebaseJsonData d;
+                js.setJsonData(src);
+                js.get(d, pgm2Str(fb_esp_pgm_str_176 /* "error" */));
+                if (d.success)
+                    response.fbError = d.stringValue.c_str();
+            }
+
+            if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_92 /* "\"blob,base64," */, true))
+            {
+                response.dataType = fb_esp_data_type::d_blob;
+                if ((response.isEvent && response.hasEventData) || getOfs)
+                {
+                    if (response.eventData.length() > 0)
+                    {
+                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_92) - 1;
+                        response.payloadLen = dlen;
+                    }
+                    response.payloadOfs += strlen_P(fb_esp_pgm_str_92);
+                    response.eventData.clear();
+                }
+            }
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_93 /* "\"file,base64," */, true))
+            {
+                response.dataType = fb_esp_data_type::d_file;
+                if ((response.isEvent && response.hasEventData) || getOfs)
+                {
+                    if (response.eventData.length() > 0)
+                    {
+                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_93) - 1;
+                        response.payloadLen = dlen;
+                    }
+
+                    response.payloadOfs += strlen_P(fb_esp_pgm_str_93);
+                    response.eventData.clear();
+                }
+            }
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_3 /* "\"" */))
+                response.dataType = fb_esp_data_type::d_string;
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_163 /* "{" */))
+                response.dataType = fb_esp_data_type::d_json;
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_182 /* "[" */))
+                response.dataType = fb_esp_data_type::d_array;
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_106 /* "false" */) ||
+                     StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_107 /* "true" */))
+            {
+                response.dataType = fb_esp_data_type::d_boolean;
+                response.boolData = StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_107 /* "trye" */);
+            }
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_19 /* "null" */))
+                response.dataType = fb_esp_data_type::d_null;
+            else
+                setNumDataType(src, payloadOfs, response, src.find(pgm2Str(fb_esp_pgm_str_4 /* "." */), payloadOfs) != MB_String::npos);
+        }
+    }
+
+    inline void getCustomHeaders(MB_String &header, const MB_String &tokens)
+    {
+        if (tokens.length() > 0)
+        {
+            MB_VECTOR<MB_String> headers;
+            StringHelper::splitTk(tokens, headers, ",");
+            for (size_t i = 0; i < headers.size(); i++)
+            {
+                size_t p1 = headers[i].find(F("X-Firebase-"));
+                size_t p2 = headers[i].find(':');
+                size_t p3 = headers[i].find(F("-ETag"));
+
+                if (p1 != MB_String::npos && p2 != MB_String::npos && p2 > p1 && p3 == MB_String::npos)
+                {
+                    header += headers[i];
+                    addNewLine(header);
+                }
+                headers[i].clear();
+            }
+            headers.clear();
+        }
+    }
+
+    inline void initTCPSession(struct fb_esp_session_info_t &session)
+    {
+
+#ifdef ENABLE_RTDB
+        if (session.con_mode == fb_esp_con_mode_rtdb)
+            session.rtdb.raw.clear();
+#endif
+
+#ifdef ENABLE_FIRESTORE
+        if (session.con_mode == fb_esp_con_mode_firestore)
+            session.cfs.payload.clear();
+#endif
+
+#ifdef ENABLE_FB_FUNCTIONS
+        if (session.con_mode == fb_esp_con_mode_functions)
+            session.cfn.payload.clear();
+#endif
+
+#if defined(ENABLE_FCM) && defined(FIREBASE_ESP_CLIENT)
+        if (session.con_mode == fb_esp_con_mode_fcm)
+            session.fcm.payload.clear();
+#endif
+
+#ifdef ENABLE_GC_STORAGE
+        if (session.con_mode == fb_esp_con_mode_gc_storage)
+            session.gcs.payload.clear();
+#endif
+
+#ifdef ENABLE_FB_STORAGE
+        if (session.con_mode == fb_esp_con_mode_storage)
+            session.fcs.files.items.clear();
+#endif
+
+        session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
+        session.content_length = -1;
+        session.payload_length = 0;
+        session.chunked_encoding = false;
+        session.buffer_ovf = false;
+    }
+
+    inline void intTCPHandler(Client *client, struct fb_esp_tcp_response_handler_t &tcpHandler,
+                              size_t defaultChunkSize, size_t respSize, MB_String *payload, bool isOTA)
+    {
+        // set the client before calling available
+        tcpHandler.client = client;
+        tcpHandler.payloadLen = 0;
+        tcpHandler.payloadRead = 0;
+        tcpHandler.chunkBufSize = tcpHandler.available(); // client must be set before calling
+        tcpHandler.defaultChunkSize = respSize;
+        tcpHandler.error.code = -1;
+        tcpHandler.defaultChunkSize = defaultChunkSize;
+        tcpHandler.bufferAvailable = 0;
+        tcpHandler.header.clear();
+        tcpHandler.dataTime = millis();
+        tcpHandler.downloadOTA = isOTA;
+        tcpHandler.payload = payload;
+    }
+
+    inline int readLine(Client *client, char *buf, int bufLen)
+    {
+        if (!client)
+            return 0;
+
+        int res = -1;
+        char c = 0;
+        int idx = 0;
+        if (!client)
+            return idx;
+        while (client->available() && idx < bufLen)
+        {
+            if (!client)
+                break;
+
+            delay(0);
+
+            res = client->read();
+            if (res > -1)
+            {
+                c = (char)res;
+                buf[idx++] = c;
+                if (c == '\n')
+                    return idx;
+            }
+        }
+        return idx;
+    }
+
+    inline int readLine(Client *client, MB_String &buf)
+    {
+        if (!client)
+            return 0;
+
+        int res = -1;
+        char c = 0;
+        int idx = 0;
+        if (!client)
+            return idx;
+        while (client->available())
+        {
+            if (!client)
+                break;
+
+            delay(0);
+
+            res = client->read();
+            if (res > -1)
+            {
+                c = (char)res;
+                buf += c;
+                idx++;
+                if (c == '\n')
+                    return idx;
+            }
+        }
+        return idx;
+    }
+
+    inline uint32_t hex2int(const char *hex)
+    {
+        uint32_t val = 0;
+        while (*hex)
+        {
+            // get current character then increment
+            uint8_t byte = *hex++;
+            // transform hex character to the 4bit equivalent number, using the ascii table indexes
+            if (byte >= '0' && byte <= '9')
+                byte = byte - '0';
+            else if (byte >= 'a' && byte <= 'f')
+                byte = byte - 'a' + 10;
+            else if (byte >= 'A' && byte <= 'F')
+                byte = byte - 'A' + 10;
+            // shift 4 to make space for new digit, and add the 4 bits of the new digit
+            val = (val << 4) | (byte & 0xF);
+        }
+        return val;
+    }
+
+    inline int readChunkedData(MB_FS *mbfs, Client *client, char *out1, MB_String *out2,
+                               struct fb_esp_tcp_response_handler_t &tcpHandler)
+    {
+        if (!client)
+            return 0;
+
+        int bufLen = tcpHandler.chunkBufSize;
+        char *buf = nullptr;
+        int p1 = 0;
+        int olen = 0;
+
+        if (tcpHandler.chunkState.state == 0)
+        {
+            tcpHandler.chunkState.state = 1;
+            tcpHandler.chunkState.chunkedSize = -1;
+            tcpHandler.chunkState.dataLen = 0;
+
+            MB_String s;
+            int readLen = 0;
+
+            if (out2)
+                readLen = readLine(client, s);
+            else if (out1)
+            {
+                buf = MemoryHelper::createBuffer<char *>(mbfs, bufLen);
+                readLen = readLine(client, buf, bufLen);
+            }
+
+            if (readLen)
+            {
+                if (out1)
+                    s = buf;
+
+                p1 = StringHelper::strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR(";"), 0);
+                if (p1 == -1)
+                    p1 = StringHelper::strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR("\r\n"), 0);
+
+                if (p1 != -1)
+                {
+                    if (out2)
+                        tcpHandler.chunkState.chunkedSize = hex2int(s.substr(0, p1).c_str());
+                    else if (out1)
+                    {
+                        char *temp = MemoryHelper::createBuffer<char *>(mbfs, p1 + 1);
+                        memcpy(temp, buf, p1);
+                        tcpHandler.chunkState.chunkedSize = hex2int(temp);
+                        MemoryHelper::freeBuffer(mbfs, temp);
+                    }
+                }
+
+                // last chunk
+                if (tcpHandler.chunkState.chunkedSize < 1)
+                    olen = -1;
+            }
+            else
+                tcpHandler.chunkState.state = 0;
+
+            if (out1)
+                MemoryHelper::freeBuffer(mbfs, buf);
+        }
+        else
+        {
+            if (tcpHandler.chunkState.chunkedSize > -1)
+            {
+                MB_String s;
+                int readLen = 0;
+
+                if (out2)
+                    readLen = readLine(client, s);
+                else if (out1)
+                {
+                    buf = MemoryHelper::createBuffer<char *>(mbfs, bufLen);
+                    readLen = readLine(client, buf, bufLen);
+                }
+
+                if (readLen > 0)
+                {
+                    // chunk may contain trailing
+                    if (tcpHandler.chunkState.dataLen + readLen - 2 < tcpHandler.chunkState.chunkedSize)
+                    {
+                        tcpHandler.chunkState.dataLen += readLen;
+                        if (out2)
+                            *out2 += s;
+                        else if (out1)
+                            memcpy(out1, buf, readLen);
+
+                        olen = readLen;
+                    }
+                    else
+                    {
+                        if (tcpHandler.chunkState.chunkedSize - tcpHandler.chunkState.dataLen > 0)
+                        {
+                            if (out2)
+                                *out2 += s;
+                            else if (out1)
+                                memcpy(out1, buf, tcpHandler.chunkState.chunkedSize - tcpHandler.chunkState.dataLen);
+                        }
+
+                        tcpHandler.chunkState.dataLen = tcpHandler.chunkState.chunkedSize;
+                        tcpHandler.chunkState.state = 0;
+                        olen = readLen;
+                    }
+                }
+                else
+                    olen = -1;
+
+                if (out1)
+                    MemoryHelper::freeBuffer(mbfs, buf);
+            }
+        }
+
+        return olen;
+    }
+
+    inline bool readStatusLine(MB_FS *mbfs, Client *client, struct fb_esp_tcp_response_handler_t &tcpHandler,
+                               struct server_response_data_t &response)
+    {
+        tcpHandler.chunkIdx++;
+
+        if (!tcpHandler.isHeader && tcpHandler.chunkIdx > 1)
+            tcpHandler.pChunkIdx++;
+
+        if (tcpHandler.chunkIdx > 1)
+            return false;
+
+        // the first chunk (line) can be http response status or already connected stream payload
+        char *hChunk = MemoryHelper::createBuffer<char *>(mbfs, tcpHandler.chunkBufSize);
+        int readLen = readLine(client, hChunk, tcpHandler.chunkBufSize);
+        if (readLen > 0)
+            tcpHandler.header += hChunk;
+
+        int pos = 0;
+        int status = HttpHelper::getStatusCode(hChunk, pos);
+        if (status > 0)
+        {
+            // http response status
+            tcpHandler.isHeader = true;
+            response.httpCode = status;
+        }
+
+        MemoryHelper::freeBuffer(mbfs, hChunk);
+        return true;
+    }
+
+    inline bool readHeader(MB_FS *mbfs, Client *client, struct fb_esp_tcp_response_handler_t &tcpHandler,
+                           struct server_response_data_t &response)
+    {
+        // do not check of the config here to allow legacy fcm to work
+
+        char *hChunk = MemoryHelper::createBuffer<char *>(mbfs, tcpHandler.chunkBufSize);
+        int readLen = readLine(client, hChunk, tcpHandler.chunkBufSize);
+
+        // check is it the end of http header (\n or \r\n)?
+        if ((readLen == 1 && hChunk[0] == '\r') || (readLen == 2 && hChunk[0] == '\r' && hChunk[1] == '\n'))
+            tcpHandler.headerEnded = true;
+
+        if (tcpHandler.headerEnded)
+        {
+            // parse header string to get the header field
+            tcpHandler.isHeader = false;
+            HttpHelper::parseRespHeader(tcpHandler.header, response);
+        }
+        // accumulate the remaining header field
+        else if (readLen > 0)
+            tcpHandler.header += hChunk;
+
+        MemoryHelper::freeBuffer(mbfs, hChunk);
+        return tcpHandler.headerEnded;
+    }
+
+};
+
+namespace Base64Helper
+{
+
+    inline int getBase64Len(int n)
+    {
+        int len = (4 * ceil(n / 3.0));
+        return len;
+    }
+
+    inline int getBase64Padding(int n)
+    {
+        int pLen = getBase64Len(n);
+        int uLen = ceil(4.0 * n / 3.0);
+        return pLen - uLen;
+    }
+
+    inline size_t encodedLength(size_t len)
+    {
+        return ((len + 2) / 3 * 4) + 1;
+    }
+
+    inline int decodedLen(const char *src)
+    {
+        int len = strlen(src), i = len - 1, pad = 0;
+        if (len < 4)
+            return 0;
+        while (i > 0 && src[i--] == '=')
+        {
+            pad++;
+        }
+        return (3 * (len / 4)) - pad;
+    }
+
+    inline unsigned char *creatBase64EncBuffer(MB_FS *mbfs, bool isURL)
+    {
+        unsigned char *base64EncBuf = MemoryHelper::createBuffer<unsigned char *>(mbfs, 65);
+        strcpy_P((char *)base64EncBuf, (char *)fb_esp_base64_table);
+        if (isURL)
+        {
+            base64EncBuf[62] = '-';
+            base64EncBuf[63] = '_';
+        }
+        return base64EncBuf;
+    }
+
+    inline bool updateWrite(uint8_t *data, size_t len)
+    {
+        return Update.write(data, len) == len;
+    }
+
+    inline unsigned char *creatBase64DecBuffer(MB_FS *mbfs)
+    {
+        unsigned char *base64DecBuf = MemoryHelper::createBuffer<unsigned char *>(mbfs, 256, false);
+        memset(base64DecBuf, 0x80, 256);
+        for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
+            base64DecBuf[fb_esp_base64_table[i]] = (unsigned char)i;
+        base64DecBuf['='] = 0;
+        return base64DecBuf;
+    }
+
+    template <typename T = uint8_t>
+    inline bool writeOutput(MB_FS *mbfs, fb_esp_base64_io_t<T> &out)
+    {
+        size_t write = out.bufWrite;
+        out.bufWrite = 0;
+
+        if (out.outC && out.outC->write((uint8_t *)out.outT, write) == write)
+            return true;
+        else if (out.filetype != mb_fs_mem_storage_type_undefined && mbfs->write(mbfs_type out.filetype,
+                                                                                 (uint8_t *)out.outT, write) == (int)write)
+            return true;
+#if defined(OTA_UPDATE_ENABLED)
+        else if (out.ota && updateWrite((uint8_t *)out.outT, write))
+            return true;
+#endif
+        return false;
+    }
+
+    template <typename T = uint8_t>
+    inline bool setOutput(MB_FS *mbfs, uint8_t val, fb_esp_base64_io_t<T> &out, T **pos)
+    {
+        if (out.outT)
+        {
+            if (out.ota || out.outC || out.filetype != mb_fs_mem_storage_type_undefined)
+            {
+                out.outT[out.bufWrite++] = val;
+                if (out.bufWrite == (int)out.bufLen && !writeOutput(mbfs, out))
+                    return false;
+            }
+            else
+                *(*pos)++ = (T)(val);
+        }
+        else if (out.outL)
+            out.outL->push_back(val);
+
+        return true;
+    }
+
+    template <typename T>
+    inline bool decode(MB_FS *mbfs, unsigned char *base64DecBuf, const char *src, size_t len, fb_esp_base64_io_t<T> &out)
+    {
+        // the maximum chunk size that writes to output is limited by out.bufLen, the minimum is depending on the source length
+        bool ret = false;
+        unsigned char *block = MemoryHelper::createBuffer<unsigned char *>(mbfs, 4, false);
+        unsigned char temp;
+        size_t i, count;
+        int pad = 0;
+        size_t extra_pad;
+        T *pos = out.outT ? (T *)&out.outT[0] : nullptr;
+        if (len == 0)
+            len = strlen(src);
+
+        count = 0;
+
+        for (i = 0; i < len; i++)
+        {
+            if ((uint8_t)base64DecBuf[(uint8_t)src[i]] != 0x80)
+                count++;
+        }
+
+        if (count == 0)
+            goto skip;
+
+        extra_pad = (4 - count % 4) % 4;
+        count = 0;
+        for (i = 0; i < len + extra_pad; i++)
+        {
+            unsigned char val;
+
+            if (i >= len)
+                val = '=';
+            else
+                val = src[i];
+
+            temp = base64DecBuf[val];
+
+            if (temp == 0x80)
+                continue;
+
+            if (val == '=')
+                pad++;
+
+            block[count] = temp;
+            count++;
+            if (count == 4)
+            {
+
+                setOutput(mbfs, (block[0] << 2) | (block[1] >> 4), out, &pos);
+
+                count = 0;
+                if (pad)
+                {
+                    if (pad == 1)
+                        setOutput(mbfs, (block[1] << 4) | (block[2] >> 2), out, &pos);
+                    else if (pad > 2)
+                        goto skip;
+
+                    break;
+                }
+                else
+                {
+                    setOutput(mbfs, (block[1] << 4) | (block[2] >> 2), out, &pos);
+                    setOutput(mbfs, (block[2] << 6) | block[3], out, &pos);
+                }
+            }
+        }
+
+        // write remaining
+        if (out.bufWrite > 0 && !writeOutput(mbfs, out))
+            goto skip;
+
+        ret = true;
+
+    skip:
+        MemoryHelper::freeBuffer(mbfs, block);
+        return ret;
+    }
+
+    template <typename T>
+    inline bool encodeLast(MB_FS *mbfs, unsigned char *base64EncBuf, const unsigned char *in, size_t len,
+                           fb_esp_base64_io_t<T> &out, T **pos)
+    {
+        if (len > 2)
+            return false;
+
+        if (!setOutput(mbfs, base64EncBuf[in[0] >> 2], out, pos))
+            return false;
+
+        if (len == 1)
+        {
+            if (!setOutput(mbfs, base64EncBuf[(in[0] & 0x03) << 4], out, pos))
+                return false;
+            if (!setOutput(mbfs, '=', out, pos))
+                return false;
+        }
+        else
+        {
+            if (!setOutput(mbfs, base64EncBuf[((in[0] & 0x03) << 4) | (in[1] >> 4)], out, pos))
+                return false;
+            if (!setOutput(mbfs, base64EncBuf[(in[1] & 0x0f) << 2], out, pos))
+                return false;
+        }
+
+        if (!setOutput(mbfs, '=', out, pos))
+            return false;
+
+        return true;
+    }
+
+    template <typename T>
+    inline bool encode(MB_FS *mbfs, unsigned char *base64EncBuf, uint8_t *src, size_t len,
+                       fb_esp_base64_io_t<T> &out, bool writeAllRemaining = true)
+    {
+        const unsigned char *end, *in;
+
+        T *pos = out.outT ? (T *)&out.outT[0] : nullptr;
+        in = src;
+        end = src + len;
+
+        while (end - in >= 3)
+        {
+            if (!setOutput(mbfs, base64EncBuf[in[0] >> 2], out, &pos))
+                return false;
+            if (!setOutput(mbfs, base64EncBuf[((in[0] & 0x03) << 4) | (in[1] >> 4)], out, &pos))
+                return false;
+            if (!setOutput(mbfs, base64EncBuf[((in[1] & 0x0f) << 2) | (in[2] >> 6)], out, &pos))
+                return false;
+            if (!setOutput(mbfs, base64EncBuf[in[2] & 0x3f], out, &pos))
+                return false;
+            in += 3;
+        }
+
+        if (end - in && !encodeLast(mbfs, base64EncBuf, in, end - in, out, &pos))
+            return false;
+
+        if (writeAllRemaining && out.bufWrite > 0 && !writeOutput(mbfs, out))
+            return false;
+
+        return true;
+    }
+    template <typename T>
+    inline bool decodeToArray(MB_FS *mbfs, const MB_String &src, MB_VECTOR<T> &val)
+    {
+        fb_esp_base64_io_t<T> out;
+        out.outL = &val;
+        unsigned char *base64DecBuf = creatBase64DecBuffer(mbfs);
+        bool ret = decode<T>(mbfs, base64DecBuf, src.c_str(), src.length(), out);
+        MemoryHelper::freeBuffer(mbfs, base64DecBuf);
+        return ret;
+    }
+
+    inline bool decodeToFile(MB_FS *mbfs, const char *src, size_t len, mbfs_file_type type)
+    {
+        fb_esp_base64_io_t<uint8_t> out;
+        out.filetype = type;
+        uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(mbfs, out.bufLen);
+        out.outT = buf;
+        unsigned char *base64DecBuf = creatBase64DecBuffer(mbfs);
+        bool ret = decode<uint8_t>(mbfs, base64DecBuf, src, strlen(src), out);
+        MemoryHelper::freeBuffer(mbfs, buf);
+        MemoryHelper::freeBuffer(mbfs, base64DecBuf);
+        return ret;
+    }
+
+    inline void encodeUrl(MB_FS *mbfs, char *encoded, unsigned char *string, size_t len)
+    {
+        size_t i;
+        char *p = encoded;
+        unsigned char *base64EncBuf = creatBase64EncBuffer(mbfs, true);
+
+        for (i = 0; i < len - 2; i += 3)
+        {
+            *p++ = base64EncBuf[(string[i] >> 2) & 0x3F];
+            *p++ = base64EncBuf[((string[i] & 0x3) << 4) | ((int)(string[i + 1] & 0xF0) >> 4)];
+            *p++ = base64EncBuf[((string[i + 1] & 0xF) << 2) | ((int)(string[i + 2] & 0xC0) >> 6)];
+            *p++ = base64EncBuf[string[i + 2] & 0x3F];
+        }
+
+        if (i < len)
+        {
+            *p++ = base64EncBuf[(string[i] >> 2) & 0x3F];
+            if (i == (len - 1))
+                *p++ = base64EncBuf[((string[i] & 0x3) << 4)];
+            else
+            {
+                *p++ = base64EncBuf[((string[i] & 0x3) << 4) | ((int)(string[i + 1] & 0xF0) >> 4)];
+                *p++ = base64EncBuf[((string[i + 1] & 0xF) << 2)];
+            }
+        }
+
+        *p++ = '\0';
+
+        MemoryHelper::freeBuffer(mbfs, base64EncBuf);
+    }
+
+    inline MB_String encodeToString(MB_FS *mbfs, uint8_t *src, size_t len)
+    {
+        MB_String str;
+        char *encoded = MemoryHelper::createBuffer<char *>(mbfs, encodedLength(len) + 1);
+        fb_esp_base64_io_t<char> out;
+        out.outT = encoded;
+        unsigned char *base64EncBuf = creatBase64EncBuffer(mbfs, false);
+        if (encode<char>(mbfs, base64EncBuf, (uint8_t *)src, len, out))
+            str = encoded;
+        MemoryHelper::freeBuffer(mbfs, encoded);
+        MemoryHelper::freeBuffer(mbfs, base64EncBuf);
+        return str;
+    }
+
+    inline bool encodeToClient(Client *client, MB_FS *mbfs, size_t bufSize, uint8_t *data, size_t len)
+    {
+        fb_esp_base64_io_t<uint8_t> out;
+        out.outC = client;
+        uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(mbfs, out.bufLen);
+        out.outT = buf;
+        unsigned char *base64EncBuf = creatBase64EncBuffer(mbfs, false);
+        bool ret = encode<uint8_t>(mbfs, base64EncBuf, (uint8_t *)data, len, out);
+        MemoryHelper::freeBuffer(mbfs, buf);
+        MemoryHelper::freeBuffer(mbfs, base64EncBuf);
+        return ret;
+    }
+};
+
+namespace OtaHelper
+{
+
+#if defined(ESP32) || defined(ESP8266)
+
+    // trim double quotes and return pad length
+    inline int trimLastChunkBase64(MB_String &s, int len)
+    {
+        int padLen = -1;
+        if (len > 1)
+        {
+            if (s[len - 1] == '"')
+            {
+                padLen = 0;
+                if (len > 2)
+                {
+                    if (s[len - 2] == '=')
+                        padLen++;
+                }
+                if (len > 3)
+                {
+                    if (s[len - 3] == '=')
+                        padLen++;
+                }
+                s[len - 1] = 0;
+            }
+        }
+        return padLen;
+    }
+
+    inline bool decodeBase64OTA(MB_FS *mbfs, const char *src, size_t len, int &code)
+    {
+        bool ret = true;
+        fb_esp_base64_io_t<uint8_t> out;
+        uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(mbfs, out.bufLen);
+        out.ota = true;
+        out.outT = buf;
+        unsigned char *base64DecBuf = Base64Helper::creatBase64DecBuffer(mbfs);
+        if (!Base64Helper::decode<uint8_t>(mbfs, base64DecBuf, src, strlen(src), out))
+        {
+            code = FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED;
+            ret = false;
+        }
+        MemoryHelper::freeBuffer(mbfs, buf);
+        MemoryHelper::freeBuffer(mbfs, base64DecBuf);
+        return ret;
+    }
+
+#endif
+
+};
+
+namespace TimeHelper
+{
+
+    inline time_t getTime(uint32_t *mb_ts)
+    {
+        uint32_t &tm = *mb_ts;
+
+#if defined(ESP8266) || defined(ESP32)
+        if (tm < ESP_DEFAULT_TS)
+            tm = time(nullptr);
+#else
+        tm += millis() / 1000;
+#endif
+
+        return tm;
+    }
+
+    inline bool syncClock(uint32_t *mb_ts, float gmtOffset, FirebaseConfig *config)
+    {
+
+        if (!config)
+            return false;
+
+        time_t now = getTime(mb_ts);
+
+        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
+
+        if (config->internal.fb_clock_rdy && gmtOffset == config->internal.fb_gmt_offset)
+            return true;
+
+        if (!config->internal.fb_clock_rdy || gmtOffset != config->internal.fb_gmt_offset)
+        {
+            if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
+                config->internal.fb_clock_synched = false;
+
+#if defined(ESP32) || defined(ESP8266)
+            if (!config->internal.fb_clock_synched)
+            {
+                config->internal.fb_clock_synched = true;
+                configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
+            }
+#endif
+        }
+
+        now = getTime(mb_ts);
+
+        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
+        if (config->internal.fb_clock_rdy)
+            config->internal.fb_gmt_offset = gmtOffset;
+
+        return config->internal.fb_clock_rdy;
+    }
+
+    inline int setTimestamp(time_t ts)
+    {
+#if defined(ESP32) || defined(ESP8266)
+        struct timeval tm = {ts, 0}; // sec, us
+        return settimeofday((const timeval *)&tm, 0);
+#endif
+        return -1;
+    }
+
+};
+
+namespace Utils
+{
+
+    inline int ishex(int x)
+    {
+        return (x >= '0' && x <= '9') ||
+               (x >= 'a' && x <= 'f') ||
+               (x >= 'A' && x <= 'F');
+    }
+
+    inline char from_hex(char ch)
+    {
+        return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+    }
+
+    inline void createDirs(MB_String dirs, fb_esp_mem_storage_type storageType)
     {
 #if defined(SD_FS)
         MB_String dir;
@@ -798,7 +1773,7 @@ public:
     }
 
 #if defined(__AVR__)
-    unsigned long long strtoull_alt(const char *s)
+    inline unsigned long long strtoull_alt(const char *s)
     {
         unsigned long long sum = 0;
         while (*s)
@@ -809,547 +1784,47 @@ public:
     }
 #endif
 
-    bool decodeBase64Str(const MB_String &src, MB_VECTOR<uint8_t> &out)
-    {
-        unsigned char *dtable = (unsigned char *)newP(256);
-        memset(dtable, 0x80, 256);
-        for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
-            dtable[fb_esp_base64_table[i]] = (unsigned char)i;
-        dtable['='] = 0;
-
-        unsigned char *block = (unsigned char *)newP(4);
-        unsigned char tmp;
-        size_t i, count;
-        int pad = 0;
-        size_t extra_pad;
-        size_t len = src.length();
-
-        count = 0;
-
-        for (i = 0; i < len; i++)
-        {
-            if ((uint8_t)dtable[(uint8_t)src[i]] != 0x80)
-                count++;
-        }
-
-        if (count == 0)
-            goto exit;
-
-        extra_pad = (4 - count % 4) % 4;
-
-        count = 0;
-        for (i = 0; i < len + extra_pad; i++)
-        {
-            unsigned char val;
-
-            if (i >= len)
-                val = '=';
-            else
-                val = src[i];
-
-            tmp = dtable[val];
-
-            if (tmp == 0x80)
-                continue;
-
-            if (val == '=')
-                pad++;
-
-            block[count] = tmp;
-            count++;
-            if (count == 4)
-            {
-                uint8_t v = (block[0] << 2) | (block[1] >> 4);
-                out.push_back(v);
-                count = 0;
-                if (pad)
-                {
-                    if (pad == 1)
-                    {
-                        v = (block[1] << 4) | (block[2] >> 2);
-                        out.push_back(v);
-                    }
-                    else if (pad > 2)
-                        goto exit;
-
-                    break;
-                }
-                else
-                {
-                    v = (block[1] << 4) | (block[2] >> 2);
-                    out.push_back(v);
-                    v = (block[2] << 6) | block[3];
-                    out.push_back(v);
-                }
-            }
-        }
-
-        delP(&block);
-        delP(&dtable);
-
-        return true;
-
-    exit:
-        delP(&block);
-        delP(&dtable);
-        return false;
-    }
-
-    bool decodeBase64Stream(const char *src, size_t len, fb_esp_mem_storage_type type)
-    {
-        if (!mbfs)
-            return false;
-
-        unsigned char *dtable = (unsigned char *)newP(256);
-        memset(dtable, 0x80, 256);
-        for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
-            dtable[fb_esp_base64_table[i]] = (unsigned char)i;
-        dtable['='] = 0;
-
-        unsigned char *block = (unsigned char *)newP(4);
-        unsigned char tmp;
-        size_t i, count;
-        int pad = 0;
-        size_t extra_pad;
-
-        count = 0;
-
-        for (i = 0; i < len; i++)
-        {
-            if (dtable[(uint8_t)src[i]] != 0x80)
-                count++;
-        }
-
-        if (count == 0)
-            goto exit;
-
-        extra_pad = (4 - count % 4) % 4;
-
-        count = 0;
-        for (i = 0; i < len + extra_pad; i++)
-        {
-            unsigned char val;
-
-            if (i >= len)
-                val = '=';
-            else
-                val = src[i];
-            tmp = dtable[val];
-            if (tmp == 0x80)
-                continue;
-
-            if (val == '=')
-                pad++;
-
-            block[count] = tmp;
-            count++;
-            if (count == 4)
-            {
-                mbfs->write(mbfs_type type, (block[0] << 2) | (block[1] >> 4));
-                count = 0;
-                if (pad)
-                {
-                    if (pad == 1)
-                        mbfs->write(mbfs_type type, (block[1] << 4) | (block[2] >> 2));
-                    else if (pad > 2)
-                        goto exit;
-
-                    break;
-                }
-                else
-                {
-                    mbfs->write(mbfs_type type, (block[1] << 4) | (block[2] >> 2));
-                    mbfs->write(mbfs_type type, (block[2] << 6) | block[3]);
-                }
-            }
-        }
-
-        delP(&block);
-        delP(&dtable);
-
-        return true;
-
-    exit:
-
-        delP(&block);
-        delP(&dtable);
-
-        return false;
-    }
-
-#if defined(ESP32) || defined(ESP8266)
-
-    // trim double quotes and return pad length
-    int trimLastChunkBase64(MB_String &s, int len)
-    {
-        int padLen = -1;
-        if (len > 1)
-        {
-            if (s[len - 1] == '"')
-            {
-                padLen = 0;
-                if (len > 2)
-                {
-                    if (s[len - 2] == '=')
-                        padLen++;
-                }
-                if (len > 3)
-                {
-                    if (s[len - 3] == '=')
-                        padLen++;
-                }
-                s[len - 1] = 0;
-            }
-        }
-        return padLen;
-    }
-
-    bool writeOTA(uint8_t *buf, size_t len, int &code)
-    {
-
-#if defined(OTA_UPDATE_ENABLED)
-        if (Update.write(buf, len) != len)
-        {
-            code = FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED;
-            return false;
-        }
-        return true;
-#else
-        return false;
-#endif
-    }
-
-    bool addBuffer(uint8_t *buf, uint8_t value, int &index, int chunkSize, int &code)
-    {
-        if (index < chunkSize)
-        {
-            buf[index] = value;
-            index++;
-        }
-        else
-        {
-            index = 0;
-            if (!writeOTA(buf, chunkSize, code))
-                return false;
-            memset(buf, 0, chunkSize);
-            buf[index] = value;
-            index++;
-        }
-
-        return true;
-    }
-
-    bool decodeBase64OTA(const char *src, size_t len, int &code)
-    {
-
-        unsigned char *dtable = (unsigned char *)newP(256);
-        memset(dtable, 0x80, 256);
-        for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
-            dtable[fb_esp_base64_table[i]] = (unsigned char)i;
-        dtable['='] = 0;
-
-        unsigned char *block = (unsigned char *)newP(4);
-        unsigned char tmp;
-        size_t i, count;
-        int pad = 0;
-        size_t extra_pad;
-
-        int chunkSize = 1024;
-        uint8_t *buf = (uint8_t *)newP(chunkSize);
-        int index = 0;
-
-        count = 0;
-
-        for (i = 0; i < len; i++)
-        {
-            if (dtable[(uint8_t)src[i]] != 0x80)
-                count++;
-        }
-
-        if (count == 0)
-            goto exit;
-
-        extra_pad = (4 - count % 4) % 4;
-
-        count = 0;
-        for (i = 0; i < len + extra_pad; i++)
-        {
-            unsigned char val;
-
-            if (i >= len)
-                val = '=';
-            else
-                val = src[i];
-            tmp = dtable[val];
-            if (tmp == 0x80)
-                continue;
-
-            if (val == '=')
-                pad++;
-
-            block[count] = tmp;
-            count++;
-            if (count == 4)
-            {
-                if (!addBuffer(buf, (block[0] << 2) | (block[1] >> 4), index, chunkSize, code))
-                    break;
-
-                count = 0;
-                if (pad)
-                {
-                    if (pad == 1)
-                    {
-                        if (!addBuffer(buf, (block[1] << 4) | (block[2] >> 2), index, chunkSize, code))
-                            break;
-                    }
-                    else if (pad > 2)
-                        goto exit;
-
-                    break;
-                }
-                else
-                {
-                    if (!addBuffer(buf, (block[1] << 4) | (block[2] >> 2), index, chunkSize, code))
-                        break;
-
-                    if (!addBuffer(buf, (block[2] << 6) | block[3], index, chunkSize, code))
-                        break;
-                }
-            }
-        }
-
-        if (index > 0)
-            writeOTA(buf, index, code);
-
-        delP(&block);
-        delP(&dtable);
-        delP(&buf);
-
-        return true;
-
-    exit:
-
-        delP(&block);
-        delP(&dtable);
-        delP(&buf);
-
-        return false;
-    }
-
-#endif
-
-    bool stringCompare(const char *buf, int ofs, PGM_P beginH, bool caseInSensitive = false)
-    {
-        char *tmp2 = (char *)newP(strlen_P(beginH) + 1);
-        memcpy(tmp2, &buf[ofs], strlen_P(beginH));
-        tmp2[strlen_P(beginH)] = 0;
-
-        bool ret = caseInSensitive ? (strcasecmp(pgm2Str(beginH), tmp2) == 0) : (strcmp(pgm2Str(beginH), tmp2) == 0);
-        delP(&tmp2);
-        return ret;
-    }
-
-    time_t getTime()
-    {
-
-        time_t tm = ts;
-
-#if defined(ESP8266) || defined(ESP32)
-        if (tm < ESP_DEFAULT_TS)
-            tm = time(nullptr);
-#else
-        tm += millis() / 1000;
-#endif
-
-        return tm;
-    }
-
-    bool syncClock(float gmtOffset)
-    {
-
-        if (!config)
-            return false;
-
-        time_t now = getTime();
-
-        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
-
-        if (config->internal.fb_clock_rdy && gmtOffset == config->internal.fb_gmt_offset)
-            return true;
-
-        if (!config->internal.fb_clock_rdy || gmtOffset != config->internal.fb_gmt_offset)
-        {
-            if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
-                config->internal.fb_clock_synched = false;
-
-#if defined(ESP32) || defined(ESP8266)
-            if (!config->internal.fb_clock_synched)
-            {
-                config->internal.fb_clock_synched = true;
-                configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
-            }
-#endif
-        }
-
-        now = getTime();
-
-        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
-        if (config->internal.fb_clock_rdy)
-            config->internal.fb_gmt_offset = gmtOffset;
-
-        return config->internal.fb_clock_rdy;
-    }
-
-    void encodeBase64Url(char *encoded, unsigned char *string, size_t len)
-    {
-        size_t i;
-        char *p = encoded;
-
-        unsigned char *b64enc = (unsigned char *)newP(65);
-        strcpy_P((char *)b64enc, (char *)fb_esp_base64_table);
-        b64enc[62] = '-';
-        b64enc[63] = '_';
-
-        for (i = 0; i < len - 2; i += 3)
-        {
-            *p++ = b64enc[(string[i] >> 2) & 0x3F];
-            *p++ = b64enc[((string[i] & 0x3) << 4) | ((int)(string[i + 1] & 0xF0) >> 4)];
-            *p++ = b64enc[((string[i + 1] & 0xF) << 2) | ((int)(string[i + 2] & 0xC0) >> 6)];
-            *p++ = b64enc[string[i + 2] & 0x3F];
-        }
-
-        if (i < len)
-        {
-            *p++ = b64enc[(string[i] >> 2) & 0x3F];
-            if (i == (len - 1))
-            {
-                *p++ = b64enc[((string[i] & 0x3) << 4)];
-            }
-            else
-            {
-                *p++ = b64enc[((string[i] & 0x3) << 4) | ((int)(string[i + 1] & 0xF0) >> 4)];
-                *p++ = b64enc[((string[i + 1] & 0xF) << 2)];
-            }
-        }
-
-        *p++ = '\0';
-
-        delP(&b64enc);
-    }
-
-    MB_String encodeBase64Str(const unsigned char *src, size_t len)
-    {
-        return encodeBase64Str((uint8_t *)src, len);
-    }
-
-    MB_String encodeBase64Str(uint8_t *src, size_t len)
-    {
-        unsigned char *out, *pos;
-        const unsigned char *end, *in;
-
-        unsigned char *b64enc = (unsigned char *)newP(65);
-        strcpy_P((char *)b64enc, (char *)fb_esp_base64_table);
-
-        size_t olen;
-
-        olen = 4 * ((len + 2) / 3); /* 3-byte blocks to 4-byte */
-
-        MB_String outStr;
-        outStr.resize(olen);
-        out = (unsigned char *)&outStr[0];
-
-        end = src + len;
-        in = src;
-        pos = out;
-
-        while (end - in >= 3)
-        {
-            *pos++ = b64enc[in[0] >> 2];
-            *pos++ = b64enc[((in[0] & 0x03) << 4) | (in[1] >> 4)];
-            *pos++ = b64enc[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
-            *pos++ = b64enc[in[2] & 0x3f];
-            in += 3;
-            delay(0);
-        }
-
-        if (end - in)
-        {
-
-            *pos++ = b64enc[in[0] >> 2];
-
-            if (end - in == 1)
-            {
-                *pos++ = b64enc[(in[0] & 0x03) << 4];
-                *pos++ = '=';
-            }
-            else
-            {
-                *pos++ = b64enc[((in[0] & 0x03) << 4) | (in[1] >> 4)];
-                *pos++ = b64enc[(in[1] & 0x0f) << 2];
-            }
-
-            *pos++ = '=';
-        }
-
-        delP(&b64enc);
-        return outStr;
-    }
-
-    size_t base64EncLen(size_t len)
-    {
-        return ((len + 2) / 3 * 4) + 1;
-    }
-
-#if defined(ESP8266)
-    void set_scheduled_callback(callback_function_t callback)
-    {
-        _callback_function = std::move([callback]()
-                                       { schedule_function(callback); });
-        _callback_function();
-    }
-#endif
-
-    void setFloatDigit(uint8_t digit)
+    inline void setFloatDigit(uint8_t digit, FirebaseConfig *config)
     {
         if (!config)
             return;
         config->internal.fb_float_digits = digit;
     }
 
-    void setDoubleDigit(uint8_t digit)
+    inline void setDoubleDigit(uint8_t digit, FirebaseConfig *config)
     {
         if (!config)
             return;
         config->internal.fb_double_digits = digit;
     }
 
-    MB_String getBoundary(size_t len)
+    inline MB_String getBoundary(MB_FS *mbfs, size_t len)
     {
-        const char *tmp = pgm2Str(fb_esp_boundary_table);
-        char *buf = (char *)newP(len);
+        MB_String temp = fb_esp_boundary_table;
+        char *buf = MemoryHelper::createBuffer<char *>(mbfs, len);
         if (len)
         {
             --len;
-            buf[0] = tmp[0];
-            buf[1] = tmp[1];
+            buf[0] = temp[0];
+            buf[1] = temp[1];
             for (size_t n = 2; n < len; n++)
             {
-                int key = rand() % (int)(strlen(tmp) - 1);
-                buf[n] = tmp[key];
+                int key = rand() % (int)(temp.length() - 1);
+                buf[n] = temp[key];
             }
             buf[len] = '\0';
         }
-        MB_String s = buf;
-        delP(&buf);
-        return s;
+        MB_String out = buf;
+        MemoryHelper::freeBuffer(mbfs, buf);
+        return out;
     }
 
-    bool boolVal(const char *v)
+    inline bool boolVal(const MB_String &v)
     {
-        return strposP(v, fb_esp_pgm_str_107 /* "true" */, 0) > -1;
+        return v.find(pgm2Str(fb_esp_pgm_str_107 /* "true" */)) != MB_String::npos;
     }
 
-    bool waitIdle(int &httpCode)
+    inline bool waitIdle(int &httpCode, FirebaseConfig *config)
     {
         if (!config)
             return true;
@@ -1372,63 +1847,7 @@ public:
         return true;
     }
 
-    void splitTk(const MB_String &str, MB_VECTOR<MB_String> &tk, const char *delim)
-    {
-        size_t current, previous = 0;
-        current = str.find(delim, previous);
-        MB_String s;
-        MB_String _str = str;
-        while (current != MB_String::npos)
-        {
-            s = _str.substr(previous, current - previous);
-            tk.push_back(s);
-            previous = current + strlen(delim);
-            current = str.find(delim, previous);
-        }
-        s = _str.substr(previous, current - previous);
-        tk.push_back(s);
-        s.clear();
-    }
-
-    void getCustomHeaders(MB_String &header)
-    {
-        if (!config)
-            return;
-
-        if (config->signer.customHeaders.length() > 0)
-        {
-            MB_VECTOR<MB_String> headers;
-            splitTk(config->signer.customHeaders, headers, ",");
-            for (size_t i = 0; i < headers.size(); i++)
-            {
-                size_t p1 = headers[i].find(F("X-Firebase-"));
-                size_t p2 = headers[i].find(':');
-                size_t p3 = headers[i].find(F("-ETag"));
-
-                if (p1 != MB_String::npos && p2 != MB_String::npos && p2 > p1 && p3 == MB_String::npos)
-                {
-                    header += headers[i];
-                    header += fb_esp_pgm_str_21; // "\r\n"
-                }
-                headers[i].clear();
-            }
-            headers.clear();
-        }
-    }
-
-    void replaceAll(MB_String &str, const MB_String &from, const MB_String &to)
-    {
-        if (from.empty())
-            return;
-        size_t start_pos = 0;
-        while ((start_pos = str.find(from, start_pos)) != MB_String::npos)
-        {
-            str.replace(start_pos, from.length(), to);
-            start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
-        }
-    }
-
-    bool validJS(const char *c)
+    inline bool validJS(const char *c)
     {
         size_t ob = 0, cb = 0, os = 0, cs = 0;
         for (size_t i = 0; i < strlen(c); i++)
@@ -1445,55 +1864,17 @@ public:
         return (ob == cb && os == cs);
     }
 
-    int setTimestamp(time_t ts)
+    inline uint16_t calCRC(MB_FS *mbfs, const char *buf)
     {
-#if defined(ESP32) || defined(ESP8266)
-        struct timeval tm = {ts, 0}; // sec, us
-        return settimeofday((const timeval *)&tm, 0);
-#endif
-        return -1;
-    }
-
-    uint16_t calCRC(const char *buf)
-    {
-        if (!mbfs)
-            return 0;
         return mbfs->calCRC(buf);
     }
 
-    void idle()
+    inline void idle()
     {
         delay(0);
     }
 
-    void replaceFirebasePath(MB_String &path)
-    {
-
-        path.replaceAll(F("."), F(""));
-        path.replaceAll(F("$"), F(""));
-        path.replaceAll(F("#"), F(""));
-        path.replaceAll(F("["), F(""));
-        path.replaceAll(F("]"), F(""));
-
-        size_t limit = 768;
-
-        for (size_t i = 0; i < path.length(); i++)
-        {
-            if (path[i] < 32 || path[i] == 127)
-            {
-                limit = i;
-                break;
-            }
-        }
-
-        if (path.length() > limit)
-        {
-            path[limit] = 0;
-            path.shrink_to_fit();
-        }
-    }
-
-    void makePath(MB_String &path)
+    inline void makePath(MB_String &path)
     {
         if (path.length() > 0)
         {
@@ -1502,18 +1883,35 @@ public:
         }
     }
 
-    int getBase64Len(int n)
+    inline size_t getUploadBufSize(FirebaseConfig *config, fb_esp_con_mode mode)
     {
-        int len = (4 * ceil(n / 3.0));
-        return len;
+        int bufLen = 0;
+#if defined(ENABLE_RTDB)
+        if (mode == fb_esp_con_mode_rtdb)
+            bufLen = config->rtdb.upload_buffer_size;
+#endif
+#if defined(ENABLE_FB_FUNCTIONS)
+        if (mode == fb_esp_con_mode_functions)
+            bufLen = config->functions.upload_buffer_size;
+#endif
+#if defined(ENABLE_GC_STORAGE)
+        if (mode == fb_esp_con_mode_gc_storage)
+            bufLen = config->gcs.upload_buffer_size;
+#endif
+#if defined(ENABLE_FB_STORAGE)
+        if (mode == fb_esp_con_mode_storage)
+            bufLen = config->fcs.upload_buffer_size;
+#endif
+
+        if (bufLen < 512)
+            bufLen = 512;
+
+        if (bufLen > 1024 * 16)
+            bufLen = 1024 * 16;
+
+        return bufLen;
     }
 
-    int getBase64Padding(int n)
-    {
-        int pLen = getBase64Len(n);
-        int uLen = ceil(4.0 * n / 3.0);
-        return pLen - uLen;
-    }
 };
 
 #endif

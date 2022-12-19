@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.8
+ * Google's Cloud Functions Config class, FunctionsConfig.h version 1.0.9
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -52,7 +52,6 @@ private:
     FirebaseJson _funcCfg;
     MB_String _projectId, _locationId, _bucketId, _entryPoint, _name, _httpsTriggerUrl;
     MB_VECTOR<MB_String> _updateMask;
-    UtilsClass *ut = nullptr;
     MB_String _bucketSourcesPath;
     MB_String _uploadArchiveFile;
     const uint8_t *_pgmArc = nullptr;
@@ -75,7 +74,8 @@ private:
     void mSetTimeout(MB_StringPtr seconds);
     void mSetAvailableMemoryMb(MB_StringPtr mb);
     void mSetMaxInstances(MB_StringPtr maxInstances);
-    void mSetSource(MB_StringPtr path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
+    void mSetSource(MB_StringPtr path, fb_esp_functions_sources_type sourceType,
+                    fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
     void mAddLabel(MB_StringPtr key, MB_StringPtr value);
     void mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr value);
     void mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPtr value);
@@ -95,7 +95,10 @@ public:
      * @param bucketId The Firebase storage bucket ID in the project.
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    FunctionsConfig(T1 projectId, T2 locationId, T3 bucketId) { mFunctionsConfig(toStringPtr(projectId), toStringPtr(locationId), toStringPtr(bucketId)); }
+    FunctionsConfig(T1 projectId, T2 locationId, T3 bucketId)
+    {
+        mFunctionsConfig(toStringPtr(projectId), toStringPtr(locationId), toStringPtr(bucketId));
+    }
 
     ~FunctionsConfig();
 
@@ -144,7 +147,8 @@ public:
      * Set the name of the function (as defined in source code) that will be executed.
      * Defaults to the resource name suffix, if not specified.
      *
-     * For backward compatibility, if function with given name is not found, then the system will try to use function named "function".
+     * For backward compatibility, if function with given name is not found, then the system will try 
+     * to use function named "function".
      *
      * @param entry The string of function entry.
      */
@@ -214,7 +218,11 @@ public:
      * mem_storage_type_sd
      */
     template <typename T = const char *>
-    void setSource(T path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType = mem_storage_type_undefined) { mSetSource(toStringPtr(path), sourceType, storageType); }
+    void setSource(T path, fb_esp_functions_sources_type sourceType,
+                   fb_esp_mem_storage_type storageType = mem_storage_type_undefined)
+    {
+        mSetSource(toStringPtr(path), sourceType, storageType);
+    }
 
     /**
      * Set the location of the function source code to the flash zip archive data.
@@ -338,7 +346,10 @@ public:
      * @param failurePolicy Specifies policy for failed executions.
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    void setEventTrigger(T1 eventType, T2 resource, T3 service = "", T4 failurePolicy = "") { mSetEventTrigger(toStringPtr(eventType), toStringPtr(resource), toStringPtr(service), toStringPtr(failurePolicy)); }
+    void setEventTrigger(T1 eventType, T2 resource, T3 service = "", T4 failurePolicy = "")
+    {
+        mSetEventTrigger(toStringPtr(eventType), toStringPtr(resource), toStringPtr(service), toStringPtr(failurePolicy));
+    }
 
     /**
      * Set the IAM policy.

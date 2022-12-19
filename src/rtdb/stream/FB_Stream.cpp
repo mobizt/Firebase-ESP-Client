@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.1.6
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.1.7
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -48,9 +48,8 @@ FIREBASE_STREAM_CLASS::~FIREBASE_STREAM_CLASS()
     empty();
 }
 
-void FIREBASE_STREAM_CLASS::begin(UtilsClass *u, struct fb_esp_stream_info_t *s)
+void FIREBASE_STREAM_CLASS::begin(struct fb_esp_stream_info_t *s)
 {
-    ut = u;
     sif = s;
 }
 

@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.22
+ * Firebase TCP Client v1.1.23
  *
- * Created July 10, 2022
+ * Created December 19, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -37,6 +37,7 @@
 
 FB_TCP_Client::FB_TCP_Client()
 {
+ 
   client = wcs.get();
 }
 
@@ -77,8 +78,6 @@ void FB_TCP_Client::setCACert(const char *caCert)
 
 bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
 {
-  if (!mbfs)
-    return false;
 
   if (strlen(caCertFile) > 0)
   {
@@ -108,9 +107,9 @@ bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type s
 #if defined(MBFS_ESP32_SDFAT_ENABLED)
 
         if (cert)
-          mbfs->delP(&cert);
+          MemoryHelper::freeBuffer(mbfs, cert);
 
-        cert = (char *)mbfs->newP(len);
+        cert = MemoryHelper::createBuffer<char *>(mbfs, len);
         if (mbfs->available(storageType))
           mbfs->read(storageType, (uint8_t *)cert, len);
 
@@ -206,7 +205,7 @@ void FB_TCP_Client::release()
     wcs.release();
 
     if (cert)
-      mbfs->delP(&cert);
+      MemoryHelper::freeBuffer(mbfs, cert);
 
     baseSetCertType(fb_cert_type_undefined);
   }

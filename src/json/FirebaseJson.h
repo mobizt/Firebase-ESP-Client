@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 3.0.2
+ * FirebaseJson, version 3.0.3
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created November 4, 2022
+ * Created December 3, 2022
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -571,7 +571,8 @@ private:
     void searchElements(MB_VECTOR<MB_String> &keys, MB_JSON *parent, struct search_result_t &r);
     MB_JSON *getElement(MB_JSON *parent, const char *key, struct search_result_t &r);
     void mAdd(MB_VECTOR<MB_String> keys, MB_JSON **parent, int beginIndex, MB_JSON *value);
-    void makeList(const char *str, MB_VECTOR<MB_String> &keys, char delim);
+    void makeList(const MB_String &str, MB_VECTOR<MB_String> &keys, char delim);
+    void pushLish(const MB_String &str, MB_VECTOR<MB_String> &keys);
     void clearList(MB_VECTOR<MB_String> &keys);
     bool isArray(MB_JSON *e);
     bool isObject(MB_JSON *e);
@@ -918,58 +919,6 @@ protected:
         return -1;
     }
 
-    int rstrpos(const char *haystack, const char *needle, int offset)
-    {
-        if (!haystack || !needle)
-            return -1;
-
-        int hlen = strlen(haystack);
-        int nlen = strlen(needle);
-
-        if (hlen == 0 || nlen == 0)
-            return -1;
-
-        int hidx = hlen - 1, nidx = nlen - 1;
-        while (offset < hidx)
-        {
-            if (*(needle + nidx) != *(haystack + hidx))
-            {
-                hidx--;
-                nidx = nlen - 1;
-            }
-            else
-            {
-                nidx--;
-                hidx--;
-                if (nidx == 0)
-                    return hidx + nidx;
-            }
-        }
-
-        return -1;
-    }
-
-    int rstrpos(const char *haystack, char needle, int offset)
-    {
-        if (!haystack || needle == 0)
-            return -1;
-
-        int hlen = strlen(haystack);
-
-        if (hlen == 0)
-            return -1;
-
-        int hidx = hlen - 1;
-        while (offset < hidx)
-        {
-            if (needle == *(haystack + hidx))
-                return hidx;
-            hidx--;
-        }
-
-        return -1;
-    }
-
     void substr(MB_String &str, const char *s, int offset, size_t len)
     {
         if (!s)
@@ -1047,121 +996,81 @@ protected:
         return val;
     }
 
-    char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
+    int getStatusCode(const MB_String &header, int &pos)
     {
-
-        char *temp = strP(beginH);
-        int p1 = strpos(buf, temp, beginPos);
-        int ofs = 0;
-        delP(&temp);
-        if (p1 != -1)
-        {
-            temp = strP(endH);
-            int p2 = -1;
-            if (endPos > 0)
-                p2 = endPos;
-            else if (endPos == 0)
-            {
-                ofs = strlen_P(endH);
-                p2 = strpos(buf, temp, p1 + strlen_P(beginH) + 1);
-            }
-            else if (endPos == -1)
-            {
-                beginPos = p1 + strlen_P(beginH);
-            }
-
-            if (p2 == -1)
-                p2 = strlen(buf);
-
-            delP(&temp);
-
-            if (p2 != -1)
-            {
-                beginPos = p2 + ofs;
-                int len = p2 - p1 - strlen_P(beginH);
-                temp = (char *)newP(len + 1);
-                memcpy(temp, &buf[p1 + strlen_P(beginH)], len);
-                return temp;
-            }
-        }
-
-        return nullptr;
+        int code = 0;
+        tokenSubStringInt(header, code, fb_json_str_1 /* "HTTP/1.1 " */, fb_json_str_2 /* " " */, pos, 0, false);
+        return code;
     }
 
-    void parseRespHeader(const char *buf, struct fb_js::server_response_data_t &response)
+    bool tokenSubStringInt(const MB_String &buf, int &out, PGM_P token1, PGM_P token2, int &ofs1, int ofs2, bool advanced)
     {
-        int beginPos = 0, pmax = 0, payloadPos = 0;
+        MB_String s;
+        if (tokenSubString(buf, s, token1, token2, ofs1, ofs2, advanced))
+        {
+            out = atoi(s.c_str());
+            return true;
+        }
+        return false;
+    }
 
-        char *temp = nullptr;
+    void parseRespHeader(const MB_String &src, struct fb_js::server_response_data_t &response)
+    {
+        int beginPos = 0;
+
+        MB_String out;
 
         if (response.httpCode != -1)
         {
-            payloadPos = beginPos;
-            pmax = beginPos;
-            temp = getHeader(buf, fb_json_str_1, fb_json_str_7, beginPos, 0);
-            if (temp)
-            {
-                response.connection = temp;
-                delP(&temp);
-            }
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            temp = getHeader(buf, fb_json_str_3, fb_json_str_7, beginPos, 0);
-            if (temp)
-            {
-                response.contentType = temp;
-                delP(&temp);
-            }
-
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            temp = getHeader(buf, fb_json_str_6, fb_json_str_7, beginPos, 0);
-            if (temp)
-            {
-                response.contentLen = atoi(temp);
-                delP(&temp);
-            }
-
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            temp = getHeader(buf, fb_json_str_8, fb_json_str_7, beginPos, 0);
-            if (temp)
-            {
-                response.transferEnc = temp;
-                if (strcmp(temp, (const char *)MBSTRING_FLASH_MCR("chunked")) == 0)
-                    response.isChunkedEnc = true;
-                delP(&temp);
-            }
-
-            if (pmax < beginPos)
-                pmax = beginPos;
-            beginPos = payloadPos;
-            temp = getHeader(buf, fb_json_str_4, fb_json_str_7, beginPos, 0);
-            if (temp)
-            {
-                response.connection = temp;
-                delP(&temp);
-            }
+            tokenSubString(src, response.connection, fb_json_str_4 /* "Connection: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false);
+            tokenSubString(src, response.contentType, fb_json_str_3 /* "Content-Type: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false);
+            tokenSubStringInt(src, response.contentLen, fb_json_str_6 /* "Content-Length: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false);
+            response.payloadLen = response.contentLen;
+            if (tokenSubString(src, response.transferEnc, fb_json_str_8 /* "Transfer-Encoding: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false) && response.transferEnc.find((const char*)MBSTRING_FLASH_MCR("chunked")) != MB_String::npos)
+                response.isChunkedEnc = true;
 
             if (response.httpCode == FBJS_ERROR_HTTP_CODE_OK || response.httpCode == FBJS_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FBJS_ERROR_HTTP_CODE_FOUND)
-            {
-                if (pmax < beginPos)
-                    pmax = beginPos;
-                beginPos = payloadPos;
-                temp = getHeader(buf, fb_json_str_9, fb_json_str_7, beginPos, 0);
-                if (temp)
-                {
-                    response.location = temp;
-                    delP(&temp);
-                }
-            }
+                tokenSubString(src, response.location, fb_json_str_9 /* "Location: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false);
 
             if (response.httpCode == FBJS_ERROR_HTTP_CODE_NO_CONTENT)
                 response.noContent = true;
         }
+    }
+
+    bool tokenSubString(const MB_String &src, MB_String &out, PGM_P token1, PGM_P token2, int &ofs1, int ofs2, bool advanced)
+    {
+        size_t pos1 = src.find(pgm2Str(token1), ofs1);
+        size_t pos2 = MB_String::npos;
+
+        int len1 = strlen_P(token1);
+        int len2 = 0;
+
+        if (pos1 != MB_String::npos)
+        {
+            if (ofs2 > 0)
+                pos2 = ofs2;
+            else if (ofs2 == 0)
+            {
+                len2 = strlen_P(token2);
+                pos2 = src.find(pgm2Str(token2), pos1 + len1 + 1);
+            }
+            else if (ofs2 == -1)
+                ofs1 = pos1 + len1;
+
+            if (pos2 == MB_String::npos)
+                pos2 = src.length();
+
+            if (pos2 != MB_String::npos)
+            {
+                // advanced the begin position before return
+                if (advanced)
+                    ofs1 = pos2 + len2;
+                out = src.substr(pos1 + len1, pos2 - pos1 - len1);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     int readLine(Client *stream, char *buf, int bufLen)
@@ -1422,18 +1331,16 @@ protected:
                             hstate = 1;
                             int readLen = readLine(client, header, chunkBufSize);
                             int pos = 0;
-
-                            temp = getHeader(header, fb_json_str_1, fb_json_str_2, pos, 0);
+                            int status = getStatusCode(header, pos);
                             idle();
                             dataTime = millis();
-                            if (temp)
+                            if (status > 0)
                             {
                                 // http response header with http response code
                                 isHeader = true;
                                 hBufPos = readLen;
-                                response.httpCode = atoi(temp);
+                                response.httpCode = status;
                                 httpCode = response.httpCode;
-                                delP(&temp);
                             }
                         }
                         else

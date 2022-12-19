@@ -122,7 +122,7 @@ void fcsUploadCallback(FCS_UploadStatusInfo info)
         Serial.printf("Metageneration: %lu\n", meta.metageneration);
         Serial.printf("ETag: %s\n", meta.etag.c_str());
         Serial.printf("CRC32: %s\n", meta.crc32.c_str());
-        Serial.printf("Token: %s\n", meta.downloadTokens.c_str());
+        Serial.printf("Tokens: %s\n", meta.downloadTokens.c_str());
         Serial.printf("Download URL: %s\n\n", fbdo.downloadURL().c_str());
     }
     else if (info.status == fb_esp_fcs_upload_status_error)

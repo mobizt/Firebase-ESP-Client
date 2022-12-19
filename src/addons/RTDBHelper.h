@@ -102,7 +102,7 @@ void printResult(FirebaseData &data)
     }
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
     {
-#if defined(FLASH_FS)
+#if defined(DEFAULT_FLASH_FS)
         File file = data.to<File>();
         int i = 0;
         while (file.available())
@@ -120,7 +120,7 @@ void printResult(FirebaseData &data)
             i++;
         }
         Serial.println();
-        file.close();
+        data.closeFile();
 #endif
     }
     else
@@ -231,7 +231,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
             i++;
         }
         Serial.println();
-        file.close();
+        data.closeFile();
 #endif
     }
 }

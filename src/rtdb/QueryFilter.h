@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.6
+ * Google's Firebase QueryFilter class, QueryFilter.h version 1.0.7
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created December 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -62,22 +62,38 @@ public:
     QueryFilter &limitToLast(T val) { return mLimitToLast(toStringPtr(val, -1)); }
 
     template <typename T = int>
-    auto startAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value || is_num_int<T>::value, QueryFilter &>::type { return mStartAt(toStringPtr(val, -1), false); }
+    auto startAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value ||
+                                                  is_num_int<T>::value,
+                                              QueryFilter &>::type { return mStartAt(toStringPtr(val, -1), false); }
 
     template <typename T = int>
-    auto endAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value || is_num_int<T>::value, QueryFilter &>::type { return mEndAt(toStringPtr(val, -1), false); }
+    auto endAt(T val) -> typename enable_if<is_same<T, float>::value || is_same<T, double>::value ||
+                                                is_num_int<T>::value,
+                                            QueryFilter &>::type { return mEndAt(toStringPtr(val, -1), false); }
 
     template <typename T = const char *>
-    auto startAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mStartAt(toStringPtr(val), true); }
+    auto startAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type
+    {
+        return mStartAt(toStringPtr(val), true);
+    }
 
     template <typename T = const char *>
-    auto endAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mEndAt(toStringPtr(val), true); }
+    auto endAt(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type
+    {
+        return mEndAt(toStringPtr(val), true);
+    }
 
     template <typename T = int>
-    auto equalTo(T val) -> typename enable_if<is_num_int<T>::value, QueryFilter &>::type { return mEqualTo(toStringPtr(val), false); }
+    auto equalTo(T val) -> typename enable_if<is_num_int<T>::value, QueryFilter &>::type
+    {
+        return mEqualTo(toStringPtr(val), false);
+    }
 
     template <typename T = const char *>
-    auto equalTo(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type { return mEqualTo(toStringPtr(val), true); }
+    auto equalTo(T val) -> typename enable_if<is_string<T>::value, QueryFilter &>::type
+    {
+        return mEqualTo(toStringPtr(val), true);
+    }
 
     QueryFilter &clear();
 

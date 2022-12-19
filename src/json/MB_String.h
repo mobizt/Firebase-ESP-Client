@@ -2,9 +2,12 @@
 /**
  * Mobizt's SRAM/PSRAM supported String, version 1.2.8
  *
- * Created November 4, 2022
+ * Created December 3, 2022
  *
  * Changes Log
+ *
+ * v1.2.9
+ * - substring optimization
  *
  * v1.2.8
  * - Add support StringSumHelper class in Arduino
@@ -1182,27 +1185,19 @@ public:
 
     MB_String substr(size_t offset, size_t len = npos) const
     {
-        MB_String str;
+        MB_String out;
+        substr(out, offset, len);
+        return out;
+    }
 
-        if (length() > 0 && offset < length())
+    void substr(MB_String &out, size_t offset, size_t len = npos) const
+    {
+        if (len > 0 && length() > 0 && offset < length())
         {
             if (len > length() - offset)
                 len = length() - offset;
-
-            size_t last = offset + len;
-
-            if (offset < length() && len > 0 && last <= length())
-            {
-                if (str._reserve(len, false))
-                {
-                    int j = 0;
-                    for (size_t i = offset; i < last; i++)
-                        *(str.buf + j++) = buf[i];
-                    *(str.buf + j) = '\0';
-                }
-            }
+            out.copy(buf + offset, len);
         }
-        return str;
     }
 
     void clear()
@@ -1416,10 +1411,10 @@ public:
         return find_last_not_of(str.buf, pos);
     }
 
-    void replaceAll(const char *find, const char *replace)
+    MB_String & replaceAll(const char *find, const char *replace)
     {
         if (length() == 0)
-            return;
+            return *this;;
 
         int i, cnt = 0;
         int repLen = strlen(replace);
@@ -1457,6 +1452,8 @@ public:
         }
 
         temp.clear();
+
+        return *this;
     }
 
     void replaceAll(const MB_String &find, const MB_String &replace)
@@ -1765,7 +1762,6 @@ private:
 
     MB_String &copy(const char *cstr, size_t length)
     {
-        clear();
 
         if (!_reserve(length, false))
         {

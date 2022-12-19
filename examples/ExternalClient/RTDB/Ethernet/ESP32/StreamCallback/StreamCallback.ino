@@ -10,10 +10,7 @@
  */
 
 /** This example shows the RTDB data changed notification with external Client.
- * This example used ESP32 and WIZnet W5500 (Etherner) devices which built-in SSL Client will be used as the external Client.
- *
- * For other non-espressif (ESP32 and ESP8266) devices, this SSL Client library can be used
- * https://github.com/OPEnSLab-OSU/SSLClient
+ * This example used ESP32 and WIZnet W5500 (Etherner) devices which ESP_SSLClient will be used as the external Client.
  *
  * Don't gorget to define this in FirebaseFS.h
  * #define FB_ENABLE_EXTERNAL_CLIENT
@@ -30,10 +27,8 @@
 //https://github.com/arduino-libraries/Ethernet
 #include <Ethernet.h>
 
-// Include built-in SSL Client which supports other network interfaces
-#include "sslclient/esp32/MB_ESP32_SSLClient.h"
-
-// You can use MB_ESP32_SSLClient.h in your ESP32 project in the same way as normal WiFiClientSecure
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
 
 // For NTP time client
 #include "MB_NTP.h"
@@ -76,13 +71,22 @@ int count = 0;
 
 volatile bool dataChanged = false;
 
+// Define the basic client
+// The network interface devices that can be used to handle SSL data should
+// have large memory buffer up to 1k - 2k or more, otherwise the SSL/TLS handshake
+// will fail.
 EthernetClient basic_client1;
 
 EthernetClient basic_client2;
 
-MB_ESP32_SSLClient ssl_client1;
+// This is the wrapper client that utilized the basic client for io and 
+// provides the mean for the data encryption and decryption before sending to or after read from the io.
+// The most probable failures are related to the basic client itself that may not provide the buffer
+// that large enough for SSL data. 
+// The SSL client can do nothing for this case, you should increase the basic client buffer memory.
+ESP_SSLClient ssl_client1;
 
-MB_ESP32_SSLClient ssl_client2;
+ESP_SSLClient ssl_client2;
 
 // For NTP client
 EthernetUDP udpClient;

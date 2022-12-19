@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.6
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.7
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -205,7 +205,9 @@ public:
         {
             if (sif->data_type == fb_esp_data_type::d_boolean)
                 mSetResBool(strcmp(sif->data.c_str(), num2Str(true, -1)) == 0);
-            else if (sif->data_type == fb_esp_data_type::d_integer || sif->data_type == fb_esp_data_type::d_float || sif->data_type == fb_esp_data_type::d_double)
+            else if (sif->data_type == fb_esp_data_type::d_integer ||
+                     sif->data_type == fb_esp_data_type::d_float ||
+                     sif->data_type == fb_esp_data_type::d_double)
             {
                 mSetResInt(sif->data.c_str());
                 mSetResFloat(sif->data.c_str());
@@ -239,7 +241,11 @@ public:
     }
 
     template <typename T>
-    auto to() -> typename enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
+    auto to() -> typename enable_if<is_const_chars<T>::value ||
+                                        is_std_string<T>::value ||
+                                        is_arduino_string<T>::value ||
+                                        is_mb_string<T>::value,
+                                    T>::type
     {
 
         if (sif->data_type == fb_esp_data_type::d_string)
@@ -256,7 +262,7 @@ public:
 
         if (sif->data_type == d_json)
         {
-            ut->idle();
+            Utils::idle();
             jsonPtr->clear();
             if (arrPtr)
                 arrPtr->clear();
@@ -305,14 +311,15 @@ public:
     template <typename T>
     auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
     {
-        if (sif->data_type == fb_esp_data_type::d_file && Signer.getCfg())
+        if (sif->data_type == fb_esp_data_type::d_file && Signer.config)
         {
-            int ret = ut->mbfs->open(pgm2Str(fb_esp_pgm_str_184 /* "/fb_bin_0.tmp" */), mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
+            int ret = Signer.mbfs->open(pgm2Str(fb_esp_pgm_str_184 /* "/fb_bin_0.tmp" */),
+                                        mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
             if (ret < 0)
                 sif->httpCode = ret;
         }
 
-        return ut->mbfs->getFlashFile();
+        return Signer.mbfs->getFlashFile();
     }
 #endif
 
@@ -320,7 +327,6 @@ public:
     FirebaseJsonArray *arrPtr = nullptr;
 
 private:
-    UtilsClass *ut = nullptr;
     struct fb_esp_stream_info_t *sif = nullptr;
 
     union IVal
@@ -355,7 +361,7 @@ private:
     IVal iVal = {0};
     FVal fVal;
 
-    void begin(UtilsClass *u, struct fb_esp_stream_info_t *s);
+    void begin(struct fb_esp_stream_info_t *s);
     void mSetResInt(const char *value);
     void mSetResFloat(const char *value);
     void mSetResBool(bool value);

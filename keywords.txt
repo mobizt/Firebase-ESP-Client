@@ -281,6 +281,7 @@ dataTypeEnum    KEYWORD2
 queryFilter KEYWORD2
 empty   KEYWORD2
 stopWiFiClient  KEYWORD2
+closeFile   KEYWORD2
 fileStream  KEYWORD2
 setResponseSize KEYWORD2
 bufferOverflow  KEYWORD2

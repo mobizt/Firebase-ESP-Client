@@ -89,14 +89,14 @@ PolicyBuilder policy;
 Binding binding;
 FunctionsConfig function_config(FIREBASE_PROJECT_ID /* project id */, PROJECT_LOCATION /* location id */, STORAGE_BUCKET_ID /* bucket id */);
 
-int creationStep = 0;
-
 unsigned long dataMillis = 0;
 
 bool taskCompleted = false;
 
 /* Define the FunctionsOperationStatusInfo data to get the Cloud Function creation status */
 FunctionsOperationStatusInfo statusInfo;
+
+fb_esp_functions_operation_status last_status;
 
 /* The function to create and deploy Cloud Function */
 void creatFunction();
@@ -146,17 +146,11 @@ void loop()
 
     if (Firebase.ready() && !taskCompleted)
     {
-        if (creationStep == 0)
-        {
-            creationStep = 1;
-            creatFunction();
-        }
-
-        if (creationStep == 1)
-            showFunctionCreationStatus(statusInfo);
-
+        creatFunction();
         taskCompleted = true;
     }
+
+    showFunctionCreationStatus(statusInfo);
 }
 
 /* The function to create and deploy Cloud Function */
@@ -201,6 +195,11 @@ void creatFunction()
 /* The function to show the Cloud Function deployment status */
 void showFunctionCreationStatus(FunctionsOperationStatusInfo statusInfo)
 {
+    if (last_status == statusInfo.status)
+        return;
+
+    last_status = statusInfo.status;
+
     if (statusInfo.status == fb_esp_functions_operation_status_unknown)
         Serial.printf("%s: Unknown\n", statusInfo.functionId.c_str());
     else if (statusInfo.status == fb_esp_functions_operation_status_generate_upload_url)
@@ -215,7 +214,6 @@ void showFunctionCreationStatus(FunctionsOperationStatusInfo statusInfo)
         Serial.printf("%s: Delete the function...\n", statusInfo.functionId.c_str());
     else if (statusInfo.status == fb_esp_functions_operation_status_finished)
     {
-        creationStep = 2;
         Serial.println("Status: success");
         Serial.print("Trigger Url: ");
         Serial.println(statusInfo.triggerUrl.c_str());
@@ -223,7 +221,6 @@ void showFunctionCreationStatus(FunctionsOperationStatusInfo statusInfo)
     }
     else if (statusInfo.status == fb_esp_functions_operation_status_error)
     {
-        creationStep = 2;
         Serial.print("Status: ");
         Serial.println(statusInfo.errorMsg.c_str());
         Serial.println();

@@ -58,7 +58,6 @@
 #endif
 #endif
 
-
 // For MB_String
 #if defined(FIREBASE_USE_PSRAM)
 #define MB_STRING_USE_PSRAM

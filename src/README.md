@@ -4321,6 +4321,24 @@ WiFiClientSecure *getWiFiClient();
 
 
 
+#### Close the keep-alive connection of the internal SSL client.
+
+note: This will release the memory used by internal SSL client.
+
+```cpp
+void stopWiFiClient();
+```
+
+
+
+
+#### Close the internal flash temporary file.
+
+```cpp
+void closeFile();
+```
+
+
 #### Set the Root certificate for a FirebaseData object
 
 param **`ca`** PEM format certificate string.

@@ -111,18 +111,18 @@ void loop()
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {
-      Serial.printf("etag, %s\n\n", fbdo.ETag().c_str());
+      Serial.printf("ETag, %s\n\n", fbdo.ETag().c_str());
       ETag = fbdo.ETag();
     }
 
     Serial.printf("Set int with valid ETag... %s\n", Firebase.RTDB.setInt(&fbdo, "/test/int/data", 200, ETag.c_str()) ? "ok" : fbdo.errorReason().c_str());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
-      Serial.printf("etag, %s\n\n", fbdo.ETag().c_str());
+      Serial.printf("ETag, %s\n\n", fbdo.ETag().c_str());
 
     Serial.printf("Set int with invalid ETag... %s\n", Firebase.RTDB.setInt(&fbdo, "/test/int/data", 200, wrong_ETag.c_str()) ? "ok" : fbdo.errorReason().c_str());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
-      Serial.printf("etag, %s\n\n", fbdo.ETag().c_str());
+      Serial.printf("ETag, %s\n\n", fbdo.ETag().c_str());
   }
 }

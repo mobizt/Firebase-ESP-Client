@@ -1,9 +1,9 @@
 /**
- * Google's IAM Policy Builder class, PolicyBuilder.cpp version 1.0.7
+ * Google's IAM Policy Builder class, PolicyBuilder.cpp version 1.0.8
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -49,47 +49,27 @@ AuditLogConfig::~AuditLogConfig()
 
 void AuditLogConfig::mSetLogType(MB_StringPtr logType)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         MB_String _logType = logType;
-        json.set(pgm2Str(fb_esp_pgm_str_414/* "logType" */), _logType);
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_414 /* "logType" */), _logType);
 }
 
 void AuditLogConfig::mAddexemptedMembers(MB_StringPtr member)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         MB_String _member = member;
         arr.add(_member);
-        json.set(pgm2Str(fb_esp_pgm_str_415/* "exemptedMembers" */), arr);
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_415 /* "exemptedMembers" */), arr);
 }
 
 void AuditLogConfig::clearExemptedMembers()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.clear();
-        json.remove(pgm2Str(fb_esp_pgm_str_415/* "exemptedMembers" */));
-    }
+        json.remove(pgm2Str(fb_esp_pgm_str_415 /* "exemptedMembers" */));
 }
 
 void AuditLogConfig::clear()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.clear();
         json.clear();
-    }
 }
 
 AuditConfig::AuditConfig()
@@ -102,48 +82,29 @@ AuditConfig::~AuditConfig()
 
 void AuditConfig::addAuditLogConfig(AuditLogConfig *config, bool clear)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.add(config->json);
-        json.set(pgm2Str(fb_esp_pgm_str_411/* "auditConfigs" */), arr);
-        if(clear)
-            config->clear();
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_411 /* "auditConfigs" */), arr);
+        if (clear)
+                config->clear();
 }
 
 void AuditConfig::clearAuditLogConfigs()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.clear();
-        json.remove(pgm2Str(fb_esp_pgm_str_411/* "auditConfigs" */));
-    }
+        json.remove(pgm2Str(fb_esp_pgm_str_411 /* "auditConfigs" */));
 }
 
 void AuditConfig::clear()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
+
         arr.clear();
         json.clear();
-    }
 }
 
 void AuditConfig::mSetService(MB_StringPtr service)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         MB_String _service = service;
-        json.set(pgm2Str(fb_esp_pgm_str_416/* "service" */), _service);
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_416 /* "service" */), _service);
 }
 
 Binding::Binding()
@@ -155,85 +116,61 @@ Binding::~Binding()
 
 void Binding::mAddMember(MB_StringPtr member)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         MB_String _member = member;
         arr.add(_member);
-        json.set(pgm2Str(fb_esp_pgm_str_403/* "members" */), arr);
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_403 /* "members" */), arr);
 }
 
 void Binding::mSetRole(MB_StringPtr role)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         MB_String _role = role;
-        json.set(pgm2Str(fb_esp_pgm_str_402/* "role" */), _role);
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_402 /* "role" */), _role);
 }
 void Binding::mSetCondition(MB_StringPtr expression, MB_StringPtr title, MB_StringPtr description, MB_StringPtr location)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
+
         MB_String b, t;
-        b +=fb_esp_pgm_str_405; // "condition"
-        b +=fb_esp_pgm_str_1; // "/"
+        b += fb_esp_pgm_str_405; // "condition"
+        b += fb_esp_pgm_str_1;   // "/"
 
         MB_String _expression = expression, _title = title, _description = description, _location = location;
 
         if (_expression.length() > 0)
         {
-            t = b;
-            t +=fb_esp_pgm_str_406; // "expression"
-            json.set(t.c_str(), _expression);
+                t = b;
+                t += fb_esp_pgm_str_406; // "expression"
+                json.set(t.c_str(), _expression);
         }
         if (_title.length() > 0)
         {
-            t = b;
-            t +=fb_esp_pgm_str_407; // "title"
-            json.set(t.c_str(), _title);
+                t = b;
+                t += fb_esp_pgm_str_407; // "title"
+                json.set(t.c_str(), _title);
         }
         if (_description.length() > 0)
         {
-            t = b;
-            t +=fb_esp_pgm_str_408; // "description"
-            json.set(t.c_str(), _description);
+                t = b;
+                t += fb_esp_pgm_str_408; // "description"
+                json.set(t.c_str(), _description);
         }
         if (_location.length() > 0)
         {
-            t = b;
-            t +=fb_esp_pgm_str_409; // "location"
-            json.set(t.c_str(), _location);
+                t = b;
+                t += fb_esp_pgm_str_409; // "location"
+                json.set(t.c_str(), _location);
         }
-    }
 }
 
 void Binding::clearMembers()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.clear();
-        json.remove(pgm2Str(fb_esp_pgm_str_403/* "members" */));
-    }
+        json.remove(pgm2Str(fb_esp_pgm_str_403 /* "members" */));
 }
 
 void Binding::clear()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.clear();
         json.clear();
-    }
 }
 
 PolicyBuilder::PolicyBuilder()
@@ -246,93 +183,58 @@ PolicyBuilder::~PolicyBuilder()
 
 void PolicyBuilder::addAuditConfig(AuditConfig *config, bool clear)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr2.add(config->json);
-        json.set(pgm2Str(fb_esp_pgm_str_411/* "auditConfigs" */), arr2);
-        if(clear)
-            config->clear();
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_411 /* "auditConfigs" */), arr2);
+        if (clear)
+                config->clear();
 };
 
 void PolicyBuilder::clearAuditConfigs()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr2.clear();
-        json.remove(pgm2Str(fb_esp_pgm_str_411/* "auditConfigs" */));
-    }
+        json.remove(pgm2Str(fb_esp_pgm_str_411 /* "auditConfigs" */));
 };
 
 void PolicyBuilder::addBinding(Binding *binding, bool clear)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.add(binding->json);
-        json.set(pgm2Str(fb_esp_pgm_str_404/* "bindings" */), arr);
-        if(clear)
-            binding->clear();
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_404 /* "bindings" */), arr);
+        if (clear)
+                binding->clear();
 }
 
 void PolicyBuilder::mSetVersion(MB_StringPtr v)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         MB_String _v = v;
-        json.set(pgm2Str(fb_esp_pgm_str_410/* "version" */), atoi(_v.c_str()));
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_410 /* "version" */), atoi(_v.c_str()));
 }
 void PolicyBuilder::mSetETag(MB_StringPtr etag)
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         MB_String _etag = etag;
-        json.set(pgm2Str(fb_esp_pgm_str_412/* "etag" */), _etag);
-    }
+        json.set(pgm2Str(fb_esp_pgm_str_412 /* "etag" */), _etag);
 }
 void PolicyBuilder::clearBindings()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr.clear();
-        json.remove(pgm2Str(fb_esp_pgm_str_404/* "bindings" */));
-    }
+        json.remove(pgm2Str(fb_esp_pgm_str_404 /* "bindings" */));
 }
 void PolicyBuilder::clear()
 {
-    if (!ut)
-        ut = Signer.ut;
-    if (ut)
-    {
         arr2.clear();
         arr.clear();
         json.clear();
-    }
 }
 
 void PolicyBuilder::toString(String &s, bool prettify)
 {
-    json.toString(s, prettify);
+        json.toString(s, prettify);
 }
 
-const char* PolicyBuilder::raw()
+const char *PolicyBuilder::raw()
 {
-    return json.raw();
+        return json.raw();
 }
 
 #endif
 
-#endif //ENABLE
+#endif // ENABLE

@@ -11,9 +11,9 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used your Arduino device and WIZnet W5500 (Ethernet) device which SSLClient https://github.com/OPEnSLab-OSU/SSLClient 
+ * This example used your Arduino device and WIZnet W5500 (Ethernet) device which SSLClient https://github.com/OPEnSLab-OSU/SSLClient
  * will be used as the external Client.
- * 
+ *
  * This SSLClient, https://github.com/OPEnSLab-OSU/SSLClient can't use in ESP8266 device due to wdt reset error.
  *
  * Don't gorget to define this in FirebaseFS.h
@@ -82,8 +82,17 @@ int count = 0;
 
 volatile bool dataChanged = false;
 
+// Define the basic client
+// The network interface devices that can be used to handle SSL data should
+// have large memory buffer up to 1k - 2k or more, otherwise the SSL/TLS handshake
+// will fail.
 EthernetClient basic_client;
 
+// This is the wrapper client that utilized the basic client for io and
+// provides the mean for the data encryption and decryption before sending to or after read from the io.
+// The most probable failures are related to the basic client itself that may not provide the buffer
+// that large enough for SSL data.
+// The SSL client can do nothing for this case, you should increase the basic client buffer memory.
 SSLClient ssl_client(basic_client, TAs, (size_t)TAs_NUM, analog_pin);
 
 // For NTP client

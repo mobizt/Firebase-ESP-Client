@@ -20,9 +20,9 @@ Since version 3.0.0, library allows you to use external Arduino Clients network 
 
 To use external Client, see the [ExternalClient examples](/examples/ExternalClient).
 
-The authentication with OAuth2.0 and custom auth tokens, RTDB error queue and downloadFileOTA features are not supported for other Arduino devices using external Clients.
+The authentication with OAuth2.0 and custom auth tokens, RTDB error queue features are not supported for other Arduino devices using external Clients.
 
-The flash and SD filesystems supports depend on the devices and third party filesystems libraries installed.
+There are known issues about ESP32 Arduino core when using external Client with ESP32 for OTA download, file download and upload.
 
 
 ## Tested Devices
@@ -95,7 +95,7 @@ For PlatfoemIO IDE, ESP8266 Core SDK can be installed through **PIO Home** > **P
 
 ## Migrate from Firebase-ESP8266 or Firebase-ESP32 to Firebase-ESP-Client
 
-All functions for Realtime database between these libraries are compattible.  [See this guide](/examples/README.md) for migrating.
+All function for Realtime database between these libraries are compattible.  [See this guide](/examples/README.md) for migrating.
 
 
 
@@ -357,7 +357,7 @@ You can set the system time using the RTC chip or manually by calling **`Firebas
 
 While authenticate using Email and password, the process will be perform faster because no token generation and time setup required. 
 
-The authenticate using the legacy token (database secret) does not have these delay times because the token is ready to use.
+The authenticate using the legacy token (database secret) does not have these delay time because the token is ready to use.
 
 
 
@@ -399,10 +399,10 @@ In ESP8266, when the free memory and speed are concerned, the legacy token shoul
 When the session was reused (in this library), the SSL handshake process will be ignored in the subsequence requests.
 
 
-The session was closed when the host or ip changes or server closed or the session timed out in 3 minutes. 
+The session was close when the host or ip changes or server closed or the session timed out in 3 minutes. 
 
 
-When the new session is needed to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
+When the new session need to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
 
 
 For post (push) or put (set) request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
@@ -1482,7 +1482,7 @@ See [Cloud Functions examples](/examples/CloudFunctions) for complete usages.
 ### IAM Permission and API Enable
 
 
-Some Firestore functions and all Cloud Functions functions require the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
+Some Firestore functions and all Cloud Functions functions requires the OAuth2.0 authentication and not allow the unauthentication and Email/password or custom token authenication access.
 
 You may still get the error permission denined error even using OAuth2.0 authen with Service Account credentials, because the client in the Service Account does not have the Owner and Editor permissions.
 

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.h version 1.2.2
+ * Google's Cloud Storage class, GCS.h version 1.2.3
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -82,7 +82,14 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, T3 remoteFileName, T4 mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, UploadProgressCallback callback = NULL) { return mUpload(fbdo, toStringPtr(bucketID), toStringPtr(localFileName), storageType, uploadType, toStringPtr(remoteFileName), toStringPtr(mime), uploadOptions, requestProps, status, callback); }
+    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType,
+                fb_esp_gcs_upload_type uploadType, T3 remoteFileName, T4 mime, UploadOptions *uploadOptions = nullptr,
+                RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr,
+                UploadProgressCallback callback = NULL)
+    {
+        return mUpload(fbdo, toStringPtr(bucketID), toStringPtr(localFileName), storageType,
+                       uploadType, toStringPtr(remoteFileName), toStringPtr(mime), uploadOptions, requestProps, status, callback);
+    }
 
     /** Downoad file from the Google Cloud Storage data bucket.
      *
@@ -101,7 +108,13 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr, DownloadProgressCallback callback = NULL) { return mDownload(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), toStringPtr(localFileName), storageType, options, callback); }
+    bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName,
+                  fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr,
+                  DownloadProgressCallback callback = NULL)
+    {
+        return mDownload(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName),
+                         toStringPtr(localFileName), storageType, options, callback);
+    }
 
     /** Download a firmware file from the Google Cloud Storage data bucket for OTA updates.
      *
@@ -115,7 +128,10 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool downloadOTA(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, DownloadProgressCallback callback = NULL) { return mDownloadOTA(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), callback); }
+    bool downloadOTA(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, DownloadProgressCallback callback = NULL)
+    {
+        return mDownloadOTA(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), callback);
+    }
 
     /** Get the meta data of file in Firebase or Google Cloud Storage data bucket.
      *
@@ -132,7 +148,10 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, StorageGetOptions *options = nullptr) { return mGetMetadata(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), options); }
+    bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, StorageGetOptions *options = nullptr)
+    {
+        return mGetMetadata(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), options);
+    }
 
     /** Delete file from Firebase or Google Cloud Storage data bucket.
      *
@@ -146,7 +165,10 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName, DeleteOptions *options = nullptr) { return mDeleteFile(fbdo, toStringPtr(bucketID), toStringPtr(fileName), options); }
+    bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName, DeleteOptions *options = nullptr)
+    {
+        return mDeleteFile(fbdo, toStringPtr(bucketID), toStringPtr(fileName), options);
+    }
 
     /** List all files in the Firebase or Google Cloud Storage data bucket.
      *
@@ -161,17 +183,18 @@ public:
      *
      */
     template <typename T = const char *>
-    bool listFiles(FirebaseData *fbdo, T bucketID, ListOptions *options = nullptr) { return mListFiles(fbdo, toStringPtr(bucketID), options); }
+    bool listFiles(FirebaseData *fbdo, T bucketID, ListOptions *options = nullptr)
+    {
+        return mListFiles(fbdo, toStringPtr(bucketID), options);
+    }
 
 private:
     const uint32_t gcs_min_chunkSize = 256 * 1024; // Min Google recommended length
     uint32_t gcs_chunkSize = 256 * 1024;
     bool _resumable_upload_task_enable = false;
-    UtilsClass *ut = nullptr;
     MB_VECTOR<struct fb_gcs_upload_resumable_task_info_t> _resumableUploadTasks;
     size_t _resumableUplaodTaskIndex = 0;
 
-    void begin(UtilsClass *u);
     void rescon(FirebaseData *fbdo, const char *host);
     void setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &header, bool hasParams);
     void setListOptions(struct fb_esp_gcs_req_t *req, MB_String &header, bool hasParams);
@@ -182,14 +205,26 @@ private:
     void setRequestproperties(struct fb_esp_gcs_req_t *req, FirebaseJson *json, bool &hasProps);
     void sendUploadCallback(FirebaseData *fbdo, UploadStatusInfo &in, UploadProgressCallback cb, UploadStatusInfo *out);
     void sendDownloadCallback(FirebaseData *fbdo, DownloadStatusInfo &in, DownloadProgressCallback cb, DownloadStatusInfo *out);
+    void makeUploadStatus(UploadStatusInfo &info, const MB_String &local, const MB_String &remote,
+                          fb_esp_gcs_upload_status status, size_t progress, size_t fileSize, int elapsedTime, const MB_String &msg);
+    void makeDownloadStatus(DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
+                            fb_esp_gcs_download_status status, size_t progress, size_t fileSize,
+                            int elapsedTime, const MB_String &msg);
     bool sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req);
     bool gcs_connect(FirebaseData *fbdo);
     bool gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req);
     bool handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req);
-    bool mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, MB_StringPtr remoteFileName, MB_StringPtr mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, UploadProgressCallback callback = NULL);
-    bool mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName, MB_StringPtr localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr, DownloadProgressCallback callback = NULL);
-    bool mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName, DownloadProgressCallback callback = NULL);
-    bool mGetMetadata(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName, StorageGetOptions *options = nullptr);
+    bool mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr localFileName,
+                 fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, MB_StringPtr remoteFileName,
+                 MB_StringPtr mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr,
+                 UploadStatusInfo *status = nullptr, UploadProgressCallback callback = NULL);
+    bool mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
+                   MB_StringPtr localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr,
+                   DownloadProgressCallback callback = NULL);
+    bool mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
+                      DownloadProgressCallback callback = NULL);
+    bool mGetMetadata(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
+                      StorageGetOptions *options = nullptr);
     bool mDeleteFile(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr fileName, DeleteOptions *options = nullptr);
     bool mListFiles(FirebaseData *fbdo, MB_StringPtr bucketID, ListOptions *options = nullptr);
     bool parseJsonResponse(FirebaseData *fbdo, PGM_P key_path);

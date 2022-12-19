@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.22
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.23
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -78,7 +78,10 @@ public:
    * The API key created in the Google Cloud console, cannot be used for authorizing FCM requests.
    */
   template <typename T = const char *>
-  void setServerKey(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mSetServerKey(toStringPtr(serverKey), spi_ethernet_module); }
+  void setServerKey(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL)
+  {
+    mSetServerKey(toStringPtr(serverKey), spi_ethernet_module);
+  }
 
   /** Send Firebase Cloud Messaging to the devices with JSON payload using the FCM legacy API.
    *
@@ -137,7 +140,10 @@ public:
    *
    */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool subscribeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mSubscribeTopic(fbdo, toStringPtr(topic), IID, numToken); }
+  bool subscribeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken)
+  {
+    return mSubscribeTopic(fbdo, toStringPtr(topic), IID, numToken);
+  }
 
   /** Unsubscribe the devices from the topic.
    *
@@ -149,7 +155,10 @@ public:
    *
    */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = size_t>
-  bool unsubscribeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken) { return mUnsubscribeTopic(fbdo, toStringPtr(topic), IID, numToken); }
+  bool unsubscribeTopic(FirebaseData *fbdo, T1 topic, T2 IID[], T3 numToken)
+  {
+    return mUnsubscribeTopic(fbdo, toStringPtr(topic), IID, numToken);
+  }
 
   /** Get the app instance info.
    *
@@ -172,7 +181,10 @@ public:
    *
    */
   template <typename T1 = const char *, typename T2 = const char **, typename T3 = size_t>
-  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3 numToken) { return mRegisAPNsTokens(fbdo, toStringPtr(application), sandbox, APNs, numToken); }
+  bool regisAPNsTokens(FirebaseData *fbdo, T1 application, bool sandbox, T2 APNs[], T3 numToken)
+  {
+    return mRegisAPNsTokens(fbdo, toStringPtr(application), sandbox, APNs, numToken);
+  }
 
   /** Get the server payload.
    *
@@ -182,8 +194,6 @@ public:
   String payload(FirebaseData *fbdo);
 
 private:
-  bool prepareUtil();
-  void begin(UtilsClass *u);
   bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
@@ -203,11 +213,9 @@ private:
   bool mRegisAPNsTokens(FirebaseData *fbdo, MB_StringPtr application, bool sandbox, const char *APNs[], size_t numToken);
   void clear();
 
-  UtilsClass *ut = nullptr;
   MB_String server_key;
   MB_String raw;
   uint16_t port = FIREBASE_PORT;
-  bool intUt = false;
   SPI_ETH_Module *_spi_ethernet_module = NULL;
 };
 

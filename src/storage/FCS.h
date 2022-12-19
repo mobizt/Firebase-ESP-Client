@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.h version 1.2.2
+ * Google's Firebase Storage class, FCS.h version 1.2.3
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created November 28, 2022
+ * Created December 12, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -68,7 +68,12 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType, T3 remotetFileName, T4 mime, FCS_UploadProgressCallback callback = NULL) { return mUpload(fbdo, toStringPtr(bucketID), toStringPtr(localFileName), storageType, toStringPtr(remotetFileName), toStringPtr(mime), callback); }
+    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType,
+                T3 remotetFileName, T4 mime, FCS_UploadProgressCallback callback = NULL)
+    {
+        return mUpload(fbdo, toStringPtr(bucketID), toStringPtr(localFileName), storageType,
+                       toStringPtr(remotetFileName), toStringPtr(mime), callback);
+    }
 
     /** Upload byte array to the Firebase Storage data bucket.
      *
@@ -86,7 +91,11 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool upload(FirebaseData *fbdo, T1 bucketID, const uint8_t *data, size_t len, T2 remoteFileName, T3 mime, FCS_UploadProgressCallback callback = NULL) { return mUpload(fbdo, toStringPtr(bucketID), data, len, toStringPtr(remoteFileName), toStringPtr(mime), callback); }
+    bool upload(FirebaseData *fbdo, T1 bucketID, const uint8_t *data, size_t len, T2 remoteFileName,
+                T3 mime, FCS_UploadProgressCallback callback = NULL)
+    {
+        return mUpload(fbdo, toStringPtr(bucketID), data, len, toStringPtr(remoteFileName), toStringPtr(mime), callback);
+    }
 
     /** Download file from the Firebase Storage data bucket.
      *
@@ -101,7 +110,12 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-    bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName, fb_esp_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL) { return mDownload(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), toStringPtr(localFileName), storageType, callback); }
+    bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName,
+                  fb_esp_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL)
+    {
+        return mDownload(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName),
+                         toStringPtr(localFileName), storageType, callback);
+    }
 
     /** Download a firmware file from the Firebase Storage data bucket for OTA updates.
      *
@@ -115,7 +129,10 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool downloadOTA(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, FCS_DownloadProgressCallback callback = NULL) { return mDownloadOTA(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), callback); }
+    bool downloadOTA(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, FCS_DownloadProgressCallback callback = NULL)
+    {
+        return mDownloadOTA(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName), callback);
+    }
 
     /** Get the meta data of file in Firebase Storage data bucket
      *
@@ -130,7 +147,10 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName) { return mGetMetadata(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName)); }
+    bool getMetadata(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName)
+    {
+        return mGetMetadata(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName));
+    }
 
     /** Delete file from Firebase Storage data bucket
      *
@@ -142,7 +162,10 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *>
-    bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName) { return mDeleteFile(fbdo, toStringPtr(bucketID), toStringPtr(fileName)); }
+    bool deleteFile(FirebaseData *fbdo, T1 bucketID, T2 fileName)
+    {
+        return mDeleteFile(fbdo, toStringPtr(bucketID), toStringPtr(fileName));
+    }
 
     /** List all files in the Firebase Storage data bucket.
      *
@@ -158,21 +181,31 @@ public:
     bool listFiles(FirebaseData *fbdo, T bucketID) { return mListFiles(fbdo, toStringPtr(bucketID)); }
 
 private:
-    UtilsClass *ut = nullptr;
-    void begin(UtilsClass *u);
     bool sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req);
-    void sendUploadCallback(FirebaseData *fbdo, FCS_UploadStatusInfo &in, FCS_UploadProgressCallback cb, FCS_UploadStatusInfo *out);
-    void sendDownloadCallback(FirebaseData *fbdo, FCS_DownloadStatusInfo &in, FCS_DownloadProgressCallback cb, FCS_DownloadStatusInfo *out);
+    void sendUploadCallback(FirebaseData *fbdo, FCS_UploadStatusInfo &in, FCS_UploadProgressCallback cb,
+                            FCS_UploadStatusInfo *out);
+    void sendDownloadCallback(FirebaseData *fbdo, FCS_DownloadStatusInfo &in,
+                              FCS_DownloadProgressCallback cb, FCS_DownloadStatusInfo *out);
+    void makeUploadStatus(FCS_UploadStatusInfo &info, const MB_String &local, const MB_String &remote,
+                          fb_esp_fcs_upload_status status, size_t progress, size_t fileSize, int elapsedTime, const MB_String &msg);
+    void makeDownloadStatus(FCS_DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
+                            fb_esp_fcs_download_status status, size_t progress, size_t fileSize, int elapsedTime,
+                            const MB_String &msg);
     void rescon(FirebaseData *fbdo, const char *host);
     bool fcs_connect(FirebaseData *fbdo);
     bool fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req);
     void reportUploadProgress(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req, size_t readBytes);
     void reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req, size_t readBytes);
     bool handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req);
-    bool mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr localFileName, fb_esp_mem_storage_type storageType, MB_StringPtr remotetFileName, MB_StringPtr mime, FCS_UploadProgressCallback callback = NULL);
-    bool mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, const uint8_t *data, size_t len, MB_StringPtr remoteFileName, MB_StringPtr mime, FCS_UploadProgressCallback callback = NULL);
-    bool mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName, MB_StringPtr localFileName, fb_esp_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL);
-    bool mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName, FCS_DownloadProgressCallback callback = NULL);
+    bool mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr localFileName,
+                 fb_esp_mem_storage_type storageType, MB_StringPtr remotetFileName, MB_StringPtr mime,
+                 FCS_UploadProgressCallback callback = NULL);
+    bool mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, const uint8_t *data, size_t len,
+                 MB_StringPtr remoteFileName, MB_StringPtr mime, FCS_UploadProgressCallback callback = NULL);
+    bool mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
+                   MB_StringPtr localFileName, fb_esp_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL);
+    bool mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
+                      FCS_DownloadProgressCallback callback = NULL);
     bool mGetMetadata(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName);
     bool mDeleteFile(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr fileName);
     bool mListFiles(FirebaseData *fbdo, MB_StringPtr bucketID);

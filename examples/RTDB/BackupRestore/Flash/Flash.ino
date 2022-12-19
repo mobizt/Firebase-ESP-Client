@@ -155,7 +155,7 @@ void loop()
       Serial.printf("file size, %d\n", fbdo.getBackupFileSize());
     }
     else
-      fbdo.fileTransferError().c_str();
+       Serial.println(fbdo.fileTransferError().c_str());
 
     // Restore data to defined database path using backup file on Flash memory.
     //<target node> is the full path of database to restore
@@ -165,6 +165,6 @@ void loop()
     Serial.println("\nRestore... \n");
 
     if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_flash, "/<target node>" /* node path to restore */, "/<file name>" /* backup file to restore */, rtdbUploadCallback /* callback function */))
-      fbdo.fileTransferError().c_str();
+       Serial.println(fbdo.fileTransferError().c_str());
   }
 }

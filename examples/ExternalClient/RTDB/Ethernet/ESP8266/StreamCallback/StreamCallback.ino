@@ -10,14 +10,11 @@
  */
 
 /** This example shows the RTDB data changed notification with external Client.
- * This example used ESP8266 and WIZnet W5500 (Ethernet) devices which built-in SSL Client will be used as the external Client.
+ * This example used ESP8266 and WIZnet W5500 (Ethernet) devices which ESP_SSLClient will be used as the external Client.
  *
  * Even the example for Ethernet that supports ENC28J60 and WIZnet W55xx is available at RTDB/BasicEthernet/ESP8266/ESP8266.ino,
  * this example will show how to use external SSL Client that supports other network interfaces e.g. GSMClient and especially
  * EthernetClient in this example.
- *
- * For other non-espressif (ESP32 and ESP8266) devices, this SSL Client library can be used
- * https://github.com/OPEnSLab-OSU/SSLClient
  *
  * Don't gorget to define this in FirebaseFS.h
  * #define FB_ENABLE_EXTERNAL_CLIENT
@@ -31,13 +28,8 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-// Include built-in SSL Client which supports other network interfaces
-#include "sslclient/esp8266/MB_ESP8266_SSLClient.h"
-
-// You can use MB_ESP8266_SSLClient.h in your ESP8266 project in the same way as normal WiFiClientSecure
-// You can't use this SSL Client library https://github.com/OPEnSLab-OSU/SSLClient in your ESP8266 project because of wdt reset error,
-// and you should not install it in Arduino libraries folder because it can cause the conflicts in ESP8266 WiFiClientSecure class because
-// the different BearSSL library sources were installed.
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
 
 #include <Ethernet.h>
 
@@ -82,13 +74,22 @@ int count = 0;
 
 volatile bool dataChanged = false;
 
+// Define the basic client
+// The network interface devices that can be used to handle SSL data should
+// have large memory buffer up to 1k - 2k or more, otherwise the SSL/TLS handshake
+// will fail.
 EthernetClient basic_client1;
 
 EthernetClient basic_client2;
 
-MB_ESP8266_SSLClient ssl_client1;
+// This is the wrapper client that utilized the basic client for io and 
+// provides the mean for the data encryption and decryption before sending to or after read from the io.
+// The most probable failures are related to the basic client itself that may not provide the buffer
+// that large enough for SSL data. 
+// The SSL client can do nothing for this case, you should increase the basic client buffer memory.
+ESP_SSLClient ssl_client1;
 
-MB_ESP8266_SSLClient ssl_client2;
+ESP_SSLClient ssl_client2;
 
 // For NTP client
 EthernetUDP udpClient;

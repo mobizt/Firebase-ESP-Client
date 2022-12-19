@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.6
+ * Google's Firebase QueryFilter class, QueryFilter.cpp version 1.0.7
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 28, 2022
+ * Created December 19, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)

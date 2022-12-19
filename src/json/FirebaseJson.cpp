@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 3.0.2
+ * FirebaseJson, version 3.0.3
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created November 4, 2022
+ * Created December 3, 2022
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -205,36 +205,27 @@ void FirebaseJsonBase::mAdd(MB_VECTOR<MB_String> keys, MB_JSON **parent, int beg
     }
 }
 
-void FirebaseJsonBase::makeList(const char *str, MB_VECTOR<MB_String> &keys, char delim)
+void FirebaseJsonBase::makeList(const MB_String &str, MB_VECTOR<MB_String> &keys, char delim)
 {
     clearList(keys);
-
-    int current = 0, previous = 0;
-    current = strpos(str, delim, 0);
+    size_t current, previous = 0;
+    current = str.find(delim, previous);
     MB_String s;
-    while (current != -1)
+    while (current != MB_String::npos)
     {
-        s.clear();
-        substr(s, str, previous, current - previous);
-        trim(s);
-        if (s.length() > 0)
-            keys.push_back(s);
-
+        pushLish(str.substr(previous, current - previous), keys);
         previous = current + 1;
-        current = strpos(str, delim, previous);
+        current = str.find(delim, previous);
     }
+    pushLish(str.substr(previous, current - previous), keys);
+}
 
-    s.clear();
-
-    if (previous > 0 && current == -1)
-        substr(s, str, previous, strlen(str) - previous);
-    else
-        s = str;
-
-    trim(s);
+void FirebaseJsonBase::pushLish(const MB_String &str, MB_VECTOR<MB_String> &keys)
+{
+    MB_String s = str;
+    s.trim();
     if (s.length() > 0)
         keys.push_back(s);
-    s.clear();
 }
 
 void FirebaseJsonBase::clearList(MB_VECTOR<MB_String> &keys)
