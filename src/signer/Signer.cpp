@@ -278,7 +278,7 @@ bool Firebase_Signer::setTime(time_t ts)
 #else
     if (ts > ESP_DEFAULT_TS)
         this->ts = ts - millis() / 1000;
-    mb_ts = (uint32_t)this->ts;
+    *mb_ts = this->ts;
 #endif
 
     return false;
