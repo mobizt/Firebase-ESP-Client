@@ -1339,6 +1339,7 @@ namespace Base64Helper
 #if defined(ESP32) || defined(ESP8266)
         return Update.write(data, len) == len;
 #endif
+        return false;
     }
 
     inline unsigned char *creatBase64DecBuffer(MB_FS *mbfs)
