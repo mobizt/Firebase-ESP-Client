@@ -278,7 +278,7 @@ bool Firebase_Signer::setTime(time_t ts)
 #else
     if (ts > ESP_DEFAULT_TS)
         this->ts = ts - millis() / 1000;
-    mb_ts = this->ts;
+    mb_ts = (uint32_t)this->ts;
 #endif
 
     return false;
@@ -953,10 +953,10 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
                                 // chunk transfer encoding?
                                 if (response.isChunkedEnc)
                                     tcpHandler.bufferAvailable = HttpHelper::readChunkedData(mbfs, tcpClient->client,
-                                                                                        pChunk, nullptr, tcpHandler);
+                                                                                             pChunk, nullptr, tcpHandler);
                                 else
                                     tcpHandler.bufferAvailable = HttpHelper::readLine(tcpClient->client,
-                                                                                 pChunk, tcpHandler.chunkBufSize);
+                                                                                      pChunk, tcpHandler.chunkBufSize);
 
                                 if (tcpHandler.bufferAvailable > 0)
                                 {
