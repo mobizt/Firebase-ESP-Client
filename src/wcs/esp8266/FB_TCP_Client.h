@@ -50,6 +50,8 @@ public:
   FB_TCP_Client();
   ~FB_TCP_Client();
 
+  void setInsecure();
+
   void setCACert(const char *caCert);
 
   bool setCertFile(const char *certFile, mb_fs_mem_storage_type storageType);

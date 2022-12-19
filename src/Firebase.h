@@ -643,7 +643,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      ut->syncClock(_gmtOffset);
+      TimeHelper::syncClock(mb_ts, _gmtOffset, config);
 #endif
     }
     begin(config, auth);
@@ -664,7 +664,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      ut->syncClock(_gmtOffset);
+      TimeHelper::syncClock(mb_ts, _gmtOffset, config);
 #endif
     }
     begin(config, auth);

@@ -42,6 +42,11 @@ FB_TCP_Client::~FB_TCP_Client()
   release();
 }
 
+void FB_TCP_Client::setInsecure()
+{
+  wcs->setInsecure();
+}
+
 void FB_TCP_Client::setCACert(const char *caCert)
 {
 

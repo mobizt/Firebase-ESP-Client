@@ -2007,8 +2007,6 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     FirebaseJsonData server_key;
     FirebaseJson json(raw);
     json.get(server_key, pgm2Str(fb_esp_pgm_str_577 /* "server_key" */));
-
-    bool hasParam = false;
     HttpHelper::addRequestHeaderFirst(header, m_post);
     header += fb_esp_pgm_str_121; // "/fcm/send"
     HttpHelper::addRequestHeaderLast(header);
@@ -2103,8 +2101,6 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
     HttpHelper::initTCPSession(fbdo->session);
     HttpHelper::intTCPHandler(fbdo->tcpClient.client, tcpHandler, 2048, fbdo->session.resp_size, &payload, isOTA);
-
-    int upos = 0;
 
     if (!fbdo->waitResponse(tcpHandler))
         return false;
