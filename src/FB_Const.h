@@ -2149,9 +2149,8 @@ static const char fb_esp_pgm_str_296[] PROGMEM = "topic";
 static const char fb_esp_pgm_str_297[] PROGMEM = "image";
 static const char fb_esp_pgm_str_298[] PROGMEM = "fcm_options";
 static const char fb_esp_pgm_str_299[] PROGMEM = "analytics_label";
-static const char fb_esp_pgm_str_300[] PROGMEM = "android";
-static const char fb_esp_pgm_str_301[] PROGMEM = "webpush";
-static const char fb_esp_pgm_str_302[] PROGMEM = "apns";
+
+
 static const char fb_esp_pgm_str_303[] PROGMEM = "ttl";
 static const char fb_esp_pgm_str_304[] PROGMEM = "channel_id";
 static const char fb_esp_pgm_str_305[] PROGMEM = "ticker";
@@ -2292,6 +2291,9 @@ static const char fb_esp_pgm_str_438[] PROGMEM = ":generateDownloadUrl";
 static const char fb_esp_pgm_str_439[] PROGMEM = ":generateUploadUrl";
 static const char fb_esp_pgm_str_440[] PROGMEM = "uploadUrl";
 #endif
+static const char fb_esp_pgm_str_300[] PROGMEM = "android";
+static const char fb_esp_pgm_str_301[] PROGMEM = "webpush";
+static const char fb_esp_pgm_str_302[] PROGMEM = "apns";
 static const char fb_esp_pgm_str_270[] PROGMEM = "Firebase ";
 static const char fb_esp_pgm_str_361[] PROGMEM = "=";
 static const char fb_esp_pgm_str_441[] PROGMEM = "https://%[^/]/%s";
