@@ -2,7 +2,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 19, 2022
+ * Created December 20, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -38,6 +38,8 @@
 #include <Schedule.h>
 #endif
 using namespace mb_string;
+
+#define stringPtr2Str(p) (MB_String().appendPtr(p).c_str())
 
 namespace MemoryHelper
 {
@@ -1879,6 +1881,65 @@ namespace Utils
             if (path[0] != '/')
                 path.prepend('/');
         }
+    }
+
+    inline MB_String makeFCMMsgPath(PGM_P sub = NULL)
+    {
+        MB_String path = fb_esp_pgm_str_575; // "msg"
+        path += fb_esp_pgm_str_1;            // "/"
+        if (sub)
+            path += sub;
+        return path;
+    }
+
+    inline MB_String makeFCMMessagePath(PGM_P sub = NULL)
+    {
+        MB_String path = fb_esp_pgm_str_575; // "message"
+        path += fb_esp_pgm_str_1;            // "/"
+        if (sub)
+            path += sub;
+        return path;
+    }
+
+    inline void addFCMNotificationPath(MB_String &path, PGM_P sub = NULL)
+    {
+        path += fb_esp_pgm_str_122; // "notification"
+        path += fb_esp_pgm_str_1;   // "/"
+        if (sub)
+            path += sub;
+    }
+
+    inline void addFCMAndroidPath(MB_String &path, PGM_P sub = NULL)
+    {
+        path += fb_esp_pgm_str_300; // "android"
+        path += fb_esp_pgm_str_1;   // "/"
+        if (sub)
+            path += sub;
+    }
+
+    inline void addFCMWebpushPath(MB_String &path, PGM_P sub = NULL)
+    {
+        path += fb_esp_pgm_str_301; // "webpush";
+        path += fb_esp_pgm_str_1;   // "/"
+        if (sub)
+            path += sub;
+    }
+
+    inline void addFCMApnsPath(MB_String &path, PGM_P sub = NULL)
+    {
+        path += fb_esp_pgm_str_302; // "apns";
+        path += fb_esp_pgm_str_1;   // "/"
+        if (sub)
+            path += sub;
+    }
+
+    inline MB_String makeFCMNotificationPath(PGM_P sub = NULL)
+    {
+        MB_String path = fb_esp_pgm_str_122; // "notification"
+        path += fb_esp_pgm_str_1;            // "/"
+        if (sub)
+            path += sub;
+        return path;
     }
 
     inline size_t getUploadBufSize(FirebaseConfig *config, fb_esp_con_mode mode)

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.23
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.24
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 12, 2022
+ * Created December 20, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -309,226 +309,113 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
 
 void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 {
-
-    MB_String s;
-
     raw.clear();
-
     FirebaseJson json;
 
     if (msg->targets.to.length() > 0)
-    {
-        s = fb_esp_pgm_str_128; // "to"
-        json.add(s, msg->targets.to);
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_128 /* "to" */), msg->targets.to);
 
     if (msg->targets.registration_ids.length() > 0)
     {
-        FirebaseJsonArray arr;
-        arr.clear();
-        arr.setJsonArrayData(msg->targets.registration_ids);
-
-        s = fb_esp_pgm_str_130; // "registration_ids"
-        json.add(s, arr);
+        FirebaseJsonArray arr(msg->targets.registration_ids);
+        json.add(fb_esp_pgm_str_130 /* "registration_ids" */, arr);
     }
 
     if (msg->targets.condition.length() > 0)
-    {
-        s = fb_esp_pgm_str_282; // "condition"
-        json.add(s, msg->targets.condition);
-    }
+        json.add(fb_esp_pgm_str_282 /* "condition" */, msg->targets.condition);
 
     if (msg->options.collapse_key.length() > 0)
-    {
-        s = fb_esp_pgm_str_138; // "collapse_key"
-        json.add(s, msg->options.collapse_key);
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_138 /* "collapse_key" */), msg->options.collapse_key);
 
     if (msg->options.priority.length() > 0)
-    {
-        s = fb_esp_pgm_str_136; // "priority"
-        json.add(s, msg->options.priority);
-    }
+        json.add(fb_esp_pgm_str_136 /* "priority" */, msg->options.priority);
 
     if (msg->options.content_available.length() > 0)
-    {
-        s = fb_esp_pgm_str_283; // "content_available"
-        json.add(s, Utils::boolVal(msg->options.content_available));
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_283 /* "content_available" */), Utils::boolVal(msg->options.content_available));
 
     if (msg->options.mutable_content.length() > 0)
-    {
-        s = fb_esp_pgm_str_284; // "mutable_content"
-        json.add(s, Utils::boolVal(msg->options.mutable_content));
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_284 /* "mutable_content" */), Utils::boolVal(msg->options.mutable_content));
 
     if (msg->options.time_to_live.length() > 0)
-    {
-        s = fb_esp_pgm_str_137; // "time_to_live"
-        json.add(s, atoi(msg->options.time_to_live.c_str()));
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_137 /* "time_to_live" */), atoi(msg->options.time_to_live.c_str()));
 
     if (msg->options.restricted_package_name.length() > 0)
-    {
-        s = fb_esp_pgm_str_147; // "restricted_package_name"
-        json.add(s, msg->options.restricted_package_name);
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_147 /* "restricted_package_name" */), msg->options.restricted_package_name);
 
     if (msg->options.dry_run.length() > 0)
-    {
-        s = fb_esp_pgm_str_281; // "dry_run"
-        json.add(s, msg->options.dry_run);
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_281 /* "dry_run" */), msg->options.dry_run);
 
     if (msg->options.direct_boot_ok.length() > 0)
-    {
-        s = fb_esp_pgm_str_323; // "direct_boot_ok"
-        json.add(s, Utils::boolVal(msg->options.direct_boot_ok));
-    }
+        json.add(pgm2Str(fb_esp_pgm_str_323 /* "direct_boot_ok" */), Utils::boolVal(msg->options.direct_boot_ok));
 
     if (msg->payloads.data.length() > 0)
     {
-        FirebaseJson js;
-        js.setJsonData(msg->payloads.data);
-        s = fb_esp_pgm_str_135; // "data"
-        json.add(s, js);
+        FirebaseJson js(msg->payloads.data);
+        json.add(pgm2Str(fb_esp_pgm_str_135 /* "data" */), js);
     }
 
     if (msg->payloads.notification.title.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_285; // "title"
-        json.set(s, msg->payloads.notification.title);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_285 /* "title" */), msg->payloads.notification.title);
 
     if (msg->payloads.notification.body.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_123; // "body"
-        json.set(s, msg->payloads.notification.body);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_123 /* "body" */), msg->payloads.notification.body);
 
     if (msg->payloads.notification.sound.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_126; // "sound"
-        json.set(s, msg->payloads.notification.sound);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_126 /* "sound" */), msg->payloads.notification.sound);
 
     if (msg->payloads.notification.badge.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_286; // "badge"
-        json.set(s, msg->payloads.notification.badge);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_286 /* "badge" */), msg->payloads.notification.badge);
 
     if (msg->payloads.notification.click_action.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_125; // "click_action"
-        json.set(s, msg->payloads.notification.click_action);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_125 /* "click_action" */), msg->payloads.notification.click_action);
 
     if (msg->payloads.notification.subtitle.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_287; // "subtitle"
-        json.set(s, msg->payloads.notification.subtitle);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_287 /* "subtitle" */), msg->payloads.notification.subtitle);
 
     if (msg->payloads.notification.body_loc_key.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_288; // "body_loc_key"
-        json.set(s, msg->payloads.notification.body_loc_key);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_288 /* "body_loc_key" */), msg->payloads.notification.body_loc_key);
 
     if (msg->payloads.notification.body_loc_args.length() > 0)
     {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_289; // "body_loc_args"
-        FirebaseJsonArray arr;
-        arr.setJsonArrayData(msg->payloads.notification.body_loc_args);
-        json.set(s, arr);
+        FirebaseJsonArray arr(msg->payloads.notification.body_loc_args);
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_289 /* "body_loc_args" */), arr);
     }
 
     if (msg->payloads.notification.title_loc_key.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_290; // "title_loc_key"
-        json.set(s, msg->payloads.notification.title_loc_key);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_290 /* "title_loc_key" */), msg->payloads.notification.title_loc_key);
 
     if (msg->payloads.notification.title_loc_args.length() > 0)
     {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_291; // "title_loc_args"
-        FirebaseJsonArray arr;
-        arr.setJsonArrayData(msg->payloads.notification.title_loc_args);
-        json.set(s, arr);
+        FirebaseJsonArray arr(msg->payloads.notification.title_loc_args);
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_291 /* "title_loc_args" */), arr);
     }
 
     if (msg->payloads.notification.android_channel_id.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_292; // "android_channel_id"
-        json.set(s, msg->payloads.notification.android_channel_id);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_292 /* "android_channel_id" */), msg->payloads.notification.android_channel_id);
 
     if (msg->payloads.notification.icon.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_124; // "icon"
-        json.set(s, msg->payloads.notification.icon);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_124 /* "icon" */), msg->payloads.notification.icon);
 
     if (msg->payloads.notification.tag.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_293; // "tag"
-        json.set(s, msg->payloads.notification.tag);
-    }
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_293 /* "tag" */), msg->payloads.notification.tag);
 
     if (msg->payloads.notification.color.length() > 0)
-    {
-        s = fb_esp_pgm_str_122;  // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_294; // "color"
-        json.set(s, msg->payloads.notification.color);
-    }
-    s.clear();
-    raw = json.raw();
+        json.set(Utils::makeFCMNotificationPath(fb_esp_pgm_str_294 /* "color" */), msg->payloads.notification.color);
+    json.toString(raw);
 }
 
 void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken)
 {
     MB_String base, s;
-
     raw.clear();
     FirebaseJson json;
-
-    base = fb_esp_pgm_str_128; // "to"
 
     s += fb_esp_pgm_str_134; // "/topics/"
     s += topic;
 
-    json.add(base, s);
+    json.add(pgm2Str(fb_esp_pgm_str_128 /* "to" */), s);
 
-    static FirebaseJsonArray arr;
-    arr.clear();
+    FirebaseJsonArray arr;
     for (size_t i = 0; i < numToken; i++)
     {
         if (IID[i])
@@ -539,29 +426,18 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
                 arr.add(s);
         }
     }
-
-    base = fb_esp_pgm_str_334; // "registration_tokens"
-
-    json.add(base, arr);
-
-    base.clear();
-    s.clear();
-    raw = json.raw();
+    json.add(pgm2Str(fb_esp_pgm_str_334/* "registration_tokens" */), arr);
+    json.toString(raw);
 }
 
 void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken)
 {
-    MB_String base, s;
-
+    MB_String s;
     raw.clear();
     FirebaseJson json;
 
-    base = fb_esp_pgm_str_337; // "application"
-
-    json.add(base, application);
-
-    base = fb_esp_pgm_str_338; // "sandbox"
-    json.add(base, sandbox);
+    json.add(pgm2Str(fb_esp_pgm_str_337 /* "application" */), application);
+    json.add(pgm2Str(fb_esp_pgm_str_338 /* "sandbox" */), sandbox);
 
     FirebaseJsonArray arr;
     for (size_t i = 0; i < numToken; i++)
@@ -574,85 +450,54 @@ void FB_CM::fcm_preparAPNsRegistPayload(const char *application, bool sandbox, c
                 arr.add(s);
         }
     }
-
-    base = fb_esp_pgm_str_339; // "apns_tokens"
-    json.add(base, arr);
-
-    base.clear();
-    s.clear();
-    raw = json.raw();
+    json.add(pgm2Str(fb_esp_pgm_str_339 /* "apns_tokens" */), arr);
+    json.toString(raw);
 }
 
 void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 {
 
-    MB_String base, _base, s;
-
+    MB_String s;
     FirebaseJson json;
     raw.clear();
 
-    base = fb_esp_pgm_str_295; // "message"
-    base += fb_esp_pgm_str_1;  // "/"
-    _base = base;
-
     if (msg->token.length() > 0)
-    {
-        s = base;
-        s += fb_esp_pgm_str_233; // "token"
-        json.set(s, msg->token);
-    }
+        json.set(Utils::makeFCMMessagePath(fb_esp_pgm_str_233 /* "token" */), msg->token);
     else if (msg->topic.length() > 0)
-    {
-        s = base;
-        s += fb_esp_pgm_str_296; // "topic"
-        json.set(s, msg->topic);
-    }
+        json.set(Utils::makeFCMMessagePath(fb_esp_pgm_str_296 /* "topic" */), msg->topic);
     else if (msg->condition.length() > 0)
-    {
-        s = base;
-        s += fb_esp_pgm_str_282; // "condition"
-        json.set(s, msg->condition);
-    }
+        json.set(Utils::makeFCMMessagePath(fb_esp_pgm_str_282 /* "condition" */), msg->condition);
 
     if (msg->data.length() > 0)
     {
-        FirebaseJson js;
-        js.setJsonData(msg->data);
-        s = base;
-        s += fb_esp_pgm_str_135; // "data"
-        json.set(s, js);
+        FirebaseJson js(msg->data);
+        json.set(Utils::makeFCMMessagePath(fb_esp_pgm_str_135 /* "data" */), js);
     }
 
     if (msg->notification.title.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_285; // "title"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_285 /* "title" */);
         json.set(s, msg->notification.title);
     }
 
     if (msg->notification.body.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_123; // "body"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_123 /* "body" */);
         json.set(s, msg->notification.body);
     }
 
     if (msg->notification.image.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_297; // "image"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_297 /* "image" */);
         json.set(s, msg->notification.image);
     }
 
     if (msg->fcm_options.analytics_label.length() > 0)
     {
-        s = base;
+        s = Utils::makeFCMMessagePath();
         s += fb_esp_pgm_str_298; // "fcm_options"
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
@@ -663,57 +508,44 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 
     if (msg->android.collapse_key.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_138; // "collapse_key"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s, fb_esp_pgm_str_138 /* "collapse_key" */);
         json.set(s, msg->android.collapse_key);
     }
 
     if (msg->android.priority.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_136; // "priority"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s, fb_esp_pgm_str_136 /* "priority" */);
         json.set(s, msg->android.priority);
     }
 
     if (msg->android.ttl.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_303; // "ttl"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s, fb_esp_pgm_str_303 /* "ttl" */);
         json.set(s, msg->android.ttl);
     }
 
     if (msg->android.restricted_package_name.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_147; // "restricted_package_name"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s, fb_esp_pgm_str_147 /* "restricted_package_name" */);
         json.set(s, msg->android.restricted_package_name);
     }
 
     if (msg->android.data.length() > 0)
     {
-        FirebaseJson js;
-        js.setJsonData(msg->android.data);
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_135; // "data"
+        FirebaseJson js(msg->android.data);
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s, fb_esp_pgm_str_135 /* "data" */);
         json.set(s, js);
     }
 
     if (msg->android.fcm_options.analytics_label.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_298; // "fcm_options"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s, fb_esp_pgm_str_298 /* "fcm_options" */);
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
         json.set(s, msg->android.fcm_options.analytics_label);
@@ -721,234 +553,166 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 
     if (msg->android.direct_boot_ok.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_323; // "direct_boot_ok"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s, fb_esp_pgm_str_323 /* "direct_boot_ok" */);
         json.set(s, msg->android.direct_boot_ok);
     }
 
     if (msg->android.notification.title.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_285; // "title"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_285 /* "title" */);
         json.set(s, msg->android.notification.title);
     }
     if (msg->android.notification.body.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_123; // "body"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_123 /* "body" */);
         json.set(s, msg->android.notification.body);
     }
 
     if (msg->android.notification.icon.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_124; // "icon"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_124 /* "icon" */);
         json.set(s, msg->android.notification.icon);
     }
 
     if (msg->android.notification.color.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_294; // "color"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_294 /* "color" */);
         json.set(s, msg->android.notification.color);
     }
 
     if (msg->android.notification.sound.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_126; // "sound"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_126 /* "sound" */);
         json.set(s, msg->android.notification.sound);
     }
     if (msg->android.notification.tag.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_293; // "tag"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_293 /* "tag" */);
         json.set(s, msg->android.notification.tag);
     }
     if (msg->android.notification.click_action.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_125; // "click_action"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_125 /* "click_action" */);
         json.set(s, msg->android.notification.click_action);
     }
 
     if (msg->android.notification.body_loc_key.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_288; // "body_loc_key"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_288 /* "body_loc_key" */);
         json.set(s, msg->android.notification.body_loc_key);
     }
 
     if (msg->android.notification.body_loc_args.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_289; // "body_loc_args"
-        static FirebaseJsonArray arr;
-        arr.clear();
-        arr.setJsonArrayData(msg->android.notification.body_loc_args);
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_289 /* "body_loc_args" */);
+        static FirebaseJsonArray arr(msg->android.notification.body_loc_args);
         json.set(s, arr);
     }
 
     if (msg->android.notification.title_loc_key.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_290; // "title_loc_key"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_290 /* "title_loc_key" */);
         json.set(s, msg->android.notification.title_loc_key);
     }
 
     if (msg->android.notification.title_loc_args.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_291; // "title_loc_args"
-        FirebaseJsonArray arr;
-        arr.setJsonArrayData(msg->android.notification.title_loc_args);
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_291 /* "title_loc_args" */);
+        FirebaseJsonArray arr(msg->android.notification.title_loc_args);
         json.set(s, arr);
     }
 
     if (msg->android.notification.channel_id.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_304; // "channel_id"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_304 /* "channel_id" */);
         json.set(s, msg->android.notification.channel_id);
     }
     if (msg->android.notification.ticker.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_305; // "ticker"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_305 /* "ticker" */);
         json.set(s, msg->android.notification.ticker);
     }
     if (msg->android.notification.sticky.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_306; // "sticky"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_306 /* "sticky" */);
         json.set(s, Utils::boolVal(msg->android.notification.sticky));
     }
     if (msg->android.notification.event_time.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_307; // "event_time"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_307 /* "event_time" */);
         json.set(s, msg->android.notification.event_time);
     }
     if (msg->android.notification.local_only.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_308; // "local_only"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_308 /* "local_only" */);
         json.set(s, Utils::boolVal(msg->android.notification.local_only));
     }
     if (msg->android.notification.notification_priority.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_309; // "notification_priority"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_309 /* "notification_priority" */);
         json.set(s, msg->android.notification.notification_priority);
     }
     if (msg->android.notification.default_sound.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_310; // "default_sound"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_310 /* "default_sound" */);
         json.set(s, Utils::boolVal(msg->android.notification.default_sound));
     }
     if (msg->android.notification.default_vibrate_timings.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_311; // "default_vibrate_timings"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_311 /* "default_vibrate_timings" */);
         json.set(s, Utils::boolVal(msg->android.notification.default_vibrate_timings));
     }
     if (msg->android.notification.default_light_settings.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_312; // "default_light_settings"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_312 /* "default_light_settings" */);
         json.set(s, Utils::boolVal(msg->android.notification.default_light_settings));
     }
     if (msg->android.notification.vibrate_timings.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_313; // "vibrate_timings"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_313 /* "vibrate_timings" */);
         FirebaseJsonArray arr;
         arr.setJsonArrayData(msg->android.notification.vibrate_timings);
         json.set(s, arr);
@@ -956,44 +720,32 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 
     if (msg->android.notification.visibility.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_314; // "visibility"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_314 /* "visibility" */);
         json.set(s, msg->android.notification.visibility);
     }
     if (msg->android.notification.notification_count.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_315; // "notification_count"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_315 /* "notification_count" */);
         json.set(s, atoi(msg->android.notification.notification_count.c_str()));
     }
 
     if (msg->android.notification.image.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_300; // "android"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_297; // "image"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMAndroidPath(s);
+        Utils::addFCMNotificationPath(s, fb_esp_pgm_str_297 /* "image" */);
         json.set(s, msg->android.notification.image);
     }
 
-    s = base;
-    s += fb_esp_pgm_str_300; // "android"
-    s += fb_esp_pgm_str_1;   // "/"
-    s += fb_esp_pgm_str_122; // "notification"
-    s += fb_esp_pgm_str_1;   // "/"
-    s += fb_esp_pgm_str_316; // "light_settings"
-    s += fb_esp_pgm_str_1;   // "/"
-    base = s;
+    s = Utils::makeFCMMessagePath();
+    Utils::addFCMAndroidPath(s);
+    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_316 /* "light_settings" */);
+    s += fb_esp_pgm_str_1; // "/"
+    MB_String base = s;
 
     if (msg->android.notification.light_settings.color.red.length() > 0)
     {
@@ -1043,44 +795,35 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     ////// WebpushConfig
 
     FirebaseJson js;
-    base = _base;
 
     if (msg->webpush.headers.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_301; // "webpush";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_324; // "headers"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMWebpushPath(s, fb_esp_pgm_str_324 /* "headers" */);
         js.setJsonData(msg->webpush.headers);
         json.set(s, js);
     }
 
     if (msg->webpush.data.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_301; // "webpush";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_135; // "data"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMWebpushPath(s, fb_esp_pgm_str_135 /* "data" */);
         js.setJsonData(msg->webpush.data);
         json.set(s, js);
     }
 
     if (msg->webpush.notification.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_301; // "webpush";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_122; // "notification"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMWebpushPath(s, fb_esp_pgm_str_122 /* "notification" */);
         js.setJsonData(msg->webpush.notification);
         json.set(s, js);
     }
 
     if (msg->webpush.fcm_options.analytics_label.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_301; // "webpush";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_298; // "fcm_options"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMWebpushPath(s, fb_esp_pgm_str_298 /* "fcm_options" */);
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
         json.set(s, msg->webpush.fcm_options.analytics_label);
@@ -1088,10 +831,8 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 
     if (msg->webpush.fcm_options.link.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_301; // "webpush";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_298; // "fcm_options"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMWebpushPath(s, fb_esp_pgm_str_298 /* "fcm_options" */);
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_325; // "link"
         json.set(s, msg->webpush.fcm_options.link);
@@ -1101,30 +842,24 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 
     if (msg->apns.headers.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_302; // "apns";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_324; // "headers"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMApnsPath(s, fb_esp_pgm_str_324 /* "headers" */);
         js.setJsonData(msg->apns.headers);
         json.set(s, js);
     }
 
     if (msg->apns.payload.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_302; // "apns";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_135; // "data"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMApnsPath(s, fb_esp_pgm_str_135 /* "data" */);
         js.setJsonData(msg->apns.payload);
         json.set(s, js);
     }
 
     if (msg->apns.fcm_options.analytics_label.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_302; // "apns";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_298; // "fcm_options"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMApnsPath(s, fb_esp_pgm_str_298 /* "fcm_options" */);
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_299; // "analytics_label"
         json.set(s, msg->apns.fcm_options.analytics_label);
@@ -1132,19 +867,14 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
 
     if (msg->apns.fcm_options.image.length() > 0)
     {
-        s = base;
-        s += fb_esp_pgm_str_302; // "apns";
-        s += fb_esp_pgm_str_1;   // "/"
-        s += fb_esp_pgm_str_298; // "fcm_options"
+        s = Utils::makeFCMMessagePath();
+        Utils::addFCMApnsPath(s, fb_esp_pgm_str_298 /* "fcm_options" */);
         s += fb_esp_pgm_str_1;   // "/"
         s += fb_esp_pgm_str_297; // "image"
         json.set(s, msg->apns.fcm_options.image);
     }
 
-    base.clear();
-    _base.clear();
-    s.clear();
-    raw = json.raw();
+    json.toString(raw);
 }
 
 bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *msg)

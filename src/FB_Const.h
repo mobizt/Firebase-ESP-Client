@@ -2438,8 +2438,8 @@ static const char fb_esp_pgm_str_573[] PROGMEM = ":beginTransaction";
 static const char fb_esp_pgm_str_574[] PROGMEM = ":rollback";
 #endif
 
-#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 static const char fb_esp_pgm_str_575[] PROGMEM = "msg";
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 static const char fb_esp_pgm_str_576[] PROGMEM = "topic";
 static const char fb_esp_pgm_str_577[] PROGMEM = "server_key";
 #endif

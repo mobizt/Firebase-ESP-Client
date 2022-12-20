@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.1
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.2
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 19, 2022
+ * Created December 20, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1834,66 +1834,51 @@ void FCMObject::clearDeviceToken()
 
 void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body)
 {
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_122;          // "notification"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_285;          // "title"
+    MB_String s = Utils::makeFCMMsgPath();
+    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_285 /* "title" */);
     FirebaseJson json(raw);
-    json.set(s, MB_String(title).c_str());
+    json.set(s, stringPtr2Str(title));
 
-    s = fb_esp_pgm_str_575;  // "msg"
-    s += fb_esp_pgm_str_1;   // "/"
-    s += fb_esp_pgm_str_122; // "notification"
-    s += fb_esp_pgm_str_1;   // "/"
-    s += fb_esp_pgm_str_123; // "body"
-    json.set(s, MB_String(body).c_str());
+    s = Utils::makeFCMMsgPath();
+    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_123 /* "body" */);
+    json.set(s, stringPtr2Str(body));
     json.toString(raw);
 }
 
 void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon)
 {
     setNotifyMessage(title, body);
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_122;          // "notification"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_124;          // "icon"
+    MB_String s = Utils::makeFCMMsgPath();
+    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_124 /* "icon" */);
     FirebaseJson json(raw);
-    json.set(s, MB_String(icon).c_str());
+    json.set(s, stringPtr2Str(icon));
     json.toString(raw);
 }
 
 void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon, MB_StringPtr click_action)
 {
     setNotifyMessage(title, body, icon);
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_122;          // "notification"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_125;          // "click_action"
+    MB_String s = Utils::makeFCMMsgPath();
+    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_125 /* "click_action" */);
     FirebaseJson json(raw);
-    json.set(s, MB_String(click_action).c_str());
+    json.set(s, stringPtr2Str(click_action));
     json.toString(raw);
 }
 
 void FCMObject::mAddCustomNotifyMessage(MB_StringPtr key, MB_StringPtr value)
 {
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_122;          // "notification"
-    s += fb_esp_pgm_str_1;            // "/"
+    MB_String s = Utils::makeFCMMsgPath();
+    Utils::addFCMNotificationPath(s);
     s += key;
     FirebaseJson json(raw);
-    json.set(s, MB_String(value).c_str());
+    json.set(s, stringPtr2Str(value));
     json.toString(raw);
 }
 
 void FCMObject::clearNotifyMessage()
 {
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_122;          // "notification"
+    MB_String s = Utils::makeFCMMsgPath();
+    Utils::addFCMNotificationPath(s);
     FirebaseJson json(raw);
     json.remove(s);
     json.toString(raw);
@@ -1901,66 +1886,45 @@ void FCMObject::clearNotifyMessage()
 
 void FCMObject::mSetDataMessage(MB_StringPtr jsonString)
 {
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_135;          // "data"
-
-    FirebaseJson js(MB_String(jsonString).c_str());
+    FirebaseJson js(stringPtr2Str(jsonString));
     FirebaseJson json(raw);
-    json.set(s, js);
+    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_135 /*  "data" */), js);
     json.toString(raw);
 }
 
 void FCMObject::setDataMessage(FirebaseJson &json)
 {
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_135;          // "data"
     FirebaseJson js(raw);
-    js.set(s, json);
+    js.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_135 /*  "data" */), json);
     js.toString(raw);
 }
 
 void FCMObject::clearDataMessage()
 {
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_135;          // "data"
     FirebaseJson json(raw);
-    json.remove(s);
+    json.remove(Utils::makeFCMMsgPath(fb_esp_pgm_str_135 /*  "data" */));
     json.toString(raw);
 }
 
 void FCMObject::mSetPriority(MB_StringPtr priority)
 {
-    MB_String _priority = priority;
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_136;          // "priority"
     FirebaseJson json(raw);
-    json.set(s, MB_String(priority).c_str());
+    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_136 /* "priority" */), stringPtr2Str(priority));
     json.toString(raw);
 }
 
 void FCMObject::mSetCollapseKey(MB_StringPtr key)
 {
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_138;          // "collapse_key"
     FirebaseJson json(raw);
-    json.set(s, MB_String(key).c_str());
+    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_138 /* "collapse_key" */), stringPtr2Str(key));
     json.toString(raw);
 }
 
 void FCMObject::setTimeToLive(uint32_t seconds)
 {
-    _ttl = (seconds <= 2419200) ? seconds: - 1;
-    MB_String s = fb_esp_pgm_str_575; // "msg"
-    s += fb_esp_pgm_str_1;            // "/"
-    s += fb_esp_pgm_str_137;          // "time_to_live"
-
+    _ttl = (seconds <= 2419200) ? seconds : -1;
     FirebaseJson json(raw);
-    json.set(s, _ttl);
+    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_137 /* "time_to_live" */), _ttl);
     json.toString(raw);
 }
 
@@ -2045,36 +2009,24 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
     FirebaseJson json(raw);
     if (messageType == fb_esp_fcm_msg_type::msg_single)
     {
-        MB_String s = fb_esp_pgm_str_575; // "msg"
-        s += fb_esp_pgm_str_1;            // "/"
-        s += fb_esp_pgm_str_128;          // "to"
-
         FirebaseJsonArray arr(idTokens);
         FirebaseJsonData data;
         arr.get(data, _index);
-        json.set(s, data.to<const char *>());
+        json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_128 /* "to" */), data.to<const char *>());
         json.toString(raw);
     }
     else if (messageType == fb_esp_fcm_msg_type::msg_multicast)
     {
         FirebaseJsonArray arr(idTokens);
-
-        MB_String s = fb_esp_pgm_str_575; // "msg"
-        s += fb_esp_pgm_str_1;            // "/"
-        s += fb_esp_pgm_str_130;          // "registration_ids"
-
-        json.set(s, arr);
+        Utils::makeFCMMsgPath(fb_esp_pgm_str_130 /* "registration_ids" */);
+        json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_130 /* "registration_ids" */), arr);
         json.toString(raw);
     }
     else if (messageType == fb_esp_fcm_msg_type::msg_topic)
     {
-        MB_String s = fb_esp_pgm_str_575; // "msg"
-        s += fb_esp_pgm_str_1;            // "/"
-        s += fb_esp_pgm_str_128;          // "to"
-
         FirebaseJsonData topic;
         json.get(topic, pgm2Str(fb_esp_pgm_str_576 /* "topic" */));
-        json.set(s, topic.to<const char *>());
+        json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_128 /* "to" */), topic.to<const char *>());
         json.toString(raw);
     }
 }
@@ -2117,10 +2069,8 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
 
         if (tcpHandler.pChunkIdx > 0)
         {
-
             MB_String pChunk;
             fbdo->readPayload(&pChunk, tcpHandler, response);
-
             if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
             {
                 delay(0);
@@ -2129,7 +2079,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
         }
     }
 
-    result= payload;
+    result = payload;
     // parse payload for error
     fbdo->getError(payload, tcpHandler, response, true);
 
