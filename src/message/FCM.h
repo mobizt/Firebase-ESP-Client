@@ -207,6 +207,7 @@ private:
   void fcm_preparAPNsRegistPayload(const char *application, bool sandbox, const char *APNs[], size_t numToken);
 
   void mSetServerKey(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
+  bool checkServerKey(FirebaseData *fbdo);
   bool mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken);
   bool mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken);
   bool mAppInstanceInfo(FirebaseData *fbdo, const char *IID);

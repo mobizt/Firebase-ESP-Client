@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 12, 2022
+ * Created December 22, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -62,7 +62,6 @@ void FunctionsConfig::mSetBucketId(MB_StringPtr bucketId)
 
 void FunctionsConfig::addUpdateMasks(const char *key)
 {
-
     for (size_t i = 0; i < _updateMask.size(); i++)
     {
         if (strcmp(_updateMask[i].c_str(), key) == 0)
@@ -71,6 +70,7 @@ void FunctionsConfig::addUpdateMasks(const char *key)
     MB_String k = key;
     _updateMask.push_back(k);
 }
+
 void FunctionsConfig::mFunctionsConfig(MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr bucketId)
 {
     _projectId = projectId;
@@ -161,9 +161,7 @@ void FunctionsConfig::mSetAvailableMemoryMb(MB_StringPtr mb)
 
 void FunctionsConfig::mSetMaxInstances(MB_StringPtr maxInstances)
 {
-    MB_String _maxInstances = maxInstances;
-    int m = atoi(_maxInstances.c_str());
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_377 /* "maxInstances"*/), m);
+    _funcCfg.set(pgm2Str(fb_esp_pgm_str_377 /* "maxInstances"*/), atoi(stringPtr2Str(maxInstances)));
     addUpdateMasks(pgm2Str(fb_esp_pgm_str_377 /* "maxInstances" */));
 }
 
@@ -213,7 +211,6 @@ void FunctionsConfig::setSource(const uint8_t *pgmArchiveData, size_t len)
 
 void FunctionsConfig::mSetIngressSettings(MB_StringPtr settings)
 {
-
     MB_String _settings = settings;
     _funcCfg.set(pgm2Str(fb_esp_pgm_str_380 /* "ingressSettings" */), _settings);
     addUpdateMasks(pgm2Str(fb_esp_pgm_str_380 /* "ingressSettings" */));
@@ -235,12 +232,11 @@ void FunctionsConfig::clearLabels()
 }
 void FunctionsConfig::mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
 {
-    MB_String _value = value;
-    MB_String t = fb_esp_pgm_str_374; // "environmentVariables"
-    addUpdateMasks(t.c_str());
-    t += fb_esp_pgm_str_1; // "/"
-    t += key;
-    _funcCfg.set(t.c_str(), _value);
+    MB_String str = fb_esp_pgm_str_374; // "environmentVariables"
+    addUpdateMasks(str.c_str());
+    str += fb_esp_pgm_str_1; // "/"
+    str += key;
+    _funcCfg.set(str.c_str(), stringPtr2Str(value));
 }
 void FunctionsConfig::clearEnvironmentVariables()
 {
@@ -250,11 +246,11 @@ void FunctionsConfig::clearEnvironmentVariables()
 void FunctionsConfig::mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
 {
     MB_String _value = value;
-    MB_String t = fb_esp_pgm_str_375; // "buildEnvironmentVariables"
-    addUpdateMasks(t.c_str());
-    t += fb_esp_pgm_str_1; // "/"
-    t += key;
-    _funcCfg.set(t.c_str(), _value);
+    MB_String str = fb_esp_pgm_str_375; // "buildEnvironmentVariables"
+    addUpdateMasks(str.c_str());
+    str += fb_esp_pgm_str_1; // "/"
+    str += key;
+    _funcCfg.set(str.c_str(),stringPtr2Str(value));
 }
 
 void FunctionsConfig::clearBuildEnvironmentVariables()
@@ -310,7 +306,6 @@ void FunctionsConfig::mSetEventTrigger(MB_StringPtr eventType, MB_StringPtr reso
 
 void FunctionsConfig::setIamPolicy(PolicyBuilder *policy)
 {
-
     _policy = policy;
     addUpdateMasks(pgm2Str(fb_esp_pgm_str_473 /* "policy" */));
 }

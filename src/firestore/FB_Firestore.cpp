@@ -3,7 +3,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 12, 2022
+ * Created December 22, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -79,10 +79,7 @@ bool FB_Firestore::mImportExportDocuments(FirebaseData *fbdo, MB_StringPtr proje
 
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     fbdo->clearJson();
-
-    bool ret = sendRequest(fbdo, &req);
-    req.payload.clear();
-    return ret;
+    return sendRequest(fbdo, &req);
 }
 
 bool FB_Firestore::mCreateDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
@@ -284,9 +281,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
         fbdo->clearJson();
     }
 
-    bool ret = sendRequest(fbdo, &req);
-    req.payload.clear();
-    return ret;
+    return sendRequest(fbdo, &req);
 }
 
 bool FB_Firestore::mGetDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
@@ -323,9 +318,7 @@ bool FB_Firestore::mBeginTransaction(FirebaseData *fbdo, MB_StringPtr projectId,
     }
 
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
-    bool ret = sendRequest(fbdo, &req);
-    req.payload.clear();
-    return ret;
+    return sendRequest(fbdo, &req);
 }
 
 bool FB_Firestore::mRollback(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr transaction)
@@ -340,9 +333,7 @@ bool FB_Firestore::mRollback(FirebaseData *fbdo, MB_StringPtr projectId, MB_Stri
     JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_537 /* "transaction" */, MB_String(transaction));
 
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
-    bool ret = sendRequest(fbdo, &req);
-    req.payload.clear();
-    return ret;
+    return sendRequest(fbdo, &req);
 }
 
 bool FB_Firestore::mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
@@ -369,9 +360,7 @@ bool FB_Firestore::mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_Stri
     JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_pgm_str_536 /* "structuredQuery" */, structuredQuery, false);
 
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
-    bool ret = sendRequest(fbdo, &req);
-    req.payload.clear();
-    return ret;
+    return sendRequest(fbdo, &req);
 }
 
 bool FB_Firestore::mDeleteDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
@@ -417,9 +406,7 @@ bool FB_Firestore::mListCollectionIds(FirebaseData *fbdo, MB_StringPtr projectId
     JsonHelper::addNumberString(fbdo->session.jsonPtr, fb_esp_pgm_str_357 /* "pageSize" */, MB_String(pageSize));
     JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_358 /* pageToken" */, MB_String(pageToken));
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
-    bool ret = sendRequest(fbdo, &req);
-    req.payload.clear();
-    return ret;
+    return sendRequest(fbdo, &req);
 }
 
 bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req)
@@ -756,22 +743,11 @@ void FB_Firestore::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_firest
 void FB_Firestore::sendUploadCallback(FirebaseData *fbdo, CFS_UploadStatusInfo &in,
                                       CFS_UploadProgressCallback cb, CFS_UploadStatusInfo *out)
 {
-
-    fbdo->session.cfs.cbUploadInfo.status = in.status;
-    fbdo->session.cfs.cbUploadInfo.errorMsg = in.errorMsg;
-    fbdo->session.cfs.cbUploadInfo.progress = in.progress;
-    fbdo->session.cfs.cbUploadInfo.size = in.size;
-    fbdo->session.cfs.cbUploadInfo.elapsedTime = in.elapsedTime;
-
+    fbdo->session.cfs.cbUploadInfo = in;
     if (cb)
         cb(fbdo->session.cfs.cbUploadInfo);
-
     if (out)
-    {
-        out->errorMsg = fbdo->session.cfs.cbUploadInfo.errorMsg;
-        out->status = fbdo->session.cfs.cbUploadInfo.status;
-        out->progress = fbdo->session.cfs.cbUploadInfo.progress;
-    }
+        out = &fbdo->session.cfs.cbUploadInfo;
 }
 
 int FB_Firestore::tcpSend(FirebaseData *fbdo, const char *data, struct fb_esp_firestore_req_t *req)

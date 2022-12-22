@@ -49,14 +49,12 @@ AuditLogConfig::~AuditLogConfig()
 
 void AuditLogConfig::mSetLogType(MB_StringPtr logType)
 {
-        MB_String _logType = logType;
-        json.set(pgm2Str(fb_esp_pgm_str_414 /* "logType" */), _logType);
+        json.set(pgm2Str(fb_esp_pgm_str_414 /* "logType" */), stringPtr2Str(logType));
 }
 
 void AuditLogConfig::mAddexemptedMembers(MB_StringPtr member)
 {
-        MB_String _member = member;
-        arr.add(_member);
+        arr.add(stringPtr2Str(member));
         json.set(pgm2Str(fb_esp_pgm_str_415 /* "exemptedMembers" */), arr);
 }
 
@@ -103,8 +101,7 @@ void AuditConfig::clear()
 
 void AuditConfig::mSetService(MB_StringPtr service)
 {
-        MB_String _service = service;
-        json.set(pgm2Str(fb_esp_pgm_str_416 /* "service" */), _service);
+        json.set(pgm2Str(fb_esp_pgm_str_416 /* "service" */), stringPtr2Str(service));
 }
 
 Binding::Binding()
@@ -116,15 +113,13 @@ Binding::~Binding()
 
 void Binding::mAddMember(MB_StringPtr member)
 {
-        MB_String _member = member;
-        arr.add(_member);
+        arr.add(stringPtr2Str(member));
         json.set(pgm2Str(fb_esp_pgm_str_403 /* "members" */), arr);
 }
 
 void Binding::mSetRole(MB_StringPtr role)
 {
-        MB_String _role = role;
-        json.set(pgm2Str(fb_esp_pgm_str_402 /* "role" */), _role);
+        json.set(pgm2Str(fb_esp_pgm_str_402 /* "role" */), stringPtr2Str(role));
 }
 void Binding::mSetCondition(MB_StringPtr expression, MB_StringPtr title, MB_StringPtr description, MB_StringPtr location)
 {
@@ -210,8 +205,7 @@ void PolicyBuilder::mSetVersion(MB_StringPtr v)
 }
 void PolicyBuilder::mSetETag(MB_StringPtr etag)
 {
-        MB_String _etag = etag;
-        json.set(pgm2Str(fb_esp_pgm_str_412 /* "etag" */), _etag);
+        json.set(pgm2Str(fb_esp_pgm_str_412 /* "etag" */), stringPtr2Str(etag));
 }
 void PolicyBuilder::clearBindings()
 {

@@ -51,16 +51,21 @@ void FB_CM::mSetServerKey(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_m
     this->_spi_ethernet_module = spi_ethernet_module;
 }
 
+bool FB_CM::checkServerKey(FirebaseData *fbdo)
+{
+    if (server_key.length() > 0)
+        return true;
+    fbdo->session.response.code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
+    return false;
+}
+
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 {
     if (fbdo->tcpClient.reserved)
         return false;
 
-    if (server_key.length() == 0)
-    {
-        fbdo->session.response.code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
+    if (!checkServerKey(fbdo))
         return false;
-    }
 
     fcm_prepareLegacyPayload(msg);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_legacy_http, raw.c_str());
@@ -95,11 +100,8 @@ bool FB_CM::mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *
 
     Signer.tokenReady();
 
-    if (server_key.length() == 0)
-    {
-        fbdo->session.response.code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
+    if (!checkServerKey(fbdo))
         return false;
-    }
 
     MB_String _topic = topic;
 
@@ -116,15 +118,10 @@ bool FB_CM::mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char
 
     Signer.tokenReady();
 
-    if (server_key.length() == 0)
-    {
-        fbdo->session.response.code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
+    if (!checkServerKey(fbdo))
         return false;
-    }
 
-    MB_String _topic = topic;
-
-    fcm_preparSubscriptionPayload(_topic.c_str(), IID, numToken);
+    fcm_preparSubscriptionPayload(stringPtr2Str(topic), IID, numToken);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_unsubscribe, raw.c_str());
     raw.clear();
     return ret;
@@ -135,11 +132,8 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
     if (fbdo->tcpClient.reserved)
         return false;
 
-    if (server_key.length() == 0)
-    {
-        fbdo->session.response.code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
+    if (!checkServerKey(fbdo))
         return false;
-    }
 
     MB_String payload = IID;
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_app_instance_info, payload.c_str());
@@ -154,15 +148,10 @@ bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, MB_StringPtr application, bool 
 
     Signer.tokenReady();
 
-    if (server_key.length() == 0)
-    {
-        fbdo->session.response.code = FIREBASE_ERROR_NO_FCM_SERVER_KEY_PROVIDED;
+    if (!checkServerKey(fbdo))
         return false;
-    }
 
-    MB_String _application = application;
-
-    fcm_preparAPNsRegistPayload(_application.c_str(), sandbox, APNs, numToken);
+    fcm_preparAPNsRegistPayload(stringPtr2Str(application), sandbox, APNs, numToken);
     bool ret = handleFCMRequest(fbdo, fb_esp_fcm_msg_mode_apn_token_registration, raw.c_str());
     raw.clear();
     return ret;
@@ -406,7 +395,7 @@ void FB_CM::fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg)
 
 void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken)
 {
-    MB_String base, s;
+    MB_String s;
     raw.clear();
     FirebaseJson json;
 
@@ -426,7 +415,7 @@ void FB_CM::fcm_preparSubscriptionPayload(const char *topic, const char *IID[], 
                 arr.add(s);
         }
     }
-    json.add(pgm2Str(fb_esp_pgm_str_334/* "registration_tokens" */), arr);
+    json.add(pgm2Str(fb_esp_pgm_str_334 /* "registration_tokens" */), arr);
     json.toString(raw);
 }
 
