@@ -22,7 +22,18 @@ To use external Client, see the [ExternalClient examples](/examples/ExternalClie
 
 The authentication with OAuth2.0 and custom auth tokens, RTDB error queue features are not supported for other Arduino devices using external Clients.
 
-There are known issues about ESP32 Arduino core when using external Client with ESP32 for OTA download, file download and upload.
+
+## Known Issues
+
+There is known issue in Client class in ESP32 Arduino Core SDK v2.0.x which the Client may close the connection after the Connection "Close" header was sent which causes the incomplete response received. 
+
+This strange behavior was partly fixed in this library by sending Connection "Keep-Alive" header in HTTP request but this is not totally prevent the problem that will be happened when transferring the large payloads.
+
+This strange behavior also existed in WiFiClientSecure core library used in this library which was fixed by sending Connection Keep-Alive header.
+
+This issue can't be fixed in the external client that uses Arduino Client derived class until the change was made in the ESP32 core.
+
+This OTA download and file upload/download functions using external Client may affected by this issue.
 
 
 ## Tested Devices

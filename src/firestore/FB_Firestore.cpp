@@ -167,7 +167,6 @@ bool FB_Firestore::setFieldTransform(FirebaseJson *json,
 
             FirebaseJson js(field_transforms->transform_content);
             json->add(key, js);
-            js.clear();
             hasTransform = true;
         }
     }
@@ -303,11 +302,8 @@ bool FB_Firestore::mBeginTransaction(FirebaseData *fbdo, MB_StringPtr projectId,
                                      TransactionOptions *transactionOptions)
 {
     struct fb_esp_firestore_req_t req;
-
     makeRequest(req, fb_esp_firestore_request_type_begin_transaction, projectId, databaseId, toStringPtr(""), toStringPtr(""));
-
     fbdo->initJson();
-
     if (transactionOptions && !(transactionOptions->readOnly.readTime.length() > 0 &&
                                 transactionOptions->readWrite.retryTransaction.length() > 0))
     {
@@ -316,7 +312,7 @@ bool FB_Firestore::mBeginTransaction(FirebaseData *fbdo, MB_StringPtr projectId,
         JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_572 /* "options/readWrite/retryTransaction" */,
                               transactionOptions->readWrite.retryTransaction);
     }
-
+    
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     return sendRequest(fbdo, &req);
 }
@@ -324,14 +320,10 @@ bool FB_Firestore::mBeginTransaction(FirebaseData *fbdo, MB_StringPtr projectId,
 bool FB_Firestore::mRollback(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr transaction)
 {
     struct fb_esp_firestore_req_t req;
-
     makeRequest(req, fb_esp_firestore_request_type_rollback, projectId, databaseId, toStringPtr(""), toStringPtr(""));
     req.async = false;
-
     fbdo->initJson();
-
     JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_537 /* "transaction" */, MB_String(transaction));
-
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     return sendRequest(fbdo, &req);
 }
@@ -341,12 +333,9 @@ bool FB_Firestore::mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_Stri
                              fb_esp_firestore_consistency_mode consistencyMode, MB_StringPtr consistency)
 {
     struct fb_esp_firestore_req_t req;
-
     makeRequest(req, fb_esp_firestore_request_type_run_query, projectId, databaseId, toStringPtr(""), toStringPtr(""));
     req.documentPath = documentPath;
-
     fbdo->initJson();
-
     if (consistencyMode != fb_esp_firestore_consistency_mode_undefined)
     {
         if (consistencyMode != fb_esp_firestore_consistency_mode_transaction)
@@ -356,9 +345,7 @@ bool FB_Firestore::mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_Stri
         else if (consistencyMode != fb_esp_firestore_consistency_mode_readTime)
             JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_539 /* "readTime" */, MB_String(consistency));
     }
-
     JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_pgm_str_536 /* "structuredQuery" */, structuredQuery, false);
-
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     return sendRequest(fbdo, &req);
 }
@@ -367,7 +354,6 @@ bool FB_Firestore::mDeleteDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
                                    MB_StringPtr documentPath, MB_StringPtr exists, MB_StringPtr updateTime)
 {
     struct fb_esp_firestore_req_t req;
-
     makeRequest(req, fb_esp_firestore_request_type_delete_doc, projectId, databaseId, toStringPtr(""), toStringPtr(""));
     req.documentPath = documentPath;
     req.exists = exists;
@@ -380,7 +366,6 @@ bool FB_Firestore::mListDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB
                                   MB_StringPtr orderBy, MB_StringPtr mask, bool showMissing)
 {
     struct fb_esp_firestore_req_t req;
-
     makeRequest(req, fb_esp_firestore_request_type_list_doc, projectId, databaseId, toStringPtr(""), collectionId);
     MB_String _pageSize = pageSize;
     req.pageSize = atoi(_pageSize.c_str());
@@ -396,12 +381,9 @@ bool FB_Firestore::mListCollectionIds(FirebaseData *fbdo, MB_StringPtr projectId
                                       MB_StringPtr pageToken)
 {
     struct fb_esp_firestore_req_t req;
-
     makeRequest(req, fb_esp_firestore_request_type_list_collection, projectId, databaseId, toStringPtr(""), toStringPtr(""));
     req.documentPath = documentPath;
-
     fbdo->initJson();
-
     MB_String _pageToken = pageToken;
     JsonHelper::addNumberString(fbdo->session.jsonPtr, fb_esp_pgm_str_357 /* "pageSize" */, MB_String(pageSize));
     JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_358 /* pageToken" */, MB_String(pageToken));
@@ -413,9 +395,7 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
 {
     if (fbdo->tcpClient.reserved)
         return false;
-
     fbdo->session.http_code = 0;
-
     if (!Signer.config)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
@@ -448,9 +428,7 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
         fbdo->session.last_conn_ms = 0;
 
     connect(fbdo);
-
     req->requestTime = millis();
-
     return firestore_sendRequest(fbdo, req);
 }
 
@@ -479,12 +457,9 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         HttpHelper::addRequestHeaderFirst(header, method);
 
     URLHelper::addGAPIPath(header);
-
     header += req->projectId.length() == 0 ? Signer.config->service_account.data.project_id : req->projectId;
-
     header += fb_esp_pgm_str_341; // "/databases/"
     header += req->databaseId.length() > 0 ? req->databaseId : fb_esp_pgm_str_342 /* "(default)" */;
-
     if (req->requestType == fb_esp_firestore_request_type_export_docs)
         header += fb_esp_pgm_str_344; // ":exportDocuments"
     else if (req->requestType == fb_esp_firestore_request_type_import_docs)
@@ -576,7 +551,6 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     {
 
         HttpHelper::addAuthHeaderFirst(header, Signer.getTokenType());
-
         fbdo->tcpClient.send(header.c_str());
         header.clear();
 
@@ -594,11 +568,8 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     HttpHelper::addUAHeader(header);
     HttpHelper::addConnectionHeader(header, true);
     HttpHelper::getCustomHeaders(header, Signer.config->signer.customHeaders);
-
     HttpHelper::addNewLine(header);
-
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
-
     fbdo->tcpClient.send(header.c_str());
     if (fbdo->session.response.code > 0 && req->payload.length() > 0)
     {
@@ -629,9 +600,6 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
             fbdo->tcpClient.send(req->payload.c_str());
     }
 
-    header.clear();
-    req->payload.clear();
-
     if (fbdo->session.response.code > 0)
     {
         fbdo->session.connected = true;
@@ -645,7 +613,6 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
         fbdo->session.connected = false;
 
     Signer.config->internal.fb_processing = false;
-
     return false;
 }
 
@@ -713,13 +680,11 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo, struct fb_esp_firestore_re
 
     // parse the payload for error
     fbdo->getError(fbdo->session.cfs.payload, tcpHandler, response, false);
-
     return tcpHandler.error.code == 0;
 }
 
 void FB_Firestore::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req, size_t readBytes)
 {
-
     if (req->size == 0)
         return;
 
@@ -728,9 +693,7 @@ void FB_Firestore::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_firest
     if (req->progress != p && (p == 0 || p == 100 || req->progress + ESP_REPORT_PROGRESS_INTERVAL <= p))
     {
         req->progress = p;
-
         fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
-
         fbdo->session.cfs.cbUploadInfo.status = fb_esp_cfs_upload_status_upload;
         CFS_UploadStatusInfo in;
         in.status = fb_esp_cfs_upload_status_upload;
@@ -771,9 +734,7 @@ int FB_Firestore::tcpSend(FirebaseData *fbdo, const char *data, struct fb_esp_fi
             chunkSize = len - sent;
 
         reportUploadProgress(fbdo, req, sent);
-
         ret = fbdo->tcpClient.send(data + sent, chunkSize);
-
         if (ret < 0)
             return ret;
 
