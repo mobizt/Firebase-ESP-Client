@@ -1955,7 +1955,7 @@ namespace Utils
             path += sub;
         return path;
     }
-
+#if defined(FIREBASE_ESP_CLIENT)
     inline MB_String makeDocPath(struct fb_esp_firestore_req_t &req, const MB_String &projectId)
     {
          MB_String str = fb_esp_pgm_str_395; // "projects/"
@@ -1965,7 +1965,7 @@ namespace Utils
         str += fb_esp_pgm_str_351; // "/documents"
         return str;
     }
-
+#endif
     inline size_t getUploadBufSize(FirebaseConfig *config, fb_esp_con_mode mode)
     {
         int bufLen = 0;
