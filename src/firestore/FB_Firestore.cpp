@@ -187,6 +187,40 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
     if (Signer.config)
         req.uploadCallback = Signer.config->cfs.upload_callback;
 
+    parseWrites(fbdo, writes, req);
+
+    if (writes.size() > 0)
+    {
+        JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_537 /* "transaction" */, MB_String(transaction));
+        JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
+        fbdo->clearJson();
+    }
+
+    return sendRequest(fbdo, &req);
+}
+
+bool FB_Firestore::mBatchWrite(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
+                               MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, FirebaseJson *labels)
+{
+    struct fb_esp_firestore_req_t req;
+
+    makeRequest(req, fb_esp_firestore_request_type_batch_write_doc, projectId, databaseId, toStringPtr(""), toStringPtr(""));
+
+    parseWrites(fbdo, writes, req);
+
+    if (writes.size() > 0)
+    {
+        if (labels)
+            JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_pgm_str_373 /* "labels" */, labels, false);
+        JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
+        fbdo->clearJson();
+    }
+
+    return sendRequest(fbdo, &req);
+}
+
+void FB_Firestore::parseWrites(FirebaseData *fbdo, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, struct fb_esp_firestore_req_t &req)
+{
     if (writes.size() > 0)
     {
         MB_String path, updateMaskPath, docPathBase, docPath;
@@ -201,11 +235,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
 
         fbdo->initJson();
 
-        docPathBase = fb_esp_pgm_str_395; // "projects/"
-        docPathBase += req.projectId.length() == 0 ? Signer.config->service_account.data.project_id : req.projectId;
-        docPathBase += fb_esp_pgm_str_341; // "/databases/"
-        docPathBase += req.databaseId.length() > 0 ? req.databaseId : fb_esp_pgm_str_342 /* "(default)" */;
-        docPathBase += fb_esp_pgm_str_351; // "/documents"
+        docPathBase = Utils::makeDocPath(req, Signer.config->service_account.data.project_id);
 
         for (size_t i = 0; i < writes.size(); i++)
         {
@@ -275,12 +305,7 @@ bool FB_Firestore::mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, M
         writesArr = nullptr;
 
         JsonHelper::addArray(fbdo->session.jsonPtr, fb_esp_pgm_str_555 /* "writes" */, fbdo->session.arrPtr, true);
-        JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_537 /* "transaction" */, MB_String(transaction));
-        JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
-        fbdo->clearJson();
     }
-
-    return sendRequest(fbdo, &req);
 }
 
 bool FB_Firestore::mGetDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
@@ -301,11 +326,7 @@ bool FB_Firestore::mGetDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_S
     {
         req.responseCallback = (FB_ResponseCallback)batchOperationCallback;
 
-        MB_String docPathBase = fb_esp_pgm_str_395; // "projects/"
-        docPathBase += req.projectId.length() == 0 ? Signer.config->service_account.data.project_id : req.projectId;
-        docPathBase += fb_esp_pgm_str_341; // "/databases/"
-        docPathBase += req.databaseId.length() > 0 ? req.databaseId : fb_esp_pgm_str_342 /* "(default)" */;
-        docPathBase += fb_esp_pgm_str_351; // "/documents"
+        MB_String docPathBase = Utils::makeDocPath(req, Signer.config->service_account.data.project_id);
         docPathBase += fb_esp_pgm_str_1;
 
         fbdo->initJson();
@@ -514,6 +535,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     else if (req->requestType == fb_esp_firestore_request_type_rollback ||
              req->requestType == fb_esp_firestore_request_type_begin_transaction ||
              req->requestType == fb_esp_firestore_request_type_commit_document ||
+             req->requestType == fb_esp_firestore_request_type_batch_write_doc ||
              req->requestType == fb_esp_firestore_request_type_run_query ||
              req->requestType == fb_esp_firestore_request_type_list_collection ||
              req->requestType == fb_esp_firestore_request_type_export_docs ||
@@ -554,6 +576,11 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     {
         header += fb_esp_pgm_str_351; // "/documents"
         header += fb_esp_pgm_str_598; // ":batchGet"
+    }
+    else if (req->requestType == fb_esp_firestore_request_type_batch_write_doc)
+    {
+        header += fb_esp_pgm_str_351; // "/documents"
+        header += fb_esp_pgm_str_599; // ":batchWrite"
     }
     else if (req->requestType == fb_esp_firestore_request_type_commit_document ||
              req->requestType == fb_esp_firestore_request_type_run_query ||

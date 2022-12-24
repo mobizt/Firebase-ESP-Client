@@ -230,6 +230,36 @@ public:
                                writes, toStringPtr(transaction), true);
     }
 
+    /** Applies a batch of write operations.
+     *
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param writes The dyamic array of write object fb_esp_firestore_document_write_t.
+     * Method does not apply writes atomically and does not guarantee ordering.
+     * Each write succeeds or fails independently.
+     * You cannot write to the same document more than once per request.
+     *
+     * For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
+     *
+     * @param labels The FirebaseJson pointer that represents the Labels (map) associated with this batch write.
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use FirebaseData.payload() to get the returned payload.
+     *
+     * This function requires Email/password, Custom token or OAuth2.0 authentication.
+     *
+     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/batchWrite
+     *
+     */
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
+    bool batchWriteDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId,
+                            MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, FirebaseJson *labels = nullptr)
+    {
+        return mBatchWrite(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, labels);
+    }
+
     /** Get a document at the defined path.
      *
      * @param fbdo The pointer to Firebase Data Object.
@@ -283,13 +313,13 @@ public:
      * @note Use FirebaseData.payload() to get the returned payload.
      *
      * This function requires Email/password, Custom token or OAuth2.0 authentication.
-     * 
+     *
      * For more detail, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/batchGet
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *,
               typename T4 = const char *, typename T5 = const char *, typename T6 = const char *>
-    bool batchGetDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPaths, T4 mask,
+    bool batchGetDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPaths, T4 mask,
                           FirebaseData::FirestoreBatchOperationsCallback batchOperationCallback, T5 transaction, FirebaseJson *newTransaction, T6 readTime)
     {
         return mGetDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId),
@@ -580,6 +610,9 @@ private:
     bool setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms);
     bool mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
                          MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, MB_StringPtr transaction, bool async = false);
+    bool mBatchWrite(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
+                     MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, FirebaseJson *labels);
+    void parseWrites(FirebaseData *fbdo, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, struct fb_esp_firestore_req_t &req);
     bool mImportExportDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
                                 MB_StringPtr bucketID, MB_StringPtr storagePath, MB_StringPtr collectionIds, bool isImport);
     bool mCreateDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,

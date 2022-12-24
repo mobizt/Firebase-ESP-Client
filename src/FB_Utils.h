@@ -1956,6 +1956,16 @@ namespace Utils
         return path;
     }
 
+    inline MB_String makeDocPath(struct fb_esp_firestore_req_t &req, const MB_String &projectId)
+    {
+         MB_String str = fb_esp_pgm_str_395; // "projects/"
+        str += req.projectId.length() == 0 ? projectId : req.projectId;
+        str += fb_esp_pgm_str_341; // "/databases/"
+        str += req.databaseId.length() > 0 ? req.databaseId : fb_esp_pgm_str_342 /* "(default)" */;
+        str += fb_esp_pgm_str_351; // "/documents"
+        return str;
+    }
+
     inline size_t getUploadBufSize(FirebaseConfig *config, fb_esp_con_mode mode)
     {
         int bufLen = 0;

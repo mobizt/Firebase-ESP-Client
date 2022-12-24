@@ -106,7 +106,7 @@ void loop()
 
         Serial.println("\nGet multiple documents...\n");
 
-        if (!Firebase.Firestore.batchGetDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */,
+        if (!Firebase.Firestore.batchGetDocuments(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */,
                                                  "info/countries,a0/b0/c0/d1,a0/b0/c0/d2,test_collection/test_document" /* documentPaths */,
                                                  "Singapore.population,key1" /* masks */, batchCallback /* callback */, "" /* transaction */,
                                                  &newTransaction /* newTransaction */, "" /* readTime */))

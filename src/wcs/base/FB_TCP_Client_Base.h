@@ -139,7 +139,7 @@ public:
     }
 
     virtual int write(uint8_t *data, int len)
-    {
+    {       
         if (!data || !client)
             return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
 

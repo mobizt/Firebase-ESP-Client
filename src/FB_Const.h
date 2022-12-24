@@ -447,6 +447,7 @@ enum fb_esp_firestore_request_type
     fb_esp_firestore_request_type_list_doc,
     fb_esp_firestore_request_type_list_collection,
     fb_esp_firestore_request_type_commit_document,
+    fb_esp_firestore_request_type_batch_write_doc,
     fb_esp_firestore_request_type_create_index,
     fb_esp_firestore_request_type_delete_index,
     fb_esp_firestore_request_type_list_index,

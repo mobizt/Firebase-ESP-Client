@@ -3140,7 +3140,7 @@ param **`writes`** The dyamic array of write object fb_esp_firestore_document_wr
 
 For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
 
-param **`transaction`** A base64-encoded string.vIf set, applies all writes in this transaction, and commits it.
+param **`transaction`** A base64-encoded string. If set, applies all writes in this transaction, and commits it.
 
 return **`Boolean`** value, indicates the success of the operation.
 
@@ -3149,9 +3149,46 @@ Use FirebaseData.payload() to get the returned payload.
 This function requires Email/password, Custom token or OAuth2.0 authentication.
 
 ```cpp
-bool commitDocument(FirebaseData *fbdo, <string> projectId, <string> databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, <string> transaction = "");
+bool commitDocument(FirebaseData *fbdo, <string> projectId, <string> databaseId, 
+std::vector<struct fb_esp_firestore_document_write_t> writes, <string> transaction = "");
 
-bool commitDocumentAsync(FirebaseData *fbdo, <string> projectId, <string> databaseId, std::vector<struct fb_esp_firestore_document_write_t> writes, <string> transaction = "");
+bool commitDocumentAsync(FirebaseData *fbdo, <string> projectId, <string> databaseId, 
+std::vector<struct fb_esp_firestore_document_write_t> writes, <string> transaction = "");
+```
+
+
+
+####  Applies a batch of write operations.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`writes`** The dyamic array of write object fb_esp_firestore_document_write_t.
+
+Method does not apply writes atomically and does not guarantee ordering.
+
+Each write succeeds or fails independently.
+
+You cannot write to the same document more than once per request.
+
+For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
+
+param **`labels`** The FirebaseJson pointer that represents the Labels (map) associated with this batch write.
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Use FirebaseData.payload() to get the returned payload.
+
+This function requires Email/password, Custom token or OAuth2.0 authentication.
+
+For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/batchWrite
+
+```cpp
+bool batchWriteDocuments(FirebaseData *fbdo, <string> projectId, <string> databaseId, 
+std::vector<struct fb_esp_firestore_document_write_t> writes, FirebaseJson *labels = nullptr);
 ```
 
 
@@ -3236,7 +3273,7 @@ Use FirebaseData.payload() to get the returned payload.
 This function requires Email/password, Custom token or OAuth2.0 authentication.
 
 ```cpp
-bool batchGetDocument(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> documentPaths, <string> mask, FirebaseData::FirestoreBatchOperationsCallback batchOperationCallback, <string> transaction, 
+bool batchGetDocuments(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> documentPaths, <string> mask, FirebaseData::FirestoreBatchOperationsCallback batchOperationCallback, <string> transaction, 
 FirebaseJson *newTransaction, <string> readTime);
 ```
 
