@@ -1081,6 +1081,9 @@ bool FirebaseData::readPayload(MB_String *chunkOut, struct fb_esp_tcp_response_h
                     session.max_payload_length = session.payload_length;
                 tcpHandler.payloadRead += tcpHandler.bufferAvailable;
 
+                if (_responseCallback)
+                    _responseCallback(pChunk);
+
                 if (chunkOut)
                 {
                     checkOvf(chunkOut->length() + tcpHandler.bufferAvailable, response);
@@ -1158,7 +1161,7 @@ bool FirebaseData::readResponse(MB_String *payload, struct fb_esp_tcp_response_h
 
                     readPayload(&pChunk, tcpHandler, response);
 
-                    if (pChunk.length() > 0)
+                    if (pChunk.length() > 0 && !_responseCallback)
                         *payload += pChunk;
                 }
             }
@@ -2137,6 +2140,8 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
 void FCMObject::rescon(FirebaseData &fbdo, const char *host)
 {
+     fbdo._responseCallback = NULL;
+    
     if (fbdo.session.cert_updated || !fbdo.session.connected ||
         millis() - fbdo.session.last_conn_ms > fbdo.session.conn_timeout ||
         fbdo.session.con_mode != fb_esp_con_mode_fcm ||

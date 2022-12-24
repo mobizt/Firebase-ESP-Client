@@ -460,7 +460,7 @@ namespace JsonHelper
     }
 
     /* convert comma separated tokens into JSON Array and set/add to JSON object */
-    inline void addTokens(FirebaseJson *json, PGM_P key, const MB_String &tokens)
+    inline void addTokens(FirebaseJson *json, PGM_P key, const MB_String &tokens, const char *pre = "")
     {
         if (json && tokens.length() > 0)
         {
@@ -468,7 +468,16 @@ namespace JsonHelper
             MB_VECTOR<MB_String> ta;
             StringHelper::splitTk(tokens, ta, ",");
             for (size_t i = 0; i < ta.size(); i++)
-                arr.add(ta[i].c_str());
+            {
+                if (strlen(pre))
+                {
+                    MB_String s = pre;
+                    s += ta[i];
+                    arr.add(s);
+                }
+                else
+                    arr.add(ta[i]);
+            }
 
             if (ta.size() > 0)
             {

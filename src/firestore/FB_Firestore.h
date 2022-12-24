@@ -256,7 +256,44 @@ public:
                      T5 transaction = "", T6 readTime = "")
     {
         return mGetDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId),
-                            toStringPtr(documentPath), toStringPtr(mask), toStringPtr(transaction), toStringPtr(readTime));
+                            toStringPtr(documentPath), toStringPtr(mask), toStringPtr(transaction), nullptr, toStringPtr(readTime), NULL);
+    }
+
+    /** Gets multiple documents.
+     *
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param documentPaths The list of relative path of documents to get. Use comma (,) to separate between the field names.
+     * @param mask The fields to return. If not set, returns all fields. If the document has a field that is not present in this mask,
+     * that field will not be returned in the response. Use comma (,) to separate between the field names.
+     *@param batchOperationCallback The callback fuction that accepts const char* as argument.
+     * Union field consistency_selector can be only one of the following
+     * @param transaction Reads the document in a transaction. A base64-encoded string.
+     * @param newTransaction FirebaseJson pointer that represents TransactionOptions object.
+     * Starts a new transaction and reads the documents.
+     * Defaults to a read-only transaction.
+     * The new transaction ID will be returned as the first response in the stream.
+     * @param readTime Reads documents as they were at the given time. This may not be older than 270 seconds.
+     * A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.
+     * Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use FirebaseData.payload() to get the returned payload.
+     *
+     * This function requires Email/password, Custom token or OAuth2.0 authentication.
+     * 
+     * For more detail, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/batchGet
+     *
+     */
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *,
+              typename T4 = const char *, typename T5 = const char *, typename T6 = const char *>
+    bool batchGetDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPaths, T4 mask,
+                          FirebaseData::FirestoreBatchOperationsCallback batchOperationCallback, T5 transaction, FirebaseJson *newTransaction, T6 readTime)
+    {
+        return mGetDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId),
+                            toStringPtr(documentPaths), toStringPtr(mask), toStringPtr(transaction), newTransaction, toStringPtr(readTime), batchOperationCallback);
     }
 
     /** Starts a new transaction.
@@ -441,7 +478,7 @@ public:
      *
      * This function requires OAuth2.0 authentication.
      *
-     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1beta1/projects.databases.indexes/create
+     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/create
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *,
@@ -553,7 +590,9 @@ private:
                         MB_StringPtr documentPath, MB_StringPtr content, MB_StringPtr updateMask, MB_StringPtr mask,
                         MB_StringPtr exists, MB_StringPtr updateTime);
     bool mGetDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
-                      MB_StringPtr documentPath, MB_StringPtr mask, MB_StringPtr transaction, MB_StringPtr readTime);
+                      MB_StringPtr documentPath, MB_StringPtr mask,
+                      MB_StringPtr transaction, FirebaseJson *newTransaction, MB_StringPtr readTime,
+                      FirebaseData::FirestoreBatchOperationsCallback batchOperationCallback);
     bool mBeginTransaction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
                            TransactionOptions *transactionOptions = nullptr);
     bool mRollback(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr transaction);

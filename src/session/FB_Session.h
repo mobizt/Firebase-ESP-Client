@@ -290,11 +290,16 @@ class FirebaseData
 #endif
 
 public:
+
 #ifdef ENABLE_RTDB
   typedef void (*StreamEventCallback)(FIREBASE_STREAM_CLASS);
   typedef void (*MultiPathStreamEventCallback)(FIREBASE_MP_STREAM_CLASS);
   typedef void (*StreamTimeoutCallback)(bool);
   typedef void (*QueueInfoCallback)(QueueInfo);
+#endif
+
+#ifdef ENABLE_FIRESTORE
+  typedef void (*FirestoreBatchOperationsCallback)(const char *);
 #endif
 
   FirebaseData();
@@ -889,6 +894,9 @@ public:
 #endif
 
 private:
+
+FB_ResponseCallback _responseCallback = NULL;
+
 #ifdef ENABLE_RTDB
   StreamEventCallback _dataAvailableCallback = NULL;
   MultiPathStreamEventCallback _multiPathDataCallback = NULL;
@@ -973,6 +981,7 @@ private:
 #if defined(ESP32) && defined(ENABLE_RTDB)
   const char *getTaskName(size_t taskStackSize, bool isStream);
 #endif
+
   void getError(MB_String &payload, struct fb_esp_tcp_response_handler_t &tcpHandler,
                 struct server_response_data_t &response, bool clearPayload);
   void clearJson();

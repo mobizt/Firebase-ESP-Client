@@ -952,6 +952,8 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
 
 void FB_CM::rescon(FirebaseData *fbdo, const char *host)
 {
+     fbdo->_responseCallback = NULL;
+    
     if (fbdo->session.cert_updated || !fbdo->session.connected ||
         millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_fcm ||

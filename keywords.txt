@@ -173,6 +173,7 @@ beginTransaction    KEYWORD2
 rollback    KEYWORD2
 commitDocumentAsync KEYWORD2
 getDocument KEYWORD2
+batchGetDocument    KEYWORD2
 deleteDocument  KEYWORD2
 listDocuments   KEYWORD2
 listCollectionIds   KEYWORD2

@@ -149,6 +149,7 @@ class FirebaseData;
 typedef void (*FB_TCPConnectionRequestCallback)(const char *, int);
 typedef void (*FB_NetworkConnectionRequestCallback)(void);
 typedef void (*FB_NetworkStatusRequestCallback)(void);
+typedef void (*FB_ResponseCallback)(const char *);
 
 typedef enum
 {
@@ -436,6 +437,7 @@ enum fb_esp_firestore_request_type
     fb_esp_firestore_request_type_export_docs,
     fb_esp_firestore_request_type_import_docs,
     fb_esp_firestore_request_type_get_doc,
+    fb_esp_firestore_request_type_batch_get_doc,
     fb_esp_firestore_request_type_create_doc,
     fb_esp_firestore_request_type_patch_doc,
     fb_esp_firestore_request_type_delete_doc,
@@ -1728,6 +1730,7 @@ struct fb_esp_firestore_req_t
     fb_esp_firestore_request_type requestType = fb_esp_firestore_request_type_undefined;
     CFS_UploadStatusInfo *uploadStatusInfo = nullptr;
     CFS_UploadProgressCallback uploadCallback = NULL;
+    FB_ResponseCallback responseCallback = NULL;
     int progress = -1;
     unsigned long requestTime = 0;
 };
@@ -2364,7 +2367,7 @@ static const char fb_esp_pgm_str_498[] PROGMEM = "queryScope";
 static const char fb_esp_pgm_str_499[] PROGMEM = "contentEncoding=";
 static const char fb_esp_pgm_str_500[] PROGMEM = "kmsKeyName=";
 static const char fb_esp_pgm_str_501[] PROGMEM = "predefinedAcl=";
- static const char fb_esp_pgm_str_502[] PROGMEM = "/collectionGroups/";
+static const char fb_esp_pgm_str_502[] PROGMEM = "/collectionGroups/";
 static const char fb_esp_pgm_str_503[] PROGMEM = "metageneration";
 static const char fb_esp_pgm_str_504[] PROGMEM = "acl";
 static const char fb_esp_pgm_str_505[] PROGMEM = "cacheControl";
@@ -2440,6 +2443,11 @@ static const char fb_esp_pgm_str_571[] PROGMEM = "options/readOnly/readTime";
 static const char fb_esp_pgm_str_572[] PROGMEM = "options/readWrite/retryTransaction";
 static const char fb_esp_pgm_str_573[] PROGMEM = ":beginTransaction";
 static const char fb_esp_pgm_str_574[] PROGMEM = ":rollback";
+static const char fb_esp_pgm_str_598[] PROGMEM = ":batchGet";
+static const char fb_esp_pgm_str_599[] PROGMEM = ":batchWrite";
+static const char fb_esp_pgm_str_600[] PROGMEM = "mask";
+static const char fb_esp_pgm_str_601[] PROGMEM = "newTransaction";
+
 #endif
 
 static const char fb_esp_pgm_str_575[] PROGMEM = "msg";
@@ -2455,7 +2463,7 @@ static const char fb_esp_pgm_str_578[] PROGMEM = "\n** WARNING!, in stream conne
 #endif
 
 static const char fb_esp_pgm_str_579[] PROGMEM = "Missing data.";
-static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials.";
+static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e.g., database URL, host and tokens.";
 static const char fb_esp_pgm_str_581[] PROGMEM = "Security rules is not a valid JSON";
 static const char fb_esp_pgm_str_582[] PROGMEM = "/v1/accounts:delete?key=";
 static const char fb_esp_pgm_str_583[] PROGMEM = "error_description";

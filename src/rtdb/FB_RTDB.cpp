@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.7
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.8
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 19, 2022
+ * Created December 24, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -735,7 +735,7 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
     fbdo->addSession(fb_esp_con_mode_rtdb_stream);
 
 #if defined(ESP32)
-    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
+    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, 1));
 #elif defined(ESP8266)
     Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
@@ -767,7 +767,7 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
     fbdo->addSession(fb_esp_con_mode_rtdb_stream);
 
 #if defined(ESP32)
-    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
+    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, 1));
 #elif defined(ESP8266)
     Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
@@ -1074,7 +1074,7 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
         vTaskDelete(NULL);
     };
 
-    xTaskCreatePinnedToCore(taskCode, fbdo->getTaskName(queueTaskStackSize, false),
+    xTaskCreatePinnedToCore(taskCode, fbdo->getTaskName(queueTaskStackSize, 0),
                             Signer.config->internal.queue_task_stack_size,
                             Signer.config,
                             Signer.config->internal.queue_task_priority,
@@ -1615,6 +1615,8 @@ void FB_RTDB::allowMultipleRequests(bool enable)
 
 void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_info_t *req)
 {
+    fbdo->_responseCallback = NULL;
+    
     if (req->method == m_stream)
     {
         if (strcmp(req->path.c_str(), fbdo->session.rtdb.stream_path.c_str()) != 0)
@@ -1904,6 +1906,10 @@ int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
         code = 0;
     else if (!fbdo->tokenReady())
         code = FIREBASE_ERROR_TOKEN_NOT_READY;
+    else if (req->path.length() == 0 ||
+             (Signer.config->database_url.length() == 0 && Signer.config->host.length() == 0) ||
+             (strlen(Signer.getToken()) == 0 && !Signer.config->signer.test_mode))
+        code = FIREBASE_ERROR_MISSING_CREDENTIALS;
     else if (req->method != m_stream &&
              (req->method == m_put || req->method == m_post || req->method == m_patch ||
               req->method == m_patch_nocontent || req->task_type == fb_esp_rtdb_task_store_rules) &&
@@ -2758,11 +2764,7 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         FIREBASE_STREAM_CLASS s;
         s.begin(&fbdo->session.rtdb.stream);
 
-        if (!fbdo->session.jsonPtr)
-            fbdo->session.jsonPtr = new FirebaseJson();
-
-        if (!fbdo->session.arrPtr)
-            fbdo->session.arrPtr = new FirebaseJsonArray();
+        fbdo->initJson();
 
         if (fbdo->session.rtdb.resp_data_type == d_json)
         {
