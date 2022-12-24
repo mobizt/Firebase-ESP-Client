@@ -49,7 +49,6 @@
 #endif
 #include "json/FirebaseJson.h"
 
-
 #if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
 #if defined(ESP32)
 #include <Update.h>
@@ -445,7 +444,11 @@ enum fb_esp_firestore_request_type
     fb_esp_firestore_request_type_rollback,
     fb_esp_firestore_request_type_list_doc,
     fb_esp_firestore_request_type_list_collection,
-    fb_esp_firestore_request_type_commit_document
+    fb_esp_firestore_request_type_commit_document,
+    fb_esp_firestore_request_type_create_index,
+    fb_esp_firestore_request_type_delete_index,
+    fb_esp_firestore_request_type_list_index,
+    fb_esp_firestore_request_type_get_index
 };
 
 enum fb_esp_firestore_document_write_type
@@ -2118,7 +2121,7 @@ static const char fb_esp_pgm_str_266[] PROGMEM = "/v0/b/";
 static const char fb_esp_pgm_str_267[] PROGMEM = "/o";
 static const char fb_esp_pgm_str_268[] PROGMEM = "name=";
 static const char fb_esp_pgm_str_269[] PROGMEM = "alt=media";
-// static const char fb_esp_pgm_str_271[] PROGMEM = "";
+static const char fb_esp_pgm_str_271[] PROGMEM = "collectionId";
 static const char fb_esp_pgm_str_272[] PROGMEM = "downloadTokens";
 static const char fb_esp_pgm_str_273[] PROGMEM = "token=";
 static const char fb_esp_pgm_str_274[] PROGMEM = "name";
@@ -2149,7 +2152,6 @@ static const char fb_esp_pgm_str_296[] PROGMEM = "topic";
 static const char fb_esp_pgm_str_297[] PROGMEM = "image";
 static const char fb_esp_pgm_str_298[] PROGMEM = "fcm_options";
 static const char fb_esp_pgm_str_299[] PROGMEM = "analytics_label";
-
 
 static const char fb_esp_pgm_str_303[] PROGMEM = "ttl";
 static const char fb_esp_pgm_str_304[] PROGMEM = "channel_id";
@@ -2319,7 +2321,7 @@ static const char fb_esp_pgm_str_459[] PROGMEM = "nodejs12";
 static const char fb_esp_pgm_str_460[] PROGMEM = "ALLOW_ALL";
 static const char fb_esp_pgm_str_461[] PROGMEM = "roles/cloudfunctions.invoker";
 static const char fb_esp_pgm_str_462[] PROGMEM = "allUsers";
-// static const char fb_esp_pgm_str_463[] PROGMEM = "\"sourceUploadUrl\":";
+static const char fb_esp_pgm_str_463[] PROGMEM = "fields";
 static const char fb_esp_pgm_str_464[] PROGMEM = "\",";
 static const char fb_esp_pgm_str_465[] PROGMEM = ":getIamPolicy";
 static const char fb_esp_pgm_str_466[] PROGMEM = "options.requestedPolicyVersion";
@@ -2333,16 +2335,16 @@ static const char fb_esp_pgm_str_473[] PROGMEM = "policy";
 static const char fb_esp_pgm_str_474[] PROGMEM = "The function deployment timeout";
 static const char fb_esp_pgm_str_475[] PROGMEM = "deployTask";
 
-// static const char fb_esp_pgm_str_476[] PROGMEM = "\"name\": \"";
-// static const char fb_esp_pgm_str_477[] PROGMEM = "\"bucket\": \"";
+static const char fb_esp_pgm_str_476[] PROGMEM = "/indexes";
+static const char fb_esp_pgm_str_477[] PROGMEM = "/v1beta1/projects/";
 
 static const char fb_esp_pgm_str_478[] PROGMEM = "crc32c";
 static const char fb_esp_pgm_str_479[] PROGMEM = "metadata/firebaseStorageDownloadTokens";
 static const char fb_esp_pgm_str_480[] PROGMEM = "resumableUploadTask";
 static const char fb_esp_pgm_str_481[] PROGMEM = "Range: bytes=0-";
 
-// static const char fb_esp_pgm_str_482[] PROGMEM = "\"contentType\": \"";
-// static const char fb_esp_pgm_str_483[] PROGMEM = "\"size\": \"";
+static const char fb_esp_pgm_str_482[] PROGMEM = "filter";
+static const char fb_esp_pgm_str_483[] PROGMEM = "apiScope";
 
 static const char fb_esp_pgm_str_484[] PROGMEM = "maxResults=";
 static const char fb_esp_pgm_str_485[] PROGMEM = "delimiter=";
@@ -2358,11 +2360,11 @@ static const char fb_esp_pgm_str_494[] PROGMEM = "ifGenerationMatch=";
 static const char fb_esp_pgm_str_495[] PROGMEM = "ifGenerationNotMatch=";
 static const char fb_esp_pgm_str_496[] PROGMEM = "ifMetagenerationMatch=";
 static const char fb_esp_pgm_str_497[] PROGMEM = "ifMetagenerationNotMatch=";
-// static const char fb_esp_pgm_str_498[] PROGMEM = "\"generation\": \"";
+static const char fb_esp_pgm_str_498[] PROGMEM = "queryScope";
 static const char fb_esp_pgm_str_499[] PROGMEM = "contentEncoding=";
 static const char fb_esp_pgm_str_500[] PROGMEM = "kmsKeyName=";
 static const char fb_esp_pgm_str_501[] PROGMEM = "predefinedAcl=";
-// static const char fb_esp_pgm_str_502[] PROGMEM = "";
+ static const char fb_esp_pgm_str_502[] PROGMEM = "/collectionGroups/";
 static const char fb_esp_pgm_str_503[] PROGMEM = "metageneration";
 static const char fb_esp_pgm_str_504[] PROGMEM = "acl";
 static const char fb_esp_pgm_str_505[] PROGMEM = "cacheControl";

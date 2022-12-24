@@ -170,10 +170,7 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
 
             fbdo->session.cfn.fileSize = sz;
         }
-
-        // Close file and open later.
-        // This is inefficient unless less memory usage than keep file opened
-        // which causes the issue in ESP32 core 2.0.x
+        // Fix in ESP32 core 2.0.x
         Signer.mbfs->close(mbfs_type config->_uploadArchiveStorageType);
 
         addCreationTask(fbdo, config, patch, fb_esp_functions_creation_step_gen_upload_url,
@@ -289,7 +286,6 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
     }
 
     JsonHelper::toString(&config->_funcCfg, req.payload, true);
-
     return sendRequest(fbdo, &req);
 }
 
@@ -317,18 +313,14 @@ bool FB_Functions::mSetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId,
                                  PolicyBuilder *policy, MB_StringPtr updateMask)
 {
     struct fb_esp_functions_req_t req;
-
     makeRequest(req, fb_esp_functions_request_type_set_iam_policy, projectId, locationId, functionId);
-
     fbdo->initJson();
 
     if (policy)
         JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_pgm_str_399 /* "policy" */, &policy->json, true);
 
     JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_400 /* "updateMask" */, MB_String(updateMask));
-
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
-
     return sendRequest(fbdo, &req);
 }
 
@@ -336,24 +328,17 @@ bool FB_Functions::mGetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId,
                                  MB_StringPtr locationId, MB_StringPtr functionId, MB_StringPtr version)
 {
     struct fb_esp_functions_req_t req;
-
     makeRequest(req, fb_esp_functions_request_type_get_iam_policy, projectId, locationId, functionId);
-
     req.policyVersion = version;
-
     fbdo->initJson();
-
     return sendRequest(fbdo, &req);
 }
 
 bool FB_Functions::mGetFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId)
 {
     struct fb_esp_functions_req_t req;
-
     makeRequest(req, fb_esp_functions_request_type_get, projectId, locationId, functionId);
-
     _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
-
     bool ret = sendRequest(fbdo, &req);
     if (ret)
     {
@@ -380,7 +365,6 @@ bool FB_Functions::mGetFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_S
                 _function_status = fb_esp_functions_status_UNKNOWN;
         }
     }
-
     return ret;
 }
 
@@ -388,11 +372,8 @@ bool FB_Functions::mListFunctions(FirebaseData *fbdo, MB_StringPtr projectId,
                                   MB_StringPtr locationId, MB_StringPtr pageSize, MB_StringPtr pageToken)
 {
     struct fb_esp_functions_req_t req;
-
     makeRequest(req, fb_esp_functions_request_type_list, projectId, locationId, toStringPtr(""));
-
-    MB_String _pageSize = pageSize;
-    req.pageSize = atoi(_pageSize.c_str());
+    req.pageSize = atoi(stringPtr2Str(pageSize));
     req.pageToken = pageToken;
     return sendRequest(fbdo, &req);
 }
@@ -402,19 +383,15 @@ bool FB_Functions::mListOperations(FirebaseData *fbdo, MB_StringPtr filter, MB_S
     struct fb_esp_functions_req_t req;
     req.requestType = fb_esp_functions_request_type_list_operations;
     req.filter = filter;
-    MB_String _pageSize = pageSize;
-    req.pageSize = atoi(_pageSize.c_str());
+    req.pageSize = atoi(stringPtr2Str(pageSize));
     req.pageToken = pageToken;
-
     return sendRequest(fbdo, &req);
 }
 
 bool FB_Functions::mDeleteFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId)
 {
     struct fb_esp_functions_req_t req;
-
     makeRequest(req, fb_esp_functions_request_type_delete, projectId, locationId, functionId);
-
     return sendRequest(fbdo, &req);
 }
 
@@ -422,11 +399,8 @@ bool FB_Functions::mGenerateDownloadUrl(FirebaseData *fbdo, MB_StringPtr project
                                         MB_StringPtr locationId, MB_StringPtr functionId, MB_StringPtr versionId)
 {
     struct fb_esp_functions_req_t req;
-
     makeRequest(req, fb_esp_functions_request_type_gen_download_url, projectId, locationId, functionId);
-
     fbdo->initJson();
-
     JsonHelper::addNumberString(fbdo->session.jsonPtr, fb_esp_pgm_str_437 /* "versionId" */, MB_String(versionId));
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     return sendRequest(fbdo, &req);
@@ -550,7 +524,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     }
     else
     {
-        URLHelper::addGAPIPath(header);
+        URLHelper::addGAPIv1Path(header);
 
         header += req->projectId.length() == 0 ? Signer.config->service_account.data.project_id : req->projectId;
 
@@ -671,15 +645,10 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
         fbdo->session.connected = true;
         if (req->requestType == fb_esp_functions_request_type_upload)
         {
-            // This is inefficient unless less memory usage than keep file opened
-            // which causes the issue in ESP32 core 2.0.x
-
+            // Fix in ESP32 core 2.0.x
             Signer.mbfs->open(fbdo->session.cfn.filepath, mbfs_type fbdo->session.cfn.storageType, mb_fs_open_mode_read);
-
             fbdo->session.cfn.filepath.clear();
-
             int available = Signer.mbfs->available(mbfs_type fbdo->session.cfn.storageType);
-
             int bufLen = Utils::getUploadBufSize(Signer.config, fb_esp_con_mode_functions);
             uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(Signer.mbfs, bufLen + 1, false);
             int read = 0;

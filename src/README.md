@@ -3380,6 +3380,125 @@ bool listCollectionIds(FirebaseData *fbdo, <string> projectId, <string> database
 
 
 
+#### Creates a composite index.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`collectionId`** The relative path of document colection.
+
+param **`apiScope`** The API scope enum e.g., ANY_API and DATASTORE_MODE_API
+
+param **`queryScope`** The QueryScope enum string e.g., QUERY_SCOPE_UNSPECIFIED, COLLECTION, and COLLECTION_GROUP
+
+See https://cloud.google.com/firestore/docs/reference/rest/Shared.Types/QueryScope
+
+param **`fields`** The FirebaseJsonArray that represents array of fields (IndexField JSON object) of indexes.
+
+A IndexField object contains the keys "fieldPath" and the uinion field "value_mode" of "order" and "arrayConfig"
+
+Where the fieldPath value is the field path string of index.
+
+Where order is the enum string of ORDER_UNSPECIFIED, ASCENDING, and DESCENDING.
+
+And arrayConfig is the ArrayConfig enum string of ARRAY_CONFIG_UNSPECIFIED and CONTAINS
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Note Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1beta1/projects.databases.indexes/create
+
+```cpp
+bool createIndex(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> collectionId, 
+<string> apiScope, <string> queryScope, FirebaseJsonArray *fields);
+```
+
+
+
+#### Deletes an index.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`collectionId`** The relative path of document colection.
+
+param **`indexId`** The index to delete.
+
+Note Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/delete
+
+```cpp
+bool deleteIndex(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> collectionId, <string> indexId);
+```
+
+
+
+#### Lists the indexes that match the specified filters.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`collectionId`** The relative path of document colection.
+
+param **`filter`** The filter to apply to list results.
+
+param **`pageSize`** The number of results to return.
+
+param **`pageToken`** A page token, returned from a previous call to FirestoreAdmin.ListIndexes, that may be used to get the next page of results.
+
+Note Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/list
+
+```cpp
+bool listIndex(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> collectionId, <string> filter,
+int pageSize, <string> pageToken);
+```
+
+
+
+#### Get an index.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`projectId`** The Firebase project id (only the name without the firebaseio.com).
+
+param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
+
+param **`collectionId`** The relative path of document colection.
+
+param **`indexId`** The index to get.
+
+Note Use FirebaseData.payload() to get the returned payload.
+
+This function requires OAuth2.0 authentication.
+
+For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/get
+
+```cpp
+bool getIndex(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> collectionId, <string> indexId);
+```
+
+
+
+
 ## Firebase Cloud Messaging Functions
 
 These functions can be called directly from FCM object in the Firebase object e.g. Firebase.FCM.\<function name\>

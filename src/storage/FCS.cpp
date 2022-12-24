@@ -207,7 +207,6 @@ bool FB_Storage::mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID, MB_Stri
 #endif
 
     fbdo->closeSession();
-
     return ret;
 
 #endif
@@ -250,7 +249,6 @@ void FB_Storage::rescon(FirebaseData *fbdo, const char *host)
         fbdo->closeSession();
         fbdo->setSecure();
     }
-
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_storage;
 }
@@ -364,10 +362,6 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
     if (req->requestType == fb_esp_fcs_request_type_upload)
         ret = Signer.mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
-
-    // Close file and open later.
-    // This is inefficient unless less memory usage than keep file opened
-    // which causes the issue in ESP32 core 2.0.x
     if (ret > 0)
         Signer.mbfs->close(mbfs_type req->storageType); // fixed for ESP32 core v2.0.2, SPIFFS file
     else if (ret < 0)
@@ -449,9 +443,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         HttpHelper::addNewLine(header);
     }
     HttpHelper::addUAHeader(header);
-    // There is an issue of missing some response at the end of http transaction on ESP32 in case Connection Close header.
-    // This is ESP32 issue only on sdk v2.0.x and may relate to the Client and Stream classes operation.
-    // This library will keep the connection alive instead of close after request sent for the above reason.
+    // required for ESP32 core sdk v2.0.x.
     HttpHelper::addConnectionHeader(header, true);
 
     HttpHelper::getCustomHeaders(header, Signer.config->signer.customHeaders);
@@ -476,9 +468,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         if (req->requestType == fb_esp_fcs_request_type_upload)
         {
             int available = len;
-
-            // This is inefficient unless less memory usage than keep file opened
-            // which causes the issue in ESP32 core 2.0.x
+            // Fix in ESP32 core 2.0.x
             Signer.mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
 
             int bufLen = Utils::getUploadBufSize(Signer.config, fb_esp_con_mode_storage);

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.1.18
+ * Google's Cloud Firestore class, Forestore.h version 1.2.0
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 22, 2022
+ * Created December 24, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -419,6 +419,116 @@ public:
                                   toStringPtr(pageSize, -1), toStringPtr(pageToken));
     }
 
+    /** Creates a composite index.
+     *
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param collectionId The relative path of document colection.
+     * @param apiScope The API scope enum e.g., ANY_API and DATASTORE_MODE_API
+     * @param queryScope The QueryScope enum string e.g., QUERY_SCOPE_UNSPECIFIED, COLLECTION, and COLLECTION_GROUP
+     * See https://cloud.google.com/firestore/docs/reference/rest/Shared.Types/QueryScope
+     *
+     * @param fields The FirebaseJsonArray that represents array of fields (IndexField JSON object) of indexes.
+     * A IndexField object contains the keys "fieldPath" and the uinion field "value_mode" of "order" and "arrayConfig"
+     * Where the fieldPath value is the field path string of index.
+     * Where order is the enum string of ORDER_UNSPECIFIED, ASCENDING, and DESCENDING.
+     * And arrayConfig is the ArrayConfig enum string of ARRAY_CONFIG_UNSPECIFIED and CONTAINS
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use FirebaseData.payload() to get the returned payload.
+     *
+     * This function requires OAuth2.0 authentication.
+     *
+     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1beta1/projects.databases.indexes/create
+     *
+     */
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *,
+              typename T4 = const char *, typename T5 = const char *>
+    bool createIndex(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId,
+                     T4 apiScope, T5 queryScope, FirebaseJsonArray *fields)
+    {
+        return mCreateIndex(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId),
+                            toStringPtr(apiScope), toStringPtr(queryScope), fields);
+    }
+
+    /** Deletes an index.
+     *
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param collectionId The relative path of document colection.
+     * @param indexId The index to delete.
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use FirebaseData.payload() to get the returned payload.
+     *
+     * This function requires OAuth2.0 authentication.
+     *
+     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/delete
+     *
+     */
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    bool deleteIndex(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 indexId)
+    {
+        return mGetDeleteIndex(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId),
+                               toStringPtr(indexId), 1);
+    }
+
+    /** Lists the indexes that match the specified filters.
+     *
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param collectionId The relative path of document colection.
+     * @param filter The filter to apply to list results.
+     * @param pageSize The number of results to return.
+     * @param pageToken A page token, returned from a previous call to FirestoreAdmin.ListIndexes,
+     * that may be used to get the next page of results.
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use FirebaseData.payload() to get the returned payload.
+     *
+     * This function requires OAuth2.0 authentication.
+     *
+     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/list
+     *
+     */
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *,
+              typename T4 = const char *, typename T5 = const char *>
+    bool listIndex(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 filter = "", int pageSize = -1, T5 pageToken = "")
+    {
+        return mListIndex(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId), toStringPtr(filter),
+                          toStringPtr(pageSize, -1), toStringPtr(pageToken));
+    }
+
+    /** Get an index.
+     *
+     * @param fbdo The pointer to Firebase Data Object.
+     * @param projectId The Firebase project id (only the name without the firebaseio.com).
+     * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
+     * @param collectionId The relative path of document colection.
+     * @param indexId The index to get.
+     *
+     * @return Boolean value, indicates the success of the operation.
+     *
+     * @note Use FirebaseData.payload() to get the returned payload.
+     *
+     * This function requires OAuth2.0 authentication.
+     *
+     * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/get
+     *
+     */
+    template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
+    bool getIndex(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 collectionId, T4 indexId)
+    {
+        return mGetDeleteIndex(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(collectionId),
+                               toStringPtr(indexId), 0);
+    }
+
 private:
     void makeRequest(struct fb_esp_firestore_req_t &req, fb_esp_firestore_request_type type,
                      MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentId, MB_StringPtr collectionId);
@@ -457,6 +567,14 @@ private:
                         MB_StringPtr mask, bool showMissing);
     bool mListCollectionIds(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
                             MB_StringPtr documentPath, MB_StringPtr pageSize, MB_StringPtr pageToken);
+
+    bool mCreateIndex(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
+                      MB_StringPtr collectionId, MB_StringPtr apiScope, MB_StringPtr queryScope,
+                      FirebaseJsonArray *fields);
+    bool mGetDeleteIndex(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr collectionId,
+                         MB_StringPtr indexId, int type);
+    bool mListIndex(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr collectionId,
+                    MB_StringPtr filter, MB_StringPtr pageSize, MB_StringPtr pageToken);
 };
 
 #endif

@@ -3208,7 +3208,6 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     if (appendAuth)
     {
         header += fb_esp_pgm_str_238; // ".json"
-
         if (Signer.getTokenType() != token_type_oauth2_access_token && !Signer.config->signer.test_mode)
             URLHelper::addParam(header, fb_esp_pgm_str_445 /* "auth=" */, "", hasQueryParams, true);
 
@@ -3240,9 +3239,7 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     }
 
     QueryFilter *query = req->data.address.query > 0 ? addrTo<QueryFilter *>(req->data.address.query) : nullptr;
-
     bool hasQuery = false;
-
     if (req->method == m_get && query)
     {
         if (query->_orderBy.length() > 0)
@@ -3287,7 +3284,6 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     HttpHelper::addRequestHeaderLast(header);
     HttpHelper::addHostHeader(header, Signer.config->database_url.c_str());
     HttpHelper::addUAHeader(header);
-
     HttpHelper::getCustomHeaders(header, Signer.config->signer.customHeaders);
 
     if (Signer.getTokenType() == token_type_oauth2_access_token)
@@ -3330,12 +3326,10 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     if (fbdo->session.classic_request && http_method != m_get && http_method != m_post && http_method != m_patch)
     {
         header += fb_esp_pgm_str_153; // "X-HTTP-Method-Override: "
-
         if (http_method == m_put)
             HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_put);
         else if (http_method == m_delete)
             HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_delete);
-
         HttpHelper::addNewLine(header);
     }
 
@@ -3347,9 +3341,7 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     }
     else
     {
-        // There is an issue of missing some response at the end of http transaction on ESP32 in case Connection Close header.
-        // This is ESP32 issue only on sdk v2.0.x and may relate to the Client and Stream classes operation.
-        // This library will keep the connection alive instead of close after request sent for the above reason.
+        // required for ESP32 core sdk v2.0.x.
         fbdo->session.rtdb.http_req_conn_type = fb_esp_http_connection_type_keep_alive;
         HttpHelper::addConnectionHeader(header, true);
         header += fb_esp_pgm_str_37; // "Keep-Alive: timeout=30, max=100\r\n"

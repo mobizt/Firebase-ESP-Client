@@ -240,6 +240,11 @@ getMetadata KEYWORD2
 deleteFile  KEYWORD2
 listFiles   KEYWORD2
 
+createIndex KEYWORD2
+listIndex   KEYWORD2
+getIndex    KEYWORD2
+deleteIndex KEYWORD2
+
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
 #############################################

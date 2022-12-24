@@ -326,9 +326,14 @@ namespace URLHelper
         }
     }
 
-    inline void addGAPIPath(MB_String &uri)
+    inline void addGAPIv1Path(MB_String &uri)
     {
         uri += fb_esp_pgm_str_326; // "/v1/projects/"
+    }
+
+    inline void addGAPIv1beta1Path(MB_String &uri)
+    {
+        uri += fb_esp_pgm_str_477; // "/v1beta1/projects/"
     }
 #endif
 

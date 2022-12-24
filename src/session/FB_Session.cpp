@@ -1672,6 +1672,11 @@ void FirebaseData::getError(MB_String &payload, struct fb_esp_tcp_response_handl
         // JSON Array payload
         else if (payload[0] == '[')
             tcpHandler.error.code = 0;
+        else
+        {
+            session.response.code = response.httpCode;
+            tcpHandler.error.code = response.httpCode;
+        }
 
         session.content_length = response.payloadLen;
     }

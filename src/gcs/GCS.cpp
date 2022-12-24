@@ -343,10 +343,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         {
 
             ret = Signer.mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
-
-            // Close file and open later.
-            // This is inefficient unless less memory usage than keep file opened
-            // which causes the issue in ESP32 core 2.0.x
+            // Fix in ESP32 core 2.0.x
             if (ret > 0)
                 Signer.mbfs->close(mbfs_type req->storageType);
             else if (ret < 0)
@@ -522,9 +519,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     }
 
     HttpHelper::addUAHeader(header);
-    // There is an issue of missing some response at the end of http transaction on ESP32 in case Connection Close header.
-    // This is ESP32 issue only on sdk v2.0.x and may relate to the Client and Stream classes operation.
-    // This library will keep the connection alive instead of close after request sent for the above reason.
+    // required for ESP32 core sdk v2.0.x.
     HttpHelper::addConnectionHeader(header, true);
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple)
@@ -677,9 +672,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
             int bufLen = Utils::getUploadBufSize(Signer.config, fb_esp_con_mode_gc_storage);
             uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(Signer.mbfs, bufLen + 1, false);
             int read = 0;
-
-            // This is inefficient unless less memory usage than keep file opened
-            // which causes the issue in ESP32 core 2.0.x
+            // Fix in ESP32 core 2.0.x
             Signer.mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
 
             while (available)
@@ -730,8 +723,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
             if (req->chunkRange != -1 || req->location.length() > 0)
             {
-                // This is inefficient unless less memory usage than keep file opened
-                // which causes the issue in ESP32 core 2.0.x
+                // Fix in ESP32 core 2.0.x
                 Signer.mbfs->close(mbfs_type req->storageType);
                 Signer.mbfs->open(req->localFileName, mbfs_type req->storageType, mb_fs_open_mode_read);
                 byteRead = req->chunkPos;

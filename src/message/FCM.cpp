@@ -205,7 +205,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
             header += fb_esp_pgm_str_121; // "fcm/send"
         else
         {
-            URLHelper::addGAPIPath(header);
+            URLHelper::addGAPIv1Path(header);
             header += Signer.config->service_account.data.project_id;
             header += fb_esp_pgm_str_327; // "/messages:send"
         }
@@ -281,9 +281,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
         HttpHelper::addContentLengthHeader(header, strlen(payload));
     }
 
-    // There is an issue of missing some response at the end of http transaction on ESP32 in case Connection Close header.
-    // This is ESP32 issue only on sdk v2.0.x and may relate to the Client and Stream classes operation.
-    // This library will keep the connection alive instead of close after request sent for the above reason.
+    // required for ESP32 core sdk v2.0.x.
     HttpHelper::addConnectionHeader(header, true);
     HttpHelper::addNewLine(header);
 
