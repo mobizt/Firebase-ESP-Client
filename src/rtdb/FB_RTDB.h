@@ -2596,7 +2596,9 @@ private:
   bool handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   int preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  bool sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  fb_esp_request_method getHTTPMethod(fb_esp_rtdb_request_info_t *req);
+  bool hasPayload(struct fb_esp_rtdb_request_info_t *req);
+  bool sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   int getPayloadLen(fb_esp_rtdb_request_info_t *req);
   bool waitResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req);
   bool handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req);

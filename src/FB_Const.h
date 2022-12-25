@@ -230,7 +230,7 @@ enum fb_esp_request_method
     rtdb_set_rules, /* HTTP PUT */
     rtdb_get_shallow, /* HTTP GET */
     rtdb_get_priority, /* HTTP GET */
-    rtdb_set_priority, /* HTTP GET */
+    rtdb_set_priority, /* HTTP PUT */
 };
 
 enum fb_esp_http_connection_type

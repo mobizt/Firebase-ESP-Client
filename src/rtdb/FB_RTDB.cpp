@@ -1508,11 +1508,8 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 {
     Utils::idle();
 
-    int pc = preRequestCheck(fbdo, req);
-    if (pc < 0)
+    if (!preRequestCheck(fbdo, req))
         return false;
-    else if (pc == 0)
-        return true;
 
     if (req->method != http_get)
     {
@@ -1545,8 +1542,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 #endif
         }
 
-        int sz = openFile(fbdo, req, mb_fs_open_mode_write);
-        if (sz < 0)
+        if (openFile(fbdo, req, mb_fs_open_mode_write) < 0)
             return false;
 
         folder.clear();
@@ -1560,9 +1556,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     for (int i = 0; i < maxRetry; i++)
     {
         ret = handleRequest(fbdo, req);
-
         setPtrValue(fbdo, req);
-
         if (ret)
             break;
 
@@ -1617,12 +1611,9 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
     fbdo->_responseCallback = NULL;
 
     if (req->method == rtdb_stream)
-    {
-        if (strcmp(req->path.c_str(), fbdo->session.rtdb.stream_path.c_str()) != 0)
-            fbdo->session.rtdb.stream_path_changed = true;
-        else
-            fbdo->session.rtdb.stream_path_changed = false;
-    }
+        fbdo->session.rtdb.stream_path_changed = strcmp(req->path.c_str(), fbdo->session.rtdb.stream_path.c_str()) != 0
+                                                     ? true
+                                                     : false;
 
     if (fbdo->session.cert_updated ||
         !fbdo->session.connected ||
@@ -1976,7 +1967,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         req->method != rtdb_restore &&
         req->data.type != d_file &&
         req->data.type != d_file_ota)
-        ret = sendHeader(fbdo, req);
+        ret = sendRequestHeader(fbdo, req);
     else
     {
 
@@ -2006,7 +1997,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
             }
         }
 
-        ret = sendHeader(fbdo, req);
+        ret = sendRequestHeader(fbdo, req);
     }
 
     if (req->method == rtdb_get_nocontent ||
@@ -3124,9 +3115,41 @@ int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
     return len;
 }
 
-bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+fb_esp_request_method FB_RTDB::getHTTPMethod(fb_esp_rtdb_request_info_t *req)
 {
-    fb_esp_request_method http_method = req->method;
+    if (req->method == http_post)
+        return http_post;
+    else if (req->method == http_put ||
+             req->method == rtdb_set_nocontent ||
+             req->method == rtdb_set_priority ||
+             req->method == rtdb_set_rules)
+        return http_put;
+    else if (req->method == rtdb_stream ||
+             req->method == http_get ||
+             req->method == rtdb_get_nocontent ||
+             req->method == rtdb_get_shallow ||
+             req->method == rtdb_get_priority ||
+             req->method == rtdb_backup ||
+             req->method == rtdb_get_rules)
+        return http_get;
+    else if (req->method == http_patch ||
+             req->method == rtdb_update_nocontent ||
+             req->method == rtdb_restore)
+        return http_patch;
+    else if (req->method == http_delete)
+        return http_delete;
+
+    return req->method;
+}
+
+bool FB_RTDB::hasPayload(struct fb_esp_rtdb_request_info_t *req)
+{
+    return getHTTPMethod(req) == http_put || getHTTPMethod(req) == http_post || getHTTPMethod(req) == http_patch;
+}
+
+bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+{
+    fb_esp_request_method http_method = getHTTPMethod(req);
     fbdo->session.rtdb.shallow_flag = false;
     fbdo->session.rtdb.priority_val_flag = false;
 
@@ -3144,45 +3167,10 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     MB_String header;
 
-    if (req->method == rtdb_stream)
-        HttpHelper::addRequestHeaderFirst(header, http_get);
-    else
-    {
-        if (req->method == http_put ||
-            req->method == rtdb_set_nocontent ||
-            req->method == rtdb_set_priority ||
-            req->method == rtdb_set_rules)
-        {
-            http_method = http_put;
-            if (fbdo->session.classic_request)
-                HttpHelper::addRequestHeaderFirst(header, http_post);
-            else
-                HttpHelper::addRequestHeaderFirst(header, http_put);
-        }
-        else if (req->method == http_post)
-        {
-            HttpHelper::addRequestHeaderFirst(header, req->method);
-        }
-        else if (req->method == http_get || req->method == rtdb_get_nocontent ||
-                 req->method == rtdb_get_shallow || req->method == rtdb_get_priority ||
-                 req->method == rtdb_backup || req->method == rtdb_get_rules)
-        {
-            http_method = http_get;
-            HttpHelper::addRequestHeaderFirst(header, http_get);
-        }
-        else if (req->method == http_patch || req->method == rtdb_update_nocontent || req->method == rtdb_restore)
-        {
-            http_method = http_patch;
-            HttpHelper::addRequestHeaderFirst(header, http_patch);
-        }
-        else if (req->method == http_delete)
-        {
-            if (fbdo->session.classic_request)
-                HttpHelper::addRequestHeaderFirst(header, http_post);
-            else
-                HttpHelper::addRequestHeaderFirst(header, http_delete);
-        }
-    }
+    HttpHelper::addRequestHeaderFirst(header, fbdo->session.classic_request &&
+                                                      (http_method == http_put || http_method == http_delete)
+                                                  ? http_post
+                                                  : http_method);
 
     Utils::makePath(req->path);
     header += req->path;
@@ -3226,7 +3214,6 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         URLHelper::addParam(header, fb_esp_pgm_str_158 /* "timeout=" */,
                             MB_String(fbdo->session.rtdb.read_tmo) + fb_esp_pgm_str_159 /* "ms" */, hasQueryParams);
 
-    if (fbdo->session.rtdb.write_limit.length() > 0)
         URLHelper::addParam(header, fb_esp_pgm_str_160 /* "writeSizeLimit=" */,
                             fbdo->session.rtdb.write_limit, hasQueryParams);
 
@@ -3238,31 +3225,15 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     QueryFilter *query = req->data.address.query > 0 ? addrTo<QueryFilter *>(req->data.address.query) : nullptr;
     bool hasQuery = false;
-    if (req->method == http_get && query)
+    if (req->method == http_get && query && query->_orderBy.length() > 0)
     {
-        if (query->_orderBy.length() > 0)
-        {
-            hasQuery = true;
-            URLHelper::addParam(header, fb_esp_pgm_str_96 /* "orderBy=" */, query->_orderBy, hasQueryParams);
-
-            if (req->method == http_get)
-            {
-                if (query->_limitToFirst.length() > 0)
-                    URLHelper::addParam(header, fb_esp_pgm_str_97 /* "&limitToFirst=" */, query->_limitToFirst, hasQueryParams);
-
-                if (query->_limitToLast.length() > 0)
-                    URLHelper::addParam(header, fb_esp_pgm_str_98 /* "&limitToLast=" */, query->_limitToLast, hasQueryParams);
-
-                if (query->_startAt.length() > 0)
-                    URLHelper::addParam(header, fb_esp_pgm_str_99 /* "&startAt=" */, query->_startAt, hasQueryParams);
-
-                if (query->_endAt.length() > 0)
-                    URLHelper::addParam(header, fb_esp_pgm_str_100 /* "&endAt=" */, query->_endAt, hasQueryParams);
-
-                if (query->_equalTo.length() > 0)
-                    URLHelper::addParam(header, fb_esp_pgm_str_101 /* "&equalTo=" */, query->_equalTo, hasQueryParams);
-            }
-        }
+        hasQuery = true;
+        URLHelper::addParam(header, fb_esp_pgm_str_96 /* "orderBy=" */, query->_orderBy, hasQueryParams);
+        URLHelper::addParam(header, fb_esp_pgm_str_97 /* "&limitToFirst=" */, query->_limitToFirst, hasQueryParams);
+        URLHelper::addParam(header, fb_esp_pgm_str_98 /* "&limitToLast=" */, query->_limitToLast, hasQueryParams);
+        URLHelper::addParam(header, fb_esp_pgm_str_99 /* "&startAt=" */, query->_startAt, hasQueryParams);
+        URLHelper::addParam(header, fb_esp_pgm_str_100 /* "&endAt=" */, query->_endAt, hasQueryParams);
+        URLHelper::addParam(header, fb_esp_pgm_str_101 /* "&equalTo=" */, query->_equalTo, hasQueryParams);
     }
 
     if (req->method == rtdb_backup)
@@ -3324,10 +3295,8 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     if (fbdo->session.classic_request && http_method != http_get && http_method != http_post && http_method != http_patch)
     {
         header += fb_esp_pgm_str_153; // "X-HTTP-Method-Override: "
-        if (http_method == http_put)
-            HttpHelper::addRequestHeaderFirst(header, http_put);
-        else if (http_method == http_delete)
-            HttpHelper::addRequestHeaderFirst(header, http_delete);
+        if (http_method == http_put || http_method == http_delete)
+            HttpHelper::addRequestHeaderFirst(header, http_method);
         HttpHelper::addNewLine(header);
     }
 
@@ -3351,15 +3320,9 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
     if (req->method == rtdb_get_priority || req->method == rtdb_set_priority)
         fbdo->session.rtdb.priority_val_flag = true;
 
-    if (req->method == http_put || req->method == rtdb_set_nocontent ||
-        req->method == http_post || req->method == http_patch ||
-        req->method == rtdb_update_nocontent || req->method == rtdb_restore ||
-        req->method == rtdb_set_rules || req->method == rtdb_set_priority)
-    {
-        header += fb_esp_pgm_str_12; // "Content-Length: "
-        header += getPayloadLen(req);
-    }
-    HttpHelper::addNewLine(header);
+    if (hasPayload(req))
+        HttpHelper::addContentLengthHeader(header, getPayloadLen(req));
+
     HttpHelper::addNewLine(header);
 
     fbdo->tcpClient.send(header.c_str());
@@ -3392,7 +3355,6 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
 void FB_RTDB::clearDataStatus(FirebaseData *fbdo)
 {
     fbdo->clearJson();
-
     fbdo->session.rtdb.stream_data_changed = false;
     fbdo->session.rtdb.stream_path_changed = false;
     fbdo->session.rtdb.data_available = false;
@@ -3418,23 +3380,23 @@ bool FB_RTDB::connectionError(FirebaseData *fbdo)
 
 bool FB_RTDB::handleStreamRequest(FirebaseData *fbdo, const MB_String &path)
 {
-    struct fb_esp_rtdb_request_info_t _req;
-    _req.method = rtdb_stream;
-    _req.data.type = d_string;
+    struct fb_esp_rtdb_request_info_t req;
+    req.method = rtdb_stream;
+    req.data.type = d_string;
 
     if (fbdo->session.rtdb.redirect_url.length() > 0)
     {
         struct fb_esp_url_info_t uinfo;
         URLHelper::parse(Signer.mbfs, fbdo->session.rtdb.redirect_url, uinfo);
-        _req.path = uinfo.uri.c_str();
+        req.path = uinfo.uri.c_str();
     }
     else
-        _req.path = path.c_str();
+        req.path = path.c_str();
 
-    if (!preRequestCheck(fbdo, &_req))
+    if (!preRequestCheck(fbdo, &req))
         return false;
 
-    if (!sendRequest(fbdo, &_req))
+    if (!sendRequest(fbdo, &req))
         return false;
 
     return true;
