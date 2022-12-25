@@ -181,7 +181,7 @@ enum fb_esp_con_mode
 
 enum fb_esp_data_type
 {
-    d_any,
+    d_any = 0,
     d_null,
     d_integer,
     d_float,
@@ -199,7 +199,7 @@ enum fb_esp_data_type
 
 enum fb_esp_rtdb_data_type
 {
-    fb_esp_rtdb_data_type_null = 1,
+    fb_esp_rtdb_data_type_null = d_null,
     fb_esp_rtdb_data_type_integer,
     fb_esp_rtdb_data_type_float,
     fb_esp_rtdb_data_type_double,
@@ -211,26 +211,26 @@ enum fb_esp_rtdb_data_type
     fb_esp_rtdb_data_type_file
 };
 
-enum fb_esp_method
+enum fb_esp_request_method
 {
-    m_undefined,
-    m_put,
-    m_put_nocontent,
-    m_post,
-    m_get,
-    m_get_nocontent,
-    m_stream,
-    m_patch,
-    m_patch_nocontent,
-    m_delete,
-    m_download,
-    m_restore,
-    m_read_rules,
-    m_download_rules,
-    m_set_rules,
-    m_get_shallow,
-    m_get_priority,
-    m_set_priority,
+    http_undefined,
+    http_put,
+    http_post,
+    http_get,
+    http_patch,
+    http_delete,
+
+    rtdb_set_nocontent, /* HTTP PUT (No content) */
+    rtdb_update_nocontent, /* HTTP PATCH (No content) */
+    rtdb_get_nocontent, /* HTTP GET (No content) */
+    rtdb_stream, /* HTTP GET (SSE) */
+    rtdb_backup, /* HTTP GET */
+    rtdb_restore, /* HTTP PATCH */
+    rtdb_get_rules, /* HTTP GET */
+    rtdb_set_rules, /* HTTP PUT */
+    rtdb_get_shallow, /* HTTP GET */
+    rtdb_get_priority, /* HTTP GET */
+    rtdb_set_priority, /* HTTP GET */
 };
 
 enum fb_esp_http_connection_type
@@ -743,7 +743,7 @@ struct fb_esp_rtdb_request_info_t
     MB_String post_payload;
     MB_String payload;
     MB_String filename;
-    fb_esp_method method = m_get;
+    fb_esp_request_method method = http_get;
     struct fb_esp_rtdb_request_data_info data;
     fb_esp_rtdb_task_type task_type = fb_esp_rtdb_task_undefined;
     bool queue = false;
@@ -1207,7 +1207,7 @@ struct fb_esp_rtdb_info_t
     uint8_t connection_status = 0;
     uint32_t queue_ID = 0;
     uint8_t max_retry = 0;
-    fb_esp_method req_method = fb_esp_method::m_put;
+    fb_esp_request_method req_method = http_put;
     fb_esp_data_type req_data_type = fb_esp_data_type::d_any;
     fb_esp_data_type resp_data_type = fb_esp_data_type::d_any;
     uint16_t data_crc = 0;

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.2
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.3
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 20, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -306,7 +306,7 @@ MB_String FirebaseData::getDataType(uint8_t type)
         res = fb_esp_pgm_str_76; // "float"
         break;
     case fb_esp_data_type::d_double:
-        res = fb_esp_pgm_str_108; // "doubke"
+        res = fb_esp_pgm_str_108; // "double"
         break;
     case fb_esp_data_type::d_boolean:
         res = fb_esp_pgm_str_105; // "boolean"
@@ -337,21 +337,21 @@ MB_String FirebaseData::getMethod(uint8_t method)
 
     switch (method)
     {
-    case fb_esp_method::m_get:
+    case http_get:
         res = fb_esp_pgm_str_115; // "get"
         break;
-    case fb_esp_method::m_put:
-    case fb_esp_method::m_put_nocontent:
+    case http_put:
+    case rtdb_set_nocontent:
         res = fb_esp_pgm_str_116; // "set"
         break;
-    case fb_esp_method::m_post:
+    case http_post:
         res = fb_esp_pgm_str_117; // "push"
         break;
-    case fb_esp_method::m_patch:
-    case fb_esp_method::m_patch_nocontent:
+    case http_patch:
+    case rtdb_update_nocontent:
         res = fb_esp_pgm_str_118; // "update"
         break;
-    case fb_esp_method::m_delete:
+    case http_delete:
         res = fb_esp_pgm_str_119; // "delete"
         break;
     default:
@@ -1724,11 +1724,11 @@ void FirebaseData::checkOvf(size_t len, struct server_response_data_t &resp)
 #ifdef ENABLE_RTDB
     if (session.resp_size < len && !session.buffer_ovf)
     {
-        if (session.rtdb.req_method == fb_esp_method::m_get &&
+        if (session.rtdb.req_method == http_get &&
             !session.rtdb.data_tmo &&
             session.con_mode != fb_esp_con_mode_fcm &&
             resp.dataType != fb_esp_data_type::d_file &&
-            session.rtdb.req_method != fb_esp_method::m_download &&
+            session.rtdb.req_method != rtdb_backup &&
             session.rtdb.req_data_type != fb_esp_data_type::d_file &&
             session.rtdb.req_data_type != fb_esp_data_type::d_file_ota)
         {
@@ -1979,7 +1979,7 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     FirebaseJsonData server_key;
     FirebaseJson json(raw);
     json.get(server_key, pgm2Str(fb_esp_pgm_str_577 /* "server_key" */));
-    HttpHelper::addRequestHeaderFirst(header, m_post);
+    HttpHelper::addRequestHeaderFirst(header, http_post);
     header += fb_esp_pgm_str_121; // "/fcm/send"
     HttpHelper::addRequestHeaderLast(header);
     HttpHelper::addGAPIsHostHeader(header, fb_esp_pgm_str_249 /* "fcm" */);

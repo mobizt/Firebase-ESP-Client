@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.8
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.9
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 24, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -74,7 +74,7 @@ bool FB_RTDB::mGetRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType,
 {
     struct fb_esp_rtdb_request_info_t req;
     req.path += fb_esp_pgm_str_103; // "/.settings/rules"
-    req.method = m_read_rules;
+    req.method = rtdb_get_rules;
     req.data.type = d_json;
     req.filename = filename;
     req.storageType = storageType;
@@ -103,7 +103,7 @@ bool FB_RTDB::mSetRules(FirebaseData *fbdo, MB_StringPtr rules, fb_esp_mem_stora
 {
     struct fb_esp_rtdb_request_info_t req;
     req.path += fb_esp_pgm_str_103; // "/.settings/rules"
-    req.method = m_set_rules;
+    req.method = rtdb_set_rules;
     req.payload = rules;
     req.filename = filename;
     Utils::makePath(req.filename);
@@ -306,7 +306,7 @@ bool FB_RTDB::mPathExisted(FirebaseData *fbdo, MB_StringPtr path)
 {
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
-    req.method = m_get_nocontent;
+    req.method = rtdb_get_nocontent;
     req.data.type = d_string;
     if (handleRequest(fbdo, &req))
         return !fbdo->session.rtdb.path_not_found;
@@ -317,7 +317,7 @@ String FB_RTDB::mGetETag(FirebaseData *fbdo, MB_StringPtr path)
 {
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
-    req.method = m_get_nocontent;
+    req.method = rtdb_get_nocontent;
     req.data.type = d_string;
     if (handleRequest(fbdo, &req))
         return fbdo->session.rtdb.resp_etag.c_str();
@@ -328,7 +328,7 @@ bool FB_RTDB::mGetShallowData(FirebaseData *fbdo, MB_StringPtr path)
 {
     struct fb_esp_rtdb_request_info_t req;
     req.path = path;
-    req.method = m_get_shallow;
+    req.method = rtdb_get_shallow;
     req.data.type = d_string;
     return handleRequest(fbdo, &req);
 }
@@ -338,7 +338,7 @@ void FB_RTDB::enableClassicRequest(FirebaseData *fbdo, bool enable)
     fbdo->session.classic_request = enable;
 }
 
-bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_method method, MB_StringPtr path,
+bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_StringPtr path,
                            MB_StringPtr payload, fb_esp_data_type type, int subtype, uint32_t value_addr,
                            uint32_t query_addr, uint32_t priority_addr, MB_StringPtr etag, bool async,
                            bool queue, size_t blob_size, MB_StringPtr filename, fb_esp_mem_storage_type storage_type,
@@ -357,12 +357,12 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_method method, MB_StringPt
     req.downloadCallback = downloadCallback;
     req.uploadCallback = uploadCallback;
 
-    if (method == m_set_priority || method == m_get_priority)
+    if (method == rtdb_set_priority || method == rtdb_get_priority)
     {
         tpath += fb_esp_pgm_str_156; // "/.priority"
         req.path = tpath;
     }
-    else if (priority_addr > 0 && method != m_get && type != d_blob && type != d_file && type != d_file_ota)
+    else if (priority_addr > 0 && method != http_get && type != d_blob && type != d_file && type != d_file_ota)
     {
         if (type == d_json)
         {
@@ -439,14 +439,14 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_method method, MB_StringPt
         req.path = tpath;
     }
 
-    if (method == m_get && type == d_blob)
+    if (method == http_get && type == d_blob)
         setBlobRef(fbdo, value_addr);
 
     req.method = method;
     req.data.type = type;
     req.async = async;
     req.queue = queue;
-    method == m_get ? req.data.address.dout = value_addr : req.data.address.din = value_addr;
+    method == http_get ? req.data.address.dout = value_addr : req.data.address.din = value_addr;
     req.data.address.priority = priority_addr;
     req.data.address.query = query_addr;
     req.data.etag = etag;
@@ -904,11 +904,11 @@ void FB_RTDB::setBlobRef(FirebaseData *fbdo, int addr)
 
 void FB_RTDB::addQueueData(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
-    if (req->method == m_get || (!req->queue && (req->method == m_put ||
-                                                 req->method == m_put_nocontent ||
-                                                 req->method == m_post ||
-                                                 req->method == m_patch ||
-                                                 req->method == m_patch_nocontent)))
+    if (req->method == http_get || (!req->queue && (req->method == http_put ||
+                                                    req->method == rtdb_set_nocontent ||
+                                                    req->method == http_post ||
+                                                    req->method == http_patch ||
+                                                    req->method == rtdb_update_nocontent)))
     {
         QueueItem qItem;
         qItem.method = req->method;
@@ -994,7 +994,7 @@ void FB_RTDB::processErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallb
             Utils::idle();
             if (buildRequest(fbdo, item.method, MB_StringPtr(toAddr(item.path), mb_string_sub_type_mb_string),
                              MB_StringPtr(toAddr(item.payload), mb_string_sub_type_mb_string), item.dataType,
-                             item.subType, item.method == m_get ? item.address.dout : item.address.din, item.address.query,
+                             item.subType, item.method == http_get ? item.address.dout : item.address.din, item.address.query,
                              item.address.priority, MB_StringPtr(toAddr(item.etag), mb_string_sub_type_mb_string),
                              item.async, _NO_QUEUE, item.blobSize,
                              MB_StringPtr(toAddr(item.filename), mb_string_sub_type_mb_string),
@@ -1157,8 +1157,7 @@ bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_
 
     FirebaseJsonArray arr;
 
-    // This is inefficient unless less memory usage than keep file opened
-    // which causes the issue in ESP32 core 2.0.x
+    // required for ESP32 core 2.0.x
     Signer.mbfs->open(_filename, mbfs_type storageType, mb_fs_open_mode_write);
 
     for (uint8_t i = 0; i < fbdo->_qMan.size(); i++)
@@ -1288,7 +1287,7 @@ uint8_t FB_RTDB::readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &it
                             item.subType = result.to<int>();
                             break;
                         case 2:
-                            item.method = (fb_esp_method)result.to<int>();
+                            item.method = (fb_esp_request_method)result.to<int>();
                             break;
                         case 3:
                             item.storageType = (fb_esp_mem_storage_type)result.to<int>();
@@ -1370,7 +1369,7 @@ uint8_t FB_RTDB::readQueueFileSdFat(FirebaseData *fbdo, MBFS_SD_FILE &file, Queu
                             item.subType = result.to<int>();
                             break;
                         case 2:
-                            item.method = (fb_esp_method)result.to<int>();
+                            item.method = (fb_esp_request_method)result.to<int>();
                             break;
                         case 3:
                             item.storageType = (fb_esp_mem_storage_type)result.to<int>();
@@ -1445,7 +1444,7 @@ bool FB_RTDB::mBackup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, M
     req.filename = fileName;
     Utils::makePath(req.filename);
     req.path = nodePath;
-    req.method = m_download;
+    req.method = rtdb_backup;
     req.data.type = d_json;
     req.storageType = storageType;
     req.downloadCallback = callback;
@@ -1461,7 +1460,7 @@ bool FB_RTDB::mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, 
     req.filename = fileName;
     Utils::makePath(req.filename);
     req.path = nodePath;
-    req.method = m_restore;
+    req.method = rtdb_restore;
     req.data.type = d_json;
     req.storageType = storageType;
     req.uploadCallback = callback;
@@ -1472,7 +1471,7 @@ bool FB_RTDB::mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, 
 
 void FB_RTDB::setPtrValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
-    if (req->data.address.dout > 0 && req->method == m_get)
+    if (req->data.address.dout > 0 && req->method == http_get)
     {
         if (req->data.type != d_file && req->data.type != d_file_ota)
         {
@@ -1515,7 +1514,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     else if (pc == 0)
         return true;
 
-    if (req->method != m_get)
+    if (req->method != http_get)
     {
         if (!fbdo->reconnect())
         {
@@ -1528,7 +1527,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 
     bool ret = false;
 
-    if (req->data.type == d_file && req->method == m_get)
+    if (req->data.type == d_file && req->method == http_get)
     {
         fbdo->session.rtdb.filename = req->filename;
 
@@ -1577,13 +1576,13 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 #if defined(ENABLE_ERROR_QUEUE)
         addQueueData(fbdo, req);
 #endif
-        if (!req->queue && req->method != m_get)
+        if (!req->queue && req->method != http_get)
             return ret;
     }
 
     if (ret)
     {
-        if (Signer.config->rtdb.data_type_stricted && req->method == m_get && req->data.type != d_any)
+        if (Signer.config->rtdb.data_type_stricted && req->method == http_get && req->data.type != d_any)
         {
             if (req->data.type == d_integer ||
                 req->data.type == d_float ||
@@ -1616,8 +1615,8 @@ void FB_RTDB::allowMultipleRequests(bool enable)
 void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_info_t *req)
 {
     fbdo->_responseCallback = NULL;
-    
-    if (req->method == m_stream)
+
+    if (req->method == rtdb_stream)
     {
         if (strcmp(req->path.c_str(), fbdo->session.rtdb.stream_path.c_str()) != 0)
             fbdo->session.rtdb.stream_path_changed = true;
@@ -1629,8 +1628,8 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
         !fbdo->session.connected ||
         millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.rtdb.stream_path_changed ||
-        (req->method == m_stream && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream) ||
-        (req->method != m_stream && fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream) ||
+        (req->method == rtdb_stream && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream) ||
+        (req->method != rtdb_stream && fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream) ||
         strcmp(host, fbdo->session.host.c_str()) != 0)
     {
         fbdo->session.last_conn_ms = millis();
@@ -1639,7 +1638,7 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
     }
 
     fbdo->session.host = host;
-    fbdo->session.con_mode = req->method == m_stream ? fb_esp_con_mode_rtdb_stream : fb_esp_con_mode_rtdb;
+    fbdo->session.con_mode = req->method == rtdb_stream ? fb_esp_con_mode_rtdb_stream : fb_esp_con_mode_rtdb;
 
     if (fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream)
         fbdo->session.rtdb.stream_resume_millis = 0;
@@ -1688,7 +1687,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
     {
         fbdo->session.connected = true;
 
-        if (req->method == m_stream)
+        if (req->method == rtdb_stream)
         {
             if (!waitResponse(fbdo, req))
             {
@@ -1696,9 +1695,9 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
                 return false;
             }
         }
-        else if (req->method == m_read_rules ||
-                 req->method == m_download ||
-                 ((req->data.type == d_file || req->data.type == d_file_ota) && req->method == m_get))
+        else if (req->method == rtdb_get_rules ||
+                 req->method == rtdb_backup ||
+                 ((req->data.type == d_file || req->data.type == d_file_ota) && req->method == http_get))
         {
             if (!waitResponse(fbdo, req))
             {
@@ -1721,9 +1720,9 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
                 sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
             }
         }
-        else if (req->method == m_set_rules ||
-                 req->method == m_restore ||
-                 (req->data.type == d_file && req->method == m_put_nocontent))
+        else if (req->method == rtdb_set_rules ||
+                 req->method == rtdb_restore ||
+                 (req->data.type == d_file && req->method == rtdb_set_nocontent))
         {
             if (!waitResponse(fbdo, req))
             {
@@ -1910,9 +1909,9 @@ int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
              (Signer.config->database_url.length() == 0 && Signer.config->host.length() == 0) ||
              (strlen(Signer.getToken()) == 0 && !Signer.config->signer.test_mode))
         code = FIREBASE_ERROR_MISSING_CREDENTIALS;
-    else if (req->method != m_stream &&
-             (req->method == m_put || req->method == m_post || req->method == m_patch ||
-              req->method == m_patch_nocontent || req->task_type == fb_esp_rtdb_task_store_rules) &&
+    else if (req->method != rtdb_stream &&
+             (req->method == http_put || req->method == http_post || req->method == http_patch ||
+              req->method == rtdb_update_nocontent || req->task_type == fb_esp_rtdb_task_store_rules) &&
              req->payload.length() == 0 && req->data.type != d_string && req->data.type != d_json &&
              req->data.type != d_array && req->data.type != d_blob && req->data.type != d_file_ota)
         code = FIREBASE_ERROR_MISSING_DATA;
@@ -1939,7 +1938,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
 
     rescon(fbdo, Signer.config->database_url.c_str(), req);
 
-    if (req->method == m_stream)
+    if (req->method == rtdb_stream)
     {
         fbdo->session.rtdb.stream_path.clear();
         Utils::makePath(req->path);
@@ -1949,7 +1948,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
     {
         fbdo->session.rtdb.resp_etag.clear();
 
-        if (req->method != m_download && req->method != m_restore)
+        if (req->method != rtdb_backup && req->method != rtdb_restore)
         {
             fbdo->session.rtdb.path.clear();
             Utils::makePath(req->path);
@@ -1973,15 +1972,15 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
     }
 
     // Prepare request header
-    if (req->method != m_download &&
-        req->method != m_restore &&
+    if (req->method != rtdb_backup &&
+        req->method != rtdb_restore &&
         req->data.type != d_file &&
         req->data.type != d_file_ota)
         ret = sendHeader(fbdo, req);
     else
     {
 
-        if (req->method == m_download || req->method == m_restore)
+        if (req->method == rtdb_backup || req->method == rtdb_restore)
         {
             int sz = openFile(fbdo, req, mb_fs_open_mode_undefined);
             if (sz < 0)
@@ -1993,7 +1992,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
             req->fileSize = sz;
             len = sz;
         }
-        else if (req->method == m_put_nocontent || req->method == m_post)
+        else if (req->method == rtdb_set_nocontent || req->method == http_post)
         {
             if (req->data.type == d_file)
             {
@@ -2010,9 +2009,9 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         ret = sendHeader(fbdo, req);
     }
 
-    if (req->method == m_get_nocontent ||
-        req->method == m_patch_nocontent ||
-        (req->method == m_put_nocontent && (req->data.type == d_blob || req->data.type == d_file)))
+    if (req->method == rtdb_get_nocontent ||
+        req->method == rtdb_update_nocontent ||
+        (req->method == rtdb_set_nocontent && (req->data.type == d_blob || req->data.type == d_file)))
         fbdo->session.rtdb.no_content_req = true;
 
     if (req->data.type == d_blob)
@@ -2085,8 +2084,8 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         }
     }
     else if (req->task_type == fb_esp_rtdb_task_upload_rules ||
-             req->method == m_restore ||
-             (req->data.type == d_file && (req->method == m_put_nocontent || req->method == m_post)))
+             req->method == rtdb_restore ||
+             (req->data.type == d_file && (req->method == rtdb_set_nocontent || req->method == http_post)))
     {
 
         if (req->uploadCallback)
@@ -2104,7 +2103,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
 
         int readLen = 0;
 
-        if (req->data.type == d_file && (req->method == m_put_nocontent || req->method == m_post))
+        if (req->data.type == d_file && (req->method == rtdb_set_nocontent || req->method == http_post))
         {
             MB_String s = fb_esp_pgm_str_93; // "\"file,base64,"
 
@@ -2130,8 +2129,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         }
         else
         {
-            // This is inefficient unless less memory usage than keep file opened
-            // which causes the issue in ESP32 core 2.0.x
+            // required for ESP32 core 2.0.x
             MB_String filenme = Signer.mbfs->name(mbfs_type req->storageType);
             Signer.mbfs->close(mbfs_type req->storageType);
             Signer.mbfs->open(filenme, mbfs_type req->storageType, mb_fs_open_mode_read);
@@ -2255,9 +2253,9 @@ int FB_RTDB::openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_fs
 {
     int sz = 0;
 
-    if (req->method == m_download)
+    if (req->method == rtdb_backup)
         sz = Signer.mbfs->open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_write);
-    else if (req->method == m_restore)
+    else if (req->method == rtdb_restore)
         sz = Signer.mbfs->open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_read);
     else
         sz = Signer.mbfs->open(req->filename, mbfs_type req->storageType, mode);
@@ -2309,7 +2307,7 @@ waits:
             return false;
     }
 
-    if ((req->task_type == fb_esp_rtdb_task_download_rules || req->method == m_download) &&
+    if ((req->task_type == fb_esp_rtdb_task_download_rules || req->method == rtdb_backup) &&
         !fbdo->prepareDownload(req->filename, (fb_esp_mem_storage_type)req->storageType))
         return false;
 
@@ -2354,7 +2352,7 @@ waits:
                                                          : fb_esp_http_connection_type_close;
 
             // store download size for file function
-            if (req->method == m_download)
+            if (req->method == rtdb_backup)
                 fbdo->session.rtdb.file_size = response.contentLen;
 
             if (response.httpCode >= 400)
@@ -2378,8 +2376,8 @@ waits:
         else if (tcpHandler.pChunkIdx > 0)
         {
             bool downloadRequired = req->task_type == fb_esp_rtdb_task_download_rules ||
-                                    req->method == m_download ||
-                                    ((req->data.type == d_file || tcpHandler.downloadOTA) && req->method == m_get);
+                                    req->method == rtdb_backup ||
+                                    ((req->data.type == d_file || tcpHandler.downloadOTA) && req->method == http_get);
 
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK && downloadRequired)
             {
@@ -2598,18 +2596,18 @@ bool FB_RTDB::parseTCPResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *r
 
     if (response.dataType == 0 && !response.isEvent)
     {
-        bool getOfs = req->data.type == d_blob || req->method == m_download ||
-                      ((req->data.type == d_file || tcpHandler.downloadOTA || req->data.type == d_any) && req->method == m_get);
+        bool getOfs = req->data.type == d_blob || req->method == rtdb_backup ||
+                      ((req->data.type == d_file || tcpHandler.downloadOTA || req->data.type == d_any) && req->method == http_get);
         HttpHelper::parseRespPayload(*tcpHandler.payload, response, getOfs);
 
         fbdo->session.rtdb.resp_data_type = response.dataType;
         fbdo->session.content_length = response.payloadLen;
 
         fbdo->session.error = response.fbError;
-        if (req->method == m_download || req->method == m_restore)
+        if (req->method == rtdb_backup || req->method == rtdb_restore)
             fbdo->session.error = response.fbError;
 
-        if (req->method == m_download && response.dataType != d_json)
+        if (req->method == rtdb_backup && response.dataType != d_json)
         {
             fbdo->session.response.code = FIREBASE_ERROR_EXPECTED_JSON_DATA;
 
@@ -2621,7 +2619,7 @@ bool FB_RTDB::parseTCPResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *r
             return false;
         }
 
-        if (req->method == m_get)
+        if (req->method == http_get)
         {
             if (StringHelper::compare(fbdo->session.rtdb.resp_etag, 0, fb_esp_pgm_str_151 /* "null_etag" */))
             {
@@ -3001,7 +2999,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
             fbdo->session.rtdb.resp_data_type = response.dataType;
             fbdo->session.content_length = response.payloadLen;
 
-            if (req->method == m_set_rules)
+            if (req->method == rtdb_set_rules)
             {
                 if (StringHelper::compare(payload, 0, fb_esp_pgm_str_104 /* "{\"status\":\"ok\"}" */))
                     payload.clear();
@@ -3011,7 +3009,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
                 fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_PRECONDITION_FAILED)
             {
 
-                if (req->method != m_set_rules && fbdo->session.rtdb.resp_data_type != d_blob &&
+                if (req->method != rtdb_set_rules && fbdo->session.rtdb.resp_data_type != d_blob &&
                     fbdo->session.rtdb.resp_data_type != d_file &&
                     fbdo->session.rtdb.resp_data_type != d_file_ota)
                 {
@@ -3023,7 +3021,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
                                                                   strlen_P(fb_esp_pgm_str_156 /* "/.priority" */));
 
                     // Push (POST) data? set push name
-                    if (req->method == m_post)
+                    if (req->method == http_post)
                     {
                         if (response.pushName.length() > 0)
                         {
@@ -3036,7 +3034,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
             }
 
             // mismatch data type check
-            if (Signer.config->rtdb.data_type_stricted && req->method == m_get &&
+            if (Signer.config->rtdb.data_type_stricted && req->method == http_get &&
                 req->data.type != d_timestamp &&
                 !response.noContent && response.httpCode < 400)
             {
@@ -3095,7 +3093,7 @@ void FB_RTDB::handlePayload(FirebaseData *fbdo, struct server_response_data_t &r
 int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
 {
     size_t len = 0;
-    if (req->method != m_get)
+    if (req->method != http_get)
     {
         if (req->data.address.din > 0)
         {
@@ -3120,7 +3118,7 @@ int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
             if (req->data.type == d_file || req->data.type == d_file_ota || req->data.type == d_blob)
                 len = (4 * ceil(req->fileSize / 3.0)) + strlen_P(fb_esp_pgm_str_92 /* "\"blob,base64," */) + 1;
         }
-        else if (req->method == m_restore)
+        else if (req->method == rtdb_restore)
             len = req->fileSize;
     }
     return len;
@@ -3128,7 +3126,7 @@ int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
 
 bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
-    fb_esp_method http_method = m_put;
+    fb_esp_request_method http_method = req->method;
     fbdo->session.rtdb.shallow_flag = false;
     fbdo->session.rtdb.priority_val_flag = false;
 
@@ -3146,52 +3144,50 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     MB_String header;
 
-    if (req->method == m_stream)
-        HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_get);
+    if (req->method == rtdb_stream)
+        HttpHelper::addRequestHeaderFirst(header, http_get);
     else
     {
-        if (req->method == m_put ||
-            req->method == m_put_nocontent ||
-            req->method == m_set_priority ||
-            req->method == m_set_rules)
+        if (req->method == http_put ||
+            req->method == rtdb_set_nocontent ||
+            req->method == rtdb_set_priority ||
+            req->method == rtdb_set_rules)
         {
-            http_method = m_put;
+            http_method = http_put;
             if (fbdo->session.classic_request)
-                HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_post);
+                HttpHelper::addRequestHeaderFirst(header, http_post);
             else
-                HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_put);
+                HttpHelper::addRequestHeaderFirst(header, http_put);
         }
-        else if (req->method == m_post)
+        else if (req->method == http_post)
         {
-            http_method = m_post;
-            HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_post);
+            HttpHelper::addRequestHeaderFirst(header, req->method);
         }
-        else if (req->method == m_get || req->method == m_get_nocontent ||
-                 req->method == m_get_shallow || req->method == m_get_priority ||
-                 req->method == m_download || req->method == m_read_rules)
+        else if (req->method == http_get || req->method == rtdb_get_nocontent ||
+                 req->method == rtdb_get_shallow || req->method == rtdb_get_priority ||
+                 req->method == rtdb_backup || req->method == rtdb_get_rules)
         {
-            http_method = m_get;
-            HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_get);
+            http_method = http_get;
+            HttpHelper::addRequestHeaderFirst(header, http_get);
         }
-        else if (req->method == m_patch || req->method == m_patch_nocontent || req->method == m_restore)
+        else if (req->method == http_patch || req->method == rtdb_update_nocontent || req->method == rtdb_restore)
         {
-            http_method = m_patch;
-            HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_patch);
+            http_method = http_patch;
+            HttpHelper::addRequestHeaderFirst(header, http_patch);
         }
-        else if (req->method == m_delete)
+        else if (req->method == http_delete)
         {
-            http_method = m_delete;
             if (fbdo->session.classic_request)
-                HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_post);
+                HttpHelper::addRequestHeaderFirst(header, http_post);
             else
-                HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_delete);
+                HttpHelper::addRequestHeaderFirst(header, http_delete);
         }
     }
 
     Utils::makePath(req->path);
     header += req->path;
 
-    if (req->method == m_patch || req->method == m_patch_nocontent)
+    if (req->method == http_patch || req->method == rtdb_update_nocontent)
         header += fb_esp_pgm_str_1; // "/"
 
     bool appendAuth = false;
@@ -3234,7 +3230,7 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         URLHelper::addParam(header, fb_esp_pgm_str_160 /* "writeSizeLimit=" */,
                             fbdo->session.rtdb.write_limit, hasQueryParams);
 
-    if (req->method == m_get_shallow)
+    if (req->method == rtdb_get_shallow)
     {
         URLHelper::addParam(header, fb_esp_pgm_str_155 /* "shallow=true" */, "", hasQueryParams, true);
         fbdo->session.rtdb.shallow_flag = true;
@@ -3242,14 +3238,14 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 
     QueryFilter *query = req->data.address.query > 0 ? addrTo<QueryFilter *>(req->data.address.query) : nullptr;
     bool hasQuery = false;
-    if (req->method == m_get && query)
+    if (req->method == http_get && query)
     {
         if (query->_orderBy.length() > 0)
         {
             hasQuery = true;
             URLHelper::addParam(header, fb_esp_pgm_str_96 /* "orderBy=" */, query->_orderBy, hasQueryParams);
 
-            if (req->method == m_get)
+            if (req->method == http_get)
             {
                 if (query->_limitToFirst.length() > 0)
                     URLHelper::addParam(header, fb_esp_pgm_str_97 /* "&limitToFirst=" */, query->_limitToFirst, hasQueryParams);
@@ -3269,18 +3265,18 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         }
     }
 
-    if (req->method == m_download)
+    if (req->method == rtdb_backup)
     {
         URLHelper::addParam(header, fb_esp_pgm_str_162 /* "format=export" */, "", hasQueryParams, true);
         URLHelper::addParam(header, fb_esp_pgm_str_28 /* "download=" */, fbdo->session.rtdb.filename, hasQueryParams);
     }
 
-    if (req->method == m_get && req->filename.length() > 0)
+    if (req->method == http_get && req->filename.length() > 0)
         URLHelper::addParam(header, fb_esp_pgm_str_28 /* "download=" */, fbdo->session.rtdb.filename, hasQueryParams);
 
-    if (req->async || req->method == m_get_nocontent ||
-        req->method == m_restore || req->method == m_put_nocontent ||
-        req->method == m_patch_nocontent)
+    if (req->async || req->method == rtdb_get_nocontent ||
+        req->method == rtdb_restore || req->method == rtdb_set_nocontent ||
+        req->method == rtdb_update_nocontent)
         URLHelper::addParam(header, fb_esp_pgm_str_29 /* "print=silent" */, "", hasQueryParams, true);
 
     HttpHelper::addRequestHeaderLast(header);
@@ -3310,32 +3306,32 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         HttpHelper::addNewLine(header);
     }
 
-    // Timestamp cannot use with ETag header, otherwise cases internal server error
+    // Timestamp cannot use with ETag header, due to internal server error
     if (!hasServerValue && !hasQuery && req->data.type != d_timestamp &&
-        (req->method == m_delete || req->method == m_get ||
-         req->method == m_get_nocontent || req->method == m_put ||
-         req->method == m_put_nocontent || req->method == m_post))
+        (req->method == http_delete || req->method == http_get ||
+         req->method == rtdb_get_nocontent || req->method == http_put ||
+         req->method == rtdb_set_nocontent || req->method == http_post))
         header += fb_esp_pgm_str_148; // "X-Firebase-ETag: true\r\n"
 
     if (fbdo->session.rtdb.req_etag.length() > 0 &&
-        (req->method == m_put || req->method == m_put_nocontent || req->method == m_delete))
+        (req->method == http_put || req->method == rtdb_set_nocontent || req->method == http_delete))
     {
         header += fb_esp_pgm_str_149; // "if-match: "
         header += fbdo->session.rtdb.req_etag;
         HttpHelper::addNewLine(header);
     }
 
-    if (fbdo->session.classic_request && http_method != m_get && http_method != m_post && http_method != m_patch)
+    if (fbdo->session.classic_request && http_method != http_get && http_method != http_post && http_method != http_patch)
     {
         header += fb_esp_pgm_str_153; // "X-HTTP-Method-Override: "
-        if (http_method == m_put)
-            HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_put);
-        else if (http_method == m_delete)
-            HttpHelper::addRequestHeaderFirst(header, fb_esp_method::m_delete);
+        if (http_method == http_put)
+            HttpHelper::addRequestHeaderFirst(header, http_put);
+        else if (http_method == http_delete)
+            HttpHelper::addRequestHeaderFirst(header, http_delete);
         HttpHelper::addNewLine(header);
     }
 
-    if (req->method == m_stream)
+    if (req->method == rtdb_stream)
     {
         fbdo->session.rtdb.http_req_conn_type = fb_esp_http_connection_type_keep_alive;
         HttpHelper::addConnectionHeader(header, false);
@@ -3349,16 +3345,16 @@ bool FB_RTDB::sendHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
         header += fb_esp_pgm_str_37; // "Keep-Alive: timeout=30, max=100\r\n"
     }
 
-    if (req->method != m_download && req->method != m_restore)
+    if (req->method != rtdb_backup && req->method != rtdb_restore)
         header += fb_esp_pgm_str_38; // "Accept-Encoding: identity;q=1,chunked;q=0.1,*;q=0\r\n"
 
-    if (req->method == m_get_priority || req->method == m_set_priority)
+    if (req->method == rtdb_get_priority || req->method == rtdb_set_priority)
         fbdo->session.rtdb.priority_val_flag = true;
 
-    if (req->method == m_put || req->method == m_put_nocontent ||
-        req->method == m_post || req->method == m_patch ||
-        req->method == m_patch_nocontent || req->method == m_restore ||
-        req->method == m_set_rules || req->method == m_set_priority)
+    if (req->method == http_put || req->method == rtdb_set_nocontent ||
+        req->method == http_post || req->method == http_patch ||
+        req->method == rtdb_update_nocontent || req->method == rtdb_restore ||
+        req->method == rtdb_set_rules || req->method == rtdb_set_priority)
     {
         header += fb_esp_pgm_str_12; // "Content-Length: "
         header += getPayloadLen(req);
@@ -3423,7 +3419,7 @@ bool FB_RTDB::connectionError(FirebaseData *fbdo)
 bool FB_RTDB::handleStreamRequest(FirebaseData *fbdo, const MB_String &path)
 {
     struct fb_esp_rtdb_request_info_t _req;
-    _req.method = m_stream;
+    _req.method = rtdb_stream;
     _req.data.type = d_string;
 
     if (fbdo->session.rtdb.redirect_url.length() > 0)

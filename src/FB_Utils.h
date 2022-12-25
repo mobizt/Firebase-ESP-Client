@@ -711,29 +711,29 @@ namespace HttpHelper
     }
 
     /* Append the string with first request line (HTTP method) */
-    inline bool addRequestHeaderFirst(MB_String &header, fb_esp_method method)
+    inline bool addRequestHeaderFirst(MB_String &header, fb_esp_request_method method)
     {
         bool post = false;
         switch (method)
         {
-        case fb_esp_method::m_get:
+        case http_get:
             header += fb_esp_pgm_str_25; // "GET"
             break;
-        case fb_esp_method::m_post:
+        case http_post:
             header += fb_esp_pgm_str_24; // "POST"
             post = true;
             break;
 
-        case fb_esp_method::m_patch:
+        case http_patch:
             header += fb_esp_pgm_str_26; // "PATCH"
             post = true;
             break;
 
-        case fb_esp_method::m_delete:
+        case http_delete:
             header += fb_esp_pgm_str_27; // "DELETE"
             break;
 
-        case fb_esp_method::m_put:
+        case http_put:
             header += fb_esp_pgm_str_23; // "PUT"
             break;
 
@@ -741,7 +741,7 @@ namespace HttpHelper
             break;
         }
 
-        if (method == m_get || method == m_post || method == m_patch || method == m_delete || method == m_put)
+        if (method == http_get || method == http_post || method == http_patch || method == http_delete || method == http_put)
             header += fb_esp_pgm_str_6; // " "
 
         return post;

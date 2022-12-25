@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.4
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.5
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 19, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -690,7 +690,7 @@ bool Firebase_Signer::refreshToken()
     jsonPtr->add(pgm2Str(fb_esp_pgm_str_207 /* "refreshToken" */), config->internal.refresh_token.c_str());
 
     MB_String req;
-    HttpHelper::addRequestHeaderFirst(req, m_post);
+    HttpHelper::addRequestHeaderFirst(req, http_post);
 
     req += fb_esp_pgm_str_204; // "/v1/token?Key=""
     req += config->api_key;
@@ -1352,7 +1352,7 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     jsonPtr->add(pgm2Str(fb_esp_pgm_str_198 /* "returnSecureToken" */), true);
 
     MB_String req;
-    HttpHelper::addRequestHeaderFirst(req, m_post);
+    HttpHelper::addRequestHeaderFirst(req, http_post);
 
     if (createUser)
         req += fb_esp_pgm_str_259; // "/v1/accounts:signUp?key="
@@ -1473,7 +1473,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
         jsonPtr->add(pgm2Str(fb_esp_pgm_str_200 /* "idToken" */), config->internal.auth_token);
 
     MB_String req;
-    HttpHelper::addRequestHeaderFirst(req, m_post);
+    HttpHelper::addRequestHeaderFirst(req, http_post);
     req += fb_esp_pgm_str_582; //"/v1/accounts:delete?key="
     req += config->api_key;
     HttpHelper::addRequestHeaderLast(req);
@@ -1648,7 +1648,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
         return false;
 
     MB_String req;
-    HttpHelper::addRequestHeaderFirst(req, m_post);
+    HttpHelper::addRequestHeaderFirst(req, http_post);
 
     if (config->signer.tokens.token_type == token_type_custom_token)
     {
@@ -1838,7 +1838,7 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     }
 
     MB_String req;
-    HttpHelper::addRequestHeaderFirst(req, m_post);
+    HttpHelper::addRequestHeaderFirst(req, http_post);
     req += fb_esp_pgm_str_194; // "/identitytoolkit/v3/relyingparty/"
     req += fb_esp_pgm_str_262; // "getOobConfirmationCode?key="
     req += config->api_key;

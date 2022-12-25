@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.18
+ * Google's Cloud Functions class, Functions.cpp version 1.1.19
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 12, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -480,13 +480,13 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     fbdo->session.cfn.requestType = req->requestType;
 
     MB_String header;
-    fb_esp_method method = m_undefined;
+    fb_esp_request_method method = http_undefined;
     if (req->requestType == fb_esp_functions_request_type_get_iam_policy ||
         req->requestType == fb_esp_functions_request_type_list_operations ||
         req->requestType == fb_esp_functions_request_type_get ||
         req->requestType == fb_esp_functions_request_type_get_iam_policy ||
         req->requestType == fb_esp_functions_request_type_list)
-        method = fb_esp_method::m_get;
+        method = http_get;
     else if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources ||
              req->requestType == fb_esp_functions_request_type_call ||
              req->requestType == fb_esp_functions_request_type_create ||
@@ -494,16 +494,16 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
              req->requestType == fb_esp_functions_request_type_gen_upload_url ||
              req->requestType == fb_esp_functions_request_type_set_iam_policy ||
              req->requestType == fb_esp_functions_request_type_test_iam_policy)
-        method = fb_esp_method::m_post;
+        method = http_post;
     else if (req->requestType == fb_esp_functions_request_type_patch)
-        method = fb_esp_method::m_patch;
+        method = http_patch;
     else if (req->requestType == fb_esp_functions_request_type_delete)
-        method = fb_esp_method::m_delete;
+        method = http_delete;
     else if (req->requestType == fb_esp_functions_request_type_upload ||
              req->requestType == fb_esp_functions_request_type_pgm_upload)
-        method = fb_esp_method::m_put;
+        method = http_put;
 
-    if (method != m_undefined)
+    if (method != http_undefined)
         post = HttpHelper::addRequestHeaderFirst(header, method);
 
     if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources ||

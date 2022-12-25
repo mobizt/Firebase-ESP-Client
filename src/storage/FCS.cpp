@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.2.3
+ * Google's Firebase Storage class, FCS.cpp version 1.2.4
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 12, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -378,19 +378,19 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     size_t len = 0;
     bool hasParams = false;
     ret = -1;
-    fb_esp_method method = m_undefined;
+    fb_esp_request_method method = http_undefined;
 
     if (req->requestType == fb_esp_fcs_request_type_upload || req->requestType == fb_esp_fcs_request_type_upload_pgm_data)
-        method = fb_esp_method::m_post;
+        method = http_post;
     else if (req->requestType == fb_esp_fcs_request_type_download ||
              req->requestType == fb_esp_fcs_request_type_download_ota ||
              req->requestType == fb_esp_fcs_request_type_get_meta ||
              req->requestType == fb_esp_fcs_request_type_list)
-        method = fb_esp_method::m_get;
+        method = http_get;
     else if (req->requestType == fb_esp_fcs_request_type_delete)
-        method = fb_esp_method::m_delete;
+        method = http_delete;
 
-    if (method != m_undefined)
+    if (method != http_undefined)
         HttpHelper::addRequestHeaderFirst(header, method);
 
     header += fb_esp_pgm_str_266; // "/v0/b/"

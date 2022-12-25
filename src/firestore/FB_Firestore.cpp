@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.2.0
+ * Google's Cloud Firestore class, Forestore.cpp version 1.2.1
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 24, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -526,12 +526,12 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     bool ret = false;
     bool hasParam = false;
     MB_String header;
-    fb_esp_method method = m_undefined;
+    fb_esp_request_method method = http_undefined;
     if (req->requestType == fb_esp_firestore_request_type_get_doc ||
         req->requestType == fb_esp_firestore_request_type_list_doc ||
         req->requestType == fb_esp_firestore_request_type_list_index ||
         req->requestType == fb_esp_firestore_request_type_get_index)
-        method = fb_esp_method::m_get;
+        method = http_get;
     else if (req->requestType == fb_esp_firestore_request_type_rollback ||
              req->requestType == fb_esp_firestore_request_type_begin_transaction ||
              req->requestType == fb_esp_firestore_request_type_commit_document ||
@@ -543,14 +543,14 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
              req->requestType == fb_esp_firestore_request_type_create_doc ||
              req->requestType == fb_esp_firestore_request_type_batch_get_doc ||
              req->requestType == fb_esp_firestore_request_type_create_index)
-        method = fb_esp_method::m_post;
+        method = http_post;
     else if (req->requestType == fb_esp_firestore_request_type_patch_doc)
-        method = fb_esp_method::m_patch;
+        method = http_patch;
     else if (req->requestType == fb_esp_firestore_request_type_delete_doc ||
              req->requestType == fb_esp_firestore_request_type_delete_index)
-        method = fb_esp_method::m_delete;
+        method = http_delete;
 
-    if (method != m_undefined)
+    if (method != http_undefined)
         HttpHelper::addRequestHeaderFirst(header, method);
 
     URLHelper::addGAPIv1Path(header);
@@ -671,7 +671,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
 
     HttpHelper::addRequestHeaderLast(header);
 
-    if (req->payload.length() > 0 && (method == fb_esp_method::m_post || method == fb_esp_method::m_patch))
+    if (req->payload.length() > 0 && (method == http_post || method == http_patch))
     {
         HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_129 /* "application/json" */);
         HttpHelper::addContentLengthHeader(header, req->payload.length());
@@ -704,7 +704,7 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
     fbdo->tcpClient.send(header.c_str());
     if (fbdo->session.response.code > 0 && req->payload.length() > 0 &&
-        (method == fb_esp_method::m_post || method == fb_esp_method::m_patch))
+        (method == http_post || method == http_patch))
     {
         if (req->uploadCallback)
         {

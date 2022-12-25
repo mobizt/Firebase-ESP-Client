@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.24
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.25
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 20, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -194,9 +194,9 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
 
     MB_String header;
     if (mode == fb_esp_fcm_msg_mode_app_instance_info)
-        HttpHelper::addRequestHeaderFirst(header, m_get);
+        HttpHelper::addRequestHeaderFirst(header, http_get);
     else
-        HttpHelper::addRequestHeaderFirst(header, m_post);
+        HttpHelper::addRequestHeaderFirst(header, http_post);
 
     if (msgMode)
     {

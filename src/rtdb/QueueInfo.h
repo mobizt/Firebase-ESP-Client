@@ -1,9 +1,9 @@
 /**
- * Google's Firebase QueueInfo class, QueueInfo.h version 1.0.5
+ * Google's Firebase QueueInfo class, QueueInfo.h version 1.0.6
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 19, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -44,7 +44,7 @@ struct QueueItem
 {
     fb_esp_data_type dataType = fb_esp_data_type::d_any;
     int subType = 0;
-    fb_esp_method method = fb_esp_method::m_get;
+    fb_esp_request_method method = http_get;
     uint32_t qID = 0;
     uint32_t timestamp = 0;
     uint8_t runCount = 0;

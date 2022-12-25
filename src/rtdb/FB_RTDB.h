@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.8
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.9
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created December 24, 2022
+ * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -257,7 +257,7 @@ public:
   template <typename T = const char *>
   bool setPriority(FirebaseData *fbdo, T path, float &priority)
   {
-    return buildRequest(fbdo, m_set_priority, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_priority, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority),
                         toStringPtr(_NO_ETAG), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -265,7 +265,7 @@ public:
   template <typename T = const char *>
   bool setPriorityAsync(FirebaseData *fbdo, T path, float &priority)
   {
-    return buildRequest(fbdo, m_set_priority, toStringPtr(path),
+    return buildRequest(fbdo, rtdb_set_priority, toStringPtr(path),
                         toStringPtr(_NO_PAYLOAD), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY,
                         toAddr(priority), toStringPtr(_NO_ETAG), _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -280,7 +280,7 @@ public:
   template <typename T = const char *>
   bool getPriority(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get_priority, toStringPtr(path),
+    return buildRequest(fbdo, rtdb_get_priority, toStringPtr(path),
                         toStringPtr(_NO_PAYLOAD), d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY,
                         _NO_PRIORITY, toStringPtr(_NO_ETAG), _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -298,7 +298,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool pushInt(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -306,7 +306,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -316,7 +316,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool pushInt(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -324,7 +324,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool pushIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -342,7 +342,7 @@ public:
   template <typename T = const char *>
   bool pushFloat(FirebaseData *fbdo, T path, float value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -350,7 +350,7 @@ public:
   template <typename T = const char *>
   bool pushFloatAsync(FirebaseData *fbdo, T path, float value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -360,7 +360,7 @@ public:
   template <typename T = const char *>
   bool pushFloat(FirebaseData *fbdo, T path, float value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -368,7 +368,7 @@ public:
   template <typename T = const char *>
   bool pushFloatAsync(FirebaseData *fbdo, T path, float value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -386,7 +386,7 @@ public:
   template <typename T = const char *>
   bool pushDouble(FirebaseData *fbdo, T path, double value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -394,7 +394,7 @@ public:
   template <typename T = const char *>
   bool pushDoubleAsync(FirebaseData *fbdo, T path, double value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -404,7 +404,7 @@ public:
   template <typename T = const char *>
   bool pushDouble(FirebaseData *fbdo, T path, double value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -412,7 +412,7 @@ public:
   template <typename T = const char *>
   bool pushDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -431,7 +431,7 @@ public:
   template <typename T = const char *>
   bool pushBool(FirebaseData *fbdo, T path, bool value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -439,7 +439,7 @@ public:
   template <typename T = const char *>
   bool pushBoolAsync(FirebaseData *fbdo, T path, bool value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -449,7 +449,7 @@ public:
   template <typename T = const char *>
   bool pushBool(FirebaseData *fbdo, T path, bool value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -457,7 +457,7 @@ public:
   template <typename T = const char *>
   bool pushBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -475,7 +475,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool pushString(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -483,7 +483,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool pushStringAsync(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -493,7 +493,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool pushString(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -501,7 +501,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool pushStringAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -519,7 +519,7 @@ public:
   template <typename T = const char *>
   bool pushJSON(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -527,7 +527,7 @@ public:
   template <typename T = const char *>
   bool pushJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -537,7 +537,7 @@ public:
   template <typename T = const char *>
   bool pushJSON(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -545,7 +545,7 @@ public:
   template <typename T = const char *>
   bool pushJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -564,7 +564,7 @@ public:
   template <typename T = const char *>
   bool pushArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -572,7 +572,7 @@ public:
   template <typename T = const char *>
   bool pushArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -582,7 +582,7 @@ public:
   template <typename T = const char *>
   bool pushArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -590,7 +590,7 @@ public:
   template <typename T = const char *>
   bool pushArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -609,7 +609,7 @@ public:
   template <typename T = const char *>
   bool pushBlob(FirebaseData *fbdo, T path, uint8_t *blob, size_t size)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, size, toStringPtr(_NO_FILE));
   }
@@ -617,7 +617,7 @@ public:
   template <typename T = const char *>
   bool pushBlobAsync(FirebaseData *fbdo, T path, uint8_t *blob, size_t size)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, size, toStringPtr(_NO_FILE));
   }
@@ -638,7 +638,7 @@ public:
   bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName,
                 RTDB_UploadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(fileName), storageType, NULL, callback);
   }
@@ -647,7 +647,7 @@ public:
   bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path,
                      T2 fileName, RTDB_UploadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(fileName), storageType, NULL, callback);
   }
@@ -664,7 +664,7 @@ public:
   template <typename T = const char *>
   bool pushTimestamp(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path),
+    return buildRequest(fbdo, http_post, toStringPtr(path),
                         toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
@@ -673,7 +673,7 @@ public:
   template <typename T = const char *>
   bool pushTimestampAsync(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path),
+    return buildRequest(fbdo, http_post, toStringPtr(path),
                         toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
@@ -692,7 +692,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool setInt(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -700,7 +700,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -710,7 +710,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -718,7 +718,7 @@ public:
   template <typename T1 = const char *, typename T2 = int>
   bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -743,7 +743,7 @@ public:
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
   bool setInt(FirebaseData *fbdo, T1 path, T2 value, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -751,7 +751,7 @@ public:
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
   bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -761,7 +761,7 @@ public:
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
   bool setInt(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -769,7 +769,7 @@ public:
   template <typename T1 = const char *, typename T2 = int, typename T3 = const char *>
   bool setIntAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -787,7 +787,7 @@ public:
   template <typename T = const char *>
   bool setFloat(FirebaseData *fbdo, T path, float value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -795,7 +795,7 @@ public:
   template <typename T = const char *>
   bool setFloatAsync(FirebaseData *fbdo, T path, float value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -805,7 +805,7 @@ public:
   template <typename T = const char *>
   bool setFloat(FirebaseData *fbdo, T path, float value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -813,7 +813,7 @@ public:
   template <typename T = const char *>
   bool setFloatAsync(FirebaseData *fbdo, T path, float value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -838,7 +838,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setFloat(FirebaseData *fbdo, T1 path, float value, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -846,7 +846,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -856,7 +856,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setFloat(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -864,7 +864,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setFloatAsync(FirebaseData *fbdo, T1 path, float value, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(false)),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -885,7 +885,7 @@ public:
   template <typename T = const char *>
   bool setDouble(FirebaseData *fbdo, T path, double value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -893,7 +893,7 @@ public:
   template <typename T = const char *>
   bool setDoubleAsync(FirebaseData *fbdo, T path, double value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -903,7 +903,7 @@ public:
   template <typename T = const char *>
   bool setDouble(FirebaseData *fbdo, T path, double value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -911,7 +911,7 @@ public:
   template <typename T = const char *>
   bool setDoubleAsync(FirebaseData *fbdo, T path, double value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -936,7 +936,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setDouble(FirebaseData *fbdo, T1 path, double value, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -944,7 +944,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -954,7 +954,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setDouble(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -962,7 +962,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setDoubleAsync(FirebaseData *fbdo, T1 path, double value, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, getPrec(true)),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -980,7 +980,7 @@ public:
   template <typename T = const char *>
   bool setBool(FirebaseData *fbdo, T path, bool value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -988,7 +988,7 @@ public:
   template <typename T = const char *>
   bool setBoolAsync(FirebaseData *fbdo, T path, bool value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -998,7 +998,7 @@ public:
   template <typename T = const char *>
   bool setBool(FirebaseData *fbdo, T path, bool value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1006,7 +1006,7 @@ public:
   template <typename T = const char *>
   bool setBoolAsync(FirebaseData *fbdo, T path, bool value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1031,7 +1031,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setBool(FirebaseData *fbdo, T1 path, bool value, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1039,7 +1039,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1049,7 +1049,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setBool(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1057,7 +1057,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setBoolAsync(FirebaseData *fbdo, T1 path, bool value, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1075,7 +1075,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setString(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1083,7 +1083,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1093,7 +1093,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setString(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1101,7 +1101,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1126,7 +1126,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
   bool setString(FirebaseData *fbdo, T1 path, T2 value, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1134,7 +1134,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
   bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1144,7 +1144,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
   bool setString(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1152,7 +1152,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
   bool setStringAsync(FirebaseData *fbdo, T1 path, T2 value, float &priority, T3 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1172,7 +1172,7 @@ public:
   template <typename T = const char *>
   bool setJSON(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(toStringPtr(_NO_PAYLOAD)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(toStringPtr(_NO_PAYLOAD)),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1180,7 +1180,7 @@ public:
   template <typename T = const char *>
   bool setJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(toStringPtr(_NO_PAYLOAD)),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(toStringPtr(_NO_PAYLOAD)),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1190,7 +1190,7 @@ public:
   template <typename T = const char *>
   bool setJSON(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1198,7 +1198,7 @@ public:
   template <typename T = const char *>
   bool setJSONAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1225,7 +1225,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setJSON(FirebaseData *fbdo, T1 path, FirebaseJson *json, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1233,7 +1233,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setJSONAsync(FirebaseData *fbdo, T1 path, FirebaseJson *json, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1243,7 +1243,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setJSON(FirebaseData *fbdo, T1 path, FirebaseJson *json, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1251,7 +1251,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setJSONAsync(FirebaseData *fbdo, T1 path, FirebaseJson *json, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1272,7 +1272,7 @@ public:
   template <typename T = const char *>
   bool setArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1280,7 +1280,7 @@ public:
   template <typename T = const char *>
   bool setArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1290,7 +1290,7 @@ public:
   template <typename T = const char *>
   bool setArray(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1298,7 +1298,7 @@ public:
   template <typename T = const char *>
   bool setArrayAsync(FirebaseData *fbdo, T path, FirebaseJsonArray *arr, float &priority)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1325,7 +1325,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setArray(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1333,7 +1333,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setArrayAsync(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1343,7 +1343,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setArray(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1351,7 +1351,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setArrayAsync(FirebaseData *fbdo, T1 path, FirebaseJsonArray *arr, float &priority, T2 ETag)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, toAddr(priority), toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1370,7 +1370,7 @@ public:
   template <typename T = const char *>
   bool setBlob(FirebaseData *fbdo, T path, uint8_t *blob, size_t size)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, toAddr(*blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, size, toStringPtr(_NO_FILE));
   }
@@ -1378,7 +1378,7 @@ public:
   template <typename T = const char *>
   bool setBlobAsync(FirebaseData *fbdo, T path, uint8_t *blob, size_t size)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, toAddr(*blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, size, toStringPtr(_NO_FILE));
   }
@@ -1401,7 +1401,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setBlob(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, toAddr(*blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, size, toStringPtr(_NO_FILE));
   }
@@ -1409,7 +1409,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool setBlobAsync(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 ETag)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, toAddr(*blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, size, toStringPtr(_NO_FILE));
   }
@@ -1429,7 +1429,7 @@ public:
   bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName,
                RTDB_UploadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(fileName), storageType, NULL, callback);
   }
@@ -1438,7 +1438,7 @@ public:
   bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path,
                     T2 fileName, RTDB_UploadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(fileName), storageType, NULL, callback);
   }
@@ -1462,7 +1462,7 @@ public:
   bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName,
                T3 ETag, RTDB_UploadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(fileName), storageType, NULL, callback);
   }
@@ -1471,7 +1471,7 @@ public:
   bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path,
                     T2 fileName, T3 ETag, RTDB_UploadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_put_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(fileName), storageType, NULL, callback);
   }
@@ -1491,7 +1491,7 @@ public:
   template <typename T = const char *>
   bool setTimestamp(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path),
+    return buildRequest(fbdo, http_put, toStringPtr(path),
                         toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
@@ -1500,7 +1500,7 @@ public:
   template <typename T = const char *>
   bool setTimestampAsync(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path),
+    return buildRequest(fbdo, http_put, toStringPtr(path),
                         toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
@@ -1521,7 +1521,7 @@ public:
   template <typename T = const char *>
   bool updateNode(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1529,7 +1529,7 @@ public:
   template <typename T = const char *>
   bool updateNodeAsync(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1539,7 +1539,7 @@ public:
   template <typename T = const char *>
   bool updateNode(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1547,7 +1547,7 @@ public:
   template <typename T = const char *>
   bool updateNodeAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_patch, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1565,7 +1565,7 @@ public:
   template <typename T = const char *>
   bool updateNodeSilent(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_patch_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_update_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1573,7 +1573,7 @@ public:
   template <typename T = const char *>
   bool updateNodeSilentAsync(FirebaseData *fbdo, T path, FirebaseJson *json)
   {
-    return buildRequest(fbdo, m_patch_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_update_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1583,7 +1583,7 @@ public:
   template <typename T = const char *>
   bool updateNodeSilent(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_patch_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_update_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1591,7 +1591,7 @@ public:
   template <typename T = const char *>
   bool updateNodeSilentAsync(FirebaseData *fbdo, T path, FirebaseJson *json, float &priority)
   {
-    return buildRequest(fbdo, m_patch_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, rtdb_update_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, getAddr(json), _NO_QUERY, toAddr(priority), toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1613,7 +1613,7 @@ public:
   template <typename T = const char *>
   bool get(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_any, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1637,7 +1637,7 @@ public:
   template <typename T = const char *>
   bool getInt(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_integer, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1655,7 +1655,7 @@ public:
   template <typename T1 = const char *, typename T2>
   bool getInt(FirebaseData *fbdo, T1 path, T2 target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_integer, getSubType(target), toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1677,7 +1677,7 @@ public:
   template <typename T = const char *>
   bool getFloat(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_float, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1695,7 +1695,7 @@ public:
   template <typename T1 = const char *, typename T2>
   bool getFloat(FirebaseData *fbdo, T1 path, T2 target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_float, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1720,7 +1720,7 @@ public:
   template <typename T = const char *>
   bool getDouble(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_double, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1738,7 +1738,7 @@ public:
   template <typename T1 = const char *, typename T2>
   bool getDouble(FirebaseData *fbdo, T1 path, T2 target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_double, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1760,7 +1760,7 @@ public:
   template <typename T = const char *>
   bool getBool(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_boolean, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1778,7 +1778,7 @@ public:
   template <typename T1 = const char *, typename T2>
   bool getBool(FirebaseData *fbdo, T1 path, T2 target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_boolean, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1800,7 +1800,7 @@ public:
   template <typename T = const char *>
   bool getString(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1818,7 +1818,7 @@ public:
   template <typename T1 = const char *, typename T2>
   bool getString(FirebaseData *fbdo, T1 path, T2 target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_string, getSubType(target), toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1840,7 +1840,7 @@ public:
   template <typename T = const char *>
   bool getJSON(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1859,7 +1859,7 @@ public:
   template <typename T = const char *>
   bool getJSON(FirebaseData *fbdo, T path, FirebaseJson *target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1896,7 +1896,7 @@ public:
   template <typename T = const char *>
   bool getJSON(FirebaseData *fbdo, T path, QueryFilter *query)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, _NO_REF, getAddr(query), _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1914,7 +1914,7 @@ public:
   template <typename T = const char *>
   bool getJSON(FirebaseData *fbdo, T path, QueryFilter *query, FirebaseJson *target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_json, _NO_SUB_TYPE, toAddr(*target), getAddr(query), _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1937,7 +1937,7 @@ public:
   template <typename T = const char *>
   bool getArray(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1955,7 +1955,7 @@ public:
   template <typename T = const char *>
   bool getArray(FirebaseData *fbdo, T path, FirebaseJsonArray *target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1993,7 +1993,7 @@ public:
   template <typename T = const char *>
   bool getArray(FirebaseData *fbdo, T path, QueryFilter *query)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, _NO_REF, getAddr(query), _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2011,7 +2011,7 @@ public:
   template <typename T = const char *>
   bool getArray(FirebaseData *fbdo, T path, QueryFilter *query, FirebaseJsonArray *target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_array, _NO_SUB_TYPE, toAddr(*target), getAddr(query), _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2033,7 +2033,7 @@ public:
   template <typename T = const char *>
   bool getBlob(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2051,7 +2051,7 @@ public:
   template <typename T = const char *>
   bool getBlob(FirebaseData *fbdo, T path, MB_VECTOR<uint8_t> *target)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_blob, _NO_SUB_TYPE, toAddr(*target), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2072,7 +2072,7 @@ public:
   bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath,
                T2 fileName, RTDB_DownloadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(nodePath), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(nodePath), toStringPtr(_NO_PAYLOAD),
                         d_file, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(fileName), storageType, callback);
   }
@@ -2091,7 +2091,7 @@ public:
   template <typename T = const char *>
   bool downloadOTA(FirebaseData *fbdo, T fwPath, RTDB_DownloadProgressCallback callback = NULL)
   {
-    return buildRequest(fbdo, m_get, toStringPtr(fwPath), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_get, toStringPtr(fwPath), toStringPtr(_NO_PAYLOAD),
                         d_file_ota, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE), mem_storage_type_undefined, callback);
   }
@@ -2105,7 +2105,7 @@ public:
   template <typename T = const char *>
   bool deleteNode(FirebaseData *fbdo, T path)
   {
-    return buildRequest(fbdo, m_delete, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_delete, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2123,7 +2123,7 @@ public:
   template <typename T1 = const char *, typename T2 = const char *>
   bool deleteNode(FirebaseData *fbdo, T1 path, T2 ETag)
   {
-    return buildRequest(fbdo, m_delete, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
+    return buildRequest(fbdo, http_delete, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
                         d_string, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(ETag),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2609,7 +2609,7 @@ private:
   bool encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_String &filePath,
                           fb_esp_mem_storage_type storageType, struct fb_esp_rtdb_request_info_t *req);
   void setPtrValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  bool buildRequest(FirebaseData *fbdo, fb_esp_method method, MB_StringPtr path, MB_StringPtr payload,
+  bool buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_StringPtr path, MB_StringPtr payload,
                     fb_esp_data_type type, int subtype, uint32_t value_addr, uint32_t query_addr, uint32_t priority_addr,
                     MB_StringPtr etag, bool async, bool queue, size_t blob_size, MB_StringPtr filename,
                     fb_esp_mem_storage_type storage_type = mem_storage_type_undefined,
@@ -2724,7 +2724,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) ->
       typename enable_if<is_string<T1>::value && is_num_int<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1), d_integer,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1), d_integer,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(_NO_ETAG), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2733,7 +2733,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) ->
       typename enable_if<is_string<T1>::value && is_bool<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1), d_boolean,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1), d_boolean,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(_NO_ETAG), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2742,7 +2742,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, float>::value, bool>::type
   {
-    return bbuildRequestEQ(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1), d_float,
+    return bbuildRequestEQ(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1), d_float,
                            _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(_NO_ETAG), async, _NO_QUEUE,
                            _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2751,7 +2751,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, double>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value, -1), d_double,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value, -1), d_double,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(_NO_ETAG), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2760,7 +2760,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, bool async) ->
       typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(value), d_string,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(value), d_string,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(_NO_ETAG), async,
                         _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2769,7 +2769,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJson *>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_json,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_json,
                         _NO_SUB_TYPE, getAddr(json), _NO_QUERY, priority_addr, toStringPtr(_NO_ETAG), async,
                         _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2778,7 +2778,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJsonArray *>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_array,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_array,
                         _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, priority_addr, toStringPtr(_NO_ETAG), async,
                         _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2787,7 +2787,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 blob, size_t size, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, uint8_t *>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_blob,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_blob,
                         _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), async,
                         _NO_QUEUE, size, toStringPtr(_NO_FILE));
   }
@@ -2796,7 +2796,7 @@ protected:
   auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, bool async) ->
       typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_file,
+    return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_file,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(filename), storageType);
   }
@@ -2805,7 +2805,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_bool<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1), d_boolean,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1), d_boolean,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2814,7 +2814,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_num_int<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1), d_integer,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1), d_integer,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2823,7 +2823,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, float>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1), d_float,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1), d_float,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2832,7 +2832,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, double>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value, -1), d_double,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value, -1), d_double,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2841,7 +2841,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 value, int priority_addr, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(value), d_string,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(value), d_string,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, priority_addr, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2850,7 +2850,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 json, int priority_addr, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJson *>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_json,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_json,
                         _NO_SUB_TYPE, getAddr(json), _NO_QUERY, priority_addr, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2859,7 +2859,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 arr, int priority_addr, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_same<T2, FirebaseJsonArray *>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_array,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_array,
                         _NO_SUB_TYPE, getAddr(arr), _NO_QUERY, priority_addr, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2868,7 +2868,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, uint8_t *blob, size_t size, T2 etag, bool async) ->
       typename enable_if<is_string<T1>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_blob,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_blob,
                         _NO_SUB_TYPE, toAddr(blob), _NO_QUERY, _NO_PRIORITY, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2877,7 +2877,7 @@ protected:
   auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
-    return buildRequest(fbdo, m_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_file,
+    return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_file,
                         _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(etag), async, _NO_QUEUE,
                         _NO_BLOB_SIZE, toStringPtr(filename), storageType);
   }
