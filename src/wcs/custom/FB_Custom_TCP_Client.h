@@ -4,7 +4,7 @@
  * Created December 19, 2022
  *
  * The MIT License (MIT)
- * Copyright (c) 2022 K. Suwatchai (Mobizt)
+ * Copyright (c) 2023 K. Suwatchai (Mobizt)
  *
  * TCPClient Arduino library for ESP32
  *

@@ -5,7 +5,7 @@
   
   Created December 20, 2021
 
-  Copyright (c) 2022 Mobizt (K. Suwatchai)
+  Copyright (c) 2023 Mobizt (K. Suwatchai)
 
   Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
 

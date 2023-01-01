@@ -5,7 +5,7 @@
  *
  * Github: https://github.com/mobizt/FirebaseJson
  *
- * Copyright (c) 2022 mobizt
+ * Copyright (c) 2023 mobizt
  *
  */
 

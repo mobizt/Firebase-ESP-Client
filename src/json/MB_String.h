@@ -1,6 +1,6 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.8
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.9
  *
  * Created December 3, 2022
  *
@@ -53,7 +53,7 @@
  * - Initial release
  *
  * The MIT License (MIT)
- * Copyright (c) 2022 K. Suwatchai (Mobizt)
+ * Copyright (c) 2023 K. Suwatchai (Mobizt)
  *
  *
  * Permission is hereby granted, free of charge, to any person returning a copy of
