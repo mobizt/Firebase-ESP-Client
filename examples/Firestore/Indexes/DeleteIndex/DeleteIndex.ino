@@ -13,7 +13,8 @@
 // This example will show how to delete an index.
 // This operation required OAUth2.0 authentication.
 
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>

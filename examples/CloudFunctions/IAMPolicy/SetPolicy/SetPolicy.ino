@@ -26,8 +26,8 @@
 /** Due to the processing power in ESP8266 is weaker than ESP32, the OAuth2.0 token generation takes time then this example
  * will check for token to be ready in loop prior to set the IAM Policy.
  */
-
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>

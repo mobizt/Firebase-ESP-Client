@@ -22,8 +22,8 @@
  * This example will modify the database rules to set up the security rule which need to
  * guard the unauthorized access with the user Email.
  */
-
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>

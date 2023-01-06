@@ -134,6 +134,11 @@ public:
         return mPatchFunction(fbdo, toStringPtr(functionId), patchData);
     }
 
+    /** Run Functions deploying tasks manually
+     * To manually triggering the deploy task callback function, this should call repeatedly in loop().
+     */
+    void runDeployTasks() { mRunDeployTasks();};
+
     /** Sets the IAM access control policy on the specified function. Replaces any existing policy.
      *
      * @param fbdo The pointer to Firebase Data Object.
@@ -362,11 +367,13 @@ private:
                         MB_StringPtr pageSize, MB_StringPtr pageToken);
     bool mListOperations(FirebaseData *fbdo, MB_StringPtr filter, MB_StringPtr pageSize, MB_StringPtr pageToken);
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(ENABLE_PICO_FREE_RTOS)
     void runDeployTask(const char *taskName);
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
     void runDeployTask();
 #endif
+
+   void mRunDeployTasks();
 };
 
 #endif

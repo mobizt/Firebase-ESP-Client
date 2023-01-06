@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.2.1
+ * Firebase TCP Client v1.2.2
  *
- * Created December 19, 2022
+ * Created January 7, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -28,7 +28,8 @@
 #ifndef FB_TCP_Client_CPP
 #define FB_TCP_Client_CPP
 
-#if defined(ESP8266) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#include <Arduino.h>
+#if (defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #include "FB_TCP_Client.h"
 
@@ -92,7 +93,7 @@ bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type s
         mbfs->read(storageType, der, len);
       mbfs->close(storageType);
       wcs->setTrustAnchors(new X509List(der, len));
-      MemoryHelper::freeBuffer(mbfs,der);
+      MemoryHelper::freeBuffer(mbfs, der);
       baseSetCertType(fb_cert_type_file);
     }
   }
@@ -115,7 +116,11 @@ bool FB_TCP_Client::networkReady()
 
 void FB_TCP_Client::networkReconnect()
 {
+#if defined(ESP8266)
   WiFi.reconnect();
+#else
+
+#endif
 }
 
 void FB_TCP_Client::networkDisconnect()
@@ -160,6 +165,7 @@ bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
 int FB_TCP_Client::beginUpdate(int len, bool verify)
 {
   int code = 0;
+#if defined(ESP8266)
   if (len > (int)ESP.getFreeSketchSpace())
   {
     code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
@@ -197,6 +203,10 @@ int FB_TCP_Client::beginUpdate(int len, bool verify)
       code = FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
     }
   }
+#elif defined(PICO_RP2040)
+  if (!Update.begin(len))
+    code = FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
+#endif
   return code;
 }
 

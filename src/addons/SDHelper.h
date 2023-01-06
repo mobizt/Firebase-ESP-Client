@@ -20,6 +20,8 @@
 #define SPI_CLOCK_IN_MHz 16
 #elif defined(ESP8266)
 #define SPI_CS_PIN 15
+#elif defined(PICO_RP2040)
+#define SPI_CS_PIN PIN_SPI1_SS
 #endif
 
 // if SdFat library installed and FirebaseFS.h was set to use it (for ESP32 only)
@@ -32,7 +34,7 @@ SdSpiConfig sdFatSPIConfig(SPI_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(SPI_CLOCK_IN_MH
 
 SPIClass spi;
 
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(PICO_RP2040)
 
 // SDFSConfig sdFSConfig(SPI_CS_PIN, SPI_HALF_SPEED);
 
@@ -43,6 +45,7 @@ SPIClass spi;
 bool SD_Card_Mounting()
 {
 
+#if defined(FIREBASE_ESP_CLIENT) || defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
     Serial.print("\nMounting SD Card... ");
@@ -56,7 +59,7 @@ bool SD_Card_Mounting()
     spi.begin(SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, SPI_CS_PIN); // SPI pins config -> SCK,MISO, MOSI, SS
     if (!Firebase.sdBegin(SPI_CS_PIN, &spi))                        // SS, pointer to SPIClass <- SPIClass object should defined as static or global
 
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(PICO_RP2040)
 
     if (!Firebase.sdBegin(SPI_CS_PIN)) // or Firebase.sdBegin(&sdFSConfig)
 
@@ -86,6 +89,8 @@ bool SD_Card_Mounting()
         Serial.println("success\n");
         return true;
     }
+#endif
+
 #endif
 
     return false;

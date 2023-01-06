@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 3.0.3
+ * FirebaseJson, version 3.0.4
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created December 3, 2022
+ * Created January 6, 2023
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -756,13 +756,19 @@ protected:
     }
 
 #if defined(MB_JSON_FS_H)
-
+#if defined(PICO_RP2040)
+    template <typename T>
+    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, fs::File>::value, bool>::type
+    {
+        return writeStream(out, prettify);
+    }
+#else
     template <typename T>
     auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, File>::value, bool>::type
     {
         return writeStream(out, prettify);
     }
-
+#endif
 #endif
 
     template <typename T>
@@ -1026,7 +1032,7 @@ protected:
             tokenSubString(src, response.contentType, fb_json_str_3 /* "Content-Type: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false);
             tokenSubStringInt(src, response.contentLen, fb_json_str_6 /* "Content-Length: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false);
             response.payloadLen = response.contentLen;
-            if (tokenSubString(src, response.transferEnc, fb_json_str_8 /* "Transfer-Encoding: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false) && response.transferEnc.find((const char*)MBSTRING_FLASH_MCR("chunked")) != MB_String::npos)
+            if (tokenSubString(src, response.transferEnc, fb_json_str_8 /* "Transfer-Encoding: " */, fb_json_str_7 /* "\r\n" */, beginPos, 0, false) && response.transferEnc.find((const char *)MBSTRING_FLASH_MCR("chunked")) != MB_String::npos)
                 response.isChunkedEnc = true;
 
             if (response.httpCode == FBJS_ERROR_HTTP_CODE_OK || response.httpCode == FBJS_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_PERMANENT_REDIRECT || response.httpCode == FBJS_ERROR_HTTP_CODE_MOVED_PERMANENTLY || response.httpCode == FBJS_ERROR_HTTP_CODE_FOUND)

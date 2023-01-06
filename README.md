@@ -1,11 +1,11 @@
-# Firebase Arduino Client Library for ESP8266 and ESP32
+# Firebase Arduino Client Library for ESP8266, ESP32 and RP2040 Pico
 
 ![Compile](https://github.com/mobizt/Firebase-ESP-Client/actions/workflows/compile_library.yml/badge.svg) ![Examples](https://github.com/mobizt/Firebase-ESP-Client/actions/workflows/compile_examples.yml/badge.svg)  [![Github Stars](https://img.shields.io/github/stars/mobizt/Firebase-ESP-Client?logo=github)](https://github.com/mobizt/Firebase-ESP-Client/stargazers) ![Github Issues](https://img.shields.io/github/issues/mobizt/Firebase-ESP-Client?logo=github)
 
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg)
 
 
-The managed, complete, fast and secure Firebase Client Library that supports ESP8266 and ESP32 MCU from Espressif. The following are platforms in which the libraries are also available (RTDB only).
+The managed, complete, fast and secure Firebase Client Library that supports ESP8266 and ESP32 MCU from Espressif and RP2040 Pico from Raspberry Pi. The following are platforms in which the libraries are also available (RTDB only).
 
 
 * [Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
@@ -35,6 +35,9 @@ This issue can't be fixed in the external client that uses Arduino Client derive
 
 This OTA download and file upload/download functions using external Client may affected by this issue.
 
+For Raspberry Pi Pico, by including `FreeRTOS.h`, Pico device will hang when format or writing data to flash filesystem (LittleFS).
+
+
 
 ## Tested Devices
 
@@ -48,6 +51,7 @@ This OTA download and file upload/download functions using external Client may a
  * NodeMCU ESP8266
  * Wemos D1 Mini (ESP8266)
  * Arduino MKR WiFi 1010
+ * RP2040 Pico W
  * LAN8720 Ethernet PHY
  * ENC28J60 SPI Ethernet module
 
@@ -94,7 +98,7 @@ This OTA download and file upload/download functions using external Client may a
 ## Dependencies
 
 
-This library required **ESP8266 or ESP32 Core SDK**.
+This library required **ESP8266 or ESP32 or RP2040 Pico Core SDK**.
 
 ESP8266 Core SDK v2.5.0 and older versions are not supported.
 
@@ -102,7 +106,7 @@ For Arduino IDE, ESP8266 Core SDK can be installed through **Boards Manager**.
 
 For PlatfoemIO IDE, ESP8266 Core SDK can be installed through **PIO Home** > **Platforms** > **Espressif 8266 or Espressif 32**.
 
-
+The RP2040 boards required Arduino-Pico SDK from Earle F. Philhower https://github.com/earlephilhower/arduino-pico
 
 ## Migrate from Firebase-ESP8266 or Firebase-ESP32 to Firebase-ESP-Client
 
@@ -156,6 +160,25 @@ For example, the library version 2.7.7 and earlier were installed manually by do
 
 In this case, you need to delete **Firebase-ESP-Client-main** folder from libraries folder.
 
+
+## RP2040 Arduino SDK installation
+
+For Arduino IDE, the Arduino-Pico SDK can be installed from Boards Manager by searching pico and choose Raspberry Pi Pico/RP2040 to install.
+
+For PlatformIO, the Arduino-Pico SDK can be installed via platformio.ini
+
+```ini
+[env:rpipicow]
+platform = https://github.com/maxgerhardt/platform-raspberrypi.git
+board = rpipicow
+framework = arduino
+board_build.core = earlephilhower
+monitor_speed = 115200
+```
+
+See this Arduino-Pico SDK [documentation](https://arduino-pico.readthedocs.io/en/latest/) for more information.
+
+
 ## Usages
 
 
@@ -171,7 +194,8 @@ See [function description](/src/README.md) for all available functions.
 ```cpp
 
 // Include WiFi library
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>

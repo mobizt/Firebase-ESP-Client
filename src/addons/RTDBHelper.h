@@ -16,7 +16,7 @@
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #if defined(ESP32)
 #include <FirebaseESP32.h>
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(PICO_RP2040)
 #include <FirebaseESP8266.h>
 #endif
 #endif
@@ -28,7 +28,11 @@ void printResult(FirebaseData &data)
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
         Serial.println(data.to<float>(), 5);
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+#if defined(PICO_RP2040)
+        Serial.printf("%.9lf\n", data.to<double>());
+#else
         printf("%.9lf\n", data.to<double>());
+#endif
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
         Serial.println(data.to<bool>() == 1 ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string)
@@ -77,7 +81,11 @@ void printResult(FirebaseData &data)
             else if (result.typeNum == FirebaseJson::JSON_FLOAT)
                 Serial.println(result.to<float>());
             else if (result.typeNum == FirebaseJson::JSON_DOUBLE)
+#if defined(PICO_RP2040)
+                Serial.printf("%.9lf\n", result.to<double>());
+#else
                 printf("%.9lf\n", result.to<double>());
+#endif
             else if (result.typeNum == FirebaseJson::JSON_STRING ||
                      result.typeNum == FirebaseJson::JSON_NULL ||
                      result.typeNum == FirebaseJson::JSON_OBJECT ||
@@ -137,7 +145,11 @@ void printResult(FIREBASE_STREAM_CLASS &data)
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
         Serial.println(data.to<float>(), 5);
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
-        printf((const char *)FPSTR("%.9lf\n"), data.to<double>());
+#if defined(PICO_RP2040)
+        Serial.printf("%.9lf\n", data.to<double>());
+#else
+        printf("%.9lf\n", data.to<double>());
+#endif
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
         Serial.println(data.to<bool>() == 1 ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string || data.dataTypeEnum() == fb_esp_rtdb_data_type_null)
@@ -188,7 +200,11 @@ void printResult(FIREBASE_STREAM_CLASS &data)
             else if (result.typeNum == FirebaseJson::JSON_FLOAT)
                 Serial.println(result.to<float>());
             else if (result.typeNum == FirebaseJson::JSON_DOUBLE)
+#if defined(PICO_RP2040)
+                Serial.printf("%.9lf\n", result.to<double>());
+#else
                 printf("%.9lf\n", result.to<double>());
+#endif
             else if (result.typeNum == FirebaseJson::JSON_STRING ||
                      result.typeNum == FirebaseJson::JSON_NULL ||
                      result.typeNum == FirebaseJson::JSON_OBJECT ||

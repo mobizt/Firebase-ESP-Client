@@ -11,7 +11,8 @@
 
 // This example shows how to update firmware file OTA via data stored in RTDB.
 
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
@@ -116,7 +117,11 @@ void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
         Serial.println();
         Serial.println("Restarting...\n\n");
         delay(2000);
+#if defined(ESP32) || defined(ESP8266)
         ESP.restart();
+#elif defined(PICO_RP2040)
+        rp2040.restart();
+#endif
     }
     else if (info.status == fb_esp_rtdb_download_status_error)
     {

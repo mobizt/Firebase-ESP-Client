@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.3.3
+ * Google's Firebase Data class, FB_Session.h version 1.3.4
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 25, 2022
+ * Created January 6, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -290,7 +290,6 @@ class FirebaseData
 #endif
 
 public:
-
 #ifdef ENABLE_RTDB
   typedef void (*StreamEventCallback)(FIREBASE_STREAM_CLASS);
   typedef void (*MultiPathStreamEventCallback)(FIREBASE_MP_STREAM_CLASS);
@@ -333,7 +332,7 @@ public:
    */
   void setNetworkStatus(bool status);
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(PICO_RP2040)
   /** Set the receive and transmit buffer memory size for secured mode BearSSL WiFi client.
    *
    * @param rx The number of bytes for receive buffer memory for secured mode BearSSL (512 is minimum, 16384 is maximum).
@@ -373,7 +372,7 @@ public:
   bool isPause();
 #endif
 
-#if (defined(ESP32) || defined(ESP8266)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
   /** Get a WiFi client instance.
    *
    * @return WiFi client instance.
@@ -894,8 +893,7 @@ public:
 #endif
 
 private:
-
-FB_ResponseCallback _responseCallback = NULL;
+  FB_ResponseCallback _responseCallback = NULL;
 
 #ifdef ENABLE_RTDB
   StreamEventCallback _dataAvailableCallback = NULL;
@@ -978,7 +976,7 @@ FB_ResponseCallback _responseCallback = NULL;
                         struct fb_esp_fcs_file_list_item_t *fileitem);
 #endif
 
-#if defined(ESP32) && defined(ENABLE_RTDB)
+#if (defined(ESP32) || defined(PICO_RP2040)) && defined(ENABLE_RTDB)
   const char *getTaskName(size_t taskStackSize, bool isStream);
 #endif
 

@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-#ifdef ESP8266
+#include <Arduino.h>
+#if defined(ESP8266) || defined(PICO_RP2040)
 
 #include "inner.h"
 

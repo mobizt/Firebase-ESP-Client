@@ -1,18 +1,18 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.3.0"
+#define FIREBASE_CLIENT_VERSION "4.3.1"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.0
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.1
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs
  *
- * Created December 19, 2022
+ * Created January 7, 2023
  *
  *   Updates:
  * - Bugs fixed.
- * - Code optimization.
- * - Add support custom config file.
+ * - Add support RP2040 Pico.
+ * - Add runStream for RTDB and runDeployTasks for Functions.
  *
  *
  * This work is a part of Firebase ESP Client library

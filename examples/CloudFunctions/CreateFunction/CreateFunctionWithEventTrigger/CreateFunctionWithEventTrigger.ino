@@ -27,7 +27,7 @@
  * You need to upload the zip file "gcf.zip" in the data folder to the falsh memory at "/gcf.zip".
  *
  * File gcf.zip contains the sources of function firestoreImageDownloadTrigger.
- * 
+ *
  * The name of zip file should be short to avoid long file name image data upload error in IDE.
  *
  * After the firestoreImageDownloadTrigger function in gcf.zip was deployed successfully, create the collection "ImageList" and try to add the document in it which contains the field url and name fields.
@@ -54,8 +54,8 @@
  * the final result may fail due to bugs in the user function, missing dependencies,
  * and incorrect configurations.
  */
-
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
@@ -151,6 +151,11 @@ void setup()
 void loop()
 {
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
+#if defined(PICO_RP2040)
+    if (Firebase.ready())
+        Firebase.Functions.runDeployTasks();
+#endif
 
     if (Firebase.ready() && !taskCompleted)
     {

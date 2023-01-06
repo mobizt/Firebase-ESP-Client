@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.3
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.4
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 25, 2022
+ * Created January 6, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -469,7 +469,7 @@ bool FirebaseData::isStream()
 
 bool FirebaseData::streamTimeout()
 {
-    if (session.rtdb.stream_stop)
+    if (session.rtdb.stream_stop || Signer.isExpired())
         return false;
 
     if (!Signer.config)
@@ -540,7 +540,7 @@ void FirebaseData::addQueue(QueueItem *qItem)
 
 #endif
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(PICO_RP2040)
 void FirebaseData::setBSSLBufferSize(uint16_t rx, uint16_t tx)
 {
     if (rx >= 512 && rx <= 16384)
@@ -570,7 +570,7 @@ void FirebaseData::closeFile()
     Signer.mbfs->close(mbfs_type mem_storage_type_sd);
 }
 
-#if (defined(ESP32) || defined(ESP8266)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 WiFiClientSecure *FirebaseData::getWiFiClient()
 {
     return tcpClient.wcs.get();
@@ -906,7 +906,7 @@ void FirebaseData::setSecure()
     if (!tcpClient.networkReady())
         return;
 
-#if defined(ESP8266) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if (defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
     if (Signer.getTime() > ESP_DEFAULT_TS)
     {
         if (Signer.config)
@@ -1195,9 +1195,9 @@ bool FirebaseData::prepareDownload(const MB_String &filename, fb_esp_mem_storage
 
 void FirebaseData::prepareDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
 {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
     int size = tcpHandler.decodedPayloadLen > 0 ? tcpHandler.decodedPayloadLen : response.contentLen;
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
     tcpHandler.error.code = 0;
     if (!Update.begin(size))
         tcpHandler.error.code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
@@ -1211,7 +1211,7 @@ void FirebaseData::prepareDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpH
 
 void FirebaseData::endDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpHandler)
 {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
 
     if (tcpHandler.error.code == 0 && !Update.end())
         tcpHandler.error.code = FIREBASE_ERROR_FW_UPDATE_END_FAILED;
@@ -1349,7 +1349,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
 
         if (isOTA)
         {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
             if (tcpHandler.error.code == 0)
             {
                 bool ret = false;
@@ -1392,7 +1392,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
                 else
 #endif
                     ret = Signer.mbfs->write(mbfs_type type, buf, tcpHandler.bufferAvailable) == (int)tcpHandler.bufferAvailable;
-
+                delay(0);
                 if (!ret)
                     tcpHandler.error.code = MB_FS_ERROR_FILE_IO_ERROR;
 
@@ -1630,7 +1630,7 @@ void FirebaseData::getAllUploadInfo(int type, int &currentStage, const MB_String
 }
 #endif
 
-#if defined(ESP32) && defined(ENABLE_RTDB)
+#if (defined(ESP32) || defined(PICO_RP2040)) && defined(ENABLE_RTDB)
 const char *FirebaseData::getTaskName(size_t taskStackSize, bool isStream)
 {
     MB_String taskName = fb_esp_pgm_str_72; // "task"
@@ -1968,7 +1968,7 @@ void FCMObject::fcm_begin(FirebaseData &fbdo)
         return;
     }
     // Without config, no sever certificate is available
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
     fbdo.tcpClient.setInsecure();
 #endif
 }
@@ -2140,8 +2140,8 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
 void FCMObject::rescon(FirebaseData &fbdo, const char *host)
 {
-     fbdo._responseCallback = NULL;
-    
+    fbdo._responseCallback = NULL;
+
     if (fbdo.session.cert_updated || !fbdo.session.connected ||
         millis() - fbdo.session.last_conn_ms > fbdo.session.conn_timeout ||
         fbdo.session.con_mode != fb_esp_con_mode_fcm ||

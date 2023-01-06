@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-#ifdef ESP8266
+#include <Arduino.h>
+#if defined(ESP8266) || defined(PICO_RP2040)
 
 #include "inner.h"
 
@@ -91,7 +92,11 @@ static const unsigned char SMALL_PRIMES[] = {
  * is greater than 4350 (default value is 4096, so the 2-kB limit is
  * maintained unless BR_MAX_RSA_SIZE was modified).
  */
+
+//Conflicts with MIN MAX defined in pico/platform.h
+#if defined(ESP8266)
 #define MAX(x, y)   ((x) > (y) ? (x) : (y))
+#endif
 #define TEMPS       MAX(1024, 7 * ((((BR_MAX_RSA_SIZE + 1) >> 1) + 29) / 15))
 
 /*

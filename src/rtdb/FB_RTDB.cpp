@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.9
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.10
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 25, 2022
+ * Created January 6, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -51,7 +51,7 @@ FB_RTDB::~FB_RTDB()
 void FB_RTDB::end(FirebaseData *fbdo)
 {
     endStream(fbdo);
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
     removeStreamCallback(fbdo);
 #endif
     fbdo->clear();
@@ -346,6 +346,11 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_
 {
     Utils::idle();
 
+#if defined(PICO_RP2040)
+    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+        return false;
+#endif
+
     struct fb_esp_rtdb_request_info_t req;
 
     MB_String _path, tpath, pre, post;
@@ -563,6 +568,11 @@ bool FB_RTDB::mBeginStream(FirebaseData *fbdo, MB_StringPtr path)
     if (!Signer.config)
         return false;
 
+#if defined(PICO_RP2040)
+    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+        return false;
+#endif
+
     fbdo->session.rtdb.pause = false;
 
     fbdo->session.rtdb.new_stream = true;
@@ -610,6 +620,15 @@ bool FB_RTDB::endStream(FirebaseData *fbdo)
 
 bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
 {
+
+    if (Signer.isExpired())
+        return false;
+
+#if defined(PICO_RP2040)
+    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+        return false;
+#endif
+
     // if the client used by the authentication task
     if (fbdo->tcpClient.reserved)
         return false;
@@ -710,12 +729,12 @@ bool FB_RTDB::exitStream(FirebaseData *fbdo, bool status)
     return status;
 }
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
 void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                                 FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
     fbdo->session.rtdb.stream_task_enable = false;
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
 void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                                 FirebaseData::StreamTimeoutCallback timeoutCallback)
 {
@@ -734,8 +753,8 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
 
     fbdo->addSession(fb_esp_con_mode_rtdb_stream);
 
-#if defined(ESP32)
-    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, 1));
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
 #elif defined(ESP8266)
     Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
@@ -743,12 +762,12 @@ runStreamTask();
 #endif
 }
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
 void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
     fbdo->session.rtdb.stream_task_enable = false;
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
 void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                          FirebaseData::StreamTimeoutCallback timeoutCallback)
 {
@@ -766,8 +785,8 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
 
     fbdo->addSession(fb_esp_con_mode_rtdb_stream);
 
-#if defined(ESP32)
-    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, 1));
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
 #elif defined(ESP8266)
     Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
@@ -787,7 +806,7 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
     fbdo->_timeoutCallback = NULL;
     fbdo->removeSession();
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
     if (Signer.config->internal.sessions.size() == 0)
     {
         if (Signer.config->internal.stream_task_handle)
@@ -798,16 +817,16 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
 #endif
 }
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(ENABLE_PICO_FREE_RTOS)
 void FB_RTDB::runStreamTask(FirebaseData *fbdo, const char *taskName)
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
 void FB_RTDB::runStreamTask()
 #endif
 {
     if (!Signer.config)
         return;
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
 
     static FB_RTDB *_this = this;
     MB_String name = taskName;
@@ -818,60 +837,69 @@ void FB_RTDB::runStreamTask()
         const TickType_t xDelay = config->internal.stream_task_delay_ms / portTICK_PERIOD_MS;
         for (;;)
         {
-            for (size_t i = 0; i < config->internal.sessions.size(); i++)
-            {
-                FirebaseData *_fbdo = addrTo<FirebaseData *>(config->internal.sessions[i]);
-
-                if (_fbdo)
-                {
-                    if (_fbdo->session.rtdb.stream_task_enable && (_fbdo->_dataAvailableCallback || _fbdo->_timeoutCallback))
-                    {
-                        _this->readStream(_fbdo);
-
-                        if (_fbdo->streamTimeout() && _fbdo->_timeoutCallback)
-                            _fbdo->sendStreamToCB(_fbdo->session.response.code);
-
-                        vTaskDelay(xDelay);
-                    }
-                }
-            }
-
+            _this->mRunStream();
             vTaskDelay(xDelay);
         }
 
         config->internal.stream_task_handle = NULL;
+
         vTaskDelete(NULL);
     };
 
+#if defined(ESP32)
     xTaskCreatePinnedToCore(taskCode, name.c_str(), Signer.config->internal.stream_task_stack_size,
                             Signer.config, Signer.config->internal.stream_task_priority,
                             &Signer.config->internal.stream_task_handle,
                             Signer.config->internal.stream_task_cpu_core);
+#elif defined(PICO_RP2040)
 
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
-    stream();
+    /* Create a task, storing the handle. */
+    xTaskCreate(taskCode, name.c_str(), Signer.config->internal.stream_task_stack_size, Signer.config,
+                Signer.config->internal.stream_task_priority, &(Signer.config->internal.stream_task_handle));
+
+    /* Define the core affinity mask such that this task can only run on core 0
+     * and core 1. */
+    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
+
+    /* Set the core affinity mask for the task. */
+    vTaskCoreAffinitySet(Signer.config->internal.stream_task_handle, uxCoreAffinityMask);
+
+#endif
+
+#else
+    mRunStream();
 #if defined(ESP8266)
     Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #endif
 #endif
 }
 
-void FB_RTDB::stream()
+void FB_RTDB::mRunStream()
 {
-#if !defined(ESP32)
+    FirebaseData *fbdo = nullptr;
 
     if (!Signer.config)
+        return;
+
+    if (Signer.isExpired())
         return;
 
     for (size_t id = 0; id < Signer.config->internal.sessions.size(); id++)
     {
 
-        FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
+        fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
 
         if (fbdo)
         {
             if ((fbdo->_dataAvailableCallback || fbdo->_multiPathDataCallback || fbdo->_timeoutCallback))
             {
+                if (Signer.isExpired())
+                {
+                    fbdo->session.rtdb.stream_tmo_Millis = millis();
+                    fbdo->session.rtdb.data_tmo = false;
+                    return;
+                }
+
                 readStream(fbdo);
 
                 if (fbdo->streamTimeout() && fbdo->_timeoutCallback)
@@ -879,8 +907,6 @@ void FB_RTDB::stream()
             }
         }
     }
-
-#endif
 }
 
 void FB_RTDB::setMaxRetry(FirebaseData *fbdo, uint8_t num)
@@ -1021,10 +1047,11 @@ bool FB_RTDB::isErrorQueueExisted(FirebaseData *fbdo, uint32_t errorQueueID)
     return false;
 }
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040) || defined(ESP8266)
+#if defined(ESP32) || defined(PICO_RP2040)
 void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback,
                                      size_t queueTaskStackSize)
-#elif defined(ESP8266)
+#else
 void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback)
 #endif
 {
@@ -1041,7 +1068,7 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
 
     fbdo->addQueueSession();
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
 
     static FB_RTDB *_this = this;
 
@@ -1073,18 +1100,34 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
         config->internal.queue_task_handle = NULL;
         vTaskDelete(NULL);
     };
-
-    xTaskCreatePinnedToCore(taskCode, fbdo->getTaskName(queueTaskStackSize, 0),
+#if defined(ESP32)
+    xTaskCreatePinnedToCore(taskCode, fbdo->getTaskName(queueTaskStackSize, false),
                             Signer.config->internal.queue_task_stack_size,
                             Signer.config,
                             Signer.config->internal.queue_task_priority,
                             &Signer.config->internal.queue_task_handle,
                             Signer.config->internal.queue_task_cpu_core);
 
+#elif defined(PICO_RP2040)
+
+    /* Create a task, storing the handle. */
+    xTaskCreate(taskCode, fbdo->getTaskName(queueTaskStackSize, false), Signer.config->internal.queue_task_stack_size, Signer.config,
+                Signer.config->internal.queue_task_priority, &(Signer.config->internal.queue_task_handle));
+
+    /* Define the core affinity mask such that this task can only run on core 0
+     * and core 1. */
+    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
+
+    /* Set the core affinity mask for the task. */
+    vTaskCoreAffinitySet(Signer.config->internal.queue_task_handle, uxCoreAffinityMask);
+
+#endif
+
 #elif defined(ESP8266)
     Signer.set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
 #endif
 }
+#endif
 
 void FB_RTDB::endAutoRunErrorQueue(FirebaseData *fbdo)
 {
@@ -1096,7 +1139,7 @@ void FB_RTDB::endAutoRunErrorQueue(FirebaseData *fbdo)
 
     fbdo->_queueInfoCallback = NULL;
     fbdo->removeQueueSession();
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
     if (Signer.config->internal.queueSessions.size() == 0)
     {
         if (Signer.config->internal.queue_task_handle)
@@ -1257,7 +1300,7 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename,
     return count;
 }
 
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
 uint8_t FB_RTDB::readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &item, uint8_t mode)
 {
 
@@ -1506,6 +1549,7 @@ void FB_RTDB::setPtrValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
 
 bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
 {
+
     Utils::idle();
 
     if (!preRequestCheck(fbdo, req))
@@ -1597,7 +1641,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     return ret;
 }
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
 void FB_RTDB::allowMultipleRequests(bool enable)
 {
     if (!Signer.config)
@@ -1642,8 +1686,10 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
     if (!preRequestCheck(fbdo, req))
         return false;
 
+#if defined(PICO_RP2040)
     if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
         return false;
+#endif
 
     if (!fbdo->session.connected)
         fbdo->session.rtdb.async_count = 0;
@@ -2222,7 +2268,7 @@ bool FB_RTDB::encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_St
 
 bool FB_RTDB::waitResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req)
 {
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
 
     // if currently perform stream payload handling process, skip it.
     if (Signer.config->internal.fb_processing && fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream)
@@ -2306,6 +2352,9 @@ waits:
     while (tcpHandler.available() > 0 /* data available to read payload */ ||
            tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
     {
+        if (fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream)
+            fbdo->session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
+
         // still session connected?
         if (!fbdo->isConnected(tcpHandler.dataTime))
         {
@@ -2512,7 +2561,8 @@ waits:
 
     handleNoContent(fbdo, response);
 
-    return fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_OK || fbdo->session.response.code == 0;
+    return fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_OK ||
+           (fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream && fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_UNDEFINED);
 }
 
 void FB_RTDB::trimEndJson(MB_String &payload)
@@ -2670,7 +2720,7 @@ bool FB_RTDB::endDownloadOTA(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
     if (tcpHandler.downloadOTA)
     {
 
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
 
         // write extra pad
         if (tcpHandler.base64PadLenTail > 0 && tcpHandler.base64PadLenSignature == 0)
@@ -3214,8 +3264,8 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
         URLHelper::addParam(header, fb_esp_pgm_str_158 /* "timeout=" */,
                             MB_String(fbdo->session.rtdb.read_tmo) + fb_esp_pgm_str_159 /* "ms" */, hasQueryParams);
 
-        URLHelper::addParam(header, fb_esp_pgm_str_160 /* "writeSizeLimit=" */,
-                            fbdo->session.rtdb.write_limit, hasQueryParams);
+    URLHelper::addParam(header, fb_esp_pgm_str_160 /* "writeSizeLimit=" */,
+                        fbdo->session.rtdb.write_limit, hasQueryParams);
 
     if (req->method == rtdb_get_shallow)
     {
@@ -3343,7 +3393,7 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
 
     if (Signer.config->internal.sessions.size() == 0)
     {
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
         if (Signer.config->internal.stream_task_handle)
             vTaskDelete(Signer.config->internal.stream_task_handle);
 
@@ -3380,6 +3430,9 @@ bool FB_RTDB::connectionError(FirebaseData *fbdo)
 
 bool FB_RTDB::handleStreamRequest(FirebaseData *fbdo, const MB_String &path)
 {
+    if (Signer.isExpired())
+        return false;
+
     struct fb_esp_rtdb_request_info_t req;
     req.method = rtdb_stream;
     req.data.type = d_string;

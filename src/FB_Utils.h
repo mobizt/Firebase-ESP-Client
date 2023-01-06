@@ -1,8 +1,8 @@
 /**
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico (RP2040)
  *
- * Created December 20, 2022
+ * Created January 7, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -31,12 +31,14 @@
 
 #ifndef FB_UTILS_H
 #define FB_UTILS_H
+#include "FirebaseFS.h"
 
 #include <Arduino.h>
 #include "FB_Const.h"
 #if defined(ESP8266)
 #include <Schedule.h>
 #endif
+
 using namespace mb_string;
 
 #define stringPtr2Str(p) (MB_String().appendPtr(p).c_str())
@@ -1029,7 +1031,7 @@ namespace HttpHelper
             session.fcs.files.items.clear();
 #endif
 
-        session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
+        session.response.code = FIREBASE_ERROR_HTTP_CODE_UNDEFINED;
         session.content_length = -1;
         session.payload_length = 0;
         session.chunked_encoding = false;
@@ -1352,7 +1354,7 @@ namespace Base64Helper
 
     inline bool updateWrite(uint8_t *data, size_t len)
     {
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
         return Update.write(data, len) == len;
 #endif
         return false;
@@ -1685,11 +1687,11 @@ namespace TimeHelper
     {
         uint32_t &tm = *mb_ts;
 
-#if defined(ESP8266) || defined(ESP32)
+#if defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040)
         if (tm < ESP_DEFAULT_TS)
             tm = time(nullptr);
 #else
-        tm += millis() / 1000;
+        tm = millis() / 1000;
 #endif
 
         return tm;
@@ -1713,7 +1715,7 @@ namespace TimeHelper
             if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
                 config->internal.fb_clock_synched = false;
 
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
             if (!config->internal.fb_clock_synched)
             {
                 config->internal.fb_clock_synched = true;
@@ -1843,7 +1845,7 @@ namespace Utils
         if (!config)
             return true;
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
         if (config->internal.fb_multiple_requests)
             return true;
 
@@ -1955,10 +1957,10 @@ namespace Utils
             path += sub;
         return path;
     }
-#if defined(FIREBASE_ESP_CLIENT)
+#if defined(FIREBASE_ESP_CLIENT) && defined(ENABLE_FIRESTORE)
     inline MB_String makeDocPath(struct fb_esp_firestore_req_t &req, const MB_String &projectId)
     {
-         MB_String str = fb_esp_pgm_str_395; // "projects/"
+        MB_String str = fb_esp_pgm_str_395; // "projects/"
         str += req.projectId.length() == 0 ? projectId : req.projectId;
         str += fb_esp_pgm_str_341; // "/databases/"
         str += req.databaseId.length() > 0 ? req.databaseId : fb_esp_pgm_str_342 /* "(default)" */;
@@ -1994,7 +1996,6 @@ namespace Utils
 
         return bufLen;
     }
-
 };
 
 #endif

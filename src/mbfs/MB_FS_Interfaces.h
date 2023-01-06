@@ -52,7 +52,7 @@
 #endif
 
 // Only SdFat library from Bill Greiman
-#if !defined(ESP32) && !defined(ESP8266) && defined(SD_FAT_VERSION) && defined(SD_FAT_VERSION_STR) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040) && defined(SD_FAT_VERSION) && defined(SD_FAT_VERSION_STR) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
 #ifndef MBFS_SDFAT_ENABLED
 #define MBFS_SDFAT_ENABLED
 #endif
@@ -64,6 +64,7 @@
 #endif
 
 //
+
 #if defined(MBFS_SD_FS)
 
 #if !defined(SD_FS_FILE)
@@ -71,7 +72,13 @@
 #if defined(MBFS_ESP32_SDFAT_ENABLED)
 #define MBFS_SD_FILE SdFile
 #else
+
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
 #define MBFS_SD_FILE fs::File
+#else
+#define MBFS_SD_FILE File
+#endif
+
 #endif
 
 #else
@@ -81,6 +88,7 @@
 #endif
 
 #endif
+
 
 #ifndef MB_STRING_INCLUDE_CLASS
 #define MB_STRING_INCLUDE_CLASS "json/FirebaseJson.h"

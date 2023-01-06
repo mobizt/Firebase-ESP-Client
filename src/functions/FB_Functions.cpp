@@ -1,9 +1,9 @@
 /**
  * Google's Cloud Functions class, Functions.cpp version 1.1.19
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 25, 2022
+ * Created January 6, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -106,9 +106,9 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
     if (_deployTasks.size() == 1)
     {
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(ENABLE_PICO_FREE_RTOS)
         runDeployTask(pgm2Str(fb_esp_pgm_str_475 /* "deployTask" */));
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(PICO_RP2040)
         runDeployTask();
 #endif
     }
@@ -710,8 +710,8 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
 void FB_Functions::rescon(FirebaseData *fbdo, const char *host)
 {
-     fbdo->_responseCallback = NULL;
-    
+    fbdo->_responseCallback = NULL;
+
     if (fbdo->session.cert_updated || !fbdo->session.connected ||
         millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_functions || strcmp(host, fbdo->session.host.c_str()) != 0)
@@ -824,13 +824,13 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
         return tcpHandler.error.code == 0;
 }
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
 void FB_Functions::runDeployTask(const char *taskName)
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
 void FB_Functions::runDeployTask()
 #endif
 {
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
 
     static FB_Functions *_this = this;
 
@@ -1129,8 +1129,24 @@ void FB_Functions::runDeployTask()
         vTaskDelete(NULL);
     };
 
+#if defined(ESP32)
     xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Signer.config->internal.functions_check_task_handle, 1);
-#elif defined(ESP8266)
+
+#elif defined(PICO_RP2040)
+
+    /* Create a task, storing the handle. */
+    xTaskCreate(taskCode, taskName, 12000, NULL,
+                3, &(Signer.config->internal.functions_check_task_handle));
+
+    /* Define the core affinity mask such that this task can only run on core 0
+     * and core 1. */
+    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
+
+    /* Set the core affinity mask for the task. */
+    vTaskCoreAffinitySet(Signer.config->internal.functions_check_task_handle, uxCoreAffinityMask);
+
+#endif
+#elif defined(ESP8266) || defined(PICO_RP2040)
 
     if (_creation_task_enable)
     {
@@ -1396,8 +1412,10 @@ void FB_Functions::runDeployTask()
             if (_deployTasks[i].done)
                 n++;
 
+#if defined(ESP8266)
         if (_deployTasks.size() > 0 && n < _deployTasks.size())
             Signer.set_scheduled_callback(std::bind(&FB_Functions::runDeployTask, this));
+#endif
 
         if (n == _deployTasks.size())
         {
@@ -1423,6 +1441,19 @@ void FB_Functions::runDeployTask()
     }
 
 #endif
+}
+
+void FB_Functions::mRunDeployTasks()
+{
+    if (_deployTasks.size() > 0)
+    {
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+        if (!Signer.config->internal.functions_check_task_handle)
+            runDeployTask(pgm2Str(fb_esp_pgm_str_475 /* "deployTask" */));
+#elif defined(ESP8266) || defined(PICO_RP2040)
+        runDeployTask();
+#endif
+    }
 }
 
 #endif

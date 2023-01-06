@@ -56,8 +56,8 @@
  * the final result may fail due to bugs in the user function, missing dependencies,
  * and incorrect configurations.
  */
-
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
@@ -153,6 +153,11 @@ void setup()
 void loop()
 {
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
+#if defined(PICO_RP2040)
+    if (Firebase.ready())
+        Firebase.Functions.runDeployTasks();
+#endif
 
     if (Firebase.ready() && !taskCompleted)
     {

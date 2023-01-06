@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.9
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.10
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 25, 2022
+ * Created January 6, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -56,7 +56,7 @@ class FB_RTDB
 #endif
 
 #if defined(ENABLE_ERROR_QUEUE)
-#if !defined(ESP32) && !defined(ESP8266)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
 #undef ENABLE_ERROR_QUEUE
 #endif
 #endif
@@ -71,7 +71,7 @@ public:
    */
   void end(FirebaseData *fbdo);
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
   /** Enable multiple HTTP requests at a time (for ESP32 only).
    *
    * @param enable - The boolean value to enable/disable.
@@ -2210,10 +2210,10 @@ public:
    * the payload returned from the server.
    */
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
   void setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize = 8192);
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
   void setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                          FirebaseData::StreamTimeoutCallback timeoutCallback);
 #endif
@@ -2240,10 +2240,10 @@ public:
    * These properties will store the result from calling the function [MultiPathStreamData object].get.
    */
 
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
   void setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                   FirebaseData::StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
   void setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                   FirebaseData::StreamTimeoutCallback timeoutCallback = NULL);
 #endif
@@ -2259,6 +2259,11 @@ public:
    * @param fbdo The pointer to Firebase Data Object.
    */
   void removeMultiPathStreamCallback(FirebaseData *fbdo);
+
+  /** Run stream manually.
+   * To manually triggering the stream callback function, this should call repeatedly in loop().
+   */
+  void runStream() { mRunStream(); }
 
   /** Backup (download) the database at the defined node to the storage memory.
    *
@@ -2425,11 +2430,13 @@ public:
    *
    * queueInfo.path(), get a string of the Firebase call path that is being processed of current Error Queue.
    */
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040) || defined(ESP8266)
+#if defined(ESP32) || defined(PICO_RP2040)
   void beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback = NULL,
                               size_t queueTaskStackSize = 8192);
-#elif defined(ESP8266)
+#else
   void beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback = NULL);
+#endif
 #endif
 
   /** Stop the Firebase Error Queues Auto Run Process.
@@ -2674,12 +2681,12 @@ private:
                             RTDB_DownloadStatusInfo *out);
   void makeDownloadStatus(RTDB_DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
                           fb_esp_rtdb_download_status status, size_t progress, size_t size, int elapsedTime, const MB_String &msg);
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
   void runStreamTask(FirebaseData *fbdo, const char *taskName);
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
   void runStreamTask();
 #endif
-  void stream();
+  void mRunStream();
 
 #if defined(ENABLE_ERROR_QUEUE)
 
@@ -2690,7 +2697,7 @@ private:
 #endif
 
   uint8_t openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType, uint8_t mode);
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
   uint8_t readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &item, uint8_t mode);
 #endif
 #if defined(MBFS_ESP32_SDFAT_ENABLED)

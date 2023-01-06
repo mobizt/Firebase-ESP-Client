@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.2.1
+ * Google's Cloud Firestore class, Forestore.h version 1.2.2
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 25, 2022
+ * Created January 6, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -43,7 +43,7 @@
 #include "json/FirebaseJson.h"
 #if defined(ESP32)
 #include "wcs/esp32/FB_TCP_Client.h"
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(PICO_RP2040)
 #include "wcs/esp8266/FB_TCP_Client.h"
 #endif
 

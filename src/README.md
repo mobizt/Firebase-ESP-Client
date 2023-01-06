@@ -2704,6 +2704,19 @@ void removeMultiPathStreamCallback(FirebaseData *fbdo);
 
 
 
+
+#### Run Stream manually.
+
+To manually triggering the stream callback function, 
+this should call repeatedly in loop().
+
+```cpp
+void runStream();
+```
+
+
+
+
 #### Backup (download) the database at the defined node to the storage memory.
 
 param **`fbdo`** The pointer to Firebase Data Object.
@@ -4227,6 +4240,19 @@ This function requires OAuth2.0 authentication.
 ```cpp
 bool patchFunction(FirebaseData *fbdo, <string> functionId, FunctionsConfig *patchData);
 ```
+
+
+
+
+#### Run Functions deploying tasks manually.
+  
+To manually triggering the deploy task callback function, 
+this should call repeatedly in loop().
+
+```cpp
+void runDeployTasks();
+```
+
 
 
 

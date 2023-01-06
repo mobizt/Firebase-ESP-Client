@@ -25,8 +25,8 @@
  * This library used RFC 7523, JWT Bearer Token Grant Type Profile for OAuth 2.0
  * which no refresh token is available for access token exchanging.
  */
-
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>

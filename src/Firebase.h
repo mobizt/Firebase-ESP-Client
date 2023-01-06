@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.2.2
+ * The Firebase class, Firebase.h v1.2.3
  *
- *  Created December 19, 2022
+ *  Created January 7, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,17 +29,17 @@
 #ifndef Firebase_H
 #define Firebase_H
 
+#include <Arduino.h>
+
 #include "FirebaseFS.h"
 
-#if !defined(ESP32) && !defined(ESP8266)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
 #ifndef FB_ENABLE_EXTERNAL_CLIENT
 #define FB_ENABLE_EXTERNAL_CLIENT
 #endif
 #endif
 
-#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT)
-
-#include <Arduino.h>
+#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(PICO_RP2040)
 
 #if !defined(ESP32) && !defined(ESP8266)
 #ifdef __arm__

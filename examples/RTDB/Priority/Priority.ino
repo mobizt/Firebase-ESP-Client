@@ -14,7 +14,8 @@
 
 // Since data ordering is not supported in Firebase's REST APIs, then the query result will not sorted.
 
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>

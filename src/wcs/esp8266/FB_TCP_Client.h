@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.2.1
+ * Firebase TCP Client v1.2.2
  *
- * Created December 19, 2022
+ * Created January 7, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -28,9 +28,9 @@
 #ifndef FB_TCP_Client_H
 #define FB_TCP_Client_H
 
-#if defined(ESP8266) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
-
 #include <Arduino.h>
+#if (defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+
 #include <ESP8266WiFi.h>
 #include "FB_Network.h"
 #include "FB_Error.h"
@@ -82,8 +82,14 @@ public:
 
 private:
   std::unique_ptr<FB_ESP_SSL_CLIENT> wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
-  uint16_t bsslRxSize = 2048;
+
+#if defined(ESP8266)
+  uint16_t bsslRxSize = 4096;
   uint16_t bsslTxSize = 512;
+#elif defined(PICO_RP2040)
+  uint16_t bsslRxSize = 16384;
+  uint16_t bsslTxSize = 1024;
+#endif
   X509List *x509 = nullptr;
   void release();
 };

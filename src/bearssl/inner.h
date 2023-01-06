@@ -24,7 +24,8 @@
 
 #ifndef INNER_H__
 #define INNER_H__
-#ifdef ESP8266
+#include <Arduino.h>
+#if defined(ESP8266) || defined(PICO_RP2040)
 
 #include <string.h>
 #include <limits.h>
@@ -902,6 +903,8 @@ BIT_LENGTH(uint32_t x)
 	return k;
 }
 
+//Conflicts with MIN MAX defined in pico/platform.h
+#if defined(ESP8266)
 /*
  * Compute the minimum of x and y.
  */
@@ -919,6 +922,8 @@ MAX(uint32_t x, uint32_t y)
 {
 	return MUX(GT(x, y), x, y);
 }
+
+#endif
 
 /*
  * Multiply two 32-bit integers, with a 64-bit result. This default

@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.2.2
+ * The Firebase class, Firebase.cpp v1.2.3
  *
- *  Created December 19, 2022
+ *  Created January 7, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,7 +30,7 @@
 
 #include "Firebase.h"
 
-#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040) || defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #if defined(FIREBASE_ESP_CLIENT)
 
@@ -125,6 +125,7 @@ struct token_info_t Firebase_ESP_Client::authTokenInfo()
 
 bool Firebase_ESP_Client::ready()
 {
+#if defined(ESP32) || defined(ESP8266)
     // We need to close all data object TCP sessions when token was expired.
     if (Signer.isExpired())
     {
@@ -132,14 +133,13 @@ bool Firebase_ESP_Client::ready()
         {
             for (size_t id = 0; id < Signer.config->internal.sessions.size(); id++)
             {
-
                 FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
                 if (fbdo && !fbdo->tcpClient.reserved)
                     fbdo->closeSession();
             }
         }
     }
-
+#endif
     return Signer.tokenReady();
 }
 
@@ -537,6 +537,7 @@ struct token_info_t FIREBASE_CLASS::authTokenInfo()
 
 bool FIREBASE_CLASS::ready()
 {
+#if defined(ESP32) || defined(ESP8266)
     // We need to close all data object TCP sessions when token was expired.
     if (Signer.isExpired())
     {
@@ -544,14 +545,13 @@ bool FIREBASE_CLASS::ready()
         {
             for (size_t id = 0; id < Signer.config->internal.sessions.size(); id++)
             {
-
                 FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
                 if (fbdo && !fbdo->tcpClient.reserved)
                     fbdo->closeSession();
             }
         }
     }
-
+#endif
     return Signer.tokenReady();
 }
 

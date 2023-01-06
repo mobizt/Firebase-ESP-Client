@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.4
+ * Google's Cloud Storage class, GCS.cpp version 1.2.5
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 25, 2022
+ * Created January 6, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -38,6 +38,8 @@
 #define GOOGLE_CS_CPP
 
 #include "GCS.h"
+#include <Arduino.h>
+
 
 GG_CloudStorage::GG_CloudStorage()
 {
@@ -199,7 +201,7 @@ bool GG_CloudStorage::mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_St
 bool GG_CloudStorage::mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID,
                                    MB_StringPtr remoteFileName, DownloadProgressCallback callback)
 {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
     struct fb_esp_gcs_req_t req;
     req.bucketID = bucketID;
     req.remoteFileName = remoteFileName;
@@ -268,8 +270,8 @@ bool GG_CloudStorage::gcs_connect(FirebaseData *fbdo)
 
 void GG_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
 {
-     fbdo->_responseCallback = NULL;
-     
+    fbdo->_responseCallback = NULL;
+
     if (fbdo->session.cert_updated || !fbdo->session.connected ||
         millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_gc_storage || strcmp(host, fbdo->session.host.c_str()) != 0)
@@ -1055,13 +1057,13 @@ void GG_CloudStorage::makeDownloadStatus(DownloadStatusInfo &info, const MB_Stri
     info.errorMsg = msg;
 }
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
 void GG_CloudStorage::runResumableUploadTask(const char *taskName)
-#elif defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#else
 void GG_CloudStorage::runResumableUploadTask()
 #endif
 {
-#if defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
 
     static GG_CloudStorage *_this = this;
 
@@ -1104,9 +1106,19 @@ void GG_CloudStorage::runResumableUploadTask()
         Signer.config->internal.resumable_upload_task_handle = NULL;
         vTaskDelete(NULL);
     };
-
+#if defined(ESP32)
     xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Signer.config->internal.resumable_upload_task_handle, 1);
+#elif defined(PICO_RP2040)
+    /* Create a task, storing the handle. */
+    xTaskCreate(taskCode, taskName, 12000, NULL, 3, &Signer.config->internal.resumable_upload_task_handle);
 
+    /* Define the core affinity mask such that this task can only run on core 0
+     * and core 1. */
+    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
+
+    /* Set the core affinity mask for the task. */
+    vTaskCoreAffinitySet(Signer.config->internal.resumable_upload_task_handle, uxCoreAffinityMask);
+#endif
 #elif defined(ESP8266)
 
     if (_resumable_upload_task_enable)
@@ -1241,7 +1253,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
             if (_resumable_upload_task_enable && _resumableUploadTasks.size() == 1)
             {
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
                 runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480 /* "resumableUploadTask" */));
 #elif defined(ESP8266)
                 runResumableUploadTask();

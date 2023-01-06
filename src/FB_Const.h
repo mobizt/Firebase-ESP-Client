@@ -1,6 +1,6 @@
 
 /**
- * Created December 12, 2022
+ * Created January 7, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -52,7 +52,7 @@
 #if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
 #if defined(ESP32)
 #include <Update.h>
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(PICO_RP2040)
 #include <Updater.h>
 #endif
 #define OTA_UPDATE_ENABLED
@@ -158,7 +158,7 @@ typedef enum
     mem_storage_type_sd
 } fb_esp_mem_storage_type;
 
-#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#if !defined(FIREBASE_ESP_CLIENT)
 struct StorageType
 {
     static const int8_t UNDEFINED = 0; // add to compatible with fb_esp_mem_storage_type enum
@@ -220,17 +220,17 @@ enum fb_esp_request_method
     http_patch,
     http_delete,
 
-    rtdb_set_nocontent, /* HTTP PUT (No content) */
+    rtdb_set_nocontent,    /* HTTP PUT (No content) */
     rtdb_update_nocontent, /* HTTP PATCH (No content) */
-    rtdb_get_nocontent, /* HTTP GET (No content) */
-    rtdb_stream, /* HTTP GET (SSE) */
-    rtdb_backup, /* HTTP GET */
-    rtdb_restore, /* HTTP PATCH */
-    rtdb_get_rules, /* HTTP GET */
-    rtdb_set_rules, /* HTTP PUT */
-    rtdb_get_shallow, /* HTTP GET */
-    rtdb_get_priority, /* HTTP GET */
-    rtdb_set_priority, /* HTTP PUT */
+    rtdb_get_nocontent,    /* HTTP GET (No content) */
+    rtdb_stream,           /* HTTP GET (SSE) */
+    rtdb_backup,           /* HTTP GET */
+    rtdb_restore,          /* HTTP PATCH */
+    rtdb_get_rules,        /* HTTP GET */
+    rtdb_set_rules,        /* HTTP PUT */
+    rtdb_get_shallow,      /* HTTP GET */
+    rtdb_get_priority,     /* HTTP GET */
+    rtdb_set_priority,     /* HTTP PUT */
 };
 
 enum fb_esp_http_connection_type
@@ -751,7 +751,7 @@ struct fb_esp_rtdb_request_info_t
     size_t fileSize = 0;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#else
     uint8_t storageType = StorageType::UNDEFINED;
 #endif
     int progress = -1;
@@ -819,7 +819,7 @@ struct fb_esp_auth_cert_t
     MB_String file;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type file_storage = mem_storage_type_flash;
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#else
     uint8_t file_storage = StorageType::UNDEFINED;
 #endif
 };
@@ -829,7 +829,7 @@ struct fb_esp_service_account_file_info_t
     MB_String path;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storage_type = mem_storage_type_flash;
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#else
     uint8_t storage_type = StorageType::UNDEFINED;
 #endif
 };
@@ -868,7 +868,7 @@ struct fb_esp_token_signer_resources_t
     size_t signatureSize = 256;
 #if defined(ESP32)
     uint8_t *hash = nullptr;
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(PICO_RP2040)
     char *hash = nullptr;
 #endif
     unsigned char *signature = nullptr;
@@ -947,7 +947,7 @@ struct fb_esp_cfg_int_t
     uint16_t ltok_len = 0;
     uint16_t email_crc = 0, password_crc = 0, client_email_crc = 0, project_id_crc = 0, priv_key_crc = 0, uid_crc = 0;
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
     TaskHandle_t resumable_upload_task_handle = NULL;
     TaskHandle_t functions_check_task_handle = NULL;
     TaskHandle_t functions_deployment_task_handle = NULL;
@@ -957,11 +957,19 @@ struct fb_esp_cfg_int_t
     size_t stream_task_stack_size = STREAM_TASK_STACK_SIZE;
     uint8_t stream_task_priority = 3;
     uint8_t stream_task_cpu_core = 1;
-    uint8_t stream_task_delay_ms = 3;
+#if defined(ESP32)
+    uint16_t stream_task_delay_ms = 10;
+#else
+    uint16_t stream_task_delay_ms = 200;
+#endif
     size_t queue_task_stack_size = QUEUE_TASK_STACK_SIZE;
     uint8_t queue_task_priority = 1;
     uint8_t queue_task_cpu_core = 1;
-    uint8_t queue_task_delay_ms = 3;
+#if defined(ESP32)
+    uint16_t queue_task_delay_ms = 10;
+#else
+    uint16_t queue_task_delay_ms = 100;
+#endif
 #endif
 };
 
@@ -1223,7 +1231,7 @@ struct fb_esp_rtdb_info_t
     float priority;
 #if defined(FIREBASE_ESP_CLIENT)
     fb_esp_mem_storage_type storage_type = mem_storage_type_flash;
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#else
     uint8_t storage_type = StorageType::UNDEFINED;
 #endif
     uint8_t redirect_count = 0;
@@ -1248,7 +1256,7 @@ struct fb_esp_rtdb_info_t
 
     struct fb_esp_stream_info_t stream;
 
-#if defined(ESP32)
+#if defined(ESP32) || defined(PICO_RP2040)
     bool stream_task_enable = false;
 #endif
 
@@ -1825,6 +1833,9 @@ struct fb_esp_session_info_t
 #if defined(ESP8266)
     uint16_t bssl_rx_size = 512;
     uint16_t bssl_tx_size = 512;
+#elif defined(PICO_RP2040)
+    uint16_t bssl_rx_size = 16384;
+    uint16_t bssl_tx_size = 2048;
 #endif
 };
 
