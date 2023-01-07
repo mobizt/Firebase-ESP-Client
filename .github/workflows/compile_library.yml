@@ -93,8 +93,6 @@ jobs:
         echo "board = nanorp2040connect" >> platformio.ini
         echo "framework = arduino" >> platformio.ini
         echo "lib_deps = WiFiNINA" >> platformio.ini
-        echo "lib_deps = WiFiNINA" >> platformio.ini
-
 
     - name: Run PlatformIO
       run: pio ci --project-conf="platformio.ini" --project-option="lib_ldf_mode=chain+" src
