@@ -169,8 +169,7 @@ void loop()
   // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
 #if defined(PICO_RP2040)
-  if (Firebase.ready())
-    Firebase.RTDB.runStream();
+  Firebase.RTDB.runStream();
 #endif
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))

@@ -1,4 +1,4 @@
-# Firebase Arduino Client Library for ESP8266 and ESP32
+# Firebase Arduino Client Library for ESP8266, ESP32 and RP2040 Pico
 
 
 Google's Firebase Arduino Client Library for ESP8266 and ESP32

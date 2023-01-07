@@ -161,7 +161,7 @@ For example, the library version 2.7.7 and earlier were installed manually by do
 In this case, you need to delete **Firebase-ESP-Client-main** folder from libraries folder.
 
 
-## RP2040 Arduino SDK installation
+### RP2040 Arduino SDK installation
 
 For Arduino IDE, the Arduino-Pico SDK can be installed from Boards Manager by searching pico and choose Raspberry Pi Pico/RP2040 to install.
 

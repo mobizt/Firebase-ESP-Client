@@ -5,7 +5,7 @@
 /**
  * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.1
  *
- * This library supports Espressif ESP8266 and ESP32 MCUs
+ * This library supports Espressif ESP8266 and ESP32 MCUs and Raspberry Pi RP2040 Pico MCUs.
  *
  * Created January 7, 2023
  *
