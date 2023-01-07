@@ -59,13 +59,10 @@ jobs:
     - name: Run PlatformIO
       run: pio ci --board=${{ matrix.board }} src
 
-  build2:
+  nanorp2040connect:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        board: 
-          - "nanorp2040connect"
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip
@@ -91,8 +88,19 @@ jobs:
         echo "#include <Arduino.h>" >> src/main.ino
         echo "void setup() {}" >> src/main.ino
         echo "void loop() {}" >> src/main.ino
+        echo "[env:nanorp2040connect]" >> platformio.ini
+        echo "platform = raspberrypi" >> platformio.ini
+        echo "board = nanorp2040connect" >> platformio.ini
+        echo "framework = arduino" >> platformio.ini
+        echo "lib_deps = WiFiNINA" >> platformio.ini
+        echo "lib_deps = WiFiNINA" >> platformio.ini
 
-  build3:
+
+    - name: Run PlatformIO
+      run: pio ci --project-conf="platformio.ini" --project-option="lib_ldf_mode=chain+" src
+
+
+  picow:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
