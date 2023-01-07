@@ -137,7 +137,7 @@ public:
     /** Run Functions deploying tasks manually
      * To manually triggering the deploy task callback function, this should call repeatedly in loop().
      */
-    void runDeployTasks() { mRunDeployTasks();};
+    void runDeployTasks() { mRunDeployTasks(); };
 
     /** Sets the IAM access control policy on the specified function. Replaces any existing policy.
      *
@@ -332,6 +332,7 @@ private:
     TaskHandle_t function_check_task_handle = NULL;
 #endif
     bool _creation_task_enable = false;
+    bool _creation_task_running = false;
     size_t _deployIndex = 0;
     MB_VECTOR<fb_esp_deploy_task_info_t> _deployTasks;
     void makeRequest(struct fb_esp_functions_req_t &req, fb_esp_functions_request_type type,
@@ -372,8 +373,8 @@ private:
 #else
     void runDeployTask();
 #endif
-
-   void mRunDeployTasks();
+    void mDeployTasks();
+    void mRunDeployTasks();
 };
 
 #endif

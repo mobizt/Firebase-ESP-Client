@@ -102,16 +102,23 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
     fbdo->session.long_running_task++;
 
     _creation_task_enable = true;
-
-    if (_deployTasks.size() == 1)
+    
+    // Allow running in FreeRTOS loop task?, add to loop task.
+    if (Signer.config->internal.deploy_loop_task_enable)
     {
+        //The first task?, running in loop task by default
+        if (_deployTasks.size() == 1)
+        {
 
-#if defined(ESP32) || defined(ENABLE_PICO_FREE_RTOS)
-        runDeployTask(pgm2Str(fb_esp_pgm_str_475 /* "deployTask" */));
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+            runDeployTask(pgm2Str(fb_esp_pgm_str_475 /* "deployTask" */));
 #elif defined(ESP8266) || defined(PICO_RP2040)
-        runDeployTask();
+            runDeployTask();
 #endif
+        }
     }
+    else // User intends to run task manually, run immediately.
+        mDeployTasks();
 }
 
 bool FB_Functions::createFunction(FirebaseData *fbdo, FunctionsConfig *config, FunctionsOperationStatusInfo *statusInfo)
@@ -133,6 +140,7 @@ bool FB_Functions::createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId
                                      FunctionsConfig *config, bool patch, FunctionsOperationCallback cb,
                                      FunctionsOperationStatusInfo *info)
 {
+    Signer.config->internal.deploy_loop_task_enable = true;
 
     if (patch)
         fbdo->session.cfn.cbInfo.functionId = functionId;
@@ -838,289 +846,16 @@ void FB_Functions::runDeployTask()
     {
         while (_this->_creation_task_enable)
         {
+
+            if (!Signer.config->internal.deploy_loop_task_enable)
+                break;
+
             vTaskDelay(10 / portTICK_PERIOD_MS);
 
             if (_this->_deployTasks.size() == 0)
                 break;
 
-            if (_this->_deployIndex < _this->_deployTasks.size() - 1)
-                _this->_deployIndex++;
-            else
-                _this->_deployIndex = 0;
-
-            struct fb_esp_deploy_task_info_t *taskInfo = &_this->_deployTasks[_this->_deployIndex];
-
-            if (!taskInfo->done)
-            {
-                if (taskInfo->step == fb_esp_functions_creation_step_gen_upload_url)
-                {
-                    taskInfo->done = true;
-                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_generate_upload_url;
-                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
-                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    bool ret = _this->mGenerateUploadUrl(taskInfo->fbdo, toStringPtr(taskInfo->config->_projectId),
-                                                         toStringPtr(taskInfo->config->_locationId));
-
-                    if (ret)
-                    {
-                        taskInfo->fbdo->initJson();
-
-                        JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
-                        JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
-                                          fb_esp_pgm_str_440 /* "uploadUrl" */);
-                        JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
-                        JsonHelper::arrayClear(taskInfo->fbdo->session.arrPtr);
-                        taskInfo->fbdo->session.cfn.payload.clear();
-                        if (taskInfo->fbdo->session.dataPtr->success)
-                        {
-                            _this->addCreationTask(taskInfo->fbdo, taskInfo->config,
-                                                   taskInfo->patch, taskInfo->nextStep,
-                                                   fb_esp_functions_creation_step_deploy,
-                                                   taskInfo->callback, taskInfo->statusInfo);
-                            _this->_deployTasks[_this->_deployIndex + 1].uploadUrl = taskInfo->fbdo->session.dataPtr->to<const char *>();
-                        }
-                    }
-                    else
-                    {
-                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    }
-                }
-                else if (taskInfo->step == fb_esp_functions_creation_step_upload_source_files)
-                {
-                    taskInfo->done = true;
-                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_upload_source_file_in_progress;
-                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
-                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    bool ret = _this->uploadSources(taskInfo->fbdo, taskInfo->config);
-
-                    if (ret)
-                    {
-                        taskInfo->fbdo->initJson();
-
-                        JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
-
-                        if (JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
-                                              fb_esp_pgm_str_457 /* "status/uploadUrl" */))
-                        {
-                            JsonHelper::addString(&taskInfo->config->_funcCfg, fb_esp_pgm_str_383 /* "sourceUploadUrl" */,
-                                                  taskInfo->fbdo->session.dataPtr->to<const char *>());
-                            taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383));
-                        }
-
-                        JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
-
-                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch, taskInfo->nextStep,
-                                               fb_esp_functions_creation_step_polling_status, taskInfo->callback,
-                                               taskInfo->statusInfo);
-                    }
-                    else
-                    {
-                        if (taskInfo->fbdo->session.response.code == 302 || taskInfo->fbdo->session.response.code == 403)
-                            taskInfo->fbdo->session.error += fb_esp_pgm_str_458;
-                        // "missing autozip function, please deploy it first"
-                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    }
-                }
-                else if (taskInfo->step == fb_esp_functions_creation_step_upload_zip_file)
-                {
-                    taskInfo->done = true;
-                    bool ret = false;
-                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_upload_source_file_in_progress;
-                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
-                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-
-                    if (taskInfo->config->_sourceType == functions_sources_type_local_archive)
-                        ret = _this->uploadFile(taskInfo->fbdo, taskInfo->uploadUrl.c_str(),
-                                                taskInfo->config->_uploadArchiveFile.c_str(),
-                                                taskInfo->config->_uploadArchiveStorageType);
-                    else if (taskInfo->config->_sourceType == functions_sources_type_flash_data)
-                        ret = _this->uploadPGMArchive(taskInfo->fbdo, taskInfo->uploadUrl.c_str(),
-                                                      taskInfo->config->_pgmArc, taskInfo->config->_pgmArcLen);
-
-                    if (ret)
-                    {
-                        if (!taskInfo->fbdo->session.dataPtr)
-                            taskInfo->fbdo->session.dataPtr = new FirebaseJsonData();
-
-                        taskInfo->config->_funcCfg.set(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */),
-                                                       taskInfo->uploadUrl.c_str());
-                        taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */));
-
-                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
-                                               taskInfo->nextStep, fb_esp_functions_creation_step_polling_status,
-                                               taskInfo->callback, taskInfo->statusInfo);
-                    }
-                    else
-                    {
-                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    }
-                }
-                else if (taskInfo->step == fb_esp_functions_creation_step_deploy)
-                {
-                    taskInfo->done = true;
-                    bool ret = false;
-                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_deploy_in_progress;
-                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
-                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-
-                    ret = _this->deploy(taskInfo->fbdo, taskInfo->functionId.c_str(), taskInfo->config, taskInfo->patch);
-                    taskInfo->fbdo->session.cfn.cbInfo.triggerUrl = taskInfo->config->_httpsTriggerUrl;
-                    if (ret)
-                        _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
-                                               taskInfo->nextStep, fb_esp_functions_creation_step_set_iam_policy,
-                                               taskInfo->callback, taskInfo->statusInfo);
-                    else
-                    {
-                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    }
-                }
-                else if (taskInfo->step == fb_esp_functions_creation_step_set_iam_policy)
-                {
-                    taskInfo->done = true;
-                    bool ret = false;
-                    static PolicyBuilder pol;
-                    JsonHelper::setData(&pol.json, taskInfo->policy, false);
-                    ret = _this->mSetIamPolicy(taskInfo->fbdo, toStringPtr(taskInfo->projectId),
-                                               toStringPtr(taskInfo->locationId),
-                                               toStringPtr(taskInfo->functionId), &pol, toStringPtr(_EMPTY_STR));
-                    if (ret)
-                    {
-                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_finished;
-                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg.clear();
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    }
-                    else
-                    {
-                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    }
-                }
-                else if (taskInfo->step == fb_esp_functions_creation_step_delete)
-                {
-                    taskInfo->done = true;
-                    bool ret = false;
-                    MB_String t;
-                    t += fb_esp_pgm_str_428; // "project:"
-                    t += taskInfo->projectId;
-                    t += fb_esp_pgm_str_431; // ",latest:true"
-                    ret = _this->mListOperations(taskInfo->fbdo, toStringPtr(t.c_str()), toStringPtr("1"),
-                                                 toStringPtr(_EMPTY_STR));
-                    if (ret)
-                    {
-                        taskInfo->fbdo->initJson();
-                        JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
-                        JsonHelper::parse(taskInfo->fbdo->session.jsonPtr,
-                                          taskInfo->fbdo->session.dataPtr, fb_esp_pgm_str_432 /* "operations/[0]/error/message" */);
-                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                        taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->session.dataPtr->to<const char *>();
-                        _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                    }
-
-                    ret = _this->mDeleteFunction(taskInfo->fbdo,
-                                                 toStringPtr(taskInfo->projectId),
-                                                 toStringPtr(taskInfo->locationId),
-                                                 toStringPtr(taskInfo->functionId));
-                }
-                else if (taskInfo->step == fb_esp_functions_creation_step_polling_status)
-                {
-                    if (millis() - _this->_lastPollMs > 5000 || _this->_lastPollMs == 0)
-                    {
-                        _this->_lastPollMs = millis();
-
-                        if (!taskInfo->_delete && !taskInfo->active)
-                        {
-
-                            bool ret = _this->mGetFunction(taskInfo->fbdo,
-                                                           toStringPtr(taskInfo->projectId),
-                                                           toStringPtr(taskInfo->locationId),
-                                                           toStringPtr(taskInfo->functionId));
-
-                            if (ret)
-                            {
-                                if (_this->_function_status == fb_esp_functions_status_UNKNOWN ||
-                                    _this->_function_status == fb_esp_functions_status_OFFLINE)
-                                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
-                                else if (_this->_function_status == fb_esp_functions_status_DEPLOY_IN_PROGRESS)
-                                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_deploy_in_progress;
-                                else if (_this->_function_status == fb_esp_functions_status_DELETE_IN_PROGRESS)
-                                    taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_delete_in_progress;
-                                else if (_this->_function_status == fb_esp_functions_status_ACTIVE)
-                                {
-                                    if (taskInfo->setPolicy)
-                                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_set_iam_policy_in_progress;
-                                    else
-                                        taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_finished;
-                                }
-
-                                if (_this->_function_status != fb_esp_functions_status_UNKNOWN &&
-                                    _this->_function_status != fb_esp_functions_status_OFFLINE)
-                                {
-                                    taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->session.error;
-                                    _this->sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);
-                                }
-                            }
-
-                            if (!ret || _this->_function_status == fb_esp_functions_status_ACTIVE ||
-                                _this->_function_status == fb_esp_functions_status_UNKNOWN ||
-                                _this->_function_status == fb_esp_functions_status_OFFLINE)
-                            {
-                                taskInfo->done = true;
-                                taskInfo->_delete = true;
-                                taskInfo->active = _this->_function_status == fb_esp_functions_status_ACTIVE;
-
-                                if (_this->_function_status == fb_esp_functions_status_ACTIVE && taskInfo->setPolicy)
-                                    _this->addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
-                                                           taskInfo->nextStep, fb_esp_functions_creation_step_idle,
-                                                           taskInfo->callback, taskInfo->statusInfo);
-
-                                if (_this->_function_status == fb_esp_functions_status_UNKNOWN ||
-                                    _this->_function_status == fb_esp_functions_status_OFFLINE)
-                                    _this->addCreationTask(taskInfo->fbdo, taskInfo->config,
-                                                           taskInfo->patch, fb_esp_functions_creation_step_delete,
-                                                           fb_esp_functions_creation_step_idle,
-                                                           taskInfo->callback, taskInfo->statusInfo);
-                            }
-                        }
-                    }
-                    yield();
-                    vTaskDelay(5000 / portTICK_PERIOD_MS);
-                }
-            }
-
-            size_t n = 0;
-            for (size_t i = 0; i < _this->_deployTasks.size(); i++)
-                if (_this->_deployTasks[i].done)
-                    n++;
-
-            if (n == _this->_deployTasks.size())
-            {
-                for (size_t i = 0; i < n; i++)
-                {
-                    struct fb_esp_deploy_task_info_t *taskInfo = &_this->_deployTasks[i];
-                    taskInfo->uploadUrl.clear();
-                    taskInfo->projectId.clear();
-                    taskInfo->locationId.clear();
-                    taskInfo->functionId.clear();
-                    taskInfo->policy.clear();
-                    taskInfo->httpsTriggerUrl.clear();
-                    taskInfo->fbdo->session.long_running_task--;
-                    taskInfo->fbdo->clear();
-                    taskInfo->fbdo = nullptr;
-                    taskInfo->callback = NULL;
-                    taskInfo->config = nullptr;
-                }
-                _this->_deployTasks.clear();
-                _this->_creation_task_enable = false;
-            }
+            _this->mDeployTasks();
 
             yield();
         }
@@ -1147,13 +882,24 @@ void FB_Functions::runDeployTask()
 
 #endif
 #elif defined(ESP8266) || defined(PICO_RP2040)
+    mDeployTasks();
+#endif
+}
+
+void FB_Functions::mDeployTasks()
+{
+    if (_creation_task_running)
+        return;
 
     if (_creation_task_enable)
     {
+
         delay(10);
 
         if (_deployTasks.size() == 0)
             return;
+
+        _creation_task_running = true;
 
         if (_deployIndex < _deployTasks.size() - 1)
             _deployIndex++;
@@ -1413,7 +1159,8 @@ void FB_Functions::runDeployTask()
                 n++;
 
 #if defined(ESP8266)
-        if (_deployTasks.size() > 0 && n < _deployTasks.size())
+        // User intends to run task manually, do not add schedule.
+        if (Signer.config->internal.deploy_loop_task_enable && _deployTasks.size() > 0 && n < _deployTasks.size())
             Signer.set_scheduled_callback(std::bind(&FB_Functions::runDeployTask, this));
 #endif
 
@@ -1440,20 +1187,20 @@ void FB_Functions::runDeployTask()
         }
     }
 
-#endif
+    _creation_task_running = false;
 }
 
 void FB_Functions::mRunDeployTasks()
 {
-    if (_deployTasks.size() > 0)
-    {
+    Signer.config->internal.deploy_loop_task_enable = false;
+
 #if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
-        if (!Signer.config->internal.functions_check_task_handle)
-            runDeployTask(pgm2Str(fb_esp_pgm_str_475 /* "deployTask" */));
-#elif defined(ESP8266) || defined(PICO_RP2040)
-        runDeployTask();
+    if (Signer.config->internal.functions_check_task_handle)
+        return;
 #endif
-    }
+
+    if (_deployTasks.size() > 0)
+        mDeployTasks();
 }
 
 #endif

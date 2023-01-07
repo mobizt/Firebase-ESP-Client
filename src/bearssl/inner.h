@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
  *
- * Permission is hereby granted, free of charge, to any person obtaining 
+ * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
@@ -9,12 +9,12 @@
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * The above copyright notice and this permission notice shall be 
+ * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
@@ -24,6 +24,9 @@
 
 #ifndef INNER_H__
 #define INNER_H__
+#if defined(ARDUINO_NANO_RP2040_CONNECT)
+#include "bool_types.h"
+#endif
 #include <Arduino.h>
 #if defined(ESP8266) || defined(PICO_RP2040)
 
@@ -39,7 +42,7 @@
  * good reasons.
  */
 #if _MSC_VER
-#pragma warning( disable : 4146 )
+#pragma warning(disable : 4146)
 #endif
 
 /*
@@ -55,7 +58,7 @@
  * no more than 23833 bits). RSA key sizes beyond 3072 bits don't make a
  * lot of sense anyway.
  */
-#define BR_MAX_RSA_SIZE   4096
+#define BR_MAX_RSA_SIZE 4096
 
 /*
  * Minimum size for a RSA modulus (in bits); this value is used only to
@@ -64,7 +67,7 @@
  * specific cases might need shorter keys, for legacy or research
  * purposes.
  */
-#define BR_MIN_RSA_SIZE   512
+#define BR_MIN_RSA_SIZE 512
 
 /*
  * Maximum size for a RSA factor (in bits). This is for RSA private-key
@@ -73,7 +76,7 @@
  *
  * This value MUST be a multiple of 32.
  */
-#define BR_MAX_RSA_FACTOR   ((BR_MAX_RSA_SIZE + 64) >> 1)
+#define BR_MAX_RSA_FACTOR ((BR_MAX_RSA_SIZE + 64) >> 1)
 
 /*
  * Maximum size for an EC curve (modulus or order), in bits. Size of
@@ -81,7 +84,7 @@
  * of 8 (so that decoding an integer with that many bytes does not
  * overflow).
  */
-#define BR_MAX_EC_SIZE   528
+#define BR_MAX_EC_SIZE 528
 
 /*
  * Some macros to recognize the current architecture. Right now, we are
@@ -106,16 +109,15 @@
  */
 #ifndef BR_64
 #if ((ULONG_MAX >> 31) >> 31) == 3
-#define BR_64   1
+#define BR_64 1
 #elif defined(__ia64) || defined(__itanium__) || defined(_M_IA64)
-#define BR_64   1
-#elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) \
-	|| defined(__64BIT__) || defined(_LP64) || defined(__LP64__)
-#define BR_64   1
+#define BR_64 1
+#elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) || defined(__64BIT__) || defined(_LP64) || defined(__LP64__)
+#define BR_64 1
 #elif defined(__sparc64__)
-#define BR_64   1
+#define BR_64 1
 #elif defined(__x86_64__) || defined(_M_X64)
-#define BR_64   1
+#define BR_64 1
 #endif
 #endif
 
@@ -124,7 +126,7 @@
  */
 #ifndef BR_LOMUL
 #if BR_ARMEL_CORTEXM_GCC
-#define BR_LOMUL   1
+#define BR_LOMUL 1
 #endif
 #endif
 
@@ -133,13 +135,13 @@
  */
 #ifndef BR_i386
 #if __i386__ || _M_IX86
-#define BR_i386   1
+#define BR_i386 1
 #endif
 #endif
 
 #ifndef BR_amd64
 #if __x86_64__ || _M_X64
-#define BR_amd64   1
+#define BR_amd64 1
 #endif
 #endif
 
@@ -162,41 +164,41 @@
  */
 #ifndef BR_GCC
 #if __GNUC__ && !__clang__
-#define BR_GCC   1
+#define BR_GCC 1
 
 #if __GNUC__ > 4
-#define BR_GCC_5_0   1
+#define BR_GCC_5_0 1
 #elif __GNUC__ == 4 && __GNUC_MINOR__ >= 9
-#define BR_GCC_4_9   1
+#define BR_GCC_4_9 1
 #elif __GNUC__ == 4 && __GNUC_MINOR__ >= 8
-#define BR_GCC_4_8   1
+#define BR_GCC_4_8 1
 #elif __GNUC__ == 4 && __GNUC_MINOR__ >= 7
-#define BR_GCC_4_7   1
+#define BR_GCC_4_7 1
 #elif __GNUC__ == 4 && __GNUC_MINOR__ >= 6
-#define BR_GCC_4_6   1
+#define BR_GCC_4_6 1
 #elif __GNUC__ == 4 && __GNUC_MINOR__ >= 5
-#define BR_GCC_4_5   1
+#define BR_GCC_4_5 1
 #elif __GNUC__ == 4 && __GNUC_MINOR__ >= 4
-#define BR_GCC_4_4   1
+#define BR_GCC_4_4 1
 #endif
 
 #if BR_GCC_5_0
-#define BR_GCC_4_9   1
+#define BR_GCC_4_9 1
 #endif
 #if BR_GCC_4_9
-#define BR_GCC_4_8   1
+#define BR_GCC_4_8 1
 #endif
 #if BR_GCC_4_8
-#define BR_GCC_4_7   1
+#define BR_GCC_4_7 1
 #endif
 #if BR_GCC_4_7
-#define BR_GCC_4_6   1
+#define BR_GCC_4_6 1
 #endif
 #if BR_GCC_4_6
-#define BR_GCC_4_5   1
+#define BR_GCC_4_5 1
 #endif
 #if BR_GCC_4_5
-#define BR_GCC_4_4   1
+#define BR_GCC_4_4 1
 #endif
 
 #endif
@@ -207,16 +209,16 @@
  */
 #ifndef BR_CLANG
 #if __clang__
-#define BR_CLANG   1
+#define BR_CLANG 1
 
 #if __clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 8)
-#define BR_CLANG_3_8   1
+#define BR_CLANG_3_8 1
 #elif __clang_major__ == 3 && __clang_minor__ >= 7
-#define BR_CLANG_3_7   1
+#define BR_CLANG_3_7 1
 #endif
 
 #if BR_CLANG_3_8
-#define BR_CLANG_3_7   1
+#define BR_CLANG_3_7 1
 #endif
 
 #endif
@@ -227,36 +229,36 @@
  */
 #ifndef BR_MSC
 #if _MSC_VER
-#define BR_MSC   1
+#define BR_MSC 1
 
 #if _MSC_VER >= 1900
-#define BR_MSC_2015   1
+#define BR_MSC_2015 1
 #elif _MSC_VER >= 1800
-#define BR_MSC_2013   1
+#define BR_MSC_2013 1
 #elif _MSC_VER >= 1700
-#define BR_MSC_2012   1
+#define BR_MSC_2012 1
 #elif _MSC_VER >= 1600
-#define BR_MSC_2010   1
+#define BR_MSC_2010 1
 #elif _MSC_VER >= 1500
-#define BR_MSC_2008   1
+#define BR_MSC_2008 1
 #elif _MSC_VER >= 1400
-#define BR_MSC_2005   1
+#define BR_MSC_2005 1
 #endif
 
 #if BR_MSC_2015
-#define BR_MSC_2013   1
+#define BR_MSC_2013 1
 #endif
 #if BR_MSC_2013
-#define BR_MSC_2012   1
+#define BR_MSC_2012 1
 #endif
 #if BR_MSC_2012
-#define BR_MSC_2010   1
+#define BR_MSC_2010 1
 #endif
 #if BR_MSC_2010
-#define BR_MSC_2008   1
+#define BR_MSC_2008 1
 #endif
 #if BR_MSC_2008
-#define BR_MSC_2005   1
+#define BR_MSC_2005 1
 #endif
 
 #endif
@@ -267,7 +269,7 @@
  * 'target' attribute that activates support for specific opcodes.
  */
 #if BR_GCC_4_4 || BR_CLANG_3_7
-#define BR_TARGET(x)   __attribute__((target(x)))
+#define BR_TARGET(x) __attribute__((target(x)))
 #else
 #define BR_TARGET(x)
 #endif
@@ -278,7 +280,7 @@
  */
 #ifndef BR_AES_X86NI
 #if (BR_i386 || BR_amd64) && (BR_GCC_4_8 || BR_CLANG_3_7 || BR_MSC_2012)
-#define BR_AES_X86NI   1
+#define BR_AES_X86NI 1
 #endif
 #endif
 
@@ -288,7 +290,7 @@
  */
 #ifndef BR_SSE2
 #if (BR_i386 || BR_amd64) && (BR_GCC_4_4 || BR_CLANG_3_7 || BR_MSC_2005)
-#define BR_SSE2   1
+#define BR_SSE2 1
 #endif
 #endif
 
@@ -298,7 +300,7 @@
  */
 #ifndef BR_RDRAND
 #if (BR_i386 || BR_amd64) && (BR_GCC_4_6 || BR_CLANG_3_7 || BR_MSC_2012)
-#define BR_RDRAND   1
+#define BR_RDRAND 1
 #endif
 #endif
 
@@ -313,22 +315,14 @@
  */
 
 #ifndef BR_USE_URANDOM
-#if defined _AIX \
-	|| defined __ANDROID__ \
-	|| defined __FreeBSD__ \
-	|| defined __NetBSD__ \
-	|| defined __OpenBSD__ \
-	|| defined __DragonFly__ \
-	|| defined __linux__ \
-	|| (defined __sun && (defined __SVR4 || defined __svr4__)) \
-	|| (defined __APPLE__ && defined __MACH__)
-#define BR_USE_URANDOM   1
+#if defined _AIX || defined __ANDROID__ || defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__ || defined __DragonFly__ || defined __linux__ || (defined __sun && (defined __SVR4 || defined __svr4__)) || (defined __APPLE__ && defined __MACH__)
+#define BR_USE_URANDOM 1
 #endif
 #endif
 
 #ifndef BR_USE_WIN32_RAND
 #if defined _WIN32 || defined _WIN64
-#define BR_USE_WIN32_RAND   1
+#define BR_USE_WIN32_RAND 1
 #endif
 #endif
 
@@ -342,7 +336,7 @@
  */
 #ifndef BR_POWER8
 #if __GNUC__ && ((_ARCH_PWR8 || _ARCH_PPC) && __CRYPTO__)
-#define BR_POWER8   1
+#define BR_POWER8 1
 #endif
 #endif
 
@@ -353,24 +347,24 @@
 #if defined BR_POWER8_LE
 #undef BR_POWER8_BE
 #if BR_POWER8_LE
-#define BR_POWER8_BE   0
+#define BR_POWER8_BE 0
 #else
-#define BR_POWER8_BE   1
+#define BR_POWER8_BE 1
 #endif
 #elif defined BR_POWER8_BE
 #undef BR_POWER8_LE
 #if BR_POWER8_BE
-#define BR_POWER8_LE   0
+#define BR_POWER8_LE 0
 #else
-#define BR_POWER8_LE   1
+#define BR_POWER8_LE 1
 #endif
 #else
 #if __LITTLE_ENDIAN__
-#define BR_POWER8_LE   1
-#define BR_POWER8_BE   0
+#define BR_POWER8_LE 1
+#define BR_POWER8_BE 0
 #else
-#define BR_POWER8_LE   0
-#define BR_POWER8_BE   1
+#define BR_POWER8_LE 0
+#define BR_POWER8_BE 1
 #endif
 #endif
 #endif
@@ -380,9 +374,9 @@
  */
 #if !defined BR_INT128 && !defined BR_UMUL128
 #ifdef __SIZEOF_INT128__
-#define BR_INT128    1
+#define BR_INT128 1
 #elif _M_X64
-#define BR_UMUL128   1
+#define BR_UMUL128 1
 #endif
 #endif
 
@@ -398,14 +392,13 @@
 #if !defined BR_LE_UNALIGNED && !defined BR_BE_UNALIGNED
 
 #if __i386 || __i386__ || __x86_64__ || _M_IX86 || _M_X64
-#define BR_LE_UNALIGNED   1
+#define BR_LE_UNALIGNED 1
 #elif BR_POWER8_BE
-#define BR_BE_UNALIGNED   1
+#define BR_BE_UNALIGNED 1
 #elif BR_POWER8_LE
-#define BR_LE_UNALIGNED   1
-#elif (__powerpc__ || __powerpc64__ || _M_PPC || _ARCH_PPC || _ARCH_PPC64) \
-	&& __BIG_ENDIAN__
-#define BR_BE_UNALIGNED   1
+#define BR_LE_UNALIGNED 1
+#elif (__powerpc__ || __powerpc64__ || _M_PPC || _ARCH_PPC || _ARCH_PPC64) && __BIG_ENDIAN__
+#define BR_BE_UNALIGNED 1
 #endif
 
 #endif
@@ -415,16 +408,14 @@
  */
 
 #ifndef BR_USE_UNIX_TIME
-#if defined __unix__ || defined __linux__ \
-	|| defined _POSIX_SOURCE || defined _POSIX_C_SOURCE \
-	|| (defined __APPLE__ && defined __MACH__)
-#define BR_USE_UNIX_TIME   1
+#if defined __unix__ || defined __linux__ || defined _POSIX_SOURCE || defined _POSIX_C_SOURCE || (defined __APPLE__ && defined __MACH__)
+#define BR_USE_UNIX_TIME 1
 #endif
 #endif
 
 #ifndef BR_USE_WIN32_TIME
 #if defined _WIN32 || defined _WIN64
-#define BR_USE_WIN32_TIME   1
+#define BR_USE_WIN32_TIME 1
 #endif
 #endif
 
@@ -447,17 +438,20 @@
  * "right".
  */
 
-typedef union {
+typedef union
+{
 	uint16_t u;
 	unsigned char b[sizeof(uint16_t)];
 } br_union_u16;
 
-typedef union {
+typedef union
+{
 	uint32_t u;
 	unsigned char b[sizeof(uint32_t)];
 } br_union_u32;
 
-typedef union {
+typedef union
+{
 	uint64_t u;
 	unsigned char b[sizeof(uint64_t)];
 } br_union_u64;
@@ -557,10 +551,7 @@ br_dec32le(const void *src)
 	const unsigned char *buf;
 
 	buf = (const unsigned char *)src;
-	return (uint32_t)buf[0]
-		| ((uint32_t)buf[1] << 8)
-		| ((uint32_t)buf[2] << 16)
-		| ((uint32_t)buf[3] << 24);
+	return (uint32_t)buf[0] | ((uint32_t)buf[1] << 8) | ((uint32_t)buf[2] << 16) | ((uint32_t)buf[3] << 24);
 #endif
 }
 
@@ -573,10 +564,7 @@ br_dec32be(const void *src)
 	const unsigned char *buf;
 
 	buf = (const unsigned char *)src;
-	return ((uint32_t)buf[0] << 24)
-		| ((uint32_t)buf[1] << 16)
-		| ((uint32_t)buf[2] << 8)
-		| (uint32_t)buf[3];
+	return ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | (uint32_t)buf[3];
 #endif
 }
 
@@ -617,8 +605,7 @@ br_dec64le(const void *src)
 	const unsigned char *buf;
 
 	buf = (const unsigned char *)src;
-	return (uint64_t)br_dec32le(buf)
-		| ((uint64_t)br_dec32le(buf + 4) << 32);
+	return (uint64_t)br_dec32le(buf) | ((uint64_t)br_dec32le(buf + 4) << 32);
 #endif
 }
 
@@ -631,8 +618,7 @@ br_dec64be(const void *src)
 	const unsigned char *buf;
 
 	buf = (unsigned char *)src;
-	return ((uint64_t)br_dec32be(buf) << 32)
-		| (uint64_t)br_dec32be(buf + 4);
+	return ((uint64_t)br_dec32be(buf) << 32) | (uint64_t)br_dec32be(buf + 4);
 #endif
 }
 
@@ -660,8 +646,7 @@ void br_range_enc64be(void *dst, const uint64_t *v, size_t num);
 static inline uint32_t
 br_swap32(uint32_t x)
 {
-	x = ((x & (uint32_t)0x00FF00FF) << 8)
-		| ((x >> 8) & (uint32_t)0x00FF00FF);
+	x = ((x & (uint32_t)0x00FF00FF) << 8) | ((x >> 8) & (uint32_t)0x00FF00FF);
 	return (x << 16) | (x >> 16);
 }
 
@@ -691,9 +676,9 @@ void br_sha2small_round(const unsigned char *buf, uint32_t *val);
  * P_hash(secret, label + seed), and XORs the result into the dst buffer.
  */
 void br_tls_phash(void *dst, size_t len,
-	const br_hash_class *dig,
-	const void *secret, size_t secret_len, const char *label,
-	size_t seed_num, const br_tls_prf_seed_chunk *seed);
+				  const br_hash_class *dig,
+				  const void *secret, size_t secret_len, const char *label,
+				  size_t seed_num, const br_tls_prf_seed_chunk *seed);
 
 /*
  * Copy all configured hash implementations from a multihash context
@@ -701,7 +686,7 @@ void br_tls_phash(void *dst, size_t len,
  */
 static inline void
 br_multihash_copyimpl(br_multihash_context *dst,
-	const br_multihash_context *src)
+					  const br_multihash_context *src)
 {
 	memcpy((void *)dst->impl, src->impl, sizeof src->impl);
 }
@@ -801,9 +786,9 @@ GT(uint32_t x, uint32_t y)
 /*
  * Other comparisons (greater-or-equal, lower-than, lower-or-equal).
  */
-#define GE(x, y)   NOT(GT(y, x))
-#define LT(x, y)   GT(y, x)
-#define LE(x, y)   NOT(GT(x, y))
+#define GE(x, y) NOT(GT(y, x))
+#define LT(x, y) GT(y, x)
+#define LE(x, y) NOT(GT(x, y))
 
 /*
  * General comparison: returned value is -1, 0 or 1, depending on
@@ -883,7 +868,7 @@ LE0(int32_t x)
  */
 void br_ccopy(uint32_t ctl, void *dst, const void *src, size_t len);
 
-#define CCOPY   br_ccopy
+#define CCOPY br_ccopy
 
 /*
  * Compute the bit length of a 32-bit integer. Returned value is between 0
@@ -895,15 +880,23 @@ BIT_LENGTH(uint32_t x)
 	uint32_t k, c;
 
 	k = NEQ(x, 0);
-	c = GT(x, 0xFFFF); x = MUX(c, x >> 16, x); k += c << 4;
-	c = GT(x, 0x00FF); x = MUX(c, x >>  8, x); k += c << 3;
-	c = GT(x, 0x000F); x = MUX(c, x >>  4, x); k += c << 2;
-	c = GT(x, 0x0003); x = MUX(c, x >>  2, x); k += c << 1;
+	c = GT(x, 0xFFFF);
+	x = MUX(c, x >> 16, x);
+	k += c << 4;
+	c = GT(x, 0x00FF);
+	x = MUX(c, x >> 8, x);
+	k += c << 3;
+	c = GT(x, 0x000F);
+	x = MUX(c, x >> 4, x);
+	k += c << 2;
+	c = GT(x, 0x0003);
+	x = MUX(c, x >> 2, x);
+	k += c << 1;
 	k += GT(x, 0x0001);
 	return k;
 }
 
-//Conflicts with MIN MAX defined in pico/platform.h
+// Conflicts with MIN MAX defined in pico/platform.h
 #if defined(ESP8266)
 /*
  * Compute the minimum of x and y.
@@ -930,7 +923,7 @@ MAX(uint32_t x, uint32_t y)
  * implementation assumes that the basic multiplication operator
  * yields constant-time code.
  */
-#define MUL(x, y)   ((uint64_t)(x) * (uint64_t)(y))
+#define MUL(x, y) ((uint64_t)(x) * (uint64_t)(y))
 
 #if BR_CT_MUL31
 
@@ -947,10 +940,7 @@ MAX(uint32_t x, uint32_t y)
  * word, and then replace automatically the unsigned multiplication with
  * a signed multiplication opcode.
  */
-#define MUL31(x, y)   ((uint64_t)((x) | (uint32_t)0x80000000) \
-                       * (uint64_t)((y) | (uint32_t)0x80000000) \
-                       - ((uint64_t)(x) << 31) - ((uint64_t)(y) << 31) \
-                       - ((uint64_t)1 << 62))
+#define MUL31(x, y) ((uint64_t)((x) | (uint32_t)0x80000000) * (uint64_t)((y) | (uint32_t)0x80000000) - ((uint64_t)(x) << 31) - ((uint64_t)(y) << 31) - ((uint64_t)1 << 62))
 static inline uint32_t
 MUL31_lo(uint32_t x, uint32_t y)
 {
@@ -972,8 +962,8 @@ MUL31_lo(uint32_t x, uint32_t y)
  * yields constant-time code.
  * The MUL31_lo() macro returns only the low 31 bits of the product.
  */
-#define MUL31(x, y)     ((uint64_t)(x) * (uint64_t)(y))
-#define MUL31_lo(x, y)  (((uint32_t)(x) * (uint32_t)(y)) & (uint32_t)0x7FFFFFFF)
+#define MUL31(x, y) ((uint64_t)(x) * (uint64_t)(y))
+#define MUL31_lo(x, y) (((uint32_t)(x) * (uint32_t)(y)) & (uint32_t)0x7FFFFFFF)
 
 #endif
 
@@ -986,11 +976,9 @@ MUL31_lo(uint32_t x, uint32_t y)
  * multiplication is not constant-time.
  */
 #if BR_CT_MUL15
-#define MUL15(x, y)   (((uint32_t)(x) | (uint32_t)0x80000000) \
-                       * ((uint32_t)(y) | (uint32_t)0x80000000) \
-		       & (uint32_t)0x7FFFFFFF)
+#define MUL15(x, y) (((uint32_t)(x) | (uint32_t)0x80000000) * ((uint32_t)(y) | (uint32_t)0x80000000) & (uint32_t)0x7FFFFFFF)
 #else
-#define MUL15(x, y)   ((uint32_t)(x) * (uint32_t)(y))
+#define MUL15(x, y) ((uint32_t)(x) * (uint32_t)(y))
 #endif
 
 /*
@@ -1009,10 +997,9 @@ MUL31_lo(uint32_t x, uint32_t y)
  * and yields bigger code, which is why it is deactivated by default.
  */
 #if BR_NO_ARITH_SHIFT
-#define ARSH(x, n)   (((uint32_t)(x) >> (n)) \
-                      | ((-((uint32_t)(x) >> 31)) << (32 - (n))))
+#define ARSH(x, n) (((uint32_t)(x) >> (n)) | ((-((uint32_t)(x) >> 31)) << (32 - (n))))
 #else
-#define ARSH(x, n)   ((*(int32_t *)&(x)) >> (n))
+#define ARSH(x, n) ((*(int32_t *)&(x)) >> (n))
 #endif
 
 /*
@@ -1110,7 +1097,7 @@ void br_i32_decode(uint32_t *x, const void *src, size_t len);
  * not does not leak either.
  */
 uint32_t br_i32_decode_mod(uint32_t *x,
-	const void *src, size_t len, const uint32_t *m);
+						   const void *src, size_t len, const uint32_t *m);
 
 /*
  * Reduce an integer (a[]) modulo another (m[]). The result is written
@@ -1130,7 +1117,7 @@ void br_i32_reduce(uint32_t *x, const uint32_t *a, const uint32_t *m);
  * x[] MUST be distinct from m[].
  */
 void br_i32_decode_reduce(uint32_t *x,
-	const void *src, size_t len, const uint32_t *m);
+						  const void *src, size_t len, const uint32_t *m);
 
 /*
  * Encode an integer into its big-endian unsigned representation. The
@@ -1166,9 +1153,12 @@ br_i32_word(const uint32_t *a, uint32_t off)
 
 	u = (size_t)(off >> 5) + 1;
 	j = (unsigned)off & 31;
-	if (j == 0) {
+	if (j == 0)
+	{
 		return a[u];
-	} else {
+	}
+	else
+	{
 		return (a[u] >> j) | (a[u + 1] << (32 - j));
 	}
 }
@@ -1216,7 +1206,7 @@ void br_i32_mulacc(uint32_t *d, const uint32_t *a, const uint32_t *b);
 static inline void
 br_i32_zero(uint32_t *x, uint32_t bit_len)
 {
-	*x ++ = bit_len;
+	*x++ = bit_len;
 	memset(x, 0, ((bit_len + 31) >> 5) * sizeof *x);
 }
 
@@ -1250,7 +1240,7 @@ void br_i32_from_monty(uint32_t *x, const uint32_t *m, uint32_t m0i);
  * integer).
  */
 void br_i32_montymul(uint32_t *d, const uint32_t *x, const uint32_t *y,
-	const uint32_t *m, uint32_t m0i);
+					 const uint32_t *m, uint32_t m0i);
 
 /*
  * Compute a modular exponentiation. x[] MUST be an integer modulo m[]
@@ -1262,7 +1252,7 @@ void br_i32_montymul(uint32_t *d, const uint32_t *x, const uint32_t *y,
  * each large enough to accommodate an integer with the same size as m[].
  */
 void br_i32_modpow(uint32_t *x, const unsigned char *e, size_t elen,
-	const uint32_t *m, uint32_t m0i, uint32_t *t1, uint32_t *t2);
+				   const uint32_t *m, uint32_t m0i, uint32_t *t1, uint32_t *t2);
 
 /* ==================================================================== */
 
@@ -1354,7 +1344,7 @@ void br_i31_decode(uint32_t *x, const void *src, size_t len);
  * not does not leak either.
  */
 uint32_t br_i31_decode_mod(uint32_t *x,
-	const void *src, size_t len, const uint32_t *m);
+						   const void *src, size_t len, const uint32_t *m);
 
 /*
  * Zeroize an integer. The announced bit length is set to the provided
@@ -1364,7 +1354,7 @@ uint32_t br_i31_decode_mod(uint32_t *x,
 static inline void
 br_i31_zero(uint32_t *x, uint32_t bit_len)
 {
-	*x ++ = bit_len;
+	*x++ = bit_len;
 	memset(x, 0, ((bit_len + 31) >> 5) * sizeof *x);
 }
 
@@ -1392,7 +1382,7 @@ void br_i31_reduce(uint32_t *x, const uint32_t *a, const uint32_t *m);
  * x[] MUST be distinct from m[].
  */
 void br_i31_decode_reduce(uint32_t *x,
-	const void *src, size_t len, const uint32_t *m);
+						  const void *src, size_t len, const uint32_t *m);
 
 /*
  * Multiply x[] by 2^31 and then add integer z, modulo m[]. This
@@ -1431,7 +1421,7 @@ uint32_t br_i31_ninv31(uint32_t x);
  * integer).
  */
 void br_i31_montymul(uint32_t *d, const uint32_t *x, const uint32_t *y,
-	const uint32_t *m, uint32_t m0i);
+					 const uint32_t *m, uint32_t m0i);
 
 /*
  * Convert a modular integer to Montgomery representation. The integer x[]
@@ -1458,7 +1448,7 @@ void br_i31_from_monty(uint32_t *x, const uint32_t *m, uint32_t m0i);
  * each large enough to accommodate an integer with the same size as m[].
  */
 void br_i31_modpow(uint32_t *x, const unsigned char *e, size_t elen,
-	const uint32_t *m, uint32_t m0i, uint32_t *t1, uint32_t *t2);
+				   const uint32_t *m, uint32_t m0i, uint32_t *t1, uint32_t *t2);
 
 /*
  * Compute a modular exponentiation. x[] MUST be an integer modulo m[]
@@ -1477,7 +1467,7 @@ void br_i31_modpow(uint32_t *x, const unsigned char *e, size_t elen,
  * the provided tmp[] array is too short.
  */
 uint32_t br_i31_modpow_opt(uint32_t *x, const unsigned char *e, size_t elen,
-	const uint32_t *m, uint32_t m0i, uint32_t *tmp, size_t twlen);
+						   const uint32_t *m, uint32_t m0i, uint32_t *tmp, size_t twlen);
 
 /*
  * Compute d+a*b, result in d. The initial announced bit length of d[]
@@ -1507,7 +1497,7 @@ void br_i31_mulacc(uint32_t *d, const uint32_t *a, const uint32_t *b);
  * y is invertible modulo m.
  */
 uint32_t br_i31_moddiv(uint32_t *x, const uint32_t *y,
-	const uint32_t *m, uint32_t m0i, uint32_t *t);
+					   const uint32_t *m, uint32_t m0i, uint32_t *t);
 
 /* ==================================================================== */
 
@@ -1518,7 +1508,7 @@ uint32_t br_i31_moddiv(uint32_t *x, const uint32_t *y,
 static inline void
 br_i15_zero(uint16_t *x, uint16_t bit_len)
 {
-	*x ++ = bit_len;
+	*x++ = bit_len;
 	memset(x, 0, ((bit_len + 15) >> 4) * sizeof *x);
 }
 
@@ -1533,20 +1523,20 @@ uint32_t br_i15_sub(uint16_t *a, const uint16_t *b, uint32_t ctl);
 void br_i15_muladd_small(uint16_t *x, uint16_t z, const uint16_t *m);
 
 void br_i15_montymul(uint16_t *d, const uint16_t *x, const uint16_t *y,
-	const uint16_t *m, uint16_t m0i);
+					 const uint16_t *m, uint16_t m0i);
 
 void br_i15_to_monty(uint16_t *x, const uint16_t *m);
 
 void br_i15_modpow(uint16_t *x, const unsigned char *e, size_t elen,
-	const uint16_t *m, uint16_t m0i, uint16_t *t1, uint16_t *t2);
+				   const uint16_t *m, uint16_t m0i, uint16_t *t1, uint16_t *t2);
 
 uint32_t br_i15_modpow_opt(uint16_t *x, const unsigned char *e, size_t elen,
-	const uint16_t *m, uint16_t m0i, uint16_t *tmp, size_t twlen);
+						   const uint16_t *m, uint16_t m0i, uint16_t *tmp, size_t twlen);
 
 void br_i15_encode(void *dst, size_t len, const uint16_t *x);
 
 uint32_t br_i15_decode_mod(uint16_t *x,
-	const void *src, size_t len, const uint16_t *m);
+						   const void *src, size_t len, const uint16_t *m);
 
 void br_i15_rshift(uint16_t *x, int count);
 
@@ -1557,14 +1547,14 @@ void br_i15_decode(uint16_t *x, const void *src, size_t len);
 void br_i15_from_monty(uint16_t *x, const uint16_t *m, uint16_t m0i);
 
 void br_i15_decode_reduce(uint16_t *x,
-	const void *src, size_t len, const uint16_t *m);
+						  const void *src, size_t len, const uint16_t *m);
 
 void br_i15_reduce(uint16_t *x, const uint16_t *a, const uint16_t *m);
 
 void br_i15_mulacc(uint16_t *d, const uint16_t *a, const uint16_t *b);
 
 uint32_t br_i15_moddiv(uint16_t *x, const uint16_t *y,
-	const uint16_t *m, uint16_t m0i, uint16_t *t);
+					   const uint16_t *m, uint16_t m0i, uint16_t *t);
 
 /*
  * Variant of br_i31_modpow_opt() that internally uses 64x64->128
@@ -1573,7 +1563,7 @@ uint32_t br_i15_moddiv(uint16_t *x, const uint16_t *y,
  * integers.
  */
 uint32_t br_i62_modpow_opt(uint32_t *x31, const unsigned char *e, size_t elen,
-	const uint32_t *m31, uint32_t m0i31, uint64_t *tmp, size_t twlen);
+						   const uint32_t *m31, uint32_t m0i31, uint64_t *tmp, size_t twlen);
 
 /*
  * Type for a function with the same API as br_i31_modpow_opt() (some
@@ -1581,8 +1571,8 @@ uint32_t br_i62_modpow_opt(uint32_t *x31, const unsigned char *e, size_t elen,
  * on the temporaries).
  */
 typedef uint32_t (*br_i31_modpow_opt_type)(uint32_t *x,
-	const unsigned char *e, size_t elen,
-	const uint32_t *m, uint32_t m0i, uint32_t *tmp, size_t twlen);
+										   const unsigned char *e, size_t elen,
+										   const uint32_t *m, uint32_t m0i, uint32_t *tmp, size_t twlen);
 
 /*
  * Wrapper for br_i62_modpow_opt() that uses the same type as
@@ -1590,16 +1580,15 @@ typedef uint32_t (*br_i31_modpow_opt_type)(uint32_t *x,
  * 64-bit aligned.
  */
 uint32_t br_i62_modpow_opt_as_i31(uint32_t *x,
-	const unsigned char *e, size_t elen,
-	const uint32_t *m, uint32_t m0i, uint32_t *tmp, size_t twlen);
+								  const unsigned char *e, size_t elen,
+								  const uint32_t *m, uint32_t m0i, uint32_t *tmp, size_t twlen);
 
 /* ==================================================================== */
 
 static inline size_t
 br_digest_size(const br_hash_class *digest_class)
 {
-	return (size_t)(digest_class->desc >> BR_HASHDESC_OUT_OFF)
-		& BR_HASHDESC_OUT_MASK;
+	return (size_t)(digest_class->desc >> BR_HASHDESC_OUT_OFF) & BR_HASHDESC_OUT_MASK;
 }
 
 /*
@@ -1658,19 +1647,19 @@ unsigned br_des_ct_keysched(uint32_t *skey, const void *key, size_t key_len);
  * DES/3DES subkey decompression (from the compressed bitsliced subkeys).
  */
 void br_des_ct_skey_expand(uint32_t *sk_exp,
-	unsigned num_rounds, const uint32_t *skey);
+						   unsigned num_rounds, const uint32_t *skey);
 
 /*
  * DES/3DES block encryption/decryption ('des_tab').
  */
 void br_des_tab_process_block(unsigned num_rounds,
-	const uint32_t *skey, void *block);
+							  const uint32_t *skey, void *block);
 
 /*
  * DES/3DES block encryption/decryption ('des_ct').
  */
 void br_des_ct_process_block(unsigned num_rounds,
-	const uint32_t *skey, void *block);
+							 const uint32_t *skey, void *block);
 
 /* ==================================================================== */
 /*
@@ -1696,7 +1685,7 @@ unsigned br_aes_keysched(uint32_t *skey, const void *key, size_t key_len);
  * AES key schedule for decryption ('aes_big' implementation).
  */
 unsigned br_aes_big_keysched_inv(uint32_t *skey,
-	const void *key, size_t key_len);
+								 const void *key, size_t key_len);
 
 /*
  * AES block encryption with the 'aes_big' implementation (fast, but
@@ -1716,7 +1705,7 @@ void br_aes_big_decrypt(unsigned num_rounds, const uint32_t *skey, void *data);
  * "in place".
  */
 void br_aes_small_encrypt(unsigned num_rounds,
-	const uint32_t *skey, void *data);
+						  const uint32_t *skey, void *data);
 
 /*
  * AES block decryption with the 'aes_small' implementation (small, but
@@ -1724,7 +1713,7 @@ void br_aes_small_encrypt(unsigned num_rounds,
  * "in place".
  */
 void br_aes_small_decrypt(unsigned num_rounds,
-	const uint32_t *skey, void *data);
+						  const uint32_t *skey, void *data);
 
 /*
  * The constant-time implementation is "bitsliced": the 128-bit state is
@@ -1787,7 +1776,7 @@ void br_aes_ct_bitslice_invSbox(uint32_t *q);
  * in parallel.
  */
 void br_aes_ct_bitslice_encrypt(unsigned num_rounds,
-	const uint32_t *skey, uint32_t *q);
+								const uint32_t *skey, uint32_t *q);
 
 /*
  * Compute AES decryption on bitsliced data. Since input is stored on
@@ -1795,7 +1784,7 @@ void br_aes_ct_bitslice_encrypt(unsigned num_rounds,
  * in parallel.
  */
 void br_aes_ct_bitslice_decrypt(unsigned num_rounds,
-	const uint32_t *skey, uint32_t *q);
+								const uint32_t *skey, uint32_t *q);
 
 /*
  * AES key schedule, constant-time version. skey[] is filled with n+1
@@ -1804,7 +1793,7 @@ void br_aes_ct_bitslice_decrypt(unsigned num_rounds,
  * invalid (not 16, 24 or 32), then 0 is returned.
  */
 unsigned br_aes_ct_keysched(uint32_t *comp_skey,
-	const void *key, size_t key_len);
+							const void *key, size_t key_len);
 
 /*
  * Expand AES subkeys as produced by br_aes_ct_keysched(), into
@@ -1812,7 +1801,7 @@ unsigned br_aes_ct_keysched(uint32_t *comp_skey,
  * br_aes_ct_bitslice_decrypt().
  */
 void br_aes_ct_skey_expand(uint32_t *skey,
-	unsigned num_rounds, const uint32_t *comp_skey);
+						   unsigned num_rounds, const uint32_t *comp_skey);
 
 /*
  * For the ct64 implementation, the same bitslicing technique is used,
@@ -1865,7 +1854,7 @@ void br_aes_ct64_bitslice_invSbox(uint64_t *q);
  * in parallel.
  */
 void br_aes_ct64_bitslice_encrypt(unsigned num_rounds,
-	const uint64_t *skey, uint64_t *q);
+								  const uint64_t *skey, uint64_t *q);
 
 /*
  * Compute AES decryption on bitsliced data. Since input is stored on
@@ -1873,7 +1862,7 @@ void br_aes_ct64_bitslice_encrypt(unsigned num_rounds,
  * in parallel.
  */
 void br_aes_ct64_bitslice_decrypt(unsigned num_rounds,
-	const uint64_t *skey, uint64_t *q);
+								  const uint64_t *skey, uint64_t *q);
 
 /*
  * AES key schedule, constant-time version. skey[] is filled with n+1
@@ -1882,7 +1871,7 @@ void br_aes_ct64_bitslice_decrypt(unsigned num_rounds,
  * invalid (not 16, 24 or 32), then 0 is returned.
  */
 unsigned br_aes_ct64_keysched(uint64_t *comp_skey,
-	const void *key, size_t key_len);
+							  const void *key, size_t key_len);
 
 /*
  * Expand AES subkeys as produced by br_aes_ct64_keysched(), into
@@ -1890,7 +1879,7 @@ unsigned br_aes_ct64_keysched(uint64_t *comp_skey,
  * br_aes_ct64_bitslice_decrypt().
  */
 void br_aes_ct64_skey_expand(uint64_t *skey,
-	unsigned num_rounds, const uint64_t *comp_skey);
+							 unsigned num_rounds, const uint64_t *comp_skey);
 
 /*
  * Test support for AES-NI opcodes.
@@ -1903,7 +1892,7 @@ int br_aes_x86ni_supported(void);
  * Key size MUST be 16, 24 or 32 bytes; otherwise, 0 is returned.
  */
 unsigned br_aes_x86ni_keysched_enc(unsigned char *skni,
-	const void *key, size_t len);
+								   const void *key, size_t len);
 
 /*
  * AES key schedule, using x86 AES-NI instructions. This yields the
@@ -1911,7 +1900,7 @@ unsigned br_aes_x86ni_keysched_enc(unsigned char *skni,
  * Key size MUST be 16, 24 or 32 bytes; otherwise, 0 is returned.
  */
 unsigned br_aes_x86ni_keysched_dec(unsigned char *skni,
-	const void *key, size_t len);
+								   const void *key, size_t len);
 
 /*
  * Test support for AES POWER8 opcodes.
@@ -1924,7 +1913,7 @@ int br_aes_pwr8_supported(void);
  * Key size MUST be 16, 24 or 32 bytes; otherwise, 0 is returned.
  */
 unsigned br_aes_pwr8_keysched(unsigned char *skni,
-	const void *key, size_t len);
+							  const void *key, size_t len);
 
 /* ==================================================================== */
 /*
@@ -1936,8 +1925,8 @@ unsigned br_aes_pwr8_keysched(unsigned char *skni,
  * the encoded hash function OID, or NULL.
  */
 uint32_t br_rsa_pkcs1_sig_pad(const unsigned char *hash_oid,
-	const unsigned char *hash, size_t hash_len,
-	uint32_t n_bitlen, unsigned char *x);
+							  const unsigned char *hash, size_t hash_len,
+							  uint32_t n_bitlen, unsigned char *x);
 
 /*
  * Check PKCS#1 v1.5 padding (for signatures). 'hash_oid' is the encoded
@@ -1946,16 +1935,16 @@ uint32_t br_rsa_pkcs1_sig_pad(const unsigned char *hash_oid,
  * success, the hashed message is extracted.
  */
 uint32_t br_rsa_pkcs1_sig_unpad(const unsigned char *sig, size_t sig_len,
-	const unsigned char *hash_oid, size_t hash_len,
-	unsigned char *hash_out);
+								const unsigned char *hash_oid, size_t hash_len,
+								unsigned char *hash_out);
 
 /*
  * Apply OAEP padding. Returned value is the actual padded string length,
  * or zero on error.
  */
 size_t br_rsa_oaep_pad(const br_prng_class **rnd, const br_hash_class *dig,
-	const void *label, size_t label_len, const br_rsa_public_key *pk,
-	void *dst, size_t dst_nax_len, const void *src, size_t src_len);
+					   const void *label, size_t label_len, const br_rsa_public_key *pk,
+					   void *dst, size_t dst_nax_len, const void *src, size_t src_len);
 
 /*
  * Unravel and check OAEP padding. If the padding is correct, then 1 is
@@ -1965,23 +1954,23 @@ size_t br_rsa_oaep_pad(const br_prng_class **rnd, const br_hash_class *dig,
  * the complete buffer contents are altered.
  */
 uint32_t br_rsa_oaep_unpad(const br_hash_class *dig,
-	const void *label, size_t label_len, void *data, size_t *len);
+						   const void *label, size_t label_len, void *data, size_t *len);
 
 /*
  * Compute MGF1 for a given seed, and XOR the output into the provided
  * buffer.
  */
 void br_mgf1_xor(void *data, size_t len,
-	const br_hash_class *dig, const void *seed, size_t seed_len);
+				 const br_hash_class *dig, const void *seed, size_t seed_len);
 
 /*
  * Inner function for RSA key generation; used by the "i31" and "i62"
  * implementations.
  */
 uint32_t br_rsa_i31_keygen_inner(const br_prng_class **rng,
-	br_rsa_private_key *sk, void *kbuf_priv,
-	br_rsa_public_key *pk, void *kbuf_pub,
-	unsigned size, uint32_t pubexp, br_i31_modpow_opt_type mp31);
+								 br_rsa_private_key *sk, void *kbuf_priv,
+								 br_rsa_public_key *pk, void *kbuf_pub,
+								 unsigned size, uint32_t pubexp, br_i31_modpow_opt_type mp31);
 
 /* ==================================================================== */
 /*
@@ -1992,7 +1981,8 @@ uint32_t br_rsa_i31_keygen_inner(const br_prng_class **rng,
  * Type for generic EC parameters: curve order (unsigned big-endian
  * encoding) and encoded conventional generator.
  */
-typedef struct {
+typedef struct
+{
 	int curve;
 	const unsigned char *order;
 	size_t order_len;
@@ -2021,7 +2011,7 @@ extern const br_ec_curve_def br_curve25519;
  * of exactly that many bits in the source (capped at the source length).
  */
 void br_ecdsa_i31_bits2int(uint32_t *x,
-	const void *src, size_t len, uint32_t ebitlen);
+						   const void *src, size_t len, uint32_t ebitlen);
 
 /*
  * Decode some bytes as an i15 integer, with truncation (corresponding
@@ -2031,7 +2021,7 @@ void br_ecdsa_i31_bits2int(uint32_t *x,
  * of exactly that many bits in the source (capped at the source length).
  */
 void br_ecdsa_i15_bits2int(uint16_t *x,
-	const void *src, size_t len, uint32_t ebitlen);
+						   const void *src, size_t len, uint32_t ebitlen);
 
 /* ==================================================================== */
 /*
@@ -2049,7 +2039,8 @@ void br_ecdsa_i15_bits2int(uint16_t *x,
  * Under these conditions, 'asn1len' is necessarily equal to either len
  * or len+1.
  */
-typedef struct {
+typedef struct
+{
 	const unsigned char *data;
 	size_t len;
 	size_t asn1len;
@@ -2071,7 +2062,7 @@ size_t br_asn1_encode_length(void *dest, size_t len);
 /*
  * Convenient macro for computing lengths of lengths.
  */
-#define len_of_len(len)   br_asn1_encode_length(NULL, len)
+#define len_of_len(len) br_asn1_encode_length(NULL, len)
 
 /*
  * Encode a (prepared) ASN.1 INTEGER. The encoded length is returned.
@@ -2096,8 +2087,8 @@ const unsigned char *br_get_curve_OID(int curve);
  * _not_ included in the output blob (this is for PKCS#8 support).
  */
 size_t br_encode_ec_raw_der_inner(void *dest,
-	const br_ec_private_key *sk, const br_ec_public_key *pk,
-	int include_curve_oid);
+								  const br_ec_private_key *sk, const br_ec_public_key *pk,
+								  int include_curve_oid);
 
 /* ==================================================================== */
 /*
@@ -2107,38 +2098,38 @@ size_t br_encode_ec_raw_der_inner(void *dest,
 /*
  * Record types.
  */
-#define BR_SSL_CHANGE_CIPHER_SPEC    20
-#define BR_SSL_ALERT                 21
-#define BR_SSL_HANDSHAKE             22
-#define BR_SSL_APPLICATION_DATA      23
+#define BR_SSL_CHANGE_CIPHER_SPEC 20
+#define BR_SSL_ALERT 21
+#define BR_SSL_HANDSHAKE 22
+#define BR_SSL_APPLICATION_DATA 23
 
 /*
  * Handshake message types.
  */
-#define BR_SSL_HELLO_REQUEST          0
-#define BR_SSL_CLIENT_HELLO           1
-#define BR_SSL_SERVER_HELLO           2
-#define BR_SSL_CERTIFICATE           11
-#define BR_SSL_SERVER_KEY_EXCHANGE   12
-#define BR_SSL_CERTIFICATE_REQUEST   13
-#define BR_SSL_SERVER_HELLO_DONE     14
-#define BR_SSL_CERTIFICATE_VERIFY    15
-#define BR_SSL_CLIENT_KEY_EXCHANGE   16
-#define BR_SSL_FINISHED              20
+#define BR_SSL_HELLO_REQUEST 0
+#define BR_SSL_CLIENT_HELLO 1
+#define BR_SSL_SERVER_HELLO 2
+#define BR_SSL_CERTIFICATE 11
+#define BR_SSL_SERVER_KEY_EXCHANGE 12
+#define BR_SSL_CERTIFICATE_REQUEST 13
+#define BR_SSL_SERVER_HELLO_DONE 14
+#define BR_SSL_CERTIFICATE_VERIFY 15
+#define BR_SSL_CLIENT_KEY_EXCHANGE 16
+#define BR_SSL_FINISHED 20
 
 /*
  * Alert levels.
  */
-#define BR_LEVEL_WARNING   1
-#define BR_LEVEL_FATAL     2
+#define BR_LEVEL_WARNING 1
+#define BR_LEVEL_FATAL 2
 
 /*
  * Low-level I/O state.
  */
-#define BR_IO_FAILED   0
-#define BR_IO_IN       1
-#define BR_IO_OUT      2
-#define BR_IO_INOUT    3
+#define BR_IO_FAILED 0
+#define BR_IO_IN 1
+#define BR_IO_OUT 2
+#define BR_IO_INOUT 3
 
 /*
  * Mark a SSL engine as failed. The provided error code is recorded if
@@ -2200,7 +2191,7 @@ int br_ssl_engine_init_rand(br_ssl_engine_context *cc);
  * Reset the handshake-related parts of the engine.
  */
 void br_ssl_engine_hs_reset(br_ssl_engine_context *cc,
-	void (*hsinit)(void *), void (*hsrun)(void *));
+							void (*hsinit)(void *), void (*hsrun)(void *));
 
 /*
  * Get the PRF to use for this context, for the provided PRF hash
@@ -2214,7 +2205,7 @@ br_tls_prf_impl br_ssl_engine_get_PRF(br_ssl_engine_context *cc, int prf_id);
  * with the TLS 1.2 PRF (ignored if the version is TLS 1.0 or 1.1).
  */
 void br_ssl_engine_compute_master(br_ssl_engine_context *cc,
-	int prf_id, const void *pms, size_t len);
+								  int prf_id, const void *pms, size_t len);
 
 /*
  * Switch to CBC decryption for incoming records.
@@ -2226,8 +2217,8 @@ void br_ssl_engine_compute_master(br_ssl_engine_context *cc,
  *    cipher_key_len   block cipher key length (in bytes)
  */
 void br_ssl_engine_switch_cbc_in(br_ssl_engine_context *cc,
-	int is_client, int prf_id, int mac_id,
-	const br_block_cbcdec_class *bc_impl, size_t cipher_key_len);
+								 int is_client, int prf_id, int mac_id,
+								 const br_block_cbcdec_class *bc_impl, size_t cipher_key_len);
 
 /*
  * Switch to CBC encryption for outgoing records.
@@ -2239,8 +2230,8 @@ void br_ssl_engine_switch_cbc_in(br_ssl_engine_context *cc,
  *    cipher_key_len   block cipher key length (in bytes)
  */
 void br_ssl_engine_switch_cbc_out(br_ssl_engine_context *cc,
-	int is_client, int prf_id, int mac_id,
-	const br_block_cbcenc_class *bc_impl, size_t cipher_key_len);
+								  int is_client, int prf_id, int mac_id,
+								  const br_block_cbcenc_class *bc_impl, size_t cipher_key_len);
 
 /*
  * Switch to GCM decryption for incoming records.
@@ -2251,8 +2242,8 @@ void br_ssl_engine_switch_cbc_out(br_ssl_engine_context *cc,
  *    cipher_key_len   block cipher key length (in bytes)
  */
 void br_ssl_engine_switch_gcm_in(br_ssl_engine_context *cc,
-	int is_client, int prf_id,
-	const br_block_ctr_class *bc_impl, size_t cipher_key_len);
+								 int is_client, int prf_id,
+								 const br_block_ctr_class *bc_impl, size_t cipher_key_len);
 
 /*
  * Switch to GCM encryption for outgoing records.
@@ -2263,8 +2254,8 @@ void br_ssl_engine_switch_gcm_in(br_ssl_engine_context *cc,
  *    cipher_key_len   block cipher key length (in bytes)
  */
 void br_ssl_engine_switch_gcm_out(br_ssl_engine_context *cc,
-	int is_client, int prf_id,
-	const br_block_ctr_class *bc_impl, size_t cipher_key_len);
+								  int is_client, int prf_id,
+								  const br_block_ctr_class *bc_impl, size_t cipher_key_len);
 
 /*
  * Switch to ChaCha20+Poly1305 decryption for incoming records.
@@ -2273,7 +2264,7 @@ void br_ssl_engine_switch_gcm_out(br_ssl_engine_context *cc,
  *    prf_id           id of hash function for PRF
  */
 void br_ssl_engine_switch_chapol_in(br_ssl_engine_context *cc,
-	int is_client, int prf_id);
+									int is_client, int prf_id);
 
 /*
  * Switch to ChaCha20+Poly1305 encryption for outgoing records.
@@ -2282,7 +2273,7 @@ void br_ssl_engine_switch_chapol_in(br_ssl_engine_context *cc,
  *    prf_id           id of hash function for PRF
  */
 void br_ssl_engine_switch_chapol_out(br_ssl_engine_context *cc,
-	int is_client, int prf_id);
+									 int is_client, int prf_id);
 
 /*
  * Switch to CCM decryption for incoming records.
@@ -2294,9 +2285,9 @@ void br_ssl_engine_switch_chapol_out(br_ssl_engine_context *cc,
  *    tag_len          tag length (in bytes)
  */
 void br_ssl_engine_switch_ccm_in(br_ssl_engine_context *cc,
-	int is_client, int prf_id,
-	const br_block_ctrcbc_class *bc_impl,
-	size_t cipher_key_len, size_t tag_len);
+								 int is_client, int prf_id,
+								 const br_block_ctrcbc_class *bc_impl,
+								 size_t cipher_key_len, size_t tag_len);
 
 /*
  * Switch to GCM encryption for outgoing records.
@@ -2308,9 +2299,9 @@ void br_ssl_engine_switch_ccm_in(br_ssl_engine_context *cc,
  *    tag_len          tag length (in bytes)
  */
 void br_ssl_engine_switch_ccm_out(br_ssl_engine_context *cc,
-	int is_client, int prf_id,
-	const br_block_ctrcbc_class *bc_impl,
-	size_t cipher_key_len, size_t tag_len);
+								  int is_client, int prf_id,
+								  const br_block_ctrcbc_class *bc_impl,
+								  size_t cipher_key_len, size_t tag_len);
 
 /*
  * Calls to T0-generated code.
@@ -2339,78 +2330,78 @@ int br_ssl_choose_hash(unsigned bf);
 
 #if BR_POWER_ASM_MACROS
 
-#define lxvw4x(xt, ra, rb)        lxvw4x_(xt, ra, rb)
-#define stxvw4x(xt, ra, rb)       stxvw4x_(xt, ra, rb)
+#define lxvw4x(xt, ra, rb) lxvw4x_(xt, ra, rb)
+#define stxvw4x(xt, ra, rb) stxvw4x_(xt, ra, rb)
 
-#define bdnz(foo)                 bdnz_(foo)
-#define bdz(foo)                  bdz_(foo)
-#define beq(foo)                  beq_(foo)
+#define bdnz(foo) bdnz_(foo)
+#define bdz(foo) bdz_(foo)
+#define beq(foo) beq_(foo)
 
-#define li(rx, value)             li_(rx, value)
-#define addi(rx, ra, imm)         addi_(rx, ra, imm)
-#define cmpldi(rx, imm)           cmpldi_(rx, imm)
-#define mtctr(rx)                 mtctr_(rx)
-#define vspltb(vrt, vrb, uim)     vspltb_(vrt, vrb, uim)
-#define vspltw(vrt, vrb, uim)     vspltw_(vrt, vrb, uim)
-#define vspltisb(vrt, imm)        vspltisb_(vrt, imm)
-#define vspltisw(vrt, imm)        vspltisw_(vrt, imm)
-#define vrlw(vrt, vra, vrb)       vrlw_(vrt, vra, vrb)
-#define vsbox(vrt, vra)           vsbox_(vrt, vra)
-#define vxor(vrt, vra, vrb)       vxor_(vrt, vra, vrb)
-#define vand(vrt, vra, vrb)       vand_(vrt, vra, vrb)
-#define vsro(vrt, vra, vrb)       vsro_(vrt, vra, vrb)
-#define vsl(vrt, vra, vrb)        vsl_(vrt, vra, vrb)
-#define vsldoi(vt, va, vb, sh)    vsldoi_(vt, va, vb, sh)
-#define vsr(vrt, vra, vrb)        vsr_(vrt, vra, vrb)
-#define vaddcuw(vrt, vra, vrb)    vaddcuw_(vrt, vra, vrb)
-#define vadduwm(vrt, vra, vrb)    vadduwm_(vrt, vra, vrb)
-#define vsububm(vrt, vra, vrb)    vsububm_(vrt, vra, vrb)
-#define vsubuwm(vrt, vra, vrb)    vsubuwm_(vrt, vra, vrb)
-#define vsrw(vrt, vra, vrb)       vsrw_(vrt, vra, vrb)
-#define vcipher(vt, va, vb)       vcipher_(vt, va, vb)
-#define vcipherlast(vt, va, vb)   vcipherlast_(vt, va, vb)
-#define vncipher(vt, va, vb)      vncipher_(vt, va, vb)
-#define vncipherlast(vt, va, vb)  vncipherlast_(vt, va, vb)
-#define vperm(vt, va, vb, vc)     vperm_(vt, va, vb, vc)
-#define vpmsumd(vt, va, vb)       vpmsumd_(vt, va, vb)
-#define xxpermdi(vt, va, vb, d)   xxpermdi_(vt, va, vb, d)
+#define li(rx, value) li_(rx, value)
+#define addi(rx, ra, imm) addi_(rx, ra, imm)
+#define cmpldi(rx, imm) cmpldi_(rx, imm)
+#define mtctr(rx) mtctr_(rx)
+#define vspltb(vrt, vrb, uim) vspltb_(vrt, vrb, uim)
+#define vspltw(vrt, vrb, uim) vspltw_(vrt, vrb, uim)
+#define vspltisb(vrt, imm) vspltisb_(vrt, imm)
+#define vspltisw(vrt, imm) vspltisw_(vrt, imm)
+#define vrlw(vrt, vra, vrb) vrlw_(vrt, vra, vrb)
+#define vsbox(vrt, vra) vsbox_(vrt, vra)
+#define vxor(vrt, vra, vrb) vxor_(vrt, vra, vrb)
+#define vand(vrt, vra, vrb) vand_(vrt, vra, vrb)
+#define vsro(vrt, vra, vrb) vsro_(vrt, vra, vrb)
+#define vsl(vrt, vra, vrb) vsl_(vrt, vra, vrb)
+#define vsldoi(vt, va, vb, sh) vsldoi_(vt, va, vb, sh)
+#define vsr(vrt, vra, vrb) vsr_(vrt, vra, vrb)
+#define vaddcuw(vrt, vra, vrb) vaddcuw_(vrt, vra, vrb)
+#define vadduwm(vrt, vra, vrb) vadduwm_(vrt, vra, vrb)
+#define vsububm(vrt, vra, vrb) vsububm_(vrt, vra, vrb)
+#define vsubuwm(vrt, vra, vrb) vsubuwm_(vrt, vra, vrb)
+#define vsrw(vrt, vra, vrb) vsrw_(vrt, vra, vrb)
+#define vcipher(vt, va, vb) vcipher_(vt, va, vb)
+#define vcipherlast(vt, va, vb) vcipherlast_(vt, va, vb)
+#define vncipher(vt, va, vb) vncipher_(vt, va, vb)
+#define vncipherlast(vt, va, vb) vncipherlast_(vt, va, vb)
+#define vperm(vt, va, vb, vc) vperm_(vt, va, vb, vc)
+#define vpmsumd(vt, va, vb) vpmsumd_(vt, va, vb)
+#define xxpermdi(vt, va, vb, d) xxpermdi_(vt, va, vb, d)
 
-#define lxvw4x_(xt, ra, rb)       "\tlxvw4x\t" #xt "," #ra "," #rb "\n"
-#define stxvw4x_(xt, ra, rb)      "\tstxvw4x\t" #xt "," #ra "," #rb "\n"
+#define lxvw4x_(xt, ra, rb) "\tlxvw4x\t" #xt "," #ra "," #rb "\n"
+#define stxvw4x_(xt, ra, rb) "\tstxvw4x\t" #xt "," #ra "," #rb "\n"
 
-#define label(foo)                #foo "%=:\n"
-#define bdnz_(foo)                "\tbdnz\t" #foo "%=\n"
-#define bdz_(foo)                 "\tbdz\t" #foo "%=\n"
-#define beq_(foo)                 "\tbeq\t" #foo "%=\n"
+#define label(foo) #foo "%=:\n"
+#define bdnz_(foo) "\tbdnz\t" #foo "%=\n"
+#define bdz_(foo) "\tbdz\t" #foo "%=\n"
+#define beq_(foo) "\tbeq\t" #foo "%=\n"
 
-#define li_(rx, value)            "\tli\t" #rx "," #value "\n"
-#define addi_(rx, ra, imm)        "\taddi\t" #rx "," #ra "," #imm "\n"
-#define cmpldi_(rx, imm)          "\tcmpldi\t" #rx "," #imm "\n"
-#define mtctr_(rx)                "\tmtctr\t" #rx "\n"
-#define vspltb_(vrt, vrb, uim)    "\tvspltb\t" #vrt "," #vrb "," #uim "\n"
-#define vspltw_(vrt, vrb, uim)    "\tvspltw\t" #vrt "," #vrb "," #uim "\n"
-#define vspltisb_(vrt, imm)       "\tvspltisb\t" #vrt "," #imm "\n"
-#define vspltisw_(vrt, imm)       "\tvspltisw\t" #vrt "," #imm "\n"
-#define vrlw_(vrt, vra, vrb)      "\tvrlw\t" #vrt "," #vra "," #vrb "\n"
-#define vsbox_(vrt, vra)          "\tvsbox\t" #vrt "," #vra "\n"
-#define vxor_(vrt, vra, vrb)      "\tvxor\t" #vrt "," #vra "," #vrb "\n"
-#define vand_(vrt, vra, vrb)      "\tvand\t" #vrt "," #vra "," #vrb "\n"
-#define vsro_(vrt, vra, vrb)      "\tvsro\t" #vrt "," #vra "," #vrb "\n"
-#define vsl_(vrt, vra, vrb)       "\tvsl\t" #vrt "," #vra "," #vrb "\n"
-#define vsldoi_(vt, va, vb, sh)   "\tvsldoi\t" #vt "," #va "," #vb "," #sh "\n"
-#define vsr_(vrt, vra, vrb)       "\tvsr\t" #vrt "," #vra "," #vrb "\n"
-#define vaddcuw_(vrt, vra, vrb)   "\tvaddcuw\t" #vrt "," #vra "," #vrb "\n"
-#define vadduwm_(vrt, vra, vrb)   "\tvadduwm\t" #vrt "," #vra "," #vrb "\n"
-#define vsububm_(vrt, vra, vrb)   "\tvsububm\t" #vrt "," #vra "," #vrb "\n"
-#define vsubuwm_(vrt, vra, vrb)   "\tvsubuwm\t" #vrt "," #vra "," #vrb "\n"
-#define vsrw_(vrt, vra, vrb)      "\tvsrw\t" #vrt "," #vra "," #vrb "\n"
-#define vcipher_(vt, va, vb)      "\tvcipher\t" #vt "," #va "," #vb "\n"
-#define vcipherlast_(vt, va, vb)  "\tvcipherlast\t" #vt "," #va "," #vb "\n"
-#define vncipher_(vt, va, vb)     "\tvncipher\t" #vt "," #va "," #vb "\n"
+#define li_(rx, value) "\tli\t" #rx "," #value "\n"
+#define addi_(rx, ra, imm) "\taddi\t" #rx "," #ra "," #imm "\n"
+#define cmpldi_(rx, imm) "\tcmpldi\t" #rx "," #imm "\n"
+#define mtctr_(rx) "\tmtctr\t" #rx "\n"
+#define vspltb_(vrt, vrb, uim) "\tvspltb\t" #vrt "," #vrb "," #uim "\n"
+#define vspltw_(vrt, vrb, uim) "\tvspltw\t" #vrt "," #vrb "," #uim "\n"
+#define vspltisb_(vrt, imm) "\tvspltisb\t" #vrt "," #imm "\n"
+#define vspltisw_(vrt, imm) "\tvspltisw\t" #vrt "," #imm "\n"
+#define vrlw_(vrt, vra, vrb) "\tvrlw\t" #vrt "," #vra "," #vrb "\n"
+#define vsbox_(vrt, vra) "\tvsbox\t" #vrt "," #vra "\n"
+#define vxor_(vrt, vra, vrb) "\tvxor\t" #vrt "," #vra "," #vrb "\n"
+#define vand_(vrt, vra, vrb) "\tvand\t" #vrt "," #vra "," #vrb "\n"
+#define vsro_(vrt, vra, vrb) "\tvsro\t" #vrt "," #vra "," #vrb "\n"
+#define vsl_(vrt, vra, vrb) "\tvsl\t" #vrt "," #vra "," #vrb "\n"
+#define vsldoi_(vt, va, vb, sh) "\tvsldoi\t" #vt "," #va "," #vb "," #sh "\n"
+#define vsr_(vrt, vra, vrb) "\tvsr\t" #vrt "," #vra "," #vrb "\n"
+#define vaddcuw_(vrt, vra, vrb) "\tvaddcuw\t" #vrt "," #vra "," #vrb "\n"
+#define vadduwm_(vrt, vra, vrb) "\tvadduwm\t" #vrt "," #vra "," #vrb "\n"
+#define vsububm_(vrt, vra, vrb) "\tvsububm\t" #vrt "," #vra "," #vrb "\n"
+#define vsubuwm_(vrt, vra, vrb) "\tvsubuwm\t" #vrt "," #vra "," #vrb "\n"
+#define vsrw_(vrt, vra, vrb) "\tvsrw\t" #vrt "," #vra "," #vrb "\n"
+#define vcipher_(vt, va, vb) "\tvcipher\t" #vt "," #va "," #vb "\n"
+#define vcipherlast_(vt, va, vb) "\tvcipherlast\t" #vt "," #va "," #vb "\n"
+#define vncipher_(vt, va, vb) "\tvncipher\t" #vt "," #va "," #vb "\n"
 #define vncipherlast_(vt, va, vb) "\tvncipherlast\t" #vt "," #va "," #vb "\n"
-#define vperm_(vt, va, vb, vc)    "\tvperm\t" #vt "," #va "," #vb "," #vc "\n"
-#define vpmsumd_(vt, va, vb)      "\tvpmsumd\t" #vt "," #va "," #vb "\n"
-#define xxpermdi_(vt, va, vb, d)  "\txxpermdi\t" #vt "," #va "," #vb "," #d "\n"
+#define vperm_(vt, va, vb, vc) "\tvperm\t" #vt "," #va "," #vb "," #vc "\n"
+#define vpmsumd_(vt, va, vb) "\tvpmsumd\t" #vt "," #va "," #vb "\n"
+#define xxpermdi_(vt, va, vb, d) "\txxpermdi\t" #vt "," #va "," #vb "," #d "\n"
 
 #endif
 
@@ -2446,9 +2437,9 @@ int br_ssl_choose_hash(unsigned bf);
  */
 #if BR_GCC && !BR_GCC_5_0
 #if BR_GCC_4_6
-#define BR_TARGETS_X86_UP \
+#define BR_TARGETS_X86_UP       \
 	_Pragma("GCC push_options") \
-	_Pragma("GCC target(\"sse2,ssse3,sse4.1,aes,pclmul,rdrnd\")")
+		_Pragma("GCC target(\"sse2,ssse3,sse4.1,aes,pclmul,rdrnd\")")
 #define BR_TARGETS_X86_DOWN \
 	_Pragma("GCC pop_options")
 #else
@@ -2467,13 +2458,13 @@ int br_ssl_choose_hash(unsigned bf);
 #undef __AES__
 #undef __PCLMUL__
 #undef __RDRND__
-#define __SSE2__     1
-#define __SSE3__     1
-#define __SSSE3__    1
-#define __SSE4_1__   1
-#define __AES__      1
-#define __PCLMUL__   1
-#define __RDRND__    1
+#define __SSE2__ 1
+#define __SSE3__ 1
+#define __SSSE3__ 1
+#define __SSE4_1__ 1
+#define __AES__ 1
+#define __PCLMUL__ 1
+#define __RDRND__ 1
 #endif
 
 #ifndef BR_TARGETS_X86_UP
@@ -2487,7 +2478,7 @@ int br_ssl_choose_hash(unsigned bf);
 BR_TARGETS_X86_UP
 #include <x86intrin.h>
 #include <cpuid.h>
-#define br_bswap32   __builtin_bswap32
+#define br_bswap32 __builtin_bswap32
 BR_TARGETS_X86_DOWN
 #endif
 
@@ -2495,21 +2486,19 @@ BR_TARGETS_X86_DOWN
 #include <stdlib.h>
 #include <intrin.h>
 #include <immintrin.h>
-#define br_bswap32   _byteswap_ulong
+#define br_bswap32 _byteswap_ulong
 #endif
 
 static inline int
 br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
-	uint32_t mask_ecx, uint32_t mask_edx)
+		 uint32_t mask_ecx, uint32_t mask_edx)
 {
 #if BR_GCC || BR_CLANG
 	unsigned eax, ebx, ecx, edx;
 
-	if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
-		if ((eax & mask_eax) == mask_eax
-			&& (ebx & mask_ebx) == mask_ebx
-			&& (ecx & mask_ecx) == mask_ecx
-			&& (edx & mask_edx) == mask_edx)
+	if (__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+	{
+		if ((eax & mask_eax) == mask_eax && (ebx & mask_ebx) == mask_ebx && (ecx & mask_ecx) == mask_ecx && (edx & mask_edx) == mask_edx)
 		{
 			return 1;
 		}
@@ -2518,10 +2507,7 @@ br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
 	int info[4];
 
 	__cpuid(info, 1);
-	if (((uint32_t)info[0] & mask_eax) == mask_eax
-		&& ((uint32_t)info[1] & mask_ebx) == mask_ebx
-		&& ((uint32_t)info[2] & mask_ecx) == mask_ecx
-		&& ((uint32_t)info[3] & mask_edx) == mask_edx)
+	if (((uint32_t)info[0] & mask_eax) == mask_eax && ((uint32_t)info[1] & mask_ebx) == mask_ebx && ((uint32_t)info[2] & mask_ecx) == mask_ecx && ((uint32_t)info[3] & mask_edx) == mask_edx)
 	{
 		return 1;
 	}

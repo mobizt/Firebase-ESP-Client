@@ -22,10 +22,9 @@
  * SOFTWARE.
  */
 
+#include "inner.h"
 #include <Arduino.h>
 #if defined(ESP8266) || defined(PICO_RP2040)
-
-#include "inner.h"
 
 #define U      (2 + ((BR_MAX_RSA_FACTOR + 30) / 31))
 #define TLEN   (8 * U)

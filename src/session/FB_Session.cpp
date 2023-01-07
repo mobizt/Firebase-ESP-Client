@@ -1310,7 +1310,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
             else
             {
                 tcpHandler.bufferAvailable = tcpClient.readBytes(buf, available);
-                bufReady = tcpHandler.bufferAvailable == available;
+                bufReady = tcpHandler.bufferAvailable == (int)available;
                 tcpHandler.payloadRead += tcpHandler.bufferAvailable;
             }
 #if defined(ENABLE_RTDB)
@@ -1641,7 +1641,6 @@ const char *FirebaseData::getTaskName(size_t taskStackSize, bool isStream)
         Signer.config->internal.stream_task_stack_size = taskStackSize > STREAM_TASK_STACK_SIZE
                                                              ? taskStackSize
                                                              : STREAM_TASK_STACK_SIZE;
-        session.rtdb.stream_task_enable = true;
     }
     else
         Signer.config->internal.queue_task_stack_size = taskStackSize > QUEUE_TASK_STACK_SIZE

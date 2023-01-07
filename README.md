@@ -174,6 +174,7 @@ board = rpipicow
 framework = arduino
 board_build.core = earlephilhower
 monitor_speed = 115200
+board_build.filesystem_size = 1m
 ```
 
 See this Arduino-Pico SDK [documentation](https://arduino-pico.readthedocs.io/en/latest/) for more information.

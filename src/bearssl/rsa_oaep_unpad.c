@@ -22,10 +22,9 @@
  * SOFTWARE.
  */
 
+#include "inner.h"
 #include <Arduino.h>
 #if defined(ESP8266) || defined(PICO_RP2040)
-
-#include "inner.h"
 
 /*
  * Hash some data and XOR the result into the provided buffer. This is put

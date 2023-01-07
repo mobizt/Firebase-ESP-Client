@@ -2263,7 +2263,11 @@ public:
   /** Run stream manually.
    * To manually triggering the stream callback function, this should call repeatedly in loop().
    */
-  void runStream() { mRunStream(); }
+  void runStream()
+  {
+    mStopStreamLoopTask();
+    mRunStream();
+  }
 
   /** Backup (download) the database at the defined node to the storage memory.
    *
@@ -2686,6 +2690,7 @@ private:
 #else
   void runStreamTask();
 #endif
+  void mStopStreamLoopTask();
   void mRunStream();
 
 #if defined(ENABLE_ERROR_QUEUE)

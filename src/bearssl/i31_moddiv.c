@@ -22,10 +22,9 @@
  * SOFTWARE.
  */
 
+#include "inner.h"
 #include <Arduino.h>
 #if defined(ESP8266) || defined(PICO_RP2040)
-
-#include "inner.h"
 
 /*
  * In this file, we handle big integers with a custom format, i.e.

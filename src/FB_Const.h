@@ -665,8 +665,8 @@ struct fb_esp_tcp_response_handler_t
     unsigned long dataTime = 0;
     // pointer to payload
     MB_String *payload = nullptr;
-    // data is already in receive buffer
-    size_t bufferAvailable = 0;
+    // data is already in receive buffer (must be int)
+    int bufferAvailable = 0;
     // data in receive buffer is base64 file data
     bool isBase64File = false;
     // the base64 encoded string downloaded anount
@@ -947,6 +947,8 @@ struct fb_esp_cfg_int_t
     uint16_t ltok_len = 0;
     uint16_t email_crc = 0, password_crc = 0, client_email_crc = 0, project_id_crc = 0, priv_key_crc = 0, uid_crc = 0;
 
+    bool stream_loop_task_enable = true;
+    bool deploy_loop_task_enable = true;
 #if defined(ESP32) || defined(PICO_RP2040)
     TaskHandle_t resumable_upload_task_handle = NULL;
     TaskHandle_t functions_check_task_handle = NULL;
@@ -960,7 +962,7 @@ struct fb_esp_cfg_int_t
 #if defined(ESP32)
     uint16_t stream_task_delay_ms = 10;
 #else
-    uint16_t stream_task_delay_ms = 200;
+    uint16_t stream_task_delay_ms = 100;
 #endif
     size_t queue_task_stack_size = QUEUE_TASK_STACK_SIZE;
     uint8_t queue_task_priority = 1;
@@ -1257,7 +1259,7 @@ struct fb_esp_rtdb_info_t
     struct fb_esp_stream_info_t stream;
 
 #if defined(ESP32) || defined(PICO_RP2040)
-    bool stream_task_enable = false;
+    bool stream_loop_task_enable = false;
 #endif
 
     RTDB_UploadStatusInfo cbUploadInfo;

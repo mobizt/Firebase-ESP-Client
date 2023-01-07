@@ -21,11 +21,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+#include "inner.h"
 #include <Arduino.h>
 #if defined(ESP8266) || defined(PICO_RP2040)
 
-#include "inner.h"
 
 /* see inner.h */
 uint32_t

@@ -733,7 +733,7 @@ bool FB_RTDB::exitStream(FirebaseData *fbdo, bool status)
 void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                                 FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
-    fbdo->session.rtdb.stream_task_enable = false;
+    fbdo->session.rtdb.stream_loop_task_enable = false;
 #else
 void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                                 FirebaseData::StreamTimeoutCallback timeoutCallback)
@@ -752,6 +752,7 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
     fbdo->_timeoutCallback = timeoutCallback;
 
     fbdo->addSession(fb_esp_con_mode_rtdb_stream);
+    Signer.config->internal.stream_loop_task_enable = true;
 
 #if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
     runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
@@ -766,7 +767,7 @@ runStreamTask();
 void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
-    fbdo->session.rtdb.stream_task_enable = false;
+    fbdo->session.rtdb.stream_loop_task_enable = false;
 #else
 void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                          FirebaseData::StreamTimeoutCallback timeoutCallback)
@@ -784,6 +785,7 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
     fbdo->_timeoutCallback = timeoutCallback;
 
     fbdo->addSession(fb_esp_con_mode_rtdb_stream);
+    Signer.config->internal.stream_loop_task_enable = true;
 
 #if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
     runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
@@ -823,7 +825,7 @@ void FB_RTDB::runStreamTask(FirebaseData *fbdo, const char *taskName)
 void FB_RTDB::runStreamTask()
 #endif
 {
-    if (!Signer.config)
+    if (!Signer.config || !Signer.config->internal.stream_loop_task_enable)
         return;
 
 #if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
@@ -837,6 +839,8 @@ void FB_RTDB::runStreamTask()
         const TickType_t xDelay = config->internal.stream_task_delay_ms / portTICK_PERIOD_MS;
         for (;;)
         {
+            if (!config->internal.stream_loop_task_enable)
+                break;
             _this->mRunStream();
             vTaskDelay(xDelay);
         }
@@ -872,6 +876,12 @@ void FB_RTDB::runStreamTask()
     Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #endif
 #endif
+}
+
+void FB_RTDB::mStopStreamLoopTask()
+{
+    if (Signer.config)
+        Signer.config->internal.stream_loop_task_enable = false;
 }
 
 void FB_RTDB::mRunStream()
@@ -2499,9 +2509,10 @@ waits:
 
                     // stream data complete?
                     int ofs = payload[payload.length() - 1] == '\r' || payload[payload.length() - 1] == '\n' ? 3 : 2;
-                    bool streamDataComplete = payload.length() > 2 &&
-                                              payload[payload.length() - ofs] == '"' &&
-                                              payload[payload.length() - ofs + 1] == '}';
+
+                    __attribute__((unused)) bool streamDataComplete = payload.length() > 2 &&
+                                                                      payload[payload.length() - ofs] == '"' &&
+                                                                      payload[payload.length() - ofs + 1] == '}';
 
                     if (response.dataType == d_file)
                     {

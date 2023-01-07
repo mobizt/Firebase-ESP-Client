@@ -7,6 +7,8 @@
 
 #define FIREBASE_ESP_CLIENT 1
 
+#define FB_DEFAULT_DEBUG_PORT Serial
+
 /**
  * To use other flash file systems
  *
