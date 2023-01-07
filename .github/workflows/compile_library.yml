@@ -99,6 +99,8 @@ jobs:
       matrix:
         board: 
           - "rpipicow"
+        platform: "https://github.com/maxgerhardt/platform-raspberrypi.git"
+        board_build.core: "earlephilhower"
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip

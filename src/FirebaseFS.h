@@ -153,3 +153,8 @@ static SdFat sd_fat_fs;   // should declare as static here
 #endif
 
 #endif
+
+/////////////////////////////////// WARNING ///////////////////////////////////
+// Using RP2040 Pico Arduino SDK, FreeRTOS with LittleFS will cause device hangs 
+// when write the data to flash filesystem.
+// Do not include FreeRTOS.h or even it excluded from compilation by using macro, it  issue.
