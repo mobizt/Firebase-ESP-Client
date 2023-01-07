@@ -92,6 +92,39 @@ jobs:
         echo "void setup() {}" >> src/main.ino
         echo "void loop() {}" >> src/main.ino
 
+  build3:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: 
+          - "rpipicow"
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: ${{ runner.os }}-pip-
+    - name: Cache PlatformIO
+      uses: actions/cache@v2
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade platformio
+
+    - name: Create main file
+      run: |
+        echo "#include <Arduino.h>" >> src/main.ino
+        echo "void setup() {}" >> src/main.ino
+        echo "void loop() {}" >> src/main.ino
+
 
     - name: Run PlatformIO
       run: pio ci --project-option="lib_ldf_mode=chain+" --board=${{ matrix.board }} src
