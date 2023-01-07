@@ -96,11 +96,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        board: 
-          - "rpipicow"
-        platform: "https://github.com/maxgerhardt/platform-raspberrypi.git"
-        board_build.core: "earlephilhower"
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip
@@ -126,8 +121,13 @@ jobs:
         echo "#include <Arduino.h>" >> src/main.ino
         echo "void setup() {}" >> src/main.ino
         echo "void loop() {}" >> src/main.ino
+        echo "[env:rpipicow]" >> platformio.ini
+        echo "platform = https://github.com/maxgerhardt/platform-raspberrypi.git" >> platformio.ini
+        echo "board = rpipicow" >> platformio.ini
+        echo "framework = arduino" >> platformio.ini
+        echo "board_build.core = earlephilhower" >> platformio.ini
 
 
     - name: Run PlatformIO
-      run: pio ci --project-option="lib_ldf_mode=chain+" --board=${{ matrix.board }} src
+      run: pio ci --project-conf="platformio.ini" src
  
