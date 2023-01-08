@@ -2,7 +2,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico (RP2040)
  *
- * Created January 7, 2023
+ * Created January 8, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -1688,7 +1688,6 @@ namespace TimeHelper
         uint32_t &tm = *mb_ts;
 
 #if defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040)
-        if (tm < ESP_DEFAULT_TS)
             tm = time(nullptr);
 #else
         tm = millis() / 1000;

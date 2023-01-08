@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.2.3
+ * The Firebase class, Firebase.cpp v1.2.4
  *
- *  Created January 7, 2023
+ *  Created January 8, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -126,7 +126,12 @@ struct token_info_t Firebase_ESP_Client::authTokenInfo()
 bool Firebase_ESP_Client::ready()
 {
 #if defined(ESP32) || defined(ESP8266)
-    // We need to close all data object TCP sessions when token was expired.
+    // Stop the session only for ESPs to free the memory when token 
+    // expired (actually nearly expired) as the Signer needs memory 
+    // to open another secure TCP session to request new orrefresh token.
+    // We don't stop session to free memory on other devices e,g, Pico as it uses 
+    // BearSSL engine that required less memory then it has enough free memory 
+    //to do other things. 
     if (Signer.isExpired())
     {
         if (Signer.config)
@@ -134,7 +139,8 @@ bool Firebase_ESP_Client::ready()
             for (size_t id = 0; id < Signer.config->internal.sessions.size(); id++)
             {
                 FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
-                if (fbdo && !fbdo->tcpClient.reserved)
+                // non-stream used session will stop
+                if (fbdo && !fbdo->tcpClient.reserved && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream) 
                     fbdo->closeSession();
             }
         }
