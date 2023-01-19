@@ -4,20 +4,38 @@
  *
  * Email: k_suwatchai@hotmail.com
  *
- * Github: https://github.com/mobizt/Firebase-ESP-Client
+ * Github: https://github.com/mobizt/Firebase-ESP8266
  *
  * Copyright (c) 2023 mobizt
  *
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used your Arduino device and WIZnet W5500 (Ethernet) device which SSLClient https://github.com/OPEnSLab-OSU/SSLClient
- * will be used as the external Client.
+ * This example used Raspberry Pi Pico and WIZnet W5500 (Ethernet) devices which ESP_SSLClient will be used as the external Client.
+ * The Ethernet.h will work with SPI 0 only.
  *
- * This SSLClient, https://github.com/OPEnSLab-OSU/SSLClient can't use in ESP8266 device due to wdt reset error.
+ * Even the example for Ethernet that supports ENC28J60 and WIZnet W55xx is available at RTB/BasicEthernet/Pico/Pico.ino,
+ * this example will show how to use external SSL Client that supports other network interfaces e.g. GSMClient and especially
+ * EthernetClient in this example.
  *
  * Don't gorget to define this in FirebaseFS.h
  * #define FB_ENABLE_EXTERNAL_CLIENT
+ */
+
+/**
+ *
+ * The W5500 Ethernet module and RPI2040 Pico board, SPI 0 port wiring connection.
+ *
+ * RP2040 (Pico)                           W5500
+ *
+ * GPIO 16 - SPI 0 MISO                     SO
+ * GPIO 19 - SPI 0 MOSI                     SI
+ * GPIO 18 - SPI 0 SCK                      SCK
+ * GPIO 17 - SPI 0 CS                       CS
+ * GPIO 20 - W5500 Reset                    Reset
+ * GND                                      GND
+ * 3V3                                      VCC
+ *
  */
 
 #include <Firebase_ESP_Client.h>
@@ -28,46 +46,34 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
+
 #include <Ethernet.h>
-
-/* 1. Install SSLClient library */
-// https://github.com/OPEnSLab-OSU/SSLClient
-#include <SSLClient.h>
-
-/* 2. Create Trus anchors for the server i.e. www.google.com */
-// https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md
-// or generate using this site https://openslab-osu.github.io/bearssl-certificate-utility/
-#include "trust_anchors.h"
 
 // For NTP time client
 #include "MB_NTP.h"
 
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
-/* 3. Define the API Key */
+/* 1. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 4. Define the RTDB URL */
+/* 2. Define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-/* 5. Define the user Email and password that alreadey registerd or added in your project */
+/* 3. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-/* 6. Defined the Ethernet module connection */
-#define WIZNET_RESET_PIN 26 // Connect W5500 Reset pin to GPIO 26 of ESP32
-#define WIZNET_CS_PIN 5     // Connect W5500 CS pin to GPIO 5 of ESP32
-#define WIZNET_MISO_PIN 19  // Connect W5500 MISO pin to GPIO 19 of ESP32
-#define WIZNET_MOSI_PIN 23  // Connect W5500 MOSI pin to GPIO 23 of ESP32
-#define WIZNET_SCLK_PIN 18  // Connect W5500 SCLK pin to GPIO 18 of ESP32
+/* 4. Defined the Ethernet module connection */
+#define WIZNET_RESET_PIN 20       // Connect W5500 Reset pin to GPIO 20 of Raspberry Pi Pico
+#define WIZNET_CS_PIN PIN_SPI0_SS // Connect W5500 CS pin to SPI 0's SS (GPIO 17) of Raspberry Pi Pico
 
-/* 7. Define the analog GPIO pin to pull random bytes from, used in seeding the RNG for SSLClient */
-const int analog_pin = 34; // ESP32 GPIO 34 (Analog pin)
-
-/* 8. Define MAC */
+/* 5. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
-/* 9. Define IP (Optional) */
+/* 6. Define IP (Optional) */
 IPAddress Eth_IP(192, 168, 1, 104);
 
 // Define Firebase Data object
@@ -80,8 +86,6 @@ unsigned long sendDataPrevMillis = 0;
 
 int count = 0;
 
-volatile bool dataChanged = false;
-
 // Define the basic client
 // The network interface devices that can be used to handle SSL data should
 // have large memory buffer up to 1k - 2k or more, otherwise the SSL/TLS handshake
@@ -93,7 +97,7 @@ EthernetClient basic_client;
 // The most probable failures are related to the basic client itself that may not provide the buffer
 // that large enough for SSL data.
 // The SSL client can do nothing for this case, you should increase the basic client buffer memory.
-SSLClient ssl_client(basic_client, TAs, (size_t)TAs_NUM, analog_pin);
+ESP_SSLClient ssl_client;
 
 void ResetEthernet()
 {
@@ -145,10 +149,17 @@ void setup()
 {
 
     Serial.begin(115200);
+    delay(5000);
 
     networkConnection();
 
     Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
+    /* Assign the basic Client (Ethernet) pointer to the basic Client */
+    ssl_client.setClient(&basic_client);
+
+    /* Similar to WiFiClientSecure */
+    ssl_client.setInsecure();
 
     /* Assign the api key (required) */
     config.api_key = API_KEY;

@@ -49,19 +49,32 @@ FirebaseConfig config;
 
 bool taskCompleted = false;
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+WiFiMulti multi;
+#endif
+
 void setup()
 {
 
   Serial.begin(115200);
-  Serial.println();
-  Serial.println();
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+  multi.addAP(WIFI_SSID, WIFI_PASSWORD);
+  multi.run();
+#else
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
   Serial.print("Connecting to Wi-Fi");
+  unsigned long ms = millis();
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
     delay(300);
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    if (millis() - ms > 10000)
+      break;
+#endif
   }
   Serial.println();
   Serial.print("Connected with IP: ");
@@ -81,6 +94,13 @@ void setup()
 
   /* Assign the RTDB URL (required) */
   config.database_url = DATABASE_URL;
+
+  // The WiFi credentials are required for Pico W
+  // due to it does not have reconnect feature.
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+  config.wifi.clearAP();
+  config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
+#endif
 
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h

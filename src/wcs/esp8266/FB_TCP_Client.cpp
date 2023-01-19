@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.2.2
+ * Firebase TCP Client v1.2.3
  *
- * Created January 7, 2023
+ * Created January 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -243,12 +243,19 @@ bool FB_TCP_Client::ethLinkUp()
   }
 #endif
 
+#elif defined(PICO_RP2040)
+
+
+#endif
+
   return ret;
 
+#if defined(INC_ENC28J60_LWIP) || defined(INC_W5100_LWIP) || defined(INC_W5500_LWIP)
 ex:
+#endif
+
   // workaround for ESP8266 Ethernet
   delayMicroseconds(0);
-#endif
 
   return ret;
 }
@@ -258,7 +265,7 @@ void FB_TCP_Client::ethDNSWorkAround()
   if (!eth)
     return;
 
-#if defined(ESP8266_CORE_SDK_V3_X_X)
+#if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
 
 #if defined(INC_ENC28J60_LWIP)
   if (eth->enc28j60)
@@ -273,8 +280,14 @@ void FB_TCP_Client::ethDNSWorkAround()
     goto ex;
 #endif
 
+#elif defined(PICO_RP2040)
+
+
+#endif
+
   return;
 
+#if defined(INC_ENC28J60_LWIP) || defined(INC_W5100_LWIP) || defined(INC_W5500_LWIP) 
 ex:
   WiFiClient _client;
   _client.connect(host.c_str(), port);
@@ -295,6 +308,7 @@ void FB_TCP_Client::release()
 
     baseSetCertType(fb_cert_type_undefined);
   }
+  client = nullptr;
 }
 
 #endif /* ESP8266 */

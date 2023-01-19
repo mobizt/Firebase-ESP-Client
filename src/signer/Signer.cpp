@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.6
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.7
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -40,14 +40,32 @@ Firebase_Signer::Firebase_Signer()
 
 Firebase_Signer::~Firebase_Signer()
 {
+    end();
 }
 
-void Firebase_Signer::begin(FirebaseConfig *cfg, FirebaseAuth *authen, MB_FS *mbfs, uint32_t *mb_ts)
+void Firebase_Signer::begin(FirebaseConfig *cfg, FirebaseAuth *authen, MB_FS *mbfs, uint32_t *mb_ts, uint32_t *mb_ts_offset)
 {
     config = cfg;
     auth = authen;
     this->mbfs = mbfs;
     this->mb_ts = mb_ts;
+    this->mb_ts_offset = mb_ts_offset;
+}
+
+void Firebase_Signer::end()
+{
+    freeJson();
+
+    WiFiCreds.clearAP();
+#if defined(HAS_WIFIMULTI)
+    if (multi)
+        delete multi;
+
+    multi = nullptr;
+#endif
+
+    if (localTCPClient)
+        freeClient(&tcpClient);
 }
 
 bool Firebase_Signer::parseSAFile()
@@ -226,7 +244,7 @@ bool Firebase_Signer::checkAuthTypeChanged(FirebaseConfig *config, FirebaseAuth 
         {
             uint16_t crc1 = Utils::calCRC(mbfs, config->service_account.data.client_email.c_str()),
                      crc2 = Utils::calCRC(mbfs, config->service_account.data.project_id.c_str());
-            uint16_t crc3 = crc2 = Utils::calCRC(mbfs, config->service_account.data.private_key);
+            uint16_t crc3 = Utils::calCRC(mbfs, config->service_account.data.private_key);
 
             auth_changed = config->internal.client_email_crc != crc1 ||
                            config->internal.project_id_crc != crc2 ||
@@ -260,13 +278,13 @@ bool Firebase_Signer::checkAuthTypeChanged(FirebaseConfig *config, FirebaseAuth 
 
 time_t Firebase_Signer::getTime()
 {
-    return TimeHelper::getTime(mb_ts);
+    return TimeHelper::getTime(mb_ts, mb_ts_offset);
 }
 
 bool Firebase_Signer::setTime(time_t ts)
 {
 
-#if defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040)
+#if !defined(FB_ENABLE_EXTERNAL_CLIENT) && (defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040))
 
     if (TimeHelper::setTimestamp(ts) == 0)
     {
@@ -281,9 +299,14 @@ bool Firebase_Signer::setTime(time_t ts)
     }
 
 #else
+
     if (ts > ESP_DEFAULT_TS)
-        this->ts = ts - millis() / 1000;
-    *mb_ts = this->ts;
+    {
+        *mb_ts_offset = ts - millis() / 1000;
+        this->ts = ts;
+        *mb_ts = this->ts;
+    }
+
 #endif
 
     return false;
@@ -309,7 +332,7 @@ bool Firebase_Signer::isExpired()
 
 void Firebase_Signer::adjustTime(time_t &now)
 {
-    now = getTime(); // returns timestamp (sunched) or millis/1000 (unsynched)
+    now = getTime(); // returns timestamp (synched) or millis/1000 (unsynched)
 
     // if time has changed (synched or manually set) after token has been generated, update its expiration
     if (config->signer.tokens.expires > 0 && config->signer.tokens.expires < ESP_DEFAULT_TS && now > ESP_DEFAULT_TS)
@@ -324,7 +347,7 @@ void Firebase_Signer::adjustTime(time_t &now)
 bool Firebase_Signer::readyToRequest()
 {
     bool ret = false;
-
+    // To detain the next request using lat request millis
     if (config && (millis() - config->signer.lastReqMillis > config->signer.reqTO || config->signer.lastReqMillis == 0))
     {
         config->signer.lastReqMillis = millis();
@@ -338,14 +361,14 @@ bool Firebase_Signer::readyToRefresh()
 {
     if (!config)
         return false;
-
+    // To detain the next request using lat request millis
     return millis() - config->internal.fb_last_request_token_cb_millis > 5000;
 }
 
 bool Firebase_Signer::readyToSync()
 {
     bool ret = false;
-
+    // To detain the next synching using lat synching millis
     if (config && millis() - config->internal.fb_last_time_sync_millis > FB_TIME_SYNC_INTERVAL)
     {
         config->internal.fb_last_time_sync_millis = millis();
@@ -358,7 +381,7 @@ bool Firebase_Signer::readyToSync()
 bool Firebase_Signer::isSyncTimeOut()
 {
     bool ret = false;
-
+    // If device time was not synched in time
     if (config && millis() - config->internal.fb_last_ntp_sync_timeout_millis > config->timeout.ntpServerRequest)
     {
         config->internal.fb_last_ntp_sync_timeout_millis = millis();
@@ -371,7 +394,7 @@ bool Firebase_Signer::isSyncTimeOut()
 bool Firebase_Signer::isErrorCBTimeOut()
 {
     bool ret = false;
-
+    // To detain the next error callback
     if (config &&
         (millis() - config->internal.fb_last_jwt_generation_error_cb_millis > config->timeout.tokenGenerationError ||
          config->internal.fb_last_jwt_generation_error_cb_millis == 0))
@@ -386,6 +409,7 @@ bool Firebase_Signer::isErrorCBTimeOut()
 bool Firebase_Signer::handleToken()
 {
 
+    // no config?, no auth? or no network?
     if (!config || !auth)
         return false;
 
@@ -438,7 +462,7 @@ bool Firebase_Signer::handleToken()
         return true;
     }
 
-    // Hadle the signed jwt token generation, request and refresh the token
+    // Handle the signed jwt token generation, request and refresh the token
 
     // if token type is any and expiry time is up or reset/unset, start the process
     if (isAuthToken(true) && exp)
@@ -478,6 +502,7 @@ bool Firebase_Signer::handleToken()
                     _token_processing_task_enable = true;
                     tokenProcessingTask();
                 }
+
                 return false;
             }
             // if auth request using OAuth 2.0 and custom token
@@ -560,6 +585,28 @@ void Firebase_Signer::freeJson()
     resultPtr = nullptr;
 }
 
+bool Firebase_Signer::checkUDP(UDP *udp, bool &ret, bool &_token_processing_task_enable)
+{
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
+
+    if (udp)
+        ntpClient.begin(udp, "pool.ntp.org" /* NTP host */, 123 /* NTP port */, gmtOffset /* timezone offset in seconds */);
+    else
+    {
+        config->signer.tokens.error.message.clear();
+        setTokenError(FIREBASE_ERROR_UDP_CLIENT_REQUIRED);
+        sendTokenStatusCB();
+        config->signer.tokens.status = token_status_on_initialize;
+        config->signer.step = fb_esp_jwt_generation_step_begin;
+        _token_processing_task_enable = false;
+        ret = true;
+        return false;
+    }
+#endif
+
+    return true;
+}
+
 void Firebase_Signer::tokenProcessingTask()
 {
     // We don't have to use memory reserved tasks e.g., RTOS task in ESP32 for this JWT
@@ -582,6 +629,8 @@ void Firebase_Signer::tokenProcessingTask()
         sslValidTime = true;
 #endif
 
+    time_t now = getTime();
+
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
         delay(0);
@@ -602,10 +651,16 @@ void Firebase_Signer::tokenProcessingTask()
 
                 // reset flag to allow clock synching execution again in ut->syncClock if clocck synching was timed out
                 config->internal.fb_clock_synched = false;
+
+                reconnect();
             }
 
             // check or set time again
-            TimeHelper::syncClock(mb_ts, config->time_zone, config);
+
+            if (!checkUDP(udp, ret, _token_processing_task_enable))
+                continue;
+
+            TimeHelper::syncClock(&ntpClient, mb_ts, mb_ts_offset, config->time_zone, config);
 
             // exit task immediately if time is not ready synched
             // which handleToken function should run repeatedly to enter this function again.
@@ -621,7 +676,12 @@ void Firebase_Signer::tokenProcessingTask()
             config->signer.lastReqMillis = millis();
 
             // email/password verification and get id token
+
             getIdToken(false, toStringPtr(_EMPTY_STR), toStringPtr(_EMPTY_STR));
+
+            // send error cb
+            if (!reconnect())
+                handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
 
             // finish
             _token_processing_task_enable = false;
@@ -635,7 +695,10 @@ void Firebase_Signer::tokenProcessingTask()
                  config->internal.fb_last_jwt_begin_step_millis == 0))
             {
                 // time must be set first
-                TimeHelper::syncClock(mb_ts, config->time_zone, config);
+                if (!checkUDP(udp, ret, _token_processing_task_enable))
+                    continue;
+
+                TimeHelper::syncClock(&ntpClient, mb_ts, mb_ts_offset, config->time_zone, config);
                 config->internal.fb_last_jwt_begin_step_millis = millis();
 
                 if (config->internal.fb_clock_rdy)
@@ -659,11 +722,16 @@ void Firebase_Signer::tokenProcessingTask()
                 if (readyToRefresh())
                 {
                     // sending a new request
-                    requestTokens(false);
+                    ret = requestTokens(false);
+
+                    config->signer.step = ret || getTime() - now > 3599 ? fb_esp_jwt_generation_step_begin : fb_esp_jwt_generation_step_exchange;
+
+                    // send error cb
+                    if (!reconnect())
+                        handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
 
                     // reset state and exit loop
                     _token_processing_task_enable = false;
-                    config->signer.step = fb_esp_jwt_generation_step_begin;
                     ret = true;
                 }
             }
@@ -768,6 +836,35 @@ bool Firebase_Signer::refreshToken()
     return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
 }
 
+void Firebase_Signer::newClient(FB_TCP_CLIENT **client)
+{
+    freeClient(client);
+
+    if (!*client)
+    {
+        *client = new FB_TCP_CLIENT();
+
+        if (*client)
+        {
+            // Set local client
+            localTCPClient = true;
+            (*client)->setConfig(config, mbfs);
+        }
+    }
+}
+
+void Firebase_Signer::freeClient(FB_TCP_CLIENT **client)
+{
+    // Local client defined?
+    if (localTCPClient)
+    {
+        if (*client)
+            delete *client;
+        *client = nullptr;
+        localTCPClient = false;
+    }
+}
+
 void Firebase_Signer::setTokenError(int code)
 {
     if (code != 0)
@@ -831,12 +928,7 @@ bool Firebase_Signer::handleTaskError(int code, int httpCode)
     }
 
     // Free memory
-    if (tcpClient && intTCPClient)
-    {
-        delete tcpClient;
-        tcpClient = nullptr;
-        intTCPClient = false;
-    }
+    freeClient(&tcpClient);
 
     freeJson();
 
@@ -869,13 +961,7 @@ void Firebase_Signer::sendTokenStatusCB()
 bool Firebase_Signer::handleTokenResponse(int &httpCode)
 {
 
-#if defined(FB_ENABLE_EXTERNAL_CLIENT)
-    tcpClient->networkReady();
-#else
-    networkStatus = tcpClient->networkReady();
-#endif
-
-    if (!networkStatus)
+    if (!reconnect(tcpClient, nullptr))
         return false;
 
     MB_String header, payload;
@@ -887,114 +973,84 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
 
     while (tcpClient->connected() && tcpClient->available() == 0)
     {
-
-#if defined(FB_ENABLE_EXTERNAL_CLIENT)
-        tcpClient->networkReady();
-#else
-        networkStatus = tcpClient->networkReady();
-#endif
-
-        if (!networkStatus)
-        {
-            tcpClient->stop();
+        delay(0);
+        if (!reconnect(tcpClient, nullptr, tcpHandler.dataTime))
             return false;
-        }
-        Utils::idle();
     }
 
     bool complete = false;
-    while (!complete)
+
+    tcpHandler.chunkBufSize = tcpHandler.defaultChunkSize;
+
+    char *pChunk = MemoryHelper::createBuffer<char *>(mbfs, tcpHandler.chunkBufSize + 1);
+
+    while (tcpHandler.available() || !complete)
     {
+        delay(0);
 
-#if defined(FB_ENABLE_EXTERNAL_CLIENT)
-        tcpClient->networkReady();
-#else
-        networkStatus = tcpClient->networkReady();
-#endif
-
-        if (!networkStatus)
-        {
-            tcpClient->stop();
+        if (!reconnect(tcpClient, nullptr, tcpHandler.dataTime))
             return false;
-        }
 
-        if (tcpHandler.available() > 0 || !complete)
+        if (!HttpHelper::readStatusLine(mbfs, tcpClient->client, tcpHandler, response))
         {
-            while (tcpHandler.available() || !complete)
+
+            // The next chunk data can be the remaining http header
+            if (tcpHandler.isHeader)
             {
-                Utils::idle();
-
-                if (tcpHandler.available() > 0)
+                // Read header, complete?
+                if (HttpHelper::readHeader(mbfs, tcpClient->client, tcpHandler, response))
                 {
-                    tcpHandler.chunkBufSize = tcpHandler.defaultChunkSize;
+                    if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
+                        tcpHandler.error.code = 0;
 
-                    if (!HttpHelper::readStatusLine(mbfs, tcpClient->client, tcpHandler, response))
-                    {
-                        Utils::idle();
-                        // the next chunk data can be the remaining http header
-                        if (tcpHandler.isHeader)
-                        {
-                            // read header, complete?
-                            if (HttpHelper::readHeader(mbfs, tcpClient->client, tcpHandler, response))
-                            {
-                                if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
-                                    tcpHandler.error.code = 0;
+                    if (Utils::isNoContent(&response))
+                        break;
+                }
+            }
+            else
+            {
+                memset(pChunk, 0, tcpHandler.chunkBufSize + 1);
 
-                                if (response.contentLen == 0)
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            if (!response.noContent)
-                            {
+                // Read the avilable data
+                // chunk transfer encoding?
+                if (response.isChunkedEnc)
+                    tcpHandler.bufferAvailable = HttpHelper::readChunkedData(mbfs, tcpClient->client,
+                                                                             pChunk, nullptr, tcpHandler);
+                else
+                    tcpHandler.bufferAvailable = HttpHelper::readLine(tcpClient->client,
+                                                                      pChunk, tcpHandler.chunkBufSize);
 
-                                char *pChunk = MemoryHelper::createBuffer<char *>(mbfs, tcpHandler.chunkBufSize + 1);
-
-                                if (response.isChunkedEnc)
-                                    delay(1);
-
-                                // read the avilable data
-                                // chunk transfer encoding?
-                                if (response.isChunkedEnc)
-                                    tcpHandler.bufferAvailable = HttpHelper::readChunkedData(mbfs, tcpClient->client,
-                                                                                             pChunk, nullptr, tcpHandler);
-                                else
-                                    tcpHandler.bufferAvailable = HttpHelper::readLine(tcpClient->client,
-                                                                                      pChunk, tcpHandler.chunkBufSize);
-
-                                if (tcpHandler.bufferAvailable > 0)
-                                {
-                                    tcpHandler.payloadRead += tcpHandler.bufferAvailable;
-                                    payload += pChunk;
-                                }
-
-                                MemoryHelper::freeBuffer(mbfs, pChunk);
-
-                                if (tcpHandler.bufferAvailable < 0 ||
-                                    (tcpHandler.payloadRead >= response.contentLen && !response.isChunkedEnc))
-                                    break;
-                            }
-
-                            break;
-                        }
-                    }
+                if (tcpHandler.bufferAvailable > 0)
+                {
+                    tcpHandler.payloadRead += tcpHandler.bufferAvailable;
+                    payload += pChunk;
                 }
 
-                if (millis() - tcpHandler.dataTime > 5000)
-                    complete = true;
+                if (Utils::isChunkComplete(&tcpHandler, &response, complete) ||
+                    Utils::isResponseComplete(&tcpHandler, &response, complete))
+                    break;
             }
         }
+
+        if (Utils::isResponseTimeout(&tcpHandler, complete))
+            break;
     }
+
+    // To make sure all chunks read and
+    // ready to send next request
+    if (response.isChunkedEnc)
+        tcpClient->flush();
+
+    MemoryHelper::freeBuffer(mbfs, pChunk);
 
     if (tcpClient->connected())
         tcpClient->stop();
 
     httpCode = response.httpCode;
 
-    if (payload.length() > 0 && !response.noContent)
+    if (jsonPtr && payload.length() > 0 && !response.noContent)
     {
-        // just a simple JSON which is suitable for parsing in low memory device
+        // Just a simple JSON which is suitable for parsing in low memory device
         jsonPtr->setJsonData(payload.c_str());
         payload.clear();
         return true;
@@ -1540,7 +1596,17 @@ void Firebase_Signer::setAutoReconnectWiFi(bool reconnect)
 
 void Firebase_Signer::setTCPClient(FB_TCP_CLIENT *tcpClient)
 {
+    // If local client is alreaddy created, free it
+    // and use external client instead.
+    if (localTCPClient)
+        freeClient(&tcpClient);
     this->tcpClient = tcpClient;
+}
+
+void Firebase_Signer::setUDPClient(UDP *client, float gmtOffset)
+{
+    this->udp = client;
+    this->gmtOffset = gmtOffset;
 }
 
 void Firebase_Signer::setNetworkStatus(bool status)
@@ -1550,6 +1616,203 @@ void Firebase_Signer::setNetworkStatus(bool status)
     if (tcpClient)
         tcpClient->setNetworkStatus(networkStatus);
 #endif
+}
+
+void Firebase_Signer::closeSession(FB_TCP_CLIENT *client, fb_esp_session_info_t *session)
+{
+    if (!session || !client)
+        return;
+
+    bool status = client->networkReady();
+
+    if (status)
+    {
+        // close the socket and free the resources used by the SSL engine
+
+        if (config)
+            config->internal.fb_last_reconnect_millis = millis();
+
+        client->stop();
+    }
+#ifdef ENABLE_RTDB
+    if (session->con_mode == fb_esp_con_mode_rtdb_stream)
+    {
+        session->rtdb.stream_tmo_Millis = millis();
+        session->rtdb.data_millis = millis();
+        session->rtdb.data_tmo = false;
+        session->rtdb.new_stream = true;
+    }
+#endif
+    session->connected = false;
+}
+
+bool Firebase_Signer::reconnect(FB_TCP_CLIENT *client, fb_esp_session_info_t *session, unsigned long dataTime)
+{
+    if (!client)
+        return false;
+
+    if (client->type() == fb_tcp_client_type_external)
+    {
+#if !defined(FB_ENABLE_EXTERNAL_CLIENT)
+        if (session)
+            session->response.code = FIREBASE_ERROR_EXTERNAL_CLIENT_DISABLED;
+        return false;
+#endif
+        if (!client->isInitialized())
+        {
+            if (session)
+                session->response.code = FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED;
+            return false;
+        }
+    }
+
+    client->setConfig(config, mbfs);
+
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
+    client->networkReady();
+#else
+    networkStatus = client->networkReady();
+#endif
+
+    if (networkStatus && dataTime > 0)
+    {
+        unsigned long tmo = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+        if (config)
+        {
+            if (config->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT ||
+                config->timeout.serverResponse > MAX_SERVER_RESPONSE_TIMEOUT)
+                config->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
+            tmo = config->timeout.serverResponse;
+        }
+
+        if (millis() - dataTime > tmo)
+        {
+            if (session)
+            {
+                session->response.code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
+
+                session->error = fb_esp_pgm_str_69; // "response payload read timed out due to network issue or too large data size"
+
+#if defined(ESP32) || defined(ESP8266)
+                if (session->con_mode == fb_esp_con_mode_rtdb_stream)
+                    // "\n** RECOMMENDATION, Update the ESP32 Arduino Core SDK, try to reduce the data at the node that data is
+                    // being read **"
+                    // "\n** WARNING!, in stream connection, unknown length payload can cause device crashed (wdt reset)
+                    // **\n** RECOMMENDATION, increase the Rx buffer in setBSSLBufferSize Firebase Data object's function
+                    // **\n** Or reduce the data at the node that data is being read **"
+                    session->error += fb_esp_pgm_str_578;
+#endif
+                closeSession(client, session);
+            }
+            return false;
+        }
+    }
+
+    if (!networkStatus)
+    {
+        if (session)
+        {
+            if (session->connected)
+                closeSession(client, session);
+            session->response.code = FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
+        }
+
+        bool s_connected = session ? session->connected : false;
+
+        if (config)
+            resumeWiFi(client, config->internal.net_once_connected, config->internal.fb_last_reconnect_millis, config->timeout.wifiReconnect, s_connected);
+        else
+            resumeWiFi(client, net_once_connected, last_reconnect_millis, wifi_reconnect_tmo, s_connected);
+
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
+        client->networkReady();
+#else
+        networkStatus = client->networkReady();
+#endif
+    }
+
+#if defined(ENABLE_RTDB)
+    if (session)
+    {
+        if (!networkStatus && session->con_mode == fb_esp_con_mode_rtdb_stream)
+            session->rtdb.new_stream = true;
+    }
+#endif
+
+    if (networkStatus)
+        config->internal.net_once_connected = true;
+
+    if (!networkStatus && session)
+        session->response.code = FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
+
+    return networkStatus;
+}
+
+void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo, bool session_connected)
+{
+
+    if (autoReconnectWiFi || !net_once_connected)
+    {
+        if (wifi_reconnect_tmo < MIN_WIFI_RECONNECT_TIMEOUT ||
+            wifi_reconnect_tmo > MAX_WIFI_RECONNECT_TIMEOUT)
+            wifi_reconnect_tmo = MIN_WIFI_RECONNECT_TIMEOUT;
+
+        if (millis() - last_reconnect_millis > wifi_reconnect_tmo &&
+            !session_connected)
+        {
+
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
+            client->networkReconnect();
+#else
+
+#if defined(ESP32) || defined(ESP8266)
+            WiFi.reconnect();
+#else
+            if (WiFiCreds.credentials.size() > 0)
+            {
+#if __has_include(<WiFi.h>) || __has_include(<WiFiNINA.h>) || __has_include(<WiFi101.h>)
+                if (!networkStatus)
+                {
+                    WiFi.disconnect();
+#if defined(HAS_WIFIMULTI)
+                    if (multi)
+                        delete multi;
+                    multi = nullptr;
+
+                    multi = new WiFiMulti();
+                    for (size_t i = 0; i < WiFiCreds.credentials.size(); i++)
+                        multi->addAP(WiFiCreds.credentials[i].ssid.c_str(), WiFiCreds.credentials[i].password.c_str());
+
+                    if (WiFiCreds.credentials.size() > 0)
+                        multi->run();
+#else
+                    WiFi.begin(WiFiCreds.credentials[0].ssid.c_str(), WiFiCreds.credentials[0].password.c_str());
+#endif
+                }
+#endif
+            }
+
+#endif
+
+#endif
+
+            last_reconnect_millis = millis();
+        }
+    }
+}
+
+bool Firebase_Signer::reconnect()
+{
+    bool noClient = tcpClient == nullptr;
+    if (noClient)
+        newClient(&tcpClient);
+
+    reconnect(tcpClient, nullptr);
+
+    if (noClient)
+        freeClient(&tcpClient);
+
+    return networkStatus;
 }
 
 bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status status)
@@ -1568,28 +1831,11 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
         sendTokenStatusCB();
     }
 
-    if (tcpClient && intTCPClient)
-    {
-        delete tcpClient;
-        tcpClient = nullptr;
-        intTCPClient = false;
-    }
+    // No external and local client assigned?
+    if (!tcpClient && !localTCPClient)
+        newClient(&tcpClient);
 
-    // No FirebaseData Object declared globally?
-    if (!tcpClient)
-    {
-        tcpClient = new FB_TCP_CLIENT();
-
-        if (tcpClient)
-            intTCPClient = true;
-
-        tcpClient->setConfig(config, mbfs);
-
-        // No callbacks i.e., tcpConnectionCB, networkConnectionCB and networkStatusCB for external Client are available
-        // when FirebaseData Object was not declared globally
-    }
-
-    // stop the TCP session
+    // Stop TCP session
     tcpClient->stop();
 
 #if !defined(FB_ENABLE_EXTERNAL_CLIENT)
@@ -1597,20 +1843,8 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
         tcpClient->setCACert(nullptr);
 #endif
 
-    if (tcpClient->client)
-        networkStatus = tcpClient->networkReady();
-
-    if (!networkStatus)
-    {
-        if (autoReconnectWiFi)
-        {
-            if (millis() - last_reconnect_millis > reconnect_tmo)
-            {
-                tcpClient->networkReconnect();
-                last_reconnect_millis = millis();
-            }
-        }
-    }
+    if (!reconnect(tcpClient, nullptr))
+        return false;
 
     if (!tcpClient->isInitialized())
         return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED);
@@ -1619,7 +1853,7 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
     tcpClient->setBufferSizes(2048, 1024);
 #endif
 
-    // use for authentication task
+    // Used for authentication task
     tcpClient->reserved = true;
 
     initJson();
@@ -1630,17 +1864,12 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
     Utils::idle();
     tcpClient->begin(host.c_str(), 443, &response_code);
 
-#if defined(FB_ENABLE_EXTERNAL_CLIENT)
-
-    tcpClient->tcp_connection_cb(host.c_str(), 443);
-
-#endif
-
     return true;
 }
 
 bool Firebase_Signer::requestTokens(bool refresh)
 {
+
     time_t now = getTime();
 
     if (config->signer.tokens.status == token_status_on_request ||
@@ -1907,6 +2136,10 @@ bool Firebase_Signer::tokenReady()
 
     checkToken();
 
+    // call checkToken to send callback before checking connection.
+    if (!reconnect())
+        return false;
+
     return config->signer.tokens.status == token_status_ready;
 };
 
@@ -2158,7 +2391,9 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
     case FIREBASE_ERROR_NTP_SYNC_TIMED_OUT:
         buff += fb_esp_pgm_str_230; // "NTP server time synching failed"
         return;
-
+    case FIREBASE_ERROR_UDP_CLIENT_REQUIRED:
+        buff += fb_esp_pgm_str_170; // "UDP client is required for NTP server time synching based on your network type e.g. WiFiUDP or EthernetUDP\nPlease call fbdo.setUDPClient(&udpClient); to assing the UDP client."
+        return;
     default:
         return;
     }

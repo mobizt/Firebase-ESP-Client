@@ -112,8 +112,6 @@ void setup()
 
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-    Firebase.reconnectWiFi(true);
-
     // required for legacy HTTP API
     spi_ethernet_module.enc28j60 = &eth;
     // spi_ethernet_module.w5100 = &eth;

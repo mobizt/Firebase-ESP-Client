@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef FirebaseFS_H
 #define FirebaseFS_H
 
@@ -62,9 +60,14 @@ static SdFat sd_fat_fs;   // should declare as static here
 
 */
 
-#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ESP8266)
 #include <SD.h>
 #define DEFAULT_SD_FS SD
+#define CARD_TYPE_SD 1
+#elif  defined(PICO_RP2040)
+// Use SDFS (ESP8266SdFat) instead of SD
+#include <SDFS.h>
+#define DEFAULT_SD_FS SDFS
 #define CARD_TYPE_SD 1
 #endif
 
@@ -99,12 +102,18 @@ static SdFat sd_fat_fs;   // should declare as static here
 // To enable OTA updates via RTDB, Firebase Storage and Google Cloud Storage buckets
 #define ENABLE_OTA_FIRMWARE_UPDATE
 
-// To enable external Client for ESP8266 and ESP32.
+// Use Keep Alive connection mode
+#define USE_CONNECTION_KEEP_ALIVE_MODE
+
+// To enable external Client for ESP8266, ESP32 and Raspberry Pi Pico.
 // This will enable automatically for other devices.
-// #define FB_ENABLE_EXTERNAL_CLIENT
+//  #define FB_ENABLE_EXTERNAL_CLIENT
 
 // For ESP8266 W5100 Ethernet module
 // #define ENABLE_ESP8266_W5100_ETH
+
+// For ESP8266 W5500 Ethernet module
+// #define ENABLE_ESP8266_W5500_ETH
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 // You can create your own header file "CustomFirebaseFS.h" in the same diectory of
@@ -157,4 +166,5 @@ static SdFat sd_fat_fs;   // should declare as static here
 /////////////////////////////////// WARNING ///////////////////////////////////
 // Using RP2040 Pico Arduino SDK, FreeRTOS with LittleFS will cause device hangs 
 // when write the data to flash filesystem.
-// Do not include FreeRTOS.h or even it excluded from compilation by using macro, it  issue.
+// Do not include free rtos dot h or even it excluded from compilation by using macro 
+// or even comment it out with "//"".

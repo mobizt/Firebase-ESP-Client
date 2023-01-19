@@ -73,10 +73,11 @@
 #include <W5100lwIP.h>
 #endif
 
-#if __has_include(<W5500lwIP.h>)
+#if __has_include(<W5500lwIP.h>) && defined(ENABLE_ESP8266_W5500_ETH)
 #define INC_W5500_LWIP
 #include <W5500lwIP.h>
 #endif
+
 
 #endif
 

@@ -41,7 +41,7 @@ class FB_Custom_TCP_Client : public FB_TCP_Client_Base
 {
 
 public:
-    FB_Custom_TCP_Client() { };
+    FB_Custom_TCP_Client(){};
     ~FB_Custom_TCP_Client(){};
 
     void setCACert(const char *caCert) {}
@@ -82,7 +82,7 @@ public:
 
     bool isInitialized()
     {
-        return this->client != nullptr && tcp_connection_cb != NULL && network_connection_cb != NULL;
+        return this->client != nullptr && network_status_cb != NULL && network_connection_cb != NULL;
     }
 
     int hostByName(const char *name, IPAddress &ip)
@@ -111,8 +111,7 @@ public:
 
         networkReady();
 
-        if (this->tcp_connection_cb)
-            this->tcp_connection_cb(host.c_str(), port);
+        this->client->connect(host.c_str(), port);
 
         return connected();
     }
@@ -120,11 +119,6 @@ public:
     void setClient(Client *client)
     {
         this->client = client;
-    }
-
-    void tcpConnectionRequestCallback(FB_TCPConnectionRequestCallback tcpConnectionCB)
-    {
-        this->tcp_connection_cb = tcpConnectionCB;
     }
 
     void networkConnectionRequestCallback(FB_NetworkConnectionRequestCallback networkConnectionCB)
@@ -144,7 +138,6 @@ public:
 
 private:
     friend class Firebase_Signer;
-    FB_TCPConnectionRequestCallback tcp_connection_cb = NULL;
     FB_NetworkConnectionRequestCallback network_connection_cb = NULL;
     FB_NetworkStatusRequestCallback network_status_cb = NULL;
     volatile bool networkStatus = false;

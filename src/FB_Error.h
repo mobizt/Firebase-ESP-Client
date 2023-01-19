@@ -5,8 +5,6 @@
 #ifndef FB_Error_H
 #define FB_Error_H
 
-#pragma once
-
 #define FIREBASE_ERROR_HTTP_CODE_UNDEFINED -1000
 #define FB_ERROR_RANGE -100
 
@@ -99,6 +97,6 @@
 #define FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY /*          */ (FB_ERROR_RANGE - 37)
 #define FIREBASE_ERROR_TOKEN_COMPLETE_UNNOTIFY /*          */ (FB_ERROR_RANGE - 38)
 #define FIREBASE_ERROR_TOKEN_ERROR_UNNOTIFY /*          */ (FB_ERROR_RANGE - 39)
-
+#define FIREBASE_ERROR_UDP_CLIENT_REQUIRED /*          */ (FB_ERROR_RANGE - 40)
 
 #endif

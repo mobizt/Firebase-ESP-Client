@@ -1,5 +1,5 @@
 /**
- * Mobizt's UDP NTP Time Client, version 1.0.1
+ * Mobizt's UDP NTP Time Client, version 1.0.2
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -33,17 +33,55 @@ class MB_NTP
 {
 
 public:
-    MB_NTP();
+    MB_NTP(){};
 
-    MB_NTP(UDP *client, const char *host, uint16_t port, int timeZoneOffset = 0);
+    ~MB_NTP()
+    {
+    }
 
-    ~MB_NTP();
+    MB_NTP(UDP *client, const char *host, uint16_t port, int timeZoneOffset = 0)
+    {
+        begin(client, host, port, timeZoneOffset);
+    }
 
-    bool begin();
+    bool begin(UDP *client, const char *host, uint16_t port, int timeZoneOffset = 0)
+    {
+        this->udp = client;
+        this->host = host;
+        this->port = port;
+        this->timeZoneOffset = timeZoneOffset;
 
-    bool begin(UDP *client, const char *host, uint16_t port, int timeZoneOffset = 0);
+        return this->begin();
+    }
 
-    uint32_t getTime(uint16_t waitMillisec = 0);
+    bool begin()
+    {
+        if (!this->udp || this->host.length() == 0 || this->port == 0)
+            return false;
+            
+        if (!udpStarted)
+            udpStarted = udp->begin(intPort) > 0;
+
+        return udpStarted;
+    }
+
+    uint32_t getTime(uint16_t waitMillisec = 0)
+    {
+
+        if (getResponse())
+            return ts;
+
+        if (!sendRequest())
+            return 0;
+
+        if (waitMillisec > 0)
+            delay(waitMillisec);
+
+        if (!getResponse())
+            return 0;
+
+        return ts;
+    }
 
 private:
     UDP *udp = NULL;
@@ -57,123 +95,74 @@ private:
     uint32_t ts = 0;
     const uint8_t ntpPacketSize = 48;
     uint8_t packet[48];
-    bool sendRequest();
-    bool getResponse();
-};
 
-MB_NTP::MB_NTP()
-{
-}
-
-MB_NTP::~MB_NTP()
-{
-}
-
-MB_NTP::MB_NTP(UDP *client, const char *host, uint16_t port, int timeZoneOffset)
-{
-    begin(client, host, port, timeZoneOffset);
-}
-
-bool MB_NTP::begin(UDP *client, const char *host, uint16_t port, int timeZoneOffset)
-{
-    this->udp = client;
-    this->host = host;
-    this->port = port;
-    this->timeZoneOffset = timeZoneOffset;
-
-    return this->begin();
-}
-
-bool MB_NTP::begin()
-{
-    if (!this->udp || this->host.length() == 0 || this->port == 0)
-        return false;
-
-    udpStarted = udp->begin(intPort) > 0;
-
-    return udpStarted;
-}
-
-bool MB_NTP::sendRequest()
-{
-    if (!udpStarted)
-        return false;
-
-    if (lastRequestMs == 0 || millis() - lastRequestMs > timeout)
+    bool sendRequest()
     {
-        lastRequestMs = millis();
-
-        if (!udp->beginPacket(host.c_str(), port))
+        if (!udpStarted)
             return false;
 
-        memset(packet, 0, ntpPacketSize);
+        if (lastRequestMs == 0 || millis() - lastRequestMs > timeout)
+        {
+            lastRequestMs = millis();
 
-        // https://datatracker.ietf.org/doc/html/rfc5905
-        packet[0] = 0b11100011; // leap indicator[0-1], version number[2-4], mode[5-7]
-        packet[1] = 0;          // stratum 0 is unspecified or invalid
-        packet[2] = 6;          // polling interval in log2 seconds
-        packet[3] = 236;       // precision in log2 seconds
+            if (!udp->beginPacket(host.c_str(), port))
+                return false;
 
-        // 4 bytes for Root Delay
-        // 4 bytes for Root Dispersion
-        // 4 bytes for Reference ID (kiss code)
-        // 8 bytes for Reference Timestamp
-        // 8 bytes for Origin Timestamp
-        // 8 bytes for Receive Timestamp
-        // 8 bytes for Transmit Timestamp
+            memset(packet, 0, ntpPacketSize);
 
-        if (udp->write(packet, ntpPacketSize) != ntpPacketSize)
-            return false;
+            // https://datatracker.ietf.org/doc/html/rfc5905
+            packet[0] = 0b11100011; // leap indicator[0-1], version number[2-4], mode[5-7]
+            packet[1] = 0;          // stratum 0 is unspecified or invalid
+            packet[2] = 6;          // polling interval in log2 seconds
+            packet[3] = 236;        // precision in log2 seconds
 
-        if (!udp->endPacket())
-            return false;
-    }
+            // 4 bytes for Root Delay
+            // 4 bytes for Root Dispersion
+            // 4 bytes for Reference ID (kiss code)
+            // 8 bytes for Reference Timestamp
+            // 8 bytes for Origin Timestamp
+            // 8 bytes for Receive Timestamp
+            // 8 bytes for Transmit Timestamp
 
-    return true;
-}
+            if (udp->write(packet, ntpPacketSize) != ntpPacketSize)
+                return false;
 
-bool MB_NTP::getResponse()
-{
-
-    if (!udpStarted)
-        return false;
-
-    if (!udp->parsePacket())
-        return false;
-
-    memset(packet, 0, ntpPacketSize);
-
-    if (udp->read(packet, ntpPacketSize) > 0)
-    {
-        unsigned long highWord = word(packet[40], packet[41]);
-        unsigned long lowWord = word(packet[42], packet[43]);
-
-        unsigned long s1900 = highWord << 16 | lowWord;
-
-        ts = s1900 - 2208988800UL + timeZoneOffset;
+            if (!udp->endPacket())
+                return false;
+        }
 
         return true;
     }
 
-    return false;
-}
+    bool getResponse()
+    {
+        if (!udpStarted)
+        {
+            // We call begin again if network may not ready (e.g., WiFi)
+            // during class initalizing.
+            udpStarted = udp->begin(intPort);
+            return udpStarted;
+        }
 
-uint32_t MB_NTP::getTime(uint16_t waitMillisec)
-{
+        if (!udp->parsePacket())
+            return false;
 
-    if (getResponse())
-        return ts;
+        memset(packet, 0, ntpPacketSize);
 
-    if (!sendRequest())
-        return 0;
+        if (udp->read(packet, ntpPacketSize) > 0)
+        {
+            unsigned long highWord = word(packet[40], packet[41]);
+            unsigned long lowWord = word(packet[42], packet[43]);
 
-    if (waitMillisec > 0)
-        delay(waitMillisec);
+            unsigned long s1900 = highWord << 16 | lowWord;
 
-    if (!getResponse())
-        return 0;
+            ts = s1900 - 2208988800UL + timeZoneOffset;
 
-    return ts;
-}
+            return true;
+        }
+
+        return false;
+    }
+};
 
 #endif

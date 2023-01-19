@@ -1,9 +1,9 @@
 /**
- * The MB_FS, filesystems wrapper class v1.0.10
+ * The MB_FS, filesystems wrapper class v1.0.11
  *
  * This wrapper class is for SD and Flash filesystems interface which supports SdFat (//https://github.com/greiman/SdFat)
  *
- *  Created January 7, 2023
+ *  Created January 17, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -157,8 +157,15 @@ public:
         SPI.begin(sck, miso, mosi, ss);
         sd_config.frequency = frequency;
         return sdSPIBegin(ss, &SPI, frequency);
-#elif defined(ESP8266) || defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
         sd_rdy = MBFS_SD_FS.begin(ss);
+        return sd_rdy;
+#elif defined(PICO_RP2040)
+        SDFSConfig c;
+        c.setCSPin(ss);
+        c.setSPISpeed(frequency);
+        MBFS_SD_FS.setConfig(c);
+        sd_rdy = MBFS_SD_FS.begin();
         return sd_rdy;
 #endif
 
@@ -998,7 +1005,11 @@ private:
 
         if (mode == mb_fs_open_mode_read)
         {
+#if defined(ESP32) || defined(ESP8266)
             mb_sdFs = MBFS_SD_FS.open(filename.c_str(), FILE_READ);
+#else
+            mb_sdFs = MBFS_SD_FS.open(filename.c_str(), "r");
+#endif
             if (mb_sdFs)
             {
                 sd_file = filename;
@@ -1018,8 +1029,13 @@ private:
                 mb_sdFs = MBFS_SD_FS.open(filename.c_str(), FILE_WRITE);
             else
                 mb_sdFs = MBFS_SD_FS.open(filename.c_str(), FILE_APPEND);
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266)
             mb_sdFs = MBFS_SD_FS.open(filename.c_str(), FILE_WRITE);
+#else
+            if (mode == mb_fs_open_mode_write)
+                mb_sdFs = MBFS_SD_FS.open(filename.c_str(), "w");
+            else
+                mb_sdFs = MBFS_SD_FS.open(filename.c_str(), "a");
 #endif
 
             if (mb_sdFs)

@@ -44,19 +44,32 @@ FirebaseConfig config;
 
 bool taskCompleted = false;
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+WiFiMulti multi;
+#endif
+
 void setup()
 {
 
     Serial.begin(115200);
-    Serial.println();
-    Serial.println();
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    multi.addAP(WIFI_SSID, WIFI_PASSWORD);
+    multi.run();
+#else
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
     Serial.print("Connecting to Wi-Fi");
+    unsigned long ms = millis();
     while (WiFi.status() != WL_CONNECTED)
     {
         Serial.print(".");
         delay(300);
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+        if (millis() - ms > 10000)
+            break;
+#endif
     }
     Serial.println();
     Serial.print("Connected with IP: ");
@@ -69,6 +82,13 @@ void setup()
     config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
     config.service_account.data.project_id = FIREBASE_PROJECT_ID;
     config.service_account.data.private_key = PRIVATE_KEY;
+
+    // The WiFi credentials are required for Pico W
+    // due to it does not have reconnect feature.
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    config.wifi.clearAP();
+    config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
+#endif
 
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
@@ -103,7 +123,7 @@ void loop()
             Serial.println("ok");
             FileList *files = fbdo.fileList();
             for (size_t i = 0; i < files->items.size(); i++)
-                 Serial.printf("name: %s, bucket: %s, generation: %d, contentType: %s, size: %d\n", files->items[i].name.c_str(), files->items[i].bucket.c_str(), (int)files->items[i].generation, files->items[i].contentType.c_str(), (int)files->items[i].size);
+                Serial.printf("name: %s, bucket: %s, generation: %d, contentType: %s, size: %d\n", files->items[i].name.c_str(), files->items[i].bucket.c_str(), (int)files->items[i].generation, files->items[i].contentType.c_str(), (int)files->items[i].size);
         }
         else
             Serial.println(fbdo.errorReason());

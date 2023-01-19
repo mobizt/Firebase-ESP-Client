@@ -44,17 +44,32 @@ FirebaseConfig config;
 
 bool taskCompleted;
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+WiFiMulti multi;
+#endif
+
 void setup()
 {
 
   Serial.begin(115200);
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+  multi.addAP(WIFI_SSID, WIFI_PASSWORD);
+  multi.run();
+#else
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
   Serial.print("Connecting to Wi-Fi");
+  unsigned long ms = millis();
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
     delay(300);
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    if (millis() - ms > 10000)
+      break;
+#endif
   }
   Serial.println();
   Serial.print("Connected with IP: ");
@@ -74,6 +89,13 @@ void setup()
 
   /* Assign the RTDB URL (required) */
   config.database_url = DATABASE_URL;
+
+  // The WiFi credentials are required for Pico W
+  // due to it does not have reconnect feature.
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+  config.wifi.clearAP();
+  config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
+#endif
 
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
@@ -156,7 +178,7 @@ void loop()
       Serial.printf("file size, %d\n", fbdo.getBackupFileSize());
     }
     else
-       Serial.println(fbdo.fileTransferError().c_str());
+      Serial.println(fbdo.fileTransferError().c_str());
 
     // Restore data to defined database path using backup file on Flash memory.
     //<target node> is the full path of database to restore
@@ -166,6 +188,6 @@ void loop()
     Serial.println("\nRestore... \n");
 
     if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_flash, "/<target node>" /* node path to restore */, "/<file name>" /* backup file to restore */, rtdbUploadCallback /* callback function */))
-       Serial.println(fbdo.fileTransferError().c_str());
+      Serial.println(fbdo.fileTransferError().c_str());
   }
 }

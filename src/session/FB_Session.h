@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.3.4
+ * Google's Firebase Data class, FB_Session.h version 1.3.5
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -44,6 +44,13 @@
 
 #include "signer/Signer.h"
 
+#if defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_SAMD)
+#if __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#endif
+#endif
 /**
  * Simple Queue implemented in this library is for error retry only.
  * Other QueueTask management e.g., FreeRTOS Queue is not necessary.
@@ -316,7 +323,16 @@ public:
    */
   void setExternalClient(Client *client);
 
-  /** Assign the callback functions required for external Client usage.
+
+   /** Assign the callback functions required for external Client usage.
+   *
+   * @param networkConnectionCB The function that handles the network connection.
+   * @param networkStatusCB The function that handle the network connection status acknowledgement.
+   */
+  void setExternalClientCallbacks(FB_NetworkConnectionRequestCallback networkConnectionCB,
+                                  FB_NetworkStatusRequestCallback networkStatusCB);
+
+  /** Assign the callback functions required for external Client usage (deprecated).
    *
    * @param tcpConnectionCB The function that handles the server connection.
    * @param networkConnectionCB The function that handles the network connection.

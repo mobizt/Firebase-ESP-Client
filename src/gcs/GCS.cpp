@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.5
+ * Google's Cloud Storage class, GCS.cpp version 1.2.6
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 12, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -39,7 +39,6 @@
 
 #include "GCS.h"
 #include <Arduino.h>
-
 
 GG_CloudStorage::GG_CloudStorage()
 {
@@ -178,7 +177,10 @@ bool GG_CloudStorage::sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *r
                              0, 0, 0, fbdo->errorReason());
             sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
         }
+
+        fbdo->closeSession();
     }
+
     return ret;
 }
 
@@ -524,7 +526,12 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     HttpHelper::addUAHeader(header);
     // required for ESP32 core sdk v2.0.x.
-    HttpHelper::addConnectionHeader(header, true);
+
+    bool keepAlive = false;
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
+    keepAlive = true;
+#endif
+    HttpHelper::addConnectionHeader(header, keepAlive);
 
     if (req->requestType == fb_esp_gcs_request_type_upload_simple)
     {
@@ -640,6 +647,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         header.clear();
         if (fbdo->session.response.code < 0)
             return false;
+
         if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
         {
             if (fbdo->session.jsonPtr)
@@ -1086,7 +1094,8 @@ void GG_CloudStorage::runResumableUploadTask()
             if (!taskInfo->done)
             {
                 taskInfo->done = true;
-                _this->gcs_sendRequest(taskInfo->fbdo, &taskInfo->req);
+                if (!_this->gcs_sendRequest(taskInfo->fbdo, &taskInfo->req))
+                    taskInfo->fbdo->closeSession();
             }
 
             size_t n = 0;
@@ -1138,7 +1147,8 @@ void GG_CloudStorage::runResumableUploadTask()
         if (!taskInfo->done)
         {
             taskInfo->done = true;
-            gcs_sendRequest(taskInfo->fbdo, &taskInfo->req);
+            if (!gcs_sendRequest(taskInfo->fbdo, &taskInfo->req))
+                taskInfo->fbdo->closeSession();
         }
 
         size_t n = 0;
@@ -1195,6 +1205,8 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
     bool ruTask = req->requestType == fb_esp_gcs_request_type_upload_resumable_init ||
                   req->requestType == fb_esp_gcs_request_type_upload_resumable_run;
+
+    bool complete = false;
 
     while (tcpHandler.available() > 0 /* data available to read payload */ ||
            tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
@@ -1316,6 +1328,10 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                 MB_String pChunk;
                 fbdo->readPayload(&pChunk, tcpHandler, response);
 
+                // Last chunk?
+                if (Utils::isChunkComplete(&tcpHandler, &response, complete))
+                    goto skip;
+
                 if (pChunk.length() > 0)
                 {
                     if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
@@ -1334,6 +1350,13 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
             }
         }
     }
+
+skip:
+
+    // To make sure all chunks read and
+    // ready to send next request
+    if (response.isChunkedEnc)
+        fbdo->tcpClient.flush();
 
     fbdo->getAllUploadInfo(1, fileInfoStage, payload, isList, isMeta, &itm);
 

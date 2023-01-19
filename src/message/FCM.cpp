@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.26
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.27
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created January 7, 2023
+ * Created January 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -282,7 +282,11 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
     }
 
     // required for ESP32 core sdk v2.0.x.
-    HttpHelper::addConnectionHeader(header, true);
+    bool keepAlive = false;
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
+    keepAlive = true;
+#endif
+    HttpHelper::addConnectionHeader(header, keepAlive);
     HttpHelper::addNewLine(header);
 
     fbdo->tcpClient.send(header.c_str());
@@ -937,12 +941,23 @@ bool FB_CM::handleResponse(FirebaseData *fbdo)
     if (!fbdo->waitResponse(tcpHandler))
         return false;
 
+    bool complete = false;
+
     while (tcpHandler.available() > 0 /* data available to read payload */ ||
            tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
     {
-        if (!fbdo->readResponse(&fbdo->session.fcm.payload, tcpHandler, response))
+        if (!fbdo->readResponse(&fbdo->session.fcm.payload, tcpHandler, response) && !response.isChunkedEnc)
+            break;
+
+        // Last chunk?
+        if (Utils::isChunkComplete(&tcpHandler, &response, complete))
             break;
     }
+
+    // To make sure all chunks read and
+    // ready to send next request
+    if (response.isChunkedEnc)
+        fbdo->tcpClient.flush();
 
     // parse the payload for error
     fbdo->getError(fbdo->session.fcm.payload, tcpHandler, response, false);

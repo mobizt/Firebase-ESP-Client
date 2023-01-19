@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.10
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.11
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -2073,7 +2073,10 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
     }
 
     if (!ret)
+    {
+        fbdo->closeSession();
         return false;
+    }
 
     int bufSize = Utils::getUploadBufSize(Signer.config, fb_esp_con_mode_rtdb);
     unsigned long ms = millis();
@@ -2358,6 +2361,8 @@ waits:
         !fbdo->prepareDownload(req->filename, (fb_esp_mem_storage_type)req->storageType))
         return false;
 
+    bool complete = false;
+
     // data available to read?
     while (tcpHandler.available() > 0 /* data available to read payload */ ||
            tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
@@ -2480,12 +2485,12 @@ waits:
                     reportDownloadProgress(fbdo, req, tcpHandler.payloadRead);
 
                 if (tcpHandler.downloadOTA && !endDownloadOTA(fbdo, req, tcpHandler, response))
-                    break;
+                    goto skip;
 
                 if (tcpHandler.error.code != 0)
                     fbdo->session.response.code = tcpHandler.error.code;
 
-                break;
+                goto skip;
             }
             else
             {
@@ -2496,6 +2501,10 @@ waits:
                                                                     : pChunkSize;
                 fbdo->readPayload(&pChunk, tcpHandler, response);
 
+                // Last chunk?
+                if (Utils::isChunkComplete(&tcpHandler, &response, complete))
+                    goto skip;
+
                 if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
                 {
 
@@ -2505,7 +2514,7 @@ waits:
                     // early parsing currently available http response for data types, event types, and event data
                     // which these information will be used for download task
                     if (!parseTCPResponse(fbdo, req, tcpHandler, response))
-                        break;
+                        goto skip;
 
                     // stream data complete?
                     int ofs = payload[payload.length() - 1] == '\r' || payload[payload.length() - 1] == '\n' ? 3 : 2;
@@ -2556,15 +2565,25 @@ waits:
                         payload = stream;
                         payload.shrink_to_fit();
                         Signer.mbfs->close(mb_fs_mem_storage_type_flash);
-                        break;
+                        goto skip;
 #endif
                     }
                 }
+
+                if (Utils::isResponseComplete(&tcpHandler, &response, complete, fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream))
+                    goto skip;
             }
         }
 
         tcpHandler.dataTime = millis();
     }
+
+skip:
+
+    // To make sure all chunks read and
+    // ready to send next request
+    if (response.isChunkedEnc)
+        fbdo->tcpClient.flush();
 
     endDownload(fbdo, req, tcpHandler, response);
 
@@ -3371,7 +3390,11 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
     {
         // required for ESP32 core sdk v2.0.x.
         fbdo->session.rtdb.http_req_conn_type = fb_esp_http_connection_type_keep_alive;
-        HttpHelper::addConnectionHeader(header, true);
+        bool keepAlive = false;
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
+        keepAlive = true;
+#endif
+        HttpHelper::addConnectionHeader(header, keepAlive);
         header += fb_esp_pgm_str_37; // "Keep-Alive: timeout=30, max=100\r\n"
     }
 

@@ -68,12 +68,16 @@ unsigned long dataMillis = 0;
 int count = 0;
 bool toggleUser = false;
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+WiFiMulti multi;
+#endif
+
 void signIn(const char *email, const char *password)
 {
     /* Assign the user sign in credentials */
     auth.user.email = email;
     auth.user.password = password;
-    
+
     /* Reset stored authen and config */
     Firebase.reset(&config);
 
@@ -86,12 +90,23 @@ void setup()
 
     Serial.begin(115200);
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    multi.addAP(WIFI_SSID, WIFI_PASSWORD);
+    multi.run();
+#else
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
     Serial.print("Connecting to Wi-Fi");
+    unsigned long ms = millis();
     while (WiFi.status() != WL_CONNECTED)
     {
         Serial.print(".");
         delay(300);
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+        if (millis() - ms > 10000)
+            break;
+#endif
     }
     Serial.println();
     Serial.print("Connected with IP: ");
@@ -106,6 +121,13 @@ void setup()
     /* Assign the RTDB URL */
     config.database_url = DATABASE_URL;
 
+    // The WiFi credentials are required for Pico W
+    // due to it does not have reconnect feature.
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    config.wifi.clearAP();
+    config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
     Firebase.reconnectWiFi(true);
     fbdo.setResponseSize(4096);
 
@@ -118,7 +140,7 @@ void setup()
 
 void loop()
 {
-    
+
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
     if (millis() - dataMillis > 5000)

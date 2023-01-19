@@ -1,9 +1,9 @@
 /**
  * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.9
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 22, 2022
+ * Created January 12, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

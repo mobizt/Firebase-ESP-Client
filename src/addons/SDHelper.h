@@ -2,8 +2,6 @@
 #ifndef SD_HELPER_H_
 #define SD_HELPER_H_
 
-#pragma once
-
 #include <Arduino.h>
 #include "Firebase.h"
 
@@ -21,6 +19,7 @@
 #elif defined(ESP8266)
 #define SPI_CS_PIN 15
 #elif defined(PICO_RP2040)
+// Use SPI 1's SS (GPIO 13) port as CS for SPI
 #define SPI_CS_PIN PIN_SPI1_SS
 #endif
 
@@ -34,9 +33,19 @@ SdSpiConfig sdFatSPIConfig(SPI_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(SPI_CLOCK_IN_MH
 
 SPIClass spi;
 
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266)
 
-// SDFSConfig sdFSConfig(SPI_CS_PIN, SPI_HALF_SPEED);
+SDFSConfig sdFSConfig(SPI_CS_PIN, SPI_HALF_SPEED);
+
+#elif defined(PICO_RP2040)
+
+/** Use Pico SPI 1 for SPI
+ * MISO  GPIO 12
+ * MOSI  GPIO 15
+ * SCK   GPIO 14
+ * SS    GPIO 13
+ */
+SDFSConfig sdFSConfig(SPI_CS_PIN, SPI_HALF_SPEED, SPI1);
 
 #endif
 
@@ -46,24 +55,14 @@ bool SD_Card_Mounting()
 {
 
 #if defined(FIREBASE_ESP_CLIENT) || defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
-    Serial.print("\nMounting SD Card... ");
+#if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD)
 
 #if defined(USE_SD_FAT_ESP32)
 
+    Serial.print("\nMounting SD Card... ");
+
     if (!Firebase.sdBegin(&sdFatSPIConfig, SPI_CS_PIN, SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN)) // pointer to SdSpiConfig, SS, SCK,MISO, MOSI
-
-#elif defined(ESP32) // if ESP32 and no SdFat library installed
-
-    spi.begin(SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, SPI_CS_PIN); // SPI pins config -> SCK,MISO, MOSI, SS
-    if (!Firebase.sdBegin(SPI_CS_PIN, &spi))                        // SS, pointer to SPIClass <- SPIClass object should defined as static or global
-
-#elif defined(ESP8266) || defined(PICO_RP2040)
-
-    if (!Firebase.sdBegin(SPI_CS_PIN)) // or Firebase.sdBegin(&sdFSConfig)
-
-#endif
     {
         Serial.println("failed\n");
         return false;
@@ -73,6 +72,55 @@ bool SD_Card_Mounting()
         Serial.println("success\n");
         return true;
     }
+
+#elif defined(ESP32) // if ESP32 and no SdFat library installed
+
+    Serial.print("\nMounting SD Card... ");
+
+    spi.begin(SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, SPI_CS_PIN); // SPI pins config -> SCK,MISO, MOSI, SS
+    if (!Firebase.sdBegin(SPI_CS_PIN, &spi))                        // SS, pointer to SPIClass <- SPIClass object should defined as static or global
+    {
+        Serial.println("failed\n");
+        return false;
+    }
+    else
+    {
+        Serial.println("success\n");
+        return true;
+    }
+
+#elif defined(ESP8266)
+
+    Serial.print("\nMounting SD Card... ");
+
+    if (!Firebase.sdBegin(SPI_CS_PIN)) // or Firebase.sdBegin(&sdFSConfig)
+    {
+        Serial.println("failed\n");
+        return false;
+    }
+    else
+    {
+        Serial.println("success\n");
+        return true;
+    }
+
+#elif defined(PICO_RP2040)
+
+    Serial.print("\nMounting SD Card... ");
+
+    if (!Firebase.sdBegin(&sdFSConfig)) // We begin with the SDFSConfig to use SPI 1 port
+    {
+        Serial.println("failed\n");
+        return false;
+    }
+    else
+    {
+        Serial.println("success\n");
+        return true;
+    }
+
+#endif
+
 #endif
 
 #if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD_MMC)
@@ -89,10 +137,12 @@ bool SD_Card_Mounting()
         Serial.println("success\n");
         return true;
     }
-#endif
 
 #endif
 
+#endif
+
+    Serial.println("\nSD filesystem was not setup yet.");
     return false;
 }
 

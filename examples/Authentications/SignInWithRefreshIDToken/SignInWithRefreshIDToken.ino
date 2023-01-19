@@ -59,17 +59,32 @@ FirebaseConfig config;
 unsigned long dataMillis = 0;
 int count = 0;
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+WiFiMulti multi;
+#endif
+
 void setup()
 {
 
     Serial.begin(115200);
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    multi.addAP(WIFI_SSID, WIFI_PASSWORD);
+    multi.run();
+#else
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
     Serial.print("Connecting to Wi-Fi");
+    unsigned long ms = millis();
     while (WiFi.status() != WL_CONNECTED)
     {
         Serial.print(".");
         delay(300);
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+        if (millis() - ms > 10000)
+            break;
+#endif
     }
     Serial.println();
     Serial.print("Connected with IP: ");
@@ -84,6 +99,13 @@ void setup()
     /* Assign the RTDB URL */
     config.database_url = DATABASE_URL;
 
+    // The WiFi credentials are required for Pico W
+    // due to it does not have reconnect feature.
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    config.wifi.clearAP();
+    config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
     Firebase.reconnectWiFi(true);
 
     /* Assign the callback function for the long running token generation task */
@@ -94,8 +116,8 @@ void setup()
 
     // Use refresh token and force token to refresh immediately
     // Refresh token is required for id token refreshing.
-    Firebase.setIdToken(&config, "" /* set id token to empty to refresh token immediately */ , 3600 /* expiry time */, "<Refresh Token>");
-    
+    Firebase.setIdToken(&config, "" /* set id token to empty to refresh token immediately */, 3600 /* expiry time */, "<Refresh Token>");
+
     // Or refresh token manually
     // Firebase.refreshToken(&config);
 

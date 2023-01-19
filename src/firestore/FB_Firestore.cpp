@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.2.2
+ * Google's Cloud Firestore class, Forestore.cpp version 1.2.3
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -517,7 +517,12 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
 
     connect(fbdo);
     req->requestTime = millis();
-    return firestore_sendRequest(fbdo, req);
+    
+    bool ret = firestore_sendRequest(fbdo, req);
+    if (!ret)
+        fbdo->closeSession();
+
+    return ret;
 }
 
 bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req)
@@ -698,11 +703,19 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     }
 
     HttpHelper::addUAHeader(header);
-    HttpHelper::addConnectionHeader(header, true);
+    bool keepAlive = false;
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
+    keepAlive = true;
+#endif
+    HttpHelper::addConnectionHeader(header, keepAlive);
     HttpHelper::getCustomHeaders(header, Signer.config->signer.customHeaders);
     HttpHelper::addNewLine(header);
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
     fbdo->tcpClient.send(header.c_str());
+
+    if (fbdo->session.response.code < 0)
+        return false;
+
     if (fbdo->session.response.code > 0 && req->payload.length() > 0 &&
         (method == http_post || method == http_patch))
     {
@@ -791,8 +804,10 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo, struct fb_esp_firestore_re
     if (!fbdo->waitResponse(tcpHandler))
         return false;
 
+    bool complete = false;
+
     while (tcpHandler.available() > 0 /* data available to read payload */ ||
-           tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
+           tcpHandler.payloadRead < response.contentLen /* incomplete content read  */ || !complete)
     {
         tcpHandler.dataTime = millis();
 
@@ -808,9 +823,21 @@ bool FB_Firestore::handleResponse(FirebaseData *fbdo, struct fb_esp_firestore_re
             sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
         }
 
-        if (!fbdo->readResponse(&fbdo->session.cfs.payload, tcpHandler, response))
+        if (!fbdo->readResponse(&fbdo->session.cfs.payload, tcpHandler, response) && !response.isChunkedEnc)
+        {
+            complete = true;
+            break;
+        }
+
+        // Last chunk?
+        if (Utils::isChunkComplete(&tcpHandler, &response, complete))
             break;
     }
+
+    // To make sure all chunks read and
+    // ready to send next request
+    if (response.isChunkedEnc)
+        fbdo->tcpClient.flush();
 
     // parse the payload for error
     fbdo->getError(fbdo->session.cfs.payload, tcpHandler, response, false);

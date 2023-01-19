@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.4
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.5
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -83,7 +83,16 @@ void FirebaseData::setExternalClientCallbacks(FB_TCPConnectionRequestCallback tc
                                               FB_NetworkStatusRequestCallback networkStatusCB)
 {
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)
-    tcpClient.tcpConnectionRequestCallback(tcpConnectionCB);
+    Serial_Printf("\nWarning: The TCP Connection Request Callback is deprecated\nWarning: Do not assign this to setExternalClientCallbacks\n\n");
+    tcpClient.networkConnectionRequestCallback(networkConnectionCB);
+    tcpClient.networkStatusRequestCallback(networkStatusCB);
+#endif
+}
+
+void FirebaseData::setExternalClientCallbacks(FB_NetworkConnectionRequestCallback networkConnectionCB,
+                                              FB_NetworkStatusRequestCallback networkStatusCB)
+{
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
     tcpClient.networkConnectionRequestCallback(networkConnectionCB);
     tcpClient.networkStatusRequestCallback(networkStatusCB);
 #endif
@@ -748,135 +757,12 @@ void FirebaseData::sendStreamToCB(int code)
 
 void FirebaseData::closeSession()
 {
-
-    bool status = tcpClient.networkReady();
-
-    if (status)
-    {
-        // close the socket and free the resources used by the SSL engine
-        if (session.connected || tcpClient.connected())
-        {
-            if (Signer.config)
-                Signer.config->internal.fb_last_reconnect_millis = millis();
-
-            if (tcpClient.connected())
-                tcpClient.stop();
-        }
-    }
-#ifdef ENABLE_RTDB
-    if (session.con_mode == fb_esp_con_mode_rtdb_stream)
-    {
-        session.rtdb.stream_tmo_Millis = millis();
-        session.rtdb.data_millis = millis();
-        session.rtdb.data_tmo = false;
-        session.rtdb.new_stream = true;
-    }
-#endif
-    session.connected = false;
+    Signer.closeSession(&tcpClient, &session);
 }
 
 bool FirebaseData::reconnect(unsigned long dataTime)
 {
-    if (tcpClient.type() == fb_tcp_client_type_external)
-    {
-#if !defined(FB_ENABLE_EXTERNAL_CLIENT)
-        session.response.code = FIREBASE_ERROR_EXTERNAL_CLIENT_DISABLED;
-        return false;
-#endif
-        if (!tcpClient.isInitialized())
-        {
-            session.response.code = FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED;
-            return false;
-        }
-    }
-
-    tcpClient.setConfig(Signer.config, Signer.mbfs);
-
-    bool status = tcpClient.networkReady();
-
-    if (dataTime > 0)
-    {
-        unsigned long tmo = DEFAULT_SERVER_RESPONSE_TIMEOUT;
-        if (Signer.config)
-        {
-            if (Signer.config->timeout.serverResponse < MIN_SERVER_RESPONSE_TIMEOUT ||
-                Signer.config->timeout.serverResponse > MAX_SERVER_RESPONSE_TIMEOUT)
-                Signer.config->timeout.serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
-            tmo = Signer.config->timeout.serverResponse;
-        }
-
-        if (millis() - dataTime > tmo)
-        {
-            session.response.code = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
-
-            session.error = fb_esp_pgm_str_69; // "response payload read timed out due to network issue or too large data size"
-
-#if defined(ESP32) || defined(ESP8266)
-            if (session.con_mode == fb_esp_con_mode_rtdb_stream)
-                // "\n** RECOMMENDATION, Update the ESP32 Arduino Core SDK, try to reduce the data at the node that data is
-                // being read **"
-                // "\n** WARNING!, in stream connection, unknown length payload can cause device crashed (wdt reset)
-                // **\n** RECOMMENDATION, increase the Rx buffer in setBSSLBufferSize Firebase Data object's function
-                // **\n** Or reduce the data at the node that data is being read **"
-                session.error += fb_esp_pgm_str_578;
-#endif
-            closeSession();
-            return false;
-        }
-    }
-
-    if (!status)
-    {
-        if (session.connected)
-            closeSession();
-
-        session.response.code = FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
-
-        if (Signer.config)
-        {
-            if (Signer.autoReconnectWiFi)
-            {
-                if (Signer.config->timeout.wifiReconnect < MIN_WIFI_RECONNECT_TIMEOUT ||
-                    Signer.config->timeout.wifiReconnect > MAX_WIFI_RECONNECT_TIMEOUT)
-                    Signer.config->timeout.wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
-
-                if (millis() - Signer.config->internal.fb_last_reconnect_millis > Signer.config->timeout.wifiReconnect &&
-                    !session.connected)
-                {
-
-#if defined(ESP32) || defined(ESP8266)
-                    WiFi.reconnect();
-#else
-                    tcpClient.networkReconnect();
-#endif
-                    Signer.config->internal.fb_last_reconnect_millis = millis();
-                }
-            }
-        }
-        else
-        {
-            if (Signer.autoReconnectWiFi)
-            {
-                if (millis() - last_reconnect_millis > reconnect_tmo && !session.connected)
-                {
-#if defined(ESP32) || defined(ESP8266)
-                    WiFi.reconnect();
-#else
-                    tcpClient.networkReconnect();
-#endif
-                    last_reconnect_millis = millis();
-                }
-            }
-        }
-        status = tcpClient.networkReady();
-    }
-
-#if defined(ENABLE_RTDB)
-    if (!status && session.con_mode == fb_esp_con_mode_rtdb_stream)
-        session.rtdb.new_stream = true;
-#endif
-
-    return status;
+    return Signer.reconnect(&tcpClient, &session, dataTime);
 }
 
 void FirebaseData::setTimeout()
@@ -929,7 +815,7 @@ void FirebaseData::setSecure()
         if (!Signer.config->internal.fb_clock_rdy && (Signer.config->cert.file.length() > 0 ||
                                                       Signer.config->cert.data != NULL || session.cert_ptr > 0))
         {
-            TimeHelper::syncClock(Signer.mb_ts, Signer.config->internal.fb_gmt_offset, Signer.config);
+            TimeHelper::syncClock(&Signer.ntpClient, Signer.mb_ts, Signer.mb_ts_offset, Signer.config->internal.fb_gmt_offset, Signer.config);
             tcpClient.clockReady = Signer.config->internal.fb_clock_rdy;
         }
 
@@ -1104,7 +990,9 @@ bool FirebaseData::readPayload(MB_String *chunkOut, struct fb_esp_tcp_response_h
 bool FirebaseData::readResponse(MB_String *payload, struct fb_esp_tcp_response_handler_t &tcpHandler,
                                 struct server_response_data_t &response)
 {
-    // do not check of the config here to allow legacy fcm to work
+    // Do not check for the config here to allow legacy fcm to work
+
+    // Return false for time out and network issue otherwise return true
 
     if (!reconnect(tcpHandler.dataTime))
         return false;
@@ -1229,6 +1117,8 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
     size_t available = tcpClient.available();
     tcpHandler.dataTime = millis();
 
+    bool complete = false;
+
     if (stage == 0 /* read stage */)
     {
         while (available == 0 && reconnect(tcpHandler.dataTime) && tcpClient.connected() &&
@@ -1256,6 +1146,10 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
                 MB_String pChunk;
 
                 readPayload(&pChunk, tcpHandler, response);
+
+                // Last chunk?
+                if (Utils::isChunkComplete(&tcpHandler, &response, complete))
+                    return true;
 
                 if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
                 {
@@ -1999,7 +1893,11 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     HttpHelper::addUAHeader(header);
     HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_129 /* "application/json" */);
     HttpHelper::addContentLengthHeader(header, payloadSize);
-    HttpHelper::addConnectionHeader(header, true);
+    bool keepAlive = false;
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
+    keepAlive = true;
+#endif
+    HttpHelper::addConnectionHeader(header, keepAlive);
     HttpHelper::addNewLine(header);
 
     fbdo.tcpClient.send(header.c_str());
@@ -2086,6 +1984,11 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
         }
     }
 
+    // To make sure all chunks read and
+    // ready to send next request
+    if (response.isChunkedEnc)
+        fbdo->tcpClient.flush();
+
     result = payload;
     // parse payload for error
     fbdo->getError(payload, tcpHandler, response, true);
@@ -2108,7 +2011,10 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
     fcm_sendHeader(fbdo, strlen(msg.to<const char *>()));
 
     if (fbdo.session.response.code < 0)
+    {
+        fbdo.closeSession();
         return false;
+    }
 
     fbdo.tcpClient.send(msg.to<const char *>());
 

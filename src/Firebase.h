@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.2.4
+ * The Firebase class, Firebase.h v1.2.5
  *
- *  Created January 8, 2023
+ *  Created January 16, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -32,6 +32,7 @@
 #include <Arduino.h>
 
 #include "FirebaseFS.h"
+#include "FB_Const.h"
 
 #if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
 #ifndef FB_ENABLE_EXTERNAL_CLIENT
@@ -95,7 +96,7 @@ class SdSpiConfig;
 #define FPSTR MBSTRING_FLASH_MCR
 #endif
 
-class Firebase_ESP_Client
+class FIREBASE_CLASS
 {
   friend class QueryFilter;
   friend class FirebaseSession;
@@ -120,8 +121,8 @@ public:
   GG_CloudStorage GCStorage;
 #endif
 
-  Firebase_ESP_Client();
-  ~Firebase_ESP_Client();
+  FIREBASE_CLASS();
+  ~FIREBASE_CLASS();
 
   /** Initialize Firebase with the config and Firebase's authentication credentials.
    *
@@ -322,6 +323,12 @@ public:
    */
   void reconnectWiFi(bool reconnect);
 
+  /** Assign UDP client and gmt offset for NTP time synching when using external SSL client
+   * @param client The pointer to UDP client based on the network type.
+   * @param gmtOffset The GMT time offset.
+   */
+  void setUDPClient(UDP *client, float gmtOffset);
+
   /** Get currently used auth token string.
    *
    * @return constant char* of currently used auth token.
@@ -371,12 +378,12 @@ public:
    */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(PICO_RP2040)
 
   /** Initiate SD card with SD FS configurations (ESP8266 only).
    *
    * @param ss SPI Chip/Slave Select pin.
-   * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 only).
+   * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 and Pico only).
    * @return Boolean type status indicates the success of the operation.
    */
   bool sdBegin(SDFSConfig *sdFSConfig);
@@ -460,9 +467,10 @@ private:
   FirebaseConfig *config = nullptr;
   MB_FS mbfs;
   uint32_t mb_ts = 0;
+  uint32_t mb_ts_offset = 0;
 };
 
-extern Firebase_ESP_Client Firebase;
+extern FIREBASE_CLASS Firebase;
 
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 
@@ -643,7 +651,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      TimeHelper::syncClock(mb_ts, _gmtOffset, config);
+      TimeHelper::syncClock(&Signer.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
 #endif
     }
     begin(config, auth);
@@ -664,7 +672,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      TimeHelper::syncClock(mb_ts, _gmtOffset, config);
+      TimeHelper::syncClock(&Signer.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
 #endif
     }
     begin(config, auth);
@@ -755,6 +763,12 @@ public:
    * @param reconnect The boolean to set/unset WiFi AP reconnection.
    */
   void reconnectWiFi(bool reconnect);
+
+  /** Assign UDP client and gmt offset for NTP time synching when using external SSL client
+   * @param client The pointer to UDP client based on the network type.
+   * @param gmtOffset The GMT time offset.
+   */
+  void setUDPClient(UDP *client, float gmtOffset);
 
   /** Get currently used auth token string.
    *
@@ -2520,7 +2534,7 @@ public:
    */
   void removeMultiPathStreamCallback(FirebaseData &fbdo) { RTDB.removeMultiPathStreamCallback(&fbdo); }
 
-   /** Run stream manually.
+  /** Run stream manually.
    * To manually triggering the stream callback function, this should call repeatedly in loop().
    */
   void runStream()
@@ -2755,7 +2769,7 @@ public:
    */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(PICO_RP2040)
 
   /** Initiate SD card with SD FS configurations (ESP8266 only).
    *
@@ -3066,6 +3080,7 @@ private:
   FirebaseConfig *config = nullptr;
   MB_FS mbfs;
   uint32_t mb_ts = 0;
+  uint32_t mb_ts_offset = 0;
   bool extConfig = true;
 };
 

@@ -70,6 +70,10 @@ unsigned long lastTime = 0;
 
 int count = 0;
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+WiFiMulti multi;
+#endif
+
 void sendMessage();
 
 void setup()
@@ -77,12 +81,23 @@ void setup()
 
     Serial.begin(115200);
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    multi.addAP(WIFI_SSID, WIFI_PASSWORD);
+    multi.run();
+#else
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
     Serial.print("Connecting to Wi-Fi");
+    unsigned long ms = millis();
     while (WiFi.status() != WL_CONNECTED)
     {
         Serial.print(".");
         delay(300);
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+        if (millis() - ms > 10000)
+            break;
+#endif
     }
     Serial.println();
     Serial.print("Connected with IP: ");
@@ -95,6 +110,13 @@ void setup()
     config.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
     config.service_account.data.project_id = FIREBASE_PROJECT_ID;
     config.service_account.data.private_key = PRIVATE_KEY;
+
+    // The WiFi credentials are required for Pico W
+    // due to it does not have reconnect feature.
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    config.wifi.clearAP();
+    config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
+#endif
 
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
@@ -123,8 +145,8 @@ void sendMessage()
 
     // Read more details about HTTP v1 API here https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages
     FCM_HTTPv1_JSON_Message msg;
-    
-    msg.topic = "myTopic"; //Topic name to send a message to, e.g. "weather". Note: "/topics/" prefix should not be provided.
+
+    msg.topic = "myTopic"; // Topic name to send a message to, e.g. "weather". Note: "/topics/" prefix should not be provided.
     msg.notification.body = "Notification body";
     msg.notification.title = "Notification title";
 
@@ -137,7 +159,6 @@ void sendMessage()
     payload.add("timestamp", "1609815454");
     msg.data = payload.raw();
 
-    
     if (Firebase.FCM.send(&fbdo, &msg)) // send message to recipient
         Serial.printf("ok\n%s\n\n", Firebase.FCM.payload(&fbdo).c_str());
     else

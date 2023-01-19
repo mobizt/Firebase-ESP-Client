@@ -45,17 +45,32 @@ FirebaseConfig config;
 unsigned long dataMillis = 0;
 int count = 0;
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+WiFiMulti multi;
+#endif
+
 void setup()
 {
 
     Serial.begin(115200);
 
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    multi.addAP(WIFI_SSID, WIFI_PASSWORD);
+    multi.run();
+#else
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
+
     Serial.print("Connecting to Wi-Fi");
+    unsigned long ms = millis();
     while (WiFi.status() != WL_CONNECTED)
     {
         Serial.print(".");
         delay(300);
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+        if (millis() - ms > 10000)
+            break;
+#endif
     }
     Serial.println();
     Serial.print("Connected with IP: ");
@@ -66,6 +81,13 @@ void setup()
 
     /* Assign the RTDB URL */
     config.database_url = DATABASE_URL;
+
+    // The WiFi credentials are required for Pico W
+    // due to it does not have reconnect feature.
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+    config.wifi.clearAP();
+    config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
+#endif
 
     Firebase.reconnectWiFi(true);
 
@@ -78,7 +100,7 @@ void setup()
     /* Set access token */
     // The access token obtained from other apps using OAuth2.0 authentication.
 
-    // The APIs scopes that cover all library applications should include the following 
+    // The APIs scopes that cover all library applications should include the following
     // https://www.googleapis.com/auth/devstorage.full_control
     // https://www.googleapis.com/auth/datastore
     // https://www.googleapis.com/auth/userinfo.email
@@ -88,7 +110,7 @@ void setup()
 
     // Refresh token, Client ID and Client Secret are required for OAuth2.0 token refreshing.
     // The Client ID and Client  Secret can be taken from https://console.developers.google.com/apis/credentials
-    
+
     // If Refresh token was not assigned or empty string, the id token will not refresh when it expired.
     Firebase.setAccessToken(&config, "<Access Token>" /* access token */, 3600 /* expiry time */, "<Refresh Token>" /* refresh token */, "<Client ID>" /* client id */, "<Client Secret>" /* client secret */);
 

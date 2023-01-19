@@ -30,8 +30,6 @@
 #ifndef FB_CONST_H_
 #define FB_CONST_H_
 
-#pragma once
-
 #include <Arduino.h>
 #include <time.h>
 
@@ -48,6 +46,7 @@
 #define FIREBASEJSON_USE_PSRAM
 #endif
 #include "json/FirebaseJson.h"
+#include "MB_NTP.h"
 
 #if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
 #if defined(ESP32)
@@ -67,11 +66,21 @@
 #endif
 
 #if defined(FIREBASE_ESP_CLIENT)
+
 #define FIREBASE_STREAM_CLASS FirebaseStream
 #define FIREBASE_MP_STREAM_CLASS MultiPathStream
+#define FIREBASE_CLASS Firebase_ESP_Client
+
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+
 #define FIREBASE_STREAM_CLASS StreamData
 #define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
+#if defined(ESP32)
+#define FIREBASE_CLASS FirebaseESP32
+#elif defined(ES8266) || defined(PICO_RP2040)
+#define FIREBASE_CLASS FirebaseESP8266
+#endif
+
 #endif
 
 class FirebaseData;
@@ -560,6 +569,52 @@ enum fb_esp_functions_operation_status
 
 #endif
 
+struct fb_esp_wifi_credential_t
+{
+    MB_String ssid;
+    MB_String password;
+};
+
+struct fb_esp_wifi_credentials_t
+{
+    friend class Firebase_Signer;
+
+public:
+    fb_esp_wifi_credentials_t(){};
+    ~fb_esp_wifi_credentials_t() { clearAP(); };
+    void addAP(const String &ssid, const String &password)
+    {
+        fb_esp_wifi_credential_t cred;
+        cred.ssid = ssid;
+        cred.password = password;
+        credentials.push_back(cred);
+    }
+    void clearAP()
+    {
+        credentials.clear();
+    }
+
+private:
+    MB_List<fb_esp_wifi_credential_t> credentials;
+};
+
+static fb_esp_wifi_credentials_t WiFiCreds;
+
+class fb_esp_wifi
+{
+public:
+    fb_esp_wifi(){};
+    ~fb_esp_wifi() { WiFiCreds.clearAP(); };
+    void addAP(const String &ssid, const String &password)
+    {
+        WiFiCreds.addAP(ssid, password);
+    }
+    void clearAP()
+    {
+        WiFiCreds.clearAP();
+    }
+};
+
 template <typename T>
 struct fb_esp_base64_io_t
 {
@@ -767,15 +822,19 @@ typedef struct fb_esp_spi_ethernet_module_t
 {
 #if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
 #ifdef INC_ENC28J60_LWIP
-    ENC28J60lwIP *enc28j60;
+    ENC28J60lwIP *enc28j60 = nullptr;
 #endif
 #ifdef INC_W5100_LWIP
-    Wiznet5100lwIP *w5100;
+    Wiznet5100lwIP *w5100 = nullptr;
 #endif
 #ifdef INC_W5500_LWIP
-    Wiznet5500lwIP *w5500;
+    Wiznet5500lwIP *w5500 = nullptr;
 #endif
+
+#elif defined(PICO_RP2040)
+
 #endif
+
 } SPI_ETH_Module;
 
 struct fb_esp_auth_token_info_t
@@ -922,6 +981,7 @@ struct fb_esp_cfg_int_t
 
     bool fb_reconnect_wifi = false;
     unsigned long fb_last_reconnect_millis = 0;
+    bool net_once_connected = false;
     unsigned long fb_last_jwt_begin_step_millis = 0;
     unsigned long fb_last_jwt_generation_error_cb_millis = 0;
     unsigned long fb_last_request_token_cb_millis = 0;
@@ -1077,7 +1137,7 @@ struct fb_esp_functions_config_t
 #if defined(ENABLE_FB_STORAGE)
 struct fb_esp_fcs_config_t
 {
-    size_t upload_buffer_size = 512;
+    size_t upload_buffer_size = 2048;
     size_t download_buffer_size = 2048;
 };
 
@@ -1177,6 +1237,7 @@ struct fb_esp_cfg_t
     TokenStatusCallback token_status_callback = NULL;
     // deprecated
     int8_t max_token_generation_retry = 0;
+    fb_esp_wifi wifi;
     struct fb_esp_rtdb_config_t rtdb;
 #if defined(ENABLE_GC_STORAGE)
     struct fb_esp_gcs_config_t gcs;
@@ -1194,6 +1255,10 @@ struct fb_esp_cfg_t
 
     SPI_ETH_Module spi_ethernet_module;
     struct fb_esp_client_timeout_t timeout;
+
+public:
+    fb_esp_cfg_t(){};
+    ~fb_esp_cfg_t() { wifi.clearAP(); };
 };
 
 #ifdef ENABLE_RTDB
@@ -1935,7 +2000,7 @@ static const char fb_esp_pgm_str_65[] PROGMEM = "gateway timeout";
 static const char fb_esp_pgm_str_66[] PROGMEM = "http version not support";
 static const char fb_esp_pgm_str_67[] PROGMEM = "network authentication required";
 static const char fb_esp_pgm_str_68[] PROGMEM = "data buffer overflow";
-static const char fb_esp_pgm_str_69[] PROGMEM = "response payload read timed out due to network issue or too large data size";
+static const char fb_esp_pgm_str_69[] PROGMEM = "response payload read timed out";
 static const char fb_esp_pgm_str_70[] PROGMEM = "data type mismatch";
 static const char fb_esp_pgm_str_71[] PROGMEM = "path not exist";
 static const char fb_esp_pgm_str_72[] PROGMEM = "task";
@@ -2036,7 +2101,7 @@ static const char fb_esp_pgm_str_166[] PROGMEM = "\".sv\"";
 static const char fb_esp_pgm_str_167[] PROGMEM = "Transfer-Encoding: ";
 static const char fb_esp_pgm_str_168[] PROGMEM = "chunked";
 static const char fb_esp_pgm_str_169[] PROGMEM = "Maximum Redirection reached";
-// static const char fb_esp_pgm_str_170[] PROGMEM = "";
+static const char fb_esp_pgm_str_170[] PROGMEM = "UDP client is required for NTP server time synching based on your network type \ne.g. WiFiUDP or EthernetUDP. Please call Firebase.setUDPClient(&udpClient, gmtOffset); to assign the UDP client.";
 // static const char fb_esp_pgm_str_171[] PROGMEM = "";
 static const char fb_esp_pgm_str_172[] PROGMEM = "&";
 static const char fb_esp_pgm_str_173[] PROGMEM = "?";

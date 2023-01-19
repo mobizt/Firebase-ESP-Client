@@ -3,17 +3,38 @@
  *
  * Email: k_suwatchai@hotmail.com
  *
- * Github: https://github.com/mobizt/Firebase-ESP-Client
+ * Github: https://github.com/mobizt/Firebase-ESP8266
  *
  * Copyright (c) 2023 mobizt
  *
  */
 
 /** This example shows the RTDB data changed notification with external Client.
- * This example used ESP32 and WIZnet W5500 (Etherner) devices which ESP_SSLClient will be used as the external Client.
+ * This example used Raspberry Pi Pico and WIZnet W5500 (Ethernet) devices which ESP_SSLClient will be used as the external Client.
+ * The Ethernet.h will work with SPI 0 only.
+ *
+ * Even the example for Ethernet that supports ENC28J60 and WIZnet W55xx is available at RTB/BasicEthernet/Pico/Pico.ino,
+ * this example will show how to use external SSL Client that supports other network interfaces e.g. GSMClient and especially
+ * EthernetClient in this example.
  *
  * Don't gorget to define this in FirebaseFS.h
  * #define FB_ENABLE_EXTERNAL_CLIENT
+ */
+
+/**
+ *
+ * The W5500 Ethernet module and RPI2040 Pico board, SPI 0 port wiring connection.
+ *
+ * RP2040 (Pico)                           W5500
+ *
+ * GPIO 16 - SPI 0 MISO                     SO
+ * GPIO 19 - SPI 0 MOSI                     SI
+ * GPIO 18 - SPI 0 SCK                      SCK
+ * GPIO 17 - SPI 0 CS                       CS
+ * GPIO 20 - W5500 Reset                    Reset
+ * GND                                      GND
+ * 3V3                                      VCC
+ *
  */
 
 #include <Firebase_ESP_Client.h>
@@ -24,11 +45,10 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-// https://github.com/arduino-libraries/Ethernet
-#include <Ethernet.h>
-
 // https://github.com/mobizt/ESP_SSLClient
 #include <ESP_SSLClient.h>
+
+#include <Ethernet.h>
 
 // For NTP time client
 #include "MB_NTP.h"
@@ -46,11 +66,8 @@
 #define USER_PASSWORD "USER_PASSWORD"
 
 /* 4. Defined the Ethernet module connection */
-#define WIZNET_RESET_PIN 26 // Connect W5500 Reset pin to GPIO 26 of ESP32
-#define WIZNET_CS_PIN 5     // Connect W5500 CS pin to GPIO 5 of ESP32
-#define WIZNET_MISO_PIN 19  // Connect W5500 MISO pin to GPIO 19 of ESP32
-#define WIZNET_MOSI_PIN 23  // Connect W5500 MOSI pin to GPIO 23 of ESP32
-#define WIZNET_SCLK_PIN 18  // Connect W5500 SCLK pin to GPIO 18 of ESP32
+#define WIZNET_RESET_PIN 20       // Connect W5500 Reset pin to GPIO 20 of Raspberry Pi Pico
+#define WIZNET_CS_PIN PIN_SPI0_SS // Connect W5500 CS pin to SPI 0's SS (GPIO 17) of Raspberry Pi Pico
 
 /* 5. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
@@ -170,6 +187,7 @@ void setup()
 {
 
   Serial.begin(115200);
+  delay(5000);
 
   networkConnection();
 
@@ -181,7 +199,7 @@ void setup()
   /* Similar to WiFiClientSecure */
   ssl_client1.setInsecure();
 
-  /* Assign the basic Client (Ethernet) pointer to the basic Client */
+  /* Assign the basic Client (Ethernet) pointer to the SSL Client */
   ssl_client2.setClient(&basic_client2);
 
   /* Similar to WiFiClientSecure */

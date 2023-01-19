@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.2.2
+ * Firebase TCP Client v1.2.3
  *
- * Created January 7, 2023
+ * Created January 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.19
+ * Google's Cloud Functions class, Functions.cpp version 1.1.20
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 12, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -102,11 +102,11 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
     fbdo->session.long_running_task++;
 
     _creation_task_enable = true;
-    
+
     // Allow running in FreeRTOS loop task?, add to loop task.
     if (Signer.config->internal.deploy_loop_task_enable)
     {
-        //The first task?, running in loop task by default
+        // The first task?, running in loop task by default
         if (_deployTasks.size() == 1)
         {
 
@@ -479,7 +479,13 @@ bool FB_Functions::sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t
     Signer.config->internal.fb_processing = true;
     fbdo->clear();
     connect(fbdo, req->host.c_str());
-    return functions_sendRequest(fbdo, req);
+    
+    bool ret = functions_sendRequest(fbdo, req);
+
+    if (!ret)
+        fbdo->closeSession();
+
+    return ret;
 }
 
 bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t *req)
@@ -635,13 +641,20 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     }
 
     HttpHelper::addUAHeader(header);
-    HttpHelper::addConnectionHeader(header, true);
+    bool keepAlive = false;
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
+    keepAlive = true;
+#endif
+    HttpHelper::addConnectionHeader(header, keepAlive);
     HttpHelper::getCustomHeaders(header, Signer.config->signer.customHeaders);
     HttpHelper::addNewLine(header);
 
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
     fbdo->tcpClient.send(header.c_str());
+    if (fbdo->session.response.code < 0)
+        return false;
+
     if (fbdo->session.response.code > 0 && req->payload.length() > 0)
         fbdo->tcpClient.send(req->payload.c_str());
 
@@ -766,12 +779,23 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
     if (!fbdo->waitResponse(tcpHandler))
         return false;
 
+    bool complete = false;
+
     while (tcpHandler.available() > 0 /* data available to read payload */ ||
            tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
     {
-        if (!fbdo->readResponse(&fbdo->session.cfn.payload, tcpHandler, response))
+        if (!fbdo->readResponse(&fbdo->session.cfn.payload, tcpHandler, response) && !response.isChunkedEnc)
+            break;
+
+        // Last chunk?
+        if (Utils::isChunkComplete(&tcpHandler, &response, complete))
             break;
     }
+
+    // To make sure all chunks read and
+    // ready to send next request
+    if (response.isChunkedEnc)
+        fbdo->tcpClient.flush();
 
     // parse the payload
     if (fbdo->session.cfn.payload.length() > 0 &&

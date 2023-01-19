@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.h version 1.3.6
+ * Google's Firebase Token Management class, Signer.h version 1.3.7
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created January 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -39,13 +39,12 @@
 #include "./FirebaseFS.h"
 #include "./mbfs/MB_FS.h"
 
-
 using namespace mb_string;
 
 class Firebase_Signer
 {
+    friend class FIREBASE_CLASS;
 #if defined(FIREBASE_ESP_CLIENT)
-    friend class Firebase_ESP_Client;
     friend class FB_CM;
     friend class FB_Storage;
     friend class GG_CloudStorage;
@@ -56,16 +55,7 @@ class Firebase_Signer
     friend class AuditLogConfig;
     friend class AuditConfig;
     friend class FunctionsConfig;
-
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-
-#if defined(ESP32)
-#define FIREBASE_CLASS FirebaseESP32
-#elif defined(ES8266) || defined(PICO_RP2040)
-#define FIREBASE_CLASS FirebaseESP8266
-#endif
-
-    friend class FIREBASE_CLASS;
     friend class FCMObject;
 #endif
     friend class FIREBASE_STREAM_CLASS;
@@ -84,6 +74,10 @@ private:
     FirebaseAuth *auth = nullptr;
     MB_FS *mbfs = nullptr;
     uint32_t *mb_ts = nullptr;
+    uint32_t *mb_ts_offset = nullptr;
+    MB_NTP ntpClient;
+    UDP *udp= nullptr;
+    float gmtOffset = 0;
 #if defined(ESP8266)
     callback_function_t esp8266_cb = nullptr;
 #endif
@@ -91,18 +85,24 @@ private:
     bool authenticated = false;
     bool _token_processing_task_enable = false;
     FB_TCP_CLIENT *tcpClient = nullptr;
-    bool intTCPClient = false;
+    bool localTCPClient = false;
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonData *resultPtr = nullptr;
     int response_code = 0;
     time_t ts = 0;
     bool autoReconnectWiFi = false;
+
+    // Used as local vars in reconnect
     unsigned long last_reconnect_millis = 0;
-    uint16_t reconnect_tmo = 10 * 1000;
+    bool net_once_connected = false;
+    uint16_t wifi_reconnect_tmo = MIN_WIFI_RECONNECT_TIMEOUT;
+
     volatile bool networkStatus = false;
 
     /* intitialize the class */
-    void begin(FirebaseConfig *config, FirebaseAuth *auth, MB_FS *mbfs, uint32_t *mb_ts);
+    void begin(FirebaseConfig *config, FirebaseAuth *auth, MB_FS *mbfs, uint32_t *mb_ts, uint32_t *mb_ts_offset);
+    /* free memory */
+    void end();
     /* parse service account json file for private key */
     bool parseSAFile();
     /* clear service account credentials */
@@ -139,12 +139,17 @@ private:
     bool refreshToken();
     /* set the token status by error code */
     void setTokenError(int code);
+    /* create new TCP client */
+    void newClient(FB_TCP_CLIENT **client);
+    /* delete TCP client */
+    void freeClient(FB_TCP_CLIENT **client);
     /* handle the token processing task error */
     bool handleTaskError(int code, int httpCode = 0);
     // parse the auth token response
     bool handleTokenResponse(int &httpCode);
     /* process the tokens (generation, signing, request and refresh) */
     void tokenProcessingTask();
+    bool checkUDP(UDP *udp, bool &ret, bool &_token_processing_task_enable);
     /* encode and sign the JWT token */
     bool createJWT();
     /* verifying the user with email/passwod to get id token */
@@ -187,8 +192,15 @@ private:
     FirebaseAuth *getAuth();
     /* prepare or initialize the external/internal TCP client */
     bool initClient(PGM_P subDomain, fb_esp_auth_token_status status = token_status_uninitialized);
+    /* resume network connection */
+    bool reconnect(FB_TCP_CLIENT *client, fb_esp_session_info_t *session, unsigned long dataTime = 0);
+    bool reconnect();
+    void resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo, bool session_connected);
+    /* close TCP session */
+    void closeSession(FB_TCP_CLIENT *client, fb_esp_session_info_t *session);
     /* set external Client */
     void setTCPClient(FB_TCP_CLIENT *tcpClient);
+    void setUDPClient(UDP *client, float gmtOffset);
     /* set the network status acknowledge */
     void setNetworkStatus(bool status);
     /* get system time */
@@ -205,6 +217,12 @@ private:
                                { schedule_function(callback); });
         esp8266_cb();
     }
+#endif
+#if defined(PICO_RP2040)
+#if __has_include(<WiFiMulti.h>)
+#define HAS_WIFIMULTI
+    WiFiMulti *multi = nullptr;
+#endif
 #endif
 };
 

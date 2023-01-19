@@ -182,8 +182,6 @@ void setupFCM()
 
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-    Firebase.reconnectWiFi(true);
-
     // required for legacy HTTP API
     Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY);
 }

@@ -281,6 +281,20 @@ void reconnectWiFi(bool reconnect);
 
 
 
+
+####  Assign UDP client and gmt offset for NTP time synching when using external SSL client
+
+param **`client`** The pointer to UDP client based on the network type.
+
+param **`gmtOffset`** The GMT time offset.
+
+```cpp
+void setUDPClient(UDP *client, float gmtOffset = 0);
+```
+
+
+
+
 #### Get currently used auth token string.
 
 param **`constant char*`** of currently used auth token.

@@ -32,7 +32,6 @@
 #include "FB_Utils.h"
 #include <IPAddress.h>
 #include <Client.h>
-
 typedef enum
 {
     fb_cert_type_undefined = -1,

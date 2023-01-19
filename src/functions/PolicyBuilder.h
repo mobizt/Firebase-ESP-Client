@@ -1,9 +1,9 @@
 /**
  * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.8
  *
- * This library supports Espressif ESP8266 and ESP32
+ * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created December 12, 2022
+ * Created January 12, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

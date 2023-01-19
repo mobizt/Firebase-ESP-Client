@@ -1,8 +1,6 @@
 #ifndef TOKEN_HElPER_H
 #define TOKEN_HElPER_H
 
-#pragma once
-
 #include <Arduino.h>
 #include "FirebaseFS.h"
 

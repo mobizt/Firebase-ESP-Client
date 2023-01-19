@@ -84,13 +84,6 @@ EthernetClient basic_client;
 // The SSL client can do nothing for this case, you should increase the basic client buffer memory.
 ESP_SSLClient ssl_client;
 
-// For NTP client
-EthernetUDP udpClient;
-
-MB_NTP ntpClient(&udpClient, "pool.ntp.org" /* NTP host */, 123 /* NTP port */, 0 /* timezone offset in seconds */);
-
-uint32_t timestamp = 0;
-
 void ResetEthernet()
 {
     Serial.println("Resetting WIZnet W5500 Ethernet Board...  ");
@@ -137,30 +130,6 @@ void networkStatusRequestCallback()
     fbdo.setNetworkStatus(Ethernet.linkStatus() == LinkON);
 }
 
-// Define the callback function to handle server connection
-void tcpConnectionRequestCallback(const char *host, int port)
-{
-
-    // You may need to set the system timestamp to use for
-    // auth token expiration checking.
-
-    if (timestamp == 0)
-    {
-        timestamp = ntpClient.getTime(2000 /* wait 2000 ms */);
-
-        if (timestamp > 0)
-            Firebase.setSystemTime(timestamp);
-    }
-
-    Serial.print("Connecting to server via external Client... ");
-    if (!ssl_client.connect(host, port))
-    {
-        Serial.println("failed.");
-        return;
-    }
-    Serial.println("success.");
-}
-
 void setup()
 {
 
@@ -195,7 +164,7 @@ void setup()
     fbdo.setExternalClient(&ssl_client);
 
     /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(tcpConnectionRequestCallback, networkConnection, networkStatusRequestCallback);
+    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
     // Comment or pass false value when WiFi reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
@@ -207,7 +176,6 @@ void setup()
 
 void loop()
 {
-
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
     if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))

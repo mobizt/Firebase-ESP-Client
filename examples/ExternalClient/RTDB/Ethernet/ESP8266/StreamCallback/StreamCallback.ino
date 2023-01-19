@@ -82,21 +82,14 @@ EthernetClient basic_client1;
 
 EthernetClient basic_client2;
 
-// This is the wrapper client that utilized the basic client for io and 
+// This is the wrapper client that utilized the basic client for io and
 // provides the mean for the data encryption and decryption before sending to or after read from the io.
 // The most probable failures are related to the basic client itself that may not provide the buffer
-// that large enough for SSL data. 
+// that large enough for SSL data.
 // The SSL client can do nothing for this case, you should increase the basic client buffer memory.
 ESP_SSLClient ssl_client1;
 
 ESP_SSLClient ssl_client2;
-
-// For NTP client
-EthernetUDP udpClient;
-
-MB_NTP ntpClient(&udpClient, "pool.ntp.org" /* NTP host */, 123 /* NTP port */, 0 /* timezone offset in seconds */);
-
-uint32_t timestamp = 0;
 
 void ResetEthernet()
 {
@@ -143,54 +136,6 @@ void networkStatusRequestCallback()
   // Set the network status
   fbdo.setNetworkStatus(Ethernet.linkStatus() == LinkON);
   stream.setNetworkStatus(Ethernet.linkStatus() == LinkON);
-}
-
-// Define the callback function to handle server connection
-void tcpConnectionRequestCallback1(const char *host, int port)
-{
-
-  // You may need to set the system timestamp to use for
-  // auth token expiration checking.
-
-  if (timestamp == 0)
-  {
-    timestamp = ntpClient.getTime(2000 /* wait 2000 ms */);
-
-    if (timestamp > 0)
-      Firebase.setSystemTime(timestamp);
-  }
-
-  Serial.print("Connecting to server via external Client... ");
-  if (!ssl_client1.connect(host, port))
-  {
-    Serial.println("failed.");
-    return;
-  }
-  Serial.println("success.");
-}
-
-// Define the callback function to handle server connection
-void tcpConnectionRequestCallback2(const char *host, int port)
-{
-
-  // You may need to set the system timestamp to use for
-  // auth token expiration checking.
-
-  if (timestamp == 0)
-  {
-    timestamp = ntpClient.getTime(2000 /* wait 2000 ms */);
-
-    if (timestamp > 0)
-      Firebase.setSystemTime(timestamp);
-  }
-
-  Serial.print("Connecting to server via external Client2... ");
-  if (!ssl_client2.connect(host, port))
-  {
-    Serial.println("failed.");
-    return;
-  }
-  Serial.println("success.");
 }
 
 void streamCallback(FirebaseStream data)
@@ -264,13 +209,13 @@ void setup()
   fbdo.setExternalClient(&ssl_client1);
 
   /* Assign the required callback functions */
-  fbdo.setExternalClientCallbacks(tcpConnectionRequestCallback1, networkConnection, networkStatusRequestCallback);
+  fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
   /* Assign the pointer to global defined  external SSL Client object */
   stream.setExternalClient(&ssl_client2);
 
   /* Assign the required callback functions */
-  stream.setExternalClientCallbacks(tcpConnectionRequestCallback2, networkConnection, networkStatusRequestCallback);
+  stream.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
   // Comment or pass false value when WiFi reconnection will control by your code or third party library
   Firebase.reconnectWiFi(true);
