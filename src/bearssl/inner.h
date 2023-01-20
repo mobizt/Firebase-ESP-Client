@@ -25,13 +25,13 @@
 #ifndef INNER_H__
 #define INNER_H__
 
-#include "esp_suspend.h"
+
 #if defined(ARDUINO_NANO_RP2040_CONNECT)
 #include "bool_types.h"
 #endif
 #include <Arduino.h>
 #if defined(ESP8266) || defined(PICO_RP2040)
-
+#include "esp_suspend.h"
 #include <string.h>
 #include <limits.h>
 
