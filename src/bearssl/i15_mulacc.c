@@ -48,12 +48,12 @@ br_i15_mulacc(uint16_t *d, const uint16_t *a, const uint16_t *b)
 		uint32_t f;
 		size_t v;
 		uint32_t cc;
-		delay(0);
+		esp_bssl_idle();
 
 		f = b[1 + u];
 		cc = 0;
 		for (v = 0; v < alen; v ++) {
-			delay(0);
+			esp_bssl_idle();
 			uint32_t z;
 			z = (uint32_t)d[1 + u + v] + MUL15(f, a[1 + v]) + cc;
 			cc = z >> 15;

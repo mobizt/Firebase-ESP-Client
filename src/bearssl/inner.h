@@ -24,6 +24,8 @@
 
 #ifndef INNER_H__
 #define INNER_H__
+
+#include "esp_suspend.h"
 #if defined(ARDUINO_NANO_RP2040_CONNECT)
 #include "bool_types.h"
 #endif

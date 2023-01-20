@@ -1336,7 +1336,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                 {
                     if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
                     {
-                        delay(0);
+                        Utils::idle();
 
                         isList = fbdo->session.gcs.requestType == fb_esp_gcs_request_type_list;
                         isMeta = fbdo->session.gcs.requestType != fb_esp_gcs_request_type_download_ota &&

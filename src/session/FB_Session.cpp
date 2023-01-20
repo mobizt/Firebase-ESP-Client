@@ -1286,7 +1286,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
                 else
 #endif
                     ret = Signer.mbfs->write(mbfs_type type, buf, tcpHandler.bufferAvailable) == (int)tcpHandler.bufferAvailable;
-                delay(0);
+               Utils::idle();
                 if (!ret)
                     tcpHandler.error.code = MB_FS_ERROR_FILE_IO_ERROR;
 
@@ -1978,7 +1978,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
             fbdo->readPayload(&pChunk, tcpHandler, response);
             if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
             {
-                delay(0);
+               Utils::idle();
                 payload += pChunk;
             }
         }

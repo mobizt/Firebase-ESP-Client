@@ -690,7 +690,7 @@ bool FB_Storage::handleResponse(FirebaseData *fbdo, struct fb_esp_fcs_req_t *req
 
                 if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
                 {
-                    delay(0);
+                   Utils::idle();
 
                     isList = fbdo->session.fcs.requestType == fb_esp_fcs_request_type_list;
                     isMeta = fbdo->session.fcs.requestType != fb_esp_fcs_request_type_download_ota &&

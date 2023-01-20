@@ -41,7 +41,7 @@ br_i31_montymul(uint32_t *d, const uint32_t *x, const uint32_t *y,
 	for (u = 0; u < len; u ++) {
 		uint32_t f, xu;
 		uint64_t r, zh;
-		delay(0);
+		esp_bssl_idle();
 
 		xu = x[u + 1];
 		f = MUL31_lo((d[1] + MUL31_lo(x[u + 1], y[1])), m0i);
@@ -69,7 +69,7 @@ br_i31_montymul(uint32_t *d, const uint32_t *x, const uint32_t *y,
 		}
 		for (; v < len; v ++) {
 			uint64_t z;
-			delay(0);
+			esp_bssl_idle();
 			z = (uint64_t)d[v + 1] + MUL31(xu, y[v + 1]) + MUL31(f, m[v + 1]) + r;
 			r = z >> 31;
 			d[v] = (uint32_t)z & 0x7FFFFFFF;

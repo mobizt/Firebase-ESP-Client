@@ -1,9 +1,9 @@
 /**
- * The MB_FS, filesystems wrapper class v1.0.11
+ * The MB_FS, filesystems wrapper class v1.0.12
  *
  * This wrapper class is for SD and Flash filesystems interface which supports SdFat (//https://github.com/greiman/SdFat)
  *
- *  Created January 17, 2023
+ *  Created January 20, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -913,13 +913,6 @@ public:
 #endif
 
         return false;
-    }
-
-    void feed()
-    {
-        if (loopCount % 128 == 0)
-            delay(0);
-        loopCount++;
     }
 
 private:

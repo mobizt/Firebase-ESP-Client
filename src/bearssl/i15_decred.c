@@ -81,7 +81,7 @@ br_i15_decode_reduce(uint16_t *x,
 	acc_len = 0;
 	while (k < len) {
 		uint32_t v;
-		delay(0);
+		esp_bssl_idle();
 
 		v = buf[k ++];
 		acc = (acc << 8) | v;

@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 3.0.4
+ * FirebaseJson, version 3.0.5
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created January 6, 2023
+ * Created January 20, 2023
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -50,6 +50,11 @@
 #if defined(ESP8266)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+#if __has_include(<core_esp8266_version.h>)
+#include <core_esp8266_version.h>
+#endif
+
 #endif
 
 #include <FS.h>
@@ -792,8 +797,11 @@ protected:
 
     void idle()
     {
-        yield();
+#if defined(ARDUINO_ESP8266_MAJOR) && defined(ARDUINO_ESP8266_MINOR) && defined(ARDUINO_ESP8266_REVISION) && ((ARDUINO_ESP8266_MAJOR == 3 && ARDUINO_ESP8266_MINOR >= 1) || ARDUINO_ESP8266_MAJOR > 3)
+        esp_yield();
+#else
         delay(0);
+#endif
     }
 
     void shrinkS(MB_String &s)
@@ -1307,7 +1315,7 @@ protected:
         while (client->connected() && chunkBufSize == 0 && millis() - dataTime < 5000)
         {
             chunkBufSize = client->available();
-            delay(0);
+            idle();
         }
 
         if (client->connected())

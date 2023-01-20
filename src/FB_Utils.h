@@ -39,9 +39,27 @@
 #include <Schedule.h>
 #endif
 
+#if defined(ESP8266)
+#if __has_include(<core_esp8266_version.h>)
+#include <core_esp8266_version.h>
+#endif
+#endif
+
 using namespace mb_string;
 
 #define stringPtr2Str(p) (MB_String().appendPtr(p).c_str())
+
+namespace Utils
+{
+    inline void idle()
+    {
+#if defined(ARDUINO_ESP8266_MAJOR) && defined(ARDUINO_ESP8266_MINOR) && defined(ARDUINO_ESP8266_REVISION) && ((ARDUINO_ESP8266_MAJOR == 3 && ARDUINO_ESP8266_MINOR >= 1) || ARDUINO_ESP8266_MAJOR > 3)
+           esp_yield();
+#else
+        delay(0);
+#endif
+    }
+};
 
 namespace MemoryHelper
 {
@@ -125,7 +143,6 @@ namespace StringHelper
 
             previous = current + 1;
             current = str.find(delim, previous);
-            delay(0);
         }
 
         s.clear();
@@ -1071,7 +1088,7 @@ namespace HttpHelper
             if (!client)
                 break;
 
-            delay(0);
+            Utils::idle();
 
             res = client->read();
             if (res > -1)
@@ -1100,7 +1117,7 @@ namespace HttpHelper
             if (!client)
                 break;
 
-            delay(0);
+            Utils::idle();
 
             res = client->read();
             if (res > -1)
@@ -1878,7 +1895,7 @@ namespace Utils
                 httpCode = FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED;
                 return false;
             }
-            delay(0);
+            Utils::idle();
         }
 #endif
         return true;
@@ -1906,11 +1923,6 @@ namespace Utils
         return mbfs->calCRC(buf);
     }
 
-    inline void idle()
-    {
-        delay(0);
-    }
-
     inline void makePath(MB_String &path)
     {
         if (path.length() > 0)
@@ -1928,7 +1940,7 @@ namespace Utils
             path += sub;
         return path;
     }
-    
+
 #if defined(FIREBASE_ESP_CLIENT)
     inline MB_String makeFCMMessagePath(PGM_P sub = NULL)
     {

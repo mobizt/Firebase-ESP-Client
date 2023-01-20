@@ -633,7 +633,7 @@ void Firebase_Signer::tokenProcessingTask()
 
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
-        delay(0);
+       Utils::idle();
         // check time if clock synching once set in the JWT token generating process (during beginning step)
         // or valid time required for SSL handshake in ESP8266
         if (!config->internal.fb_clock_rdy && (config->internal.fb_clock_synched || sslValidTime))
@@ -973,7 +973,7 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
 
     while (tcpClient->connected() && tcpClient->available() == 0)
     {
-        delay(0);
+       Utils::idle();
         if (!reconnect(tcpClient, nullptr, tcpHandler.dataTime))
             return false;
     }
@@ -986,7 +986,7 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
 
     while (tcpHandler.available() || !complete)
     {
-        delay(0);
+       Utils::idle();
 
         if (!reconnect(tcpClient, nullptr, tcpHandler.dataTime))
             return false;

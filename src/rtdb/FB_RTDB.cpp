@@ -2508,7 +2508,7 @@ waits:
                 if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
                 {
 
-                    delay(0);
+                   Utils::idle();
                     payload += pChunk;
 
                     // early parsing currently available http response for data types, event types, and event data

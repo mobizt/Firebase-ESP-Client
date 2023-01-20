@@ -36,7 +36,7 @@ br_rsa_i15_pkcs1_sign(const unsigned char *hash_oid,
 		return 0;
 	}
 	
-	delay(0);
+	esp_bssl_idle();
 
 	return br_rsa_i15_private(x, sk);
 }

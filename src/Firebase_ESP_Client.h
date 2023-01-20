@@ -16,6 +16,7 @@
  * - Fix Storage file openning locked issue.
  * - Fix NTP client issue.
  * - Fix Firebase.ready returns true when network disconnected.
+ * - Fix wdt reset in ESP8266 core v3.1.1 as delay(0) replaced by esp suspend. 
  * - Improve network (WiFi) resume task.
  * - Add support non-ESP device WiFi resume.
  * - Add support SDFS (ESP8266SdFat) filesystem for RP2040/Pico.
