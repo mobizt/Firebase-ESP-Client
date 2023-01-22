@@ -1,25 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.3.3"
+#define FIREBASE_CLIENT_VERSION "4.3.4"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.3
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.4
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs and Raspberry Pi RP2040 Pico MCUs.
  *
- * Created January 19, 2023
+ * Created January 22, 2023
  *
  *   Updates:
- * - Fix Firestore incomplete chunked response issue.
- * - Fix chunked response handling issue for authentications.
- * - Fix FCM HTTPv1 invalid message issue.
- * - Fix Storage file openning locked issue.
- * - Fix NTP client issue.
- * - Fix Firebase.ready returns true when network disconnected.
- * - Fix wdt reset in ESP8266 core v3.1.1 as delay(0) replaced by esp suspend. 
- * - Improve network (WiFi) resume task.
- * - Add support non-ESP device WiFi resume.
- * - Add support SDFS (ESP8266SdFat) filesystem for RP2040/Pico.
+ * - Fix NTP issue and update.
+ * - Fix netwok management task issue.
  *
  *
  * This work is a part of Firebase ESP Client library

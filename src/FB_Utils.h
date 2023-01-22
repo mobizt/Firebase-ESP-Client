@@ -2,7 +2,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico (RP2040)
  *
- * Created January 17, 2023
+ * Created January 21, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -54,7 +54,7 @@ namespace Utils
     inline void idle()
     {
 #if defined(ARDUINO_ESP8266_MAJOR) && defined(ARDUINO_ESP8266_MINOR) && defined(ARDUINO_ESP8266_REVISION) && ((ARDUINO_ESP8266_MAJOR == 3 && ARDUINO_ESP8266_MINOR >= 1) || ARDUINO_ESP8266_MAJOR > 3)
-           esp_yield();
+        esp_yield();
 #else
         delay(0);
 #endif
@@ -1705,14 +1705,58 @@ namespace TimeHelper
     inline time_t getTime(uint32_t *mb_ts, uint32_t *mb_ts_offset)
     {
         uint32_t &tm = *mb_ts;
-
-#if !defined(FB_ENABLE_EXTERNAL_CLIENT) && (defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040))
-        tm = time(nullptr);
-#else
+#if defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(PICO_RP2040)
         tm = *mb_ts_offset + millis() / 1000;
+#elif defined(ESP32) || defined(ESP8266)
+        tm = time(nullptr);
+#endif
+        return tm;
+    }
+
+    inline int setTimestamp(time_t ts)
+    {
+#if defined(ESP32) || defined(ESP8266)
+        struct timeval tm = {ts, 0}; // sec, us
+        return settimeofday((const timeval *)&tm, 0);
+#endif
+        return -1;
+    }
+
+    inline bool setTime(time_t ts, uint32_t *mb_ts, uint32_t *mb_ts_offset)
+    {
+        bool ret = false;
+
+#if defined(ESP32) || defined(ESP8266)
+        ret = TimeHelper::setTimestamp(ts) == 0;
+        *mb_ts = time(nullptr);
+#else
+        if (ts > ESP_DEFAULT_TS)
+        {
+            *mb_ts_offset = ts - millis() / 1000;
+            *mb_ts = ts;
+            ret = true;
+        }
 #endif
 
-        return tm;
+        return ret;
+    }
+
+    inline bool updateClock(MB_NTP *ntp, uint32_t *mb_ts, uint32_t *mb_ts_offset)
+    {
+        uint32_t ts = ntp->getTime(2000 /* wait 10000 ms */);
+        if (ts > 0)
+            *mb_ts_offset = ts - millis() / 1000;
+
+        time_t now = getTime(mb_ts, mb_ts_offset);
+
+        bool rdy = now > ESP_DEFAULT_TS;
+
+#if defined(ESP32) || defined(ESP8266)
+        if (rdy && time(nullptr) < now)
+            setTime(now, mb_ts, mb_ts_offset);
+#endif
+
+        return rdy;
     }
 
     inline bool syncClock(MB_NTP *ntp, uint32_t *mb_ts, uint32_t *mb_ts_offset, float gmtOffset, FirebaseConfig *config)
@@ -1739,19 +1783,20 @@ namespace TimeHelper
 
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)
 
-                if (*mb_ts_offset == 0)
-                {
-                    *mb_ts_offset = ntp->getTime(2000 /* wait 2000 ms */);
-                    if (*mb_ts_offset > 0)
-                        *mb_ts_offset = *mb_ts_offset - millis() / 1000;
-                }
+                updateClock(ntp, mb_ts, mb_ts_offset);
 
 #else
+
 #if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
 
 #if defined(PICO_RP2040)
                 NTP.begin("pool.ntp.org", "time.nist.gov");
                 NTP.waitSet();
+
+                now = time(nullptr);
+                if (now > ESP_DEFAULT_TS)
+                    *mb_ts_offset = now - millis() / 1000;
+
 #else
                 configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
 #endif
@@ -1769,15 +1814,6 @@ namespace TimeHelper
             config->internal.fb_gmt_offset = gmtOffset;
 
         return config->internal.fb_clock_rdy;
-    }
-
-    inline int setTimestamp(time_t ts)
-    {
-#if defined(ESP32) || defined(ESP8266)
-        struct timeval tm = {ts, 0}; // sec, us
-        return settimeofday((const timeval *)&tm, 0);
-#endif
-        return -1;
     }
 
 };

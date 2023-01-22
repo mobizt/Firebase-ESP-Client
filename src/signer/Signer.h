@@ -98,6 +98,7 @@ private:
     uint16_t wifi_reconnect_tmo = MIN_WIFI_RECONNECT_TIMEOUT;
 
     volatile bool networkStatus = false;
+    bool networkChecking = false;
 
     /* intitialize the class */
     void begin(FirebaseConfig *config, FirebaseAuth *auth, MB_FS *mbfs, uint32_t *mb_ts, uint32_t *mb_ts_offset);
@@ -149,7 +150,7 @@ private:
     bool handleTokenResponse(int &httpCode);
     /* process the tokens (generation, signing, request and refresh) */
     void tokenProcessingTask();
-    bool checkUDP(UDP *udp, bool &ret, bool &_token_processing_task_enable);
+    bool checkUDP(UDP *udp, bool &ret, bool &_token_processing_task_enable, float gmtOffset);
     /* encode and sign the JWT token */
     bool createJWT();
     /* verifying the user with email/passwod to get id token */

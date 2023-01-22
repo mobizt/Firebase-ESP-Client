@@ -283,33 +283,7 @@ time_t Firebase_Signer::getTime()
 
 bool Firebase_Signer::setTime(time_t ts)
 {
-
-#if !defined(FB_ENABLE_EXTERNAL_CLIENT) && (defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040))
-
-    if (TimeHelper::setTimestamp(ts) == 0)
-    {
-        this->ts = time(nullptr);
-        *mb_ts = this->ts;
-        return true;
-    }
-    else
-    {
-        this->ts = time(nullptr);
-        *mb_ts = this->ts;
-    }
-
-#else
-
-    if (ts > ESP_DEFAULT_TS)
-    {
-        *mb_ts_offset = ts - millis() / 1000;
-        this->ts = ts;
-        *mb_ts = this->ts;
-    }
-
-#endif
-
-    return false;
+    return TimeHelper::setTime(ts, mb_ts, mb_ts_offset);
 }
 
 bool Firebase_Signer::isExpired()
@@ -585,12 +559,12 @@ void Firebase_Signer::freeJson()
     resultPtr = nullptr;
 }
 
-bool Firebase_Signer::checkUDP(UDP *udp, bool &ret, bool &_token_processing_task_enable)
+bool Firebase_Signer::checkUDP(UDP *udp, bool &ret, bool &_token_processing_task_enable, float gmtOffset)
 {
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)
 
     if (udp)
-        ntpClient.begin(udp, "pool.ntp.org" /* NTP host */, 123 /* NTP port */, gmtOffset /* timezone offset in seconds */);
+        ntpClient.begin(udp, "pool.ntp.org" /* NTP host */, 123 /* NTP port */, gmtOffset * 3600 /* timezone offset in seconds */);
     else
     {
         config->signer.tokens.error.message.clear();
@@ -633,7 +607,7 @@ void Firebase_Signer::tokenProcessingTask()
 
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
-       Utils::idle();
+        Utils::idle();
         // check time if clock synching once set in the JWT token generating process (during beginning step)
         // or valid time required for SSL handshake in ESP8266
         if (!config->internal.fb_clock_rdy && (config->internal.fb_clock_synched || sslValidTime))
@@ -657,7 +631,7 @@ void Firebase_Signer::tokenProcessingTask()
 
             // check or set time again
 
-            if (!checkUDP(udp, ret, _token_processing_task_enable))
+            if (!checkUDP(udp, ret, _token_processing_task_enable, config->time_zone))
                 continue;
 
             TimeHelper::syncClock(&ntpClient, mb_ts, mb_ts_offset, config->time_zone, config);
@@ -695,7 +669,7 @@ void Firebase_Signer::tokenProcessingTask()
                  config->internal.fb_last_jwt_begin_step_millis == 0))
             {
                 // time must be set first
-                if (!checkUDP(udp, ret, _token_processing_task_enable))
+                if (!checkUDP(udp, ret, _token_processing_task_enable, config->time_zone))
                     continue;
 
                 TimeHelper::syncClock(&ntpClient, mb_ts, mb_ts_offset, config->time_zone, config);
@@ -973,7 +947,7 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
 
     while (tcpClient->connected() && tcpClient->available() == 0)
     {
-       Utils::idle();
+        Utils::idle();
         if (!reconnect(tcpClient, nullptr, tcpHandler.dataTime))
             return false;
     }
@@ -986,7 +960,7 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
 
     while (tcpHandler.available() || !complete)
     {
-       Utils::idle();
+        Utils::idle();
 
         if (!reconnect(tcpClient, nullptr, tcpHandler.dataTime))
             return false;
@@ -1803,6 +1777,11 @@ void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected
 
 bool Firebase_Signer::reconnect()
 {
+    if (networkChecking)
+        return networkStatus;
+
+    networkChecking = true;
+
     bool noClient = tcpClient == nullptr;
     if (noClient)
         newClient(&tcpClient);
@@ -1811,6 +1790,8 @@ bool Firebase_Signer::reconnect()
 
     if (noClient)
         freeClient(&tcpClient);
+
+    networkChecking = false;
 
     return networkStatus;
 }

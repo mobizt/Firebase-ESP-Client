@@ -1,5 +1,5 @@
 /**
- * Mobizt's UDP NTP Time Client, version 1.0.2
+ * Mobizt's UDP NTP Time Client, version 1.0.3
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -50,7 +50,6 @@ public:
         this->host = host;
         this->port = port;
         this->timeZoneOffset = timeZoneOffset;
-
         return this->begin();
     }
 
@@ -58,7 +57,7 @@ public:
     {
         if (!this->udp || this->host.length() == 0 || this->port == 0)
             return false;
-            
+
         if (!udpStarted)
             udpStarted = udp->begin(intPort) > 0;
 
@@ -67,18 +66,23 @@ public:
 
     uint32_t getTime(uint16_t waitMillisec = 0)
     {
+        if (ts == 0)
+        {
+            if (!udp)
+                return 0;
 
-        if (getResponse())
-            return ts;
+            if (getResponse())
+                return ts;
 
-        if (!sendRequest())
-            return 0;
+            if (!sendRequest())
+                return 0;
 
-        if (waitMillisec > 0)
-            delay(waitMillisec);
+            if (waitMillisec > 0)
+                delay(waitMillisec);
 
-        if (!getResponse())
-            return 0;
+            if (!getResponse())
+                return 0;
+        }
 
         return ts;
     }
@@ -98,7 +102,7 @@ private:
 
     bool sendRequest()
     {
-        if (!udpStarted)
+        if (!udpStarted || !udp)
             return false;
 
         if (lastRequestMs == 0 || millis() - lastRequestMs > timeout)
@@ -136,6 +140,9 @@ private:
 
     bool getResponse()
     {
+        if (!udp)
+            return false;
+
         if (!udpStarted)
         {
             // We call begin again if network may not ready (e.g., WiFi)
