@@ -11,7 +11,7 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used your Arduino device and WIZnet W5500 (Ethernet) device which SSLClient https://github.com/OPEnSLab-OSU/SSLClient
+ * This example used your Arduino device (ESP32 in this case) and WIZnet W5500 (Ethernet) device which SSLClient https://github.com/OPEnSLab-OSU/SSLClient
  * will be used as the external Client.
  *
  * This SSLClient, https://github.com/OPEnSLab-OSU/SSLClient can't use in ESP8266 device due to wdt reset error.
@@ -130,7 +130,7 @@ void networkConnection()
     }
     else
     {
-        Serial.println("Can't connected");
+        Serial.println("Can't connect");
     }
 }
 

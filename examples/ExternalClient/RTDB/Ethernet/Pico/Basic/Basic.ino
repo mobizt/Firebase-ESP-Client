@@ -134,7 +134,7 @@ void networkConnection()
     }
     else
     {
-        Serial.println("Can't connected");
+        Serial.println("Can't connect");
     }
 }
 

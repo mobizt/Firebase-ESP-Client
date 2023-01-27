@@ -1,5 +1,5 @@
 /**
- * Created January 7, 2023
+ * Created January 27, 2023
  */
 
 #ifndef FB_Network_H
@@ -56,11 +56,11 @@
 
 #if defined __has_include
 
-#if __has_include(<LwipIntfDev.h>)
+#if __has_include(<LwipIntfDev.h>) && (defined(ENABLE_ESP8266_ENC28J60_ETH) || defined(ENABLE_ESP8266_W5500_ETH) || defined(ENABLE_ESP8266_W5500_ETH))
 #include <LwipIntfDev.h>
 #endif
 
-#if __has_include(<ENC28J60lwIP.h>)
+#if __has_include(<ENC28J60lwIP.h>) && defined(ENABLE_ESP8266_ENC28J60_ETH)
 #define INC_ENC28J60_LWIP
 #include <ENC28J60lwIP.h>
 #endif
@@ -77,7 +77,6 @@
 #define INC_W5500_LWIP
 #include <W5500lwIP.h>
 #endif
-
 
 #endif
 
