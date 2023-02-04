@@ -51,6 +51,11 @@ class FB_WCS : public WiFiClientSecure
 public:
   FB_WCS(){};
   ~FB_WCS(){};
+  
+  // Bandaid empty stop method because calling the base class stop() method spits out errors to stdin
+  void stop() {
+    // override with NOTHING!!!
+  }
 
   int _connect(const char *host, uint16_t port, unsigned long timeout)
   {
