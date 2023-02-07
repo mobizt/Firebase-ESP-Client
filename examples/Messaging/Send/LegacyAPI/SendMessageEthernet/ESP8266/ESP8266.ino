@@ -50,8 +50,12 @@
 #include <Firebase_ESP_Client.h>
 
 #include <ENC28J60lwIP.h>
-//#include <W5100lwIP.h>
-//#include <W5500lwIP.h>
+// #include <W5100lwIP.h>
+// #include <W5500lwIP.h>
+
+/** Don't gorget to define this in FirebaseFS.h
+  #define ENABLE_ESP8266_ENC28J60_ETH
+*/
 
 /** 1 Define the Firebase project Server Key which must be taken from
  * https://console.firebase.google.com/u/0/project/_/settings/cloudmessaging
@@ -112,10 +116,16 @@ void setup()
 
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-    // required for legacy HTTP API
+// required for legacy HTTP API
+#if defined(ENABLE_ESP8266_ENC28J60_ETH)
     spi_ethernet_module.enc28j60 = &eth;
-    // spi_ethernet_module.w5100 = &eth;
-    // spi_ethernet_module.w5500 = &eth;
+#endif
+#if defined(ENABLE_ESP8266_W5100_ETH)
+    spi_ethernet_module.w5100 = &eth;
+#endif
+#if defined(ENABLE_ESP8266_W5500_ETH)
+    spi_ethernet_module.w5500 = &eth;
+#endif
     Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
 
     sendMessage();

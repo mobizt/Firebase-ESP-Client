@@ -100,9 +100,15 @@ void setupFirebase()
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     /* Assign the pointer to Ethernet module lwip interface */
+#if defined(ENABLE_ESP8266_ENC28J60_ETH)
     config.spi_ethernet_module.enc28j60 = &eth;
-    // config.spi_ethernet_module.w5100 = &eth;
-    // config.spi_ethernet_module.w5500 = &eth;
+#endif
+#if defined(ENABLE_ESP8266_W5100_ETH)
+    config.spi_ethernet_module.w5100 = &eth;
+#endif
+#if defined(ENABLE_ESP8266_W5500_ETH)
+    config.spi_ethernet_module.w5500 = &eth;
+#endif
 
     // Or use legacy authenticate method
     // config.database_url = DATABASE_URL;
