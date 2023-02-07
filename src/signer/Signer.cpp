@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.7
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.8
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
+ * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created January 16, 2023
+ * Created February 7, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -56,7 +56,7 @@ void Firebase_Signer::end()
 {
     freeJson();
 
-    WiFiCreds.clearAP();
+    wifiCreds.clearAP();
 #if defined(HAS_WIFIMULTI)
     if (multi)
         delete multi;
@@ -490,24 +490,27 @@ bool Firebase_Signer::handleToken()
                 // handle the jwt token processing
 
                 // if it is the first step and no task is currently running
-                if (config->signer.step == fb_esp_jwt_generation_step_begin && !config->signer.tokenTaskRunning)
+                if (!config->signer.tokenTaskRunning)
                 {
-                    // if service account key json file assigned and no private key parsing data
-                    if (config->service_account.json.path.length() > 0 && config->signer.pk.length() == 0)
+                    if (config->signer.step == fb_esp_jwt_generation_step_begin)
                     {
-                        // if fail to parse the private key from service account json file, reset the token status
-                        if (!parseSAFile())
-                            config->signer.tokens.status = token_status_uninitialized;
-                    }
+                        // if service account key json file assigned and no private key parsing data
+                        if (config->service_account.json.path.length() > 0 && config->signer.pk.length() == 0)
+                        {
+                            // if fail to parse the private key from service account json file, reset the token status
+                            if (!parseSAFile())
+                                config->signer.tokens.status = token_status_uninitialized;
+                        }
 
-                    // if no token status set, set the states
-                    if (config->signer.tokens.status != token_status_on_initialize)
-                    {
-                        config->signer.tokens.status = token_status_on_initialize;
-                        config->signer.tokens.error.code = 0;
-                        config->signer.tokens.error.message.clear();
-                        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
-                        sendTokenStatusCB();
+                        // if no token status set, set the states
+                        if (config->signer.tokens.status != token_status_on_initialize)
+                        {
+                            config->signer.tokens.status = token_status_on_initialize;
+                            config->signer.tokens.error.code = 0;
+                            config->signer.tokens.error.message.clear();
+                            config->internal.fb_last_jwt_generation_error_cb_millis = 0;
+                            sendTokenStatusCB();
+                        }
                     }
 
                     // set the token processing task started flag and run the task
@@ -759,7 +762,7 @@ bool Firebase_Signer::refreshToken()
 
     struct fb_esp_auth_token_error_t error;
 
-    int httpCode = 0;
+    int httpCode = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
     if (handleTokenResponse(httpCode))
     {
         if (JsonHelper::parse(jsonPtr, resultPtr, fb_esp_pgm_str_257 /* "error/code" */))
@@ -883,7 +886,6 @@ bool Firebase_Signer::handleTaskError(int code, int httpCode)
         {
             // Show error based on request time out
             setTokenError(code);
-            config->signer.tokens.error.message.clear();
         }
         else
         {
@@ -1420,7 +1422,7 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
 
     jsonPtr->clear();
 
-    int httpCode = 0;
+    int httpCode = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
     if (handleTokenResponse(httpCode))
     {
         struct fb_esp_auth_token_error_t error;
@@ -1527,7 +1529,7 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
 
     jsonPtr->clear();
 
-    int httpCode = 0;
+    int httpCode = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
     if (handleTokenResponse(httpCode))
     {
         struct fb_esp_auth_token_error_t error;
@@ -1742,7 +1744,11 @@ void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected
 #if defined(ESP32) || defined(ESP8266)
             WiFi.reconnect();
 #else
-            if (WiFiCreds.credentials.size() > 0)
+             // If config exists, use wifi credentials from config instead of local wifi creds.
+             // The local wifi creds can be accessed trough FCM class in case legacy API used. 
+            fb_esp_wifi_credentials_t *_wifiCreds = config ? &config->wifi.wifiCreds : &wifiCreds;      
+
+            if (_wifiCreds->size() > 0)
             {
 #if __has_include(<WiFi.h>) || __has_include(<WiFiNINA.h>) || __has_include(<WiFi101.h>)
                 if (!networkStatus)
@@ -1754,13 +1760,13 @@ void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected
                     multi = nullptr;
 
                     multi = new WiFiMulti();
-                    for (size_t i = 0; i < WiFiCreds.credentials.size(); i++)
-                        multi->addAP(WiFiCreds.credentials[i].ssid.c_str(), WiFiCreds.credentials[i].password.c_str());
+                    for (size_t i = 0; i < _wifiCreds->size(); i++)
+                        multi->addAP((*_wifiCreds)[i].ssid.c_str(), (*_wifiCreds)[i].password.c_str());
 
-                    if (WiFiCreds.credentials.size() > 0)
+                    if (_wifiCreds->size() > 0)
                         multi->run();
 #else
-                    WiFi.begin(WiFiCreds.credentials[0].ssid.c_str(), WiFiCreds.credentials[0].password.c_str());
+                    WiFi.begin((*_wifiCreds)[0].ssid.c_str(), (*_wifiCreds)[0].password.c_str());
 #endif
                 }
 #endif
@@ -1926,7 +1932,7 @@ bool Firebase_Signer::requestTokens(bool refresh)
 
     struct fb_esp_auth_token_error_t error;
 
-    int httpCode = 0;
+    int httpCode = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
     if (handleTokenResponse(httpCode))
     {
         config->signer.tokens.jwt.clear();
@@ -2073,7 +2079,7 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
 
     jsonPtr->clear();
 
-    int httpCode = 0;
+    int httpCode = FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
     if (handleTokenResponse(httpCode))
     {
         struct fb_esp_auth_token_error_t error;

@@ -194,7 +194,7 @@ void loop()
     Serial.printf("Set BLOB... %s\n", Firebase.RTDB.setBlob(&fbdo, "/test/stream/data", data, sizeof(data)) ? "ok" : fbdo.errorReason().c_str());
 #if defined(ESP8266) || defined(ESP32)
     Serial.printf("Free Heap, %d\n", (int)ESP.getFreeHeap());
-#elif defined(PICO_RP2040)
+#elif defined(ARDUINO_RASPBERRY_PI_PICO_W)
     Serial.printf("Free Heap, %d\n", (int)rp2040.getFreeHeap());
 #endif
     Serial.println();

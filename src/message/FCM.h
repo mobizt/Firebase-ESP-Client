@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.27
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.28
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created January 16, 2023
+ * Created February 7, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -88,7 +88,7 @@ public:
    */
   void clearAP()
   {
-    WiFiCreds.clearAP();
+    Signer.wifiCreds.clearAP();
   }
 
   /** Add WiFi access point for non-ESP device to resume WiFi connection.
@@ -98,7 +98,7 @@ public:
    */
   void addAP(const String &ssid, const String &password)
   {
-    WiFiCreds.addAP(ssid, password);
+    Signer.wifiCreds.addAP(ssid, password);
   }
 
   /** Send Firebase Cloud Messaging to the devices with JSON payload using the FCM legacy API.

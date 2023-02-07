@@ -41,7 +41,7 @@
  * and incorrect configurations.
  */
 #include <Arduino.h>
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
@@ -166,7 +166,7 @@ void loop()
 
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
-#if defined(PICO_RP2040)
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
     if (Firebase.ready())
         Firebase.Functions.runDeployTasks();
 #endif

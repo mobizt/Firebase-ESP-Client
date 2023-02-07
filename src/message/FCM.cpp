@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.27
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.28
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created January 16, 2023
+ * Created February 7, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

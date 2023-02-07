@@ -593,26 +593,41 @@ public:
     {
         credentials.clear();
     }
+    size_t size()
+    {
+        return credentials.size();
+    }
+
+    fb_esp_wifi_credential_t operator[](size_t index)
+    {
+        return credentials[index];
+    }
 
 private:
     MB_List<fb_esp_wifi_credential_t> credentials;
 };
 
-static fb_esp_wifi_credentials_t WiFiCreds;
-
 class fb_esp_wifi
 {
+    friend class Firebase_Signer;
+
 public:
     fb_esp_wifi(){};
-    ~fb_esp_wifi() { WiFiCreds.clearAP(); };
+    ~fb_esp_wifi()
+    {
+        wifiCreds.clearAP();
+    };
     void addAP(const String &ssid, const String &password)
     {
-        WiFiCreds.addAP(ssid, password);
+        wifiCreds.addAP(ssid, password);
     }
     void clearAP()
     {
-        WiFiCreds.clearAP();
+        wifiCreds.clearAP();
     }
+
+private:
+    fb_esp_wifi_credentials_t wifiCreds;
 };
 
 template <typename T>

@@ -1,9 +1,9 @@
 /**
- * The MB_FS, filesystems wrapper class v1.0.12
+ * The MB_FS, filesystems wrapper class v1.0.13
  *
  * This wrapper class is for SD and Flash filesystems interface which supports SdFat (//https://github.com/greiman/SdFat)
  *
- *  Created January 20, 2023
+ *  Created February 4, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -37,6 +37,23 @@
 #include "MB_FS_Interfaces.h"
 #include MB_STRING_INCLUDE_CLASS
 #include "SPI.h"
+
+#if defined(ESP32) && __has_include(<sys/stat.h>)
+#if MBFS_FLASH_FS == LittleFS
+#define MB_FS_USE_POSIX_STAT
+#include <sys/stat.h>
+namespace mb_fs_ns
+{
+    inline bool exists(const char *mountPoint, const char *filename)
+    {
+        MB_String path = mountPoint;
+        path += filename;
+        struct stat st;
+        return stat(path.c_str(), &st) == 0;
+    }
+};
+#endif
+#endif
 
 using namespace mb_string;
 
@@ -636,7 +653,17 @@ public:
 
 #if defined(MBFS_FLASH_FS)
         if (type == mbfs_flash)
+        {
+
+// The workaround for ESP32 LittleFS when calling vfs_api.cpp open() issue.
+// See https://github.com/espressif/arduino-esp32/issues/7615
+#if defined(MB_FS_USE_POSIX_STAT)
+            return mb_fs_ns::exists("/littlefs", filename.c_str());
+#else
             return MBFS_FLASH_FS.exists(filename.c_str());
+#endif
+        }
+
 #endif
 
 #if defined(MBFS_SD_FS)
