@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.8
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.9
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created February 7, 2023
+ * Created February 14, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -1744,9 +1744,9 @@ void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected
 #if defined(ESP32) || defined(ESP8266)
             WiFi.reconnect();
 #else
-             // If config exists, use wifi credentials from config instead of local wifi creds.
-             // The local wifi creds can be accessed trough FCM class in case legacy API used. 
-            fb_esp_wifi_credentials_t *_wifiCreds = config ? &config->wifi.wifiCreds : &wifiCreds;      
+            // If config exists, use wifi credentials from config instead of local wifi creds.
+            // The local wifi creds can be accessed trough FCM class in case legacy API used.
+            fb_esp_wifi_credentials_t *_wifiCreds = config ? &config->wifi.wifiCreds : &wifiCreds;
 
             if (_wifiCreds->size() > 0)
             {
@@ -1798,6 +1798,14 @@ bool Firebase_Signer::reconnect()
         freeClient(&tcpClient);
 
     networkChecking = false;
+
+    if (!networkStatus && config->signer.tokens.status == token_status_on_refresh)
+    {
+        config->signer.tokens.error.message.clear();
+        setTokenError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
+        config->internal.fb_last_jwt_generation_error_cb_millis = 0;
+        sendTokenStatusCB();
+    }
 
     return networkStatus;
 }
