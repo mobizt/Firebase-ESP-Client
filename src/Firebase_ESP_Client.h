@@ -10,7 +10,7 @@
  * Created February 7, 2023
  *
  *   Updates:
- * - Add mising connection status error event during token refreshing when WiFi reconnection was disabled.
+ * - Add missing connection status error event during token refreshing when WiFi reconnection was disabled.
  *
  *
  * This work is a part of Firebase ESP Client library
