@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 3.0.5
+ * FirebaseJson, version 3.0.6
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created January 20, 2023
+ * Created March 5, 2023
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -39,6 +39,47 @@
 #ifndef FirebaseJson_H
 #define FirebaseJson_H
 
+#include <Arduino.h>
+
+#if defined(ESP8266) || defined(ESP32)
+#ifndef MB_ARDUINO_ESP
+#define MB_ARDUINO_ESP
+#endif
+#endif
+
+#if defined(__arm__)
+#ifndef MB_ARDUINO_ARM
+#define MB_ARDUINO_ARM 
+#endif
+#endif
+
+#if defined(ARDUINO_ARCH_SAMD)
+#ifndef MB_ARDUINO_ARCH_SAMD
+#define MB_ARDUINO_ARCH_SAMD
+#endif
+#endif
+
+#if defined(ARDUINO_ARCH_RP2040)
+
+#if defined(ARDUINO_NANO_RP2040_CONNECT)
+#ifndef MB_ARDUINO_NANO_RP2040_CONNECT
+#define MB_ARDUINO_NANO_RP2040_CONNECT
+#endif
+#else
+#ifndef MB_ARDUINO_PICO
+#define MB_ARDUINO_PICO
+#endif
+#endif
+
+#endif
+
+
+#if defined(TEENSYDUINO)
+#ifndef MB_ARDUINO_TEENSY
+#define MB_ARDUINO_TEENSY
+#endif
+#endif
+
 #if defined __has_include
 #if __has_include(<wirish.h>)
 #include <wirish.h>
@@ -63,7 +104,7 @@
 #endif
 #endif
 
-#include <Arduino.h>
+
 #include <stdio.h>
 #include "MB_List.h"
 
@@ -761,7 +802,7 @@ protected:
     }
 
 #if defined(MB_JSON_FS_H)
-#if defined(PICO_RP2040)
+#if defined(MB_ARDUINO_PICO)
     template <typename T>
     auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, fs::File>::value, bool>::type
     {

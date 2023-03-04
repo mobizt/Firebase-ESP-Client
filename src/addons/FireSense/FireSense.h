@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.13
+ * FireSense v1.0.14
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 6, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -40,20 +40,20 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_RTDB
 
 #ifndef FireSenseClass_H
 #define FireSenseClass_H
-#include <Arduino.h>
 
 #if defined(ESP32)
 #if defined(FIREBASE_ESP32_CLIENT)
 #include <FirebaseESP32.h>
 #endif
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
 #if defined(FIREBASE_ESP8266_CLIENT)
 #include <FirebaseESP8266.h>
 #endif

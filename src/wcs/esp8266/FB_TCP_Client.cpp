@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.2.3
+ * Firebase TCP Client v1.2.4
  *
- * Created January 13, 2023
+ * Created March 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,7 +29,8 @@
 #define FB_TCP_Client_CPP
 
 #include <Arduino.h>
-#if (defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#include "mbfs/MB_MCU.h"
+#if (defined(ESP8266) || defined(MB_ARDUINO_PICO)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #include "FB_TCP_Client.h"
 
@@ -203,7 +204,7 @@ int FB_TCP_Client::beginUpdate(int len, bool verify)
       code = FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
     }
   }
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
   if (!Update.begin(len))
     code = FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
 #endif
@@ -243,7 +244,7 @@ bool FB_TCP_Client::ethLinkUp()
   }
 #endif
 
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
 
 
 #endif
@@ -280,7 +281,7 @@ void FB_TCP_Client::ethDNSWorkAround()
     goto ex;
 #endif
 
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
 
 
 #endif

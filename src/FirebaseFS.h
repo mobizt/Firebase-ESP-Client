@@ -2,6 +2,7 @@
 #define FirebaseFS_H
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 
 #define FIREBASE_ESP_CLIENT 1
 

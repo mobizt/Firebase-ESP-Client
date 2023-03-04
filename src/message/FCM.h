@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Cloud Messaging class, FCM.h version 1.0.28
+ * Google's Firebase Cloud Messaging class, FCM.h version 1.0.29
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created February 7, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,13 +30,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_FCM
 
 #ifndef FIREBASE_FCM_H
 #define FIREBASE_FCM_H
-#include <Arduino.h>
 #include "FB_Utils.h"
 #include "session/FB_Session.h"
 

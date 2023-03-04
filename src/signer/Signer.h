@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.h version 1.3.9
+ * Google's Firebase Token Management class, Signer.h version 1.3.10
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created February 14, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -34,6 +34,7 @@
 #define FIREBASE_SIGNER_H
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FB_Utils.h"
 #include "./wcs/FB_Clients.h"
 #include "./FirebaseFS.h"

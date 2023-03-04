@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.9
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.10
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created February 14, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -32,6 +32,9 @@
 
 #ifndef FIREBASE_SIGNER_CPP
 #define FIREBASE_SIGNER_CPP
+
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "Signer.h"
 
 Firebase_Signer::Firebase_Signer()
@@ -342,7 +345,7 @@ bool Firebase_Signer::readyToRefresh()
 bool Firebase_Signer::readyToSync()
 {
     bool ret = false;
-    // To detain the next synching using lat synching millis
+    // To detain the next synching using last synching millis
     if (config && millis() - config->internal.fb_last_time_sync_millis > FB_TIME_SYNC_INTERVAL)
     {
         config->internal.fb_last_time_sync_millis = millis();
@@ -600,7 +603,7 @@ void Firebase_Signer::tokenProcessingTask()
     // flag set for valid time required
     bool sslValidTime = false;
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
     // valid time required for SSL handshake using server certificate in ESP8266
     if (config->cert.data != NULL || config->cert.file.length() > 0)
         sslValidTime = true;
@@ -1182,7 +1185,7 @@ bool Firebase_Signer::createJWT()
             MemoryHelper::freeBuffer(mbfs, config->signer.hash);
             return false;
         }
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
         config->signer.hash = MemoryHelper::createBuffer<char *>(Signer.mbfs, config->signer.hashSize);
         br_sha256_context mc;
         br_sha256_init(&mc);
@@ -1283,7 +1286,7 @@ bool Firebase_Signer::createJWT()
 
         if (ret != 0)
             return false;
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
         // RSA private key
         BearSSL::PrivateKey *pk = nullptr;
         Utils::idle();

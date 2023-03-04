@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.2.3
+ * Google's Cloud Firestore class, Forestore.cpp version 1.2.4
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 16, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,7 +29,8 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_FIRESTORE

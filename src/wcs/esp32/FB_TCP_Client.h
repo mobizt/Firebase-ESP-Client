@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.23
+ * Firebase TCP Client v1.1.24
  *
- * Created December 19, 2022
+ * Created March 5, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,6 +30,9 @@
 
 #ifndef FB_TCP_Client_H
 #define FB_TCP_Client_H
+
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 
 #if defined(ESP32) && !defined(ENABLE_EXTERNAL_CLIENT)
 

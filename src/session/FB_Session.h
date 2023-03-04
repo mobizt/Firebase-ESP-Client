@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.3.5
+ * Google's Firebase Data class, FB_Session.h version 1.3.6
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 16, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,11 +30,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "FirebaseFS.h"
+
 
 #ifndef FIREBASE_SESSION_H
 #define FIREBASE_SESSION_H
+
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
+#include "FirebaseFS.h"
 #include "FB_Utils.h"
 
 #include "rtdb/stream/FB_Stream.h"
@@ -348,7 +351,7 @@ public:
    */
   void setNetworkStatus(bool status);
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
   /** Set the receive and transmit buffer memory size for secured mode BearSSL WiFi client.
    *
    * @param rx The number of bytes for receive buffer memory for secured mode BearSSL (512 is minimum, 16384 is maximum).
@@ -388,7 +391,7 @@ public:
   bool isPause();
 #endif
 
-#if (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
   /** Get a WiFi client instance.
    *
    * @return WiFi client instance.
@@ -992,7 +995,7 @@ private:
                         struct fb_esp_fcs_file_list_item_t *fileitem);
 #endif
 
-#if (defined(ESP32) || defined(PICO_RP2040)) && defined(ENABLE_RTDB)
+#if (defined(ESP32) || defined(MB_ARDUINO_PICO)) && defined(ENABLE_RTDB)
   const char *getTaskName(size_t taskStackSize, bool isStream);
 #endif
 

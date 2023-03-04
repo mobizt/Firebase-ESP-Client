@@ -1,16 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.3.7"
+#define FIREBASE_CLIENT_VERSION "4.3.8"
 #endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.7
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.8
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs and Raspberry Pi RP2040 Pico MCUs.
  *
- * Created February 7, 2023
+ * Created March 5, 2023
  *
  *   Updates:
- * - Add missing connection status error event during token refreshing when WiFi reconnection was disabled.
+ * - Fix ESP32 SPIFFS file upload issue.
+ * - Fix Firebase pause issue.
  *
  *
  * This work is a part of Firebase ESP Client library

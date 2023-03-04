@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.2.6
+ * Google's Firebase Storage class, FCS.cpp version 1.2.7
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 16, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,6 +30,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_FB_STORAGE
@@ -187,7 +189,7 @@ bool FB_Storage::mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringP
 bool FB_Storage::mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
                               FCS_DownloadProgressCallback callback)
 {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
     struct fb_esp_fcs_req_t req;
     req.remoteFileName = remoteFileName;
     req.requestType = fb_esp_fcs_request_type_download_ota;

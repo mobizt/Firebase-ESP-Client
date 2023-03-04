@@ -31,6 +31,7 @@
 
 #ifndef FB_UTILS_H
 #define FB_UTILS_H
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #include <Arduino.h>

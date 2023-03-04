@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.20
+ * Google's Cloud Functions class, Functions.cpp version 1.1.21
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 12, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -110,9 +110,9 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
         if (_deployTasks.size() == 1)
         {
 
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
             runDeployTask(pgm2Str(fb_esp_pgm_str_475 /* "deployTask" */));
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
             runDeployTask();
 #endif
         }
@@ -856,13 +856,13 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
         return tcpHandler.error.code == 0;
 }
 
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
 void FB_Functions::runDeployTask(const char *taskName)
 #else
 void FB_Functions::runDeployTask()
 #endif
 {
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
 
     static FB_Functions *_this = this;
 
@@ -891,7 +891,7 @@ void FB_Functions::runDeployTask()
 #if defined(ESP32)
     xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Signer.config->internal.functions_check_task_handle, 1);
 
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
 
     /* Create a task, storing the handle. */
     xTaskCreate(taskCode, taskName, 12000, NULL,
@@ -905,7 +905,7 @@ void FB_Functions::runDeployTask()
     vTaskCoreAffinitySet(Signer.config->internal.functions_check_task_handle, uxCoreAffinityMask);
 
 #endif
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
     mDeployTasks();
 #endif
 }
@@ -1218,7 +1218,7 @@ void FB_Functions::mRunDeployTasks()
 {
     Signer.config->internal.deploy_loop_task_enable = false;
 
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
     if (Signer.config->internal.functions_check_task_handle)
         return;
 #endif

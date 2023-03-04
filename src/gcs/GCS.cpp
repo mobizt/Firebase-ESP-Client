@@ -1,9 +1,9 @@
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.6
+ * Google's Cloud Storage class, GCS.cpp version 1.2.7
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 12, 2023
+ * Created March 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,7 +29,8 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_GC_STORAGE
@@ -38,7 +39,6 @@
 #define GOOGLE_CS_CPP
 
 #include "GCS.h"
-#include <Arduino.h>
 
 GG_CloudStorage::GG_CloudStorage()
 {
@@ -203,7 +203,7 @@ bool GG_CloudStorage::mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_St
 bool GG_CloudStorage::mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID,
                                    MB_StringPtr remoteFileName, DownloadProgressCallback callback)
 {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
     struct fb_esp_gcs_req_t req;
     req.bucketID = bucketID;
     req.remoteFileName = remoteFileName;
@@ -1065,13 +1065,13 @@ void GG_CloudStorage::makeDownloadStatus(DownloadStatusInfo &info, const MB_Stri
     info.errorMsg = msg;
 }
 
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
 void GG_CloudStorage::runResumableUploadTask(const char *taskName)
 #else
 void GG_CloudStorage::runResumableUploadTask()
 #endif
 {
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
 
     static GG_CloudStorage *_this = this;
 
@@ -1117,7 +1117,7 @@ void GG_CloudStorage::runResumableUploadTask()
     };
 #if defined(ESP32)
     xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Signer.config->internal.resumable_upload_task_handle, 1);
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
     /* Create a task, storing the handle. */
     xTaskCreate(taskCode, taskName, 12000, NULL, 3, &Signer.config->internal.resumable_upload_task_handle);
 
@@ -1265,7 +1265,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
 
             if (_resumable_upload_task_enable && _resumableUploadTasks.size() == 1)
             {
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
                 runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480 /* "resumableUploadTask" */));
 #elif defined(ESP8266)
                 runResumableUploadTask();
