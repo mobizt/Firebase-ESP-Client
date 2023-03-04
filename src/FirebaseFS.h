@@ -28,7 +28,7 @@
 #endif
 #if defined(ESP32) || defined(ESP8266)
 #define DEFAULT_FLASH_FS SPIFFS
-#elif defined(PICO_RP2040)
+#elif defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_NANO_RP2040_CONNECT)
 #include <LittleFS.h>
 #define DEFAULT_FLASH_FS LittleFS
 #endif
@@ -65,7 +65,7 @@ static SdFat sd_fat_fs;   // should declare as static here
 #include <SD.h>
 #define DEFAULT_SD_FS SD
 #define CARD_TYPE_SD 1
-#elif  defined(PICO_RP2040)
+#elif defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_NANO_RP2040_CONNECT)
 // Use SDFS (ESP8266SdFat) instead of SD
 #include <SDFS.h>
 #define DEFAULT_SD_FS SDFS
@@ -168,7 +168,7 @@ static SdFat sd_fat_fs;   // should declare as static here
 #endif
 
 /////////////////////////////////// WARNING ///////////////////////////////////
-// Using RP2040 Pico Arduino SDK, FreeRTOS with LittleFS will cause device hangs 
+// Using RP2040 Pico Arduino SDK, FreeRTOS with LittleFS will cause device hangs
 // when write the data to flash filesystem.
-// Do not include free rtos dot h or even it excluded from compilation by using macro 
+// Do not include free rtos dot h or even it excluded from compilation by using macro
 // or even comment it out with "//"".
