@@ -31,6 +31,8 @@
 
 #ifndef FB_UTILS_H
 #define FB_UTILS_H
+
+#include <Arduino.h>
 #include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
@@ -1374,7 +1376,7 @@ namespace Base64Helper
 
     inline bool updateWrite(uint8_t *data, size_t len)
     {
-#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
         return Update.write(data, len) == len;
 #endif
         return false;
@@ -1706,10 +1708,10 @@ namespace TimeHelper
     inline time_t getTime(uint32_t *mb_ts, uint32_t *mb_ts_offset)
     {
         uint32_t &tm = *mb_ts;
-#if defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(PICO_RP2040)
+#if defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(MB_ARDUINO_PICO)
         tm = *mb_ts_offset + millis() / 1000;
 
-#if defined(PICO_RP2040)
+#if defined(MB_ARDUINO_PICO)
     if (tm < time(nullptr))
       tm = time(nullptr);
 #endif
@@ -1794,9 +1796,9 @@ namespace TimeHelper
 
 #else
 
-#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
 
-#if defined(PICO_RP2040)
+#if defined(MB_ARDUINO_PICO)
                 NTP.begin("pool.ntp.org", "time.nist.gov");
                 NTP.waitSet();
 
@@ -1926,7 +1928,7 @@ namespace Utils
         if (!config)
             return true;
 
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
         if (config->internal.fb_multiple_requests)
             return true;
 

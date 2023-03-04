@@ -1,14 +1,15 @@
 /**
- * Created January 27, 2023
+ * Created March 5, 2023
  */
 
 #ifndef FB_Network_H
 #define FB_Network_H
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
-#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
 #ifndef FB_ENABLE_EXTERNAL_CLIENT
 #define FB_ENABLE_EXTERNAL_CLIENT
 #endif
@@ -24,7 +25,7 @@
 #endif
 #endif
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <CertStoreBearSSL.h>

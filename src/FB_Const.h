@@ -31,6 +31,7 @@
 #define FB_CONST_H_
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include <time.h>
 
 #if !defined(__AVR__)
@@ -51,7 +52,7 @@
 #if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
 #if defined(ESP32)
 #include <Update.h>
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
 #include <Updater.h>
 #endif
 #define OTA_UPDATE_ENABLED
@@ -77,7 +78,7 @@
 #define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
 #if defined(ESP32)
 #define FIREBASE_CLASS FirebaseESP32
-#elif defined(ES8266) || defined(PICO_RP2040)
+#elif defined(ES8266) || defined(MB_ARDUINO_PICO)
 #define FIREBASE_CLASS FirebaseESP8266
 #endif
 
@@ -846,7 +847,7 @@ typedef struct fb_esp_spi_ethernet_module_t
     Wiznet5500lwIP *w5500 = nullptr;
 #endif
 
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
 
 #endif
 
@@ -942,7 +943,7 @@ struct fb_esp_token_signer_resources_t
     size_t signatureSize = 256;
 #if defined(ESP32)
     uint8_t *hash = nullptr;
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
     char *hash = nullptr;
 #endif
     unsigned char *signature = nullptr;
@@ -1024,7 +1025,7 @@ struct fb_esp_cfg_int_t
 
     bool stream_loop_task_enable = true;
     bool deploy_loop_task_enable = true;
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
     TaskHandle_t resumable_upload_task_handle = NULL;
     TaskHandle_t functions_check_task_handle = NULL;
     TaskHandle_t functions_deployment_task_handle = NULL;
@@ -1338,7 +1339,7 @@ struct fb_esp_rtdb_info_t
 
     struct fb_esp_stream_info_t stream;
 
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
     bool stream_loop_task_enable = false;
 #endif
 
@@ -1915,7 +1916,7 @@ struct fb_esp_session_info_t
 #if defined(ESP8266)
     uint16_t bssl_rx_size = 512;
     uint16_t bssl_tx_size = 512;
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
     uint16_t bssl_rx_size = 16384;
     uint16_t bssl_tx_size = 2048;
 #endif
