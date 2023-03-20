@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.12
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.13
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created March 5, 2023
+ * Created March 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

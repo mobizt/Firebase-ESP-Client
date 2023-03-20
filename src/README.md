@@ -3372,7 +3372,7 @@ bool rollback(FirebaseData *fbdo, <string> projectId, <string> databaseId, <stri
 
 
 
-#### Get a document at the defined path.
+#### Runs a query.
 
 param **`fbdo`** The pointer to Firebase Data Object.
 

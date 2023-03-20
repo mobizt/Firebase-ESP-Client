@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.12
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.13
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created March 5, 2023
+ * Created March 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -522,7 +522,7 @@ bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, MB_StringPtr path, MB_
     uint32_t lastTS = current_ts - pr;
 
     if (strcmp(_timestampNode.c_str(), (const char *)MBSTRING_FLASH_MCR("$key")) == 0)
-        query.orderBy(_timestampNode).startAt(MB_String(0)).endAt(MB_String(lastTS)).limitToLast(_limit);
+        query.orderBy(_timestampNode).startAt(MB_String(0)).endAt(MB_String((int)lastTS)).limitToLast(_limit);
     else
         query.orderBy(_timestampNode).startAt(0).endAt(lastTS).limitToLast(_limit);
 
