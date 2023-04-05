@@ -1,8 +1,12 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
 
 /**
- * The Firebase class, Firebase.h v1.2.5
+ * The Firebase class, Firebase.h v1.2.6
  *
- *  Created January 16, 2023
+ *  Created April 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

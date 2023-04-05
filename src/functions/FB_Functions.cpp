@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.21
+ * Google's Cloud Functions class, Functions.cpp version 1.1.22
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created March 5, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -66,7 +71,7 @@ bool FB_Functions::mCallFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_
     req.payload = data;
     fbdo->initJson();
 
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_135 /* "data" */, req.payload);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_67 /* "data" */, req.payload);
 
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
 
@@ -111,7 +116,7 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
         {
 
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-            runDeployTask(pgm2Str(fb_esp_pgm_str_475 /* "deployTask" */));
+            runDeployTask(pgm2Str(fb_esp_func_pgm_str_1 /* "deployTask" */));
 #elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
             runDeployTask();
 #endif
@@ -227,11 +232,11 @@ bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
 {
     fbdo->initJson();
 
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_387 /* "projectId" */, config->_projectId);
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_409 /* "location" */, config->_locationId);
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_453 /* "zip" */, MB_String(fb_esp_pgm_str_456 /* "tmp.zip" */));
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_454 /* "accessToken" */, Signer.getToken());
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_455 /* "path" */, config->_bucketSourcesPath);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_2 /* "projectId" */, config->_projectId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_3 /* "location" */, config->_locationId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_5 /* "zip" */, MB_String(fb_esp_func_pgm_str_8 /* "tmp.zip" */));
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_6 /* "accessToken" */, Signer.getToken());
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_7 /* "path" */, config->_bucketSourcesPath);
 
     struct fb_esp_functions_req_t req;
 
@@ -240,7 +245,7 @@ bool FB_Functions::uploadSources(FirebaseData *fbdo, FunctionsConfig *config)
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
 
     URLHelper::addFunctionsHost(req.host, config->_locationId, config->_projectId,
-                                MB_String(fb_esp_pgm_str_452) /* "autozip" */, false);
+                                MB_String(fb_esp_func_pgm_str_4) /* "autozip" */, false);
 
     return sendRequest(fbdo, &req);
 }
@@ -261,23 +266,23 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
 
     fbdo->initJson();
 
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_387 /* "projectId" */, config->_projectId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_2 /* "projectId" */, config->_projectId);
     URLHelper::host2Url(str, Signer.config->database_url);
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_388 /* "databaseURL" */, str);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_9 /* "databaseURL" */, str);
 
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_389 /* "storageBucket" */, config->_bucketId);
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_390 /* "locationId" */, config->_locationId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_10 /* "storageBucket" */, config->_bucketId);
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_11 /* "locationId" */, config->_locationId);
 
-    str = fb_esp_pgm_str_374;  // "environmentVariables"
-    str += fb_esp_pgm_str_1;   // "/"
-    str += fb_esp_pgm_str_386; // "FIREBASE_CONFIG"
+    str = fb_esp_func_pgm_str_12;  // "environmentVariables"
+    str += fb_esp_pgm_str_1;       // "/"
+    str += fb_esp_func_pgm_str_13; // "FIREBASE_CONFIG"
 
     JsonHelper::addString(&config->_funcCfg, str.c_str(), fbdo->session.jsonPtr->raw());
     JsonHelper::clear(fbdo->session.jsonPtr);
 
-    str = fb_esp_pgm_str_374;  // "environmentVariables"
-    str += fb_esp_pgm_str_1;   // "/"
-    str += fb_esp_pgm_str_449; // "GCLOUD_PROJECT"
+    str = fb_esp_func_pgm_str_12;  // "environmentVariables"
+    str += fb_esp_pgm_str_1;       // "/"
+    str += fb_esp_func_pgm_str_14; // "GCLOUD_PROJECT"
 
     JsonHelper::addString(&config->_funcCfg, str.c_str(), config->_projectId);
 
@@ -288,7 +293,7 @@ bool FB_Functions::deploy(FirebaseData *fbdo, const char *functionId, FunctionsC
         str.clear();
 
         URLHelper::addFunctionsHost(str, config->_locationId, config->_projectId, config->_entryPoint, true);
-        JsonHelper::addString(&config->_funcCfg, fb_esp_pgm_str_384 /* "httpsTrigger/url" */, str);
+        JsonHelper::addString(&config->_funcCfg, fb_esp_func_pgm_str_15 /* "httpsTrigger/url" */, str);
         config->_httpsTriggerUrl = str;
         str.clear();
     }
@@ -325,9 +330,9 @@ bool FB_Functions::mSetIamPolicy(FirebaseData *fbdo, MB_StringPtr projectId,
     fbdo->initJson();
 
     if (policy)
-        JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_pgm_str_399 /* "policy" */, &policy->json, true);
+        JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_func_pgm_str_16 /* "policy" */, &policy->json, true);
 
-    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_400 /* "updateMask" */, MB_String(updateMask));
+    JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_70 /* "updateMask" */, MB_String(updateMask));
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     return sendRequest(fbdo, &req);
 }
@@ -352,24 +357,24 @@ bool FB_Functions::mGetFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_S
     {
         fbdo->initJson();
         JsonHelper::setData(fbdo->session.jsonPtr, fbdo->session.cfn.payload, false);
-        if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_419 /* "status" */))
+        if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_func_pgm_str_17 /* "status" */))
         {
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_420 /* "CLOUD_FUNCTION_STATUS_UNSPECIFIED" */) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_func_pgm_str_18 /* "CLOUD_FUNCTION_STATUS_UNSPECIFIED" */) == 0)
                 _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
 
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_421 /* "ACTIVE" */) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_func_pgm_str_19 /* "ACTIVE" */) == 0)
                 _function_status = fb_esp_functions_status_ACTIVE;
 
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_422 /* "OFFLINE" */) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_func_pgm_str_20 /* "OFFLINE" */) == 0)
                 _function_status = fb_esp_functions_status_OFFLINE;
 
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_423 /* "DEPLOY_IN_PROGRESS" */) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_func_pgm_str_21 /* "DEPLOY_IN_PROGRESS" */) == 0)
                 _function_status = fb_esp_functions_status_DEPLOY_IN_PROGRESS;
 
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_424 /* "DELETE_IN_PROGRESS" */) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_func_pgm_str_22 /* "DELETE_IN_PROGRESS" */) == 0)
                 _function_status = fb_esp_functions_status_DELETE_IN_PROGRESS;
 
-            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_pgm_str_425 /*  "UNKNOWN" */) == 0)
+            if (strcmp_P(fbdo->session.dataPtr->to<const char *>(), fb_esp_func_pgm_str_23 /*  "UNKNOWN" */) == 0)
                 _function_status = fb_esp_functions_status_UNKNOWN;
         }
     }
@@ -409,7 +414,7 @@ bool FB_Functions::mGenerateDownloadUrl(FirebaseData *fbdo, MB_StringPtr project
     struct fb_esp_functions_req_t req;
     makeRequest(req, fb_esp_functions_request_type_gen_download_url, projectId, locationId, functionId);
     fbdo->initJson();
-    JsonHelper::addNumberString(fbdo->session.jsonPtr, fb_esp_pgm_str_437 /* "versionId" */, MB_String(versionId));
+    JsonHelper::addNumberString(fbdo->session.jsonPtr, fb_esp_func_pgm_str_24 /* "versionId" */, MB_String(versionId));
     JsonHelper::toString(fbdo->session.jsonPtr, req.payload, true);
     return sendRequest(fbdo, &req);
 }
@@ -479,7 +484,7 @@ bool FB_Functions::sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t
     Signer.config->internal.fb_processing = true;
     fbdo->clear();
     connect(fbdo, req->host.c_str());
-    
+
     bool ret = functions_sendRequest(fbdo, req);
 
     if (!ret)
@@ -526,15 +531,15 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
         header += req->uri;
     else if (req->requestType == fb_esp_functions_request_type_list_operations)
     {
-        header += fb_esp_pgm_str_426; // "/v1/operations"
+        header += fb_esp_func_pgm_str_25; // "/v1/operations"
         bool hasParam = false;
 
-        URLHelper::addParam(header, fb_esp_pgm_str_427 /* "filter=" */, req->filter, hasParam);
+        URLHelper::addParam(header, fb_esp_func_pgm_str_26 /* "filter=" */, req->filter, hasParam);
 
         if (req->pageSize > 0)
-            URLHelper::addParam(header, fb_esp_pgm_str_357 /* "pageSize" */, MB_String(req->pageSize), hasParam);
+            URLHelper::addParam(header, fb_esp_pgm_str_63 /* "pageSize" */, MB_String(req->pageSize), hasParam);
 
-        URLHelper::addParam(header, fb_esp_pgm_str_358 /* "pageToken" */, req->pageToken, hasParam);
+        URLHelper::addParam(header, fb_esp_pgm_str_65 /* "pageToken" */, req->pageToken, hasParam);
     }
     else
     {
@@ -542,20 +547,20 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
         header += req->projectId.length() == 0 ? Signer.config->service_account.data.project_id : req->projectId;
 
-        header += fb_esp_pgm_str_364; // "/locations/"
+        header += fb_esp_func_pgm_str_27; // "/locations/"
         if (req->locationId.length() > 0)
             header += req->locationId;
 
-        header += fb_esp_pgm_str_365; // "/functions"
+        header += fb_esp_func_pgm_str_28; // "/functions"
 
         if (req->requestType == fb_esp_functions_request_type_list)
         {
             bool hasParam = false;
 
             if (req->pageSize > 0)
-                URLHelper::addParam(header, fb_esp_pgm_str_357 /* "pageSize" */, MB_String(req->pageSize), hasParam);
+                URLHelper::addParam(header, fb_esp_pgm_str_63 /* "pageSize" */, MB_String(req->pageSize), hasParam);
 
-            URLHelper::addParam(header, fb_esp_pgm_str_358 /* "pageToken" */, req->pageToken, hasParam);
+            URLHelper::addParam(header, fb_esp_pgm_str_65 /* "pageToken" */, req->pageToken, hasParam);
         }
 
         if (req->requestType == fb_esp_functions_request_type_patch ||
@@ -570,16 +575,16 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             if (req->functionId.length() > 0)
                 header += req->functionId;
             if (req->requestType == fb_esp_functions_request_type_call)
-                header += fb_esp_pgm_str_366; // ":call"
+                header += fb_esp_func_pgm_str_29; // ":call"
             else if (req->requestType == fb_esp_functions_request_type_set_iam_policy)
-                header += fb_esp_pgm_str_401; // ":setIamPolicy"
+                header += fb_esp_func_pgm_str_30; // ":setIamPolicy"
             else if (req->requestType == fb_esp_functions_request_type_gen_download_url)
-                header += fb_esp_pgm_str_438; // ":generateDownloadUrl"
+                header += fb_esp_func_pgm_str_31; // ":generateDownloadUrl"
             else if (req->requestType == fb_esp_functions_request_type_get_iam_policy)
             {
-                header += fb_esp_pgm_str_465; // ":getIamPolicy"
+                header += fb_esp_func_pgm_str_32; // ":getIamPolicy"
                 bool hasParam = false;
-                URLHelper::addParam(header, fb_esp_pgm_str_466 /* "options.requestedPolicyVersion" */,
+                URLHelper::addParam(header, fb_esp_func_pgm_str_33 /* "options.requestedPolicyVersion" */,
                                     req->policyVersion, hasParam);
             }
             else if (req->requestType == fb_esp_functions_request_type_patch)
@@ -589,12 +594,12 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
                 if (req->updateMask->size() > 0)
                 {
                     for (size_t i = 0; i < req->updateMask->size(); i++)
-                        URLHelper::addParam(header, fb_esp_pgm_str_470 /* "updateMask=" */, (*req->updateMask)[i], hasParam);
+                        URLHelper::addParam(header, fb_esp_func_pgm_str_34 /* "updateMask=" */, (*req->updateMask)[i], hasParam);
                 }
             }
         }
         else if (req->requestType == fb_esp_functions_request_type_gen_upload_url)
-            header += fb_esp_pgm_str_439; // :generateUploadUrl"
+            header += fb_esp_func_pgm_str_35; // :generateUploadUrl"
     }
 
     HttpHelper::addRequestHeaderLast(header);
@@ -602,14 +607,14 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
     if (post)
     {
         if (req->payload.length() > 0)
-            HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_129 /* "application/json" */);
+            HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_62 /* "application/json" */);
         HttpHelper::addContentLengthHeader(header, req->payload.length());
     }
 
     if (req->requestType == fb_esp_functions_request_type_upload ||
         req->requestType == fb_esp_functions_request_type_pgm_upload)
     {
-        HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_447 /* "application/zip" */);
+        HttpHelper::addContentTypeHeader(header, fb_esp_func_pgm_str_36 /* "application/zip" */);
         size_t len = 0;
         if (req->requestType == fb_esp_functions_request_type_pgm_upload)
             len = req->pgmArcLen;
@@ -617,7 +622,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             len = fbdo->session.cfn.fileSize;
 
         HttpHelper::addContentLengthHeader(header, len);
-        header += fb_esp_pgm_str_448; // "x-goog-content-length-range: 0,104857600"
+        header += fb_esp_func_pgm_str_37; // "x-goog-content-length-range: 0,104857600"
         HttpHelper::addNewLine(header);
         HttpHelper::addHostHeader(header, req->host.c_str());
     }
@@ -627,7 +632,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
         if (req->requestType == fb_esp_functions_request_type_upload_bucket_sources)
             HttpHelper::addHostHeader(header, req->host.c_str());
         else
-            HttpHelper::addGAPIsHostHeader(header, fb_esp_pgm_str_363 /* "cloudfunctions." */);
+            HttpHelper::addGAPIsHostHeader(header, fb_esp_func_pgm_str_38 /* "cloudfunctions." */);
 
         if (req->requestType != fb_esp_functions_request_type_upload_bucket_sources)
         {
@@ -755,7 +760,7 @@ bool FB_Functions::connect(FirebaseData *fbdo, const char *host)
     else
     {
         MB_String host;
-        HttpHelper::addGAPIsHost(host, fb_esp_pgm_str_363 /* "cloudfunctions." */);
+        HttpHelper::addGAPIsHost(host, fb_esp_func_pgm_str_38 /* "cloudfunctions." */);
         rescon(fbdo, host.c_str());
         fbdo->tcpClient.begin(host.c_str(), 443, &fbdo->session.response.code);
     }
@@ -808,9 +813,9 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
             int errType = 0;
 
             JsonHelper::setData(fbdo->session.jsonPtr, fbdo->session.cfn.payload, false);
-            if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_257 /* "error/code" */))
+            if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_storage_ss_pgm_str_16 /* "error/code" */))
                 errType = 1;
-            else if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_84 /* "operations/[0]/error/code" */))
+            else if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_func_pgm_str_39 /* "operations/[0]/error/code" */))
                 errType = 2;
 
             if (errType > 0)
@@ -820,15 +825,15 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
                 bool success = false;
 
                 if (errType == 1)
-                    success = JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_258 /* "error/message" */);
+                    success = JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_storage_ss_pgm_str_17 /* "error/message" */);
                 else if (errType == 2)
-                    success = JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_432 /* "operations/[0]/error/message" */);
+                    success = JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_func_pgm_str_40 /* "operations/[0]/error/message" */);
 
                 if (success)
                 {
                     fbdo->session.error = fbdo->session.dataPtr->to<const char *>();
 
-                    if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_pgm_str_418 /* "error/details" */))
+                    if (JsonHelper::parse(fbdo->session.jsonPtr, fbdo->session.dataPtr, fb_esp_func_pgm_str_41 /* "error/details" */))
                         fbdo->session.error = fbdo->session.dataPtr->to<const char *>();
 
                     if (_deployTasks.size() > 0)
@@ -950,7 +955,7 @@ void FB_Functions::mDeployTasks()
                     taskInfo->fbdo->initJson();
                     JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
                     JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
-                                      fb_esp_pgm_str_440 /* "uploadUrl" */);
+                                      fb_esp_func_pgm_str_42 /* "uploadUrl" */);
 
                     JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
                     JsonHelper::arrayClear(taskInfo->fbdo->session.arrPtr);
@@ -985,12 +990,12 @@ void FB_Functions::mDeployTasks()
                     taskInfo->fbdo->initJson();
                     JsonHelper::setData(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.cfn.payload, false);
                     if (JsonHelper::parse(taskInfo->fbdo->session.jsonPtr, taskInfo->fbdo->session.dataPtr,
-                                          fb_esp_pgm_str_457 /* "status/uploadUrl" */))
+                                          fb_esp_func_pgm_str_43 /* "status/uploadUrl" */))
                     {
 
-                        taskInfo->config->_funcCfg.add(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */),
+                        taskInfo->config->_funcCfg.add(pgm2Str(fb_esp_func_pgm_str_44 /* "sourceUploadUrl" */),
                                                        taskInfo->fbdo->session.dataPtr->to<const char *>());
-                        taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */));
+                        taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_44 /* "sourceUploadUrl" */));
                     }
 
                     JsonHelper::clear(taskInfo->fbdo->session.jsonPtr);
@@ -1001,7 +1006,7 @@ void FB_Functions::mDeployTasks()
                 else
                 {
                     if (taskInfo->fbdo->session.response.code == 302 || taskInfo->fbdo->session.response.code == 403)
-                        taskInfo->fbdo->session.error += fb_esp_pgm_str_458;
+                        taskInfo->fbdo->session.error += fb_esp_functions_err_pgm_str_1;
                     // "missing autozip function, please deploy it first"
                     taskInfo->fbdo->session.cfn.cbInfo.status = fb_esp_functions_operation_status_error;
                     taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->errorReason().c_str();
@@ -1028,9 +1033,9 @@ void FB_Functions::mDeployTasks()
                 if (ret)
                 {
 
-                    taskInfo->config->_funcCfg.set(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */),
+                    taskInfo->config->_funcCfg.set(pgm2Str(fb_esp_func_pgm_str_44 /* "sourceUploadUrl" */),
                                                    taskInfo->uploadUrl.c_str());
-                    taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_pgm_str_383 /* "sourceUploadUrl" */));
+                    taskInfo->config->addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_44 /* "sourceUploadUrl" */));
 
                     addCreationTask(taskInfo->fbdo, taskInfo->config, taskInfo->patch,
                                     taskInfo->nextStep, fb_esp_functions_creation_step_polling_status,
@@ -1095,9 +1100,9 @@ void FB_Functions::mDeployTasks()
                 taskInfo->done = true;
                 bool ret = false;
                 MB_String t;
-                t += fb_esp_pgm_str_428; // "project:"
+                t += fb_esp_func_pgm_str_45; // "project:"
                 t += taskInfo->projectId;
-                t += fb_esp_pgm_str_431; // ",latest:true"
+                t += fb_esp_func_pgm_str_46; // ",latest:true"
                 ret = mListOperations(taskInfo->fbdo, toStringPtr(t), toStringPtr("1"), toStringPtr(_EMPTY_STR));
                 if (ret)
                 {
@@ -1106,7 +1111,7 @@ void FB_Functions::mDeployTasks()
                     JsonHelper::setData(taskInfo->fbdo->session.jsonPtr,
                                         taskInfo->fbdo->session.cfn.payload, false);
                     JsonHelper::parse(taskInfo->fbdo->session.jsonPtr,
-                                      taskInfo->fbdo->session.dataPtr, fb_esp_pgm_str_432 /* "operations/[0]/error/message" */);
+                                      taskInfo->fbdo->session.dataPtr, fb_esp_func_pgm_str_40 /* "operations/[0]/error/message" */);
 
                     taskInfo->fbdo->session.cfn.cbInfo.errorMsg = taskInfo->fbdo->session.dataPtr->to<const char *>();
                     sendCallback(taskInfo->fbdo, taskInfo->callback, taskInfo->statusInfo);

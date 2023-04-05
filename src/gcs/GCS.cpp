@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.7
+ * Google's Cloud Storage class, GCS.cpp version 1.2.8
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created March 5, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -263,7 +268,7 @@ bool GG_CloudStorage::mGetMetadata(FirebaseData *fbdo, MB_StringPtr bucketID,
 
 bool GG_CloudStorage::gcs_connect(FirebaseData *fbdo)
 {
-    MB_String host = fb_esp_pgm_str_120; // "googleapis.com"
+    MB_String host = fb_esp_pgm_str_31; // "googleapis.com"
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), 443, &fbdo->session.response.code);
     fbdo->session.max_payload_length = 0;
@@ -416,13 +421,13 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     if (req->requestType == fb_esp_gcs_request_type_upload_simple ||
         req->requestType == fb_esp_gcs_request_type_upload_multipart ||
         req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
-        header += fb_esp_pgm_str_521; // "/upload"
+        header += fb_esp_gcs_pgm_str_2; // "/upload"
 
     if (req->requestType != fb_esp_gcs_request_type_upload_resumable_run)
     {
-        header += fb_esp_pgm_str_520; // "/storage/v1/b/"
+        header += fb_esp_gcs_pgm_str_1; // "/storage/v1/b/"
         header += req->bucketID;
-        header += fb_esp_pgm_str_522; // "/o"
+        header += fb_esp_gcs_pgm_str_3; // "/o"
     }
 
     if (req->requestType == fb_esp_gcs_request_type_download ||
@@ -430,13 +435,13 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     {
         header += fb_esp_pgm_str_1; // "/"
         header += URLHelper::encode(req->remoteFileName);
-        header += fb_esp_pgm_str_523; // "?alt=media"
+        header += fb_esp_gcs_pgm_str_4; // "?alt=media"
         setGetOptions(req, header, true);
         HttpHelper::addRequestHeaderLast(header);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_simple)
     {
-        header += fb_esp_pgm_str_524; // "?uploadType=media&name="
+        header += fb_esp_gcs_pgm_str_5; // "?uploadType=media&name="
         if (req->remoteFileName[0] == '/')
             header += URLHelper::encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
@@ -447,13 +452,13 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
     {
-        header += fb_esp_pgm_str_525; // "?uploadType=multipart"
+        header += fb_esp_gcs_pgm_str_6; // "?uploadType=multipart"
         setUploadOptions(req, header, true);
         HttpHelper::addRequestHeaderLast(header);
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
     {
-        header += fb_esp_pgm_str_526; // "?uploadType=resumable&name="
+        header += fb_esp_gcs_pgm_str_7; // "?uploadType=resumable&name="
         if (req->remoteFileName[0] == '/')
             header += URLHelper::encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1));
         else
@@ -495,7 +500,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         else
             header += URLHelper::encode(req->remoteFileName);
 
-        header += fb_esp_pgm_str_527; //"?alt=json"
+        header += fb_esp_gcs_pgm_str_8; //"?alt=json"
 
         setGetOptions(req, header, true);
         HttpHelper::addRequestHeaderLast(header);
@@ -503,7 +508,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
     if (req->requestType != fb_esp_gcs_request_type_upload_resumable_run)
     {
-        HttpHelper::addGAPIsHostHeader(header, fb_esp_pgm_str_193 /* "www" */);
+        HttpHelper::addGAPIsHostHeader(header, fb_esp_pgm_str_61 /* "www" */);
 
         if (!Signer.config->signer.test_mode)
         {
@@ -540,22 +545,22 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_multipart)
     {
-        multipart_header += fb_esp_pgm_str_529; // "--"
+        multipart_header += fb_esp_gcs_pgm_str_13; // "--"
         multipart_header += boundary;
         HttpHelper::addNewLine(multipart_header);
-        multipart_header += fb_esp_pgm_str_528; // "Content-Type: application/json; charset=UTF-8\r\n"
+        multipart_header += fb_esp_gcs_pgm_str_12; // "Content-Type: application/json; charset=UTF-8\r\n"
         HttpHelper::addNewLine(multipart_header);
 
         JsonHelper::clear(fbdo->session.jsonPtr);
 
         if (req->remoteFileName[0] == '/')
-            JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_274 /* "name" */,
+            JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_66 /* "name" */,
                                   URLHelper::encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1)));
         else
-            JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_274 /* "name" */,
+            JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_66 /* "name" */,
                                   URLHelper::encode(req->remoteFileName));
 
-        JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_pgm_str_277 /* "contentType" */, req->mime);
+        JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_storage_ss_pgm_str_9 /* "contentType" */, req->mime);
 
         bool hasProps = false;
         setRequestproperties(req, fbdo->session.jsonPtr, hasProps);
@@ -564,18 +569,18 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         HttpHelper::addNewLine(multipart_header);
         HttpHelper::addNewLine(multipart_header);
 
-        multipart_header += fb_esp_pgm_str_529; // "--"
+        multipart_header += fb_esp_gcs_pgm_str_13; // "--"
         multipart_header += boundary;
         HttpHelper::addNewLine(multipart_header);
         HttpHelper::addNewLine(multipart_header);
 
         HttpHelper::addNewLine(multipart_header2);
-        multipart_header2 += fb_esp_pgm_str_529; // "--"
+        multipart_header2 += fb_esp_gcs_pgm_str_13; // "--"
         multipart_header2 += boundary;
-        multipart_header2 += fb_esp_pgm_str_529; // "--"
+        multipart_header2 += fb_esp_gcs_pgm_str_13; // "--"
 
-        header += fb_esp_pgm_str_8;   // "Content-Type: "
-        header += fb_esp_pgm_str_533; // "multipart/related; boundary="
+        header += fb_esp_pgm_str_33;   // "Content-Type: "
+        header += fb_esp_gcs_pgm_str_14; // "multipart/related; boundary="
         header += boundary;
         HttpHelper::addNewLine(header);
 
@@ -583,15 +588,15 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     }
     else if (req->requestType == fb_esp_gcs_request_type_upload_resumable_init)
     {
-        header += fb_esp_pgm_str_530; //"X-Upload-Content-Type: "
+        header += fb_esp_gcs_pgm_str_9; //"X-Upload-Content-Type: "
         header += req->mime;
         HttpHelper::addNewLine(header);
 
-        header += fb_esp_pgm_str_531; // "X-Upload-Content-Length: "
+        header += fb_esp_gcs_pgm_str_10; // "X-Upload-Content-Length: "
         header += req->fileSize;
         HttpHelper::addNewLine(header);
 
-        header += fb_esp_pgm_str_528; // "Content-Type: application/json; charset=UTF-8\r\n"
+        header += fb_esp_gcs_pgm_str_12; // "Content-Type: application/json; charset=UTF-8\r\n"
 
         JsonHelper::clear(fbdo->session.jsonPtr);
 
@@ -621,9 +626,9 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
 
         if (req->chunkRange != -1 || req->location.length() > 0)
         {
-            header += fb_esp_pgm_str_532; // "Content-Range: bytes "
+            header += fb_esp_gcs_pgm_str_11; // "Content-Range: bytes "
             header += req->chunkPos;
-            header += fb_esp_pgm_str_397; // "-"
+            header += fb_esp_pgm_str_14; // "-"
             header += req->chunkPos + req->chunkLen - 1;
             header += fb_esp_pgm_str_1; // "/"
             header += req->fileSize;
@@ -860,17 +865,17 @@ void GG_CloudStorage::setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &hea
 {
     if (req->getOptions)
     {
-        URLHelper::addParam(header, fb_esp_pgm_str_493 /* "generation=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_15 /* "generation=" */,
                             req->getOptions->generation, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_494 /* "ifGenerationMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_16 /* "ifGenerationMatch=" */,
                             req->getOptions->ifGenerationMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_495 /* "ifGenerationNotMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_17 /* "ifGenerationNotMatch=" */,
                             req->getOptions->ifGenerationNotMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_496 /* "ifMetagenerationMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_18 /* "ifMetagenerationMatch=" */,
                             req->getOptions->ifMetagenerationMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_497 /* "ifMetagenerationNotMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_19 /* "ifMetagenerationNotMatch=" */,
                             req->getOptions->ifMetagenerationNotMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_489 /* "projection=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_21 /* "projection=" */,
                             req->getOptions->projection, hasParams);
     }
 }
@@ -879,21 +884,21 @@ void GG_CloudStorage::setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &
 {
     if (req->uploadOptions)
     {
-        URLHelper::addParam(header, fb_esp_pgm_str_499 /* "contentEncoding=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_20 /* "contentEncoding=" */,
                             req->uploadOptions->contentEncoding, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_494 /* "ifGenerationMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_16 /* "ifGenerationMatch=" */,
                             req->uploadOptions->ifGenerationMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_495 /* "ifGenerationNotMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_17 /* "ifGenerationNotMatch=" */,
                             req->uploadOptions->ifGenerationNotMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_496 /* "ifMetagenerationMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_18 /* "ifMetagenerationMatch=" */,
                             req->uploadOptions->ifMetagenerationMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_497 /* "ifMetagenerationNotMatch=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_19 /* "ifMetagenerationNotMatch=" */,
                             req->uploadOptions->ifMetagenerationNotMatch, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_500 /* "kmsKeyName=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_22 /* "kmsKeyName=" */,
                             req->uploadOptions->kmsKeyName, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_501 /* "predefinedAcl=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_23 /* "predefinedAcl=" */,
                             req->uploadOptions->predefinedAcl, hasParams);
-        URLHelper::addParam(header, fb_esp_pgm_str_489 /* "projection=" */,
+        URLHelper::addParam(header, fb_esp_gcs_pgm_str_21 /* "projection=" */,
                             req->uploadOptions->projection, hasParams);
     }
 }
@@ -913,37 +918,37 @@ void GG_CloudStorage::setRequestproperties(struct fb_esp_gcs_req_t *req, Firebas
         }
     }
 
-    JsonHelper::addString(json, fb_esp_pgm_str_518 /* "firebaseStorageDownloadTokens" */,
-                          MB_String(fb_esp_pgm_str_519 /* "a82781ce-a115-442f-bac6-a52f7f63b3e8" */));
-    JsonHelper::addObject(json, fb_esp_pgm_str_514 /* "metadata" */, &js, false);
+    JsonHelper::addString(json, fb_esp_gcs_pgm_str_24 /* "firebaseStorageDownloadTokens" */,
+                          MB_String(fb_esp_gcs_pgm_str_25 /* "a82781ce-a115-442f-bac6-a52f7f63b3e8" */));
+    JsonHelper::addObject(json, fb_esp_gcs_pgm_str_36 /* "metadata" */, &js, false);
 
     if (req->requestProps)
     {
-        JsonHelper::addArrayString(json, fb_esp_pgm_str_504 /* "acl" */,
+        JsonHelper::addArrayString(json, fb_esp_gcs_pgm_str_26 /* "acl" */,
                                    req->requestProps->acl, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_505 /* "cacheControl" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_27 /* "cacheControl" */),
                               req->requestProps->cacheControl, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_506 /* "contentDisposition" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_28 /* "contentDisposition" */),
                               req->requestProps->contentDisposition, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_507 /* "contentEncoding" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_29 /* "contentEncoding" */),
                               req->requestProps->contentEncoding, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_508 /* "contentLanguage" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_30 /* "contentLanguage" */),
                               req->requestProps->contentLanguage, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_509 /* "contentType" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_31 /* "contentType" */),
                               req->requestProps->contentType, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_510 /* "crc32c" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_32 /* "crc32c" */),
                               req->requestProps->crc32c, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_511 /* "customTime" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_33 /* "customTime" */),
                               req->requestProps->customTime, hasProps);
-        JsonHelper::addBoolString(json, pgm2Str(fb_esp_pgm_str_512 /* "eventBasedHold" */),
+        JsonHelper::addBoolString(json, pgm2Str(fb_esp_gcs_pgm_str_34 /* "eventBasedHold" */),
                                   req->requestProps->eventBasedHold, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_513 /* "md5Hash" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_35 /* "md5Hash" */),
                               req->requestProps->md5Hash, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_515 /* "name" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_37 /* "name" */),
                               req->requestProps->name, hasProps);
-        JsonHelper::addString(json, pgm2Str(fb_esp_pgm_str_516 /* "storageClass" */),
+        JsonHelper::addString(json, pgm2Str(fb_esp_gcs_pgm_str_38 /* "storageClass" */),
                               req->requestProps->storageClass, hasProps);
-        JsonHelper::addBoolString(json, pgm2Str(fb_esp_pgm_str_517 /* "temporaryHold" */),
+        JsonHelper::addBoolString(json, pgm2Str(fb_esp_gcs_pgm_str_39 /* "temporaryHold" */),
                                   req->requestProps->temporaryHold, hasProps);
     }
 }
@@ -952,19 +957,19 @@ void GG_CloudStorage::setDeleteOptions(struct fb_esp_gcs_req_t *req, MB_String &
 {
     if (req->deleteOptions)
     {
-        header += URLHelper::addParam(header, fb_esp_pgm_str_494 /* "ifGenerationMatch=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_16 /* "ifGenerationMatch=" */,
                                       req->deleteOptions->ifGenerationMatch, hasParams)
                       ? StringHelper::intStr2Str(req->deleteOptions->ifGenerationMatch)
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_495 /* "ifGenerationNotMatch=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_17 /* "ifGenerationNotMatch=" */,
                                       req->deleteOptions->ifGenerationNotMatch, hasParams)
                       ? StringHelper::intStr2Str(req->deleteOptions->ifGenerationNotMatch)
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_496 /* "fMetagenerationMatch=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_18 /* "fMetagenerationMatch=" */,
                                       req->deleteOptions->ifMetagenerationMatch, hasParams)
                       ? StringHelper::intStr2Str(req->deleteOptions->ifMetagenerationMatch)
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_497 /* "ifMetagenerationNotMatch=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_19 /* "ifMetagenerationNotMatch=" */,
                                       req->deleteOptions->ifMetagenerationNotMatch, hasParams)
                       ? StringHelper::intStr2Str(req->deleteOptions->ifMetagenerationNotMatch)
                       : "";
@@ -975,39 +980,39 @@ void GG_CloudStorage::setListOptions(struct fb_esp_gcs_req_t *req, MB_String &he
 {
     if (req->listOptions)
     {
-        header += URLHelper::addParam(header, fb_esp_pgm_str_485 /* "delimiter=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_41 /* "delimiter=" */,
                                       req->listOptions->delimiter, hasParams)
                       ? req->listOptions->delimiter
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_486 /* "endOffset=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_42 /* "endOffset=" */,
                                       req->listOptions->endOffset, hasParams)
                       ? req->listOptions->endOffset
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_487 /* "includeTrailingDelimiter=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_43 /* "includeTrailingDelimiter=" */,
                                       req->listOptions->includeTrailingDelimiter, hasParams)
                       ? StringHelper::boolStr2Str(req->listOptions->includeTrailingDelimiter)
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_484 /* "maxResults=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_40 /* "maxResults=" */,
                                       req->listOptions->maxResults, hasParams)
                       ? StringHelper::intStr2Str(req->listOptions->maxResults)
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_358 /* "pageToken" */,
+        header += URLHelper::addParam(header, fb_esp_pgm_str_65 /* "pageToken" */,
                                       req->listOptions->pageToken, hasParams)
                       ? req->listOptions->pageToken
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_488 /* "prefix=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_44 /* "prefix=" */,
                                       req->listOptions->prefix, hasParams)
                       ? req->listOptions->prefix
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_489 /* "projection=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_21 /* "projection=" */,
                                       req->listOptions->projection, hasParams)
                       ? req->listOptions->projection
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_490 /* "startOffset=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_45 /* "startOffset=" */,
                                       req->listOptions->startOffset, hasParams)
                       ? req->listOptions->startOffset
                       : "";
-        header += URLHelper::addParam(header, fb_esp_pgm_str_491 /* "versions=" */,
+        header += URLHelper::addParam(header, fb_esp_gcs_pgm_str_46 /* "versions=" */,
                                       req->listOptions->versions, hasParams)
                       ? StringHelper::boolStr2Str(req->listOptions->versions)
                       : "";
@@ -1230,7 +1235,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT) // resume incomplete
             {
                 int p1 = 0;
-                if (StringHelper::find(tcpHandler.header, fb_esp_pgm_str_481 /* "Range: bytes=0-" */, false, 0, p1))
+                if (StringHelper::find(tcpHandler.header, fb_esp_gcs_pgm_str_48 /* "Range: bytes=0-" */, false, 0, p1))
                 {
                     if (_resumableUploadTasks.size() > 0)
                     {
@@ -1238,8 +1243,8 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
                         fbdo->createResumableTask(ruTask, req->fileSize, req->location,
                                                   req->localFileName, req->remoteFileName, req->storageType,
                                                   fb_esp_gcs_request_type_upload_resumable_run);
-                        ruTask.req.chunkRange = atoi(tcpHandler.header.substr(p1 + strlen_P(fb_esp_pgm_str_481 /* "Range: bytes=0-" */),
-                                                                              tcpHandler.header.length() - p1 - strlen_P(fb_esp_pgm_str_481 /* "Range: bytes=0-" */))
+                        ruTask.req.chunkRange = atoi(tcpHandler.header.substr(p1 + strlen_P(fb_esp_gcs_pgm_str_48 /* "Range: bytes=0-" */),
+                                                                              tcpHandler.header.length() - p1 - strlen_P(fb_esp_gcs_pgm_str_48 /* "Range: bytes=0-" */))
                                                          .c_str());
                         ruTask.req.uploadCallback = req->uploadCallback;
                         ruTask.req.uploadStatusInfo = req->uploadStatusInfo;
@@ -1266,7 +1271,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t
             if (_resumable_upload_task_enable && _resumableUploadTasks.size() == 1)
             {
 #if defined(ESP32) || defined(MB_ARDUINO_PICO)
-                runResumableUploadTask(pgm2Str(fb_esp_pgm_str_480 /* "resumableUploadTask" */));
+                runResumableUploadTask(pgm2Str(fb_esp_gcs_pgm_str_47 /* "resumableUploadTask" */));
 #elif defined(ESP8266)
                 runResumableUploadTask();
 #endif

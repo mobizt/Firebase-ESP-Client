@@ -1,5 +1,10 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Created March 5, 2023
+ * Created April 5, 2023
  */
 
 #ifndef FB_Network_H

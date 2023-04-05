@@ -1,17 +1,10 @@
-#ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.3.8"
-#endif
 
 /**
- * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h v4.3.8
+ * Google's Firebase ESP Client Main class, Firebase_ESP_Client.h
  *
  * This library supports Espressif ESP8266 and ESP32 MCUs and Raspberry Pi RP2040 Pico MCUs.
  *
  * Created March 5, 2023
- *
- *   Updates:
- * - Fix ESP32 SPIFFS file upload issue.
- * - Fix Firebase pause issue.
  *
  *
  * This work is a part of Firebase ESP Client library
@@ -38,5 +31,4 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 #include "Firebase.h"

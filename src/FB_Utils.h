@@ -1,8 +1,13 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico (RP2040)
  *
- * Created January 22, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -204,7 +209,7 @@ namespace StringHelper
     /* convert string to boolean */
     inline bool str2Bool(const MB_String &v)
     {
-        return v.length() > 0 && strcmp(v.c_str(), pgm2Str(fb_esp_pgm_str_107 /* "true" */)) == 0;
+        return v.length() > 0 && strcmp(v.c_str(), pgm2Str(fb_esp_pgm_str_20 /* "true" */)) == 0;
     }
 
     inline MB_String intStr2Str(const MB_String &v)
@@ -284,10 +289,10 @@ namespace URLHelper
             _key[0] = '&';
 
         if (_key[0] != '?' && _key[0] != '&')
-            url += !hasParam ? fb_esp_pgm_str_173 /* "?" */ : fb_esp_pgm_str_172 /* "&" */;
+            url += !hasParam ? fb_esp_pgm_str_7 /* "?" */ : fb_esp_pgm_str_8 /* "&" */;
 
         if (_key[_key.length() - 1] != '=' && _key.find('=') == MB_String::npos)
-            _key += fb_esp_pgm_str_361; // "="
+            _key += fb_esp_pgm_str_13; // "="
 
         url += _key;
         url += val;
@@ -324,7 +329,7 @@ namespace URLHelper
     /* Append the string with google storage URL */
     inline void addGStorageURL(MB_String &uri, const MB_String &bucketID, const MB_String &storagePath)
     {
-        uri += fb_esp_pgm_str_350; // "gs://"
+        uri += fb_esp_pgm_str_21; // "gs://"
         uri += bucketID;
         if (storagePath[0] != '/')
             uri += fb_esp_pgm_str_1; // "/"
@@ -335,33 +340,35 @@ namespace URLHelper
     inline void addFunctionsHost(MB_String &uri, const MB_String &locationId, const MB_String &projectId,
                                  const MB_String &path, bool url)
     {
+#if defined(ENABLE_FB_FUNCTIONS)
         if (url)
-            uri = fb_esp_pgm_str_112; // "https://"
+            uri = fb_esp_pgm_str_22; // "https://"
         uri += locationId;
-        uri += fb_esp_pgm_str_397; // "-"
+        uri += fb_esp_pgm_str_14; // "-"
         uri += projectId;
-        uri += fb_esp_pgm_str_398; // ".cloudfunctions.net"
+        uri += fb_esp_func_pgm_str_82; // ".cloudfunctions.net"
         if (path.length() > 0)
         {
             uri += fb_esp_pgm_str_1; // "/"
             uri += path;
         }
+#endif
     }
 
     inline void addGAPIv1Path(MB_String &uri)
     {
-        uri += fb_esp_pgm_str_326; // "/v1/projects/"
+        uri += fb_esp_pgm_str_23; // "/v1/projects/"
     }
 
     inline void addGAPIv1beta1Path(MB_String &uri)
     {
-        uri += fb_esp_pgm_str_477; // "/v1beta1/projects/"
+        uri += fb_esp_pgm_str_24; // "/v1beta1/projects/"
     }
 #endif
 
     inline void host2Url(MB_String &url, MB_String &host)
     {
-        url = fb_esp_pgm_str_112; // "https://"
+        url = fb_esp_pgm_str_22; // "https://"
         url += host;
     }
 
@@ -372,23 +379,25 @@ namespace URLHelper
         char *auth = MemoryHelper::createBuffer<char *>(mbfs, url.length());
 
         int p1 = 0;
-        int x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_441), host, uri);
-        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_442), host, uri);
-        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_443), host, uri);
+        int x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_25 /* "https://%[^/]/%s" */), host, uri);
+        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_26 /* "http://%[^/]/%s" */), host, uri);
+        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_27 /* "%[^/]/%s" */), host, uri);
 
         size_t p2 = 0;
         if (x > 0)
         {
-            p2 = MB_String(host).find(pgm2Str(fb_esp_pgm_str_173), 0);
+            p2 = MB_String(host).find(pgm2Str(fb_esp_pgm_str_7 /* "?" */), 0);
             if (p2 != MB_String::npos)
-                x = sscanf(url.c_str() + p1, pgm2Str(fb_esp_pgm_str_444), host, uri);
+                x = sscanf(url.c_str() + p1, pgm2Str(fb_esp_pgm_str_28 /* "%[^?]?%s" */), host, uri);
         }
 
         if (strlen(uri) > 0)
         {
-            p2 = MB_String(uri).find(pgm2Str(fb_esp_pgm_str_445), 0);
+#if defined(ENABLE_RTDB)
+            p2 = MB_String(uri).find(pgm2Str(fb_esp_rtdb_pgm_str_19 /* "auth=" */), 0);
             if (p2 != MB_String::npos)
-                x = sscanf(uri + p2 + 5, pgm2Str(fb_esp_pgm_str_446), auth);
+                x = sscanf(uri + p2 + 5, pgm2Str(fb_esp_pgm_str_29 /* "%[^&]" */), auth);
+#endif
         }
 
         info.uri = uri;
@@ -451,7 +460,7 @@ namespace JsonHelper
         if (key.length() == 0)
             return false;
 
-        MB_String token = fb_esp_pgm_str_3; // "\""
+        MB_String token = fb_esp_pgm_str_4; // "\""
 
         MB_String _key;
 
@@ -464,7 +473,7 @@ namespace JsonHelper
         size_t p1 = chunk.find(_key, pos);
         if (p1 != MB_String::npos)
         {
-            size_t p2 = chunk.find(MB_String(fb_esp_pgm_str_7 /* ":" */).c_str(), p1 + _key.length());
+            size_t p2 = chunk.find(MB_String(fb_esp_pgm_str_2 /* ":" */).c_str(), p1 + _key.length());
             if (p2 != MB_String::npos)
                 p2 = chunk.find(token, p2 + 1);
             if (p2 != MB_String::npos)
@@ -542,9 +551,9 @@ namespace JsonHelper
         if (json && val.length() > 0)
         {
             if (isJsonPath(key))
-                json->set(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_107)) == 0 ? true : false);
+                json->set(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_20 /* "true" */)) == 0 ? true : false);
             else
-                json->add(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_107)) == 0 ? true : false);
+                json->add(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_20 /* "true" */)) == 0 ? true : false);
             flag = true;
         }
     }
@@ -682,54 +691,54 @@ namespace HttpHelper
 {
     inline void addNewLine(MB_String &header)
     {
-        header += fb_esp_pgm_str_21; // "\r\n"
+        header += fb_esp_pgm_str_30; // "\r\n"
     }
 
     inline void addGAPIsHost(MB_String &str, PGM_P sub)
     {
         str += sub;
         if (str[str.length() - 1] != '.')
-            str += fb_esp_pgm_str_4; // "."
-        str += fb_esp_pgm_str_120;   // "googleapis.com"
+            str += fb_esp_pgm_str_5; // "."
+        str += fb_esp_pgm_str_31;    // "googleapis.com"
     }
 
     inline void addGAPIsHostHeader(MB_String &header, PGM_P sub)
     {
-        header += fb_esp_pgm_str_31; // "Host: "
+        header += fb_esp_pgm_str_32; // "Host: "
         addGAPIsHost(header, sub);
         addNewLine(header);
     }
 
     inline void addHostHeader(MB_String &header, PGM_P host)
     {
-        header += fb_esp_pgm_str_31; // "Host: "
+        header += fb_esp_pgm_str_32; // "Host: "
         header += host;
         addNewLine(header);
     }
 
     inline void addContentTypeHeader(MB_String &header, PGM_P v)
     {
-        header += fb_esp_pgm_str_8; // "Content-Type: "
+        header += fb_esp_pgm_str_33; // "Content-Type: "
         header += v;
-        header += fb_esp_pgm_str_21; // "\r\n"
+        header += fb_esp_pgm_str_30; // "\r\n"
     }
 
     inline void addContentLengthHeader(MB_String &header, size_t len)
     {
-        header += fb_esp_pgm_str_12; // "Content-Length: "
+        header += fb_esp_pgm_str_34; // "Content-Length: "
         header += len;
         addNewLine(header);
     }
 
     inline void addUAHeader(MB_String &header)
     {
-        header += fb_esp_pgm_str_32; // "User-Agent: ESP\r\n"
+        header += fb_esp_pgm_str_35; // "User-Agent: ESP\r\n"
     }
 
     inline void addConnectionHeader(MB_String &header, bool keepAlive)
     {
         header += keepAlive ? fb_esp_pgm_str_36 /* "Connection: keep-alive\r\n" */
-                            : fb_esp_pgm_str_34 /* "Connection: close\r\n" */;
+                            : fb_esp_pgm_str_37 /* "Connection: close\r\n" */;
     }
 
     /* Append the string with first request line (HTTP method) */
@@ -739,24 +748,24 @@ namespace HttpHelper
         switch (method)
         {
         case http_get:
-            header += fb_esp_pgm_str_25; // "GET"
+            header += fb_esp_pgm_str_41; // "GET"
             break;
         case http_post:
-            header += fb_esp_pgm_str_24; // "POST"
+            header += fb_esp_pgm_str_40; // "POST"
             post = true;
             break;
 
         case http_patch:
-            header += fb_esp_pgm_str_26; // "PATCH"
+            header += fb_esp_pgm_str_38; // "PATCH"
             post = true;
             break;
 
         case http_delete:
-            header += fb_esp_pgm_str_27; // "DELETE"
+            header += fb_esp_pgm_str_42; // "DELETE"
             break;
 
         case http_put:
-            header += fb_esp_pgm_str_23; // "PUT"
+            header += fb_esp_pgm_str_39; // "PUT"
             break;
 
         default:
@@ -764,7 +773,7 @@ namespace HttpHelper
         }
 
         if (method == http_get || method == http_post || method == http_patch || method == http_delete || method == http_put)
-            header += fb_esp_pgm_str_6; // " "
+            header += fb_esp_pgm_str_9; // " "
 
         return post;
     }
@@ -772,19 +781,19 @@ namespace HttpHelper
     /* Append the string with last request line (HTTP version) */
     inline void addRequestHeaderLast(MB_String &header)
     {
-        header += fb_esp_pgm_str_30; // " HTTP/1.1\r\n"
+        header += fb_esp_pgm_str_43; // " HTTP/1.1\r\n"
     }
 
     /* Append the string with first part of Authorization header */
     inline void addAuthHeaderFirst(MB_String &header, fb_esp_auth_token_type type)
     {
-        header += fb_esp_pgm_str_237; // "Authorization: "
+        header += fb_esp_pgm_str_44; // "Authorization: "
         if (type == token_type_oauth2_access_token)
-            header += fb_esp_pgm_str_209; // "Bearer "
+            header += fb_esp_pgm_str_45; // "Bearer "
         else if (type == token_type_id_token || type == token_type_custom_token)
-            header += fb_esp_pgm_str_270; // "Firebase "
+            header += fb_esp_pgm_str_46; // "Firebase "
         else
-            header += fb_esp_pgm_str_131; // "key="
+            header += fb_esp_pgm_str_47; // "key="
     }
 
     inline void parseRespHeader(const MB_String &src, struct server_response_data_t &response)
@@ -797,23 +806,23 @@ namespace HttpHelper
         {
 
             StringHelper::tokenSubString(src, response.connection,
-                                         fb_esp_pgm_str_10 /* "Connection: " */,
-                                         fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+                                         fb_esp_pgm_str_48 /* "Connection: " */,
+                                         fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
             StringHelper::tokenSubString(src, response.contentType,
-                                         fb_esp_pgm_str_8 /* "Content-Type: " */,
-                                         fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+                                         fb_esp_pgm_str_33 /* "Content-Type: " */,
+                                         fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
             StringHelper::tokenSubStringInt(src, response.contentLen,
-                                            fb_esp_pgm_str_12 /* "Content-Length: " */,
-                                            fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+                                            fb_esp_pgm_str_34 /* "Content-Length: " */,
+                                            fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
             StringHelper::tokenSubString(src, response.etag,
-                                         fb_esp_pgm_str_150 /* "ETag: " */,
-                                         fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+                                         fb_esp_pgm_str_49 /* "ETag: " */,
+                                         fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
             response.payloadLen = response.contentLen;
 
             if (StringHelper::tokenSubString(src, response.transferEnc,
-                                             fb_esp_pgm_str_167 /* "Transfer-Encoding: " */,
-                                             fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false) &&
-                StringHelper::compare(response.transferEnc, 0, fb_esp_pgm_str_168 /* "chunked" */))
+                                             fb_esp_pgm_str_50 /* "Transfer-Encoding: " */,
+                                             fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false) &&
+                StringHelper::compare(response.transferEnc, 0, fb_esp_pgm_str_51 /* "chunked" */))
                 response.isChunkedEnc = true;
 
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK ||
@@ -822,8 +831,8 @@ namespace HttpHelper
                 response.httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY ||
                 response.httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
                 StringHelper::tokenSubString(src, response.location,
-                                             fb_esp_pgm_str_95 /* "Location: " */,
-                                             fb_esp_pgm_str_21 /* "\r\n" */, beginPos, 0, false);
+                                             fb_esp_pgm_str_52 /* "Location: " */,
+                                             fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
 
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
                 response.noContent = true;
@@ -834,8 +843,8 @@ namespace HttpHelper
     {
         int code = 0;
         StringHelper::tokenSubStringInt(header, code,
-                                        fb_esp_pgm_str_5 /* "HTTP/1.1 " */,
-                                        fb_esp_pgm_str_6 /* " " */, pos, 0, false);
+                                        fb_esp_pgm_str_53 /* "HTTP/1.1 " */,
+                                        fb_esp_pgm_str_9 /* " " */, pos, 0, false);
         return code;
     }
 
@@ -889,36 +898,38 @@ namespace HttpHelper
 
         MB_String out;
 
+#if defined(ENABLE_RTDB)
+
         if (!response.isEvent && !response.noEvent)
         {
             if (StringHelper::tokenSubString(src, response.eventType,
-                                             fb_esp_pgm_str_13 /* "event: " */,
-                                             fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0, true))
+                                             fb_esp_rtdb_pgm_str_12 /* "event: " */,
+                                             fb_esp_pgm_str_12 /* "\n" */, payloadPos, 0, true))
             {
                 response.isEvent = true;
                 payloadOfs = payloadPos;
 
                 if (StringHelper::tokenSubString(src, out,
-                                                 fb_esp_pgm_str_14 /* "data: " */,
-                                                 fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0, true))
+                                                 fb_esp_rtdb_pgm_str_13 /* "data: " */,
+                                                 fb_esp_pgm_str_12 /* "\n" */, payloadPos, 0, true))
                 {
-                    payloadOfs += strlen_P(fb_esp_pgm_str_14 /* "data: " */);
+                    payloadOfs += strlen_P(fb_esp_rtdb_pgm_str_13 /* "data: " */);
                     payloadPos = payloadOfs;
                     response.hasEventData = true;
 
                     if (StringHelper::tokenSubString(src, response.eventPath,
-                                                     fb_esp_pgm_str_17 /* "\"path\":\"" */,
-                                                     fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0, true))
+                                                     fb_esp_pgm_str_54 /* "\"path\":\"" */,
+                                                     fb_esp_pgm_str_4 /* "\"" */, payloadPos, 0, true))
                     {
                         payloadOfs = payloadPos;
 
                         if (StringHelper::tokenSubString(src, response.eventData,
-                                                         fb_esp_pgm_str_18 /* "\"data\":" */,
-                                                         fb_esp_pgm_str_180 /* "\n" */, payloadPos, 0, true))
+                                                         fb_esp_pgm_str_55 /* "\"data\":" */,
+                                                         fb_esp_pgm_str_12 /* "\n" */, payloadPos, 0, true))
                         {
                             response.eventData[response.eventData.length() - 1] = 0;
                             response.payloadLen = response.eventData.length();
-                            payloadOfs += strlen_P(fb_esp_pgm_str_18 /* "\"data\":" */) + 1;
+                            payloadOfs += strlen_P(fb_esp_pgm_str_55 /* "\"data\":" */) + 1;
                             response.payloadOfs = payloadOfs;
                         }
                     }
@@ -926,72 +937,75 @@ namespace HttpHelper
             }
         }
 
+#endif
+
         if (src.length() < (size_t)payloadOfs)
             return;
 
         if (response.dataType == 0)
         {
             StringHelper::tokenSubString(src, response.pushName,
-                                         fb_esp_pgm_str_20 /* "{\"name\":\"" */,
-                                         fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0, true);
+                                         fb_esp_pgm_str_56 /* "{\"name\":\"" */,
+                                         fb_esp_pgm_str_4 /* "\"" */, payloadPos, 0, true);
 
             if (StringHelper::tokenSubString(src, out,
-                                             fb_esp_pgm_str_102 /* "\"error\" : " */,
-                                             fb_esp_pgm_str_3 /* "\"" */, payloadPos, 0, true))
+                                             fb_esp_pgm_str_57 /* "\"error\" : " */,
+                                             fb_esp_pgm_str_4 /* "\"" */, payloadPos, 0, true))
             {
                 FirebaseJson js;
                 FirebaseJsonData d;
                 js.setJsonData(src);
-                js.get(d, pgm2Str(fb_esp_pgm_str_176 /* "error" */));
+                js.get(d, pgm2Str(fb_esp_pgm_str_58 /* "error" */));
                 if (d.success)
                     response.fbError = d.stringValue.c_str();
             }
-
-            if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_92 /* "\"blob,base64," */, true))
+#if defined(ENABLE_RTDB)
+            if (StringHelper::compare(src, payloadOfs, fb_esp_rtdb_pgm_str_7 /* "\"blob,base64," */, true))
             {
                 response.dataType = fb_esp_data_type::d_blob;
                 if ((response.isEvent && response.hasEventData) || getOfs)
                 {
                     if (response.eventData.length() > 0)
                     {
-                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_92) - 1;
+                        int dlen = response.eventData.length() - strlen_P(fb_esp_rtdb_pgm_str_7) - 1;
                         response.payloadLen = dlen;
                     }
-                    response.payloadOfs += strlen_P(fb_esp_pgm_str_92);
+                    response.payloadOfs += strlen_P(fb_esp_rtdb_pgm_str_7);
                     response.eventData.clear();
                 }
             }
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_93 /* "\"file,base64," */, true))
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_rtdb_pgm_str_8 /* "\"file,base64," */, true))
             {
                 response.dataType = fb_esp_data_type::d_file;
                 if ((response.isEvent && response.hasEventData) || getOfs)
                 {
                     if (response.eventData.length() > 0)
                     {
-                        int dlen = response.eventData.length() - strlen_P(fb_esp_pgm_str_93) - 1;
+                        int dlen = response.eventData.length() - strlen_P(fb_esp_rtdb_pgm_str_8) - 1;
                         response.payloadLen = dlen;
                     }
 
-                    response.payloadOfs += strlen_P(fb_esp_pgm_str_93);
+                    response.payloadOfs += strlen_P(fb_esp_rtdb_pgm_str_8);
                     response.eventData.clear();
                 }
             }
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_3 /* "\"" */))
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_4 /* "\"" */))
                 response.dataType = fb_esp_data_type::d_string;
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_163 /* "{" */))
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_10 /* "{" */))
                 response.dataType = fb_esp_data_type::d_json;
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_182 /* "[" */))
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_6 /* "[" */))
                 response.dataType = fb_esp_data_type::d_array;
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_106 /* "false" */) ||
-                     StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_107 /* "true" */))
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_19 /* "false" */) ||
+                     StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_20 /* "true" */))
             {
                 response.dataType = fb_esp_data_type::d_boolean;
-                response.boolData = StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_107 /* "trye" */);
+                response.boolData = StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_20 /* "true" */);
             }
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_19 /* "null" */))
+            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_59 /* "null" */))
                 response.dataType = fb_esp_data_type::d_null;
             else
-                setNumDataType(src, payloadOfs, response, src.find(pgm2Str(fb_esp_pgm_str_4 /* "." */), payloadOfs) != MB_String::npos);
+                setNumDataType(src, payloadOfs, response, src.find(pgm2Str(fb_esp_pgm_str_5 /* "." */), payloadOfs) != MB_String::npos);
+#endif
         }
     }
 
@@ -1376,8 +1390,10 @@ namespace Base64Helper
 
     inline bool updateWrite(uint8_t *data, size_t len)
     {
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
 #if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
         return Update.write(data, len) == len;
+#endif
 #endif
         return false;
     }
@@ -1712,8 +1728,8 @@ namespace TimeHelper
         tm = *mb_ts_offset + millis() / 1000;
 
 #if defined(MB_ARDUINO_PICO)
-    if (tm < time(nullptr))
-      tm = time(nullptr);
+        if (tm < time(nullptr))
+            tm = time(nullptr);
 #endif
 
 #elif defined(ESP32) || defined(ESP8266)
@@ -1920,7 +1936,7 @@ namespace Utils
 
     inline bool boolVal(const MB_String &v)
     {
-        return v.find(pgm2Str(fb_esp_pgm_str_107 /* "true" */)) != MB_String::npos;
+        return v.find(pgm2Str(fb_esp_pgm_str_20 /* "true" */)) != MB_String::npos;
     }
 
     inline bool waitIdle(int &httpCode, FirebaseConfig *config)
@@ -1979,72 +1995,75 @@ namespace Utils
 
     inline MB_String makeFCMMsgPath(PGM_P sub = NULL)
     {
-        MB_String path = fb_esp_pgm_str_575; // "msg"
-        path += fb_esp_pgm_str_1;            // "/"
+        MB_String path = fb_esp_pgm_str_60; // "msg"
+        path += fb_esp_pgm_str_1;           // "/"
         if (sub)
             path += sub;
         return path;
     }
 
-#if defined(FIREBASE_ESP_CLIENT)
+#if defined(ENABLE_FCM)
+
     inline MB_String makeFCMMessagePath(PGM_P sub = NULL)
     {
-        MB_String path = fb_esp_pgm_str_295; // "message"
-        path += fb_esp_pgm_str_1;            // "/"
+        MB_String path = fb_esp_fcm_pgm_str_68; // "message"
+        path += fb_esp_pgm_str_1;               // "/"
         if (sub)
             path += sub;
         return path;
     }
-#endif
 
     inline void addFCMNotificationPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_pgm_str_122; // "notification"
-        path += fb_esp_pgm_str_1;   // "/"
+        path += fb_esp_fcm_pgm_str_67; // "notification"
+        path += fb_esp_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
     inline void addFCMAndroidPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_pgm_str_300; // "android"
-        path += fb_esp_pgm_str_1;   // "/"
+        path += fb_esp_fcm_pgm_str_69; // "android"
+        path += fb_esp_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
     inline void addFCMWebpushPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_pgm_str_301; // "webpush";
-        path += fb_esp_pgm_str_1;   // "/"
+        path += fb_esp_fcm_pgm_str_70; // "webpush";
+        path += fb_esp_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
     inline void addFCMApnsPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_pgm_str_302; // "apns";
-        path += fb_esp_pgm_str_1;   // "/"
+        path += fb_esp_fcm_pgm_str_71; // "apns";
+        path += fb_esp_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
     inline MB_String makeFCMNotificationPath(PGM_P sub = NULL)
     {
-        MB_String path = fb_esp_pgm_str_122; // "notification"
-        path += fb_esp_pgm_str_1;            // "/"
+        MB_String path = fb_esp_fcm_pgm_str_67; // "notification"
+        path += fb_esp_pgm_str_1;               // "/"
         if (sub)
             path += sub;
         return path;
     }
+
+#endif
+
 #if defined(FIREBASE_ESP_CLIENT) && defined(ENABLE_FIRESTORE)
     inline MB_String makeDocPath(struct fb_esp_firestore_req_t &req, const MB_String &projectId)
     {
-        MB_String str = fb_esp_pgm_str_395; // "projects/"
+        MB_String str = fb_esp_func_pgm_str_47; // "projects/"
         str += req.projectId.length() == 0 ? projectId : req.projectId;
-        str += fb_esp_pgm_str_341; // "/databases/"
-        str += req.databaseId.length() > 0 ? req.databaseId : fb_esp_pgm_str_342 /* "(default)" */;
-        str += fb_esp_pgm_str_351; // "/documents"
+        str += fb_esp_cfs_pgm_str_32; // "/databases/"
+        str += req.databaseId.length() > 0 ? req.databaseId : fb_esp_cfs_pgm_str_33 /* "(default)" */;
+        str += fb_esp_cfs_pgm_str_21; // "/documents"
         return str;
     }
 #endif

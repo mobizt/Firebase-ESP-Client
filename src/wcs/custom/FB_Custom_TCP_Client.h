@@ -1,3 +1,8 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
  * The custom TCP Client Class v1.0.3
  *

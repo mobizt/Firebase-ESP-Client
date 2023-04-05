@@ -1,7 +1,12 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * The Firebase class, Firebase.cpp v1.2.5
+ * The Firebase class, Firebase.cpp v1.2.6
  *
- *  Created January 16, 2023
+ *  Created April 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -832,7 +837,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
-    MB_String s = fb_esp_pgm_str_577; // "server_key"
+    MB_String s = esp_fb_legacy_fcm_pgm_str_1; // "server_key"
 
     json->get(data, s.c_str());
 
@@ -857,7 +862,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
         return false;
     }
 
-    s = fb_esp_pgm_str_576; // "topic"
+    s = esp_fb_legacy_fcm_pgm_str_2; // "topic"
 
     json->get(data, s.c_str());
 

@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.2.7
+ * Google's Firebase Storage class, FCS.cpp version 1.2.8
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created March 5, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -307,7 +312,7 @@ void FB_Storage::makeDownloadStatus(FCS_DownloadStatusInfo &info, const MB_Strin
 bool FB_Storage::fcs_connect(FirebaseData *fbdo)
 {
     MB_String host;
-    HttpHelper::addGAPIsHost(host, fb_esp_pgm_str_265 /* "firebasestorage." */);
+    HttpHelper::addGAPIsHost(host, fb_esp_storage_ss_pgm_str_1 /* "firebasestorage." */);
     rescon(fbdo, host.c_str());
     fbdo->tcpClient.begin(host.c_str(), 443, &fbdo->session.response.code);
     fbdo->session.max_payload_length = 0;
@@ -396,19 +401,19 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     if (method != http_undefined)
         HttpHelper::addRequestHeaderFirst(header, method);
 
-    header += fb_esp_pgm_str_266; // "/v0/b/"
+    header += fb_esp_storage_ss_pgm_str_2; // "/v0/b/"
     header += req->bucketID;
-    header += fb_esp_pgm_str_267; // "/o"
+    header += fb_esp_storage_ss_pgm_str_3; // "/o"
 
     if (req->requestType == fb_esp_fcs_request_type_download || req->requestType == fb_esp_fcs_request_type_download_ota)
     {
         header += fb_esp_pgm_str_1; // "/"
         header += URLHelper::encode(req->remoteFileName);
-        header += fb_esp_pgm_str_173; // "?"
-        header += fb_esp_pgm_str_269; // "alt=media"
+        header += fb_esp_pgm_str_7; // "?"
+        header += fb_esp_storage_ss_pgm_str_4; // "alt=media"
     }
     else if (req->requestType != fb_esp_fcs_request_type_list)
-        URLHelper::addParam(header, fb_esp_pgm_str_268 /* "name=" */,
+        URLHelper::addParam(header, fb_esp_storage_pgm_str_1 /* "name=" */,
                             req->remoteFileName[0] == '/'
                                 ? URLHelper::encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1))
                                 : URLHelper::encode(req->remoteFileName),
@@ -428,7 +433,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
         HttpHelper::addContentLengthHeader(header, len);
     }
 
-    HttpHelper::addGAPIsHostHeader(header, fb_esp_pgm_str_265 /* "firebasestorage." */);
+    HttpHelper::addGAPIsHostHeader(header, fb_esp_storage_ss_pgm_str_1 /* "firebasestorage." */);
 
     if (!Signer.config->signer.test_mode)
     {

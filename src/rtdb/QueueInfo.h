@@ -1,3 +1,8 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
  * Google's Firebase QueueInfo class, QueueInfo.h version 1.0.6
  *

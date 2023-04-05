@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Firebase Data class, FB_Session.h version 1.3.6
+ * Google's Firebase Data class, FB_Session.h version 1.3.7
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created March 5, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,8 +34,6 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 
 #ifndef FIREBASE_SESSION_H
 #define FIREBASE_SESSION_H
@@ -326,8 +329,7 @@ public:
    */
   void setExternalClient(Client *client);
 
-
-   /** Assign the callback functions required for external Client usage.
+  /** Assign the callback functions required for external Client usage.
    *
    * @param networkConnectionCB The function that handles the network connection.
    * @param networkStatusCB The function that handle the network connection status acknowledgement.
@@ -525,6 +527,15 @@ public:
    * @return The error description string (String object).
    */
   String errorReason();
+
+  /** Get the error code from the process.
+   *
+   * @return The error code (int).
+   * 
+   * See src/FB_Error.h
+   * 
+   */
+  int errorCode();
 
   /** Return the integer data of server returned payload (RTDB only).
    *
@@ -767,13 +778,13 @@ public:
     return session.rtdb.blob;
   }
 
-#if defined(MBFS_FLASH_FS)
+#if defined(MBFS_FLASH_FS) && defined(ENABLE_RTDB)
   template <typename T>
   auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
   {
     if (session.rtdb.resp_data_type == fb_esp_data_type::d_file)
     {
-      int ret = Signer.mbfs->open(pgm2Str(fb_esp_pgm_str_184 /* "/fb_bin_0.tmp" */),
+      int ret = Signer.mbfs->open(pgm2Str(fb_esp_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
                                   mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
       if (ret < 0)
         session.response.code = ret;
