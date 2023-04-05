@@ -2055,6 +2055,7 @@ static const char fb_esp_signer_pgm_str_5[] PROGMEM = "private_key_id";
 static const char fb_esp_signer_pgm_str_6[] PROGMEM = "private_key";
 static const char fb_esp_signer_pgm_str_7[] PROGMEM = "client_email";
 static const char fb_esp_signer_pgm_str_8[] PROGMEM = "client_id";
+#if !defined(USE_LEGACY_TOKEN_ONLY)
 static const char fb_esp_signer_pgm_str_9[] PROGMEM = "securetoken";
 static const char fb_esp_signer_pgm_str_10[] PROGMEM = "/v1/token?key=";
 static const char fb_esp_signer_pgm_str_11[] PROGMEM = "grantType";
@@ -2109,6 +2110,7 @@ static const char fb_esp_signer_pgm_str_59[] PROGMEM = "requestType";
 static const char fb_esp_signer_pgm_str_60[] PROGMEM = "VERIFY_EMAIL";
 static const char fb_esp_signer_pgm_str_61[] PROGMEM = "getOobConfirmationCode?key=";
 static const char fb_esp_signer_pgm_str_62[] PROGMEM = "PASSWORD_RESET";
+#endif
 
 // RTDB class string
 #if defined(ENABLE_RTDB)

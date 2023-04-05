@@ -77,6 +77,9 @@ static SdFat sd_fat_fs;   // should declare as static here
 #define CARD_TYPE_SD 1
 #endif
 
+// For RTDB legacy token usage only
+// #define USE_LEGACY_TOKEN_ONLY
+
 // Enable the error string from fbdo.errorReason */
 // You can get the error code from fbdo.errorCode() when disable this option
 #define ENABLE_ERROR_STRING

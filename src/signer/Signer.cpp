@@ -729,6 +729,7 @@ void Firebase_Signer::tokenProcessingTask()
 
 bool Firebase_Signer::refreshToken()
 {
+#if !defined(USE_LEGACY_TOKEN_ONLY)
 
     if (!config)
         return false;
@@ -819,6 +820,10 @@ bool Firebase_Signer::refreshToken()
     }
 
     return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
+
+#endif
+
+    return true;
 }
 
 void Firebase_Signer::newClient(FB_TCP_CLIENT **client)
@@ -1045,6 +1050,8 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
 
 bool Firebase_Signer::createJWT()
 {
+
+#if !defined(USE_LEGACY_TOKEN_ONLY)
 
     if (config->signer.step == fb_esp_jwt_generation_step_encode_header_payload)
     {
@@ -1356,11 +1363,14 @@ bool Firebase_Signer::createJWT()
 #endif
     }
 
+#endif
+
     return true;
 }
 
 bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringPtr password)
 {
+#if !defined(USE_LEGACY_TOKEN_ONLY)
 
     config->signer.signup = false;
 
@@ -1496,10 +1506,15 @@ bool Firebase_Signer::getIdToken(bool createUser, MB_StringPtr email, MB_StringP
     }
 
     return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
+
+#endif
+    return true;
 }
 
 bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
 {
+#if !defined(USE_LEGACY_TOKEN_ONLY)
+
     if (config->signer.tokens.status == token_status_on_request ||
         config->signer.tokens.status == token_status_on_refresh ||
         config->internal.fb_processing)
@@ -1571,6 +1586,10 @@ bool Firebase_Signer::deleteIdToken(MB_StringPtr idToken)
     }
 
     return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
+
+#endif
+
+    return true;
 }
 
 void Firebase_Signer::setAutoReconnectWiFi(bool reconnect)
@@ -1862,6 +1881,8 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
 bool Firebase_Signer::requestTokens(bool refresh)
 {
 
+#if !defined(USE_LEGACY_TOKEN_ONLY)
+
     time_t now = getTime();
 
     if (config->signer.tokens.status == token_status_on_request ||
@@ -2016,6 +2037,10 @@ bool Firebase_Signer::requestTokens(bool refresh)
     }
 
     return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
+
+#endif
+
+    return true;
 }
 
 void Firebase_Signer::getExpiration(const char *exp)
@@ -2028,6 +2053,8 @@ void Firebase_Signer::getExpiration(const char *exp)
 
 bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email_sending_type type)
 {
+#if !defined(USE_LEGACY_TOKEN_ONLY)
+
     if (config->internal.fb_processing)
         return false;
 
@@ -2110,6 +2137,10 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     }
 
     return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, httpCode);
+
+#endif
+
+    return true;
 }
 
 void Firebase_Signer::checkToken()
