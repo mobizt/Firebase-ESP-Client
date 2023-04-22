@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.11
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.12
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created April 5, 2023
+ * Created April 22, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -299,8 +299,8 @@ bool Firebase_Signer::isExpired()
     if (!config || !auth)
         return false;
 
-    // never expired for legacy token
-    if (config->signer.tokens.token_type == token_type_legacy_token)
+    // never expired for legacy token and test mode
+    if (config->signer.tokens.token_type == token_type_legacy_token || config->signer.test_mode)
         return false;
 
     time_t now = 0;

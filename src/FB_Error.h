@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
 #error "Mixed versions compilation."
 #endif
 
