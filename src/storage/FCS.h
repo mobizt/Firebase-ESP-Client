@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Firebase Storage class, FCS.h version 1.2.6
+ * Google's Firebase Storage class, FCS.h version 1.2.8
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 16, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,6 +35,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_FB_STORAGE
@@ -37,7 +44,6 @@
 #ifndef FB_Storage_H
 #define FB_Storage_H
 
-#include <Arduino.h>
 #include "FB_Utils.h"
 #include "session/FB_Session.h"
 

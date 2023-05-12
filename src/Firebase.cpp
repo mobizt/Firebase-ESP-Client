@@ -1,7 +1,12 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * The Firebase class, Firebase.cpp v1.2.5
+ * The Firebase class, Firebase.cpp v1.2.6
  *
- *  Created January 16, 2023
+ *  Created April 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -28,9 +33,11 @@
 #ifndef Firebase_CPP
 #define Firebase_CPP
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "Firebase.h"
 
-#if defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if defined(ESP8266) || defined(ESP32) || defined(MB_ARDUINO_PICO) || defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #if defined(FIREBASE_ESP_CLIENT)
 
@@ -403,7 +410,7 @@ bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi, ui
     return mbfs.sdBegin(ss, sck, miso, mosi, frequency);
 }
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 bool FIREBASE_CLASS::sdBegin(SDFSConfig *sdFSConfig)
 {
     return mbfs.sdFatBegin(sdFSConfig);
@@ -830,7 +837,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
-    MB_String s = fb_esp_pgm_str_577; // "server_key"
+    MB_String s = esp_fb_legacy_fcm_pgm_str_1; // "server_key"
 
     json->get(data, s.c_str());
 
@@ -855,7 +862,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
         return false;
     }
 
-    s = fb_esp_pgm_str_576; // "topic"
+    s = esp_fb_legacy_fcm_pgm_str_2; // "topic"
 
     json->get(data, s.c_str());
 
@@ -898,7 +905,7 @@ bool FIREBASE_CLASS::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi, ui
     return mbfs.sdBegin(ss, sck, miso, mosi, frequency);
 }
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 bool FIREBASE_CLASS::sdBegin(SDFSConfig *sdFSConfig)
 {
     return mbfs.sdFatBegin(sdFSConfig);

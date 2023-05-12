@@ -13,7 +13,7 @@
 // This example shows how to create a document in a document collection. This operation required Email/password, custom or OAUth2.0 authentication.
 
 #include <Arduino.h>
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
@@ -151,10 +151,13 @@ void loop()
         // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
         FirebaseJson content;
 
-        // We will create the nested document in the parent path "a0/b0/c0
-        // a0 is the collection id, b0 is the document id in collection a0 and c0 is the collection id in the document b0.
-        // and d? is the document id in the document collection id c0 which we will create.
-        String documentPath = "a0/b0/c0/d" + String(count);
+        // Note: If new document created under non-existent ancestor documents, that document will not appear in queries and snapshot 
+        // https://cloud.google.com/firestore/docs/using-console#non-existent_ancestor_documents.
+
+         // We will create the document in the parent path "a0/b?
+        // a0 is the collection id, b? is the document id in collection a0.
+
+        String documentPath = "a0/b" + String(count);
 
         // If the document path contains space e.g. "a b c/d e f"
         // It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"

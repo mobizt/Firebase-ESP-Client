@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Cloud Storage class, GCS.h version 1.2.6
+ * Google's Cloud Storage class, GCS.h version 1.2.8
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 12, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,6 +35,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_GC_STORAGE
@@ -37,7 +44,6 @@
 #ifndef GOOGLE_CS_H
 #define GOOGLE_CS_H
 
-#include <Arduino.h>
 #include "FB_Utils.h"
 #include "session/FB_Session.h"
 
@@ -229,7 +235,7 @@ private:
     bool mListFiles(FirebaseData *fbdo, MB_StringPtr bucketID, ListOptions *options = nullptr);
     bool parseJsonResponse(FirebaseData *fbdo, PGM_P key_path);
 
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
     void runResumableUploadTask(const char *taskName);
 #else
     void runResumableUploadTask();

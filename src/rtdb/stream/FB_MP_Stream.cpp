@@ -1,3 +1,8 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
  * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.6
  *
@@ -68,7 +73,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
             if (data.success)
             {
                 type = data.type;
-                if (strcmp(type.c_str(), pgm2Str(fb_esp_pgm_str_186/* "object" */)) == 0)
+                if (strcmp(type.c_str(), pgm2Str(fb_esp_rtdb_pgm_str_40/* "object" */)) == 0)
                     type = sif->data_type_str.c_str();
                 eventType = sif->event_type_str.c_str();
                 value = data.to<const char *>();

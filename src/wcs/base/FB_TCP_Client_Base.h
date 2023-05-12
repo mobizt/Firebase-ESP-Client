@@ -1,7 +1,12 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /*
- * TCP Client Base class, version 1.0.8
+ * TCP Client Base class, version 1.0.9
  *
- * Created November 10, 2022
+ * Created March 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,9 +34,11 @@
 #define FB_TCP_CLIENT_BASE_H
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FB_Utils.h"
 #include <IPAddress.h>
 #include <Client.h>
+
 typedef enum
 {
     fb_cert_type_undefined = -1,

@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.9
+ * Google's Cloud Functions Config class, FunctionsConfig.cpp version 1.0.10
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 12, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -94,45 +99,45 @@ void FunctionsConfig::removeUpdateMasks(const char *key)
 
 void FunctionsConfig::mSetName(MB_StringPtr name)
 {
-    MB_String t = fb_esp_pgm_str_395; // "projects/"
+    MB_String t = fb_esp_func_pgm_str_47; // "projects/"
     t += _projectId;
-    t += fb_esp_pgm_str_364; // "/locations/"
+    t += fb_esp_func_pgm_str_27; // "/locations/"
     t += _locationId;
-    t += fb_esp_pgm_str_365; // "/functions"
+    t += fb_esp_func_pgm_str_28; // "/functions"
     t += fb_esp_pgm_str_1;   // "/"
     t += name;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_274 /* "name" */), t.c_str());
+    _funcCfg.set(pgm2Str(fb_esp_pgm_str_66 /* "name" */), t.c_str());
     _name = name;
 }
 
 void FunctionsConfig::mSetDescription(MB_StringPtr description)
 {
     MB_String _description = description;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_367 /* "description" */), _description);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_367 /* "description" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_48 /* "description" */), _description);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_48 /* "description" */));
 }
 
 void FunctionsConfig::mSetEntryPoint(MB_StringPtr entry)
 {
     MB_String _entry = entry;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_368 /* "entryPoint" */), _entry);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_368 /* "entryPoint" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_49 /* "entryPoint" */), _entry);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_49 /* "entryPoint" */));
     _entryPoint = entry;
 }
 
 void FunctionsConfig::mSetRuntime(MB_StringPtr runtime)
 {
     MB_String _runtime = runtime;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_369 /* "runtime" */), _runtime);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_369 /* "runtime" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_50 /* "runtime" */), _runtime);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_50 /* "runtime" */));
 }
 
 void FunctionsConfig::mSetTimeout(MB_StringPtr seconds)
 {
     MB_String s = seconds;
-    s += fb_esp_pgm_str_417; // "s"
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_370 /* "timeout" */), s.c_str());
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_370 /* "timeout" */));
+    s += fb_esp_func_pgm_str_51; // "s"
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_52 /* "timeout" */), s.c_str());
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_52 /* "timeout" */));
 }
 
 void FunctionsConfig::mSetAvailableMemoryMb(MB_StringPtr mb)
@@ -155,14 +160,14 @@ void FunctionsConfig::mSetAvailableMemoryMb(MB_StringPtr mb)
     else
         _mb = 128;
 
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_371 /* "availableMemoryMb" */), _mb);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_371 /* "availableMemoryMb" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_53 /* "availableMemoryMb" */), _mb);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_53 /* "availableMemoryMb" */));
 }
 
 void FunctionsConfig::mSetMaxInstances(MB_StringPtr maxInstances)
 {
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_377 /* "maxInstances"*/), atoi(stringPtr2Str(maxInstances)));
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_377 /* "maxInstances" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_54 /* "maxInstances"*/), atoi(stringPtr2Str(maxInstances)));
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_54 /* "maxInstances" */));
 }
 
 void FunctionsConfig::mSetSource(MB_StringPtr path, fb_esp_functions_sources_type sourceType, fb_esp_mem_storage_type storageType)
@@ -174,8 +179,8 @@ void FunctionsConfig::mSetSource(MB_StringPtr path, fb_esp_functions_sources_typ
     case functions_sources_type_storage_bucket_archive:
 
         URLHelper::addGStorageURL(t, _bucketId, path);
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_381 /* "sourceArchiveUrl" */), t.c_str());
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_381 /* "sourceArchiveUrl" */));
+        _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_58 /* "sourceArchiveUrl" */), t.c_str());
+        addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_58 /* "sourceArchiveUrl" */));
 
         _sourceType = sourceType;
         break;
@@ -193,8 +198,8 @@ void FunctionsConfig::mSetSource(MB_StringPtr path, fb_esp_functions_sources_typ
         break;
 
     case functions_sources_type_repository:
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_382 /* "sourceRepository" */), _path);
-        addUpdateMasks(pgm2Str(fb_esp_pgm_str_382 /* "sourceRepository" */));
+        _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_59 /* "sourceRepository" */), _path);
+        addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_59 /* "sourceRepository" */));
         _sourceType = sourceType;
         break;
 
@@ -212,14 +217,14 @@ void FunctionsConfig::setSource(const uint8_t *pgmArchiveData, size_t len)
 void FunctionsConfig::mSetIngressSettings(MB_StringPtr settings)
 {
     MB_String _settings = settings;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_380 /* "ingressSettings" */), _settings);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_380 /* "ingressSettings" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_57 /* "ingressSettings" */), _settings);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_57 /* "ingressSettings" */));
 }
 
 void FunctionsConfig::mAddLabel(MB_StringPtr key, MB_StringPtr value)
 {
     MB_String _value = value;
-    MB_String t = fb_esp_pgm_str_373; // "labels"
+    MB_String t = fb_esp_pgm_str_64; // "labels"
     addUpdateMasks(t.c_str());
     t += fb_esp_pgm_str_1; // "/"
     t += key;
@@ -227,12 +232,12 @@ void FunctionsConfig::mAddLabel(MB_StringPtr key, MB_StringPtr value)
 }
 void FunctionsConfig::clearLabels()
 {
-    _funcCfg.remove(pgm2Str(fb_esp_pgm_str_373 /* "labels" */));
-    removeUpdateMasks(pgm2Str(fb_esp_pgm_str_373 /* labels */));
+    _funcCfg.remove(pgm2Str(fb_esp_pgm_str_64 /* "labels" */));
+    removeUpdateMasks(pgm2Str(fb_esp_pgm_str_64 /* labels */));
 }
 void FunctionsConfig::mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
 {
-    MB_String str = fb_esp_pgm_str_374; // "environmentVariables"
+    MB_String str = fb_esp_func_pgm_str_12; // "environmentVariables"
     addUpdateMasks(str.c_str());
     str += fb_esp_pgm_str_1; // "/"
     str += key;
@@ -240,43 +245,43 @@ void FunctionsConfig::mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr val
 }
 void FunctionsConfig::clearEnvironmentVariables()
 {
-    _funcCfg.remove(pgm2Str(fb_esp_pgm_str_374 /* "environmentVariables" */));
-    removeUpdateMasks(pgm2Str(fb_esp_pgm_str_374 /* "environmentVariables" */));
+    _funcCfg.remove(pgm2Str(fb_esp_func_pgm_str_12 /* "environmentVariables" */));
+    removeUpdateMasks(pgm2Str(fb_esp_func_pgm_str_12 /* "environmentVariables" */));
 }
 void FunctionsConfig::mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPtr value)
 {
     MB_String _value = value;
-    MB_String str = fb_esp_pgm_str_375; // "buildEnvironmentVariables"
+    MB_String str = fb_esp_func_pgm_str_60; // "buildEnvironmentVariables"
     addUpdateMasks(str.c_str());
     str += fb_esp_pgm_str_1; // "/"
     str += key;
-    _funcCfg.set(str.c_str(),stringPtr2Str(value));
+    _funcCfg.set(str.c_str(), stringPtr2Str(value));
 }
 
 void FunctionsConfig::clearBuildEnvironmentVariables()
 {
-    _funcCfg.remove(pgm2Str(fb_esp_pgm_str_375 /* "buildEnvironmentVariables" */));
-    removeUpdateMasks(pgm2Str(fb_esp_pgm_str_375 /* "buildEnvironmentVariables" */));
+    _funcCfg.remove(pgm2Str(fb_esp_func_pgm_str_60 /* "buildEnvironmentVariables" */));
+    removeUpdateMasks(pgm2Str(fb_esp_func_pgm_str_60 /* "buildEnvironmentVariables" */));
 }
 void FunctionsConfig::mSetNetwork(MB_StringPtr network)
 {
     MB_String _network = network;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_376 /* "network" */), _network);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_376 /* "network" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_61 /* "network" */), _network);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_61 /* "network" */));
 }
 void FunctionsConfig::mSetVpcConnector(MB_StringPtr vpcConnector)
 {
 
     MB_String _vpcConnector = vpcConnector;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_378 /* "vpcConnector" */), _vpcConnector);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_378 /* "vpcConnector" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_55 /* "vpcConnector" */), _vpcConnector);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_55 /* "vpcConnector" */));
 }
 void FunctionsConfig::mSetVpcConnectorEgressSettings(MB_StringPtr e)
 {
 
     MB_String _e = e;
-    _funcCfg.set(pgm2Str(fb_esp_pgm_str_379 /* "vpcConnectorEgressSettings" */), _e);
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_379 /* "vpcConnectorEgressSettings" */));
+    _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_56 /* "vpcConnectorEgressSettings" */), _e);
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_56 /* "vpcConnectorEgressSettings" */));
 }
 
 void FunctionsConfig::mSetEventTrigger(MB_StringPtr eventType, MB_StringPtr resource,
@@ -287,27 +292,27 @@ void FunctionsConfig::mSetEventTrigger(MB_StringPtr eventType, MB_StringPtr reso
     _triggerType = fb_esp_functions_trigger_type_event;
 
     if (_eventType.length() > 0)
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_385 /* "eventTrigger/eventType" */), _eventType);
+        _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_62 /* "eventTrigger/eventType" */), _eventType);
 
     if (_resource.length() > 0)
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_391 /* "eventTrigger/resource" */), _resource);
+        _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_63 /* "eventTrigger/resource" */), _resource);
 
     if (_service.length() > 0)
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_392 /* "eventTrigger/service" */), _service);
+        _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_64 /* "eventTrigger/service" */), _service);
 
     if (_failurePolicy.length() > 0)
     {
 
-        static FirebaseJson js(fb_esp_pgm_str_394 /* "{\"retry\":{}}" */);
-        _funcCfg.set(pgm2Str(fb_esp_pgm_str_393 /* "eventTrigger/failurePolicy" */), js);
+        static FirebaseJson js(fb_esp_func_pgm_str_66 /* "{\"retry\":{}}" */);
+        _funcCfg.set(pgm2Str(fb_esp_func_pgm_str_65 /* "eventTrigger/failurePolicy" */), js);
     }
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_472 /* "eventTrigger" */));
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_67 /* "eventTrigger" */));
 }
 
 void FunctionsConfig::setIamPolicy(PolicyBuilder *policy)
 {
     _policy = policy;
-    addUpdateMasks(pgm2Str(fb_esp_pgm_str_473 /* "policy" */));
+    addUpdateMasks(pgm2Str(fb_esp_func_pgm_str_68 /* "policy" */));
 }
 
 String FunctionsConfig::getTriggerUrl()

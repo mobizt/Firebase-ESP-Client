@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.8
+ * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.9
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 12, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

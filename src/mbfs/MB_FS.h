@@ -1,9 +1,9 @@
 /**
- * The MB_FS, filesystems wrapper class v1.0.12
+ * The MB_FS, filesystems wrapper class v1.0.15
  *
  * This wrapper class is for SD and Flash filesystems interface which supports SdFat (//https://github.com/greiman/SdFat)
  *
- *  Created January 20, 2023
+ *  Created March 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,13 +30,33 @@
 #ifndef MBFS_CLASS_H
 #define MBFS_CLASS_H
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
+
 #define FS_NO_GLOBALS
-#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
 #include <FS.h>
 #endif
 #include "MB_FS_Interfaces.h"
 #include MB_STRING_INCLUDE_CLASS
 #include "SPI.h"
+
+#if defined(ESP32) && __has_include(<sys/stat.h>)
+#ifdef _LITTLEFS_H_
+#define MB_FS_USE_POSIX_STAT
+#include <sys/stat.h>
+namespace mb_fs_ns
+{
+    inline bool exists(const char *mountPoint, const char *filename)
+    {
+        MB_String path = mountPoint;
+        path += filename;
+        struct stat st;
+        return stat(path.c_str(), &st) == 0;
+    }
+};
+#endif
+#endif
 
 using namespace mb_string;
 
@@ -118,7 +138,7 @@ struct mbfs_sd_config_info_t
 #endif
 };
 
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
 struct mbfs_sd_config_info_t
 {
     int ss = -1;
@@ -160,7 +180,7 @@ public:
 #elif defined(ESP8266) || defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
         sd_rdy = MBFS_SD_FS.begin(ss);
         return sd_rdy;
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
         SDFSConfig c;
         c.setCSPin(ss);
         c.setSPISpeed(frequency);
@@ -200,7 +220,7 @@ public:
             sd_rdy = MBFS_SD_FS.begin();
 #endif
 
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
 
         cfg->_int.sd_config.sck = sck;
 
@@ -268,7 +288,7 @@ public:
     }
 #endif
 
-#if (defined(ESP8266) || defined(PICO_RP2040)) && defined(MBFS_SD_FS)
+#if (defined(ESP8266) || defined(MB_ARDUINO_PICO)) && defined(MBFS_SD_FS)
     // Assign the SD card interfaces with SDFSConfig object pointer (ESP8266 and Pico only).
     bool sdFatBegin(SDFSConfig *sdFSConfig)
     {
@@ -325,7 +345,7 @@ public:
         flash_rdy = MBFS_FLASH_FS.begin();
 #endif
 
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
         flash_rdy = MBFS_FLASH_FS.begin();
 #endif
 
@@ -375,7 +395,7 @@ public:
             sd_rdy = sdMMCBegin(sd_config.sdMMCConfig.mountpoint, sd_config.sdMMCConfig.mode1bit, sd_config.sdMMCConfig.format_if_mount_failed);
 #endif
 
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
         if (!sd_rdy)
         {
             if (sd_config.sdFSConfig)
@@ -636,7 +656,17 @@ public:
 
 #if defined(MBFS_FLASH_FS)
         if (type == mbfs_flash)
+        {
+
+// The workaround for ESP32 LittleFS when calling vfs_api.cpp open() issue.
+// See https://github.com/espressif/arduino-esp32/issues/7615
+#if defined(MB_FS_USE_POSIX_STAT)
+            return mb_fs_ns::exists("/littlefs", filename.c_str());
+#else
             return MBFS_FLASH_FS.exists(filename.c_str());
+#endif
+        }
+
 #endif
 
 #if defined(MBFS_SD_FS)
@@ -908,7 +938,7 @@ public:
         return true;
 #endif
 
-#if defined(MBFS_SD_FS) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
+#if defined(MBFS_SD_FS) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
         return true;
 #endif
 

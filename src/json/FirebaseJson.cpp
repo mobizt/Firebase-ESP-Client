@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 3.0.5
+ * FirebaseJson, version 3.0.6
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created January 20, 2023
+ * Created March 5, 2023
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")

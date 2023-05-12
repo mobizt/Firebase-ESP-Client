@@ -3372,7 +3372,7 @@ bool rollback(FirebaseData *fbdo, <string> projectId, <string> databaseId, <stri
 
 
 
-#### Get a document at the defined path.
+#### Runs a query.
 
 param **`fbdo`** The pointer to Firebase Data Object.
 
@@ -4708,6 +4708,18 @@ return **`The error description string (String object).`**
 ```cpp
 String errorReason();
 ```
+
+
+#### Get the error code from the process
+
+return **`The error code (int).`**
+
+See src/FB_Error.h
+
+```cpp
+String errorCode();
+```
+
 
 
 

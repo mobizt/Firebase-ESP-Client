@@ -1,7 +1,13 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 #ifndef FirebaseFS_H
 #define FirebaseFS_H
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 
 #define FIREBASE_ESP_CLIENT 1
 
@@ -27,7 +33,7 @@
 #endif
 #if defined(ESP32) || defined(ESP8266)
 #define DEFAULT_FLASH_FS SPIFFS
-#elif defined(PICO_RP2040)
+#elif defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_NANO_RP2040_CONNECT)
 #include <LittleFS.h>
 #define DEFAULT_FLASH_FS LittleFS
 #endif
@@ -64,12 +70,19 @@ static SdFat sd_fat_fs;   // should declare as static here
 #include <SD.h>
 #define DEFAULT_SD_FS SD
 #define CARD_TYPE_SD 1
-#elif  defined(PICO_RP2040)
+#elif defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_NANO_RP2040_CONNECT)
 // Use SDFS (ESP8266SdFat) instead of SD
 #include <SDFS.h>
 #define DEFAULT_SD_FS SDFS
 #define CARD_TYPE_SD 1
 #endif
+
+// For RTDB legacy token usage only
+// #define USE_LEGACY_TOKEN_ONLY
+
+// Enable the error string from fbdo.errorReason */
+// You can get the error code from fbdo.errorCode() when disable this option
+#define ENABLE_ERROR_STRING
 
 // For ESP32, format SPIFFS or FFat if mounting failed
 #define FORMAT_FLASH_IF_MOUNT_FAILED 1
@@ -167,7 +180,7 @@ static SdFat sd_fat_fs;   // should declare as static here
 #endif
 
 /////////////////////////////////// WARNING ///////////////////////////////////
-// Using RP2040 Pico Arduino SDK, FreeRTOS with LittleFS will cause device hangs 
+// Using RP2040 Pico Arduino SDK, FreeRTOS with LittleFS will cause device hangs
 // when write the data to flash filesystem.
-// Do not include free rtos dot h or even it excluded from compilation by using macro 
+// Do not include free rtos dot h or even it excluded from compilation by using macro
 // or even comment it out with "//"".

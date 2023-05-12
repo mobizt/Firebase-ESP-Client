@@ -1,3 +1,8 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
  * Google's Firebase Stream class, FB_Stream.h version 1.1.7
  *
@@ -307,13 +312,13 @@ public:
         return sif->blob;
     }
 
-#if defined(MBFS_FLASH_FS)
+#if defined(MBFS_FLASH_FS) && defined(ENABLE_RTDB)
     template <typename T>
     auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
     {
         if (sif->data_type == fb_esp_data_type::d_file && Signer.config)
         {
-            int ret = Signer.mbfs->open(pgm2Str(fb_esp_pgm_str_184 /* "/fb_bin_0.tmp" */),
+            int ret = Signer.mbfs->open(pgm2Str(fb_esp_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
                                         mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
             if (ret < 0)
                 sif->httpCode = ret;

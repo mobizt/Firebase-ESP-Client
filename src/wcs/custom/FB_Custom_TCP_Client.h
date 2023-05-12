@@ -1,7 +1,12 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * The custom TCP Client Class v1.0.2
+ * The custom TCP Client Class v1.0.3
  *
- * Created December 19, 2022
+ * Created March 5, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

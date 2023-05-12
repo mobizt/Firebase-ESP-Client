@@ -1,8 +1,12 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
 
 /**
- * The Firebase class, Firebase.h v1.2.5
+ * The Firebase class, Firebase.h v1.2.6
  *
- *  Created January 16, 2023
+ *  Created April 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,19 +34,20 @@
 #define Firebase_H
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 
 #include "FirebaseFS.h"
 #include "FB_Const.h"
 
-#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
 #ifndef FB_ENABLE_EXTERNAL_CLIENT
 #define FB_ENABLE_EXTERNAL_CLIENT
 #endif
 #endif
 
-#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(MB_ARDUINO_PICO)
 
-#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
 extern "C" char *sbrk(int incr);
@@ -378,7 +383,7 @@ public:
    */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 
   /** Initiate SD card with SD FS configurations (ESP8266 only).
    *
@@ -2474,13 +2479,13 @@ public:
    * Call [streamData object].xxxData will return the appropriate data type of
    * the payload returned from the server.
    */
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
   void setStreamCallback(FirebaseData &fbdo, FirebaseData::StreamEventCallback dataAvailablecallback,
                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize = 8192)
   {
     RTDB.setStreamCallback(&fbdo, dataAvailablecallback, timeoutCallback, streamTaskStackSize);
   }
-#elif defined(ESP8266) || defined(PICO_RP2040) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO) || defined(FB_ENABLE_EXTERNAL_CLIENT)
   void setStreamCallback(FirebaseData &fbdo, FirebaseData::StreamEventCallback dataAvailablecallback,
                          FirebaseData::StreamTimeoutCallback timeoutCallback = NULL)
   {
@@ -2769,7 +2774,7 @@ public:
    */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 
   /** Initiate SD card with SD FS configurations (ESP8266 only).
    *

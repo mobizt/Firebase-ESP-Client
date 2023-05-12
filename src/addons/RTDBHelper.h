@@ -3,20 +3,21 @@
 
 #pragma once
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_RTDB
 
 #ifndef RTDBHelper_H
 #define RTDBHelper_H
-#include <Arduino.h>
 
 #if defined(FIREBASE_ESP_CLIENT)
 #include <Firebase_ESP_Client.h>
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #if defined(ESP32)
 #include <FirebaseESP32.h>
-#elif defined(ESP8266) || defined(PICO_RP2040)
+#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
 #include <FirebaseESP8266.h>
 #endif
 #endif
@@ -28,7 +29,7 @@ void printResult(FirebaseData &data)
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
         Serial.println(data.to<float>(), 5);
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
-#if defined(PICO_RP2040)
+#if defined(MB_ARDUINO_PICO)
         Serial.printf("%.9lf\n", data.to<double>());
 #else
         printf("%.9lf\n", data.to<double>());
@@ -81,7 +82,7 @@ void printResult(FirebaseData &data)
             else if (result.typeNum == FirebaseJson::JSON_FLOAT)
                 Serial.println(result.to<float>());
             else if (result.typeNum == FirebaseJson::JSON_DOUBLE)
-#if defined(PICO_RP2040)
+#if defined(MB_ARDUINO_PICO)
                 Serial.printf("%.9lf\n", result.to<double>());
 #else
                 printf("%.9lf\n", result.to<double>());
@@ -145,7 +146,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
         Serial.println(data.to<float>(), 5);
     else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
-#if defined(PICO_RP2040)
+#if defined(MB_ARDUINO_PICO)
         Serial.printf("%.9lf\n", data.to<double>());
 #else
         printf("%.9lf\n", data.to<double>());
@@ -200,7 +201,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
             else if (result.typeNum == FirebaseJson::JSON_FLOAT)
                 Serial.println(result.to<float>());
             else if (result.typeNum == FirebaseJson::JSON_DOUBLE)
-#if defined(PICO_RP2040)
+#if defined(MB_ARDUINO_PICO)
                 Serial.printf("%.9lf\n", result.to<double>());
 #else
                 printf("%.9lf\n", result.to<double>());

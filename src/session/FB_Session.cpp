@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.5
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.7
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 16, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,7 +34,8 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifndef FIREBASE_SESSION_CPP
@@ -255,15 +261,6 @@ void FirebaseData::clearQueueItem(QueueItem *item)
 bool FirebaseData::pauseFirebase(bool pause)
 {
 
-    bool status = tcpClient.networkReady();
-
-    if (!status || !tcpClient.connected())
-    {
-        session.connected = false;
-        session.rtdb.pause = true;
-        return false;
-    }
-
     if (pause == session.rtdb.pause)
         return true;
 
@@ -303,34 +300,34 @@ MB_String FirebaseData::getDataType(uint8_t type)
     switch (type)
     {
     case fb_esp_data_type::d_json:
-        res = fb_esp_pgm_str_74; // "json"
+        res = fb_esp_rtdb_ss_pgm_str_1; // "json"
         break;
     case fb_esp_data_type::d_array:
-        res = fb_esp_pgm_str_165; // "array"
+        res = fb_esp_rtdb_ss_pgm_str_3; // "array"
         break;
     case fb_esp_data_type::d_string:
-        res = fb_esp_pgm_str_75; // "string"
+        res = fb_esp_rtdb_ss_pgm_str_2; // "string"
         break;
     case fb_esp_data_type::d_float:
-        res = fb_esp_pgm_str_76; // "float"
+        res = fb_esp_rtdb_ss_pgm_str_4; // "float"
         break;
     case fb_esp_data_type::d_double:
-        res = fb_esp_pgm_str_108; // "double"
+        res = fb_esp_rtdb_ss_pgm_str_7; // "double"
         break;
     case fb_esp_data_type::d_boolean:
-        res = fb_esp_pgm_str_105; // "boolean"
+        res = fb_esp_rtdb_ss_pgm_str_8; // "boolean"
         break;
     case fb_esp_data_type::d_integer:
-        res = fb_esp_pgm_str_77; // "int"
+        res = fb_esp_rtdb_ss_pgm_str_5; // "int"
         break;
     case fb_esp_data_type::d_blob:
-        res = fb_esp_pgm_str_91; // "blob"
+        res = fb_esp_rtdb_ss_pgm_str_9; // "blob"
         break;
     case fb_esp_data_type::d_file:
-        res = fb_esp_pgm_str_183; // "file"
+        res = fb_esp_rtdb_ss_pgm_str_10; // "file"
         break;
     case fb_esp_data_type::d_null:
-        res = fb_esp_pgm_str_78; // "null"
+        res = fb_esp_rtdb_ss_pgm_str_6; // "null"
         break;
     default:
         break;
@@ -347,21 +344,21 @@ MB_String FirebaseData::getMethod(uint8_t method)
     switch (method)
     {
     case http_get:
-        res = fb_esp_pgm_str_115; // "get"
+        res = fb_esp_rtdb_ss_pgm_str_11; // "get"
         break;
     case http_put:
     case rtdb_set_nocontent:
-        res = fb_esp_pgm_str_116; // "set"
+        res = fb_esp_rtdb_ss_pgm_str_12; // "set"
         break;
     case http_post:
-        res = fb_esp_pgm_str_117; // "push"
+        res = fb_esp_rtdb_ss_pgm_str_13; // "push"
         break;
     case http_patch:
     case rtdb_update_nocontent:
-        res = fb_esp_pgm_str_118; // "update"
+        res = fb_esp_pgm_str_68; // "update"
         break;
     case http_delete:
-        res = fb_esp_pgm_str_119; // "delete"
+        res = fb_esp_pgm_str_69; // "delete"
         break;
     default:
         break;
@@ -549,7 +546,7 @@ void FirebaseData::addQueue(QueueItem *qItem)
 
 #endif
 
-#if defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 void FirebaseData::setBSSLBufferSize(uint16_t rx, uint16_t tx)
 {
     if (rx >= 512 && rx <= 16384)
@@ -579,7 +576,7 @@ void FirebaseData::closeFile()
     Signer.mbfs->close(mbfs_type mem_storage_type_sd);
 }
 
-#if (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 WiFiClientSecure *FirebaseData::getWiFiClient()
 {
     return tcpClient.wcs.get();
@@ -635,10 +632,16 @@ String FirebaseData::errorReason()
     {
         MB_String buf;
         Signer.errorToString(session.response.code, buf);
-        if (buf.length() == 0)
-            buf += fb_esp_pgm_str_83; // "unknown error"
         return buf.c_str();
     }
+}
+
+int FirebaseData::errorCode()
+{
+    if (session.error.length() > 0)
+        return session.errCode;
+    else
+        return session.response.code;
 }
 
 #if defined(FIREBASE_ESP_CLIENT)
@@ -697,17 +700,17 @@ String FirebaseData::downloadURL()
     if (bucket.length() > 0)
     {
         MB_String host;
-        HttpHelper::addGAPIsHost(host, fb_esp_pgm_str_265);
+        HttpHelper::addGAPIsHost(host, fb_esp_storage_ss_pgm_str_1/* "firebasestorage." */);
         URLHelper::host2Url(link, host);
-        link += fb_esp_pgm_str_266; // "/v0/b/"
+        link += fb_esp_storage_ss_pgm_str_2; // "/v0/b/"
         link += bucket;
-        link += fb_esp_pgm_str_267; // "/o"
-        link += fb_esp_pgm_str_1;   // "/"
+        link += fb_esp_storage_ss_pgm_str_3; // "/o"
+        link += fb_esp_pgm_str_1;            // "/"
         link += URLHelper::encode(metaName);
-        link += fb_esp_pgm_str_173; // "?"
-        link += fb_esp_pgm_str_269; // "alt=media"
-        link += fb_esp_pgm_str_172; // "&"
-        link += fb_esp_pgm_str_273; // "token="
+        link += fb_esp_pgm_str_7;            // "?"
+        link += fb_esp_storage_ss_pgm_str_4; // "alt=media"
+        link += fb_esp_pgm_str_8;            // "&"
+        link += fb_esp_storage_ss_pgm_str_5; // "token="
         link += token;
     }
 
@@ -741,6 +744,7 @@ int FirebaseData::maxPayloadLength()
 void FirebaseData::sendStreamToCB(int code)
 {
     session.error.clear();
+    session.errCode = 0;
     session.rtdb.data_millis = 0;
     session.rtdb.data_tmo = true;
     session.response.code = code;
@@ -792,7 +796,7 @@ void FirebaseData::setSecure()
     if (!tcpClient.networkReady())
         return;
 
-#if (defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if (defined(ESP8266) || defined(MB_ARDUINO_PICO)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
     if (Signer.getTime() > ESP_DEFAULT_TS)
     {
         if (Signer.config)
@@ -1083,9 +1087,9 @@ bool FirebaseData::prepareDownload(const MB_String &filename, fb_esp_mem_storage
 
 void FirebaseData::prepareDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
 {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
     int size = tcpHandler.decodedPayloadLen > 0 ? tcpHandler.decodedPayloadLen : response.contentLen;
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
     tcpHandler.error.code = 0;
     if (!Update.begin(size))
         tcpHandler.error.code = FIREBASE_ERROR_FW_UPDATE_TOO_LOW_FREE_SKETCH_SPACE;
@@ -1099,7 +1103,7 @@ void FirebaseData::prepareDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpH
 
 void FirebaseData::endDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpHandler)
 {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
 
     if (tcpHandler.error.code == 0 && !Update.end())
         tcpHandler.error.code = FIREBASE_ERROR_FW_UPDATE_END_FAILED;
@@ -1160,7 +1164,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
                     {
 #if defined(ENABLE_RTDB)
                         // check for the request node path is empty or not found
-                        if (StringHelper::compare(session.rtdb.resp_etag, 0, fb_esp_pgm_str_151 /* "null_etag" */))
+                        if (StringHelper::compare(session.rtdb.resp_etag, 0, fb_esp_rtdb_pgm_str_11 /* "null_etag" */))
                         {
                             session.response.code = FIREBASE_ERROR_PATH_NOT_EXIST;
                             tcpHandler.error.code = FIREBASE_ERROR_PATH_NOT_EXIST;
@@ -1169,7 +1173,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
                         else
                         {
                             // based64 encoded string of file data
-                            tcpHandler.isBase64File = StringHelper::compare((char *)buf, 0, fb_esp_pgm_str_93, true);
+                            tcpHandler.isBase64File = StringHelper::compare((char *)buf, 0, fb_esp_rtdb_pgm_str_8/* "\"file,base64," */, true);
                         }
 
                         if (tcpHandler.isBase64File)
@@ -1243,7 +1247,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
 
         if (isOTA)
         {
-#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040))
+#if defined(OTA_UPDATE_ENABLED) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
             if (tcpHandler.error.code == 0)
             {
                 bool ret = false;
@@ -1286,7 +1290,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
                 else
 #endif
                     ret = Signer.mbfs->write(mbfs_type type, buf, tcpHandler.bufferAvailable) == (int)tcpHandler.bufferAvailable;
-               Utils::idle();
+                Utils::idle();
                 if (!ret)
                     tcpHandler.error.code = MB_FS_ERROR_FILE_IO_ERROR;
 
@@ -1315,7 +1319,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
     switch (stage)
     {
     case 0:
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_274 /* "name" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_66 /* "name" */, pos))
         {
             stage++;
             if (isList)
@@ -1331,7 +1335,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
         }
         break;
     case 1:
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_275 /* "bucket" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_6 /* "bucket" */, pos))
         {
             stage++;
             if (isList)
@@ -1355,7 +1359,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
         break;
 
     case 2:
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_276 /* "generation" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_7 /* "generation" */, pos))
         {
             stage++;
             int ts = atoi(val.substr(0, val.length() - 6).c_str());
@@ -1381,7 +1385,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
             return false;
         }
 
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_503 /* "metageneration" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_8 /* "metageneration" */, pos))
         {
             stage++;
             int gen = atoi(val.c_str());
@@ -1398,7 +1402,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
         break;
 
     case 4:
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_277 /* "contentType" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_9 /* "contentType" */, pos))
         {
             stage++;
             if (isList)
@@ -1415,7 +1419,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
         break;
 
     case 5:
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_278 /* "size" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_10 /* "size" */, pos))
         {
             stage++;
             int size = atoi(val.c_str());
@@ -1442,7 +1446,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
     case 6:
     case 7:
 
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_478 /* "crc32c" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_11 /* "crc32c" */, pos))
         {
             stage++;
 #if defined(ENABLE_FB_STORAGE)
@@ -1454,7 +1458,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
                 session.gcs.meta.crc32 = val;
 #endif
         }
-        else if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_279 /* "etag" */, pos))
+        else if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_12 /* "etag" */, pos))
         {
             stage++;
 #if defined(ENABLE_FB_STORAGE)
@@ -1469,8 +1473,8 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
         break;
 
     case 8:
-        if ((type == 0 && JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_272 /* "downloadTokens" */, pos)) ||
-            (type == 1 && JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_479 /* "metadata/firebaseStorageDownloadTokens" */,
+        if ((type == 0 && JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_13 /* "downloadTokens" */, pos)) ||
+            (type == 1 && JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_14 /* "metadata/firebaseStorageDownloadTokens" */,
                                                  pos)))
         {
             stage++;
@@ -1486,7 +1490,7 @@ bool FirebaseData::getUploadInfo(int type, int &stage, const MB_String &pChunk, 
         break;
 
     case 9:
-        if (JsonHelper::parseChunk(val, pChunk, fb_esp_pgm_str_492 /* "mediaLink" */, pos))
+        if (JsonHelper::parseChunk(val, pChunk, fb_esp_storage_ss_pgm_str_15 /* "mediaLink" */, pos))
         {
             stage++;
 #if defined(ENABLE_GC_STORAGE)
@@ -1524,11 +1528,11 @@ void FirebaseData::getAllUploadInfo(int type, int &currentStage, const MB_String
 }
 #endif
 
-#if (defined(ESP32) || defined(PICO_RP2040)) && defined(ENABLE_RTDB)
+#if (defined(ESP32) || defined(MB_ARDUINO_PICO)) && defined(ENABLE_RTDB)
 const char *FirebaseData::getTaskName(size_t taskStackSize, bool isStream)
 {
-    MB_String taskName = fb_esp_pgm_str_72; // "task"
-    taskName += isStream ? fb_esp_pgm_str_113 /* "_stream" */ : fb_esp_pgm_str_114 /* "_error_queue" */;
+    MB_String taskName = fb_esp_rtdb_ss_pgm_str_14; // "task"
+    taskName += isStream ? fb_esp_rtdb_ss_pgm_str_15 /* "_stream" */ : fb_esp_rtdb_ss_pgm_str_16 /* "_error_queue" */;
     taskName += sessionPtr;
     if (isStream)
     {
@@ -1554,10 +1558,11 @@ void FirebaseData::getError(MB_String &payload, struct fb_esp_tcp_response_handl
             initJson();
             JsonHelper::setData(session.jsonPtr, payload, clearPayload);
 
-            if (JsonHelper::parse(session.jsonPtr, session.dataPtr, fb_esp_pgm_str_257 /* "error/code" */))
+            if (JsonHelper::parse(session.jsonPtr, session.dataPtr, fb_esp_storage_ss_pgm_str_16 /* "error/code" */))
             {
                 tcpHandler.error.code = session.dataPtr->to<int>();
-                if (JsonHelper::parse(session.jsonPtr, session.dataPtr, fb_esp_pgm_str_258 /* "error/message" */))
+                session.errCode = tcpHandler.error.code;
+                if (JsonHelper::parse(session.jsonPtr, session.dataPtr, fb_esp_storage_ss_pgm_str_17 /* "error/message" */))
                     session.error = session.dataPtr->to<const char *>();
             }
             else
@@ -1709,7 +1714,7 @@ void FCMObject::mBegin(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_modu
 {
     _spi_ethernet_module = spi_ethernet_module;
     FirebaseJson json(raw);
-    json.set(pgm2Str(fb_esp_pgm_str_577 /* "server_key" */), addrTo<const char *>(serverKey.address()));
+    json.set(pgm2Str(esp_fb_legacy_fcm_pgm_str_1 /* "server_key" */), addrTo<const char *>(serverKey.address()));
     raw.clear();
     json.toString(raw);
 }
@@ -1736,12 +1741,12 @@ void FCMObject::clearDeviceToken()
 void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body)
 {
     MB_String s = Utils::makeFCMMsgPath();
-    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_285 /* "title" */);
+    Utils::addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_3 /* "title" */);
     FirebaseJson json(raw);
     json.set(s, stringPtr2Str(title));
 
     s = Utils::makeFCMMsgPath();
-    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_123 /* "body" */);
+    Utils::addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_4 /* "body" */);
     json.set(s, stringPtr2Str(body));
     json.toString(raw);
 }
@@ -1750,7 +1755,7 @@ void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_Stri
 {
     setNotifyMessage(title, body);
     MB_String s = Utils::makeFCMMsgPath();
-    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_124 /* "icon" */);
+    Utils::addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_5 /* "icon" */);
     FirebaseJson json(raw);
     json.set(s, stringPtr2Str(icon));
     json.toString(raw);
@@ -1760,7 +1765,7 @@ void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_Stri
 {
     setNotifyMessage(title, body, icon);
     MB_String s = Utils::makeFCMMsgPath();
-    Utils::addFCMNotificationPath(s, fb_esp_pgm_str_125 /* "click_action" */);
+    Utils::addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_6 /* "click_action" */);
     FirebaseJson json(raw);
     json.set(s, stringPtr2Str(click_action));
     json.toString(raw);
@@ -1789,35 +1794,35 @@ void FCMObject::mSetDataMessage(MB_StringPtr jsonString)
 {
     FirebaseJson js(stringPtr2Str(jsonString));
     FirebaseJson json(raw);
-    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_135 /*  "data" */), js);
+    json.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_7 /*  "data" */), js);
     json.toString(raw);
 }
 
 void FCMObject::setDataMessage(FirebaseJson &json)
 {
     FirebaseJson js(raw);
-    js.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_135 /*  "data" */), json);
+    js.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_7 /*  "data" */), json);
     js.toString(raw);
 }
 
 void FCMObject::clearDataMessage()
 {
     FirebaseJson json(raw);
-    json.remove(Utils::makeFCMMsgPath(fb_esp_pgm_str_135 /*  "data" */));
+    json.remove(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_7 /*  "data" */));
     json.toString(raw);
 }
 
 void FCMObject::mSetPriority(MB_StringPtr priority)
 {
     FirebaseJson json(raw);
-    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_136 /* "priority" */), stringPtr2Str(priority));
+    json.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_8 /* "priority" */), stringPtr2Str(priority));
     json.toString(raw);
 }
 
 void FCMObject::mSetCollapseKey(MB_StringPtr key)
 {
     FirebaseJson json(raw);
-    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_138 /* "collapse_key" */), stringPtr2Str(key));
+    json.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_9 /* "collapse_key" */), stringPtr2Str(key));
     json.toString(raw);
 }
 
@@ -1825,15 +1830,15 @@ void FCMObject::setTimeToLive(uint32_t seconds)
 {
     _ttl = (seconds <= 2419200) ? seconds : -1;
     FirebaseJson json(raw);
-    json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_137 /* "time_to_live" */), _ttl);
+    json.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_10 /* "time_to_live" */), _ttl);
     json.toString(raw);
 }
 
 void FCMObject::mSetTopic(MB_StringPtr topic)
 {
     MB_String s, v;
-    s += fb_esp_pgm_str_576; // "topic"
-    v += fb_esp_pgm_str_134; // "/topics/"
+    s += esp_fb_legacy_fcm_pgm_str_2;  // "topic"
+    v += esp_fb_legacy_fcm_pgm_str_11; // "/topics/"
     v += topic;
     FirebaseJson json(raw);
     json.set(s, v);
@@ -1852,7 +1857,7 @@ void FCMObject::fcm_begin(FirebaseData &fbdo)
         return;
 
     MB_String host;
-    HttpHelper::addGAPIsHost(host, fb_esp_pgm_str_249 /* "fcm" */);
+    HttpHelper::addGAPIsHost(host, esp_fb_legacy_fcm_pgm_str_12 /* "fcm" */);
     rescon(fbdo, host.c_str());
     fbdo.tcpClient.begin(host.c_str(), _port, &fbdo.session.response.code);
     if (Signer.config)
@@ -1861,7 +1866,7 @@ void FCMObject::fcm_begin(FirebaseData &fbdo)
         return;
     }
     // Without config, no sever certificate is available
-#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
     fbdo.tcpClient.setInsecure();
 #endif
 }
@@ -1871,11 +1876,11 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     MB_String header;
     FirebaseJsonData server_key;
     FirebaseJson json(raw);
-    json.get(server_key, pgm2Str(fb_esp_pgm_str_577 /* "server_key" */));
+    json.get(server_key, pgm2Str(esp_fb_legacy_fcm_pgm_str_1 /* "server_key" */));
     HttpHelper::addRequestHeaderFirst(header, http_post);
-    header += fb_esp_pgm_str_121; // "/fcm/send"
+    header += esp_fb_legacy_fcm_pgm_str_13; // "/fcm/send"
     HttpHelper::addRequestHeaderLast(header);
-    HttpHelper::addGAPIsHostHeader(header, fb_esp_pgm_str_249 /* "fcm" */);
+    HttpHelper::addGAPIsHostHeader(header, esp_fb_legacy_fcm_pgm_str_12 /* "fcm" */);
     HttpHelper::addAuthHeaderFirst(header, token_type_undefined);
 
     fbdo.tcpClient.send(header.c_str());
@@ -1891,7 +1896,7 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
 
     HttpHelper::addNewLine(header);
     HttpHelper::addUAHeader(header);
-    HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_129 /* "application/json" */);
+    HttpHelper::addContentTypeHeader(header, fb_esp_pgm_str_62 /* "application/json" */);
     HttpHelper::addContentLengthHeader(header, payloadSize);
     bool keepAlive = false;
 #if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
@@ -1917,21 +1922,21 @@ void FCMObject::fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
         FirebaseJsonArray arr(idTokens);
         FirebaseJsonData data;
         arr.get(data, _index);
-        json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_128 /* "to" */), data.to<const char *>());
+        json.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_14 /* "to" */), data.to<const char *>());
         json.toString(raw);
     }
     else if (messageType == fb_esp_fcm_msg_type::msg_multicast)
     {
         FirebaseJsonArray arr(idTokens);
-        Utils::makeFCMMsgPath(fb_esp_pgm_str_130 /* "registration_ids" */);
-        json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_130 /* "registration_ids" */), arr);
+        Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_15 /* "registration_ids" */);
+        json.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_15 /* "registration_ids" */), arr);
         json.toString(raw);
     }
     else if (messageType == fb_esp_fcm_msg_type::msg_topic)
     {
         FirebaseJsonData topic;
-        json.get(topic, pgm2Str(fb_esp_pgm_str_576 /* "topic" */));
-        json.set(Utils::makeFCMMsgPath(fb_esp_pgm_str_128 /* "to" */), topic.to<const char *>());
+        json.get(topic, pgm2Str(esp_fb_legacy_fcm_pgm_str_2 /* "topic" */));
+        json.set(Utils::makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_14 /* "to" */), topic.to<const char *>());
         json.toString(raw);
     }
 }
@@ -1978,7 +1983,7 @@ bool FCMObject::handleResponse(FirebaseData *fbdo)
             fbdo->readPayload(&pChunk, tcpHandler, response);
             if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
             {
-               Utils::idle();
+                Utils::idle();
                 payload += pChunk;
             }
         }
@@ -2005,7 +2010,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
     FirebaseJson json(raw);
     FirebaseJsonData msg;
-    json.get(msg, pgm2Str(fb_esp_pgm_str_575 /*  "msg" */));
+    json.get(msg, pgm2Str(esp_fb_legacy_fcm_pgm_str_16 /*  "msg" */));
     json.toString(raw);
 
     fcm_sendHeader(fbdo, strlen(msg.to<const char *>()));
@@ -2019,7 +2024,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
     fbdo.tcpClient.send(msg.to<const char *>());
 
     json.setJsonData(raw);
-    json.remove(pgm2Str(fb_esp_pgm_str_575 /*  "msg" */));
+    json.remove(pgm2Str(esp_fb_legacy_fcm_pgm_str_16 /*  "msg" */));
     json.toString(raw);
 
     if (fbdo.session.response.code < 0)

@@ -1,7 +1,12 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Firebase TCP Client v1.2.3
+ * Firebase TCP Client v1.2.4
  *
- * Created January 13, 2023
+ * Created March 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,7 +34,8 @@
 #define FB_TCP_Client_H
 
 #include <Arduino.h>
-#if (defined(ESP8266) || defined(PICO_RP2040)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
+#include "mbfs/MB_MCU.h"
+#if (defined(ESP8266) || defined(MB_ARDUINO_PICO)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #include <ESP8266WiFi.h>
 #include "FB_Network.h"
@@ -86,7 +92,7 @@ private:
 #if defined(ESP8266)
   uint16_t bsslRxSize = 4096;
   uint16_t bsslTxSize = 512;
-#elif defined(PICO_RP2040)
+#elif defined(MB_ARDUINO_PICO)
   uint16_t bsslRxSize = 16384;
   uint16_t bsslTxSize = 1024;
 #endif

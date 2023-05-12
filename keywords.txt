@@ -266,6 +266,7 @@ ETag    KEYWORD2
 streamPath  KEYWORD2
 dataPath    KEYWORD2
 errorReason KEYWORD2
+errorCode   KEYWORD2
 intData KEYWORD2
 floatData   KEYWORD2
 doubleData  KEYWORD2

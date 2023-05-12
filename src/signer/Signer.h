@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Firebase Token Management class, Signer.h version 1.3.7
+ * Google's Firebase Token Management class, Signer.h version 1.3.12
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
+ * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created January 16, 2023
+ * Created April 22, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -34,6 +39,7 @@
 #define FIREBASE_SIGNER_H
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FB_Utils.h"
 #include "./wcs/FB_Clients.h"
 #include "./FirebaseFS.h"
@@ -76,7 +82,8 @@ private:
     uint32_t *mb_ts = nullptr;
     uint32_t *mb_ts_offset = nullptr;
     MB_NTP ntpClient;
-    UDP *udp= nullptr;
+    UDP *udp = nullptr;
+    fb_esp_wifi_credentials_t wifiCreds;
     float gmtOffset = 0;
 #if defined(ESP8266)
     callback_function_t esp8266_cb = nullptr;
@@ -191,6 +198,9 @@ private:
     uint32_t *getTS();
     /* get the pointer to user defined auth data*/
     FirebaseAuth *getAuth();
+    /* get the pointer to wifi crendentials object */
+    fb_esp_wifi_credentials_t *getCred();
+
     /* prepare or initialize the external/internal TCP client */
     bool initClient(PGM_P subDomain, fb_esp_auth_token_status status = token_status_uninitialized);
     /* resume network connection */
@@ -219,7 +229,7 @@ private:
         esp8266_cb();
     }
 #endif
-#if defined(PICO_RP2040)
+#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #if __has_include(<WiFiMulti.h>)
 #define HAS_WIFIMULTI
     WiFiMulti *multi = nullptr;

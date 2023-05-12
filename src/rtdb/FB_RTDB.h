@@ -1,9 +1,14 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#error "Mixed versions compilation."
+#endif
+
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.11
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.14
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created January 16, 2023
+ * Created April 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -30,6 +35,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
 #ifdef ENABLE_RTDB
@@ -37,7 +44,6 @@
 #ifndef FIREBASE_RTDB_H
 #define FIREBASE_RTDB_H
 
-#include <Arduino.h>
 #include "FB_Utils.h"
 #include "session/FB_Session.h"
 #include "QueueInfo.h"
@@ -56,7 +62,7 @@ class FB_RTDB
 #endif
 
 #if defined(ENABLE_ERROR_QUEUE)
-#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
 #undef ENABLE_ERROR_QUEUE
 #endif
 #endif
@@ -71,7 +77,7 @@ public:
    */
   void end(FirebaseData *fbdo);
 
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
   /** Enable multiple HTTP requests at a time (for ESP32 only).
    *
    * @param enable - The boolean value to enable/disable.
@@ -665,7 +671,7 @@ public:
   bool pushTimestamp(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_post, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -674,7 +680,7 @@ public:
   bool pushTimestampAsync(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_post, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1492,7 +1498,7 @@ public:
   bool setTimestamp(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_put, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1501,7 +1507,7 @@ public:
   bool setTimestampAsync(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_put, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_pgm_str_154 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2210,7 +2216,7 @@ public:
    * the payload returned from the server.
    */
 
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
   void setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize = 8192);
 #else
@@ -2240,7 +2246,7 @@ public:
    * These properties will store the result from calling the function [MultiPathStreamData object].get.
    */
 
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
   void setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                   FirebaseData::StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 #else
@@ -2434,8 +2440,8 @@ public:
    *
    * queueInfo.path(), get a string of the Firebase call path that is being processed of current Error Queue.
    */
-#if defined(ESP32) || defined(PICO_RP2040) || defined(ESP8266)
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO) || defined(ESP8266)
+#if defined(ESP32) || defined(MB_ARDUINO_PICO)
   void beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback = NULL,
                               size_t queueTaskStackSize = 8192);
 #else
@@ -2685,7 +2691,7 @@ private:
                             RTDB_DownloadStatusInfo *out);
   void makeDownloadStatus(RTDB_DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
                           fb_esp_rtdb_download_status status, size_t progress, size_t size, int elapsedTime, const MB_String &msg);
-#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
   void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #else
   void runStreamTask();
@@ -2702,7 +2708,7 @@ private:
 #endif
 
   uint8_t openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType, uint8_t mode);
-#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
   uint8_t readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &item, uint8_t mode);
 #endif
 #if defined(MBFS_ESP32_SDFAT_ENABLED)
