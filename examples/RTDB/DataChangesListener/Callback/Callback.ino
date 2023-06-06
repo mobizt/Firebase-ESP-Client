@@ -191,7 +191,15 @@ void loop()
   // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
 #if defined(ARDUINO_RASPBERRY_PI_PICO_W)
+
   Firebase.RTDB.runStream();
+
+  // Note: For Raspberry Pi Pico, FreeRTOS was not use by default in this library. To enable FreeRTOS, please include FreeRTOS.h in FirebaseFS.h or in CustomFirebaseFS.h.
+  // That is why Firebase.RTDB.runStream was develped to handle stream with callback especially in Pico. 
+
+  // In case using runStream function, FreeRTOS stream task will be discarded and later deleted to free memory,
+  // while event data will sent to the callback function whenever the runStream was executed in loop.
+ 
 #endif
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))

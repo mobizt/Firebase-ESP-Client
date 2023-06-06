@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.12
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.13
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created April 22, 2023
+ * Created June 2, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -1809,9 +1809,6 @@ bool Firebase_Signer::reconnect()
         newClient(&tcpClient);
 
     reconnect(tcpClient, nullptr);
-
-    if (noClient)
-        freeClient(&tcpClient);
 
     networkChecking = false;
 

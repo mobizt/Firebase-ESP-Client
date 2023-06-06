@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
 #error "Mixed versions compilation."
 #endif
 
@@ -60,6 +60,12 @@
 #include <Updater.h>
 #endif
 #define OTA_UPDATE_ENABLED
+#endif
+
+
+#if defined(MB_ARDUINO_PICO) && defined(INC_FREERTOS_H) && !defined(ENABLE_PICO_FREE_RTOS)
+#define ENABLE_PICO_FREE_RTOS
+#include <task.h>
 #endif
 
 #if defined(ESP32)
@@ -1030,12 +1036,15 @@ struct fb_esp_cfg_int_t
     bool stream_loop_task_enable = true;
     bool deploy_loop_task_enable = true;
 #if defined(ESP32) || defined(MB_ARDUINO_PICO)
+
+#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
     TaskHandle_t resumable_upload_task_handle = NULL;
     TaskHandle_t functions_check_task_handle = NULL;
     TaskHandle_t functions_deployment_task_handle = NULL;
 
     TaskHandle_t stream_task_handle = NULL;
     TaskHandle_t queue_task_handle = NULL;
+#endif
     size_t stream_task_stack_size = STREAM_TASK_STACK_SIZE;
     uint8_t stream_task_priority = 3;
     uint8_t stream_task_cpu_core = 1;
@@ -2577,7 +2586,6 @@ static const char fb_esp_rtdb_err_pgm_str_1[] PROGMEM = "backup data should be t
 static const char fb_esp_rtdb_err_pgm_str_2[] PROGMEM = "path not exist";
 static const char fb_esp_rtdb_err_pgm_str_3[] PROGMEM = "data type mismatch";
 static const char fb_esp_rtdb_err_pgm_str_4[] PROGMEM = "security rules is not a valid JSON";
-
 
 // FCM error string
 static const char fb_esp_fcm_err_pgm_str_1[] PROGMEM = "no ID token or registration token provided";

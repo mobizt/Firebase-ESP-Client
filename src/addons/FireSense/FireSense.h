@@ -1491,6 +1491,8 @@ void FireSenseClass::testConditionItem(struct condition_item_info_t *cond)
             {
                 target_ts = cond->data.left.time.tm_wday;
                 current_ts = current_timeinfo.tm_wday;
+                if (current_ts == 0)
+                    current_ts = 7;
             }
             else if (cond->data.left.type == cond_operand_type_year)
             {

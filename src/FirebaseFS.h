@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40310)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
 #error "Mixed versions compilation."
 #endif
 
@@ -179,8 +179,10 @@ static SdFat sd_fat_fs;   // should declare as static here
 
 #endif
 
-/////////////////////////////////// WARNING ///////////////////////////////////
-// Using RP2040 Pico Arduino SDK, FreeRTOS with LittleFS will cause device hangs
-// when write the data to flash filesystem.
-// Do not include free rtos dot h or even it excluded from compilation by using macro
-// or even comment it out with "//"".
+
+// For Raspberry Pi Pico, to use FreeRTOS in this library, please include FreeRTOS.h in this file or in CustomFirebaseFS.h.
+
+// If FreeRTOS was not used in this library, the Google Cloud Storage's Resumable upload, Firebase Functions deployment and RTDB queue tasks will not work,
+// and RTDB stream callback requires Firebase.RTDB.runStream() function to call in the loop.
+
+// Please do not use FreeRTOS in Arduino Pico SDK older than v3.2.1 because of deadlocks issue when accessing flash.
