@@ -179,10 +179,6 @@ static SdFat sd_fat_fs;   // should declare as static here
 
 #endif
 
+// For Raspberry Pi Pico, FreeRTOS was not used in this library by default as it can cause some operation deadlocks. 
+// To use or enable FreeRTOS in this library, include FreeRTOS header in this file or CustomFirebaseFS.h.
 
-// For Raspberry Pi Pico, to use FreeRTOS in this library, please include FreeRTOS.h in this file or in CustomFirebaseFS.h.
-
-// If FreeRTOS was not used in this library, the Google Cloud Storage's Resumable upload, Firebase Functions deployment and RTDB queue tasks will not work,
-// and RTDB stream callback requires Firebase.RTDB.runStream() function to call in the loop.
-
-// Please do not use FreeRTOS in Arduino Pico SDK older than v3.2.1 because of deadlocks issue when accessing flash.
