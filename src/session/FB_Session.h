@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.h version 1.3.7
+ * Google's Firebase Data class, FB_Session.h version 1.3.8
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created April 5, 2023
+ * Created June 9, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

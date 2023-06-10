@@ -1002,7 +1002,33 @@ In addition, delay function used in the same loop of `readStream()` will defer t
 
 Keep in mind that `FirebaseData` object will create the SSL client inside of HTTPS data transaction and uses large memory.
 
+### Enable TCP KeepAlive for reliable HTTP Streaming
 
+In general, the RTDB stream timed out occurred when no data included keep-alive event data received in the specific period (45 seconds) which can be set via `config.timeout.rtdbKeepAlive`.
+
+Now you can take the pros of TCP KeepAlive in Stream mode by brobing the server connection at some intervals to improve the stream time out more reliable.
+
+The cons when using TCP KeepAlive in Stream it consumes more data bandwidth which depends on the settings of
+`config.timeout.tcpKeepIdleSeconds`, `config.timeout.tcpKeepIntervalSeconds` and `config.timeout.tcpKeepCount`.
+
+The default values of `config.timeout.tcpKeepIdleSeconds` and `config.timeout.tcpKeepIntervalSeconds` are 5 sec.
+and `config.timeout.tcpKeepCount` default value is 1.
+
+See the TCP options doc [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
+
+The TCP KeepAlive can be enabled by define this maco in FirebaseFS.h or your own config file CustomFirebaseFS.h
+
+```
+ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM
+```
+
+Now TCP KeepAlive was currently supported in ESP32. 
+
+For ESP8266, [this ESP8266 PR #8940](https://github.com/esp8266/Arduino/pull/8940) should be merged in the released ESP8266 Arduino Core sdk.
+ 
+For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
+
+### HTTP Streaming examples
 
 The following example showed how to subscribe to the data changes at node "/test/data" with a callback function.
 

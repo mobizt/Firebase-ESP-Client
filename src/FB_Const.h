@@ -1,10 +1,10 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created June 7, 2023
+ * Created June 9, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -61,7 +61,6 @@
 #endif
 #define OTA_UPDATE_ENABLED
 #endif
-
 
 #if defined(MB_ARDUINO_PICO) && defined(INC_FREERTOS_H) && !defined(ENABLE_PICO_FREE_RTOS)
 #define ENABLE_PICO_FREE_RTOS
@@ -1225,6 +1224,15 @@ struct fb_esp_client_timeout_t
 
     // Socket connection and ssl handshake timeout in ms (1 sec - 1 min).
     unsigned long socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
+
+    // lwIP TCP Keepalive idle in seconds.
+    int tcpKeepIdleSeconds = 5;
+
+     // lwIP TCP Keepalive interval in seconds.
+    int tcpKeepIntervalSeconds = 5;
+
+     // lwIP TCP Keepalive count.
+    int tcpKeepCount = 1;
 
     // unused.
     unsigned long sslHandshake = 0;

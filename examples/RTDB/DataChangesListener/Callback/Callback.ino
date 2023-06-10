@@ -158,6 +158,9 @@ void setup()
 
   Firebase.RTDB.setStreamCallback(&stream, streamCallback, streamTimeoutCallback);
 
+  // for more reliable stream operation, please read this
+  // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
+
   /** Timeout options, below is default config.
 
   //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.

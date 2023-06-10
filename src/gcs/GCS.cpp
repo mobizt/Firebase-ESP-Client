@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.8
+ * Google's Cloud Storage class, GCS.cpp version 1.2.9
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created April 5, 2023
+ * Created June 9, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -289,6 +289,7 @@ void GG_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
     }
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_gc_storage;
+    fbdo->tcpClient.setTCPKeepalive(false);
 }
 
 void GG_CloudStorage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req, size_t readBytes)

@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.1.24
+ * Firebase TCP Client v1.1.25
  *
- * Created March 5, 2022
+ * Created June 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -42,7 +42,7 @@
 
 FB_TCP_Client::FB_TCP_Client()
 {
- 
+
   client = wcs.get();
 }
 
@@ -183,10 +183,20 @@ bool FB_TCP_Client::connect()
     return true;
   }
 
+  lastConnMillis = millis();
   if (!wcs->_connect(host.c_str(), port, timeoutMs))
     return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
   wcs->setTimeout(timeoutMs);
+
+#if defined(ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM)
+  if (config && useTCPKeepalive)
+  {
+    wcs->setOption(TCP_KEEPIDLE, &config->timeout.tcpKeepIdleSeconds);
+    wcs->setOption(TCP_KEEPINTVL, &config->timeout.tcpKeepIntervalSeconds);
+    wcs->setOption(TCP_KEEPCNT, &config->timeout.tcpKeepCount);
+  }
+#endif
 
   return connected();
 }

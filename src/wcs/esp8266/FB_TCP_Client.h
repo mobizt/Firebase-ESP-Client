@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.2.4
+ * Firebase TCP Client v1.2.5
  *
- * Created March 5, 2023
+ * Created June 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -43,6 +43,8 @@
 #include "mbfs/MB_FS.h"
 #include "./wcs/base/FB_TCP_Client_Base.h"
 
+#include "lwip/sockets.h"
+
 class FB_TCP_Client : public FB_TCP_Client_Base
 {
 
@@ -75,6 +77,8 @@ public:
   bool isInitialized();
 
   int hostByName(const char *name, IPAddress &ip);
+
+  bool connect();
 
   void setTimeout(uint32_t timeoutmSec);
 

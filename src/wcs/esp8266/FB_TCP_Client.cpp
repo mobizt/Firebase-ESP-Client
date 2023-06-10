@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.2.4
+ * Firebase TCP Client v1.2.5
  *
- * Created March 5, 2023
+ * Created June 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -146,6 +146,38 @@ int FB_TCP_Client::hostByName(const char *name, IPAddress &ip)
   return WiFi.hostByName(name, ip);
 }
 
+// override the base connect
+bool FB_TCP_Client::connect()
+{
+  if (connected())
+  {
+    flush();
+    return true;
+  }
+
+  client = wcs.get();
+
+  lastConnMillis = millis();
+  if (!client->connect(host.c_str(), port))
+    return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
+
+  wcs->setTimeout(timeoutMs);
+
+// For TCP keepalive
+// Now it's currently not support in ESP8266 WiFiClientSecure until this PR merged.
+// https://github.com/esp8266/Arduino/pull/8940
+
+// Not currently supported by WiFiClientSecure in Arduino Pico core
+#if defined(ESP8266)
+#if defined(ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM)
+  if (config && useTCPKeepalive)
+    wcs->keepAlive(config->timeout.tcpKeepIdleSeconds, config->timeout.tcpKeepIntervalSeconds, config->timeout.tcpKeepCount);
+#endif
+#endif
+
+  return connected();
+}
+
 void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
 {
   if (wcs)
@@ -251,7 +283,6 @@ bool FB_TCP_Client::ethLinkUp()
 
 #elif defined(MB_ARDUINO_PICO)
 
-
 #endif
 
   return ret;
@@ -288,12 +319,11 @@ void FB_TCP_Client::ethDNSWorkAround()
 
 #elif defined(MB_ARDUINO_PICO)
 
-
 #endif
 
   return;
 
-#if defined(INC_ENC28J60_LWIP) || defined(INC_W5100_LWIP) || defined(INC_W5500_LWIP) 
+#if defined(INC_ENC28J60_LWIP) || defined(INC_W5100_LWIP) || defined(INC_W5500_LWIP)
 ex:
   WiFiClient _client;
   _client.connect(host.c_str(), port);

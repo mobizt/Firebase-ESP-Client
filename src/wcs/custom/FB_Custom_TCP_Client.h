@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * The custom TCP Client Class v1.0.3
+ * The custom TCP Client Class v1.0.4
  *
- * Created March 5, 2022
+ * Created June 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -116,6 +116,7 @@ public:
 
         networkReady();
 
+        lastConnMillis = millis();
         this->client->connect(host.c_str(), port);
 
         return connected();

@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
@@ -118,6 +118,9 @@ static SdFat sd_fat_fs;   // should declare as static here
 // Use Keep Alive connection mode
 #define USE_CONNECTION_KEEP_ALIVE_MODE
 
+// To enable TCP KeepAlive for RTDB stream
+// #define ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM
+
 // To enable external Client for ESP8266, ESP32 and Raspberry Pi Pico.
 // This will enable automatically for other devices.
 // #define FB_ENABLE_EXTERNAL_CLIENT
@@ -179,6 +182,5 @@ static SdFat sd_fat_fs;   // should declare as static here
 
 #endif
 
-// For Raspberry Pi Pico, FreeRTOS was not used in this library by default as it can cause some operation deadlocks. 
+// For Raspberry Pi Pico, FreeRTOS was not used in this library by default as it can cause some operation deadlocks.
 // To use or enable FreeRTOS in this library, include FreeRTOS header in this file or CustomFirebaseFS.h.
-

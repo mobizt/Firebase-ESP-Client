@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.30
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.31
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created April 5, 2023
+ * Created June 9, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -986,6 +986,7 @@ void FB_CM::rescon(FirebaseData *fbdo, const char *host)
 
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_fcm;
+    fbdo->tcpClient.setTCPKeepalive(false);
 }
 
 bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload)

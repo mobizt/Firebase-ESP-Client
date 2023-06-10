@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /*
- * TCP Client Base class, version 1.0.9
+ * TCP Client Base class, version 1.0.10
  *
- * Created March 5, 2023
+ * Created June 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -119,7 +119,8 @@ public:
 
         if (connected())
             return true;
-
+        
+        lastConnMillis = millis();
         if (!client->connect(host.c_str(), port))
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
@@ -145,7 +146,7 @@ public:
     }
 
     virtual int write(uint8_t *data, int len)
-    {       
+    {
         if (!data || !client)
             return setError(FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED);
 
@@ -156,7 +157,10 @@ public:
             return setError(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
 
         // call base or derived connect.
-        if (!connected() && !connect())
+        if (!connected() && (lastConnMillis == 0 || millis() - lastConnMillis > connTimeout))
+            connect();
+
+        if (!connected())
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
 
         int res = client->write(data, len);
@@ -263,6 +267,11 @@ public:
 
     fb_cert_type getCertType() { return certType; }
 
+    void setTCPKeepalive(bool keppalive)
+    {
+        useTCPKeepalive = keppalive;
+    }
+
 private:
     void setConfig(FirebaseConfig *config, MB_FS *mbfs)
     {
@@ -287,6 +296,9 @@ protected:
     unsigned long dataStart = 0;
     unsigned long dataTime = 0;
     MB_FS *mbfs = nullptr;
+    unsigned long lastConnMillis = 0;
+    unsigned long connTimeout = 1000;
+    bool useTCPKeepalive = false;
 
     // In esp8266, this is actually Arduino base Stream (char read) timeout.
     //  This will override internally by WiFiClientSecureCtx::_connectSSL

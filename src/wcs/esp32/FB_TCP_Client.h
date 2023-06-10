@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40311)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.1.24
+ * Firebase TCP Client v1.1.25
  *
- * Created March 5, 2022
+ * Created June 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -51,6 +51,8 @@ extern "C"
 #include <esp_err.h>
 #include <esp_wifi.h>
 }
+
+#include "lwip/sockets.h"
 
 // The derived class to fix the memory leaks issue
 // https://github.com/espressif/arduino-esp32/issues/5480

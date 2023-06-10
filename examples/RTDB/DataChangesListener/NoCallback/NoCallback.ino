@@ -115,6 +115,9 @@ void setup()
   if (!Firebase.RTDB.beginStream(&stream, "/test/stream/data"))
     Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
 
+  // for more reliable stream operation, please read this
+  // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
+
   /** Timeout options, below is default config.
 
   //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.

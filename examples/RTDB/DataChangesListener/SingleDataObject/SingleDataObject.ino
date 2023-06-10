@@ -120,6 +120,9 @@ void setup()
   // Large stream payload leads to the parsing error due to memory allocation.
   if (!Firebase.RTDB.beginStream(&fbdo, "/test/stream/data"))
     Serial.printf("sream begin error, %s\n\n", fbdo.errorReason().c_str());
+
+  // for more reliable stream operation, please read this
+  // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
 }
 
 void loop()
