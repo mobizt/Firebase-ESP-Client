@@ -179,6 +179,10 @@ void setup()
 
   Firebase.setDoubleDigits(5);
 
+  // You can use TCP KeepAlive in FirebaseData object and tracking the server connection status, please read this for detail.
+  // https://github.com/mobizt/Firebase-ESP-Client#about-firebasedata-object
+  // fbdo.keepAlive(5, 5, 1);
+
   // If cert file stored in SD card, mount it.
   // SD_Card_Mounting();//See src/addons/SDHelper.h
 

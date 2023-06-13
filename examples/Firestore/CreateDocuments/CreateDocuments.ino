@@ -137,6 +137,10 @@ void setup()
 
     // For sending payload callback
     // config.cfs.upload_callback = fcsUploadCallback;
+
+    // You can use TCP KeepAlive in FirebaseData object and tracking the server connection status, please read this for detail.
+    // https://github.com/mobizt/Firebase-ESP-Client#about-firebasedata-object
+    // fbdo.keepAlive(5, 5, 1);
 }
 
 void loop()
@@ -151,10 +155,10 @@ void loop()
         // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
         FirebaseJson content;
 
-        // Note: If new document created under non-existent ancestor documents, that document will not appear in queries and snapshot 
+        // Note: If new document created under non-existent ancestor documents, that document will not appear in queries and snapshot
         // https://cloud.google.com/firestore/docs/using-console#non-existent_ancestor_documents.
 
-         // We will create the document in the parent path "a0/b?
+        // We will create the document in the parent path "a0/b?
         // a0 is the collection id, b? is the document id in collection a0.
 
         String documentPath = "a0/b" + String(count);

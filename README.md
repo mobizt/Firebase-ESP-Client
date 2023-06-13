@@ -607,6 +607,48 @@ To disable OTA update via RTDB , Firebase Storage and Google Cloud Storage, comm
 ENABLE_OTA_FIRMWARE_UPDATE
 ```
 
+### About FirebaseData object
+
+`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client transmission.
+
+The WiFiClientSecure instance was created in `FirebaseData` object when connecting to server. The response payload will store in this object that allows user to acquire and process leter.
+
+The memory consumed during server connection state is relatively large which depends on the SSL engine used in device Core SDK e.g., as much as 50k for ESP32 using mbedTLS SSL engine library.
+
+This library will send HTTP Keep-Alive header for session reuse by default as the macro `USE_CONNECTION_KEEP_ALIVE_MODE` defined in FirebaseFS.h and memory will be reserved as long as server connected.
+
+
+With HTTP Keep-Alive mode, you can take the benefit of TCP KeepAlive which will probe the server connection periodically.
+
+
+The disadvantage when using TCP KeepAlive is little or more data bandwidth consumed which depends on the TCP KeepAlive options set in `FirebaseData` object.
+
+The TCP KeepAlive can be enable from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
+
+`tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
+
+Ex.
+
+```cpp
+fbdo.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
+```
+
+For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
+
+You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+
+
+The TCP KeepAlive was currently available in ESP32 unless in ESP8266, [this ESP8266 PR #8940](https://github.com/esp8266/Arduino/pull/8940) should be merged in the [ESP8266 Arduino Core SDK](https://github.com/esp8266/Arduino/releases), i.e., it will be supported in the ESP8266 core version newer than v3.1.2.
+
+
+In ESP8266 core v3.1.2 and older, the error can be occurred when executing `<FirebaseData>.keepAlive` because of object slicing.
+
+
+The Arduino Pico is currently not support TCP KeepAlive until it's implemented in WiFiClientSecure library as in ESP8266.
+
+ 
+For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
+
 
 ## Realtime Database
 
@@ -1002,31 +1044,27 @@ In addition, delay function used in the same loop of `readStream()` will defer t
 
 Keep in mind that `FirebaseData` object will create the SSL client inside of HTTPS data transaction and uses large memory.
 
+
 ### Enable TCP KeepAlive for reliable HTTP Streaming
 
 In general, the RTDB stream timed out occurred when no data included keep-alive event data received in the specific period (45 seconds) which can be set via `config.timeout.rtdbKeepAlive`.
 
-Now you can take the pros of TCP KeepAlive in Stream mode by brobing the server connection at some intervals to improve the stream time out more reliable.
+Now you can take the pros of TCP KeepAlive in Stream mode by brobing the server connection at some intervals to help the stream time out more reliable.
 
-The cons when using TCP KeepAlive in Stream it consumes more data bandwidth which depends on the settings of
-`config.timeout.tcpKeepIdleSeconds`, `config.timeout.tcpKeepIntervalSeconds` and `config.timeout.tcpKeepCount`.
+You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
 
-The default values of `config.timeout.tcpKeepIdleSeconds` and `config.timeout.tcpKeepIntervalSeconds` are 5 sec.
-and `config.timeout.tcpKeepCount` default value is 1.
+As previousely described, using [TCP KeepAlive in `FirebaseData` object](/#about-firebasedata-object) in Stream has pros and cons.
 
-See the TCP options doc [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
+The TCP KeepAlive can be enable from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
 
-The TCP KeepAlive can be enabled by define this maco in FirebaseFS.h or your own config file CustomFirebaseFS.h
+`tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
 
+Ex.
+
+```cpp
+stream.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
 ```
-ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM
-```
 
-Now TCP KeepAlive was currently supported in ESP32. 
-
-For ESP8266, [this ESP8266 PR #8940](https://github.com/esp8266/Arduino/pull/8940) should be merged in the released ESP8266 Arduino Core sdk.
- 
-For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
 
 ### HTTP Streaming examples
 
@@ -1380,7 +1418,7 @@ Firebase.RTDB.saveErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
 
 ```
 
-## FireSense, The Programmable Data Logging and IO Control (Add On)
+## FireSense, The Programmable Data Logging and IO Control (Deprecated Add On)
 
 This add on library is for the advance usages and works with Firebase RTDB.
 
@@ -1388,11 +1426,9 @@ With this add on library, you can remotely program your device to control its IO
 
 This allows you to change your device behaviour and functions without to flash a new firmware via serial or OTA.
 
-See [examples/RTDB/FireSense](examples/RTDB/FireSense) for the usage.
-
 For FireSense function description, see [src/addons/FireSense/README.md](src/addons/FireSense/README.md).
 
-
+FireSense is now inactive development and deprecated.
 
 
 

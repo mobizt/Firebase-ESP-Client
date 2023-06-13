@@ -585,6 +585,12 @@ WiFiClientSecure *FirebaseData::getWiFiClient()
 
 bool FirebaseData::httpConnected()
 {
+    if (tcpClient.isKeepAliveSet())
+        session.connected = tcpClient.connected();
+
+    if (!session.connected)
+        closeSession();
+
     return session.connected;
 }
 
@@ -599,6 +605,11 @@ String FirebaseData::fileTransferError()
         return session.error.c_str();
     else
         return errorReason();
+}
+
+void FirebaseData::keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCount)
+{
+    tcpClient.keepAlive(tcpKeepIdleSeconds, tcpKeepIntervalSeconds, tcpKeepCount);
 }
 
 String FirebaseData::payload()
@@ -700,7 +711,7 @@ String FirebaseData::downloadURL()
     if (bucket.length() > 0)
     {
         MB_String host;
-        HttpHelper::addGAPIsHost(host, fb_esp_storage_ss_pgm_str_1/* "firebasestorage." */);
+        HttpHelper::addGAPIsHost(host, fb_esp_storage_ss_pgm_str_1 /* "firebasestorage." */);
         URLHelper::host2Url(link, host);
         link += fb_esp_storage_ss_pgm_str_2; // "/v0/b/"
         link += bucket;
@@ -1173,7 +1184,7 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
                         else
                         {
                             // based64 encoded string of file data
-                            tcpHandler.isBase64File = StringHelper::compare((char *)buf, 0, fb_esp_rtdb_pgm_str_8/* "\"file,base64," */, true);
+                            tcpHandler.isBase64File = StringHelper::compare((char *)buf, 0, fb_esp_rtdb_pgm_str_8 /* "\"file,base64," */, true);
                         }
 
                         if (tcpHandler.isBase64File)
@@ -2063,7 +2074,6 @@ void FCMObject::rescon(FirebaseData &fbdo, const char *host)
     }
     fbdo.session.host = host;
     fbdo.session.con_mode = fb_esp_con_mode_fcm;
-    fbdo.tcpClient.setTCPKeepalive(false);
 }
 
 void FCMObject::clear()

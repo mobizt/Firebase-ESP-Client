@@ -115,6 +115,10 @@ void setup()
     Firebase.begin(&config, &auth);
 
     Firebase.reconnectWiFi(true);
+
+    // You can use TCP KeepAlive in FirebaseData object and tracking the server connection status, please read this for detail.
+    // https://github.com/mobizt/Firebase-ESP-Client#about-firebasedata-object
+    // fbdo.keepAlive(5, 5, 1);
 }
 
 void loop()

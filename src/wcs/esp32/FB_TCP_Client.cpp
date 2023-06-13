@@ -189,12 +189,20 @@ bool FB_TCP_Client::connect()
 
   wcs->setTimeout(timeoutMs);
 
-#if defined(ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM)
-  if (config && useTCPKeepalive)
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE) // Use TCP KeepAlive (interval connection probing) together with HTTP connection Keep-Alive
+  if (isKeepAliveSet())
   {
-    wcs->setOption(TCP_KEEPIDLE, &config->timeout.tcpKeepIdleSeconds);
-    wcs->setOption(TCP_KEEPINTVL, &config->timeout.tcpKeepIntervalSeconds);
-    wcs->setOption(TCP_KEEPCNT, &config->timeout.tcpKeepCount);
+    if (tcpKeepIdleSeconds == 0 || tcpKeepIntervalSeconds == 0 || tcpKeepCount == 0)
+    {
+      tcpKeepIdleSeconds = 0;
+      tcpKeepIntervalSeconds = 0;
+      tcpKeepCount = 0;
+    }
+    
+    wcs->setOption(TCP_KEEPIDLE, &tcpKeepIdleSeconds);
+    wcs->setOption(TCP_KEEPINTVL, &tcpKeepIntervalSeconds);
+    wcs->setOption(TCP_KEEPCNT, &tcpKeepCount);
+
   }
 #endif
 

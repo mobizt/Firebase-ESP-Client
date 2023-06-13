@@ -531,9 +531,9 @@ public:
   /** Get the error code from the process.
    *
    * @return The error code (int).
-   * 
+   *
    * See src/FB_Error.h
-   * 
+   *
    */
   int errorCode();
 
@@ -913,6 +913,18 @@ public:
    * @return Payload string (String object).
    */
   String payload();
+
+  /** Setup TCP KeepAlive for internal TCP client.
+   *
+   * @param tcpKeepIdleSeconds lwIP TCP Keepalive idle in seconds.
+   * @param tcpKeepIntervalSeconds lwIP TCP Keepalive interval in seconds.
+   * @param tcpKeepCount lwIP TCP Keepalive count.
+   * 
+   * If value of one of these parameters is zero, the TCP KeepAlive will be disabled.
+   * 
+   * You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+   */
+  void keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCount);
 
   FB_TCP_CLIENT tcpClient;
 

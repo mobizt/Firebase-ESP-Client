@@ -1225,15 +1225,6 @@ struct fb_esp_client_timeout_t
     // Socket connection and ssl handshake timeout in ms (1 sec - 1 min).
     unsigned long socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
 
-    // lwIP TCP Keepalive idle in seconds.
-    int tcpKeepIdleSeconds = 5;
-
-     // lwIP TCP Keepalive interval in seconds.
-    int tcpKeepIntervalSeconds = 5;
-
-     // lwIP TCP Keepalive count.
-    int tcpKeepCount = 1;
-
     // unused.
     unsigned long sslHandshake = 0;
 

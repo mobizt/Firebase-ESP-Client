@@ -119,7 +119,7 @@ public:
 
         if (connected())
             return true;
-        
+
         lastConnMillis = millis();
         if (!client->connect(host.c_str(), port))
             return setError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED);
@@ -267,10 +267,14 @@ public:
 
     fb_cert_type getCertType() { return certType; }
 
-    void setTCPKeepalive(bool keppalive)
+    void keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCount)
     {
-        useTCPKeepalive = keppalive;
+        this->tcpKeepIdleSeconds = tcpKeepIdleSeconds;
+        this->tcpKeepIntervalSeconds = tcpKeepIntervalSeconds;
+        this->tcpKeepCount = tcpKeepCount;
     }
+
+    bool isKeepAliveSet() { return tcpKeepIdleSeconds > -1 && tcpKeepIntervalSeconds > -1 && tcpKeepCount > -1; };
 
 private:
     void setConfig(FirebaseConfig *config, MB_FS *mbfs)
@@ -298,7 +302,15 @@ protected:
     MB_FS *mbfs = nullptr;
     unsigned long lastConnMillis = 0;
     unsigned long connTimeout = 1000;
-    bool useTCPKeepalive = false;
+
+    // lwIP TCP Keepalive idle in seconds.
+    int tcpKeepIdleSeconds = -1;
+
+    // lwIP TCP Keepalive interval in seconds.
+    int tcpKeepIntervalSeconds = -1;
+
+    // lwIP TCP Keepalive count.
+    int tcpKeepCount = -1;
 
     // In esp8266, this is actually Arduino base Stream (char read) timeout.
     //  This will override internally by WiFiClientSecureCtx::_connectSSL

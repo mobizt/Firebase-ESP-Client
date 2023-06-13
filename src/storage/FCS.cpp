@@ -261,7 +261,6 @@ void FB_Storage::rescon(FirebaseData *fbdo, const char *host)
     }
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_storage;
-    fbdo->tcpClient.setTCPKeepalive(false);
 }
 
 void FB_Storage::sendUploadCallback(FirebaseData *fbdo, FCS_UploadStatusInfo &in,

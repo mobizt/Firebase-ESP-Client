@@ -748,7 +748,6 @@ void FB_Functions::rescon(FirebaseData *fbdo, const char *host)
     }
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_functions;
-    fbdo->tcpClient.setTCPKeepalive(false);
 }
 
 bool FB_Functions::connect(FirebaseData *fbdo, const char *host)

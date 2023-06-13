@@ -139,19 +139,19 @@ bool FIREBASE_CLASS::ready()
     // We don't stop session to free memory on other devices e,g, Pico as it uses
     // BearSSL engine that required less memory then it has enough free memory
     // to do other things.
-    if (Signer.isExpired())
+    if (Signer.config)
     {
-        if (Signer.config)
+        for (size_t id = 0; id < Signer.config->internal.sessions.size(); id++)
         {
-            for (size_t id = 0; id < Signer.config->internal.sessions.size(); id++)
-            {
-                FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
-                // non-stream used session will stop
-                if (fbdo && !fbdo->tcpClient.reserved && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream)
-                    fbdo->closeSession();
-            }
+            FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
+            // non-stream used session will stop
+            if (Signer.isExpired() && fbdo && !fbdo->tcpClient.reserved && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream)
+                fbdo->closeSession();
+                
+            fbdo->httpConnected();
         }
     }
+
 #endif
     return Signer.tokenReady();
 }
@@ -187,8 +187,8 @@ bool FIREBASE_CLASS::mSendResetPassword(FirebaseConfig *config, MB_StringPtr ema
 }
 
 void FIREBASE_CLASS::mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToken, size_t expire,
-                                        MB_StringPtr refreshToken, fb_esp_auth_token_type type,
-                                        MB_StringPtr clientId, MB_StringPtr clientSecret)
+                                   MB_StringPtr refreshToken, fb_esp_auth_token_type type,
+                                   MB_StringPtr clientId, MB_StringPtr clientSecret)
 {
     if (!config)
         return;

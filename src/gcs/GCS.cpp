@@ -289,7 +289,6 @@ void GG_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
     }
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_gc_storage;
-    fbdo->tcpClient.setTCPKeepalive(false);
 }
 
 void GG_CloudStorage::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req, size_t readBytes)

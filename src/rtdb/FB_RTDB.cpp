@@ -1693,8 +1693,6 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
 
     if (fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream)
         fbdo->session.rtdb.stream_resume_millis = 0;
-
-    fbdo->tcpClient.setTCPKeepalive(fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream);
 }
 
 bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)

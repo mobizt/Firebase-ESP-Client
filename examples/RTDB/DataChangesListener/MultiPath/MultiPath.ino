@@ -170,7 +170,7 @@ void setup()
 
   Firebase.RTDB.setMultiPathStreamCallback(&stream, streamCallback, streamTimeoutCallback);
 
-  // for more reliable stream operation, please read this
+  // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
   // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
 
   /** Timeout options, below is default config.

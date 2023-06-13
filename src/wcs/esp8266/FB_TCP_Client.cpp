@@ -163,16 +163,18 @@ bool FB_TCP_Client::connect()
 
   wcs->setTimeout(timeoutMs);
 
-// For TCP keepalive
-// Now it's currently not support in ESP8266 WiFiClientSecure until this PR merged.
+// For TCP keepalive should work in ESP8266 core > 3.1.2.
 // https://github.com/esp8266/Arduino/pull/8940
 
 // Not currently supported by WiFiClientSecure in Arduino Pico core
-#if defined(ESP8266)
-#if defined(ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM)
-  if (config && useTCPKeepalive)
-    wcs->keepAlive(config->timeout.tcpKeepIdleSeconds, config->timeout.tcpKeepIntervalSeconds, config->timeout.tcpKeepCount);
-#endif
+#if defined(ESP8266) && defined(USE_CONNECTION_KEEP_ALIVE_MODE) // Use TCP KeepAlive (interval connection probing) together with HTTP connection Keep-Alive
+  if (isKeepAliveSet())
+  {
+    if (tcpKeepIdleSeconds == 0 || tcpKeepIntervalSeconds == 0 || tcpKeepCount == 0)
+      wcs->disableKeepAlive();
+    else
+      wcs->keepAlive(tcpKeepIdleSeconds, tcpKeepIntervalSeconds, tcpKeepCount);
+  }
 #endif
 
   return connected();

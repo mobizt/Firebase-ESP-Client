@@ -986,7 +986,6 @@ void FB_CM::rescon(FirebaseData *fbdo, const char *host)
 
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_fcm;
-    fbdo->tcpClient.setTCPKeepalive(false);
 }
 
 bool FB_CM::handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload)

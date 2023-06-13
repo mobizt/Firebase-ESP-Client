@@ -784,7 +784,6 @@ void FB_Firestore::rescon(FirebaseData *fbdo, const char *host)
 
     fbdo->session.host = host;
     fbdo->session.con_mode = fb_esp_con_mode_firestore;
-    fbdo->tcpClient.setTCPKeepalive(false);
 }
 
 bool FB_Firestore::connect(FirebaseData *fbdo)

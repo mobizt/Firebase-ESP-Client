@@ -123,6 +123,10 @@ void setup()
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
+
+    // You can use TCP KeepAlive in FirebaseData object and tracking the server connection status, please read this for detail.
+    // https://github.com/mobizt/Firebase-ESP-Client#about-firebasedata-object
+    // fbdo.keepAlive(5, 5, 1);
 }
 
 void loop()

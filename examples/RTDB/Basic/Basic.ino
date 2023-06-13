@@ -133,6 +133,10 @@ void setup()
 
   config.timeout.serverResponse = 10 * 1000;
 
+  // You can use TCP KeepAlive in FirebaseData object and tracking the server connection status, please read this for detail.
+  // https://github.com/mobizt/Firebase-ESP-Client#about-firebasedata-object
+  // fbdo.keepAlive(5, 5, 1);
+
   /** Timeout options.
 
   //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
