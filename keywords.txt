@@ -291,6 +291,7 @@ getBackupFileSize   KEYWORD2
 clear   KEYWORD2
 fileTransferError   KEYWORD2
 payload KEYWORD2
+keepAlive   KEYWORD2
 dataTypeEnum    KEYWORD2
 queryFilter KEYWORD2
 empty   KEYWORD2

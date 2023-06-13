@@ -1053,7 +1053,7 @@ Now you can take the pros of TCP KeepAlive in Stream mode by brobing the server 
 
 You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
 
-As previousely described, using [TCP KeepAlive in `FirebaseData` object](/#about-firebasedata-object) in Stream has pros and cons.
+As previousely described, using [TCP KeepAlive in `FirebaseData` object](#about-firebasedata-object) in Stream has pros and cons.
 
 The TCP KeepAlive can be enable from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
 

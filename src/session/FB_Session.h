@@ -920,9 +920,11 @@ public:
    * @param tcpKeepIntervalSeconds lwIP TCP Keepalive interval in seconds.
    * @param tcpKeepCount lwIP TCP Keepalive count.
    * 
+   * For the TCP (KeepAlive) options, see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options.
+   * 
    * If value of one of these parameters is zero, the TCP KeepAlive will be disabled.
    * 
-   * You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+   * You can check the server connecting status, by exexuting <FirebaseData>.httpConnected() which will return true when connection to the server is still alive. 
    */
   void keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCount);
 
