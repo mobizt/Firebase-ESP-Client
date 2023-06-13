@@ -123,6 +123,7 @@ void setup()
 
   // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
   // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
+  // fbdo.keepAlive(5, 5, 1);
 }
 
 void loop()
