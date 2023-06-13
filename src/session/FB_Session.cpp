@@ -585,7 +585,10 @@ WiFiClientSecure *FirebaseData::getWiFiClient()
 
 bool FirebaseData::httpConnected()
 {
-    if (tcpClient.isKeepAliveSet())
+    if (!reconnect())
+        session.connected = false;
+
+    if (session.connected && tcpClient.isKeepAliveSet())
         session.connected = tcpClient.connected();
 
     if (!session.connected)
