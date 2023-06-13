@@ -147,8 +147,6 @@ bool FIREBASE_CLASS::ready()
             // non-stream used session will stop
             if (Signer.isExpired() && fbdo && !fbdo->tcpClient.reserved && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream)
                 fbdo->closeSession();
-                
-            fbdo->httpConnected();
         }
     }
 
