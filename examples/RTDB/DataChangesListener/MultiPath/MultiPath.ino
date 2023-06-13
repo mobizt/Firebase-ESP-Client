@@ -160,6 +160,10 @@ void setup()
   stream.setBSSLBufferSize(2048 /* Rx in bytes, 512 - 16384 */, 512 /* Tx in bytes, 512 - 16384 */);
 #endif
 
+  // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
+  // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
+  // stream.keepAlive(5, 5, 1);
+
   // The data under the node being stream (parent path) should keep small
   // Large stream payload leads to the parsing error due to memory allocation.
 
@@ -169,10 +173,6 @@ void setup()
     Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
 
   Firebase.RTDB.setMultiPathStreamCallback(&stream, streamCallback, streamTimeoutCallback);
-
-  // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
-  // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
-  // stream.keepAlive(5, 5, 1);
 
   /** Timeout options, below is default config.
 
