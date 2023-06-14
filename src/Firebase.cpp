@@ -6,7 +6,7 @@
 /**
  * The Firebase class, Firebase.cpp v1.2.6
  *
- *  Created April 5, 2023
+ *  Created June 14, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
