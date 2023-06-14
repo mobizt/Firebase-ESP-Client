@@ -609,7 +609,7 @@ ENABLE_OTA_FIRMWARE_UPDATE
 
 ### About FirebaseData object
 
-`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client transmission.
+`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client data transmission.
 
 The WiFiClientSecure instance was created in `FirebaseData` object when connecting to server. The response payload will store in this object that allows user to acquire and process leter.
 
