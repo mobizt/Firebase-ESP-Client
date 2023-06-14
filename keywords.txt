@@ -254,7 +254,7 @@ getIndex    KEYWORD2
 deleteIndex KEYWORD2
 
 #############################################
-# Methods for Firebase Data object (KEYWORD2)
+# Methods for FirebaseData object (KEYWORD2)
 #############################################
 
 pauseFirebase   KEYWORD2
