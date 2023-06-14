@@ -1,9 +1,9 @@
 /**
- * The MB_FS, filesystems wrapper class v1.0.15
+ * The MB_FS, filesystems wrapper class v1.0.16
  *
  * This wrapper class is for SD and Flash filesystems interface which supports SdFat (//https://github.com/greiman/SdFat)
  *
- *  Created March 5, 2023
+ *  Created June 14, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -35,11 +35,16 @@
 
 #define FS_NO_GLOBALS
 #if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
+#if defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)
 #include <FS.h>
+#endif
 #endif
 #include "MB_FS_Interfaces.h"
 #include MB_STRING_INCLUDE_CLASS
+
+#if defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)
 #include "SPI.h"
+#endif
 
 #if defined(ESP32) && __has_include(<sys/stat.h>)
 #ifdef _LITTLEFS_H_

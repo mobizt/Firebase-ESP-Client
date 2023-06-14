@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.2.5
+ * Firebase TCP Client v1.2.6
  *
- * Created June 9, 2023
+ * Created June 14, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -39,9 +39,13 @@
 
 #include "FB_TCP_Client.h"
 
-FB_TCP_Client::FB_TCP_Client()
+FB_TCP_Client::FB_TCP_Client(bool initSSLClient)
 {
-  client = wcs.get();
+  if (!wcs && initSSLClient)
+  {
+    wcs = std::unique_ptr<FB_ESP_SSL_CLIENT>(new FB_ESP_SSL_CLIENT());
+    client = wcs.get();
+  }
 }
 
 FB_TCP_Client::~FB_TCP_Client()
@@ -51,6 +55,9 @@ FB_TCP_Client::~FB_TCP_Client()
 
 void FB_TCP_Client::setInsecure()
 {
+  if (!wcs)
+    return;
+
   wcs->setInsecure();
 }
 
@@ -80,6 +87,9 @@ void FB_TCP_Client::setCACert(const char *caCert)
 
 bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
 {
+
+  if (!wcs)
+    return false;
 
   if (clockReady && strlen(caCertFile) > 0)
   {
@@ -149,6 +159,9 @@ int FB_TCP_Client::hostByName(const char *name, IPAddress &ip)
 // override the base connect
 bool FB_TCP_Client::connect()
 {
+  if (!wcs)
+    return false;
+
   if (connected())
   {
     flush();
@@ -191,6 +204,9 @@ void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
 bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
 {
 
+  if (!wcs)
+    return false;
+
   this->host = host;
   this->port = port;
   this->response_code = response_code;
@@ -204,6 +220,9 @@ bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
 
 int FB_TCP_Client::beginUpdate(int len, bool verify)
 {
+  if (!wcs)
+    return FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED;
+
   int code = 0;
 #if defined(ESP8266)
   if (len > (int)ESP.getFreeSketchSpace())

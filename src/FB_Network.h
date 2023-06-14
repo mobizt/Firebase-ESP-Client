@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
@@ -23,7 +23,9 @@
 #if defined(ESP32)
 #include <WiFi.h>
 #include <WiFiClient.h>
+#if !defined(FB_ENABLE_EXTERNAL_CLIENT)
 #include <ETH.h>
+#endif
 #include <WiFiClientSecure.h>
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>

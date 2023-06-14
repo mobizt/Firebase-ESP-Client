@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
@@ -1318,7 +1318,7 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename,
     return count;
 }
 
-#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
+#if (defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
 uint8_t FB_RTDB::readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &item, uint8_t mode)
 {
 

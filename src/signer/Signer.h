@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
@@ -148,7 +148,7 @@ private:
     /* set the token status by error code */
     void setTokenError(int code);
     /* create new TCP client */
-    void newClient(FB_TCP_CLIENT **client);
+    void newClient(FB_TCP_CLIENT **client, bool initSSLClient);
     /* delete TCP client */
     void freeClient(FB_TCP_CLIENT **client);
     /* handle the token processing task error */

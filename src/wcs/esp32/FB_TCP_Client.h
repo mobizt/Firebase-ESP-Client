@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.1.25
+ * Firebase TCP Client v1.1.26
  *
- * Created June 9, 2023
+ * Created June 14, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -85,7 +85,7 @@ class FB_TCP_Client : public FB_TCP_Client_Base
   friend class UtilsClass;
 
 public:
-  FB_TCP_Client();
+  FB_TCP_Client(bool initSSLClient = true);
   ~FB_TCP_Client();
 
   void setCACert(const char *caCert);
@@ -113,7 +113,8 @@ public:
   bool connect();
 
 private:
-  std::unique_ptr<FB_WCS> wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
+
+  std::unique_ptr<FB_WCS> wcs;
   char *cert = NULL;
 
   bool ethLinkUp();

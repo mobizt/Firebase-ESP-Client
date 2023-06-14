@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.1.25
+ * Firebase TCP Client v1.1.26
  *
- * Created June 9, 2023
+ * Created June 14, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -40,10 +40,13 @@
 
 #include "FB_TCP_Client.h"
 
-FB_TCP_Client::FB_TCP_Client()
+FB_TCP_Client::FB_TCP_Client(bool initSSLClient)
 {
-
-  client = wcs.get();
+  if (!wcs && initSSLClient)
+  {
+    wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
+    client = wcs.get();
+  }
 }
 
 FB_TCP_Client::~FB_TCP_Client()
@@ -53,6 +56,9 @@ FB_TCP_Client::~FB_TCP_Client()
 
 void FB_TCP_Client::setInsecure()
 {
+  if (!wcs)
+    return;
+
 #if __has_include(<esp_idf_version.h>)
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(3, 3, 0)
   wcs->setInsecure();
@@ -83,6 +89,8 @@ void FB_TCP_Client::setCACert(const char *caCert)
 
 bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type storageType)
 {
+  if (!wcs)
+    return false;
 
   if (strlen(caCertFile) > 0)
   {
@@ -168,6 +176,9 @@ void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
 
 bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
 {
+  if (!wcs)
+    return false;
+
   this->host = host;
   this->port = port;
   this->response_code = response_code;
@@ -177,6 +188,9 @@ bool FB_TCP_Client::begin(const char *host, uint16_t port, int *response_code)
 // override the base connect
 bool FB_TCP_Client::connect()
 {
+  if (!wcs)
+    return false;
+
   if (connected())
   {
     flush();
@@ -212,11 +226,13 @@ bool FB_TCP_Client::connect()
 
 bool FB_TCP_Client::ethLinkUp()
 {
+#if !defined(FB_ENABLE_EXTERNAL_CLIENT)
   if (strcmp(ETH.localIP().toString().c_str(), (const char *)MBSTRING_FLASH_MCR("0.0.0.0")) != 0)
   {
     ETH.linkUp();
     return true;
   }
+#endif
   return false;
 }
 

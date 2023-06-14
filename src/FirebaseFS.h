@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
@@ -118,8 +118,10 @@ static SdFat sd_fat_fs;   // should declare as static here
 // Use Keep Alive connection mode
 #define USE_CONNECTION_KEEP_ALIVE_MODE
 
-// To enable TCP KeepAlive for RTDB stream
-// #define ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM
+
+#if defined(DEFAULT_FLASH_FS) || defined(DEFAULT_SD_FS)
+#define FIREBASEJSON_USE_FS
+#endif
 
 // To enable external Client for ESP8266, ESP32 and Raspberry Pi Pico.
 // This will enable automatically for other devices.

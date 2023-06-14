@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * The custom TCP Client Class v1.0.4
+ * The custom TCP Client Class v1.0.5
  *
- * Created June 9, 2023
+ * Created June 15, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -46,7 +46,7 @@ class FB_Custom_TCP_Client : public FB_TCP_Client_Base
 {
 
 public:
-    FB_Custom_TCP_Client(){};
+    FB_Custom_TCP_Client(bool initSSLClient = true){};
     ~FB_Custom_TCP_Client(){};
 
     void setCACert(const char *caCert) {}

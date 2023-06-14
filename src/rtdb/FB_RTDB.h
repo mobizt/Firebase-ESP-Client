@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
@@ -2708,7 +2708,7 @@ private:
 #endif
 
   uint8_t openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType, uint8_t mode);
-#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
+#if (defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
   uint8_t readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &item, uint8_t mode);
 #endif
 #if defined(MBFS_ESP32_SDFAT_ENABLED)

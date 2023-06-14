@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
@@ -826,13 +826,13 @@ bool Firebase_Signer::refreshToken()
     return true;
 }
 
-void Firebase_Signer::newClient(FB_TCP_CLIENT **client)
+void Firebase_Signer::newClient(FB_TCP_CLIENT **client, bool initSSLClient)
 {
     freeClient(client);
 
     if (!*client)
     {
-        *client = new FB_TCP_CLIENT();
+        *client = new FB_TCP_CLIENT(initSSLClient);
 
         if (*client)
         {
@@ -1805,10 +1805,20 @@ bool Firebase_Signer::reconnect()
     networkChecking = true;
 
     bool noClient = tcpClient == nullptr;
+
+    // We need tcpClient for network checking. 
+
+    // Because this function will be called frequently (repeatedly), to avoid too many verbose debug messages from 
+    // internal SSL client destructor when freeClient was executed, the new tcpClient will be created 
+    // without initializing the internal SSL client.
+
     if (noClient)
-        newClient(&tcpClient);
+        newClient(&tcpClient, false);
 
     reconnect(tcpClient, nullptr);
+
+    if (noClient)
+        freeClient(&tcpClient);
 
     networkChecking = false;
 
@@ -1841,7 +1851,7 @@ bool Firebase_Signer::initClient(PGM_P subDomain, fb_esp_auth_token_status statu
 
     // No external and local client assigned?
     if (!tcpClient && !localTCPClient)
-        newClient(&tcpClient);
+        newClient(&tcpClient, true);
 
     // Stop TCP session
     tcpClient->stop();
@@ -2181,6 +2191,7 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
 
 #if defined(ENABLE_ERROR_STRING)
 
+    // The httpcode (session.response.code of FirebaseData) passes to this function matches every case here.
     switch (httpCode)
     {
 
@@ -2430,6 +2441,7 @@ void Firebase_Signer::errorToString(int httpCode, MB_String &buff)
         return;
 
     default:
+        // The default case will never be happened.
         return;
     }
 

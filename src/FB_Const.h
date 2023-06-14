@@ -1,10 +1,10 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created June 9, 2023
+ * Created June 15, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -50,6 +50,8 @@
 #if defined(FIREBASE_USE_PSRAM)
 #define FIREBASEJSON_USE_PSRAM
 #endif
+
+
 #include "json/FirebaseJson.h"
 #include "MB_NTP.h"
 
