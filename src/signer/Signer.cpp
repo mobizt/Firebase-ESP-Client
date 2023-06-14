@@ -8,7 +8,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created June 7, 2023
+ * Created June 14, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -2140,13 +2140,15 @@ bool Firebase_Signer::handleEmailSending(MB_StringPtr payload, fb_esp_user_email
     return true;
 }
 
-void Firebase_Signer::checkToken()
+bool Firebase_Signer::checkToken()
 {
     if (!config || !auth)
-        return;
+        return false;
 
     if (isAuthToken(true) && isExpired())
         handleToken();
+
+    return config->signer.tokens.status == token_status_ready;
 }
 
 bool Firebase_Signer::tokenReady()

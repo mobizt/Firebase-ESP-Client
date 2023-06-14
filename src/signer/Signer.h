@@ -8,7 +8,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created June 7, 2023
+ * Created June 14, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -167,7 +167,7 @@ private:
     /* request or refresh the token */
     bool requestTokens(bool refresh);
     /* check the token ready status and process the token tasks */
-    void checkToken();
+    bool checkToken();
     /* parse expiry time from string */
     void getExpiration(const char *exp);
     /* send email */

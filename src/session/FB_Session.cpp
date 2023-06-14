@@ -8,7 +8,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 9, 2023
+ * Created June 14, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -585,14 +585,8 @@ WiFiClientSecure *FirebaseData::getWiFiClient()
 
 bool FirebaseData::httpConnected()
 {
-    if (!reconnect())
-        session.connected = false;
-
-    if (session.connected && tcpClient.isKeepAliveSet())
+    if (tcpClient.isKeepAliveSet())
         session.connected = tcpClient.connected();
-
-    if (!session.connected)
-        closeSession();
 
     return session.connected;
 }
@@ -613,6 +607,11 @@ String FirebaseData::fileTransferError()
 void FirebaseData::keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCount)
 {
     tcpClient.keepAlive(tcpKeepIdleSeconds, tcpKeepIntervalSeconds, tcpKeepCount);
+}
+
+bool FirebaseData::isKeepAlive()
+{
+    return tcpClient.isKeepAlive;
 }
 
 String FirebaseData::payload()

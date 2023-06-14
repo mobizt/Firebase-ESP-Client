@@ -631,7 +631,12 @@ Ex.
 
 ```cpp
 fbdo.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
+
+// If one of three arguments is zero, the KeepAlive will be disabled.
 ```
+
+To check the KeepAlive status, use `<FirebaseData>.isKeepAlive`.
+
 
 For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
 

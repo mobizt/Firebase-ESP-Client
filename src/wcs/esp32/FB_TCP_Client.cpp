@@ -198,11 +198,12 @@ bool FB_TCP_Client::connect()
       tcpKeepIntervalSeconds = 0;
       tcpKeepCount = 0;
     }
-    
-    wcs->setOption(TCP_KEEPIDLE, &tcpKeepIdleSeconds);
-    wcs->setOption(TCP_KEEPINTVL, &tcpKeepIntervalSeconds);
-    wcs->setOption(TCP_KEEPCNT, &tcpKeepCount);
 
+    bool success = wcs->setOption(TCP_KEEPIDLE, &tcpKeepIdleSeconds) > -1 &&
+                   wcs->setOption(TCP_KEEPINTVL, &tcpKeepIntervalSeconds) > -1 &&
+                   wcs->setOption(TCP_KEEPCNT, &tcpKeepCount) > -1;
+    if (!success)
+      isKeepAlive = false;
   }
 #endif
 

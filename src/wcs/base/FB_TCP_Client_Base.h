@@ -269,9 +269,12 @@ public:
 
     void keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCount)
     {
+#if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
         this->tcpKeepIdleSeconds = tcpKeepIdleSeconds;
         this->tcpKeepIntervalSeconds = tcpKeepIntervalSeconds;
         this->tcpKeepCount = tcpKeepCount;
+        isKeepAlive = tcpKeepIdleSeconds > 0 && tcpKeepIntervalSeconds > 0 && tcpKeepCount > 0;
+#endif
     }
 
     bool isKeepAliveSet() { return tcpKeepIdleSeconds > -1 && tcpKeepIntervalSeconds > -1 && tcpKeepCount > -1; };
@@ -311,6 +314,8 @@ protected:
 
     // lwIP TCP Keepalive count.
     int tcpKeepCount = -1;
+
+    bool isKeepAlive = false;
 
     // In esp8266, this is actually Arduino base Stream (char read) timeout.
     //  This will override internally by WiFiClientSecureCtx::_connectSSL

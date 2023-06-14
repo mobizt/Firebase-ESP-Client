@@ -8,7 +8,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 9, 2023
+ * Created June 14, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -639,7 +639,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     if (fbdo->tcpClient.reserved)
         return false;
 
-    // prevent redundant calling
+    // prevent nested calling
     if (fbdo->session.streaming)
         return false;
 
@@ -648,7 +648,9 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     if (fbdo->session.rtdb.pause || fbdo->session.rtdb.stream_stop)
         return exitStream(fbdo, true);
 
-    if (!fbdo->tokenReady())
+    // Check token status via checkToken().
+    // Don't check from tokenReady() as it depends on network status too.
+    if (!Signer.checkToken())
         return exitStream(fbdo, false);
 
     bool ret = false;
