@@ -1054,7 +1054,7 @@ Keep in mind that `FirebaseData` object will create the SSL client inside of HTT
 
 In general, the RTDB stream timed out occurred when no data included keep-alive event data received in the specific period (45 seconds) which can be set via `config.timeout.rtdbKeepAlive`.
 
-Now you can take the pros of TCP KeepAlive in Stream mode by brobing the server connection at some intervals to help the stream time out more reliable.
+Now you can take the pros of TCP KeepAlive in Stream mode by probing the server connection at some intervals to help the stream time out more reliable.
 
 You can check the server connecting status, by executing `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
 
