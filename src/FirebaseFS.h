@@ -118,9 +118,6 @@ static SdFat sd_fat_fs;   // should declare as static here
 // Use Keep Alive connection mode
 #define USE_CONNECTION_KEEP_ALIVE_MODE
 
-// To enable TCP KeepAlive for RTDB stream
-// #define ENABLE_TCP_KEEP_ALIVE_FOR_RTDB_STREAM
-
 // To enable external Client for ESP8266, ESP32 and Raspberry Pi Pico.
 // This will enable automatically for other devices.
 // #define FB_ENABLE_EXTERNAL_CLIENT
