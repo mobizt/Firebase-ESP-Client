@@ -877,8 +877,13 @@ void Firebase_Signer::setTokenError(int code)
 bool Firebase_Signer::handleTaskError(int code, int httpCode)
 {
     // Close TCP connection and unlock used flag
-    tcpClient->stop();
-    tcpClient->reserved = false;
+
+    if (tcpClient)
+    {
+        tcpClient->stop();
+        tcpClient->reserved = false;
+    }
+
     config->internal.fb_processing = false;
 
     switch (code)
@@ -1806,10 +1811,10 @@ bool Firebase_Signer::reconnect()
 
     bool noClient = tcpClient == nullptr;
 
-    // We need tcpClient for network checking. 
+    // We need tcpClient for network checking.
 
-    // Because this function will be called frequently (repeatedly), to avoid too many verbose debug messages from 
-    // internal SSL client destructor when freeClient was executed, the new tcpClient will be created 
+    // Because this function will be called frequently (repeatedly), to avoid too many verbose debug messages from
+    // internal SSL client destructor when freeClient was executed, the new tcpClient will be created
     // without initializing the internal SSL client.
 
     if (noClient)

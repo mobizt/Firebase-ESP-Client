@@ -29,10 +29,8 @@
  *
  */
 #if defined(ESP32)
-#include <SPIFFS.h>
 #endif
 #if defined(ESP32) || defined(ESP8266)
-#define DEFAULT_FLASH_FS SPIFFS
 #elif defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_NANO_RP2040_CONNECT)
 #include <LittleFS.h>
 #define DEFAULT_FLASH_FS LittleFS
@@ -67,9 +65,6 @@ static SdFat sd_fat_fs;   // should declare as static here
 */
 
 #if defined(ESP32) || defined(ESP8266)
-#include <SD.h>
-#define DEFAULT_SD_FS SD
-#define CARD_TYPE_SD 1
 #elif defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_NANO_RP2040_CONNECT)
 // Use SDFS (ESP8266SdFat) instead of SD
 #include <SDFS.h>
@@ -120,7 +115,7 @@ static SdFat sd_fat_fs;   // should declare as static here
 
 // To enable external Client for ESP8266, ESP32 and Raspberry Pi Pico.
 // This will enable automatically for other devices.
-// #define FB_ENABLE_EXTERNAL_CLIENT
+ #define FB_ENABLE_EXTERNAL_CLIENT
 
 // For ESP8266 ENC28J60 Ethernet module
 // #define ENABLE_ESP8266_ENC28J60_ETH

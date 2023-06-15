@@ -4,7 +4,7 @@
 #endif
 
 /**
- * Firebase TCP Client v1.1.26
+ * Firebase TCP Client v1.1.27
  *
  * Created June 14, 2023
  *
@@ -39,7 +39,7 @@
 #include <Arduino.h>
 #include "mbfs/MB_MCU.h"
 
-#if defined(ESP32) && !defined(ENABLE_EXTERNAL_CLIENT)
+#if defined(ESP32) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
 
 #include "FB_Network.h"
 #include "FB_Error.h"
