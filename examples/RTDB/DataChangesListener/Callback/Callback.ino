@@ -153,9 +153,13 @@ void setup()
   stream.setBSSLBufferSize(2048 /* Rx in bytes, 512 - 16384 */, 512 /* Tx in bytes, 512 - 16384 */);
 #endif
 
-  // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
-  // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
-  // stream.keepAlive(5, 5, 1);
+// You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
+// https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
+// You can use keepAlive in ESP8266 core version newer than v3.1.2.
+// Or you can use git version (v3.1.2) https://github.com/esp8266/Arduino
+#if defined(ESP32)
+  stream.keepAlive(5, 5, 1);
+#endif
 
   if (!Firebase.RTDB.beginStream(&stream, "/test/stream/data"))
     Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
@@ -197,7 +201,7 @@ void loop()
 #if defined(ARDUINO_RASPBERRY_PI_PICO_W)
 
   Firebase.RTDB.runStream();
- 
+
 #endif
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
@@ -214,5 +218,11 @@ void loop()
   {
     dataChanged = false;
     // When stream data is available, do anything here...
+  }
+
+  // After calling stream.keepAlive, now we can track the server connecting status
+  if (!stream.httpConnected())
+  {
+    // Server was disconnected!
   }
 }
