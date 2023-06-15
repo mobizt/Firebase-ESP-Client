@@ -43,16 +43,20 @@
 #include <functional>
 #endif
 
-#include "FB_Network.h"
 #include "FirebaseFS.h"
-#include "./mbfs/MB_FS.h"
+#include "FB_Network.h"
+
+#if defined(DEFAULT_FLASH_FS) || defined(DEFAULT_SD_FS)
+#define FIREBASEJSON_USE_FS
+#endif
 
 #if defined(FIREBASE_USE_PSRAM)
 #define FIREBASEJSON_USE_PSRAM
 #endif
 
+// FirebaseJson was already included in MB_FS.h
+#include "./mbfs/MB_FS.h"
 
-#include "json/FirebaseJson.h"
 #include "MB_NTP.h"
 
 #if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
