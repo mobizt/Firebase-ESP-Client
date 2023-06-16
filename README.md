@@ -623,7 +623,7 @@ With HTTP Keep-Alive mode, you can take the benefit of TCP KeepAlive which will 
 
 The disadvantage when using TCP KeepAlive is little or more data bandwidth consumed which depends on the TCP KeepAlive options set in `FirebaseData` object.
 
-The TCP KeepAlive can be enable from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
+The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
 
 `tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
 
@@ -1060,7 +1060,7 @@ You can check the server connecting status, by executing `<FirebaseData>.httpCon
 
 As previousely described, using [TCP KeepAlive in `FirebaseData` object](#about-firebasedata-object) in Stream has pros and cons.
 
-The TCP KeepAlive can be enable from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
+The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
 
 `tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
 
