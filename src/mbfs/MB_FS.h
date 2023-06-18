@@ -31,7 +31,7 @@
 #define MBFS_CLASS_H
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
+#include "MB_MCU.h"
 
 #define FS_NO_GLOBALS
 #if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)

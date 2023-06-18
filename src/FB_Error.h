@@ -14,17 +14,29 @@
 #define FB_ERROR_RANGE -100
 
 /// TCP client errors
+// Server does not response to the request in time
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED (-1)
+// Not used
 #define FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED (-2)
+// The session (server disconnected) was closed during reading the response.
 #define FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED (-3)
+// Network was disconnected
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST (-4)
+// Not used
 #define FIREBASE_ERROR_TCP_ERROR_NO_STREAM (-5)
+// Not used
 #define FIREBASE_ERROR_TCP_ERROR_NO_HTTP_SERVER (-6)
+// Not used
 #define FIREBASE_ERROR_TCP_ERROR_TOO_LESS_RAM (-7)
+// Not used
 #define FIREBASE_ERROR_TCP_ERROR_ENCODING (-8)
+// Not used
 #define FIREBASE_ERROR_TCP_ERROR_STREAM_WRITE (-9)
+// The session was already opened for other connection
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED (-10)
+// Response payload is too large or internet is too slow or not responding to complete reading in time 
 #define FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT (-11)
+// Similar to FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT but not used
 #define FIREBASE_ERROR_TCP_RESPONSE_READ_FAILED (-12)
 
 

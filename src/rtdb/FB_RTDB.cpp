@@ -3465,7 +3465,6 @@ bool FB_RTDB::connectionError(FirebaseData *fbdo)
 {
     return fbdo->session.response.code == FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED ||
            fbdo->session.response.code == FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST ||
-           fbdo->session.response.code == FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED ||
            fbdo->session.response.code == FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED ||
            fbdo->session.response.code == FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT;
 }
