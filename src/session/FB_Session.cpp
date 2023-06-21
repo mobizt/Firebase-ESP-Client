@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40314)
 #error "Mixed versions compilation."
 #endif
 
@@ -1086,14 +1086,6 @@ bool FirebaseData::prepareDownload(const MB_String &filename, fb_esp_mem_storage
     // We can't open file (flash or sd) to write here because of truncated result, only append is ok.
     // We have to remove existing file
     Signer.mbfs->remove(filename, mbfs_type type);
-#else
-    int ret = Signer.mbfs->open(filename, mbfs_type type, mb_fs_open_mode_write);
-    if (ret < 0)
-    {
-        tcpClient.flush();
-        session.response.code = ret;
-        return false;
-    }
 #endif
     return true;
 }

@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40314)
 #error "Mixed versions compilation."
 #endif
 
@@ -634,7 +634,7 @@ void Firebase_Signer::tokenProcessingTask()
                     config->internal.fb_last_jwt_generation_error_cb_millis = 0;
                 }
 
-                // reset flag to allow clock synching execution again in ut->syncClock if clocck synching was timed out
+                // reset flag to allow clock synching execution again in TimeHelper::syncClock if clocck synching was timed out
                 config->internal.fb_clock_synched = false;
 
                 reconnect();
