@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40314)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40315)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.15
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.16
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 14, 2023
+ * Created July 7, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -2276,8 +2276,8 @@ bool FB_RTDB::encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_St
             break;
     }
 
-    // remaing data to wrire? write it
-    if (size == total && out.bufLen > 0)
+    // remainig data to wrire? write it
+    if (size == total && out.bufWrite > 0)
         Base64Helper::writeOutput(Signer.mbfs, out);
 
     MemoryHelper::freeBuffer(Signer.mbfs, data);
