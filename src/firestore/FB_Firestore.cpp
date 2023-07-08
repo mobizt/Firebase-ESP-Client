@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.2.6
+ * Google's Cloud Firestore class, Forestore.cpp version 1.2.7
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 9, 2023
+ * Created July 8, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -398,11 +398,11 @@ bool FB_Firestore::mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_Stri
     fbdo->initJson();
     if (consistencyMode != fb_esp_firestore_consistency_mode_undefined)
     {
-        if (consistencyMode != fb_esp_firestore_consistency_mode_transaction)
+        if (consistencyMode == fb_esp_firestore_consistency_mode_transaction)
             JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_cfs_pgm_str_28 /* "transaction" */, MB_String(consistency));
-        else if (consistencyMode != fb_esp_firestore_consistency_mode_newTransaction)
+        else if (consistencyMode == fb_esp_firestore_consistency_mode_newTransaction)
             JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_cfs_pgm_str_29 /* "newTransaction" */, MB_String(consistency));
-        else if (consistencyMode != fb_esp_firestore_consistency_mode_readTime)
+        else if (consistencyMode == fb_esp_firestore_consistency_mode_readTime)
             JsonHelper::addString(fbdo->session.jsonPtr, fb_esp_cfs_pgm_str_24 /* "readTime" */, MB_String(consistency));
     }
     JsonHelper::addObject(fbdo->session.jsonPtr, fb_esp_cfs_pgm_str_27 /* "structuredQuery" */, structuredQuery, false);
