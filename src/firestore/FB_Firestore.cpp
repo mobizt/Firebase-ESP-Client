@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.2.7
+ * Google's Cloud Firestore class, Forestore.cpp version 1.2.8
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 8, 2023
+ * Created July 10, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -230,8 +230,8 @@ void FB_Firestore::parseWrites(FirebaseData *fbdo, MB_VECTOR<struct fb_esp_fires
     if (writes.size() > 0)
     {
         MB_String path, updateMaskPath, docPathBase, docPath;
-        updateMaskPath += fb_esp_pgm_str_70; // "updateMask"
-        updateMaskPath += fb_esp_pgm_str_1;   // "/"
+        updateMaskPath += fb_esp_pgm_str_70;     // "updateMask"
+        updateMaskPath += fb_esp_pgm_str_1;      // "/"
         updateMaskPath += fb_esp_cfs_pgm_str_12; // "fieldPaths"
 
         FirebaseJson json;
@@ -510,6 +510,7 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
         return false;
     }
 
+
     if (Signer.config->internal.fb_processing)
         return false;
 
@@ -523,10 +524,12 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
 
     connect(fbdo);
     req->requestTime = millis();
-    
+
     bool ret = firestore_sendRequest(fbdo, req);
     if (!ret)
         fbdo->closeSession();
+
+    Signer.config->internal.fb_processing = false;
 
     return ret;
 }
@@ -756,15 +759,11 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
     {
         fbdo->session.connected = true;
         if (fbdo->session.cfs.async || handleResponse(fbdo, req))
-        {
-            Signer.config->internal.fb_processing = false;
             return true;
-        }
     }
     else
         fbdo->session.connected = false;
 
-    Signer.config->internal.fb_processing = false;
     return false;
 }
 

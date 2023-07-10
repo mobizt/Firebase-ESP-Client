@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Cloud Firestore class, Forestore.h version 1.2.7
+ * Google's Cloud Firestore class, Forestore.h version 1.2.8
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 8, 2023
+ * Created July 10, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
