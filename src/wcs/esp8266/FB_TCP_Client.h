@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40315)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40316)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.2.6
+ * Firebase TCP Client v1.2.7
  *
- * Created June 14, 2023
+ * Created July 10, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -87,6 +87,8 @@ public:
   int beginUpdate(int len, bool verify = true);
 
   bool ethLinkUp();
+
+  bool validIP(IPAddress ip);
 
   void ethDNSWorkAround();
 

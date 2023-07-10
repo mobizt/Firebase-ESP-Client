@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40315)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40316)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Firebase TCP Client v1.1.26
+ * Firebase TCP Client v1.1.27
  *
- * Created June 14, 2023
+ * Created July 10, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -144,7 +144,7 @@ bool FB_TCP_Client::setCertFile(const char *caCertFile, mb_fs_mem_storage_type s
 
 bool FB_TCP_Client::networkReady()
 {
-  return WiFi.status() == WL_CONNECTED || ethLinkUp();
+  return (WiFi.status() == WL_CONNECTED && validIP(WiFi.localIP())) || ethLinkUp();
 }
 
 void FB_TCP_Client::networkReconnect()
@@ -227,13 +227,18 @@ bool FB_TCP_Client::connect()
 bool FB_TCP_Client::ethLinkUp()
 {
 #if !defined(FB_ENABLE_EXTERNAL_CLIENT)
-  if (strcmp(ETH.localIP().toString().c_str(), (const char *)MBSTRING_FLASH_MCR("0.0.0.0")) != 0)
+  if (validIP(ETH.localIP()))
   {
     ETH.linkUp();
     return true;
   }
 #endif
   return false;
+}
+
+bool FB_TCP_Client::validIP(IPAddress ip)
+{
+    return strcmp(ip.toString().c_str(), "0.0.0.0") != 0;
 }
 
 void FB_TCP_Client::release()
