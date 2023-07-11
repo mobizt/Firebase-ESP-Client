@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.8
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.9
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 14, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -508,8 +508,7 @@ uint8_t FirebaseData::dataTypeEnum()
 
 bool FirebaseData::streamAvailable()
 {
-    bool ret = session.connected && !session.rtdb.stream_stop &&
-               session.rtdb.data_available && session.rtdb.stream_data_changed;
+    bool ret = !session.rtdb.stream_stop && session.rtdb.data_available && session.rtdb.stream_data_changed;
     session.rtdb.data_available = false;
     session.rtdb.stream_data_changed = false;
     return ret;
@@ -585,10 +584,7 @@ WiFiClientSecure *FirebaseData::getWiFiClient()
 
 bool FirebaseData::httpConnected()
 {
-    if (tcpClient.isKeepAliveSet())
-        session.connected = tcpClient.connected();
-
-    return session.connected;
+    return tcpClient.connected();
 }
 
 bool FirebaseData::bufferOverflow()
@@ -754,7 +750,7 @@ int FirebaseData::maxPayloadLength()
 }
 
 #ifdef ENABLE_RTDB
-void FirebaseData::sendStreamToCB(int code)
+void FirebaseData::sendStreamToCB(int code, bool report)
 {
     session.error.clear();
     session.errCode = 0;
@@ -766,7 +762,8 @@ void FirebaseData::sendStreamToCB(int code)
         if (_timeoutCallback && millis() - Signer.config->internal.fb_last_stream_timeout_cb_millis > 3000)
         {
             Signer.config->internal.fb_last_stream_timeout_cb_millis = millis();
-            _timeoutCallback(code < 0);
+            if (report)
+                _timeoutCallback(code < 0);
         }
     }
 }

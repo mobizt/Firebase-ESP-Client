@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.9
+ * Google's Cloud Storage class, GCS.cpp version 1.2.10
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 9, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -279,8 +279,7 @@ void GG_CloudStorage::rescon(FirebaseData *fbdo, const char *host)
 {
     fbdo->_responseCallback = NULL;
 
-    if (fbdo->session.cert_updated || !fbdo->session.connected ||
-        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+    if (fbdo->session.cert_updated || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_gc_storage || strcmp(host, fbdo->session.host.c_str()) != 0)
     {
         fbdo->session.last_conn_ms = millis();
@@ -579,7 +578,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
         multipart_header2 += boundary;
         multipart_header2 += fb_esp_gcs_pgm_str_13; // "--"
 
-        header += fb_esp_pgm_str_33;   // "Content-Type: "
+        header += fb_esp_pgm_str_33;     // "Content-Type: "
         header += fb_esp_gcs_pgm_str_14; // "multipart/related; boundary="
         header += boundary;
         HttpHelper::addNewLine(header);
@@ -669,7 +668,6 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
     {
 
         fbdo->session.gcs.storage_type = req->storageType;
-        fbdo->session.connected = true;
         if (req->requestType == fb_esp_gcs_request_type_upload_simple ||
             req->requestType == fb_esp_gcs_request_type_upload_multipart)
         {
@@ -790,7 +788,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_
                 Signer.mbfs->close(mbfs_type req->storageType);
         }
 
-        if (fbdo->session.connected)
+        if (fbdo->tcpClient.connected())
         {
             bool ret = handleResponse(fbdo, req);
             fbdo->closeSession();

@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.16
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.17
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 7, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -663,7 +663,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
 
     if (millis() - Signer.config->timeout.rtdbStreamReconnect > fbdo->session.rtdb.stream_resume_millis)
     {
-        reconnectStream = (fbdo->session.rtdb.data_tmo && !fbdo->session.connected) ||
+        reconnectStream = fbdo->session.rtdb.data_tmo ||
                           fbdo->session.response.code >= 400 ||
                           fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream;
 
@@ -1677,9 +1677,7 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
                                                      ? true
                                                      : false;
 
-    if (fbdo->session.cert_updated ||
-        !fbdo->session.connected ||
-        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+    if (fbdo->session.cert_updated || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.rtdb.stream_path_changed ||
         (req->method == rtdb_stream && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream) ||
         (req->method != rtdb_stream && fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream) ||
@@ -1709,7 +1707,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
         return false;
 #endif
 
-    if (!fbdo->session.connected)
+    if (!fbdo->tcpClient.connected())
         fbdo->session.rtdb.async_count = 0;
 
     if ((fbdo->session.rtdb.async && !req->async) ||
@@ -1740,7 +1738,6 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
 
     if (sendRequest(fbdo, req))
     {
-        fbdo->session.connected = true;
 
         if (req->method == rtdb_stream)
         {
@@ -1821,11 +1818,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
         }
     }
     else
-    {
-        if (fbdo->session.response.code != FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED)
-            fbdo->session.connected = false;
         return false;
-    }
 
     return true;
 }
@@ -2230,12 +2223,8 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
 
     fbdo->tcpClient.dataTime = millis() - ms;
 
-    if (fbdo->session.response.code < 0)
-        return false;
+    return fbdo->session.response.code < 0 ? false : true;
 
-    fbdo->session.connected = fbdo->session.response.code > 0;
-
-    return true;
 }
 
 bool FB_RTDB::encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_String &filePath,
@@ -2335,12 +2324,12 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
     if (fbdo->session.rtdb.pause)
         return true;
 
-    if (!fbdo->session.connected || !fbdo->tcpClient.connected())
+    if (!fbdo->tcpClient.connected())
     {
         fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
         if (fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream)
-            fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
+            fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED, false);
 
         return false;
     }

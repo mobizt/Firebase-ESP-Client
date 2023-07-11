@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.23
+ * Google's Cloud Functions class, Functions.cpp version 1.1.24
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 9, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -668,7 +668,6 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
 
     if (fbdo->session.response.code > 0)
     {
-        fbdo->session.connected = true;
         if (req->requestType == fb_esp_functions_request_type_upload)
         {
             // Fix in ESP32 core 2.0.x
@@ -727,8 +726,6 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct fb_esp_funct
             return true;
         }
     }
-    else
-        fbdo->session.connected = false;
 
     Signer.config->internal.fb_processing = false;
     return false;
@@ -738,8 +735,7 @@ void FB_Functions::rescon(FirebaseData *fbdo, const char *host)
 {
     fbdo->_responseCallback = NULL;
 
-    if (fbdo->session.cert_updated || !fbdo->session.connected ||
-        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+    if (fbdo->session.cert_updated || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_functions || strcmp(host, fbdo->session.host.c_str()) != 0)
     {
         fbdo->session.last_conn_ms = millis();

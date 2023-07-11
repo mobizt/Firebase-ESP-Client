@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.31
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.32
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created June 9, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -235,7 +235,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char 
         }
         else if (mode == fb_esp_fcm_msg_mode_apn_token_registration)
         {
-            header += fb_esp_fcm_pgm_str_5; // "/iid/v1"
+            header += fb_esp_fcm_pgm_str_5;  // "/iid/v1"
             header += fb_esp_fcm_pgm_str_15; // ":batchImport"
         }
     }
@@ -495,7 +495,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = Utils::makeFCMMessagePath();
         s += fb_esp_fcm_pgm_str_43; // "fcm_options"
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_44; // "analytics_label"
         json.set(s, msg->fcm_options.analytics_label);
     }
@@ -542,7 +542,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = Utils::makeFCMMessagePath();
         Utils::addFCMAndroidPath(s, fb_esp_fcm_pgm_str_43 /* "fcm_options" */);
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_44; // "analytics_label"
         json.set(s, msg->android.fcm_options.analytics_label);
     }
@@ -747,7 +747,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = base;
         s += fb_esp_fcm_pgm_str_35; // "color"
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_59; // "red"
         json.set(s, atoi(msg->android.notification.light_settings.color.red.c_str()));
     }
@@ -755,7 +755,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = base;
         s += fb_esp_fcm_pgm_str_35; // "color"
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_60; // "green"
         json.set(s, atoi(msg->android.notification.light_settings.color.green.c_str()));
     }
@@ -763,7 +763,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = base;
         s += fb_esp_fcm_pgm_str_35; // "color"
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_61; // "blue"
         json.set(s, atoi(msg->android.notification.light_settings.color.blue.c_str()));
     }
@@ -771,7 +771,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = base;
         s += fb_esp_fcm_pgm_str_35; // "color"
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_62; // "alpha"
         json.set(s, atoi(msg->android.notification.light_settings.color.alpha.c_str()));
     }
@@ -820,7 +820,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = Utils::makeFCMMessagePath();
         Utils::addFCMWebpushPath(s, fb_esp_fcm_pgm_str_43 /* "fcm_options" */);
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_44; // "analytics_label"
         json.set(s, msg->webpush.fcm_options.analytics_label);
     }
@@ -829,7 +829,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = Utils::makeFCMMessagePath();
         Utils::addFCMWebpushPath(s, fb_esp_fcm_pgm_str_43 /* "fcm_options" */);
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_66; // "link"
         json.set(s, msg->webpush.fcm_options.link);
     }
@@ -856,7 +856,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = Utils::makeFCMMessagePath();
         Utils::addFCMApnsPath(s, fb_esp_fcm_pgm_str_43 /* "fcm_options" */);
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_44; // "analytics_label"
         json.set(s, msg->apns.fcm_options.analytics_label);
     }
@@ -865,7 +865,7 @@ void FB_CM::fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg)
     {
         s = Utils::makeFCMMessagePath();
         Utils::addFCMApnsPath(s, fb_esp_fcm_pgm_str_43 /* "fcm_options" */);
-        s += fb_esp_pgm_str_1;   // "/"
+        s += fb_esp_pgm_str_1;      // "/"
         s += fb_esp_fcm_pgm_str_42; // "image"
         json.set(s, msg->apns.fcm_options.image);
     }
@@ -911,8 +911,6 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *m
             Signer.config->internal.fb_processing = false;
         return false;
     }
-    else
-        fbdo->session.connected = true;
 
     ret = waitResponse(fbdo);
 
@@ -974,8 +972,7 @@ void FB_CM::rescon(FirebaseData *fbdo, const char *host)
 {
     fbdo->_responseCallback = NULL;
 
-    if (fbdo->session.cert_updated || !fbdo->session.connected ||
-        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+    if (fbdo->session.cert_updated || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_fcm ||
         strcmp(host, fbdo->session.host.c_str()) != 0)
     {

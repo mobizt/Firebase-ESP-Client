@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.h version 1.3.8
+ * Google's Firebase Data class, FB_Session.h version 1.3.9
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 14, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -1047,7 +1047,7 @@ private:
 #endif
 #ifdef ENABLE_RTDB
   void clearQueueItem(QueueItem *item);
-  void sendStreamToCB(int code);
+  void sendStreamToCB(int code, bool report = true);
   void mSetIntValue(const char *value);
   void mSetFloatValue(const char *value);
   void mSetBoolValue(bool value);

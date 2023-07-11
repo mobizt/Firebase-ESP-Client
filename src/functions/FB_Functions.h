@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Cloud Functions class, Functions.h version 1.1.23
+ * Google's Cloud Functions class, Functions.h version 1.1.24
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 9, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

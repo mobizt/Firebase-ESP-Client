@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.2.9
+ * Google's Firebase Storage class, FCS.cpp version 1.2.10
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created June 9, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -251,8 +251,7 @@ void FB_Storage::rescon(FirebaseData *fbdo, const char *host)
 {
     fbdo->_responseCallback = NULL;
 
-    if (fbdo->session.cert_updated || !fbdo->session.connected ||
-        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+    if (fbdo->session.cert_updated || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_storage || strcmp(host, fbdo->session.host.c_str()) != 0)
     {
         fbdo->session.last_conn_ms = millis();
@@ -478,7 +477,6 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
     if (fbdo->session.response.code > 0)
     {
         fbdo->session.fcs.storage_type = req->storageType;
-        fbdo->session.connected = true;
         bool waitResponse = true;
         if (req->requestType == fb_esp_fcs_request_type_upload)
         {
@@ -578,8 +576,6 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct fb_esp_fcs_req_t *re
 
         return res;
     }
-    else
-        fbdo->session.connected = false;
 
     if (req->requestType == fb_esp_fcs_request_type_download)
         Signer.mbfs->close(mbfs_type req->storageType);

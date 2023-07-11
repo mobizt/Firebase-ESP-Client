@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.2.8
+ * Google's Cloud Firestore class, Forestore.cpp version 1.2.9
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 10, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -510,7 +510,6 @@ bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t
         return false;
     }
 
-
     if (Signer.config->internal.fb_processing)
         return false;
 
@@ -755,14 +754,8 @@ bool FB_Firestore::firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_fires
             fbdo->tcpClient.send(req->payload.c_str());
     }
 
-    if (fbdo->session.response.code > 0)
-    {
-        fbdo->session.connected = true;
-        if (fbdo->session.cfs.async || handleResponse(fbdo, req))
-            return true;
-    }
-    else
-        fbdo->session.connected = false;
+    if (fbdo->session.response.code > 0 && (fbdo->session.cfs.async || handleResponse(fbdo, req)))
+        return true;
 
     return false;
 }
@@ -771,8 +764,7 @@ void FB_Firestore::rescon(FirebaseData *fbdo, const char *host)
 {
     fbdo->_responseCallback = NULL;
 
-    if (fbdo->session.cert_updated || !fbdo->session.connected ||
-        millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
+    if (fbdo->session.cert_updated || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.con_mode != fb_esp_con_mode_firestore ||
         strcmp(host, fbdo->session.host.c_str()) != 0)
     {

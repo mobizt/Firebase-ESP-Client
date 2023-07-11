@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Token Management class, Signer.cpp version 1.3.13
+ * Google's Firebase Token Management class, Signer.cpp version 1.3.14
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created June 14, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -1651,7 +1651,6 @@ void Firebase_Signer::closeSession(FB_TCP_CLIENT *client, fb_esp_session_info_t 
         session->rtdb.new_stream = true;
     }
 #endif
-    session->connected = false;
 }
 
 bool Firebase_Signer::reconnect(FB_TCP_CLIENT *client, fb_esp_session_info_t *session, unsigned long dataTime)
@@ -1709,17 +1708,14 @@ bool Firebase_Signer::reconnect(FB_TCP_CLIENT *client, fb_esp_session_info_t *se
     {
         if (session)
         {
-            if (session->connected)
-                closeSession(client, session);
+            closeSession(client, session);
             session->response.code = FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
         }
 
-        bool s_connected = session ? session->connected : false;
-
         if (config)
-            resumeWiFi(client, config->internal.net_once_connected, config->internal.fb_last_reconnect_millis, config->timeout.wifiReconnect, s_connected);
+            resumeWiFi(client, config->internal.net_once_connected, config->internal.fb_last_reconnect_millis, config->timeout.wifiReconnect);
         else
-            resumeWiFi(client, net_once_connected, last_reconnect_millis, wifi_reconnect_tmo, s_connected);
+            resumeWiFi(client, net_once_connected, last_reconnect_millis, wifi_reconnect_tmo);
 
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)
         client->networkReady();
@@ -1745,7 +1741,7 @@ bool Firebase_Signer::reconnect(FB_TCP_CLIENT *client, fb_esp_session_info_t *se
     return networkStatus;
 }
 
-void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo, bool session_connected)
+void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo)
 {
 
     if (autoReconnectWiFi || !net_once_connected)
@@ -1754,8 +1750,7 @@ void Firebase_Signer::resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected
             wifi_reconnect_tmo > MAX_WIFI_RECONNECT_TIMEOUT)
             wifi_reconnect_tmo = MIN_WIFI_RECONNECT_TIMEOUT;
 
-        if (millis() - last_reconnect_millis > wifi_reconnect_tmo &&
-            !session_connected)
+        if (millis() - last_reconnect_millis > wifi_reconnect_tmo)
         {
 
 #if defined(FB_ENABLE_EXTERNAL_CLIENT)

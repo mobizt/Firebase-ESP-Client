@@ -4,11 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Token Management class, Signer.h version 1.3.13
+ * Google's Firebase Token Management class, Signer.h version 1.3.14
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created June 14, 2023
+ * Created July 11, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -206,7 +206,7 @@ private:
     /* resume network connection */
     bool reconnect(FB_TCP_CLIENT *client, fb_esp_session_info_t *session, unsigned long dataTime = 0);
     bool reconnect();
-    void resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo, bool session_connected);
+    void resumeWiFi(FB_TCP_CLIENT *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo);
     /* close TCP session */
     void closeSession(FB_TCP_CLIENT *client, fb_esp_session_info_t *session);
     /* set external Client */
