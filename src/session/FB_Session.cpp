@@ -2036,8 +2036,6 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
             Signer.config->internal.fb_processing = false;
         return false;
     }
-    else
-        fbdo.session.connected = true;
 
     bool ret = waitResponse(fbdo);
 
@@ -2054,8 +2052,7 @@ void FCMObject::rescon(FirebaseData &fbdo, const char *host)
 {
     fbdo._responseCallback = NULL;
 
-    if (fbdo.session.cert_updated || !fbdo.session.connected ||
-        millis() - fbdo.session.last_conn_ms > fbdo.session.conn_timeout ||
+    if (fbdo.session.cert_updated || millis() - fbdo.session.last_conn_ms > fbdo.session.conn_timeout ||
         fbdo.session.con_mode != fb_esp_con_mode_fcm ||
         strcmp(host, fbdo.session.host.c_str()) != 0)
     {
