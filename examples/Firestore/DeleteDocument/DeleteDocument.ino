@@ -123,7 +123,7 @@ void loop()
     {
         taskCompleted = true;
 
-        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse/Create_Edit_Parse.ino
         FirebaseJson content;
 
         // aa is the collection id, bb is the document id in collection aa.

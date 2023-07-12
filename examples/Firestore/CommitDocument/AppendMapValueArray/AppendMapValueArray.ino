@@ -157,7 +157,7 @@ void loop()
         // fb_esp_firestore_transform_type_remove_all_from_array
         field_transforms.transform_type = fb_esp_firestore_transform_type_append_missing_elements;
 
-        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse/Create_Edit_Parse.ino
         FirebaseJson content;
 
         content.set("values/[0]/mapValue/fields/id/stringValue", "item" + String(count));

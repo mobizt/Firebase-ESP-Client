@@ -131,7 +131,7 @@ void loop()
 
         // The following query will query at collection c0 to get the 3 documents in the payload result with descending order.
 
-        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse/Create_Edit_Parse.ino
         FirebaseJson query;
 
         query.set("select/fields/[0]/fieldPath", "myDouble");

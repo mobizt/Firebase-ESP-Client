@@ -152,7 +152,7 @@ void loop()
     {
         dataMillis = millis();
 
-        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse/Create_Edit_Parse.ino
         FirebaseJson content;
 
         // Note: If new document created under non-existent ancestor documents, that document will not appear in queries and snapshot
