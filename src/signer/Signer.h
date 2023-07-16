@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40316)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40317)
 #error "Mixed versions compilation."
 #endif
 
@@ -8,7 +8,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created July 11, 2023
+ * Created July 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -158,6 +158,7 @@ private:
     /* process the tokens (generation, signing, request and refresh) */
     void tokenProcessingTask();
     bool checkUDP(UDP *udp, bool &ret, bool &_token_processing_task_enable, float gmtOffset);
+    bool handleError(int code, const char *descr, int errNum = 0);
     /* encode and sign the JWT token */
     bool createJWT();
     /* verifying the user with email/passwod to get id token */

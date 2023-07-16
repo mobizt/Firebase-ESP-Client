@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40316)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40317)
 #error "Mixed versions compilation."
 #endif
 
@@ -8,7 +8,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico
  *
- * Created July 11, 2023
+ * Created July 16, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -286,6 +286,13 @@ bool Firebase_Signer::checkAuthTypeChanged(FirebaseConfig *config, FirebaseAuth 
 
 time_t Firebase_Signer::getTime()
 {
+    // When the pointers are not yet initialized.
+    uint32_t ts = 0;
+    uint32_t ts_offset = 0;
+    if (!mb_ts)
+        mb_ts = &ts;
+    if (!ts_offset)
+        mb_ts_offset = &ts_offset;
     return TimeHelper::getTime(mb_ts, mb_ts_offset);
 }
 
@@ -1053,6 +1060,20 @@ bool Firebase_Signer::handleTokenResponse(int &httpCode)
     return false;
 }
 
+bool Firebase_Signer::handleError(int code, const char *descr, int errNum)
+{
+#if defined(ESP32)
+    char *temp = MemoryHelper::createBuffer<char *>(mbfs, 100);
+    mbedtls_strerror(errNum, temp, 100);
+    config->signer.tokens.error.message = temp;
+    MemoryHelper::freeBuffer(mbfs, temp);
+#endif
+    setTokenError(code);
+    config->signer.tokens.error.message.insert(0, descr);
+    sendTokenStatusCB();
+    return false;
+}
+
 bool Firebase_Signer::createJWT()
 {
 
@@ -1192,15 +1213,8 @@ bool Firebase_Signer::createJWT()
                              config->signer.encHeadPayload.length(), config->signer.hash);
         if (ret != 0)
         {
-            char *temp = MemoryHelper::createBuffer<char *>(mbfs, 100);
-            mbedtls_strerror(ret, temp, 100);
-            config->signer.tokens.error.message = temp;
-            config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_md: "));
-            MemoryHelper::freeBuffer(mbfs, temp);
-            setTokenError(FIREBASE_ERROR_TOKEN_CREATE_HASH);
-            sendTokenStatusCB();
             MemoryHelper::freeBuffer(mbfs, config->signer.hash);
-            return false;
+            return handleError(FIREBASE_ERROR_TOKEN_CREATE_HASH, (const char *)FPSTR("mbedTLS, mbedtls_md: "), ret);
         }
 #elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
         config->signer.hash = MemoryHelper::createBuffer<char *>(Signer.mbfs, config->signer.hashSize);
@@ -1237,18 +1251,11 @@ bool Firebase_Signer::createJWT()
 
         if (ret != 0)
         {
-            char *temp = MemoryHelper::createBuffer<char *>(mbfs, 100);
-            mbedtls_strerror(ret, temp, 100);
-            config->signer.tokens.error.message = temp;
-            config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_pk_parse_key: "));
-            MemoryHelper::freeBuffer(mbfs, temp);
-            setTokenError(FIREBASE_ERROR_TOKEN_PARSE_PK);
-            sendTokenStatusCB();
             mbedtls_pk_free(config->signer.pk_ctx);
             MemoryHelper::freeBuffer(mbfs, config->signer.hash);
             delete config->signer.pk_ctx;
             config->signer.pk_ctx = nullptr;
-            return false;
+            return handleError(FIREBASE_ERROR_TOKEN_PARSE_PK, (const char *)FPSTR("mbedTLS, mbedtls_pk_parse_key: "), ret);
         }
 
         // generate RSA signature from private key and message digest
@@ -1265,15 +1272,7 @@ bool Firebase_Signer::createJWT()
                               config->signer.signature, &sigLen,
                               mbedtls_ctr_drbg_random, config->signer.ctr_drbg_ctx);
         if (ret != 0)
-        {
-            char *temp = MemoryHelper::createBuffer<char *>(mbfs, 100);
-            mbedtls_strerror(ret, temp, 100);
-            config->signer.tokens.error.message = temp;
-            config->signer.tokens.error.message.insert(0, (const char *)FPSTR("mbedTLS, mbedtls_pk_sign: "));
-            MemoryHelper::freeBuffer(mbfs, temp);
-            setTokenError(FIREBASE_ERROR_TOKEN_SIGN);
-            sendTokenStatusCB();
-        }
+            handleError(FIREBASE_ERROR_TOKEN_SIGN, (const char *)FPSTR("mbedTLS, mbedtls_pk_sign: "), ret);
         else
         {
             config->signer.encSignature.clear();
@@ -1314,21 +1313,13 @@ bool Firebase_Signer::createJWT()
             pk = new BearSSL::PrivateKey((const char *)config->service_account.data.private_key);
 
         if (!pk)
-        {
-            setTokenError(FIREBASE_ERROR_TOKEN_PARSE_PK);
-            config->signer.tokens.error.message.insert(0, (const char *)FPSTR("BearSSL, PrivateKey: "));
-            sendTokenStatusCB();
-            return false;
-        }
+            return handleError(FIREBASE_ERROR_TOKEN_PARSE_PK, (const char *)FPSTR("BearSSL, PrivateKey: "));
 
         if (!pk->isRSA())
         {
-            setTokenError(FIREBASE_ERROR_TOKEN_PARSE_PK);
-            config->signer.tokens.error.message.insert(0, (const char *)FPSTR("BearSSL, isRSA: "));
-            sendTokenStatusCB();
             delete pk;
             pk = nullptr;
-            return false;
+            return handleError(FIREBASE_ERROR_TOKEN_PARSE_PK, (const char *)FPSTR("BearSSL, isRSA: "));
         }
 
         const br_rsa_private_key *br_rsa_key = pk->getRSA();
@@ -1359,12 +1350,7 @@ bool Firebase_Signer::createJWT()
             config->signer.encSignature.clear();
         }
         else
-        {
-            setTokenError(FIREBASE_ERROR_TOKEN_SIGN);
-            config->signer.tokens.error.message.insert(0, (const char *)FPSTR("BearSSL, br_rsa_i15_pkcs1_sign: "));
-            sendTokenStatusCB();
-            return false;
-        }
+            return handleError(FIREBASE_ERROR_TOKEN_SIGN, (const char *)FPSTR("BearSSL, br_rsa_i15_pkcs1_sign: "));
 #endif
     }
 
