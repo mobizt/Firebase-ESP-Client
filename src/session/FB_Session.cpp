@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40318)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.9
+ * Google's Firebase Data class, FB_Session.cpp version 1.3.10
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 11, 2023
+ * Created July 29, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -1073,7 +1073,7 @@ bool FirebaseData::readResponse(MB_String *payload, struct fb_esp_tcp_response_h
     return true;
 }
 
-bool FirebaseData::prepareDownload(const MB_String &filename, fb_esp_mem_storage_type type)
+bool FirebaseData::prepareDownload(const MB_String &filename, fb_esp_mem_storage_type type, bool openFileInWrireMode)
 {
     if (!Signer.config)
         return false;
@@ -1083,6 +1083,19 @@ bool FirebaseData::prepareDownload(const MB_String &filename, fb_esp_mem_storage
     // We can't open file (flash or sd) to write here because of truncated result, only append is ok.
     // We have to remove existing file
     Signer.mbfs->remove(filename, mbfs_type type);
+#else
+    // File need to be opened in case non-RTDB class.
+    // In RTDB class, it handles file opening differently.
+    if (openFileInWrireMode)
+    {
+        int ret = Signer.mbfs->open(filename, mbfs_type type, mb_fs_open_mode_write);
+        if (ret < 0)
+        {
+            tcpClient.flush();
+            session.response.code = ret;
+            return false;
+        }
+    }
 #endif
     return true;
 }
@@ -1299,6 +1312,9 @@ bool FirebaseData::processDownload(const MB_String &filename, fb_esp_mem_storage
 #if defined(ESP32_GT_2_0_1_FS_MEMORY_FIX)
                 // We close file here after append
                 Signer.mbfs->close(mbfs_type type);
+#else
+                if (tcpHandler.error.code == MB_FS_ERROR_FILE_IO_ERROR)
+                    Signer.mbfs->close(mbfs_type type);
 #endif
             }
         }

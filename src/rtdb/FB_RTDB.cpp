@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40318)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.17
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.18
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 11, 2023
+ * Created July 29, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -2355,7 +2355,7 @@ waits:
     }
 
     if ((req->task_type == fb_esp_rtdb_task_download_rules || req->method == rtdb_backup) &&
-        !fbdo->prepareDownload(req->filename, (fb_esp_mem_storage_type)req->storageType))
+        !fbdo->prepareDownload(req->filename, (fb_esp_mem_storage_type)req->storageType, false))
         return false;
 
     bool complete = false;
