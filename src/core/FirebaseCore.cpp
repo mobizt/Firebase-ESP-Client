@@ -683,6 +683,8 @@ void FirebaseCore::tokenProcessingTask()
 
         if (!internal.fb_clock_rdy && (config->cert.data != NULL || config->cert.file.length() > 0 || config->signer.tokens.token_type == token_type_oauth2_access_token || config->signer.tokens.token_type == token_type_custom_token))
         {
+            int code = FIREBASE_ERROR_NTP_TIMEOUT;
+
             if (_cli_type == firebase_client_type_external_gsm_client)
             {
                 uint32_t _time = tcpClient->gprsGetTime();
@@ -693,14 +695,24 @@ void FirebaseCore::tokenProcessingTask()
                 }
             }
             else
-                readNTPTime();
+            {
+#if defined(FIREBASE_ENABLE_NTP_TIME) || defined(ENABLE_NTP_TIME)
+                if (WiFI_CONNECTED)
+                    readNTPTime();
+                else
+                    code = FIREBASE_ERROR_NO_WIFI_TIME;
+
+#else
+                code = FIREBASE_ERROR_USER_TIME_SETTING_REQUIRED;
+#endif
+            }
 
             if (readyToSync())
             {
                 if (isSyncTimeOut())
                 {
                     config->signer.tokens.error.message.clear();
-                    setTokenError(FIREBASE_ERROR_NTP_SYNC_TIMED_OUT);
+                    setTokenError(code);
                     sendTokenStatusCB();
                     config->signer.tokens.status = token_status_on_initialize;
                     internal.fb_last_jwt_generation_error_cb_millis = 0;
@@ -2247,19 +2259,21 @@ void FirebaseCore::errorToString(int httpCode, MB_String &buff)
         return;
 #endif
 
-    case FIREBASE_ERROR_TOKEN_SET_TIME:
-        buff += firebase_time_err_pgm_str_1; // "system time was not set"
+    case FIREBASE_ERROR_NTP_TIMEOUT:
+        buff += firebase_time_err_pgm_str_1; // "NTP server time reading timed out"
         break;
-    case FIREBASE_ERROR_CANNOT_CONFIG_TIME:
-        buff += firebase_time_err_pgm_str_2; // "cannot config time"
+    case FIREBASE_ERROR_NO_WIFI_TIME:
+        buff += firebase_time_err_pgm_str_2; // "NTP server time reading cannot begin when valid time is required because of no WiFi capability/activity detected."
+        buff += firebase_pgm_str_12;         // "\n"
+        buff += firebase_time_err_pgm_str_3; // "Please set the library reference time manually using Firebase.setSystemTime"
+        return;
+    case FIREBASE_ERROR_USER_TIME_SETTING_REQUIRED:
+        buff += firebase_time_err_pgm_str_3; // "Please set the library reference time manually using Firebase.setSystemTime"
         return;
     case FIREBASE_ERROR_SYS_TIME_IS_NOT_READY:
-        buff += firebase_time_err_pgm_str_3; // "device time was not set"
-        return;
-    case FIREBASE_ERROR_NTP_SYNC_TIMED_OUT:
-        buff += firebase_time_err_pgm_str_4; // "NTP server time synching failed"
-        return;
 
+        buff += firebase_time_err_pgm_str_4; // "system time was not set"
+        return;
     case FIREBASE_ERROR_DATA_TYPE_MISMATCH:
         buff += firebase_rtdb_err_pgm_str_3; // "data type mismatch"
         return;
@@ -2357,7 +2371,7 @@ bool FirebaseCore::waitIdle(int &httpCode)
             httpCode = FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED;
             return false;
         }
-        ut.FBUtils::idle();
+        FBUtils::idle();
     }
 #endif
     return true;

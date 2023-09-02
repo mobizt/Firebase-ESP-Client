@@ -2603,11 +2603,10 @@ static const char firebase_mem_err_pgm_str_2[] PROGMEM = "payload too large";
 static const char firebase_ssl_err_pgm_str_1[] PROGMEM = "incomplete SSL client data";
 
 // Time error string
-static const char firebase_time_err_pgm_str_1[] PROGMEM = "system time was not set";
-static const char firebase_time_err_pgm_str_2[] PROGMEM = "cannot config time";
-static const char firebase_time_err_pgm_str_3[] PROGMEM = "device time was not set";
-static const char firebase_time_err_pgm_str_4[] PROGMEM = "NTP server time synching failed";
-static const char firebase_time_err_pgm_str_5[] PROGMEM = "Please set the library reference time manually using fbdo.setSystemTime";
+static const char firebase_time_err_pgm_str_1[] PROGMEM = "NTP server time reading timed out";
+static const char firebase_time_err_pgm_str_2[] PROGMEM = "NTP server time reading cannot begin when valid time is required because of no WiFi capability/activity detected.";
+static const char firebase_time_err_pgm_str_3[] PROGMEM = "Please set the library reference time manually using Firebase.setSystemTime";
+static const char firebase_time_err_pgm_str_4[] PROGMEM = "system time was not set";
 
 // RTDB error string
 static const char firebase_rtdb_err_pgm_str_1[] PROGMEM = "backup data should be the JSON object";
