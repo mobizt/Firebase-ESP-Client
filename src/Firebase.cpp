@@ -334,7 +334,7 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
 
 void FIREBASE_CLASS::reconnectWiFi(bool reconnect)
 {
-#if defined(ESP32) || defined(ESP8266)
+#if defined(FIREBASE_WIFI_IS_AVAILABLE) && (defined(ESP32) || defined(ESP8266))
     WiFi.setAutoReconnect(reconnect);
 #endif
     Core.setAutoReconnectWiFi(reconnect);

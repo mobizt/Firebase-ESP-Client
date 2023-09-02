@@ -2264,7 +2264,7 @@ void FirebaseCore::errorToString(int httpCode, MB_String &buff)
         break;
     case FIREBASE_ERROR_NO_WIFI_TIME:
         buff += firebase_time_err_pgm_str_2; // "NTP server time reading cannot begin when valid time is required because of no WiFi capability/activity detected."
-        buff += firebase_pgm_str_12;         // "\n"
+        buff += firebase_pgm_str_9;         // " "
         buff += firebase_time_err_pgm_str_3; // "Please set the library reference time manually using Firebase.setSystemTime"
         return;
     case FIREBASE_ERROR_USER_TIME_SETTING_REQUIRED:
