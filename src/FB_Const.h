@@ -601,7 +601,7 @@ struct firebase_wifi_credential_t
 
 class firebase_wifi
 {
-
+  friend class Firebase_TCP_Client;
 public:
     firebase_wifi(){};
     ~firebase_wifi()
