@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -35,15 +35,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "FirebaseFS.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_MULTIPATH_STREAM_SESSION_H
 #define FIREBASE_MULTIPATH_STREAM_SESSION_H
 #include <Arduino.h>
-#include "FB_Utils.h"
-#include "signer/Signer.h"
+#include "./FB_Utils.h"
+#include "./core/FirebaseCore.h"
 #include "FB_Stream.h"
 
 #if defined(FIREBASE_ESP_CLIENT)
@@ -70,8 +70,8 @@ public:
     String eventType;
 
 private:
-    struct fb_esp_stream_info_t *sif = nullptr;
-    void begin(struct fb_esp_stream_info_t *s);
+    struct firebase_stream_info_t *sif = nullptr;
+    void begin(struct firebase_stream_info_t *s);
     void empty();
     bool checkPath(MB_String &root, MB_String &branch);
 };

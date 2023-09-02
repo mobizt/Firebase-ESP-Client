@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -34,10 +34,10 @@
 #define Firebase_H
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
+#include "./mbfs/MB_MCU.h"
 
-#include "FirebaseFS.h"
-#include "FB_Const.h"
+#include "./FirebaseFS.h"
+#include "./FB_Const.h"
 
 #if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
 #ifndef FB_ENABLE_EXTERNAL_CLIENT
@@ -66,8 +66,8 @@ extern char *__brkval;
 #endif
 
 #include "FB_Utils.h"
-#include "wcs/FB_Clients.h"
-#include "signer/Signer.h"
+#include "client/FB_TCP_Client.h"
+#include "core/FirebaseCore.h"
 #include "session/FB_Session.h"
 
 #if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD) && defined(ESP32) && defined(SD_FAT_VERSION)
@@ -76,23 +76,23 @@ class SdSpiConfig;
 
 #if defined(FIREBASE_ESP_CLIENT)
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 #include "rtdb/FB_RTDB.h"
 #endif
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
 #include "message/FCM.h"
 #endif
 #include "FB_Utils.h"
-#ifdef ENABLE_FB_STORAGE
+#if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
 #include "storage/FCS.h"
 #endif
-#ifdef ENABLE_GC_STORAGE
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
 #include "gcs/GCS.h"
 #endif
-#ifdef ENABLE_FIRESTORE
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
 #include "firestore/FB_Firestore.h"
 #endif
-#ifdef ENABLE_FB_FUNCTIONS
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
 #include "functions/FB_Functions.h"
 #include "functions/FunctionsConfig.h"
 #endif
@@ -107,22 +107,22 @@ class FIREBASE_CLASS
   friend class FirebaseSession;
 
 public:
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FB_RTDB RTDB;
 #endif
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   FB_CM FCM;
 #endif
-#ifdef ENABLE_FB_STORAGE
+#if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   FB_Storage Storage;
 #endif
-#ifdef ENABLE_FIRESTORE
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
   FB_Firestore Firestore;
 #endif
-#ifdef ENABLE_FB_FUNCTIONS
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
   FB_Functions Functions;
 #endif
-#ifdef ENABLE_GC_STORAGE
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
   GG_CloudStorage GCStorage;
 #endif
 
@@ -328,12 +328,6 @@ public:
    */
   void reconnectWiFi(bool reconnect);
 
-  /** Assign UDP client and gmt offset for NTP time synching when using external SSL client
-   * @param client The pointer to UDP client based on the network type.
-   * @param gmtOffset The GMT time offset.
-   */
-  void setUDPClient(UDP *client, float gmtOffset);
-
   /** Get currently used auth token string.
    *
    * @return constant char* of currently used auth token.
@@ -455,14 +449,14 @@ public:
   void errorToString(int httpCode, String &buff)
   {
     MB_String out;
-    Signer.errorToString(httpCode, out);
+    Core.errorToString(httpCode, out);
     buff = out.c_str();
   }
 
 private:
   void init(FirebaseConfig *config, FirebaseAuth *auth);
   void mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToken, size_t expire, MB_StringPtr refreshToken,
-                     fb_esp_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret);
+                     firebase_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret);
   bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
   bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
   bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
@@ -470,9 +464,6 @@ private:
 
   FirebaseAuth *auth = nullptr;
   FirebaseConfig *config = nullptr;
-  MB_FS mbfs;
-  uint32_t mb_ts = 0;
-  uint32_t mb_ts_offset = 0;
 };
 
 extern FIREBASE_CLASS Firebase;
@@ -483,7 +474,7 @@ extern FIREBASE_CLASS Firebase;
 #define FPSTR MBSTRING_FLASH_MCR
 #endif
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 #include "rtdb/FB_RTDB.h"
 #endif
 
@@ -493,7 +484,7 @@ class FIREBASE_CLASS
   friend class FirebaseSession;
 
 public:
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FB_RTDB RTDB;
 #endif
 
@@ -656,7 +647,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      TimeHelper::syncClock(&Signer.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
+      TimeHelper::syncClock(&Core.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
 #endif
     }
     begin(config, auth);
@@ -677,7 +668,7 @@ public:
 #ifdef ESP8266
       if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
         _gmtOffset = GMTOffset;
-      TimeHelper::syncClock(&Signer.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
+      TimeHelper::syncClock(&Core.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
 #endif
     }
     begin(config, auth);
@@ -769,12 +760,6 @@ public:
    */
   void reconnectWiFi(bool reconnect);
 
-  /** Assign UDP client and gmt offset for NTP time synching when using external SSL client
-   * @param client The pointer to UDP client based on the network type.
-   * @param gmtOffset The GMT time offset.
-   */
-  void setUDPClient(UDP *client, float gmtOffset);
-
   /** Get currently used auth token string.
    *
    * @return constant char* of currently used auth token.
@@ -805,7 +790,7 @@ public:
    */
   void setDoubleDigits(uint8_t digits);
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifdef ESP32
   /** Enable multiple HTTP requests at a time.
@@ -816,8 +801,8 @@ public:
    */
   void allowMultipleRequests(bool enable)
   {
-    if (Signer.config)
-      Signer.config->internal.fb_multiple_requests = enable;
+    if (Core.config)
+      Core.config->internal.fb_multiple_requests = enable;
   }
 #endif
 
@@ -2591,7 +2576,7 @@ public:
    */
   void setMaxRetry(FirebaseData &fbdo, uint8_t num) { RTDB.setMaxRetry(&fbdo, num); }
 
-#if defined(ENABLE_ERROR_QUEUE)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
   /** Set the maximum Firebase Error Queues in the collection (0 255).
    * Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase
    * Error Queues collection.
@@ -2732,14 +2717,14 @@ public:
 
 #endif
 
-    /** Send Firebase Cloud Messaging to the device with the first registration token which added by
-     *  firebaseData.fcm.addDeviceToken.
-     *
-     * @param fbdo Firebase Data Object to hold data and instance.
-     * @param index The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
-     * @return Boolean type status indicates the success of the operation.
-     */
-#ifdef ENABLE_FCM
+  /** Send Firebase Cloud Messaging to the device with the first registration token which added by
+   *  firebaseData.fcm.addDeviceToken.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param index The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
+   * @return Boolean type status indicates the success of the operation.
+   */
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   bool sendMessage(FirebaseData &fbdo, uint16_t index);
 #endif
 
@@ -2748,7 +2733,7 @@ public:
    * @param fbdo Firebase Data Object to hold data and instance.
    * @return Boolean type status indicates the success of the operation.
    */
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   bool broadcastMessage(FirebaseData &fbdo);
 #endif
 
@@ -2757,7 +2742,7 @@ public:
    * @param fbdo Firebase Data Object to hold data and instance.
    * @return Boolean type status indicates the success of the operation.
    */
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   bool sendTopic(FirebaseData &fbdo);
 #endif
 
@@ -2846,7 +2831,7 @@ public:
   void errorToString(int httpCode, String &buff)
   {
     MB_String out;
-    Signer.errorToString(httpCode, out);
+    Core.errorToString(httpCode, out);
     buff = out.c_str();
   }
 
@@ -3055,14 +3040,14 @@ public:
   }
 
 private:
-#ifdef ENABLE_FCM
-  bool handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
+  bool handleFCMRequest(FirebaseData &fbdo, firebase_fcm_msg_type messageType);
 #endif
-  fb_esp_mem_storage_type getMemStorageType(uint8_t old_type);
+  firebase_mem_storage_type getMemStorageType(uint8_t old_type);
   void init(FirebaseConfig *config, FirebaseAuth *auth);
   bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
   void mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToken, size_t expire, MB_StringPtr refreshToken,
-                     fb_esp_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret);
+                     firebase_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret);
   bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
   bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
   bool mSendResetPassword(FirebaseConfig *config, MB_StringPtr email);

@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -35,16 +35,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "FirebaseFS.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_FB_FUNCTIONS
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
 
 #ifndef _FB_FUNCTIONS_CONFIG_H_
 #define _FB_FUNCTIONS_CONFIG_H_
 
 #include <Arduino.h>
-#include "FB_Utils.h"
-#include "session/FB_Session.h"
+#include "./FB_Utils.h"
+#include "./session/FB_Session.h"
 #include "PolicyBuilder.h"
 
 using namespace mb_string;
@@ -61,9 +61,9 @@ private:
     MB_String _uploadArchiveFile;
     const uint8_t *_pgmArc = nullptr;
     size_t _pgmArcLen = 0;
-    fb_esp_mem_storage_type _uploadArchiveStorageType = mem_storage_type_undefined;
-    fb_esp_functions_sources_type _sourceType = functions_sources_type_undefined;
-    fb_esp_functions_trigger_type _triggerType = fb_esp_functions_trigger_type_undefined;
+    firebase_mem_storage_type _uploadArchiveStorageType = mem_storage_type_undefined;
+    firebase_functions_sources_type _sourceType = functions_sources_type_undefined;
+    firebase_functions_trigger_type _triggerType = firebase_functions_trigger_type_undefined;
     PolicyBuilder *_policy = nullptr;
 
     void addUpdateMasks(const char *key);
@@ -79,8 +79,8 @@ private:
     void mSetTimeout(MB_StringPtr seconds);
     void mSetAvailableMemoryMb(MB_StringPtr mb);
     void mSetMaxInstances(MB_StringPtr maxInstances);
-    void mSetSource(MB_StringPtr path, fb_esp_functions_sources_type sourceType,
-                    fb_esp_mem_storage_type storageType = mem_storage_type_undefined);
+    void mSetSource(MB_StringPtr path, firebase_functions_sources_type sourceType,
+                    firebase_mem_storage_type storageType = mem_storage_type_undefined);
     void mAddLabel(MB_StringPtr key, MB_StringPtr value);
     void mAddEnvironmentVariable(MB_StringPtr key, MB_StringPtr value);
     void mAddBuildEnvironmentVariable(MB_StringPtr key, MB_StringPtr value);
@@ -223,8 +223,8 @@ public:
      * mem_storage_type_sd
      */
     template <typename T = const char *>
-    void setSource(T path, fb_esp_functions_sources_type sourceType,
-                   fb_esp_mem_storage_type storageType = mem_storage_type_undefined)
+    void setSource(T path, firebase_functions_sources_type sourceType,
+                   firebase_mem_storage_type storageType = mem_storage_type_undefined)
     {
         mSetSource(toStringPtr(path), sourceType, storageType);
     }

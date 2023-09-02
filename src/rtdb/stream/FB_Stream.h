@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -34,15 +34,15 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "FirebaseFS.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_STREAM_SESSION_H
 #define FIREBASE_STREAM_SESSION_H
 #include <Arduino.h>
-#include "FB_Utils.h"
-#include "signer/Signer.h"
+#include "./FB_Utils.h"
+#include "./core/FirebaseCore.h"
 
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_STREAM_CLASS FirebaseStream
@@ -147,18 +147,18 @@ public:
 
     /** Get the data type of payload returned from the server.
      *
-     * @return The enumeration value of fb_esp_rtdb_data_type.
+     * @return The enumeration value of firebase_rtdb_data_type.
      *
-     * fb_esp_rtdb_data_type_null or 1,
-     * fb_esp_rtdb_data_type_integer or 2,
-     * fb_esp_rtdb_data_type_float or 3,
-     * fb_esp_rtdb_data_type_double or 4,
-     * fb_esp_rtdb_data_type_boolean or 5,
-     * fb_esp_rtdb_data_type_string or 6,
-     * fb_esp_rtdb_data_type_json or 7,
-     * fb_esp_rtdb_data_type_array or 8,
-     * fb_esp_rtdb_data_type_blob or 9,
-     * fb_esp_rtdb_data_type_file or 10
+     * firebase_rtdb_data_type_null or 1,
+     * firebase_rtdb_data_type_integer or 2,
+     * firebase_rtdb_data_type_float or 3,
+     * firebase_rtdb_data_type_double or 4,
+     * firebase_rtdb_data_type_boolean or 5,
+     * firebase_rtdb_data_type_string or 6,
+     * firebase_rtdb_data_type_json or 7,
+     * firebase_rtdb_data_type_array or 8,
+     * firebase_rtdb_data_type_blob or 9,
+     * firebase_rtdb_data_type_file or 10
      */
     uint8_t dataTypeEnum();
 
@@ -203,16 +203,16 @@ public:
     template <typename T>
     auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
     {
-        if (sif->data_type == fb_esp_data_type::d_string)
+        if (sif->data_type == firebase_data_type::d_string)
             setRaw(true); // if double quotes string, trim it.
 
         if (sif->data.length() > 0)
         {
-            if (sif->data_type == fb_esp_data_type::d_boolean)
+            if (sif->data_type == firebase_data_type::d_boolean)
                 mSetResBool(strcmp(sif->data.c_str(), num2Str(true, -1)) == 0);
-            else if (sif->data_type == fb_esp_data_type::d_integer ||
-                     sif->data_type == fb_esp_data_type::d_float ||
-                     sif->data_type == fb_esp_data_type::d_double)
+            else if (sif->data_type == firebase_data_type::d_integer ||
+                     sif->data_type == firebase_data_type::d_float ||
+                     sif->data_type == firebase_data_type::d_double)
             {
                 mSetResInt(sif->data.c_str());
                 mSetResFloat(sif->data.c_str());
@@ -253,7 +253,7 @@ public:
                                     T>::type
     {
 
-        if (sif->data_type == fb_esp_data_type::d_string)
+        if (sif->data_type == firebase_data_type::d_string)
             setRaw(true);
 
         return sif->data.c_str();
@@ -267,7 +267,7 @@ public:
 
         if (sif->data_type == d_json)
         {
-            Utils::idle();
+            FBUtils::idle();
             jsonPtr->clear();
             if (arrPtr)
                 arrPtr->clear();
@@ -312,19 +312,19 @@ public:
         return sif->blob;
     }
 
-#if defined(MBFS_FLASH_FS) && defined(ENABLE_RTDB)
+#if defined(MBFS_FLASH_FS) && (defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB))
     template <typename T>
     auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
     {
-        if (sif->data_type == fb_esp_data_type::d_file && Signer.config)
+        if (sif->data_type == firebase_data_type::d_file && Core.config)
         {
-            int ret = Signer.mbfs->open(pgm2Str(fb_esp_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
+            int ret = Core.mbfs.open(pgm2Str(firebase_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
                                         mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
             if (ret < 0)
                 sif->httpCode = ret;
         }
 
-        return Signer.mbfs->getFlashFile();
+        return Core.mbfs.getFlashFile();
     }
 #endif
 
@@ -332,7 +332,7 @@ public:
     FirebaseJsonArray *arrPtr = nullptr;
 
 private:
-    struct fb_esp_stream_info_t *sif = nullptr;
+    struct firebase_stream_info_t *sif = nullptr;
 
     union IVal
     {
@@ -366,7 +366,7 @@ private:
     IVal iVal = {0};
     FVal fVal;
 
-    void begin(struct fb_esp_stream_info_t *s);
+    void begin(struct firebase_stream_info_t *s);
     void mSetResInt(const char *value);
     void mSetResFloat(const char *value);
     void mSetResBool(bool value);

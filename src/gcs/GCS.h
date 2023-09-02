@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -36,16 +36,16 @@
  */
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_GC_STORAGE
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
 
 #ifndef GOOGLE_CS_H
 #define GOOGLE_CS_H
 
-#include "FB_Utils.h"
-#include "session/FB_Session.h"
+#include "./FB_Utils.h"
+#include "./session/FB_Session.h"
 
 using namespace mb_string;
 
@@ -88,8 +88,8 @@ public:
      *
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, fb_esp_mem_storage_type storageType,
-                fb_esp_gcs_upload_type uploadType, T3 remoteFileName, T4 mime, UploadOptions *uploadOptions = nullptr,
+    bool upload(FirebaseData *fbdo, T1 bucketID, T2 localFileName, firebase_mem_storage_type storageType,
+                firebase_gcs_upload_type uploadType, T3 remoteFileName, T4 mime, UploadOptions *uploadOptions = nullptr,
                 RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr,
                 UploadProgressCallback callback = NULL)
     {
@@ -115,7 +115,7 @@ public:
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool download(FirebaseData *fbdo, T1 bucketID, T2 remoteFileName, T3 localFileName,
-                  fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr,
+                  firebase_mem_storage_type storageType, StorageGetOptions *options = nullptr,
                   DownloadProgressCallback callback = NULL)
     {
         return mDownload(fbdo, toStringPtr(bucketID), toStringPtr(remoteFileName),
@@ -202,30 +202,30 @@ private:
     size_t _resumableUplaodTaskIndex = 0;
 
     void rescon(FirebaseData *fbdo, const char *host);
-    void setGetOptions(struct fb_esp_gcs_req_t *req, MB_String &header, bool hasParams);
-    void setListOptions(struct fb_esp_gcs_req_t *req, MB_String &header, bool hasParams);
-    void setUploadOptions(struct fb_esp_gcs_req_t *req, MB_String &header, bool hasParams);
-    void setDeleteOptions(struct fb_esp_gcs_req_t *req, MB_String &header, bool hasParams);
-    void reportUploadProgress(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req, size_t readBytes);
-    void reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req, size_t readBytes);
-    void setRequestproperties(struct fb_esp_gcs_req_t *req, FirebaseJson *json, bool &hasProps);
+    void setGetOptions(struct firebase_gcs_req_t *req, MB_String &header, bool hasParams);
+    void setListOptions(struct firebase_gcs_req_t *req, MB_String &header, bool hasParams);
+    void setUploadOptions(struct firebase_gcs_req_t *req, MB_String &header, bool hasParams);
+    void setDeleteOptions(struct firebase_gcs_req_t *req, MB_String &header, bool hasParams);
+    void reportUploadProgress(FirebaseData *fbdo, struct firebase_gcs_req_t *req, size_t readBytes);
+    void reportDownloadProgress(FirebaseData *fbdo, struct firebase_gcs_req_t *req, size_t readBytes);
+    void setRequestproperties(struct firebase_gcs_req_t *req, FirebaseJson *json, bool &hasProps);
     void sendUploadCallback(FirebaseData *fbdo, UploadStatusInfo &in, UploadProgressCallback cb, UploadStatusInfo *out);
     void sendDownloadCallback(FirebaseData *fbdo, DownloadStatusInfo &in, DownloadProgressCallback cb, DownloadStatusInfo *out);
     void makeUploadStatus(UploadStatusInfo &info, const MB_String &local, const MB_String &remote,
-                          fb_esp_gcs_upload_status status, size_t progress, size_t fileSize, int elapsedTime, const MB_String &msg);
+                          firebase_gcs_upload_status status, size_t progress, size_t fileSize, int elapsedTime, const MB_String &msg);
     void makeDownloadStatus(DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
-                            fb_esp_gcs_download_status status, size_t progress, size_t fileSize,
+                            firebase_gcs_download_status status, size_t progress, size_t fileSize,
                             int elapsedTime, const MB_String &msg);
-    bool sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req);
+    bool sendRequest(FirebaseData *fbdo, struct firebase_gcs_req_t *req);
     bool gcs_connect(FirebaseData *fbdo);
-    bool gcs_sendRequest(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req);
-    bool handleResponse(FirebaseData *fbdo, struct fb_esp_gcs_req_t *req);
+    bool gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_req_t *req);
+    bool handleResponse(FirebaseData *fbdo, struct firebase_gcs_req_t *req);
     bool mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr localFileName,
-                 fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, MB_StringPtr remoteFileName,
+                 firebase_mem_storage_type storageType, firebase_gcs_upload_type uploadType, MB_StringPtr remoteFileName,
                  MB_StringPtr mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr,
                  UploadStatusInfo *status = nullptr, UploadProgressCallback callback = NULL);
     bool mDownload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
-                   MB_StringPtr localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr,
+                   MB_StringPtr localFileName, firebase_mem_storage_type storageType, StorageGetOptions *options = nullptr,
                    DownloadProgressCallback callback = NULL);
     bool mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr remoteFileName,
                       DownloadProgressCallback callback = NULL);

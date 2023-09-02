@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -36,15 +36,15 @@
  */
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
 
 #ifndef FIREBASE_FCM_H
 #define FIREBASE_FCM_H
-#include "FB_Utils.h"
-#include "session/FB_Session.h"
+#include "./FB_Utils.h"
+#include "./session/FB_Session.h"
 
 using namespace mb_string;
 
@@ -94,7 +94,7 @@ public:
    */
   void clearAP()
   {
-    Signer.wifiCreds.clearAP();
+    Core.wifiCreds.clearAP();
   }
 
   /** Add WiFi access point for non-ESP device to resume WiFi connection.
@@ -104,7 +104,7 @@ public:
    */
   void addAP(const String &ssid, const String &password)
   {
-    Signer.wifiCreds.addAP(ssid, password);
+    Core.wifiCreds.addAP(ssid, password);
   }
 
   /** Send Firebase Cloud Messaging to the devices with JSON payload using the FCM legacy API.
@@ -218,13 +218,13 @@ public:
   String payload(FirebaseData *fbdo);
 
 private:
-  bool handleFCMRequest(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
+  bool handleFCMRequest(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const char *payload);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
   void rescon(FirebaseData *fbdo, const char *host);
-  void fcm_connect(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode);
-  bool fcm_send(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *msg);
-  bool sendHeader(FirebaseData *fbdo, fb_esp_fcm_msg_mode mode, const char *payload);
+  void fcm_connect(FirebaseData *fbdo, firebase_fcm_msg_mode mode);
+  bool fcm_send(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const char *msg);
+  bool sendHeader(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const char *payload);
   void fcm_prepareLegacyPayload(FCM_Legacy_HTTP_Message *msg);
   void fcm_prepareV1Payload(FCM_HTTPv1_JSON_Message *msg);
   void fcm_preparSubscriptionPayload(const char *topic, const char *IID[], size_t numToken);

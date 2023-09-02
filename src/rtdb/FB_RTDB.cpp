@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -35,10 +35,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_RTDB_CPP
 #define FIREBASE_RTDB_CPP
@@ -74,19 +74,19 @@ void FB_RTDB::mSetwriteSizeLimit(FirebaseData *fbdo, MB_StringPtr size)
     fbdo->session.rtdb.write_limit = size;
 }
 
-bool FB_RTDB::mGetRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, MB_StringPtr filename,
+bool FB_RTDB::mGetRules(FirebaseData *fbdo, firebase_mem_storage_type storageType, MB_StringPtr filename,
                         RTDB_DownloadProgressCallback callback)
 {
-    struct fb_esp_rtdb_request_info_t req;
-    req.path += fb_esp_rtdb_pgm_str_1; // "/.settings/rules"
+    struct firebase_rtdb_request_info_t req;
+    req.path += firebase_rtdb_pgm_str_1; // "/.settings/rules"
     req.method = rtdb_get_rules;
     req.data.type = d_json;
     req.filename = filename;
     req.storageType = storageType;
     req.downloadCallback = callback;
 
-    Utils::makePath(req.filename);
-    req.task_type = req.filename.length() ? fb_esp_rtdb_task_download_rules : fb_esp_rtdb_task_read_rules;
+    Core.ut.makePath(req.filename);
+    req.task_type = req.filename.length() ? firebase_rtdb_task_download_rules : firebase_rtdb_task_read_rules;
 
     bool ret = handleRequest(fbdo, &req);
 
@@ -103,17 +103,17 @@ bool FB_RTDB::mGetRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType,
     return ret;
 }
 
-bool FB_RTDB::mSetRules(FirebaseData *fbdo, MB_StringPtr rules, fb_esp_mem_storage_type storageType,
+bool FB_RTDB::mSetRules(FirebaseData *fbdo, MB_StringPtr rules, firebase_mem_storage_type storageType,
                         MB_StringPtr filename, RTDB_UploadProgressCallback callback)
 {
-    struct fb_esp_rtdb_request_info_t req;
-    req.path += fb_esp_rtdb_pgm_str_1; // "/.settings/rules"
+    struct firebase_rtdb_request_info_t req;
+    req.path += firebase_rtdb_pgm_str_1; // "/.settings/rules"
     req.method = rtdb_set_rules;
     req.payload = rules;
     req.filename = filename;
-    Utils::makePath(req.filename);
+    Core.ut.makePath(req.filename);
     req.storageType = storageType;
-    req.task_type = req.filename.length() ? fb_esp_rtdb_task_upload_rules : fb_esp_rtdb_task_store_rules;
+    req.task_type = req.filename.length() ? firebase_rtdb_task_upload_rules : firebase_rtdb_task_store_rules;
     req.data.type = d_json;
     req.uploadCallback = callback;
     bool ret = handleRequest(fbdo, &req);
@@ -122,25 +122,25 @@ bool FB_RTDB::mSetRules(FirebaseData *fbdo, MB_StringPtr rules, fb_esp_mem_stora
 
 void FB_RTDB::storeToken(MB_String &atok, const char *databaseSecret)
 {
-    atok = Signer.config->internal.auth_token;
-    Signer.setTokenType(token_type_legacy_token);
-    Signer.config->signer.tokens.legacy_token = databaseSecret;
-    Signer.config->internal.auth_token = Signer.config->signer.tokens.legacy_token;
-    Signer.config->internal.ltok_len = strlen(databaseSecret);
-    Signer.config->internal.rtok_len = 0;
-    Signer.config->internal.atok_len = 0;
-    Signer.handleToken();
+    atok = Core.internal.auth_token;
+    Core.setTokenType(token_type_legacy_token);
+    Core.config->signer.tokens.legacy_token = databaseSecret;
+    Core.internal.auth_token = Core.config->signer.tokens.legacy_token;
+    Core.internal.ltok_len = strlen(databaseSecret);
+    Core.internal.rtok_len = 0;
+    Core.internal.atok_len = 0;
+    Core.handleToken();
 }
 
-void FB_RTDB::restoreToken(MB_String &atok, fb_esp_auth_token_type tk)
+void FB_RTDB::restoreToken(MB_String &atok, firebase_auth_token_type tk)
 {
-    Signer.config->internal.auth_token = atok;
+    Core.internal.auth_token = atok;
     atok.clear();
-    Signer.config->signer.tokens.legacy_token = "";
-    Signer.config->signer.tokens.token_type = tk;
-    Signer.config->internal.atok_len = Signer.config->internal.auth_token.length();
-    Signer.config->internal.ltok_len = 0;
-    Signer.handleToken();
+    Core.config->signer.tokens.legacy_token = "";
+    Core.config->signer.tokens.token_type = tk;
+    Core.internal.atok_len = Core.internal.auth_token.length();
+    Core.internal.ltok_len = 0;
+    Core.handleToken();
 }
 
 bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, MB_StringPtr path, MB_StringPtr node,
@@ -153,7 +153,7 @@ bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, MB_StringPtr path, MB_StringPtr
     bool ret = false;
     MB_String atok;
 
-    fb_esp_auth_token_type tk = Signer.getTokenType();
+    firebase_auth_token_type tk = Core.getTokenType();
 
     if (addrTo<const char *>(databaseSecret.address()))
     {
@@ -177,27 +177,27 @@ bool FB_RTDB::mSetQueryIndex(FirebaseData *fbdo, MB_StringPtr path, MB_StringPtr
         {
             bool ruleExisted = false;
 
-            s = fb_esp_rtdb_pgm_str_3; // "rules"
+            s = firebase_rtdb_pgm_str_3; // "rules"
 
             MB_String _path = path;
             MB_String _node = node;
-            Utils::makePath(_path);
+            Core.ut.makePath(_path);
             s += _path;
-            s += fb_esp_rtdb_pgm_str_4; // "/.indexOn"
+            s += firebase_rtdb_pgm_str_4; // "/.indexOn"
 
-            if (JsonHelper::parse(json, &data, s.c_str()) &&
+            if (Core.jh.parse(json, &data, s.c_str()) &&
                 strcmp(data.to<const char *>(), _node.c_str()) == 0)
                 ruleExisted = true;
 
             if (_node.length() == 0)
-                JsonHelper::remove(json, s.c_str());
+                Core.jh.remove(json, s.c_str());
             else
-                JsonHelper::addString(json, s.c_str(), _node);
+                Core.jh.addString(json, s.c_str(), _node);
 
             if (!ruleExisted || (ruleExisted && _node.length() == 0))
             {
                 MB_String str;
-                JsonHelper::toString(json, str, false, true);
+                Core.jh.toString(json, str, false, true);
                 ret = setRules(fbdo, str);
             }
         }
@@ -227,7 +227,7 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_Strin
     bool ret = false;
     MB_String atok;
 
-    fb_esp_auth_token_type tk = Signer.getTokenType();
+    firebase_auth_token_type tk = Core.getTokenType();
 
     if (addrTo<const char *>(databaseSecret.address()))
     {
@@ -248,20 +248,20 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_Strin
         FirebaseJson &json = fbdo->jsonObject();
         bool rd = false, wr = false;
 
-        MB_String s = fb_esp_rtdb_pgm_str_3; // "rules"
-        Utils::makePath(_path);
+        MB_String s = firebase_rtdb_pgm_str_3; // "rules"
+        Core.ut.makePath(_path);
 
         s += _path;
-        s += fb_esp_pgm_str_1; // "/"
+        s += firebase_pgm_str_1; // "/"
         s += var;
 
         if (_readVal.length() > 0)
         {
             rd = true;
             MB_String r = s;
-            r += fb_esp_pgm_str_1;      // "/"
-            r += fb_esp_rtdb_pgm_str_5; // ".read"
-            if (JsonHelper::parse(&json, &data, r.c_str()) &&
+            r += firebase_pgm_str_1;      // "/"
+            r += firebase_rtdb_pgm_str_5; // ".read"
+            if (Core.jh.parse(&json, &data, r.c_str()) &&
                 strcmp(data.to<const char *>(), _readVal.c_str()) == 0)
                 rd = false;
         }
@@ -270,9 +270,9 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_Strin
         {
             wr = true;
             MB_String w = s;
-            w += fb_esp_pgm_str_1;      // "/"
-            w += fb_esp_rtdb_pgm_str_6; // ".write"
-            if (JsonHelper::parse(&json, &data, w.c_str()) &&
+            w += firebase_pgm_str_1;      // "/"
+            w += firebase_rtdb_pgm_str_6; // ".write"
+            if (Core.jh.parse(&json, &data, w.c_str()) &&
                 strcmp(data.to<const char *>(), _writeVal.c_str()) == 0)
                 wr = false;
         }
@@ -282,13 +282,13 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_Strin
         {
             FirebaseJson js;
             if (rd)
-                JsonHelper::addString(&js, fb_esp_rtdb_pgm_str_5 /* ".read"*/, _readVal);
+                Core.jh.addString(&js, firebase_rtdb_pgm_str_5 /* ".read"*/, _readVal);
             if (wr)
-                JsonHelper::addString(&js, fb_esp_rtdb_pgm_str_6 /* ".write" */, _writeVal);
+                Core.jh.addString(&js, firebase_rtdb_pgm_str_6 /* ".write" */, _writeVal);
 
-            JsonHelper::addObject(&json, s.c_str(), &js, false);
+            Core.jh.addObject(&json, s.c_str(), &js, false);
             MB_String str;
-            JsonHelper::toString(&json, str, false, true);
+            Core.jh.toString(&json, str, false, true);
             ret = setRules(fbdo, str);
         }
 
@@ -309,7 +309,7 @@ bool FB_RTDB::mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_Strin
 
 bool FB_RTDB::mPathExisted(FirebaseData *fbdo, MB_StringPtr path)
 {
-    struct fb_esp_rtdb_request_info_t req;
+    struct firebase_rtdb_request_info_t req;
     req.path = path;
     req.method = rtdb_get_nocontent;
     req.data.type = d_string;
@@ -320,7 +320,7 @@ bool FB_RTDB::mPathExisted(FirebaseData *fbdo, MB_StringPtr path)
 
 String FB_RTDB::mGetETag(FirebaseData *fbdo, MB_StringPtr path)
 {
-    struct fb_esp_rtdb_request_info_t req;
+    struct firebase_rtdb_request_info_t req;
     req.path = path;
     req.method = rtdb_get_nocontent;
     req.data.type = d_string;
@@ -331,7 +331,7 @@ String FB_RTDB::mGetETag(FirebaseData *fbdo, MB_StringPtr path)
 
 bool FB_RTDB::mGetShallowData(FirebaseData *fbdo, MB_StringPtr path)
 {
-    struct fb_esp_rtdb_request_info_t req;
+    struct firebase_rtdb_request_info_t req;
     req.path = path;
     req.method = rtdb_get_shallow;
     req.data.type = d_string;
@@ -343,25 +343,25 @@ void FB_RTDB::enableClassicRequest(FirebaseData *fbdo, bool enable)
     fbdo->session.classic_request = enable;
 }
 
-bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_StringPtr path,
-                           MB_StringPtr payload, fb_esp_data_type type, int subtype, uint32_t value_addr,
+bool FB_RTDB::buildRequest(FirebaseData *fbdo, firebase_request_method method, MB_StringPtr path,
+                           MB_StringPtr payload, firebase_data_type type, int subtype, uint32_t value_addr,
                            uint32_t query_addr, uint32_t priority_addr, MB_StringPtr etag, bool async,
-                           bool queue, size_t blob_size, MB_StringPtr filename, fb_esp_mem_storage_type storage_type,
+                           bool queue, size_t blob_size, MB_StringPtr filename, firebase_mem_storage_type storage_type,
                            RTDB_DownloadProgressCallback downloadCallback, RTDB_UploadProgressCallback uploadCallback)
 {
-    Utils::idle();
+    FBUtils::idle();
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
         return false;
 #endif
 
-    struct fb_esp_rtdb_request_info_t req;
+    struct firebase_rtdb_request_info_t req;
 
     MB_String _path, tpath, pre, post;
 
     tpath = path;
-    Utils::makePath(tpath);
+    Core.ut.makePath(tpath);
     _path = tpath;
 
     req.downloadCallback = downloadCallback;
@@ -369,8 +369,8 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_
 
     if (method == rtdb_set_priority || method == rtdb_get_priority)
     {
-        tpath += fb_esp_pgm_str_1;      // "/"
-        tpath += fb_esp_rtdb_pgm_str_2; // "/.priority"
+        tpath += firebase_pgm_str_1;      // "/"
+        tpath += firebase_rtdb_pgm_str_2; // "/.priority"
         req.path = tpath;
     }
     else if (priority_addr > 0 && method != http_get && type != d_blob && type != d_file && type != d_file_ota)
@@ -381,7 +381,7 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_
             FirebaseJson *json = addrTo<FirebaseJson *>(value_addr);
             float *priority = addrTo<float *>(priority_addr);
             if (json && priority)
-                json->set(pgm2Str(fb_esp_rtdb_pgm_str_2) /* ".priority" */, *priority);
+                json->set(pgm2Str(firebase_rtdb_pgm_str_2) /* ".priority" */, *priority);
             req.path = tpath;
         }
         else
@@ -393,22 +393,22 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_
             float *priority = addrTo<float *>(priority_addr);
             if (priority)
             {
-                pre += fb_esp_pgm_str_10;     // "{"
-                pre += fb_esp_pgm_str_4;      // "\""
-                pre += fb_esp_rtdb_pgm_str_2; // ".priority"
-                pre += fb_esp_pgm_str_4;      // "\""
-                pre += fb_esp_pgm_str_2;      // ":"
+                pre += firebase_pgm_str_10;     // "{"
+                pre += firebase_pgm_str_4;      // "\""
+                pre += firebase_rtdb_pgm_str_2; // ".priority"
+                pre += firebase_pgm_str_4;      // "\""
+                pre += firebase_pgm_str_2;      // ":"
                 pre += *priority;
-                pre += fb_esp_pgm_str_3; // ","
-                pre += fb_esp_pgm_str_4; // "\""
+                pre += firebase_pgm_str_3; // ","
+                pre += firebase_pgm_str_4; // "\""
 
                 if (type == d_string)
-                    post += fb_esp_pgm_str_4; // "\""
-                post += fb_esp_pgm_str_11;    // "}"
+                    post += firebase_pgm_str_4; // "\""
+                post += firebase_pgm_str_11;    // "}"
 
                 int p1 = 0, p2 = 0;
                 tpath = path;
-                if (StringHelper::find(tpath, fb_esp_pgm_str_1 /* "/" */, true, 0, p1))
+                if (Core.sh.find(tpath, firebase_pgm_str_1 /* "/" */, true, 0, p1))
                 {
                     if (p1 > 0)
                     {
@@ -427,10 +427,10 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_
                     }
                 }
 
-                pre += fb_esp_pgm_str_4; // "\""
-                pre += fb_esp_pgm_str_2; // ":"
+                pre += firebase_pgm_str_4; // "\""
+                pre += firebase_pgm_str_2; // ":"
                 if (type == d_string)
-                    pre += fb_esp_pgm_str_4; // "\""
+                    pre += firebase_pgm_str_4; // "\""
 
                 req.pre_payload = pre;
                 req.post_payload = post;
@@ -441,8 +441,8 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_
     {
         if (type == d_string)
         {
-            pre += fb_esp_pgm_str_4;  // "\""
-            post += fb_esp_pgm_str_4; // "\""
+            pre += firebase_pgm_str_4;  // "\""
+            post += firebase_pgm_str_4; // "\""
             req.pre_payload = pre;
             req.post_payload = post;
         }
@@ -465,7 +465,7 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_
     req.data.blobSize = blob_size;
     req.payload = payload;
     req.filename = filename;
-    Utils::makePath(req.filename);
+    Core.ut.makePath(req.filename);
     fbdo->session.rtdb.filename = req.filename;
     req.storageType = storage_type;
 
@@ -497,9 +497,9 @@ bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, MB_StringPtr path, MB_
     if (fbdo->session.rtdb.pause)
         return true;
 
-    time_t current_ts = Signer.getTime();
+    time_t current_ts = Core.getTime();
 
-    if (current_ts < ESP_DEFAULT_TS)
+    if (current_ts < FIREBASE_DEFAULT_TS)
     {
         fbdo->session.response.code = FIREBASE_ERROR_SYS_TIME_IS_NOT_READY;
         return false;
@@ -517,7 +517,7 @@ bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, MB_StringPtr path, MB_
         _limit = 30;
 
 #if defined(__AVR__)
-    uint32_t pr = Utils::strtoull_alt(_dataRetentionPeriod.c_str());
+    uint32_t pr = Core.ut.strtoull_alt(_dataRetentionPeriod.c_str());
 #else
     char *pEnd;
     uint32_t pr = strtoull(_dataRetentionPeriod.c_str(), &pEnd, 10);
@@ -554,7 +554,7 @@ bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, MB_StringPtr path, MB_
             for (size_t i = 0; i < len; i++)
             {
                 MB_String s = path;
-                s += fb_esp_pgm_str_1; // "/"
+                s += firebase_pgm_str_1; // "/"
                 s += nodes[i];
                 deleteNode(fbdo, s);
             }
@@ -571,11 +571,11 @@ bool FB_RTDB::mDeleteNodesByTimestamp(FirebaseData *fbdo, MB_StringPtr path, MB_
 bool FB_RTDB::mBeginStream(FirebaseData *fbdo, MB_StringPtr path)
 {
 
-    if (!Signer.config)
+    if (!Core.config)
         return false;
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
         return false;
 #endif
 
@@ -600,7 +600,7 @@ bool FB_RTDB::mBeginStream(FirebaseData *fbdo, MB_StringPtr path)
 
     clearDataStatus(fbdo);
 
-    fb_esp_rtdb_request_info_t req;
+    firebase_rtdb_request_info_t req;
     return waitResponse(fbdo, &req);
 }
 
@@ -618,7 +618,7 @@ bool FB_RTDB::endStream(FirebaseData *fbdo)
 {
     fbdo->session.rtdb.pause = true;
     fbdo->session.rtdb.stream_stop = true;
-    fbdo->session.con_mode = fb_esp_con_mode_undefined;
+    fbdo->session.con_mode = firebase_con_mode_undefined;
     fbdo->closeSession();
     clearDataStatus(fbdo);
     return true;
@@ -627,11 +627,11 @@ bool FB_RTDB::endStream(FirebaseData *fbdo)
 bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
 {
 
-    if (Signer.isExpired())
+    if (Core.isExpired())
         return false;
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
         return false;
 #endif
 
@@ -650,22 +650,22 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
 
     // Check token status via checkToken().
     // Don't check from tokenReady() as it depends on network status too.
-    if (!Signer.checkToken())
+    if (!Core.checkToken())
         return exitStream(fbdo, false);
 
     bool ret = false;
     bool reconnectStream = false;
 
     // trying to reconnect the stream when required at some interval as running in the loop
-    if (Signer.config->timeout.rtdbStreamReconnect < MIN_RTDB_STREAM_RECONNECT_INTERVAL ||
-        Signer.config->timeout.rtdbStreamReconnect > MAX_RTDB_STREAM_RECONNECT_INTERVAL)
-        Signer.config->timeout.rtdbStreamReconnect = MIN_RTDB_STREAM_RECONNECT_INTERVAL;
+    if (Core.config->timeout.rtdbStreamReconnect < MIN_RTDB_STREAM_RECONNECT_INTERVAL ||
+        Core.config->timeout.rtdbStreamReconnect > MAX_RTDB_STREAM_RECONNECT_INTERVAL)
+        Core.config->timeout.rtdbStreamReconnect = MIN_RTDB_STREAM_RECONNECT_INTERVAL;
 
-    if (millis() - Signer.config->timeout.rtdbStreamReconnect > fbdo->session.rtdb.stream_resume_millis)
+    if (millis() - Core.config->timeout.rtdbStreamReconnect > fbdo->session.rtdb.stream_resume_millis)
     {
         reconnectStream = fbdo->session.rtdb.data_tmo ||
                           fbdo->session.response.code >= 400 ||
-                          fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream;
+                          fbdo->session.con_mode != firebase_con_mode_rtdb_stream;
 
         if (fbdo->session.rtdb.data_tmo)
         {
@@ -678,11 +678,11 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
         ret = true;
 
     // Stream timed out
-    if (Signer.config->timeout.rtdbKeepAlive < MIN_RTDB_KEEP_ALIVE_TIMEOUT ||
-        Signer.config->timeout.rtdbKeepAlive > MAX_RTDB_KEEP_ALIVE_TIMEOUT)
-        Signer.config->timeout.rtdbKeepAlive = DEFAULT_RTDB_KEEP_ALIVE_TIMEOUT;
+    if (Core.config->timeout.rtdbKeepAlive < MIN_RTDB_KEEP_ALIVE_TIMEOUT ||
+        Core.config->timeout.rtdbKeepAlive > MAX_RTDB_KEEP_ALIVE_TIMEOUT)
+        Core.config->timeout.rtdbKeepAlive = DEFAULT_RTDB_KEEP_ALIVE_TIMEOUT;
 
-    if (millis() - fbdo->session.rtdb.data_millis > Signer.config->timeout.rtdbKeepAlive)
+    if (millis() - fbdo->session.rtdb.data_millis > Core.config->timeout.rtdbKeepAlive)
     {
         fbdo->session.rtdb.data_millis = millis();
         fbdo->session.rtdb.data_tmo = true;
@@ -694,7 +694,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     {
         fbdo->session.rtdb.new_stream = true;
 
-        if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+        if (!Core.waitIdle(fbdo->session.response.code))
             return exitStream(fbdo, false);
 
         fbdo->closeSession();
@@ -705,8 +705,8 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
         MB_String path = fbdo->session.rtdb.stream_path;
         if (fbdo->session.rtdb.redirect_url.length() > 0)
         {
-            struct fb_esp_url_info_t uinfo;
-            URLHelper::parse(Signer.mbfs, fbdo->session.rtdb.redirect_url, uinfo);
+            struct firebase_url_info_t uinfo;
+            Core.uh.parse(&Core.mbfs, fbdo->session.rtdb.redirect_url, uinfo);
             path = uinfo.uri;
         }
 
@@ -720,10 +720,10 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
             return exitStream(fbdo, ret);
         }
 
-        fbdo->session.con_mode = fb_esp_con_mode_rtdb_stream;
+        fbdo->session.con_mode = firebase_con_mode_rtdb_stream;
     }
 
-    fb_esp_rtdb_request_info_t req;
+    firebase_rtdb_request_info_t req;
 
     if (!waitResponse(fbdo, &req))
         return exitStream(fbdo, ret);
@@ -748,7 +748,7 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
 {
 #endif
 
-    if (!Signer.config)
+    if (!Core.config)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return;
@@ -759,13 +759,13 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
     fbdo->_dataAvailableCallback = dataAvailableCallback;
     fbdo->_timeoutCallback = timeoutCallback;
 
-    fbdo->addSession(fb_esp_con_mode_rtdb_stream);
-    Signer.config->internal.stream_loop_task_enable = true;
+    fbdo->addSession(firebase_con_mode_rtdb_stream);
+    Core.internal.stream_loop_task_enable = true;
 
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
     runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
 #elif defined(ESP8266)
-    Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
+    Core.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
 runStreamTask();
 #endif
@@ -781,7 +781,7 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
                                          FirebaseData::StreamTimeoutCallback timeoutCallback)
 {
 #endif
-    if (!Signer.config)
+    if (!Core.config)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return;
@@ -792,13 +792,13 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
     fbdo->_multiPathDataCallback = multiPathDataCallback;
     fbdo->_timeoutCallback = timeoutCallback;
 
-    fbdo->addSession(fb_esp_con_mode_rtdb_stream);
-    Signer.config->internal.stream_loop_task_enable = true;
+    fbdo->addSession(firebase_con_mode_rtdb_stream);
+    Core.internal.stream_loop_task_enable = true;
 
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
     runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
 #elif defined(ESP8266)
-    Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
+    Core.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
 runStreamTask();
 #endif
@@ -806,7 +806,7 @@ runStreamTask();
 
 void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
 {
-    if (!Signer.config)
+    if (!Core.config)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return;
@@ -817,12 +817,12 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
     fbdo->removeSession();
 
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-    if (Signer.config->internal.sessions.size() == 0)
+    if (Core.internal.sessions.size() == 0)
     {
-        if (Signer.config->internal.stream_task_handle)
-            vTaskDelete(Signer.config->internal.stream_task_handle);
+        if (Core.internal.stream_task_handle)
+            vTaskDelete(Core.internal.stream_task_handle);
 
-        Signer.config->internal.stream_task_handle = NULL;
+        Core.internal.stream_task_handle = NULL;
     }
 #endif
 }
@@ -833,7 +833,7 @@ void FB_RTDB::runStreamTask(FirebaseData *fbdo, const char *taskName)
 void FB_RTDB::runStreamTask()
 #endif
 {
-    if (!Signer.config || !Signer.config->internal.stream_loop_task_enable)
+    if (!Core.config || !Core.internal.stream_loop_task_enable)
         return;
 
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
@@ -844,74 +844,74 @@ void FB_RTDB::runStreamTask()
     TaskFunction_t taskCode = [](void *param)
     {
         FirebaseConfig *config = (FirebaseConfig *)param;
-        const TickType_t xDelay = config->internal.stream_task_delay_ms / portTICK_PERIOD_MS;
+        const TickType_t xDelay = Core.internal.stream_task_delay_ms / portTICK_PERIOD_MS;
         for (;;)
         {
-            if (!config->internal.stream_loop_task_enable)
+            if (!Core.internal.stream_loop_task_enable)
                 break;
             _this->mRunStream();
             vTaskDelay(xDelay);
         }
 
-        config->internal.stream_task_handle = NULL;
+        Core.internal.stream_task_handle = NULL;
 
         vTaskDelete(NULL);
     };
 
 #if defined(ESP32)
-    xTaskCreatePinnedToCore(taskCode, name.c_str(), Signer.config->internal.stream_task_stack_size,
-                            Signer.config, Signer.config->internal.stream_task_priority,
-                            &Signer.config->internal.stream_task_handle,
-                            Signer.config->internal.stream_task_cpu_core);
+    xTaskCreatePinnedToCore(taskCode, name.c_str(), Core.internal.stream_task_stack_size,
+                            Core.config, Core.internal.stream_task_priority,
+                            &Core.internal.stream_task_handle,
+                            Core.internal.stream_task_cpu_core);
 #elif defined(MB_ARDUINO_PICO)
 
     /* Create a task, storing the handle. */
-    xTaskCreate(taskCode, name.c_str(), Signer.config->internal.stream_task_stack_size, Signer.config,
-                Signer.config->internal.stream_task_priority, &(Signer.config->internal.stream_task_handle));
+    xTaskCreate(taskCode, name.c_str(), Core.internal.stream_task_stack_size, Core.config,
+                Core.internal.stream_task_priority, &(Core.internal.stream_task_handle));
 
     /* Define the core affinity mask such that this task can only run on core 0
      * and core 1. */
     UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
 
     /* Set the core affinity mask for the task. */
-    vTaskCoreAffinitySet(Signer.config->internal.stream_task_handle, uxCoreAffinityMask);
+    vTaskCoreAffinitySet(Core.internal.stream_task_handle, uxCoreAffinityMask);
 
 #endif
 
 #else
     mRunStream();
 #if defined(ESP8266)
-    Signer.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
+    Core.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #endif
 #endif
 }
 
 void FB_RTDB::mStopStreamLoopTask()
 {
-    if (Signer.config)
-        Signer.config->internal.stream_loop_task_enable = false;
+    if (Core.config)
+        Core.internal.stream_loop_task_enable = false;
 }
 
 void FB_RTDB::mRunStream()
 {
     FirebaseData *fbdo = nullptr;
 
-    if (!Signer.config)
+    if (!Core.config)
         return;
 
-    if (Signer.isExpired())
+    if (Core.isExpired())
         return;
 
-    for (size_t id = 0; id < Signer.config->internal.sessions.size(); id++)
+    for (size_t id = 0; id < Core.internal.sessions.size(); id++)
     {
 
-        fbdo = addrTo<FirebaseData *>(Signer.config->internal.sessions[id]);
+        fbdo = addrTo<FirebaseData *>(Core.internal.sessions[id]);
 
         if (fbdo)
         {
             if ((fbdo->_dataAvailableCallback || fbdo->_multiPathDataCallback || fbdo->_timeoutCallback))
             {
-                if (Signer.isExpired())
+                if (Core.isExpired())
                 {
                     fbdo->session.rtdb.stream_tmo_Millis = millis();
                     fbdo->session.rtdb.data_tmo = false;
@@ -944,9 +944,9 @@ void FB_RTDB::setBlobRef(FirebaseData *fbdo, int addr)
     addr > 0 ? fbdo->session.rtdb.blob = addrTo<MB_VECTOR<uint8_t> *>(addr) : fbdo->session.rtdb.blob = new MB_VECTOR<uint8_t>();
 }
 
-#if defined(ENABLE_ERROR_QUEUE)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 
-void FB_RTDB::addQueueData(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+void FB_RTDB::addQueueData(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
     if (req->method == http_get || (!req->queue && (req->method == http_put ||
                                                     req->method == rtdb_set_nocontent ||
@@ -973,12 +973,12 @@ void FB_RTDB::addQueueData(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t
 #if defined(ESP8266)
 void FB_RTDB::runErrorQueueTask()
 {
-    if (!Signer.config)
+    if (!Core.config)
         return;
 
-    for (size_t id = 0; id < Signer.config->internal.queueSessions.size(); id++)
+    for (size_t id = 0; id < Core.internal.queueSessions.size(); id++)
     {
-        FirebaseData *fbdo = addrTo<FirebaseData *>(Signer.config->internal.queueSessions[id]);
+        FirebaseData *fbdo = addrTo<FirebaseData *>(Core.internal.queueSessions[id]);
 
         if (fbdo)
         {
@@ -989,7 +989,7 @@ void FB_RTDB::runErrorQueueTask()
         }
     }
 
-    Signer.set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
+    Core.set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
 }
 #endif
 
@@ -1000,7 +1000,7 @@ uint32_t FB_RTDB::getErrorQueueID(FirebaseData *fbdo)
 
 void FB_RTDB::processErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback)
 {
-    Utils::idle();
+    FBUtils::idle();
 
     if (!fbdo->reconnect())
         return;
@@ -1035,14 +1035,14 @@ void FB_RTDB::processErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallb
                 callback(qinfo);
             }
 
-            Utils::idle();
+            FBUtils::idle();
             if (buildRequest(fbdo, item.method, MB_StringPtr(toAddr(item.path), mb_string_sub_type_mb_string),
                              MB_StringPtr(toAddr(item.payload), mb_string_sub_type_mb_string), item.dataType,
                              item.subType, item.method == http_get ? item.address.dout : item.address.din, item.address.query,
                              item.address.priority, MB_StringPtr(toAddr(item.etag), mb_string_sub_type_mb_string),
                              item.async, _NO_QUEUE, item.blobSize,
                              MB_StringPtr(toAddr(item.filename), mb_string_sub_type_mb_string),
-                             (fb_esp_mem_storage_type)item.storageType))
+                             (firebase_mem_storage_type)item.storageType))
             {
                 fbdo->clearQueueItem(&item);
                 fbdo->_qMan.remove(i);
@@ -1073,7 +1073,7 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
 void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback)
 #endif
 {
-    if (!Signer.config)
+    if (!Core.config)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return;
@@ -1093,12 +1093,12 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
     TaskFunction_t taskCode = [](void *param)
     {
         FirebaseConfig *config = (FirebaseConfig *)param;
-        const TickType_t xDelay = config->internal.queue_task_delay_ms / portTICK_PERIOD_MS;
+        const TickType_t xDelay = Core.internal.queue_task_delay_ms / portTICK_PERIOD_MS;
         for (;;)
         {
-            for (size_t i = 0; i < config->internal.queueSessions.size(); i++)
+            for (size_t i = 0; i < Core.internal.queueSessions.size(); i++)
             {
-                FirebaseData *_fbdo = addrTo<FirebaseData *>(config->internal.queueSessions[i]);
+                FirebaseData *_fbdo = addrTo<FirebaseData *>(Core.internal.queueSessions[i]);
 
                 if (_fbdo)
                 {
@@ -1115,41 +1115,41 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
             vTaskDelay(xDelay);
         }
 
-        config->internal.queue_task_handle = NULL;
+        Core.internal.queue_task_handle = NULL;
         vTaskDelete(NULL);
     };
 #if defined(ESP32)
     xTaskCreatePinnedToCore(taskCode, fbdo->getTaskName(queueTaskStackSize, false),
-                            Signer.config->internal.queue_task_stack_size,
-                            Signer.config,
-                            Signer.config->internal.queue_task_priority,
-                            &Signer.config->internal.queue_task_handle,
-                            Signer.config->internal.queue_task_cpu_core);
+                            Core.internal.queue_task_stack_size,
+                            Core.config,
+                            Core.internal.queue_task_priority,
+                            &Core.internal.queue_task_handle,
+                            Core.internal.queue_task_cpu_core);
 
 #elif defined(MB_ARDUINO_PICO)
 
     /* Create a task, storing the handle. */
-    xTaskCreate(taskCode, fbdo->getTaskName(queueTaskStackSize, false), Signer.config->internal.queue_task_stack_size, Signer.config,
-                Signer.config->internal.queue_task_priority, &(Signer.config->internal.queue_task_handle));
+    xTaskCreate(taskCode, fbdo->getTaskName(queueTaskStackSize, false), Core.internal.queue_task_stack_size, Core.config,
+                Core.internal.queue_task_priority, &(Core.internal.queue_task_handle));
 
     /* Define the core affinity mask such that this task can only run on core 0
      * and core 1. */
     UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
 
     /* Set the core affinity mask for the task. */
-    vTaskCoreAffinitySet(Signer.config->internal.queue_task_handle, uxCoreAffinityMask);
+    vTaskCoreAffinitySet(Core.internal.queue_task_handle, uxCoreAffinityMask);
 
 #endif
 
 #elif defined(ESP8266)
-    Signer.set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
+    Core.set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
 #endif
 }
 #endif
 
 void FB_RTDB::endAutoRunErrorQueue(FirebaseData *fbdo)
 {
-    if (!Signer.config)
+    if (!Core.config)
     {
         fbdo->session.response.code = FIREBASE_ERROR_UNINITIALIZED;
         return;
@@ -1158,11 +1158,11 @@ void FB_RTDB::endAutoRunErrorQueue(FirebaseData *fbdo)
     fbdo->_queueInfoCallback = NULL;
     fbdo->removeQueueSession();
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-    if (Signer.config->internal.queueSessions.size() == 0)
+    if (Core.internal.queueSessions.size() == 0)
     {
-        if (Signer.config->internal.queue_task_handle)
-            vTaskDelete(Signer.config->internal.queue_task_handle);
-        Signer.config->internal.queue_task_handle = NULL;
+        if (Core.internal.queue_task_handle)
+            vTaskDelete(Core.internal.queue_task_handle);
+        Core.internal.queue_task_handle = NULL;
     }
 #endif
 }
@@ -1196,12 +1196,12 @@ void FB_RTDB::setMaxErrorQueue(FirebaseData *fbdo, uint8_t num)
     }
 }
 
-bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType)
+bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, firebase_mem_storage_type storageType)
 {
 
     MB_String _filename = filename;
 
-    int ret = Signer.mbfs->open(_filename, mbfs_type storageType, mb_fs_open_mode_write);
+    int ret = Core.mbfs.open(_filename, mbfs_type storageType, mb_fs_open_mode_write);
 
     if (ret < 0)
     {
@@ -1210,16 +1210,16 @@ bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_
     }
 
     // Close file and open later.
-    Signer.mbfs->close(mbfs_type storageType);
+    Core.mbfs.close(mbfs_type storageType);
 
     if ((storageType == mem_storage_type_flash || storageType == mem_storage_type_sd) &&
-        !Signer.mbfs->ready(mbfs_type storageType))
+        !Core.mbfs.ready(mbfs_type storageType))
         return false;
 
     FirebaseJsonArray arr;
 
     // required for ESP32 core 2.0.x
-    Signer.mbfs->open(_filename, mbfs_type storageType, mb_fs_open_mode_write);
+    Core.mbfs.open(_filename, mbfs_type storageType, mb_fs_open_mode_write);
 
     for (uint8_t i = 0; i < fbdo->_qMan.size(); i++)
     {
@@ -1233,37 +1233,35 @@ bool FB_RTDB::mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_
         arr.add(item.address.din, item.address.dout, item.address.query,
                 item.address.priority, item.blobSize);
         arr.add(item.path, item.payload, item.etag, item.filename);
-        Signer.mbfs->write(mbfs_type storageType, (uint8_t *)arr.raw(), strlen(arr.raw()));
+        Core.mbfs.write(mbfs_type storageType, (uint8_t *)arr.raw(), strlen(arr.raw()));
     }
 
-    Signer.mbfs->close(mbfs_type storageType);
+    Core.mbfs.close(mbfs_type storageType);
     return true;
 }
 
-bool FB_RTDB::mRestoreErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType)
+bool FB_RTDB::mRestoreErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, firebase_mem_storage_type storageType)
 {
     return openErrorQueue(fbdo, filename, storageType, 1) != 0;
 }
 
-uint8_t FB_RTDB::mErrorQueueCount(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType)
+uint8_t FB_RTDB::mErrorQueueCount(FirebaseData *fbdo, MB_StringPtr filename, firebase_mem_storage_type storageType)
 {
     return openErrorQueue(fbdo, filename, storageType, 0);
 }
 
-bool FB_RTDB::mDeleteStorageFile(MB_StringPtr filename, fb_esp_mem_storage_type storageType)
+bool FB_RTDB::mDeleteStorageFile(MB_StringPtr filename, firebase_mem_storage_type storageType)
 {
-    if (!Signer.mbfs)
-        return false;
-    return Signer.mbfs->remove(MB_String(filename), mbfs_type storageType);
+    return Core.mbfs.remove(MB_String(filename), mbfs_type storageType);
 }
 
 uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename,
-                                fb_esp_mem_storage_type storageType, uint8_t mode)
+                                firebase_mem_storage_type storageType, uint8_t mode)
 {
     uint8_t count = 0;
     MB_String _filename = filename;
 
-    int ret = Signer.mbfs->open(_filename, mbfs_type storageType, mb_fs_open_mode_read);
+    int ret = Core.mbfs.open(_filename, mbfs_type storageType, mb_fs_open_mode_read);
 
     if (ret < 0)
     {
@@ -1271,9 +1269,9 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename,
         return 0;
     }
 
-    if (!Signer.mbfs->available(mbfs_type storageType) || Signer.mbfs->size(mbfs_type storageType) < 4)
+    if (!Core.mbfs.available(mbfs_type storageType) || Core.mbfs.size(mbfs_type storageType) < 4)
     {
-        Signer.mbfs->close(mbfs_type storageType);
+        Core.mbfs.close(mbfs_type storageType);
         return 0;
     }
 
@@ -1284,14 +1282,14 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename,
     if (storageType == mem_storage_type_flash)
     {
 #if defined(MBFS_FLASH_FS)
-        fs::File file = Signer.mbfs->getFlashFile();
+        fs::File file = Core.mbfs.getFlashFile();
         count = readQueueFile(fbdo, file, item, mode);
 #endif
     }
     else if (storageType == mem_storage_type_sd)
     {
 #if defined(MBFS_SD_FS) && defined(CARD_TYPE_SD)
-        MBFS_SD_FILE file = Signer.mbfs->getSDFile();
+        MBFS_SD_FILE file = Core.mbfs.getSDFile();
         count = readQueueFileSdFat(fbdo, file, item, mode);
 #endif
     }
@@ -1301,14 +1299,14 @@ uint8_t FB_RTDB::openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename,
     if (storageType == mem_storage_type_flash)
     {
 #if defined(MBFS_FLASH_FS)
-        fs::File file = Signer.mbfs->getFlashFile();
+        fs::File file = Core.mbfs.getFlashFile();
         count = readQueueFile(fbdo, file, item, mode);
 #endif
     }
     else if (storageType == mem_storage_type_sd)
     {
 #if defined(MBFS_SD_FS) && defined(CARD_TYPE_SD)
-        MBFS_SD_FILE file = Signer.mbfs->getSDFile();
+        MBFS_SD_FILE file = Core.mbfs.getSDFile();
         count = readQueueFile(fbdo, file, item, mode);
 #endif
     }
@@ -1328,30 +1326,30 @@ uint8_t FB_RTDB::readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &it
 
     while (file.available())
     {
-        Utils::idle();
+        FBUtils::idle();
         if (arr.readFrom(file))
         {
             if (mode == 1)
             {
                 for (size_t i = 0; i < arr.size(); i++)
                 {
-                    Utils::idle();
+                    FBUtils::idle();
                     arr.get(result, i);
                     if (result.success)
                     {
                         switch (i)
                         {
                         case 0:
-                            item.dataType = (fb_esp_data_type)result.to<int>();
+                            item.dataType = (firebase_data_type)result.to<int>();
                             break;
                         case 1:
                             item.subType = result.to<int>();
                             break;
                         case 2:
-                            item.method = (fb_esp_request_method)result.to<int>();
+                            item.method = (firebase_request_method)result.to<int>();
                             break;
                         case 3:
-                            item.storageType = (fb_esp_mem_storage_type)result.to<int>();
+                            item.storageType = (firebase_mem_storage_type)result.to<int>();
                             break;
                         case 4:
                             item.async = (bool)result.to<int>();
@@ -1410,30 +1408,30 @@ uint8_t FB_RTDB::readQueueFileSdFat(FirebaseData *fbdo, MBFS_SD_FILE &file, Queu
 
     while (file.available())
     {
-        Utils::idle();
+        Core.ut.FBUtils::idle();
         if (arr.readFrom(file))
         {
             if (mode == 1)
             {
                 for (size_t i = 0; i < arr.size(); i++)
                 {
-                    Utils::idle();
+                    Core.ut.FBUtils::idle();
                     arr.get(result, i);
                     if (result.success)
                     {
                         switch (i)
                         {
                         case 0:
-                            item.dataType = (fb_esp_data_type)result.to<int>();
+                            item.dataType = (firebase_data_type)result.to<int>();
                             break;
                         case 1:
                             item.subType = result.to<int>();
                             break;
                         case 2:
-                            item.method = (fb_esp_request_method)result.to<int>();
+                            item.method = (firebase_request_method)result.to<int>();
                             break;
                         case 3:
-                            item.storageType = (fb_esp_mem_storage_type)result.to<int>();
+                            item.storageType = (firebase_mem_storage_type)result.to<int>();
                             break;
                         case 4:
                             item.async = (bool)result.to<int>();
@@ -1498,12 +1496,12 @@ uint8_t FB_RTDB::errorQueueCount(FirebaseData *fbdo)
 
 #endif
 
-bool FB_RTDB::mBackup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, MB_StringPtr nodePath,
+bool FB_RTDB::mBackup(FirebaseData *fbdo, firebase_mem_storage_type storageType, MB_StringPtr nodePath,
                       MB_StringPtr fileName, RTDB_DownloadProgressCallback callback)
 {
-    struct fb_esp_rtdb_request_info_t req;
+    struct firebase_rtdb_request_info_t req;
     req.filename = fileName;
-    Utils::makePath(req.filename);
+    Core.ut.makePath(req.filename);
     req.path = nodePath;
     req.method = rtdb_backup;
     req.data.type = d_json;
@@ -1514,12 +1512,12 @@ bool FB_RTDB::mBackup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, M
     return handleRequest(fbdo, &req);
 }
 
-bool FB_RTDB::mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, MB_StringPtr nodePath,
+bool FB_RTDB::mRestore(FirebaseData *fbdo, firebase_mem_storage_type storageType, MB_StringPtr nodePath,
                        MB_StringPtr fileName, RTDB_UploadProgressCallback callback)
 {
-    struct fb_esp_rtdb_request_info_t req;
+    struct firebase_rtdb_request_info_t req;
     req.filename = fileName;
-    Utils::makePath(req.filename);
+    Core.ut.makePath(req.filename);
     req.path = nodePath;
     req.method = rtdb_restore;
     req.data.type = d_json;
@@ -1530,7 +1528,7 @@ bool FB_RTDB::mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, 
     return handleRequest(fbdo, &req);
 }
 
-void FB_RTDB::setPtrValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+void FB_RTDB::setPtrValue(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
     if (req->data.address.dout > 0 && req->method == http_get)
     {
@@ -1565,10 +1563,10 @@ void FB_RTDB::setPtrValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
     }
 }
 
-bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+bool FB_RTDB::processRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
 
-    Utils::idle();
+    FBUtils::idle();
 
     if (!preRequestCheck(fbdo, req))
         return false;
@@ -1577,7 +1575,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     {
         if (!fbdo->reconnect())
         {
-#if defined(ENABLE_ERROR_QUEUE)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
             addQueueData(fbdo, req);
 #endif
             return false;
@@ -1591,16 +1589,16 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
         fbdo->session.rtdb.filename = req->filename;
 
         int p1 = 0;
-        MB_String folder = fb_esp_pgm_str_1; // "/"
+        MB_String folder = firebase_pgm_str_1; // "/"
 
-        if (StringHelper::find(fbdo->session.rtdb.filename, fb_esp_pgm_str_1 /* "/" */, true, 0, p1) && p1 != 0)
+        if (Core.sh.find(fbdo->session.rtdb.filename, firebase_pgm_str_1 /* "/" */, true, 0, p1) && p1 != 0)
             fbdo->session.rtdb.filename.substr(folder, p1 - 1);
 
         if (fbdo->session.rtdb.storage_type == mem_storage_type_sd)
         {
 #if defined(MBFS_SD_FS) && defined(CARD_TYPE_SD)
             if (!MBFS_SD_FS.exists(folder.c_str()))
-                Utils::createDirs(folder, (fb_esp_mem_storage_type)fbdo->session.rtdb.storage_type);
+                Core.ut.createDirs(folder, (firebase_mem_storage_type)fbdo->session.rtdb.storage_type);
 #endif
         }
 
@@ -1629,7 +1627,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 
     if (!ret && errCount == maxRetry && fbdo->_qMan._maxQueue > 0)
     {
-#if defined(ENABLE_ERROR_QUEUE)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
         addQueueData(fbdo, req);
 #endif
         if (!req->queue && req->method != http_get)
@@ -1638,7 +1636,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 
     if (ret)
     {
-        if (Signer.config->rtdb.data_type_stricted && req->method == http_get && req->data.type != d_any)
+        if (Core.config->rtdb.data_type_stricted && req->method == http_get && req->data.type != d_any)
         {
             if (req->data.type == d_integer ||
                 req->data.type == d_float ||
@@ -1662,13 +1660,13 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
 #if defined(ESP32) || defined(MB_ARDUINO_PICO)
 void FB_RTDB::allowMultipleRequests(bool enable)
 {
-    if (!Signer.config)
+    if (!Core.config)
         return;
-    Signer.config->internal.fb_multiple_requests = enable;
+    Core.internal.fb_multiple_requests = enable;
 }
 #endif
 
-void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_info_t *req)
+void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, firebase_rtdb_request_info_t *req)
 {
     fbdo->_responseCallback = NULL;
 
@@ -1679,8 +1677,8 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
 
     if (fbdo->session.cert_updated || millis() - fbdo->session.last_conn_ms > fbdo->session.conn_timeout ||
         fbdo->session.rtdb.stream_path_changed ||
-        (req->method == rtdb_stream && fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream) ||
-        (req->method != rtdb_stream && fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream) ||
+        (req->method == rtdb_stream && fbdo->session.con_mode != firebase_con_mode_rtdb_stream) ||
+        (req->method != rtdb_stream && fbdo->session.con_mode == firebase_con_mode_rtdb_stream) ||
         strcmp(host, fbdo->session.host.c_str()) != 0)
     {
         fbdo->session.last_conn_ms = millis();
@@ -1689,21 +1687,21 @@ void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_i
     }
 
     fbdo->session.host = host;
-    fbdo->session.con_mode = req->method == rtdb_stream ? fb_esp_con_mode_rtdb_stream : fb_esp_con_mode_rtdb;
+    fbdo->session.con_mode = req->method == rtdb_stream ? firebase_con_mode_rtdb_stream : firebase_con_mode_rtdb;
 
-    if (fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream)
+    if (fbdo->session.con_mode != firebase_con_mode_rtdb_stream)
         fbdo->session.rtdb.stream_resume_millis = 0;
 }
 
-bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
-    Utils::idle();
+    FBUtils::idle();
 
     if (!preRequestCheck(fbdo, req))
         return false;
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Utils::waitIdle(fbdo->session.response.code, Signer.config))
+    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
         return false;
 #endif
 
@@ -1711,7 +1709,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
         fbdo->session.rtdb.async_count = 0;
 
     if ((fbdo->session.rtdb.async && !req->async) ||
-        fbdo->session.rtdb.async_count > Signer.config->async_close_session_max_request)
+        fbdo->session.rtdb.async_count > Core.config->async_close_session_max_request)
     {
         fbdo->session.rtdb.async_count = 0;
         fbdo->closeSession();
@@ -1757,7 +1755,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
                 if (req->downloadCallback)
                 {
                     RTDB_DownloadStatusInfo in;
-                    makeDownloadStatus(in, req->filename, req->path, fb_esp_rtdb_download_status_error,
+                    makeDownloadStatus(in, req->filename, req->path, firebase_rtdb_download_status_error,
                                        0, 0, 0, fbdo->errorReason());
                     sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
                 }
@@ -1767,7 +1765,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
             else if (req->downloadCallback)
             {
                 RTDB_DownloadStatusInfo in;
-                makeDownloadStatus(in, req->filename, req->path, fb_esp_rtdb_download_status_complete,
+                makeDownloadStatus(in, req->filename, req->path, firebase_rtdb_download_status_complete,
                                    100, req->fileSize, 0, "");
                 sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
             }
@@ -1783,7 +1781,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
                 if (req->uploadCallback)
                 {
                     RTDB_UploadStatusInfo in;
-                    makeUploadStatus(in, req->filename, req->path, fb_esp_rtdb_upload_status_error,
+                    makeUploadStatus(in, req->filename, req->path, firebase_rtdb_upload_status_error,
                                      0, 0, 0, fbdo->errorReason());
                     sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
                 }
@@ -1796,7 +1794,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
                 makeUploadStatus(in,
                                  req->filename,
                                  req->path,
-                                 fb_esp_rtdb_upload_status_complete,
+                                 firebase_rtdb_upload_status_complete,
                                  100,
                                  req->fileSize,
                                  0,
@@ -1823,7 +1821,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_
     return true;
 }
 
-void FB_RTDB::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, size_t readBytes)
+void FB_RTDB::reportUploadProgress(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req, size_t readBytes)
 {
     if (!req)
         return;
@@ -1842,14 +1840,14 @@ void FB_RTDB::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_reques
 
         req->progress = p;
 
-        fbdo->session.rtdb.cbUploadInfo.status = fb_esp_rtdb_upload_status_upload;
+        fbdo->session.rtdb.cbUploadInfo.status = firebase_rtdb_upload_status_upload;
         if (req->uploadCallback)
         {
             RTDB_UploadStatusInfo in;
             makeUploadStatus(in,
                              req->filename,
                              req->path,
-                             fb_esp_rtdb_upload_status_upload,
+                             firebase_rtdb_upload_status_upload,
                              p,
                              0,
                              fbdo->tcpClient.dataTime,
@@ -1859,7 +1857,7 @@ void FB_RTDB::reportUploadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_reques
     }
 }
 
-void FB_RTDB::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, size_t readBytes)
+void FB_RTDB::reportDownloadProgress(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req, size_t readBytes)
 {
     if (!req)
         return;
@@ -1878,13 +1876,13 @@ void FB_RTDB::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_requ
 
         fbdo->tcpClient.dataTime = millis() - fbdo->tcpClient.dataStart;
 
-        fbdo->session.rtdb.cbDownloadInfo.status = fb_esp_rtdb_download_status_download;
+        fbdo->session.rtdb.cbDownloadInfo.status = firebase_rtdb_download_status_download;
         if (req->downloadCallback)
         {
             RTDB_DownloadStatusInfo in;
             makeDownloadStatus(in, req->filename,
                                req->path,
-                               fb_esp_rtdb_download_status_download,
+                               firebase_rtdb_download_status_download,
                                p, req->fileSize,
                                fbdo->tcpClient.dataTime,
                                "");
@@ -1894,7 +1892,7 @@ void FB_RTDB::reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_requ
 }
 
 void FB_RTDB::makeUploadStatus(RTDB_UploadStatusInfo &info, const MB_String &local, const MB_String &remote,
-                               fb_esp_rtdb_upload_status status, size_t progress, size_t size, int elapsedTime,
+                               firebase_rtdb_upload_status status, size_t progress, size_t size, int elapsedTime,
                                const MB_String &msg)
 {
     info.localFileName = local;
@@ -1917,7 +1915,7 @@ void FB_RTDB::sendUploadCallback(FirebaseData *fbdo, RTDB_UploadStatusInfo &in, 
 }
 
 void FB_RTDB::makeDownloadStatus(RTDB_DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
-                                 fb_esp_rtdb_download_status status, size_t progress, size_t size,
+                                 firebase_rtdb_download_status status, size_t progress, size_t size,
                                  int elapsedTime, const MB_String &msg)
 {
     info.localFileName = local;
@@ -1939,7 +1937,7 @@ void FB_RTDB::sendDownloadCallback(FirebaseData *fbdo, RTDB_DownloadStatusInfo &
         out = &fbdo->session.rtdb.cbDownloadInfo;
 }
 
-int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
     fbdo->session.error.clear();
     int code = 1;
@@ -1947,19 +1945,19 @@ int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     // don't check the network connection here which it ignores the
     // error queues
 
-    if (!Signer.config)
+    if (!Core.config)
         code = FIREBASE_ERROR_UNINITIALIZED;
     else if (fbdo->session.rtdb.pause)
         code = 0;
     else if (!fbdo->tokenReady())
         code = FIREBASE_ERROR_TOKEN_NOT_READY;
     else if (req->path.length() == 0 ||
-             (Signer.config->database_url.length() == 0 && Signer.config->host.length() == 0) ||
-             (strlen(Signer.getToken()) == 0 && !Signer.config->signer.test_mode))
+             (Core.config->database_url.length() == 0 && Core.config->host.length() == 0) ||
+             (strlen(Core.getToken()) == 0 && !Core.config->signer.test_mode))
         code = FIREBASE_ERROR_MISSING_CREDENTIALS;
     else if (req->method != rtdb_stream &&
              (req->method == http_put || req->method == http_post || req->method == http_patch ||
-              req->method == rtdb_update_nocontent || req->task_type == fb_esp_rtdb_task_store_rules) &&
+              req->method == rtdb_update_nocontent || req->task_type == firebase_rtdb_task_store_rules) &&
              req->payload.length() == 0 && req->data.type != d_string && req->data.type != d_json &&
              req->data.type != d_array && req->data.type != d_blob && req->data.type != d_file_ota)
         code = FIREBASE_ERROR_MISSING_DATA;
@@ -1972,7 +1970,7 @@ int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info
     return code;
 }
 
-bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
     if (fbdo->tcpClient.reserved)
         return false;
@@ -1984,12 +1982,12 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
     size_t toRead = 0;
     bool ret = false;
 
-    rescon(fbdo, Signer.config->database_url.c_str(), req);
+    rescon(fbdo, Core.config->database_url.c_str(), req);
 
     if (req->method == rtdb_stream)
     {
         fbdo->session.rtdb.stream_path.clear();
-        Utils::makePath(req->path);
+        Core.ut.makePath(req->path);
         fbdo->session.rtdb.stream_path += req->path;
     }
     else
@@ -1999,7 +1997,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         if (req->method != rtdb_backup && req->method != rtdb_restore)
         {
             fbdo->session.rtdb.path.clear();
-            Utils::makePath(req->path);
+            Core.ut.makePath(req->path);
             fbdo->session.rtdb.path += req->path;
         }
 
@@ -2007,10 +2005,11 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
     }
 
     fbdo->session.max_payload_length = 0;
+    
+    fbdo->tcpClient.setSession(&fbdo->bsslSession);
+    fbdo->tcpClient.begin(Core.config->database_url.c_str(), FIREBASE_PORT, &fbdo->session.response.code);
 
-    fbdo->tcpClient.begin(Signer.config->database_url.c_str(), FIREBASE_PORT, &fbdo->session.response.code);
-
-    if (req->task_type == fb_esp_rtdb_task_upload_rules)
+    if (req->task_type == firebase_rtdb_task_upload_rules)
     {
         int sz = openFile(fbdo, req, mb_fs_open_mode_read);
         if (sz < 0)
@@ -2079,7 +2078,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         return false;
     }
 
-    int bufSize = Utils::getUploadBufSize(Signer.config, fb_esp_con_mode_rtdb);
+    int bufSize = Core.ut.getUploadBufSize(Core.config, firebase_con_mode_rtdb);
     unsigned long ms = millis();
     fbdo->tcpClient.dataTime = 0;
 
@@ -2125,16 +2124,16 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         if (blob)
         {
             // send first payload (file base64 signature)
-            fbdo->tcpClient.send(pgm2Str(fb_esp_rtdb_pgm_str_7 /* "\"blob,base64," */));
+            fbdo->tcpClient.send(pgm2Str(firebase_rtdb_pgm_str_7 /* "\"blob,base64," */));
             if (fbdo->session.response.code > 0)
             {
                 // convert blob to base64 string before sending
-                if (Base64Helper::encodeToClient(fbdo->tcpClient.client, Signer.mbfs, bufSize, blob, req->data.blobSize))
-                    fbdo->tcpClient.send(pgm2Str(fb_esp_pgm_str_4) /* "\"" */); // send last payload
+                if (Core.bh.encodeToClient(&fbdo->tcpClient, &Core.mbfs, bufSize, blob, req->data.blobSize))
+                    fbdo->tcpClient.send(pgm2Str(firebase_pgm_str_4) /* "\"" */); // send last payload
             }
         }
     }
-    else if (req->task_type == fb_esp_rtdb_task_upload_rules ||
+    else if (req->task_type == firebase_rtdb_task_upload_rules ||
              req->method == rtdb_restore ||
              (req->data.type == d_file && (req->method == rtdb_set_nocontent || req->method == http_post)))
     {
@@ -2143,8 +2142,8 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         {
             RTDB_UploadStatusInfo in;
             makeUploadStatus(in,
-                             Signer.mbfs->name(mbfs_type req->storageType),
-                             req->path, fb_esp_rtdb_upload_status_init,
+                             Core.mbfs.name(mbfs_type req->storageType),
+                             req->path, firebase_rtdb_upload_status_init,
                              0,
                              req->fileSize,
                              0,
@@ -2156,13 +2155,13 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
 
         if (req->data.type == d_file && (req->method == rtdb_set_nocontent || req->method == http_post))
         {
-            MB_String s = fb_esp_rtdb_pgm_str_8; // "\"file,base64,"
+            MB_String s = firebase_rtdb_pgm_str_8; // "\"file,base64,"
 
             // make base64 signature with pad length encoded for later callulated decoded data size
             // used in download progress callback.
-            if (Base64Helper::getBase64Padding(req->fileSize) == 1)
+            if (Core.bh.getBase64Padding(req->fileSize) == 1)
                 s[1] = 'F'; // 1 padding -> "File,base64,
-            else if (Base64Helper::getBase64Padding(req->fileSize) == 2)
+            else if (Core.bh.getBase64Padding(req->fileSize) == 2)
                 s[2] = 'I'; // 2 paddings -> "fIle,base64,
 
             // send first payload (file base64 signature)
@@ -2172,8 +2171,8 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
                 return false;
 
             // read file and convert to base64 string before sending
-            if (encodeFileToClient(fbdo, bufSize, req->filename, (fb_esp_mem_storage_type)fbdo->session.rtdb.storage_type, req))
-                fbdo->tcpClient.send(pgm2Str(fb_esp_pgm_str_4) /* "\"" */); // send last payload
+            if (encodeFileToClient(fbdo, bufSize, req->filename, (firebase_mem_storage_type)fbdo->session.rtdb.storage_type, req))
+                fbdo->tcpClient.send(pgm2Str(firebase_pgm_str_4) /* "\"" */); // send last payload
 
             if (fbdo->session.response.code < 0)
                 return false;
@@ -2181,9 +2180,9 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
         else
         {
             // required for ESP32 core 2.0.x
-            MB_String filenme = Signer.mbfs->name(mbfs_type req->storageType);
-            Signer.mbfs->close(mbfs_type req->storageType);
-            Signer.mbfs->open(filenme, mbfs_type req->storageType, mb_fs_open_mode_read);
+            MB_String filenme = Core.mbfs.name(mbfs_type req->storageType);
+            Core.mbfs.close(mbfs_type req->storageType);
+            Core.mbfs.open(filenme, mbfs_type req->storageType, mb_fs_open_mode_read);
 
             while (len)
             {
@@ -2191,8 +2190,8 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
                 if ((int)toRead > bufSize)
                     toRead = bufSize - 1;
 
-                buf = MemoryHelper::createBuffer<char *>(Signer.mbfs, bufSize, false);
-                int read = Signer.mbfs->read(mbfs_type req->storageType, (uint8_t *)buf, toRead);
+                buf = reinterpret_cast<char *>(Core.mbfs.newP(bufSize, false));
+                int read = Core.mbfs.read(mbfs_type req->storageType, (uint8_t *)buf, toRead);
                 readLen += read;
 
                 reportUploadProgress(fbdo, req, readLen);
@@ -2204,7 +2203,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
 
                 fbdo->tcpClient.send(buf);
 
-                MemoryHelper::freeBuffer(Signer.mbfs, buf);
+                Core.mbfs.delP(&buf);
 
                 if (fbdo->session.response.code < 0)
                     return false;
@@ -2218,22 +2217,21 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t 
             reportUploadProgress(fbdo, req, req->fileSize);
         }
 
-        Signer.mbfs->close(mbfs_type req->storageType);
+        Core.mbfs.close(mbfs_type req->storageType);
     }
 
     fbdo->tcpClient.dataTime = millis() - ms;
 
     return fbdo->session.response.code < 0 ? false : true;
-
 }
 
 bool FB_RTDB::encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_String &filePath,
-                                 fb_esp_mem_storage_type storageType, struct fb_esp_rtdb_request_info_t *req)
+                                 firebase_mem_storage_type storageType, struct firebase_rtdb_request_info_t *req)
 {
 
-    MB_String filenme = Signer.mbfs->name(mbfs_type req->storageType);
-    Signer.mbfs->close(mbfs_type req->storageType);
-    int size = Signer.mbfs->open(filenme, mbfs_type req->storageType, mb_fs_open_mode_read);
+    MB_String filenme = Core.mbfs.name(mbfs_type req->storageType);
+    Core.mbfs.close(mbfs_type req->storageType);
+    int size = Core.mbfs.open(filenme, mbfs_type req->storageType, mb_fs_open_mode_read);
     if (!size)
         return false;
 
@@ -2242,21 +2240,21 @@ bool FB_RTDB::encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_St
 
     reportUploadProgress(fbdo, req, total);
 
-    fb_esp_base64_io_t<uint8_t> out;
-    out.outC = fbdo->tcpClient.client;
+    firebase_base64_io_t<uint8_t> out;
+    out.outC = &fbdo->tcpClient;
     out.bufLen = bufSize;
-    uint8_t *outBuf = MemoryHelper::createBuffer<uint8_t *>(Signer.mbfs, out.bufLen);
+    uint8_t *outBuf = reinterpret_cast<uint8_t *>(Core.mbfs.newP(out.bufLen));
     out.outT = outBuf;
-    unsigned char *base64EncBuf = Base64Helper::creatBase64EncBuffer(Signer.mbfs, false);
-    uint8_t *data = MemoryHelper::createBuffer<uint8_t *>(Signer.mbfs, 3);
+    unsigned char *base64EncBuf = Core.bh.creatBase64EncBuffer(&Core.mbfs, false);
+    uint8_t *data = reinterpret_cast<uint8_t *>(Core.mbfs.newP(3));
 
-    while (Signer.mbfs->available(mbfs_type storageType))
+    while (Core.mbfs.available(mbfs_type storageType))
     {
         // read 3 bytes from stream
-        int read = Signer.mbfs->read(mbfs_type storageType, data, 3);
+        int read = Core.mbfs.read(mbfs_type storageType, data, 3);
         if (read)
         {
-            if (!Base64Helper::encode<uint8_t>(Signer.mbfs, base64EncBuf, data, read, out, read != 3 /* write remaining */))
+            if (!Core.bh.encode<uint8_t>(&Core.mbfs, base64EncBuf, data, read, out, read != 3 /* write remaining */))
                 break;
             total += read;
             reportUploadProgress(fbdo, req, total);
@@ -2267,28 +2265,28 @@ bool FB_RTDB::encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_St
 
     // remainig data to wrire? write it
     if (size == total && out.bufWrite > 0)
-        Base64Helper::writeOutput(Signer.mbfs, out);
+        Core.bh.writeOutput(&Core.mbfs, out);
 
-    MemoryHelper::freeBuffer(Signer.mbfs, data);
-    MemoryHelper::freeBuffer(Signer.mbfs, base64EncBuf);
-    MemoryHelper::freeBuffer(Signer.mbfs, outBuf);
+    Core.mbfs.delP(&data);
+    Core.mbfs.delP(&base64EncBuf);
+    Core.mbfs.delP(&outBuf);
 
     return size == total;
 }
 
-bool FB_RTDB::waitResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req)
+bool FB_RTDB::waitResponse(FirebaseData *fbdo, firebase_rtdb_request_info_t *req)
 {
 #if defined(ESP32) || defined(MB_ARDUINO_PICO)
 
     // if currently perform stream payload handling process, skip it.
-    if (Signer.config->internal.fb_processing && fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream)
+    if (Core.internal.fb_processing && fbdo->session.con_mode == firebase_con_mode_rtdb_stream)
         return true;
 
     // set the blocking flag
-    Signer.config->internal.fb_processing = true;
+    Core.internal.fb_processing = true;
     bool ret = handleResponse(fbdo, req);
     // reset the blocking flag
-    Signer.config->internal.fb_processing = false;
+    Core.internal.fb_processing = false;
 
     return ret;
 #else
@@ -2296,16 +2294,16 @@ bool FB_RTDB::waitResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req)
 #endif
 }
 
-int FB_RTDB::openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_fs_open_mode mode, bool closeSession)
+int FB_RTDB::openFile(FirebaseData *fbdo, firebase_rtdb_request_info_t *req, mb_fs_open_mode mode, bool closeSession)
 {
     int sz = 0;
 
     if (req->method == rtdb_backup)
-        sz = Signer.mbfs->open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_write);
+        sz = Core.mbfs.open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_write);
     else if (req->method == rtdb_restore)
-        sz = Signer.mbfs->open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_read);
+        sz = Core.mbfs.open(req->filename, mbfs_type req->storageType, mb_fs_open_mode_read);
     else
-        sz = Signer.mbfs->open(req->filename, mbfs_type req->storageType, mode);
+        sz = Core.mbfs.open(req->filename, mbfs_type req->storageType, mode);
 
     if (sz < 0)
     {
@@ -2318,7 +2316,7 @@ int FB_RTDB::openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_fs
     return sz;
 }
 
-bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req)
+bool FB_RTDB::handleResponse(FirebaseData *fbdo, firebase_rtdb_request_info_t *req)
 {
 
     if (fbdo->session.rtdb.pause)
@@ -2328,7 +2326,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
     {
         fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-        if (fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream)
+        if (fbdo->session.con_mode == firebase_con_mode_rtdb_stream)
             fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED, false);
 
         return false;
@@ -2336,17 +2334,17 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
 
     MB_String payload;
     struct server_response_data_t response;
-    struct fb_esp_tcp_response_handler_t tcpHandler;
+    struct firebase_tcp_response_handler_t tcpHandler;
 
     int pChunkSize = 1024;
 
-    HttpHelper::initTCPSession(fbdo->session);
-    HttpHelper::intTCPHandler(fbdo->tcpClient.client, tcpHandler, 2048 + strlen_P(fb_esp_rtdb_pgm_str_8 /* "\"file,base64," */),
+    Core.hh.initTCPSession(fbdo->session);
+    Core.hh.intTCPHandler(&fbdo->tcpClient, tcpHandler, 2048 + strlen_P(firebase_rtdb_pgm_str_8 /* "\"file,base64," */),
                               fbdo->session.resp_size, &payload, req->data.type == d_file_ota);
 
 waits:
 
-    if (fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream)
+    if (fbdo->session.con_mode != firebase_con_mode_rtdb_stream)
     {
         if (fbdo->session.rtdb.async)
             return fbdo->tcpClient.connected();
@@ -2354,8 +2352,8 @@ waits:
             return false;
     }
 
-    if ((req->task_type == fb_esp_rtdb_task_download_rules || req->method == rtdb_backup) &&
-        !fbdo->prepareDownload(req->filename, (fb_esp_mem_storage_type)req->storageType, false))
+    if ((req->task_type == firebase_rtdb_task_download_rules || req->method == rtdb_backup) &&
+        !fbdo->prepareDownload(req->filename, (firebase_mem_storage_type)req->storageType, false))
         return false;
 
     bool complete = false;
@@ -2364,14 +2362,14 @@ waits:
     while (tcpHandler.available() > 0 /* data available to read payload */ ||
            tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
     {
-        if (fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream)
+        if (fbdo->session.con_mode == firebase_con_mode_rtdb_stream)
             fbdo->session.response.code = FIREBASE_ERROR_HTTP_CODE_OK;
 
         // still session connected?
         if (!fbdo->isConnected(tcpHandler.dataTime))
         {
             fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
-            if (fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream)
+            if (fbdo->session.con_mode == firebase_con_mode_rtdb_stream)
                 fbdo->sendStreamToCB(FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED);
             return false;
         }
@@ -2394,14 +2392,14 @@ waits:
                 goto waits;
 
             // stream response header?
-            if (response.contentType.find(pgm2Str(fb_esp_rtdb_pgm_str_9 /* "text/event-stream" */)) != MB_String::npos)
+            if (response.contentType.find(pgm2Str(firebase_rtdb_pgm_str_9 /* "text/event-stream" */)) != MB_String::npos)
                 fbdo->session.rtdb.new_stream = false; // reset new stream connection status
 
             // check connection types
-            fbdo->session.rtdb.http_resp_conn_type = StringHelper::compare(response.connection,
-                                                                           0, fb_esp_pgm_str_15 /* "keep-alive" */)
-                                                         ? fb_esp_http_connection_type_keep_alive
-                                                         : fb_esp_http_connection_type_close;
+            fbdo->session.rtdb.http_resp_conn_type = Core.sh.compare(response.connection,
+                                                                           0, firebase_pgm_str_15 /* "keep-alive" */)
+                                                         ? firebase_http_connection_type_keep_alive
+                                                         : firebase_http_connection_type_close;
 
             // store download size for file function
             if (req->method == rtdb_backup)
@@ -2427,7 +2425,7 @@ waits:
         // payloads available? handle the rest of stream payloads or http response payloads
         else if (tcpHandler.pChunkIdx > 0)
         {
-            bool downloadRequired = req->task_type == fb_esp_rtdb_task_download_rules ||
+            bool downloadRequired = req->task_type == firebase_rtdb_task_download_rules ||
                                     req->method == rtdb_backup ||
                                     ((req->data.type == d_file || tcpHandler.downloadOTA) && req->method == http_get);
 
@@ -2439,16 +2437,16 @@ waits:
                 tcpHandler.error.code = 0;
 
                 int bufLen = tcpHandler.chunkBufSize;
-                uint8_t *buf = MemoryHelper::creatDownloadBuffer<uint8_t *>(Signer.mbfs, bufLen, false);
+                uint8_t *buf = reinterpret_cast<uint8_t *>(Core.mbfs.newP(bufLen, false));
 
                 int stage = 0;
                 bool downloaded = false;
 
                 tcpHandler.chunkBufSize = tcpHandler.pChunkIdx == 1 ? pChunkSize +
-                                                                          strlen_P(fb_esp_rtdb_pgm_str_8 /* "\"file,base64," */)
+                                                                          strlen_P(firebase_rtdb_pgm_str_8 /* "\"file,base64," */)
                                                                     : pChunkSize;
 
-                while (fbdo->processDownload(req->filename, (fb_esp_mem_storage_type)req->storageType, buf, bufLen,
+                while (fbdo->processDownload(req->filename, (firebase_mem_storage_type)req->storageType, buf, bufLen,
                                              tcpHandler, response, stage, tcpHandler.downloadOTA))
                 {
                     downloaded = true;
@@ -2462,7 +2460,7 @@ waits:
                             if (req->downloadCallback)
                             {
                                 RTDB_DownloadStatusInfo in;
-                                makeDownloadStatus(in, Signer.mbfs->name(mbfs_type req->storageType), req->path, fb_esp_rtdb_download_status_init,
+                                makeDownloadStatus(in, Core.mbfs.name(mbfs_type req->storageType), req->path, firebase_rtdb_download_status_init,
                                                    0, tcpHandler.decodedPayloadLen, 0, "");
                                 sendDownloadCallback(fbdo, in, req->downloadCallback, req->downloadStatusInfo);
                             }
@@ -2472,11 +2470,11 @@ waits:
                     }
 
                     tcpHandler.chunkBufSize = tcpHandler.pChunkIdx == 1 ? pChunkSize +
-                                                                              strlen_P(fb_esp_rtdb_pgm_str_8 /* "\"file,base64," */)
+                                                                              strlen_P(firebase_rtdb_pgm_str_8 /* "\"file,base64," */)
                                                                         : pChunkSize;
                 }
 
-                MemoryHelper::freeBuffer(Signer.mbfs, buf);
+                Core.mbfs.delP(&buf);
 
                 if (downloaded)
                     reportDownloadProgress(fbdo, req, tcpHandler.payloadRead);
@@ -2494,18 +2492,18 @@ waits:
 
                 MB_String pChunk;
                 tcpHandler.chunkBufSize = tcpHandler.pChunkIdx == 1 ? pChunkSize +
-                                                                          strlen_P(fb_esp_rtdb_pgm_str_8 /* "\"file,base64," */)
+                                                                          strlen_P(firebase_rtdb_pgm_str_8 /* "\"file,base64," */)
                                                                     : pChunkSize;
                 fbdo->readPayload(&pChunk, tcpHandler, response);
 
                 // Last chunk?
-                if (Utils::isChunkComplete(&tcpHandler, &response, complete))
+                if (Core.ut.isChunkComplete(&tcpHandler, &response, complete))
                     goto skip;
 
                 if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
                 {
 
-                    Utils::idle();
+                    FBUtils::idle();
                     payload += pChunk;
 
                     // early parsing currently available http response for data types, event types, and event data
@@ -2527,8 +2525,8 @@ waits:
                         // In case file is available in stream with no download request,
                         // we store this file data to temp file (/fb_bin_0.tmp) that user can read from stream data
 
-                        Signer.mbfs->remove(pgm2Str(fb_esp_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */), mb_fs_mem_storage_type_flash);
-                        int sz = Signer.mbfs->open(pgm2Str(fb_esp_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
+                        Core.mbfs.remove(pgm2Str(firebase_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */), mb_fs_mem_storage_type_flash);
+                        int sz = Core.mbfs.open(pgm2Str(firebase_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
                                                    mb_fs_mem_storage_type_flash, mb_fs_open_mode_append);
                         if (sz < 0)
                             fbdo->session.response.code = sz;
@@ -2536,8 +2534,8 @@ waits:
                         // we keep the first part of JSON for parsing later with parsePayload()
                         MB_String stream = payload.substr(0, response.payloadOfs);
                         // append " and } to make a valid JSON
-                        stream += fb_esp_pgm_str_4;  // "\""
-                        stream += fb_esp_pgm_str_11; // "}"
+                        stream += firebase_pgm_str_4;  // "\""
+                        stream += firebase_pgm_str_11; // "}"
 
                         payload.erase(0, response.payloadOfs);
 
@@ -2545,7 +2543,7 @@ waits:
                         if (streamDataComplete)
                         {
                             trimEndJson(payload);
-                            Base64Helper::decodeToFile(Signer.mbfs, payload.c_str(),
+                            Core.bh.decodeToFile(&Core.mbfs, payload.c_str(),
                                                        payload.length(), mb_fs_mem_storage_type_flash);
                         }
                         // stream event data is not complete, try to read incoming data as a chunk (multiples of 4 bytes length)
@@ -2561,13 +2559,13 @@ waits:
                         // Save the payload
                         payload = stream;
                         payload.shrink_to_fit();
-                        Signer.mbfs->close(mb_fs_mem_storage_type_flash);
+                        Core.mbfs.close(mb_fs_mem_storage_type_flash);
                         goto skip;
 #endif
                     }
                 }
 
-                if (Utils::isResponseComplete(&tcpHandler, &response, complete, fbdo->session.con_mode != fb_esp_con_mode_rtdb_stream))
+                if (Core.ut.isResponseComplete(&tcpHandler, &response, complete, fbdo->session.con_mode != firebase_con_mode_rtdb_stream))
                     goto skip;
             }
         }
@@ -2589,7 +2587,7 @@ skip:
     handleNoContent(fbdo, response);
 
     return fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_OK ||
-           (fbdo->session.con_mode == fb_esp_con_mode_rtdb_stream && fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_UNDEFINED);
+           (fbdo->session.con_mode == firebase_con_mode_rtdb_stream && fbdo->session.response.code == FIREBASE_ERROR_HTTP_CODE_UNDEFINED);
 }
 
 void FB_RTDB::trimEndJson(MB_String &payload)
@@ -2601,7 +2599,7 @@ void FB_RTDB::trimEndJson(MB_String &payload)
     payload.erase(payload.length() - p, p);
 }
 
-void FB_RTDB::readBase64FileChunk(FirebaseData *fbdo, MB_String &payload, struct fb_esp_tcp_response_handler_t &tcpHandler,
+void FB_RTDB::readBase64FileChunk(FirebaseData *fbdo, MB_String &payload, struct firebase_tcp_response_handler_t &tcpHandler,
                                   struct server_response_data_t &response, int chunkSize, bool &streamDataComplete)
 {
     chunkSize = chunkSize * 2;
@@ -2615,7 +2613,7 @@ void FB_RTDB::readBase64FileChunk(FirebaseData *fbdo, MB_String &payload, struct
         {
             payload += pChunk;
             trimEndJson(payload);
-            Base64Helper::decodeToFile(Signer.mbfs, payload.c_str(), payload.length(), mb_fs_mem_storage_type_flash);
+            Core.bh.decodeToFile(&Core.mbfs, payload.c_str(), payload.length(), mb_fs_mem_storage_type_flash);
         }
         else
         {
@@ -2624,7 +2622,7 @@ void FB_RTDB::readBase64FileChunk(FirebaseData *fbdo, MB_String &payload, struct
             {
                 int toLen = chunkSize - payload.length();
                 payload += pChunk.substr(0, toLen);
-                Base64Helper::decodeToFile(Signer.mbfs, payload.c_str(), payload.length(), mb_fs_mem_storage_type_flash);
+                Core.bh.decodeToFile(&Core.mbfs, payload.c_str(), payload.length(), mb_fs_mem_storage_type_flash);
                 payload = pChunk.substr(toLen, total - chunkSize);
             }
             else
@@ -2638,7 +2636,7 @@ void FB_RTDB::handleNoContent(FirebaseData *fbdo, struct server_response_data_t 
     if (fbdo->session.rtdb.no_content_req || response.noContent)
     {
 
-        if (StringHelper::compare(fbdo->session.rtdb.resp_etag, 0, fb_esp_rtdb_pgm_str_11 /* "null_etag" */) && response.noContent)
+        if (Core.sh.compare(fbdo->session.rtdb.resp_etag, 0, firebase_rtdb_pgm_str_11 /* "null_etag" */) && response.noContent)
         {
             fbdo->session.response.code = FIREBASE_ERROR_PATH_NOT_EXIST;
             fbdo->session.rtdb.path_not_found = true;
@@ -2658,15 +2656,15 @@ void FB_RTDB::handleNoContent(FirebaseData *fbdo, struct server_response_data_t 
     }
 }
 
-bool FB_RTDB::parseTCPResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
-                               struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
+bool FB_RTDB::parseTCPResponse(FirebaseData *fbdo, firebase_rtdb_request_info_t *req,
+                               struct firebase_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
 {
 
     if (response.dataType == 0 && !response.isEvent)
     {
         bool getOfs = req->data.type == d_blob || req->method == rtdb_backup ||
                       ((req->data.type == d_file || tcpHandler.downloadOTA || req->data.type == d_any) && req->method == http_get);
-        HttpHelper::parseRespPayload(*tcpHandler.payload, response, getOfs);
+        Core.hh.parseRespPayload(&Core.sh, *tcpHandler.payload, response, getOfs);
 
         fbdo->session.rtdb.resp_data_type = response.dataType;
         fbdo->session.content_length = response.payloadLen;
@@ -2679,17 +2677,17 @@ bool FB_RTDB::parseTCPResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *r
         {
             fbdo->session.response.code = FIREBASE_ERROR_EXPECTED_JSON_DATA;
 
-            Signer.errorToString(fbdo->session.response.code, fbdo->session.error);
+            Core.errorToString(fbdo->session.response.code, fbdo->session.error);
 
             tcpHandler.payload->clear();
-            Signer.mbfs->close(mbfs_type fbdo->session.rtdb.storage_type);
+            Core.mbfs.close(mbfs_type fbdo->session.rtdb.storage_type);
             fbdo->closeSession();
             return false;
         }
 
         if (req->method == http_get)
         {
-            if (StringHelper::compare(fbdo->session.rtdb.resp_etag, 0, fb_esp_rtdb_pgm_str_11 /* "null_etag" */))
+            if (Core.sh.compare(fbdo->session.rtdb.resp_etag, 0, firebase_rtdb_pgm_str_11 /* "null_etag" */))
             {
                 fbdo->session.response.code = FIREBASE_ERROR_PATH_NOT_EXIST;
                 fbdo->session.rtdb.path_not_found = true;
@@ -2700,8 +2698,8 @@ bool FB_RTDB::parseTCPResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *r
     return true;
 }
 
-void FB_RTDB::endDownload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
-                          struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
+void FB_RTDB::endDownload(FirebaseData *fbdo, firebase_rtdb_request_info_t *req,
+                          struct firebase_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
 {
     if (tcpHandler.downloadByteLen > 0)
         reportDownloadProgress(fbdo, req, response.contentLen);
@@ -2728,18 +2726,18 @@ void FB_RTDB::endDownload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
 
         payload.erase(0, response.payloadOfs);
 
-        Base64Helper::decodeToArray<uint8_t>(Signer.mbfs, payload, *fbdo->session.rtdb.blob);
+        Core.bh.decodeToArray<uint8_t>(&Core.mbfs, payload, *fbdo->session.rtdb.blob);
     }
     else if (fbdo->session.rtdb.resp_data_type == d_file)
     {
         // to make sure the file was closed
-        Signer.mbfs->close(mbfs_type fbdo->session.rtdb.storage_type);
+        Core.mbfs.close(mbfs_type fbdo->session.rtdb.storage_type);
         fbdo->session.rtdb.raw.clear();
     }
 }
 
-bool FB_RTDB::endDownloadOTA(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
-                             struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
+bool FB_RTDB::endDownloadOTA(FirebaseData *fbdo, firebase_rtdb_request_info_t *req,
+                             struct firebase_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
 {
     if (tcpHandler.downloadByteLen > 0)
         reportDownloadProgress(fbdo, req, response.contentLen);
@@ -2754,7 +2752,7 @@ bool FB_RTDB::endDownloadOTA(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
         {
             uint8_t pad[tcpHandler.base64PadLenTail];
             memset(pad, 0, tcpHandler.base64PadLenTail);
-            Base64Helper::updateWrite(pad, tcpHandler.base64PadLenTail);
+            Core.bh.updateWrite(pad, tcpHandler.base64PadLenTail);
         }
 
         if (tcpHandler.error.code == 0)
@@ -2774,8 +2772,8 @@ bool FB_RTDB::endDownloadOTA(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req
     return false;
 }
 
-int FB_RTDB::handleRedirect(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
-                            struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
+int FB_RTDB::handleRedirect(FirebaseData *fbdo, firebase_rtdb_request_info_t *req,
+                            struct firebase_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response)
 {
     if (response.redirect && response.location.length() > 0)
     {
@@ -2792,9 +2790,9 @@ int FB_RTDB::handleRedirect(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
         else
         {
 
-            struct fb_esp_url_info_t uinfo;
-            URLHelper::parse(Signer.mbfs, response.location, uinfo);
-            struct fb_esp_rtdb_request_info_t newReq;
+            struct firebase_url_info_t uinfo;
+            Core.uh.parse(&Core.mbfs, response.location, uinfo);
+            struct firebase_rtdb_request_info_t newReq;
             newReq.method = req->method;
             newReq.data.type = req->data.type;
             newReq.data.address.priority = toAddr(fbdo->session.rtdb.priority);
@@ -2823,7 +2821,7 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
 
     // to allow other subsequence request which can be occurred in the user stream
     // callback
-    Signer.config->internal.fb_processing = false;
+    Core.internal.fb_processing = false;
 
     if (fbdo->_dataAvailableCallback)
     {
@@ -2911,13 +2909,13 @@ void FB_RTDB::splitStreamPayload(const MB_String &payloads, MB_VECTOR<MB_String>
 
     while (pos1 > -1)
     {
-        if (StringHelper::find(payloads, fb_esp_rtdb_pgm_str_12 /* "event: " */, false, ofs, pos1))
+        if (Core.sh.find(payloads, firebase_rtdb_pgm_str_12 /* "event: " */, false, ofs, pos1))
         {
             ofs = pos1 + 1;
-            if (StringHelper::find(payloads, fb_esp_rtdb_pgm_str_13 /* "data: " */, false, ofs, pos2))
+            if (Core.sh.find(payloads, firebase_rtdb_pgm_str_13 /* "data: " */, false, ofs, pos2))
             {
                 ofs = pos2 + 1;
-                if (StringHelper::find(payloads, fb_esp_pgm_str_12 /* "\n" */, false, ofs, pos3))
+                if (Core.sh.find(payloads, firebase_pgm_str_12 /* "\n" */, false, ofs, pos3))
                     ofs = pos3 + 1;
                 else
                     pos3 = payloads.length();
@@ -2932,7 +2930,7 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const MB_String &payload)
 {
     struct server_response_data_t response;
 
-    HttpHelper::parseRespPayload(payload, response, false);
+    Core.hh.parseRespPayload(&Core.sh, payload, response, false);
 
     fbdo->session.rtdb.resp_data_type = response.dataType;
     fbdo->session.content_length = response.payloadLen;
@@ -2950,16 +2948,16 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const MB_String &payload)
         }
 
         fbdo->session.rtdb.raw.clear();
-        Base64Helper::decodeToArray<uint8_t>(Signer.mbfs, payload.c_str() + response.payloadOfs, *fbdo->session.rtdb.blob);
+        Core.bh.decodeToArray<uint8_t>(&Core.mbfs, payload.c_str() + response.payloadOfs, *fbdo->session.rtdb.blob);
     }
     else if (fbdo->session.rtdb.resp_data_type == d_file)
     {
-        Signer.mbfs->close(mbfs_type fbdo->session.rtdb.storage_type);
+        Core.mbfs.close(mbfs_type fbdo->session.rtdb.storage_type);
         fbdo->session.rtdb.raw.clear();
     }
 
-    if (StringHelper::compare(response.eventType, 0, fb_esp_pgm_str_16 /* "put" */) ||
-        StringHelper::compare(response.eventType, 0, fb_esp_pgm_str_17 /* "patch" */))
+    if (Core.sh.compare(response.eventType, 0, firebase_pgm_str_16 /* "put" */) ||
+        Core.sh.compare(response.eventType, 0, firebase_pgm_str_17 /* "patch" */))
     {
 
         handlePayload(fbdo, response, payload);
@@ -2984,15 +2982,15 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const MB_String &payload)
     else
     {
         // Firebase keep alive event
-        if (StringHelper::compare(response.eventType, 0, fb_esp_pgm_str_15 /* "keep-alive" */))
+        if (Core.sh.compare(response.eventType, 0, firebase_pgm_str_15 /* "keep-alive" */))
         {
             if (fbdo->_timeoutCallback)
                 fbdo->sendStreamToCB(0);
         }
 
         // Firebase cancel and auth_revoked events
-        else if (StringHelper::compare(response.eventType, 0, fb_esp_rtdb_pgm_str_14 /* "cancel" */) ||
-                 StringHelper::compare(response.eventType, 0, fb_esp_rtdb_pgm_str_15 /* "auth_revoked" */))
+        else if (Core.sh.compare(response.eventType, 0, firebase_rtdb_pgm_str_14 /* "cancel" */) ||
+                 Core.sh.compare(response.eventType, 0, firebase_rtdb_pgm_str_15 /* "auth_revoked" */))
         {
             fbdo->session.rtdb.event_type = response.eventType;
             // make stream available status
@@ -3000,13 +2998,13 @@ void FB_RTDB::parseStreamPayload(FirebaseData *fbdo, const MB_String &payload)
             fbdo->session.rtdb.data_available = true;
 
             // We need to close the current session due to the token was already expired.
-            if (StringHelper::compare(response.eventType, 0, fb_esp_rtdb_pgm_str_15 /* "auth_revoked" */))
+            if (Core.sh.compare(response.eventType, 0, firebase_rtdb_pgm_str_15 /* "auth_revoked" */))
                 fbdo->closeSession();
         }
     }
 }
 
-void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
+void FB_RTDB::parsePayload(FirebaseData *fbdo, firebase_rtdb_request_info_t *req,
                            struct server_response_data_t &response, MB_String payload)
 {
     // parse the payload
@@ -3021,7 +3019,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
             // counting the occurences of JSON sets
             while (pos > -1)
             {
-                if (StringHelper::find(payload, fb_esp_rtdb_pgm_str_12 /* "event: " */, false, ofs, pos))
+                if (Core.sh.find(payload, firebase_rtdb_pgm_str_12 /* "event: " */, false, ofs, pos))
                 {
                     ofs = pos + 1;
                     jsonCount++;
@@ -3036,7 +3034,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
             splitStreamPayload(payload, payloadList);
             for (size_t i = 0; i < payloadList.size(); i++)
             {
-                if (Utils::validJS(payloadList[i].c_str()))
+                if (Core.ut.validJS(payloadList[i].c_str()))
                 {
                     validJson = true;
                     parseStreamPayload(fbdo, payloadList[i].c_str());
@@ -3069,7 +3067,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
 
             if (req->method == rtdb_set_rules)
             {
-                if (StringHelper::compare(payload, 0, fb_esp_rtdb_pgm_str_16 /* "{\"status\":\"ok\"}" */))
+                if (Core.sh.compare(payload, 0, firebase_rtdb_pgm_str_16 /* "{\"status\":\"ok\"}" */))
                     payload.clear();
             }
 
@@ -3086,7 +3084,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
                     if (fbdo->session.rtdb.priority_val_flag)
                         fbdo->session.rtdb.path =
                             fbdo->session.rtdb.path.substr(0, fbdo->session.rtdb.path.length() -
-                                                                  strlen_P(fb_esp_rtdb_pgm_str_2 /* ".priority" */) - 1);
+                                                                  strlen_P(firebase_rtdb_pgm_str_2 /* ".priority" */) - 1);
 
                     // Push (POST) data? set push name
                     if (req->method == http_post)
@@ -3102,7 +3100,7 @@ void FB_RTDB::parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req,
             }
 
             // mismatch data type check
-            if (Signer.config->rtdb.data_type_stricted && req->method == http_get &&
+            if (Core.config->rtdb.data_type_stricted && req->method == http_get &&
                 req->data.type != d_timestamp &&
                 !response.noContent && response.httpCode < 400)
             {
@@ -3152,13 +3150,13 @@ void FB_RTDB::handlePayload(FirebaseData *fbdo, struct server_response_data_t &r
         if (fbdo->session.rtdb.resp_data_type == d_string)
             fbdo->setRaw(true); // if double quotes string, trim it.
 
-        uint16_t crc = Utils::calCRC(Signer.mbfs, fbdo->session.rtdb.raw.c_str());
+        uint16_t crc = Core.ut.calCRC(&Core.mbfs, fbdo->session.rtdb.raw.c_str());
         response.dataChanged = fbdo->session.rtdb.data_crc != crc;
         fbdo->session.rtdb.data_crc = crc;
     }
 }
 
-int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
+int FB_RTDB::getPayloadLen(firebase_rtdb_request_info_t *req)
 {
     size_t len = 0;
     if (req->method != http_get)
@@ -3166,7 +3164,7 @@ int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
         if (req->data.address.din > 0)
         {
             if (req->data.type == d_blob && req->data.address.priority == 0)
-                len = (4 * ceil(req->data.blobSize / 3.0)) + strlen_P(fb_esp_rtdb_pgm_str_7 /* "\"blob,base64," */) + 1;
+                len = (4 * ceil(req->data.blobSize / 3.0)) + strlen_P(firebase_rtdb_pgm_str_7 /* "\"blob,base64," */) + 1;
             else if (req->data.type == d_json)
             {
                 FirebaseJson *json = addrTo<FirebaseJson *>(req->data.address.din);
@@ -3184,7 +3182,7 @@ int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
         {
             len = req->fileSize;
             if (req->data.type == d_file || req->data.type == d_file_ota || req->data.type == d_blob)
-                len = (4 * ceil(req->fileSize / 3.0)) + strlen_P(fb_esp_rtdb_pgm_str_7 /* "\"blob,base64," */) + 1;
+                len = (4 * ceil(req->fileSize / 3.0)) + strlen_P(firebase_rtdb_pgm_str_7 /* "\"blob,base64," */) + 1;
         }
         else if (req->method == rtdb_restore)
             len = req->fileSize;
@@ -3192,7 +3190,7 @@ int FB_RTDB::getPayloadLen(fb_esp_rtdb_request_info_t *req)
     return len;
 }
 
-fb_esp_request_method FB_RTDB::getHTTPMethod(fb_esp_rtdb_request_info_t *req)
+firebase_request_method FB_RTDB::getHTTPMethod(firebase_rtdb_request_info_t *req)
 {
     if (req->method == http_post)
         return http_post;
@@ -3219,14 +3217,14 @@ fb_esp_request_method FB_RTDB::getHTTPMethod(fb_esp_rtdb_request_info_t *req)
     return req->method;
 }
 
-bool FB_RTDB::hasPayload(struct fb_esp_rtdb_request_info_t *req)
+bool FB_RTDB::hasPayload(struct firebase_rtdb_request_info_t *req)
 {
     return getHTTPMethod(req) == http_put || getHTTPMethod(req) == http_post || getHTTPMethod(req) == http_patch;
 }
 
-bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req)
+bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
-    fb_esp_request_method http_method = getHTTPMethod(req);
+    firebase_request_method http_method = getHTTPMethod(req);
     fbdo->session.rtdb.shallow_flag = false;
     fbdo->session.rtdb.priority_val_flag = false;
 
@@ -3236,32 +3234,32 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
     {
         int p;
         if (req->data.address.din > 0 && req->data.type == d_json)
-            hasServerValue = StringHelper::find(addrTo<FirebaseJson *>(req->data.address.din)->raw(),
-                                                fb_esp_rtdb_pgm_str_17 /* "\".sv\"" */, false, 0, p);
+            hasServerValue = Core.sh.find(addrTo<FirebaseJson *>(req->data.address.din)->raw(),
+                                                firebase_rtdb_pgm_str_17 /* "\".sv\"" */, false, 0, p);
         else
-            hasServerValue = StringHelper::find(req->payload, fb_esp_rtdb_pgm_str_17 /* "\".sv\"" */, false, 0, p);
+            hasServerValue = Core.sh.find(req->payload, firebase_rtdb_pgm_str_17 /* "\".sv\"" */, false, 0, p);
     }
 
     MB_String header;
 
-    HttpHelper::addRequestHeaderFirst(header, fbdo->session.classic_request &&
+    Core.hh.addRequestHeaderFirst(header, fbdo->session.classic_request &&
                                                       (http_method == http_put || http_method == http_delete)
                                                   ? http_post
                                                   : http_method);
 
-    Utils::makePath(req->path);
+    Core.ut.makePath(req->path);
     header += req->path;
 
     if (req->method == http_patch || req->method == rtdb_update_nocontent)
-        header += fb_esp_pgm_str_1; // "/"
+        header += firebase_pgm_str_1; // "/"
 
     bool appendAuth = false;
     bool hasQueryParams = false;
 
     if (fbdo->session.rtdb.redirect_url.length() > 0)
     {
-        struct fb_esp_url_info_t uinfo;
-        URLHelper::parse(Signer.mbfs, fbdo->session.rtdb.redirect_url, uinfo);
+        struct firebase_url_info_t uinfo;
+        Core.uh.parse(&Core.mbfs, fbdo->session.rtdb.redirect_url, uinfo);
         if (uinfo.auth.length() == 0)
             appendAuth = true;
     }
@@ -3270,9 +3268,9 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
 
     if (appendAuth)
     {
-        header += fb_esp_rtdb_pgm_str_18; // ".json"
-        if (Signer.getTokenType() != token_type_oauth2_access_token && !Signer.config->signer.test_mode)
-            URLHelper::addParam(header, fb_esp_rtdb_pgm_str_19 /* "auth=" */, "", hasQueryParams, true);
+        header += firebase_rtdb_pgm_str_18; // ".json"
+        if (Core.getTokenType() != token_type_oauth2_access_token && !Core.config->signer.test_mode)
+            Core.uh.addParam(header, firebase_rtdb_pgm_str_19 /* "auth=" */, "", hasQueryParams, true);
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -3280,23 +3278,23 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
         if (fbdo->session.response.code < 0)
             return false;
 
-        if (Signer.getTokenType() != token_type_oauth2_access_token && !Signer.config->signer.test_mode)
-            fbdo->tcpClient.send(Signer.config->internal.auth_token.c_str());
+        if (Core.getTokenType() != token_type_oauth2_access_token && !Core.config->signer.test_mode)
+            fbdo->tcpClient.send(Core.internal.auth_token.c_str());
 
         if (fbdo->session.response.code < 0)
             return false;
     }
 
     if (fbdo->session.rtdb.read_tmo > 0)
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_20 /* "timeout=" */,
-                            MB_String(fbdo->session.rtdb.read_tmo) + fb_esp_rtdb_pgm_str_21 /* "ms" */, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_20 /* "timeout=" */,
+                            MB_String(fbdo->session.rtdb.read_tmo) + firebase_rtdb_pgm_str_21 /* "ms" */, hasQueryParams);
 
-    URLHelper::addParam(header, fb_esp_rtdb_pgm_str_22 /* "writeSizeLimit=" */,
+    Core.uh.addParam(header, firebase_rtdb_pgm_str_22 /* "writeSizeLimit=" */,
                         fbdo->session.rtdb.write_limit, hasQueryParams);
 
     if (req->method == rtdb_get_shallow)
     {
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_23 /* "shallow=true" */, "", hasQueryParams, true);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_23 /* "shallow=true" */, "", hasQueryParams, true);
         fbdo->session.rtdb.shallow_flag = true;
     }
 
@@ -3305,40 +3303,40 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
     if (req->method == http_get && query && query->_orderBy.length() > 0)
     {
         hasQuery = true;
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_24 /* "orderBy=" */, query->_orderBy, hasQueryParams);
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_25 /* "&limitToFirst=" */, query->_limitToFirst, hasQueryParams);
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_26 /* "&limitToLast=" */, query->_limitToLast, hasQueryParams);
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_27 /* "&startAt=" */, query->_startAt, hasQueryParams);
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_30 /* "&endAt=" */, query->_endAt, hasQueryParams);
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_31 /* "&equalTo=" */, query->_equalTo, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_24 /* "orderBy=" */, query->_orderBy, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_25 /* "&limitToFirst=" */, query->_limitToFirst, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_26 /* "&limitToLast=" */, query->_limitToLast, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_27 /* "&startAt=" */, query->_startAt, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_30 /* "&endAt=" */, query->_endAt, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_31 /* "&equalTo=" */, query->_equalTo, hasQueryParams);
     }
 
     if (req->method == rtdb_backup)
     {
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_32 /* "format=export" */, "", hasQueryParams, true);
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_28 /* "download=" */, fbdo->session.rtdb.filename, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_32 /* "format=export" */, "", hasQueryParams, true);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_28 /* "download=" */, fbdo->session.rtdb.filename, hasQueryParams);
     }
 
     if (req->method == http_get && req->filename.length() > 0)
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_28 /* "download=" */, fbdo->session.rtdb.filename, hasQueryParams);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_28 /* "download=" */, fbdo->session.rtdb.filename, hasQueryParams);
 
     if (req->async || req->method == rtdb_get_nocontent ||
         req->method == rtdb_restore || req->method == rtdb_set_nocontent ||
         req->method == rtdb_update_nocontent)
-        URLHelper::addParam(header, fb_esp_rtdb_pgm_str_29 /* "print=silent" */, "", hasQueryParams, true);
+        Core.uh.addParam(header, firebase_rtdb_pgm_str_29 /* "print=silent" */, "", hasQueryParams, true);
 
-    HttpHelper::addRequestHeaderLast(header);
-    HttpHelper::addHostHeader(header, Signer.config->database_url.c_str());
-    HttpHelper::addUAHeader(header);
-    HttpHelper::getCustomHeaders(header, Signer.config->signer.customHeaders);
+    Core.hh.addRequestHeaderLast(header);
+    Core.hh.addHostHeader(header, Core.config->database_url.c_str());
+    Core.hh.addUAHeader(header);
+    Core.hh.getCustomHeaders(&Core.sh,header, Core.config->signer.customHeaders);
 
-    if (Signer.getTokenType() == token_type_oauth2_access_token)
+    if (Core.getTokenType() == token_type_oauth2_access_token)
     {
-        HttpHelper::addAuthHeaderFirst(header, token_type_oauth2_access_token);
+        Core.hh.addAuthHeaderFirst(header, token_type_oauth2_access_token);
 
-        if (Signer.config->signer.tokens.auth_type.length() > 0 &&
-            Signer.config->signer.tokens.auth_type[Signer.config->signer.tokens.auth_type.length() - 1] != ' ')
-            header += fb_esp_pgm_str_9; // " "
+        if (Core.config->signer.tokens.auth_type.length() > 0 &&
+            Core.config->signer.tokens.auth_type[Core.config->signer.tokens.auth_type.length() - 1] != ' ')
+            header += firebase_pgm_str_9; // " "
 
         fbdo->tcpClient.send(header.c_str());
         header.clear();
@@ -3346,12 +3344,12 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
         if (fbdo->session.response.code < 0)
             return false;
 
-        fbdo->tcpClient.send(Signer.config->internal.auth_token.c_str());
+        fbdo->tcpClient.send(Core.internal.auth_token.c_str());
 
         if (fbdo->session.response.code < 0)
             return false;
 
-        HttpHelper::addNewLine(header);
+        Core.hh.addNewLine(header);
     }
 
     // Timestamp cannot use with ETag header, due to internal server error
@@ -3359,52 +3357,52 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_i
         (req->method == http_delete || req->method == http_get ||
          req->method == rtdb_get_nocontent || req->method == http_put ||
          req->method == rtdb_set_nocontent || req->method == http_post))
-        header += fb_esp_rtdb_pgm_str_33; // "X-Firebase-ETag: true\r\n"
+        header += firebase_rtdb_pgm_str_33; // "X-Firebase-ETag: true\r\n"
 
     if (fbdo->session.rtdb.req_etag.length() > 0 &&
         (req->method == http_put || req->method == rtdb_set_nocontent || req->method == http_delete))
     {
-        header += fb_esp_rtdb_pgm_str_34; // "if-match: "
+        header += firebase_rtdb_pgm_str_34; // "if-match: "
         header += fbdo->session.rtdb.req_etag;
-        HttpHelper::addNewLine(header);
+        Core.hh.addNewLine(header);
     }
 
     if (fbdo->session.classic_request && http_method != http_get && http_method != http_post && http_method != http_patch)
     {
-        header += fb_esp_rtdb_pgm_str_36; // "X-HTTP-Method-Override: "
+        header += firebase_rtdb_pgm_str_36; // "X-HTTP-Method-Override: "
         if (http_method == http_put || http_method == http_delete)
-            HttpHelper::addRequestHeaderFirst(header, http_method);
-        HttpHelper::addNewLine(header);
+            Core.hh.addRequestHeaderFirst(header, http_method);
+        Core.hh.addNewLine(header);
     }
 
     if (req->method == rtdb_stream)
     {
-        fbdo->session.rtdb.http_req_conn_type = fb_esp_http_connection_type_keep_alive;
-        HttpHelper::addConnectionHeader(header, false);
-        header += fb_esp_rtdb_pgm_str_35; //  "Accept: text/event-stream\r\n"
+        fbdo->session.rtdb.http_req_conn_type = firebase_http_connection_type_keep_alive;
+        Core.hh.addConnectionHeader(header, false);
+        header += firebase_rtdb_pgm_str_35; //  "Accept: text/event-stream\r\n"
     }
     else
     {
         // required for ESP32 core sdk v2.0.x.
-        fbdo->session.rtdb.http_req_conn_type = fb_esp_http_connection_type_keep_alive;
+        fbdo->session.rtdb.http_req_conn_type = firebase_http_connection_type_keep_alive;
         bool keepAlive = false;
 #if defined(USE_CONNECTION_KEEP_ALIVE_MODE)
         keepAlive = true;
 #endif
-        HttpHelper::addConnectionHeader(header, keepAlive);
-        header += fb_esp_rtdb_pgm_str_37; // "Keep-Alive: timeout=30, max=100\r\n"
+        Core.hh.addConnectionHeader(header, keepAlive);
+        header += firebase_rtdb_pgm_str_37; // "Keep-Alive: timeout=30, max=100\r\n"
     }
 
     if (req->method != rtdb_backup && req->method != rtdb_restore)
-        header += fb_esp_rtdb_pgm_str_38; // "Accept-Encoding: identity;q=1,chunked;q=0.1,*;q=0\r\n"
+        header += firebase_rtdb_pgm_str_38; // "Accept-Encoding: identity;q=1,chunked;q=0.1,*;q=0\r\n"
 
     if (req->method == rtdb_get_priority || req->method == rtdb_set_priority)
         fbdo->session.rtdb.priority_val_flag = true;
 
     if (hasPayload(req))
-        HttpHelper::addContentLengthHeader(header, getPayloadLen(req));
+        Core.hh.addContentLengthHeader(header, getPayloadLen(req));
 
-    HttpHelper::addNewLine(header);
+    Core.hh.addNewLine(header);
 
     fbdo->tcpClient.send(header.c_str());
     header.clear();
@@ -3422,13 +3420,13 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
     fbdo->_dataAvailableCallback = NULL;
     fbdo->_timeoutCallback = NULL;
 
-    if (Signer.config->internal.sessions.size() == 0)
+    if (Core.internal.sessions.size() == 0)
     {
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-        if (Signer.config->internal.stream_task_handle)
-            vTaskDelete(Signer.config->internal.stream_task_handle);
+        if (Core.internal.stream_task_handle)
+            vTaskDelete(Core.internal.stream_task_handle);
 
-        Signer.config->internal.stream_task_handle = NULL;
+        Core.internal.stream_task_handle = NULL;
 #endif
     }
 }
@@ -3460,17 +3458,17 @@ bool FB_RTDB::connectionError(FirebaseData *fbdo)
 
 bool FB_RTDB::handleStreamRequest(FirebaseData *fbdo, const MB_String &path)
 {
-    if (Signer.isExpired())
+    if (Core.isExpired())
         return false;
 
-    struct fb_esp_rtdb_request_info_t req;
+    struct firebase_rtdb_request_info_t req;
     req.method = rtdb_stream;
     req.data.type = d_string;
 
     if (fbdo->session.rtdb.redirect_url.length() > 0)
     {
-        struct fb_esp_url_info_t uinfo;
-        URLHelper::parse(Signer.mbfs, fbdo->session.rtdb.redirect_url, uinfo);
+        struct firebase_url_info_t uinfo;
+        Core.uh.parse(&Core.mbfs, fbdo->session.rtdb.redirect_url, uinfo);
         req.path = uinfo.uri.c_str();
     }
     else

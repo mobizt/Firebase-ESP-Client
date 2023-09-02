@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -36,19 +36,25 @@
  */
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_RTDB_H
 #define FIREBASE_RTDB_H
 
-#include "FB_Utils.h"
-#include "session/FB_Session.h"
+#include "./FB_Utils.h"
+#include "./session/FB_Session.h"
 #include "QueueInfo.h"
-#include "stream/FB_MP_Stream.h"
-#include "stream/FB_Stream.h"
+#include "./stream/FB_MP_Stream.h"
+#include "./stream/FB_Stream.h"
+
+#if defined(ESP32)
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include "freertos/semphr.h"
+#endif
 
 using namespace mb_string;
 
@@ -61,9 +67,10 @@ class FB_RTDB
   friend class Firebase_ESP_Client;
 #endif
 
-#if defined(ENABLE_ERROR_QUEUE)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 #if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
 #undef ENABLE_ERROR_QUEUE
+#undef FIREBASE_ENABLE_ERROR_QUEUE
 #endif
 #endif
 
@@ -127,7 +134,7 @@ public:
    * database rules returned from the server.
    */
   template <typename T = const char *>
-  bool getRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T filename, RTDB_DownloadProgressCallback callback = NULL) { return mGetRules(fbdo, storageType, toStringPtr(filename), callback); }
+  bool getRules(FirebaseData *fbdo, firebase_mem_storage_type storageType, T filename, RTDB_DownloadProgressCallback callback = NULL) { return mGetRules(fbdo, storageType, toStringPtr(filename), callback); }
 
   /** Write the database rules.
    *
@@ -150,7 +157,7 @@ public:
    * @return Boolean value, indicates the success of the operation.
    */
   template <typename T = const char *>
-  bool setRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T filename, RTDB_UploadProgressCallback callback = NULL)
+  bool setRules(FirebaseData *fbdo, firebase_mem_storage_type storageType, T filename, RTDB_UploadProgressCallback callback = NULL)
   {
     return mSetRules(fbdo, toStringPtr(_EMPTY_STR), storageType, toStringPtr(filename), callback);
   }
@@ -641,7 +648,7 @@ public:
    * call [FirebaseData object].pushName() to get the key.
    */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName,
+  bool pushFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName,
                 RTDB_UploadProgressCallback callback = NULL)
   {
     return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
@@ -650,7 +657,7 @@ public:
   }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path,
+  bool pushFileAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path,
                      T2 fileName, RTDB_UploadProgressCallback callback = NULL)
   {
     return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
@@ -671,7 +678,7 @@ public:
   bool pushTimestamp(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_post, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(firebase_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -680,7 +687,7 @@ public:
   bool pushTimestampAsync(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_post, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(firebase_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1432,7 +1439,7 @@ public:
    * @note No payload returned from the server.
    */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName,
+  bool setFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName,
                RTDB_UploadProgressCallback callback = NULL)
   {
     return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
@@ -1441,7 +1448,7 @@ public:
   }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path,
+  bool setFileAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path,
                     T2 fileName, RTDB_UploadProgressCallback callback = NULL)
   {
     return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
@@ -1465,7 +1472,7 @@ public:
    * the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
    */
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName,
+  bool setFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName,
                T3 ETag, RTDB_UploadProgressCallback callback = NULL)
   {
     return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
@@ -1474,7 +1481,7 @@ public:
   }
 
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path,
+  bool setFileAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path,
                     T2 fileName, T3 ETag, RTDB_UploadProgressCallback callback = NULL)
   {
     return buildRequest(fbdo, rtdb_set_nocontent, toStringPtr(path), toStringPtr(_NO_PAYLOAD),
@@ -1498,7 +1505,7 @@ public:
   bool setTimestamp(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_put, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(firebase_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _NO_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -1507,7 +1514,7 @@ public:
   bool setTimestampAsync(FirebaseData *fbdo, T path)
   {
     return buildRequest(fbdo, http_put, toStringPtr(path),
-                        toStringPtr(pgm2Str(fb_esp_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
+                        toStringPtr(pgm2Str(firebase_rtdb_pgm_str_39 /* "{\".sv\": \"timestamp\"}" */)),
                         d_timestamp, _NO_SUB_TYPE, _NO_REF, _NO_QUERY, _NO_PRIORITY, toStringPtr(_NO_ETAG),
                         _IS_ASYNC, _NO_QUEUE, _NO_BLOB_SIZE, toStringPtr(_NO_FILE));
   }
@@ -2075,7 +2082,7 @@ public:
    * @return Boolean value, indicates the success of the operation.
    */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath,
+  bool getFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 nodePath,
                T2 fileName, RTDB_DownloadProgressCallback callback = NULL)
   {
     return buildRequest(fbdo, http_get, toStringPtr(nodePath), toStringPtr(_NO_PAYLOAD),
@@ -2287,7 +2294,7 @@ public:
    * @note Only 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension) can be saved to SD card/Flash memory.
    */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath, T2 fileName,
+  bool backup(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 nodePath, T2 fileName,
               RTDB_DownloadProgressCallback callback = NULL)
   {
     return mBackup(fbdo, storageType, toStringPtr(nodePath), toStringPtr(fileName), callback);
@@ -2303,7 +2310,7 @@ public:
    * @return Boolean value, indicates the success of the operation.
    */
   template <typename T1 = const char *, typename T2 = const char *>
-  bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 nodePath, T2 fileName,
+  bool restore(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 nodePath, T2 fileName,
                RTDB_UploadProgressCallback callback = NULL)
   {
     return mRestore(fbdo, storageType, toStringPtr(nodePath), toStringPtr(fileName), callback);
@@ -2317,7 +2324,7 @@ public:
    */
   void setMaxRetry(FirebaseData *fbdo, uint8_t num);
 
-#if defined(ENABLE_ERROR_QUEUE)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 
   /** Set the maximum Firebase Error Queues in the collection (0 255).
    *
@@ -2338,7 +2345,7 @@ public:
    * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    */
   template <typename T = const char *>
-  bool saveErrorQueue(FirebaseData *fbdo, T filename, fb_esp_mem_storage_type storageType)
+  bool saveErrorQueue(FirebaseData *fbdo, T filename, firebase_mem_storage_type storageType)
   {
     return mSaveErrorQueue(fbdo, toStringPtr(filename), storageType);
   }
@@ -2349,7 +2356,7 @@ public:
    * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    */
   template <typename T = const char *>
-  bool deleteStorageFile(T filename, fb_esp_mem_storage_type storageType)
+  bool deleteStorageFile(T filename, firebase_mem_storage_type storageType)
   {
     return mDeleteStorageFile(toStringPtr(filename), storageType);
   }
@@ -2361,7 +2368,7 @@ public:
    * @param storageType The enum of memory storage type e.g. mem_storage_type_flash and mem_storage_type_sd. The file systems can be changed in FirebaseFS.h.
    */
   template <typename T = const char *>
-  bool restoreErrorQueue(FirebaseData *fbdo, T filename, fb_esp_mem_storage_type storageType)
+  bool restoreErrorQueue(FirebaseData *fbdo, T filename, firebase_mem_storage_type storageType)
   {
     return mRestoreErrorQueue(fbdo, toStringPtr(filename), storageType);
   }
@@ -2374,7 +2381,7 @@ public:
    * @return Number (0-255) of queues store in defined queue file.
    */
   template <typename T = const char *>
-  uint8_t errorQueueCount(FirebaseData *fbdo, T filename, fb_esp_mem_storage_type storageType)
+  uint8_t errorQueueCount(FirebaseData *fbdo, T filename, firebase_mem_storage_type storageType)
   {
     return mErrorQueueCount(fbdo, toStringPtr(filename), storageType);
   }
@@ -2500,13 +2507,13 @@ public:
   }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName)
+  bool push(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName)
   {
     return dataPushHandler(fbdo, path, fileName, storageType, false);
   }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName)
+  bool pushAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName)
   {
     return dataPushHandler(fbdo, path, fileName, storageType, true);
   }
@@ -2584,56 +2591,56 @@ public:
   }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName)
+  bool set(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName)
   {
     return dataSetHandler(fbdo, path, fileName, storageType, _NO_PRIORITY, false);
   }
 
   template <typename T1 = const char *, typename T2 = const char *>
-  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName)
+  bool setAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName)
   {
     return dataSetHandler(fbdo, path, fileName, storageType, _NO_PRIORITY, true);
   }
 
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 etag)
+  bool set(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName, T3 etag)
   {
     return dataSetHandler(fbdo, path, fileName, storageType, etag, false);
   }
 
   template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, T1 path, T2 fileName, T3 etag)
+  bool setAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, T1 path, T2 fileName, T3 etag)
   {
     return dataSetHandler(fbdo, path, fileName, storageType, etag, true);
   }
 
 private:
-  void rescon(FirebaseData *fbdo, const char *host, fb_esp_rtdb_request_info_t *req);
+  void rescon(FirebaseData *fbdo, const char *host, firebase_rtdb_request_info_t *req);
   void clearDataStatus(FirebaseData *fbdo);
-  bool handleRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  bool sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  int preRequestCheck(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  fb_esp_request_method getHTTPMethod(fb_esp_rtdb_request_info_t *req);
-  bool hasPayload(struct fb_esp_rtdb_request_info_t *req);
-  bool sendRequestHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  int getPayloadLen(fb_esp_rtdb_request_info_t *req);
-  bool waitResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req);
-  bool handleResponse(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req);
-  int openFile(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, mb_fs_open_mode mode, bool closeSession = false);
+  bool handleRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req);
+  bool sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req);
+  int preRequestCheck(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req);
+  firebase_request_method getHTTPMethod(firebase_rtdb_request_info_t *req);
+  bool hasPayload(struct firebase_rtdb_request_info_t *req);
+  bool sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req);
+  int getPayloadLen(firebase_rtdb_request_info_t *req);
+  bool waitResponse(FirebaseData *fbdo, firebase_rtdb_request_info_t *req);
+  bool handleResponse(FirebaseData *fbdo, firebase_rtdb_request_info_t *req);
+  int openFile(FirebaseData *fbdo, firebase_rtdb_request_info_t *req, mb_fs_open_mode mode, bool closeSession = false);
   void waitRxReady(FirebaseData *fbdo, unsigned long &dataTime);
-  void parsePayload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, struct server_response_data_t &response,
+  void parsePayload(FirebaseData *fbdo, firebase_rtdb_request_info_t *req, struct server_response_data_t &response,
                     MB_String payload);
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const MB_String &payload);
-  bool processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  bool processRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req);
   bool encodeFileToClient(FirebaseData *fbdo, size_t bufSize, const MB_String &filePath,
-                          fb_esp_mem_storage_type storageType, struct fb_esp_rtdb_request_info_t *req);
-  void setPtrValue(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  bool buildRequest(FirebaseData *fbdo, fb_esp_request_method method, MB_StringPtr path, MB_StringPtr payload,
-                    fb_esp_data_type type, int subtype, uint32_t value_addr, uint32_t query_addr, uint32_t priority_addr,
+                          firebase_mem_storage_type storageType, struct firebase_rtdb_request_info_t *req);
+  void setPtrValue(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req);
+  bool buildRequest(FirebaseData *fbdo, firebase_request_method method, MB_StringPtr path, MB_StringPtr payload,
+                    firebase_data_type type, int subtype, uint32_t value_addr, uint32_t query_addr, uint32_t priority_addr,
                     MB_StringPtr etag, bool async, bool queue, size_t blob_size, MB_StringPtr filename,
-                    fb_esp_mem_storage_type storage_type = mem_storage_type_undefined,
+                    firebase_mem_storage_type storage_type = mem_storage_type_undefined,
                     RTDB_DownloadProgressCallback downloadCallback = NULL, RTDB_UploadProgressCallback uploadCallback = NULL);
-  bool mSetRules(FirebaseData *fbdo, MB_StringPtr rules, fb_esp_mem_storage_type storageType,
+  bool mSetRules(FirebaseData *fbdo, MB_StringPtr rules, firebase_mem_storage_type storageType,
                  MB_StringPtr filename, RTDB_UploadProgressCallback callback = NULL);
   bool mSetReadWriteRules(FirebaseData *fbdo, MB_StringPtr path, MB_StringPtr var,
                           MB_StringPtr readVal, MB_StringPtr writeVal, MB_StringPtr databaseSecret);
@@ -2643,54 +2650,54 @@ private:
   bool mDeleteNodesByTimestamp(FirebaseData *fbdo, MB_StringPtr path, MB_StringPtr timestampNode,
                                MB_StringPtr limit, MB_StringPtr dataRetentionPeriod);
   bool mBeginMultiPathStream(FirebaseData *fbdo, MB_StringPtr parentPath);
-  bool mBackup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, MB_StringPtr nodePath,
+  bool mBackup(FirebaseData *fbdo, firebase_mem_storage_type storageType, MB_StringPtr nodePath,
                MB_StringPtr fileName, RTDB_DownloadProgressCallback callback = NULL);
-  bool mRestore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, MB_StringPtr nodePath,
+  bool mRestore(FirebaseData *fbdo, firebase_mem_storage_type storageType, MB_StringPtr nodePath,
                 MB_StringPtr fileName, RTDB_UploadProgressCallback callback = NULL);
-  uint8_t mErrorQueueCount(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType);
-  bool mRestoreErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType);
-  bool mDeleteStorageFile(MB_StringPtr filename, fb_esp_mem_storage_type storageType);
-  bool mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType);
+  uint8_t mErrorQueueCount(FirebaseData *fbdo, MB_StringPtr filename, firebase_mem_storage_type storageType);
+  bool mRestoreErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, firebase_mem_storage_type storageType);
+  bool mDeleteStorageFile(MB_StringPtr filename, firebase_mem_storage_type storageType);
+  bool mSaveErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, firebase_mem_storage_type storageType);
   void setBlobRef(FirebaseData *fbdo, int addr);
   void mSetwriteSizeLimit(FirebaseData *fbdo, MB_StringPtr size);
-  bool mGetRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, MB_StringPtr filename,
+  bool mGetRules(FirebaseData *fbdo, firebase_mem_storage_type storageType, MB_StringPtr filename,
                  RTDB_DownloadProgressCallback callback = NULL);
   bool handleStreamRequest(FirebaseData *fbdo, const MB_String &path);
   bool connectionError(FirebaseData *fbdo);
   bool handleStreamRead(FirebaseData *fbdo);
   bool exitStream(FirebaseData *fbdo, bool status);
   void trimEndJson(MB_String &payload);
-  void readBase64FileChunk(FirebaseData *fbdo, MB_String &payload, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  void readBase64FileChunk(FirebaseData *fbdo, MB_String &payload, struct firebase_tcp_response_handler_t &tcpHandler,
                            struct server_response_data_t &response, int chunkSize, bool &streamDataComplete);
   void handleNoContent(FirebaseData *fbdo, struct server_response_data_t &response);
-  bool parseTCPResponse(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req,
-                        fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response);
-  bool handleDownload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  bool parseTCPResponse(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req,
+                        firebase_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response);
+  bool handleDownload(FirebaseData *fbdo, firebase_rtdb_request_info_t *req, struct firebase_tcp_response_handler_t &tcpHandler,
                       struct server_response_data_t &response);
-  bool endDownloadOTA(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  bool endDownloadOTA(FirebaseData *fbdo, firebase_rtdb_request_info_t *req, struct firebase_tcp_response_handler_t &tcpHandler,
                       struct server_response_data_t &response);
-  void endDownload(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  void endDownload(FirebaseData *fbdo, firebase_rtdb_request_info_t *req, struct firebase_tcp_response_handler_t &tcpHandler,
                    struct server_response_data_t &response);
-  int handleRedirect(FirebaseData *fbdo, fb_esp_rtdb_request_info_t *req, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  int handleRedirect(FirebaseData *fbdo, firebase_rtdb_request_info_t *req, struct firebase_tcp_response_handler_t &tcpHandler,
                      struct server_response_data_t &response);
   void sendCB(FirebaseData *fbdo);
   void splitStreamPayload(const MB_String &payloads, MB_VECTOR<MB_String> &payload);
   void parseStreamPayload(FirebaseData *fbdo, const MB_String &payload);
   void storeToken(MB_String &atok, const char *databaseSecret);
-  void restoreToken(MB_String &atok, fb_esp_auth_token_type tk);
+  void restoreToken(MB_String &atok, firebase_auth_token_type tk);
   bool mSetQueryIndex(FirebaseData *fbdo, MB_StringPtr path, MB_StringPtr node, MB_StringPtr databaseSecret);
   bool mBeginStream(FirebaseData *fbdo, MB_StringPtr path);
   void mSetReadTimeout(FirebaseData *fbdo, MB_StringPtr millisec);
-  void reportUploadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, size_t readBytes);
-  void reportDownloadProgress(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, size_t readBytes);
+  void reportUploadProgress(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req, size_t readBytes);
+  void reportDownloadProgress(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req, size_t readBytes);
   void makeUploadStatus(RTDB_UploadStatusInfo &info, const MB_String &local, const MB_String &remote,
-                        fb_esp_rtdb_upload_status status, size_t progress, size_t size, int elapsedTime, const MB_String &msg);
+                        firebase_rtdb_upload_status status, size_t progress, size_t size, int elapsedTime, const MB_String &msg);
   void sendUploadCallback(FirebaseData *fbdo, RTDB_UploadStatusInfo &in, RTDB_UploadProgressCallback cb,
                           RTDB_UploadStatusInfo *out);
   void sendDownloadCallback(FirebaseData *fbdo, RTDB_DownloadStatusInfo &in, RTDB_DownloadProgressCallback cb,
                             RTDB_DownloadStatusInfo *out);
   void makeDownloadStatus(RTDB_DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
-                          fb_esp_rtdb_download_status status, size_t progress, size_t size, int elapsedTime, const MB_String &msg);
+                          firebase_rtdb_download_status status, size_t progress, size_t size, int elapsedTime, const MB_String &msg);
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
   void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #else
@@ -2699,15 +2706,15 @@ private:
   void mStopStreamLoopTask();
   void mRunStream();
 
-#if defined(ENABLE_ERROR_QUEUE)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 
-  void addQueueData(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
+  void addQueueData(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req);
 
 #if defined(ESP8266)
   void runErrorQueueTask();
 #endif
 
-  uint8_t openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, fb_esp_mem_storage_type storageType, uint8_t mode);
+  uint8_t openErrorQueue(FirebaseData *fbdo, MB_StringPtr filename, firebase_mem_storage_type storageType, uint8_t mode);
 #if (defined(MBFS_FLASH_FS) || defined(MBFS_SD_FS)) && (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO))
   uint8_t readQueueFile(FirebaseData *fbdo, fs::File &file, QueueItem &item, uint8_t mode);
 #endif
@@ -2720,12 +2727,12 @@ private:
 protected:
   int getPrec(bool dbl)
   {
-    if (Signer.getCfg())
+    if (Core.getCfg())
     {
       if (dbl)
-        return Signer.getCfg()->internal.fb_double_digits;
+        return Core.internal.fb_double_digits;
       else
-        return Signer.getCfg()->internal.fb_float_digits;
+        return Core.internal.fb_float_digits;
     }
     else
     {
@@ -2813,7 +2820,7 @@ protected:
   }
 
   template <typename T1, typename T2>
-  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, bool async) ->
+  auto dataPushHandler(FirebaseData *fbdo, T1 path, T2 filename, firebase_mem_storage_type storageType, bool async) ->
       typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
     return buildRequest(fbdo, http_post, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_file,
@@ -2894,7 +2901,7 @@ protected:
   }
 
   template <typename T1, typename T2, typename T3>
-  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 filename, fb_esp_mem_storage_type storageType, T3 etag, bool async) ->
+  auto dataSetHandler(FirebaseData *fbdo, T1 path, T2 filename, firebase_mem_storage_type storageType, T3 etag, bool async) ->
       typename enable_if<is_string<T1>::value && is_string<T2>::value, bool>::type
   {
     return buildRequest(fbdo, http_put, toStringPtr(path), toStringPtr(_NO_PAYLOAD), d_file,

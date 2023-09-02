@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -7,7 +7,7 @@
 #define FirebaseFS_H
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
+#include "./mbfs/MB_MCU.h"
 
 #define FIREBASE_ESP_CLIENT 1
 
@@ -77,8 +77,11 @@ static SdFat sd_fat_fs;   // should declare as static here
 #define CARD_TYPE_SD 1
 #endif
 
+// For NTP
+#define ENABLE_NTP_TIME
+
 // For RTDB legacy token usage only
-// #define USE_LEGACY_TOKEN_ONLY
+// #define FIREBASE_USE_LEGACY_TOKEN_ONLY
 
 // Enable the error string from fbdo.errorReason */
 // You can get the error code from fbdo.errorCode() when disable this option
@@ -102,7 +105,7 @@ static SdFat sd_fat_fs;   // should declare as static here
 #define ENABLE_FB_STORAGE
 
 // Comment to exclude Cloud Storage
-#define ENABLE_GC_STORAGE
+#define  ENABLE_GC_STORAGE
 
 // Comment to exclude Cloud Function for Firebase
 #define ENABLE_FB_FUNCTIONS
@@ -118,9 +121,6 @@ static SdFat sd_fat_fs;   // should declare as static here
 // Use Keep Alive connection mode
 #define USE_CONNECTION_KEEP_ALIVE_MODE
 
-// To enable external Client for ESP8266, ESP32 and Raspberry Pi Pico.
-// This will enable automatically for other devices.
-// #define FB_ENABLE_EXTERNAL_CLIENT
 
 // For ESP8266 ENC28J60 Ethernet module
 // #define ENABLE_ESP8266_ENC28J60_ETH
@@ -144,8 +144,6 @@ static SdFat sd_fat_fs;   // should declare as static here
 #ifndef CustomFirebaseFS_H
 #define CustomFirebaseFS_H
 
-// Use external client instead of internal client
-#define FB_ENABLE_EXTERNAL_CLIENT // define to use external client
 
 // Use LittleFS instead of SPIFFS
 #include "LittleFS.h"
@@ -163,12 +161,12 @@ static SdFat sd_fat_fs;   // should declare as static here
 
 // Disable Error Queue, Firestore, FCM, Firebase Storage, Google Cloud Storage
 // and Functions for Firebase.
-#undef ENABLE_ERROR_QUEUE
-#undef ENABLE_FIRESTORE
-#undef ENABLE_FCM
-#undef ENABLE_FB_STORAGE
-#undef ENABLE_GC_STORAGE
-#undef ENABLE_FB_FUNCTIONS
+#undef FIREBASE_ENABLE_ERROR_QUEUE
+#undef FIREBASE_ENABLE_FIRESTORE
+#undef FIREBASE_ENABLE_FCM
+#undef FIREBASE_ENABLE_FB_STORAGE
+#undef FIREBASE_ENABLE_GC_STORAGE
+#undef FIREBASE_ENABLE_FB_FUNCTIONS
 
 #endif
 

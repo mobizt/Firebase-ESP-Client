@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -16,28 +16,23 @@
 /// TCP client errors
 // Server does not response to the request in time
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED (-1)
-// Not used
+
 #define FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED (-2)
 // The session (server disconnected) was closed during reading the response.
 #define FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED (-3)
 // Network was disconnected
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST (-4)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_NO_STREAM (-5)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_NO_HTTP_SERVER (-6)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_TOO_LESS_RAM (-7)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_ENCODING (-8)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_STREAM_WRITE (-9)
 // The session was already opened for other connection
-#define FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED (-10)
+#define FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED (-5)
 // Response payload is too large or internet is too slow or not responding to complete reading in time 
-#define FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT (-11)
+#define FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT (-6)
 // Similar to FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT but not used
-#define FIREBASE_ERROR_TCP_RESPONSE_READ_FAILED (-12)
+#define FIREBASE_ERROR_TCP_RESPONSE_READ_FAILED (-7)
+
+
+#define FIREBASE_ERROR_TCP_CLIENT_MISSING_NETWORK_CONNECTION_CB -8
+#define FIREBASE_ERROR_TCP_CLIENT_MISSING_NETWORK_STATUS_CB -9
+#define FIREBASE_ERROR_TCP_CLIENT_NOT_INITIALIZED -10
 
 
 /// HTTP codes see RFC7231
@@ -114,6 +109,6 @@
 #define FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY /*          */ (FB_ERROR_RANGE - 37)
 #define FIREBASE_ERROR_TOKEN_COMPLETE_UNNOTIFY /*          */ (FB_ERROR_RANGE - 38)
 #define FIREBASE_ERROR_TOKEN_ERROR_UNNOTIFY /*          */ (FB_ERROR_RANGE - 39)
-#define FIREBASE_ERROR_UDP_CLIENT_REQUIRED /*          */ (FB_ERROR_RANGE - 40)
+
 
 #endif

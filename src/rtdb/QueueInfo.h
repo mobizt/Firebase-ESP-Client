@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -35,27 +35,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "FirebaseFS.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_QUEUE_INFO_H
 #define FIREBASE_QUEUE_INFO_H
 #include <Arduino.h>
-#include "FB_Utils.h"
+#include "./FB_Utils.h"
 #include "QueryFilter.h"
 
 struct QueueItem
 {
-    fb_esp_data_type dataType = fb_esp_data_type::d_any;
+    firebase_data_type dataType = firebase_data_type::d_any;
     int subType = 0;
-    fb_esp_request_method method = http_get;
+    firebase_request_method method = http_get;
     uint32_t qID = 0;
     uint32_t timestamp = 0;
     uint8_t runCount = 0;
     uint8_t runIndex = 0;
 #if defined(FIREBASE_ESP_CLIENT)
-    fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
+    firebase_mem_storage_type storageType = mem_storage_type_undefined;
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
     uint8_t storageType = StorageType::UNDEFINED;
 #endif
@@ -63,7 +63,7 @@ struct QueueItem
     MB_String payload;
     MB_String filename;
     MB_String etag;
-    struct fb_esp_rtdb_address_t address;
+    struct firebase_rtdb_address_t address;
     int blobSize = 0;
     bool async = false;
 };

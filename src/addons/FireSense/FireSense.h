@@ -44,7 +44,7 @@
 #include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FireSenseClass_H
 #define FireSenseClass_H
@@ -268,7 +268,7 @@ public:
      * @return Boolean value, indicates the success of the operation.
      *
      */
-    bool backupConfig(const String &filename, fb_esp_mem_storage_type storageType);
+    bool backupConfig(const String &filename, firebase_mem_storage_type storageType);
 
     /** Read the config from the device storage.
      *
@@ -278,7 +278,7 @@ public:
      * @return Boolean value, indicates the success of the operation.
      *
      */
-    bool restoreConfig(const String &filename, fb_esp_mem_storage_type storageType);
+    bool restoreConfig(const String &filename, firebase_mem_storage_type storageType);
 
     /** Enable (run) or disable (stop) the conditions checking tasks.
      *
@@ -662,7 +662,7 @@ private:
     unsigned long logMillis = 0;
     unsigned long conditionMillis = 0;
     unsigned long authen_check_millis = 0;
-    time_t minTs = ESP_DEFAULT_TS;
+    time_t minTs = FIREBASE_DEFAULT_TS;
     uint64_t maxTs = 32503654800;
     MB_String deviceId;
 
@@ -942,12 +942,11 @@ bool FireSenseClass::begin(struct firesense_config_t *config, const char *databa
         return false;
     }
 
-#ifdef ESP8266
     if (this->config->shared_fbdo)
         this->config->shared_fbdo->setBSSLBufferSize(2048, 512);
     if (this->config->stream_fbdo)
         this->config->stream_fbdo->setBSSLBufferSize(2048, 512);
-#endif
+
 
     this->config->shared_fbdo->setResponseSize(1024);
     if (this->config->stream_fbdo)
@@ -2417,7 +2416,7 @@ bool FireSenseClass::loadConfig()
     return true;
 }
 
-bool FireSenseClass::backupConfig(const String &filename, fb_esp_mem_storage_type storageType)
+bool FireSenseClass::backupConfig(const String &filename, firebase_mem_storage_type storageType)
 {
     if (!configReady())
         return false;
@@ -2438,7 +2437,7 @@ bool FireSenseClass::backupConfig(const String &filename, fb_esp_mem_storage_typ
     return true;
 }
 
-bool FireSenseClass::restoreConfig(const String &filename, fb_esp_mem_storage_type storageType)
+bool FireSenseClass::restoreConfig(const String &filename, firebase_mem_storage_type storageType)
 {
     if (!configReady())
         return false;

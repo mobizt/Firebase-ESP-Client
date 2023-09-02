@@ -1,46 +1,27 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
-/**
- * Created April 5, 2023
- */
 
-#ifndef FB_Network_H
-#define FB_Network_H
+/**
+ * Created August 14, 2023
+ */
+#ifndef FIREBASE_NETWORK_H
+#define FIREBASE_NETWORK_H
 
 #include <Arduino.h>
 #include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
-#if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
-#ifndef FB_ENABLE_EXTERNAL_CLIENT
-#define FB_ENABLE_EXTERNAL_CLIENT
-#endif
-#endif
-
-#if defined(ESP32)
-#include <WiFi.h>
-#include <WiFiClient.h>
-#if !defined(FB_ENABLE_EXTERNAL_CLIENT)
-#include <ETH.h>
-#endif
-#include <WiFiClientSecure.h>
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>
 #endif
-#endif
+
 
 #if defined(ESP8266) || defined(MB_ARDUINO_PICO)
-#include <ESP8266WiFi.h>
-#include <WiFiClientSecure.h>
-#include <CertStoreBearSSL.h>
-#if defined(ESP8266)
-#include <core_version.h>
-#endif
-#include <time.h>
-#define FB_ESP_SSL_CLIENT BearSSL::WiFiClientSecure
+
+#include <string>
 
 //__GNUC__
 //__GNUC_MINOR__
@@ -48,46 +29,149 @@
 
 #ifdef __GNUC__
 #if __GNUC__ > 4 || __GNUC__ == 10
-#include <string>
+#if defined(ARDUINO_ESP8266_GIT_VER)
+#if ARDUINO_ESP8266_GIT_VER > 0
 #define ESP8266_CORE_SDK_V3_X_X
 #endif
 #endif
-
-#if defined(ESP8266) && !defined(ARDUINO_ESP8266_GIT_VER)
-#error Your ESP8266 Arduino Core SDK is outdated, please update. From Arduino IDE go to Boards Manager and search 'esp8266' then select the latest version.
 #endif
-
-// 2.6.1 BearSSL bug
-#if ARDUINO_ESP8266_GIT_VER == 0x482516e3
-#error Due to bugs in BearSSL in ESP8266 Arduino Core SDK version 2.6.1, please update ESP8266 Arduino Core SDK to newer version. The issue was found here https:\/\/github.com/esp8266/Arduino/issues/6811.
 #endif
 
 #if defined __has_include
 
-#if __has_include(<LwipIntfDev.h>) && (defined(ENABLE_ESP8266_ENC28J60_ETH) || defined(ENABLE_ESP8266_W5500_ETH) || defined(ENABLE_ESP8266_W5500_ETH))
+#if __has_include(<LwipIntfDev.h>)
 #include <LwipIntfDev.h>
 #endif
 
-#if __has_include(<ENC28J60lwIP.h>) && defined(ENABLE_ESP8266_ENC28J60_ETH)
+#if __has_include(<ENC28J60lwIP.h>)&& defined(ENABLE_ESP8266_ENC28J60_ETH)
 #define INC_ENC28J60_LWIP
 #include <ENC28J60lwIP.h>
 #endif
 
 #if __has_include(<W5100lwIP.h>) && defined(ENABLE_ESP8266_W5100_ETH)
-
 #define INC_W5100_LWIP
-
-// PIO compilation error
 #include <W5100lwIP.h>
 #endif
 
-#if __has_include(<W5500lwIP.h>) && defined(ENABLE_ESP8266_W5500_ETH)
+#if __has_include(<W5500lwIP.h>)&& defined(ENABLE_ESP8266_W5500_ETH)
 #define INC_W5500_LWIP
 #include <W5500lwIP.h>
 #endif
 
+#if defined(MB_ARDUINO_PICO)
+
 #endif
 
+#endif
+
+#endif
+
+
+
+#if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_RASPBERRY_PI_PICO_W) || \
+    defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_PORTENTA_C33) ||                \
+    defined(ARDUINO_PORTENTA_H7_M7) || defined(ARDUINO_PORTENTA_H7_M4) ||         \
+    __has_include(<WiFiNINA.h>) ||__has_include(<WiFi101.h>)
+
+#if !defined(FIREBASE_DISABLE_ONBOARD_WIFI)
+
+#define FIREBASE_WIFI_IS_AVAILABLE
+
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
+#include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
+#elif __has_include(<WiFi.h>)
+#include <WiFi.h>
+#endif
+
+#if !defined(ARDUINO_RASPBERRY_PI_PICO_W) && \
+    !defined(MB_ARDUINO_ARCH_SAMD) &&        \
+    !defined(MB_ARDUINO_MBED_PORTENTA) &&    \
+    !defined(ARDUINO_UNOWIFIR4) &&           \
+    !defined(ARDUINO_PORTENTA_C33) &&        \
+    !defined(ARDUINO_NANO_RP2040_CONNECT)
+#define FIREBASE_HAS_WIFI_DISCONNECT
+#endif
+
+#if defined(ARDUINO_PORTENTA_C33)
+#define CONST_STRING_CAST char * // C33 WiFi library SSID is char array
+#else
+#define CONST_STRING_CAST const char *
+#endif
+
+// WiFiS3 getTime is currently return 0 (not implemented)
+#if __has_include(<WiFiNINA.h>) || __has_include(<WiFi101.h>)
+#define FIREBASE_HAS_WIFI_TIME
+#endif
+
+#if defined(MB_ARDUINO_PICO) && __has_include(<WiFiMulti.h>)
+#define FIREBASE_HAS_WIFIMULTI
+#endif
+
+#endif
+
+#endif
+
+#if !defined(FIREBASE_DISABLE_NATIVE_ETHERNET)
+
+#if defined(ESP32) && __has_include(<ETH.h>)
+#include <ETH.h>
+#define FIREBASE_ETH_IS_AVAILABLE
+#elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
+#if defined(INC_ENC28J60_LWIP) && defined(INC_W5100_LWIP) && defined(INC_W5500_LWIP)
+#define FIREBASE_ETH_IS_AVAILABLE
+#endif
+#endif
+
+#endif
+
+#if defined(TINY_GSM_MODEM_SIM800) ||     \
+    defined(TINY_GSM_MODEM_SIM808) ||     \
+    defined(TINY_GSM_MODEM_SIM868) ||     \
+    defined(TINY_GSM_MODEM_SIM900) ||     \
+    defined(TINY_GSM_MODEM_SIM7000) ||    \
+    defined(TINY_GSM_MODEM_SIM7000) ||    \
+    defined(TINY_GSM_MODEM_SIM7000SSL) || \
+    defined(TINY_GSM_MODEM_SIM7070) ||    \
+    defined(TINY_GSM_MODEM_SIM7080) ||    \
+    defined(TINY_GSM_MODEM_SIM7090) ||    \
+    defined(TINY_GSM_MODEM_SIM5320) ||    \
+    defined(TINY_GSM_MODEM_SIM5360) ||    \
+    defined(TINY_GSM_MODEM_SIM5300) ||    \
+    defined(TINY_GSM_MODEM_SIM7100) ||    \
+    defined(TINY_GSM_MODEM_SIM7600) ||    \
+    defined(TINY_GSM_MODEM_SIM7800) ||    \
+    defined(TINY_GSM_MODEM_SIM7500) ||    \
+    defined(TINY_GSM_MODEM_UBLOX) ||      \
+    defined(TINY_GSM_MODEM_SARAR4) ||     \
+    defined(TINY_GSM_MODEM_M95) ||        \
+    defined(TINY_GSM_MODEM_BG96) ||       \
+    defined(TINY_GSM_MODEM_A6) ||         \
+    defined(TINY_GSM_MODEM_A7) ||         \
+    defined(TINY_GSM_MODEM_M590) ||       \
+    defined(TINY_GSM_MODEM_MC60) ||       \
+    defined(TINY_GSM_MODEM_MC60E) ||      \
+    defined(TINY_GSM_MODEM_XBEE) ||       \
+    defined(TINY_GSM_MODEM_SEQUANS_MONARCH)
+#define FIREBASE_TINYGSM_IS_AVAILABLE
+#endif
+
+#if defined(FIREBASE_TINYGSM_IS_AVAILABLE) && __has_include(<TinyGsmClient.h>)
+#include <TinyGsmClient.h>
+#define FIREBASE_GSM_MODEM_IS_AVAILABLE
+#endif
+
+#if defined(FIREBASE_WIFI_IS_AVAILABLE)
+#define WiFI_CONNECTED (WiFi.status() == WL_CONNECTED)
+#else
+#define WiFI_CONNECTED false
 #endif
 
 #endif

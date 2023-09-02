@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -35,15 +35,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_FB_FUNCTIONS
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
 
 #ifndef _FB_FUNCTIONS_H_
 #define _FB_FUNCTIONS_H_
 
-#include "FB_Utils.h"
+#include "./FB_Utils.h"
 #include "FunctionsConfig.h"
 
 using namespace mb_string;
@@ -328,7 +328,7 @@ public:
     }
 
 private:
-    fb_esp_functions_status _function_status = fb_esp_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
+    firebase_functions_status _function_status = firebase_functions_status_CLOUD_FUNCTION_STATUS_UNSPECIFIED;
     FirebaseJson *jsonPtr = nullptr;
     FirebaseJsonArray *arrPtr = nullptr;
     FirebaseJsonData *dataPtr = nullptr;
@@ -339,22 +339,22 @@ private:
     bool _creation_task_enable = false;
     bool _creation_task_running = false;
     size_t _deployIndex = 0;
-    MB_VECTOR<fb_esp_deploy_task_info_t> _deployTasks;
-    void makeRequest(struct fb_esp_functions_req_t &req, fb_esp_functions_request_type type,
+    MB_VECTOR<firebase_deploy_task_info_t> _deployTasks;
+    void makeRequest(struct firebase_functions_req_t &req, firebase_functions_request_type type,
                      MB_StringPtr projectId, MB_StringPtr locationId, MB_StringPtr functionId);
     void rescon(FirebaseData *fbdo, const char *host);
     bool connect(FirebaseData *fbdo, const char *host = "");
     void addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, bool patch,
-                         fb_esp_functions_creation_step step, fb_esp_functions_creation_step nextStep,
+                         firebase_functions_creation_step step, firebase_functions_creation_step nextStep,
                          FunctionsOperationCallback callback, FunctionsOperationStatusInfo *statusInfo);
-    bool sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t *req);
-    bool functions_sendRequest(FirebaseData *fbdo, struct fb_esp_functions_req_t *req);
+    bool sendRequest(FirebaseData *fbdo, struct firebase_functions_req_t *req);
+    bool functions_sendRequest(FirebaseData *fbdo, struct firebase_functions_req_t *req);
     bool handleResponse(FirebaseData *fbdo);
     bool uploadSources(FirebaseData *fbdo, FunctionsConfig *config);
     bool deploy(FirebaseData *fbdo, const char *functionId, FunctionsConfig *config, bool patch);
     bool createFunctionInt(FirebaseData *fbdo, MB_StringPtr functionId, FunctionsConfig *config,
                            bool patch, FunctionsOperationCallback cb = NULL, FunctionsOperationStatusInfo *info = nullptr);
-    bool uploadFile(FirebaseData *fbdo, const char *uploadUrl, const char *filePath, fb_esp_mem_storage_type storageType);
+    bool uploadFile(FirebaseData *fbdo, const char *uploadUrl, const char *filePath, firebase_mem_storage_type storageType);
     bool uploadPGMArchive(FirebaseData *fbdo, const char *uploadUrl, const uint8_t *pgmArc, size_t pgmArcLen);
     void sendCallback(FirebaseData *fbdo, FunctionsOperationCallback cb, FunctionsOperationStatusInfo *info);
     bool mCallFunction(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId,

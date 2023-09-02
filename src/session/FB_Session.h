@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -39,16 +39,17 @@
 #define FIREBASE_SESSION_H
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
-#include "FB_Utils.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
+#include "./FB_Utils.h"
+#include "./core/FirebaseCore.h"
 
-#include "rtdb/stream/FB_Stream.h"
-#include "rtdb/stream/FB_MP_Stream.h"
-#include "rtdb/QueueInfo.h"
-#include "rtdb/QueueManager.h"
+#include "./rtdb/stream/FB_Stream.h"
+#include "./rtdb/stream/FB_MP_Stream.h"
+#include "./rtdb/QueueInfo.h"
+#include "./rtdb/QueueManager.h"
 
-#include "signer/Signer.h"
+
 
 #if defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_SAMD)
 #if __has_include(<WiFiNINA.h>)
@@ -66,7 +67,7 @@ using namespace mb_string;
 
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 
-enum fb_esp_fcm_msg_type
+enum firebase_fcm_msg_type
 {
   msg_single,
   msg_multicast,
@@ -226,11 +227,11 @@ private:
 
   void fcm_begin(FirebaseData &fbdo);
 
-  bool fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
+  bool fcm_send(FirebaseData &fbdo, firebase_fcm_msg_type messageType);
 
   bool fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize);
 
-  void fcm_preparePayload(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
+  void fcm_preparePayload(FirebaseData &fbdo, firebase_fcm_msg_type messageType);
 
   void clear();
 
@@ -268,32 +269,32 @@ private:
 class FirebaseData
 {
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   friend class FB_RTDB;
 #endif
   friend class UtilsClass;
 
 #if defined(FIREBASE_ESP_CLIENT)
 
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   friend class FB_CM;
 #endif
-#ifdef ENABLE_FB_STORAGE
+#if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   friend class FB_Storage;
 #endif
-#ifdef ENABLE_FIRESTORE
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
   friend class FB_Firestore;
 #endif
-#ifdef ENABLE_FB_FUNCTIONS
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
   friend class FB_Functions;
 #endif
-#ifdef ENABLE_GC_STORAGE
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
   friend class GG_CloudStorage;
 #endif
 
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
   friend class FIREBASE_CLASS;
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   friend class FCMObject;
 #endif
 #endif
@@ -303,14 +304,14 @@ class FirebaseData
 #endif
 
 public:
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   typedef void (*StreamEventCallback)(FIREBASE_STREAM_CLASS);
   typedef void (*MultiPathStreamEventCallback)(FIREBASE_MP_STREAM_CLASS);
   typedef void (*StreamTimeoutCallback)(bool);
   typedef void (*QueueInfoCallback)(QueueInfo);
 #endif
 
-#ifdef ENABLE_FIRESTORE
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
   typedef void (*FirestoreBatchOperationsCallback)(const char *);
 #endif
 
@@ -353,7 +354,6 @@ public:
    */
   void setNetworkStatus(bool status);
 
-#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
   /** Set the receive and transmit buffer memory size for secured mode BearSSL WiFi client.
    *
    * @param rx The number of bytes for receive buffer memory for secured mode BearSSL (512 is minimum, 16384 is maximum).
@@ -362,7 +362,6 @@ public:
    * @note Set this option to false to support get large Blob and File operations.
    */
   void setBSSLBufferSize(uint16_t rx, uint16_t tx);
-#endif
 
   /** Set the HTTP response size limit.
    *
@@ -381,7 +380,7 @@ public:
    * @param pause The boolean to set/unset pause operation.
    * @return Boolean type status indicates the success of operation.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool pauseFirebase(bool pause);
 #endif
 
@@ -389,17 +388,15 @@ public:
    *
    * @return Boolean type value of pause status.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool isPause();
 #endif
 
-#if (defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)) && !defined(FB_ENABLE_EXTERNAL_CLIENT)
   /** Get a WiFi client instance.
    *
    * @return WiFi client instance.
    */
-  WiFiClientSecure *getWiFiClient();
-#endif
+  ESP_SSLClient *getWiFiClient();
 
   /** Close the keep-alive connection of the internal SSL client.
    *
@@ -416,25 +413,25 @@ public:
    *
    * @return The one of these data type e.g. string, boolean, int, float, double, json, array, blob, file and null.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String dataType();
 #endif
 
   /** Get the data type of payload returned from the server (RTDB only).
    *
-   * @return The enumeration value of fb_esp_rtdb_data_type.
-   * fb_esp_rtdb_data_type_null or 1,
-   * fb_esp_rtdb_data_type_integer or 2,
-   * fb_esp_rtdb_data_type_float or 3,
-   * fb_esp_rtdb_data_type_double or 4,
-   * fb_esp_rtdb_data_type_boolean or 5,
-   * fb_esp_rtdb_data_type_string or 6,
-   * fb_esp_rtdb_data_type_json or 7,
-   * fb_esp_rtdb_data_type_array or 8,
-   * fb_esp_rtdb_data_type_blob or 9,
-   * fb_esp_rtdb_data_type_file or 10
+   * @return The enumeration value of firebase_rtdb_data_type.
+   * firebase_rtdb_data_type_null or 1,
+   * firebase_rtdb_data_type_integer or 2,
+   * firebase_rtdb_data_type_float or 3,
+   * firebase_rtdb_data_type_double or 4,
+   * firebase_rtdb_data_type_boolean or 5,
+   * firebase_rtdb_data_type_string or 6,
+   * firebase_rtdb_data_type_json or 7,
+   * firebase_rtdb_data_type_array or 8,
+   * firebase_rtdb_data_type_blob or 9,
+   * firebase_rtdb_data_type_file or 10
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   uint8_t dataTypeEnum();
 #endif
 
@@ -450,7 +447,7 @@ public:
    *
    * The event type "auth_revoked" indicated the provided Firebase Authentication Data (Database secret) is no longer valid.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String eventType();
 #endif
 
@@ -458,7 +455,7 @@ public:
    *
    * @return String of unique identifier.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String ETag();
 #endif
 
@@ -466,7 +463,7 @@ public:
    *
    * @return The database streaming path.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String streamPath();
 #endif
 
@@ -477,7 +474,7 @@ public:
    * @note The database path returned from this function in case of stream, also changed upon the child or parent's stream
    * value changes.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String dataPath();
 #endif
 #if defined(FIREBASE_ESP_CLIENT)
@@ -496,7 +493,7 @@ public:
    * crc32c - The CRC32 of file
    * downloadTokens - The download token
    */
-#if defined(ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE)
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   FileMetaInfo metaData();
 #endif
 
@@ -508,7 +505,7 @@ public:
    * name - The file name
    * bucket - The storage bucket id
    */
-#ifdef ENABLE_FB_STORAGE
+#if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   FileList *fileList();
 #endif
 
@@ -516,7 +513,7 @@ public:
    *
    * @return The URL to download file.
    */
-#if defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE)
+#if (defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)) || defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
   String downloadURL();
 #endif
 
@@ -541,7 +538,7 @@ public:
    *
    * @return integer value.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   int intData();
 #endif
 
@@ -549,7 +546,7 @@ public:
    *
    * @return Float value.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   float floatData();
 #endif
 
@@ -557,7 +554,7 @@ public:
    *
    * @return double value.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   double doubleData();
 #endif
 
@@ -565,7 +562,7 @@ public:
    *
    * @return Boolean value.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool boolData();
 #endif
 
@@ -573,7 +570,7 @@ public:
    *
    * @return String (String object).
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String stringData();
 #endif
 
@@ -581,7 +578,7 @@ public:
    *
    * @return String (String object).
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String jsonString();
 #endif
 
@@ -589,7 +586,7 @@ public:
    *
    * @return FirebaseJson object.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FirebaseJson &jsonObject();
 #endif
 
@@ -597,7 +594,7 @@ public:
    *
    * @return FirebaseJson object pointer.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FirebaseJson *jsonObjectPtr();
 #endif
 
@@ -605,7 +602,7 @@ public:
    *
    * @return FirebaseJsonArray object.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FirebaseJsonArray &jsonArray();
 #endif
 
@@ -613,7 +610,7 @@ public:
    *
    * @return FirebaseJsonArray object pointer.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FirebaseJsonArray *jsonArrayPtr();
 #endif
 
@@ -621,7 +618,7 @@ public:
    *
    * @return FirebaseJsonData object.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FirebaseJsonData &jsonData();
 #endif
 
@@ -629,7 +626,7 @@ public:
    *
    * @return FirebaseJsonData object pointer..
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FirebaseJsonData *jsonDataPtr();
 #endif
 
@@ -637,7 +634,7 @@ public:
    *
    * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   MB_VECTOR<uint8_t> *blobData();
 #endif
 
@@ -645,7 +642,7 @@ public:
    *
    * @return the file stream.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 #if defined(MBFS_FLASH_FS)
   File fileStream();
 #endif
@@ -655,20 +652,20 @@ public:
    * Get the value by specific type from FirebaseJsonData object (RTDB only).
    * This should call after parse or get function.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   template <typename T>
   auto to() -> typename enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
   {
-    if (session.rtdb.resp_data_type == fb_esp_data_type::d_string)
+    if (session.rtdb.resp_data_type == firebase_data_type::d_string)
       setRaw(true); // if double quotes string, trim it.
 
     if (session.rtdb.raw.length() > 0)
     {
-      if (session.rtdb.resp_data_type == fb_esp_data_type::d_boolean)
+      if (session.rtdb.resp_data_type == firebase_data_type::d_boolean)
         mSetBoolValue(strcmp(session.rtdb.raw.c_str(), num2Str(true, -1)) == 0);
-      else if (session.rtdb.resp_data_type == fb_esp_data_type::d_integer ||
-               session.rtdb.resp_data_type == fb_esp_data_type::d_float ||
-               session.rtdb.resp_data_type == fb_esp_data_type::d_double)
+      else if (session.rtdb.resp_data_type == firebase_data_type::d_integer ||
+               session.rtdb.resp_data_type == firebase_data_type::d_float ||
+               session.rtdb.resp_data_type == firebase_data_type::d_double)
       {
         mSetIntValue(session.rtdb.raw.c_str());
         mSetFloatValue(session.rtdb.raw.c_str());
@@ -714,7 +711,7 @@ public:
   template <typename T>
   auto to() -> typename enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
   {
-    if (session.rtdb.resp_data_type == fb_esp_data_type::d_string)
+    if (session.rtdb.resp_data_type == firebase_data_type::d_string)
       setRaw(true);
     return session.rtdb.raw.c_str();
   }
@@ -778,19 +775,19 @@ public:
     return session.rtdb.blob;
   }
 
-#if defined(MBFS_FLASH_FS) && defined(ENABLE_RTDB)
+#if defined(MBFS_FLASH_FS) && (defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB))
   template <typename T>
   auto to() -> typename enable_if<is_same<T, fs::File>::value, fs::File>::type
   {
-    if (session.rtdb.resp_data_type == fb_esp_data_type::d_file)
+    if (session.rtdb.resp_data_type == firebase_data_type::d_file)
     {
-      int ret = Signer.mbfs->open(pgm2Str(fb_esp_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
+      int ret = Core.mbfs.open(pgm2Str(firebase_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
                                   mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
       if (ret < 0)
         session.response.code = ret;
     }
 
-    return Signer.mbfs->getFlashFile();
+    return Core.mbfs.getFlashFile();
   }
 #endif
 
@@ -800,7 +797,7 @@ public:
    *
    * @return String (String object).
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String pushName();
 #endif
 
@@ -808,7 +805,7 @@ public:
    *
    * @return Boolean type status indicates whether the Firebase Data object is working with a stream or not.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool isStream();
 #endif
 
@@ -823,7 +820,7 @@ public:
    *
    * @return Boolean type status indicates whether the stream was a timeout or not.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool streamTimeout();
 #endif
 
@@ -831,7 +828,7 @@ public:
    *
    * @return Boolean type status indicates whether the server return the new payload or not.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool dataAvailable();
 #endif
 
@@ -840,7 +837,7 @@ public:
    * @return Boolean type status indicates whether the server returns the stream event-data
    * payload or not.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool streamAvailable();
 #endif
 
@@ -852,7 +849,7 @@ public:
    * @note Data type checking was disable by default, which can be enabled via the Firebase Config e.g.
    * config.rtdb.data_type_stricted = true
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   bool mismatchDataType();
 #endif
 
@@ -886,7 +883,7 @@ public:
    *
    * @return String (String object) of the file name that stores on SD card/Flash memory after backup operation.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   String getBackupFilename();
 #endif
 
@@ -894,7 +891,7 @@ public:
    *
    * @return Size of backup file in byte after backup operation.
    */
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   size_t getBackupFileSize();
 #endif
 
@@ -919,40 +916,46 @@ public:
    * @param tcpKeepIdleSeconds lwIP TCP Keepalive idle in seconds.
    * @param tcpKeepIntervalSeconds lwIP TCP Keepalive interval in seconds.
    * @param tcpKeepCount lwIP TCP Keepalive count.
-   * 
+   *
    * For the TCP (KeepAlive) options, see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options.
-   * 
+   *
    * If value of one of these parameters is zero, the TCP KeepAlive will be disabled.
-   * 
-   * You can check the server connecting status, by exexuting <FirebaseData>.httpConnected() which will return true when connection to the server is still alive. 
+   *
+   * You can check the server connecting status, by exexuting <FirebaseData>.httpConnected() which will return true when connection to the server is still alive.
    */
   void keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCount);
 
-   /** Get TCP KeepAlive status.
+  /** Get TCP KeepAlive status.
    *
    * @return Boolean status of TCP Keepalive.
    */
   bool isKeepAlive();
 
-  FB_TCP_CLIENT tcpClient;
+  Firebase_TCP_Client tcpClient;
 
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-#ifdef ENABLE_FCM
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   FCMObject fcm;
 #endif
 #endif
 
 private:
+
+  BearSSL_Session bsslSession;
   FB_ResponseCallback _responseCallback = NULL;
 
-#ifdef ENABLE_RTDB
+  FB_NetworkConnectionRequestCallback _networkConnectionCB;
+  FB_NetworkStatusRequestCallback _networkStatusCB;
+  Client *_client = nullptr;
+
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   StreamEventCallback _dataAvailableCallback = NULL;
   MultiPathStreamEventCallback _multiPathDataCallback = NULL;
   StreamTimeoutCallback _timeoutCallback = NULL;
   QueueInfoCallback _queueInfoCallback = NULL;
 #endif
 #if defined(FIREBASE_ESP_CLIENT)
-#ifdef ENABLE_FB_FUNCTIONS
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
   FunctionsOperationCallback _functionsOperationCallback = NULL;
 #endif
 #endif
@@ -963,7 +966,7 @@ private:
   uint32_t sessionPtr = 0;
   uint32_t queueSessionPtr = 0;
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   QueueManager _qMan;
   union IVal
   {
@@ -997,40 +1000,40 @@ private:
   IVal iVal = {0};
   FVal fVal;
 #endif
-  struct fb_esp_session_info_t session;
+  struct firebase_session_info_t session;
 
   void closeSession();
   bool handleStreamRead();
-#if defined(ENABLE_GC_STORAGE)
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
   void createResumableTask(struct fb_gcs_upload_resumable_task_info_t &ruTask, size_t fileSize,
                            const MB_String &location, const MB_String &local, const MB_String &remote,
-                           fb_esp_mem_storage_type type, fb_esp_gcs_request_type reqType);
+                           firebase_mem_storage_type type, firebase_gcs_request_type reqType);
 #endif
-  bool waitResponse(struct fb_esp_tcp_response_handler_t &tcpHandler);
+  bool waitResponse(struct firebase_tcp_response_handler_t &tcpHandler);
   bool isConnected(unsigned long &dataTime);
   void waitRxReady();
-  bool readPayload(MB_String *chunkOut, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  bool readPayload(MB_String *chunkOut, struct firebase_tcp_response_handler_t &tcpHandler,
                    struct server_response_data_t &response);
-  bool readResponse(MB_String *payload, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  bool readResponse(MB_String *payload, struct firebase_tcp_response_handler_t &tcpHandler,
                     struct server_response_data_t &response);
-  bool prepareDownload(const MB_String &filename, fb_esp_mem_storage_type type, bool openFileInWrireMode = false);
-  void prepareDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response);
-  void endDownloadOTA(struct fb_esp_tcp_response_handler_t &tcpHandler);
-  bool processDownload(const MB_String &filename, fb_esp_mem_storage_type type, uint8_t *buf,
-                       int bufLen, struct fb_esp_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response,
+  bool prepareDownload(const MB_String &filename, firebase_mem_storage_type type, bool openFileInWrireMode = false);
+  void prepareDownloadOTA(struct firebase_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response);
+  void endDownloadOTA(struct firebase_tcp_response_handler_t &tcpHandler);
+  bool processDownload(const MB_String &filename, firebase_mem_storage_type type, uint8_t *buf,
+                       int bufLen, struct firebase_tcp_response_handler_t &tcpHandler, struct server_response_data_t &response,
                        int &stage, bool isOTA);
-#if defined(ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE)
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE) || defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   bool getUploadInfo(int type, int &stage, const MB_String &pChunk, bool isList, bool isMeta,
-                     struct fb_esp_fcs_file_list_item_t *fileitem, int &pos);
+                     struct firebase_fcs_file_list_item_t *fileitem, int &pos);
   void getAllUploadInfo(int type, int &currentStage, const MB_String &payload, bool isList, bool isMeta,
-                        struct fb_esp_fcs_file_list_item_t *fileitem);
+                        struct firebase_fcs_file_list_item_t *fileitem);
 #endif
 
-#if (defined(ESP32) || defined(MB_ARDUINO_PICO)) && defined(ENABLE_RTDB)
+#if (defined(ESP32) || defined(MB_ARDUINO_PICO)) && (defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB))
   const char *getTaskName(size_t taskStackSize, bool isStream);
 #endif
 
-  void getError(MB_String &payload, struct fb_esp_tcp_response_handler_t &tcpHandler,
+  void getError(MB_String &payload, struct firebase_tcp_response_handler_t &tcpHandler,
                 struct server_response_data_t &response, bool clearPayload);
   void clearJson();
   void freeJson();
@@ -1042,10 +1045,10 @@ private:
   bool tokenReady();
   void setTimeout();
   void setSecure();
-#if defined(ENABLE_ERROR_QUEUE) && defined(ENABLE_RTDB)
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE) && (defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB))
   void addQueue(QueueItem *qItem);
 #endif
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   void clearQueueItem(QueueItem *item);
   void sendStreamToCB(int code, bool report = true);
   void mSetIntValue(const char *value);
@@ -1068,14 +1071,14 @@ private:
     }
   }
 #endif
-  void addSession(fb_esp_con_mode mode);
+  void addSession(firebase_con_mode mode);
   void removeSession();
   void addQueueSession();
   void removeQueueSession();
   void setRaw(bool trim);
   bool configReady()
   {
-    if (!Signer.config && !Signer.mbfs)
+    if (!Core.config)
     {
       session.response.code = FIREBASE_ERROR_UNINITIALIZED;
       return false;

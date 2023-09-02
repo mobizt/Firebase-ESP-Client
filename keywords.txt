@@ -86,7 +86,6 @@ updateNode  KEYWORD2
 updateNodeSilent    KEYWORD2
 setExternalClient   KEYWORD2
 setExternalClientCallbacks  KEYWORD2
-setUDPClient    KEYWORD2
 setNetworkStatus    KEYWORD2
 getFreeHeap KEYWORD2
 getCurrentTime  KEYWORD2

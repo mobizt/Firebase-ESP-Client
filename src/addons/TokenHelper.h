@@ -86,7 +86,7 @@ String getTokenError(struct token_info_t info)
 
 void tokenStatusCallback(TokenInfo info)
 {
-    /** fb_esp_auth_token_status enum
+    /** firebase_auth_token_status enum
      * token_status_uninitialized,
      * token_status_on_initialize,
      * token_status_on_signing,

@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -35,9 +35,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "FirebaseFS.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_STREAM_SESSION_CPP
 #define FIREBASE_STREAM_SESSION_CPP
@@ -53,7 +53,7 @@ FIREBASE_STREAM_CLASS::~FIREBASE_STREAM_CLASS()
     empty();
 }
 
-void FIREBASE_STREAM_CLASS::begin(struct fb_esp_stream_info_t *s)
+void FIREBASE_STREAM_CLASS::begin(struct firebase_stream_info_t *s)
 {
     sif = s;
 }
@@ -95,7 +95,7 @@ String FIREBASE_STREAM_CLASS::stringData()
 
 String FIREBASE_STREAM_CLASS::jsonString()
 {
-    if (sif->data_type == fb_esp_data_type::d_json)
+    if (sif->data_type == firebase_data_type::d_json)
         return sif->data.c_str();
     else
         return MB_String().c_str();
@@ -135,7 +135,7 @@ File FIREBASE_STREAM_CLASS::fileStream()
 #endif
 String FIREBASE_STREAM_CLASS::payload()
 {
-    if (sif->data_type == fb_esp_data_type::d_string)
+    if (sif->data_type == firebase_data_type::d_string)
         setRaw(false); // if double quotes trimmed string, retain it.
     return sif->data.c_str();
 }

@@ -7,7 +7,7 @@
 #include "mbfs/MB_MCU.h"
 #include "FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef RTDBHelper_H
 #define RTDBHelper_H
@@ -24,21 +24,21 @@
 
 void printResult(FirebaseData &data)
 {
-    if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
+    if (data.dataTypeEnum() == firebase_rtdb_data_type_integer)
         Serial.println(data.to<int>());
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_float)
         Serial.println(data.to<float>(), 5);
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_double)
 #if defined(MB_ARDUINO_PICO)
         Serial.printf("%.9lf\n", data.to<double>());
 #else
         printf("%.9lf\n", data.to<double>());
 #endif
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_boolean)
         Serial.println(data.to<bool>() == 1 ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_string)
         Serial.println(data.to<String>());
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_json)
     {
         FirebaseJson *json = data.to<FirebaseJson *>();
         // Print all object data
@@ -57,7 +57,7 @@ void printResult(FirebaseData &data)
         json->iteratorEnd();
         json->clear();
     }
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_array)
     {
         // get array data from FirebaseData using FirebaseJsonArray object
         FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
@@ -95,7 +95,7 @@ void printResult(FirebaseData &data)
         }
         arr->clear();
     }
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_blob)
     {
         MB_VECTOR<uint8_t> *blob = data.to<MB_VECTOR<uint8_t> *>();
         for (size_t i = 0; i < blob->size(); i++)
@@ -109,7 +109,7 @@ void printResult(FirebaseData &data)
         }
         Serial.println();
     }
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_file)
     {
 #if defined(DEFAULT_FLASH_FS)
         File file = data.to<File>();
@@ -141,21 +141,21 @@ void printResult(FirebaseData &data)
 void printResult(FIREBASE_STREAM_CLASS &data)
 {
 
-    if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
+    if (data.dataTypeEnum() == firebase_rtdb_data_type_integer)
         Serial.println(data.to<int>());
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_float)
         Serial.println(data.to<float>(), 5);
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_double)
 #if defined(MB_ARDUINO_PICO)
         Serial.printf("%.9lf\n", data.to<double>());
 #else
         printf("%.9lf\n", data.to<double>());
 #endif
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_boolean)
         Serial.println(data.to<bool>() == 1 ? (const char *)FPSTR("true") : (const char *)FPSTR("false"));
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string || data.dataTypeEnum() == fb_esp_rtdb_data_type_null)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_string || data.dataTypeEnum() == firebase_rtdb_data_type_null)
         Serial.println(data.to<String>());
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_json)
     {
         FirebaseJson *json = data.to<FirebaseJson *>();
         // Print all object data
@@ -174,7 +174,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
         json->iteratorEnd();
         json->clear();
     }
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_array)
     {
         // get array data from FirebaseData using FirebaseJsonArray object
         FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
@@ -214,7 +214,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
         }
         arr->clear();
     }
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_blob)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_blob)
     {
         MB_VECTOR<uint8_t> *blob = data.to<MB_VECTOR<uint8_t> *>();
         for (size_t i = 0; i < blob->size(); i++)
@@ -228,7 +228,7 @@ void printResult(FIREBASE_STREAM_CLASS &data)
         }
         Serial.println();
     }
-    else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_file)
+    else if (data.dataTypeEnum() == firebase_rtdb_data_type_file)
     {
 #if defined(FLASH_FS)
         File file = data.to<File>();

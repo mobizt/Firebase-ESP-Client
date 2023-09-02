@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -35,22 +35,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_FIRESTORE
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
 
 #ifndef _FB_FIRESTORE_H_
 #define _FB_FIRESTORE_H_
 
-#include "FB_Utils.h"
-#include "session/FB_Session.h"
-#include "json/FirebaseJson.h"
-#if defined(ESP32)
-#include "wcs/esp32/FB_TCP_Client.h"
-#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
-#include "wcs/esp8266/FB_TCP_Client.h"
-#endif
+#include "./FB_Utils.h"
+#include "./session/FB_Session.h"
+#include "./json/FirebaseJson.h"
+
+#include "./client/SSLClient/ESP_SSLClient.h"
 
 using namespace mb_string;
 
@@ -206,7 +203,7 @@ public:
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
-     * @param writes The dyamic array of write object fb_esp_firestore_document_write_t.
+     * @param writes The dyamic array of write object firebase_firestore_document_write_t.
      *
      * For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
      *
@@ -221,7 +218,7 @@ public:
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool commitDocument(FirebaseData *fbdo, T1 projectId, T2 databaseId,
-                        MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "")
+                        MB_VECTOR<struct firebase_firestore_document_write_t> writes, T3 transaction = "")
     {
         return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId),
                                writes, toStringPtr(transaction), false);
@@ -229,7 +226,7 @@ public:
 
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool commitDocumentAsync(FirebaseData *fbdo, T1 projectId, T2 databaseId,
-                             MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, T3 transaction = "")
+                             MB_VECTOR<struct firebase_firestore_document_write_t> writes, T3 transaction = "")
     {
         return mCommitDocument(fbdo, toStringPtr(projectId), toStringPtr(databaseId),
                                writes, toStringPtr(transaction), true);
@@ -240,7 +237,7 @@ public:
      * @param fbdo The pointer to Firebase Data Object.
      * @param projectId The Firebase project id (only the name without the firebaseio.com).
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
-     * @param writes The dyamic array of write object fb_esp_firestore_document_write_t.
+     * @param writes The dyamic array of write object firebase_firestore_document_write_t.
      * Method does not apply writes atomically and does not guarantee ordering.
      * Each write succeeds or fails independently.
      * You cannot write to the same document more than once per request.
@@ -260,7 +257,7 @@ public:
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
     bool batchWriteDocuments(FirebaseData *fbdo, T1 projectId, T2 databaseId,
-                            MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, FirebaseJson *labels = nullptr)
+                            MB_VECTOR<struct firebase_firestore_document_write_t> writes, FirebaseJson *labels = nullptr)
     {
         return mBatchWrite(fbdo, toStringPtr(projectId), toStringPtr(databaseId), writes, labels);
     }
@@ -392,8 +389,8 @@ public:
      * @param databaseId The Firebase Cloud Firestore database id which is (default) or empty "".
      * @param documentPath The relative path of document to get.
      * @param structuredQuery The pointer to FirebaseJson object that contains the Firestore query. For the description of structuredQuery, see https://cloud.google.com/firestore/docs/reference/rest/v1/StructuredQuery
-     * @param consistencyMode Optional. The consistency mode for this transaction e.g. fb_esp_firestore_consistency_mode_transaction,fb_esp_firestore_consistency_mode_newTransaction
-     * and fb_esp_firestore_consistency_mode_readTime
+     * @param consistencyMode Optional. The consistency mode for this transaction e.g. firebase_firestore_consistency_mode_transaction,firebase_firestore_consistency_mode_newTransaction
+     * and firebase_firestore_consistency_mode_readTime
      * @param consistency Optional. The value based on consistency mode e.g. transaction string, TransactionOptions (JSON) and date time string.
      *
      * For more description, see https://cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/runQuery#body.request_body.FIELDS
@@ -406,7 +403,7 @@ public:
      */
     template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
     bool runQuery(FirebaseData *fbdo, T1 projectId, T2 databaseId, T3 documentPath, FirebaseJson *structuredQuery,
-                  fb_esp_firestore_consistency_mode consistencyMode = fb_esp_firestore_consistency_mode_undefined,
+                  firebase_firestore_consistency_mode consistencyMode = firebase_firestore_consistency_mode_undefined,
                   T4 consistency = "")
     {
         return mRunQuery(fbdo, toStringPtr(projectId), toStringPtr(databaseId), toStringPtr(documentPath),
@@ -602,22 +599,22 @@ public:
     }
 
 private:
-    void makeRequest(struct fb_esp_firestore_req_t &req, fb_esp_firestore_request_type type,
+    void makeRequest(struct firebase_firestore_req_t &req, firebase_firestore_request_type type,
                      MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr documentId, MB_StringPtr collectionId);
     void rescon(FirebaseData *fbdo, const char *host);
     bool connect(FirebaseData *fbdo);
-    bool sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
-    bool firestore_sendRequest(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
-    bool handleResponse(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req);
-    void reportUploadProgress(FirebaseData *fbdo, struct fb_esp_firestore_req_t *req, size_t readBytes);
-    int tcpSend(FirebaseData *fbdo, const char *data, struct fb_esp_firestore_req_t *req);
+    bool sendRequest(FirebaseData *fbdo, struct firebase_firestore_req_t *req);
+    bool firestore_sendRequest(FirebaseData *fbdo, struct firebase_firestore_req_t *req);
+    bool handleResponse(FirebaseData *fbdo, struct firebase_firestore_req_t *req);
+    void reportUploadProgress(FirebaseData *fbdo, struct firebase_firestore_req_t *req, size_t readBytes);
+    int tcpSend(FirebaseData *fbdo, const char *data, struct firebase_firestore_req_t *req);
     void sendUploadCallback(FirebaseData *fbdo, CFS_UploadStatusInfo &in, CFS_UploadProgressCallback cb, CFS_UploadStatusInfo *out);
-    bool setFieldTransform(FirebaseJson *json, struct fb_esp_firestore_document_write_field_transforms_t *field_transforms);
+    bool setFieldTransform(FirebaseJson *json, struct firebase_firestore_document_write_field_transforms_t *field_transforms);
     bool mCommitDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
-                         MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, MB_StringPtr transaction, bool async = false);
+                         MB_VECTOR<struct firebase_firestore_document_write_t> writes, MB_StringPtr transaction, bool async = false);
     bool mBatchWrite(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
-                     MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, FirebaseJson *labels);
-    void parseWrites(FirebaseData *fbdo, MB_VECTOR<struct fb_esp_firestore_document_write_t> writes, struct fb_esp_firestore_req_t &req);
+                     MB_VECTOR<struct firebase_firestore_document_write_t> writes, FirebaseJson *labels);
+    void parseWrites(FirebaseData *fbdo, MB_VECTOR<struct firebase_firestore_document_write_t> writes, struct firebase_firestore_req_t &req);
     bool mImportExportDocuments(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
                                 MB_StringPtr bucketID, MB_StringPtr storagePath, MB_StringPtr collectionIds, bool isImport);
     bool mCreateDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
@@ -635,7 +632,7 @@ private:
                            TransactionOptions *transactionOptions = nullptr);
     bool mRollback(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId, MB_StringPtr transaction);
     bool mRunQuery(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
-                   MB_StringPtr documentPath, FirebaseJson *structuredQuery, fb_esp_firestore_consistency_mode consistencyMode,
+                   MB_StringPtr documentPath, FirebaseJson *structuredQuery, firebase_firestore_consistency_mode consistencyMode,
                    MB_StringPtr consistency);
     bool mDeleteDocument(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr databaseId,
                          MB_StringPtr documentPath, MB_StringPtr exists, MB_StringPtr updateTime);

@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40320)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
 #error "Mixed versions compilation."
 #endif
 
@@ -38,11 +38,11 @@
 #define FB_UTILS_H
 
 #include <Arduino.h>
-#include "mbfs/MB_MCU.h"
-#include "FirebaseFS.h"
+#include "./mbfs/MB_MCU.h"
+#include "./FirebaseFS.h"
 
 #include <Arduino.h>
-#include "FB_Const.h"
+#include "./FB_Const.h"
 #if defined(ESP8266)
 #include <Schedule.h>
 #endif
@@ -57,7 +57,7 @@ using namespace mb_string;
 
 #define stringPtr2Str(p) (MB_String().appendPtr(p).c_str())
 
-namespace Utils
+namespace FBUtils
 {
     inline void idle()
     {
@@ -69,38 +69,10 @@ namespace Utils
     }
 };
 
-namespace MemoryHelper
+class StringHelper
 {
-
-    template <typename T>
-    inline T createBuffer(MB_FS *mbfs, size_t size, bool clear = true)
-    {
-        return reinterpret_cast<T>(mbfs->newP(size, clear));
-    }
-
-    template <typename T>
-    inline T creatDownloadBuffer(MB_FS *mbfs, int &bufLen, bool clear = false)
-    {
-        if (bufLen < 512)
-            bufLen = 512;
-
-        if (bufLen > 1024 * 16)
-            bufLen = 1024 * 16;
-
-        return createBuffer<T>(mbfs, bufLen, clear);
-    }
-
-    inline void freeBuffer(MB_FS *mbfs, void *ptr)
-    {
-        mbfs->delP(&ptr);
-    }
-
-};
-
-namespace StringHelper
-{
-
-    inline int strpos(const char *haystack, const char *needle, int offset)
+public:
+    int strpos(const char *haystack, const char *needle, int offset)
     {
         if (!haystack || !needle)
             return -1;
@@ -131,41 +103,12 @@ namespace StringHelper
         return -1;
     }
 
-    inline size_t getReservedLen(MB_FS *mbfs, size_t len)
+    size_t getReservedLen(MB_FS *mbfs, size_t len)
     {
         return mbfs->getReservedLen(len);
     }
 
-    inline void splitString(const MB_String &str, MB_VECTOR<MB_String> out, const char delim)
-    {
-        size_t current = 0, previous = 0;
-        current = str.find(delim, 0);
-        MB_String s;
-        while (current != MB_String::npos)
-        {
-            s.clear();
-            str.substr(s, previous, current - previous);
-            s.trim();
-            if (s.length() > 0)
-                out.push_back(s);
-
-            previous = current + 1;
-            current = str.find(delim, previous);
-        }
-
-        s.clear();
-
-        if (previous > 0 && current == MB_String::npos)
-            str.substr(s, previous, str.length() - previous);
-        else
-            s = str;
-        s.trim();
-        if (s.length() > 0)
-            out.push_back(s);
-        s.clear();
-    }
-
-    inline void pushTk(const MB_String &str, MB_VECTOR<MB_String> &tk)
+    void pushTk(const MB_String &str, MB_VECTOR<MB_String> &tk)
     {
         MB_String s = str;
         s.trim();
@@ -173,7 +116,7 @@ namespace StringHelper
             tk.push_back(s);
     }
 
-    inline void splitTk(const MB_String &str, MB_VECTOR<MB_String> &tk, const char *delim)
+    void splitTk(const MB_String &str, MB_VECTOR<MB_String> &tk, const char *delim)
     {
         size_t current, previous = 0;
         current = str.find(delim, previous);
@@ -186,7 +129,7 @@ namespace StringHelper
         pushTk(str.substr(previous, current - previous), tk);
     }
 
-    inline bool find(const MB_String &src, PGM_P token, bool last, size_t offset, int &pos)
+    bool find(const MB_String &src, PGM_P token, bool last, size_t offset, int &pos)
     {
         size_t ret = last ? src.find_last_of(pgm2Str(token), offset) : src.find(pgm2Str(token), offset);
 
@@ -199,7 +142,7 @@ namespace StringHelper
         return false;
     }
 
-    inline bool compare(const MB_String &src, int ofs, PGM_P token, bool caseInSensitive = false)
+    bool compare(const MB_String &src, int ofs, PGM_P token, bool caseInSensitive = false)
     {
         MB_String copy;
         src.substr(copy, ofs, strlen_P(token));
@@ -207,23 +150,23 @@ namespace StringHelper
     }
 
     /* convert string to boolean */
-    inline bool str2Bool(const MB_String &v)
+    bool str2Bool(const MB_String &v)
     {
-        return v.length() > 0 && strcmp(v.c_str(), pgm2Str(fb_esp_pgm_str_20 /* "true" */)) == 0;
+        return v.length() > 0 && strcmp(v.c_str(), pgm2Str(firebase_pgm_str_20 /* "true" */)) == 0;
     }
 
-    inline MB_String intStr2Str(const MB_String &v)
+    MB_String intStr2Str(const MB_String &v)
     {
         return MB_String(atoi(v.c_str()));
     }
 
-    inline MB_String boolStr2Str(const MB_String &v)
+    MB_String boolStr2Str(const MB_String &v)
     {
         return MB_String(str2Bool(v.c_str()));
     }
 
-    inline bool tokenSubString(const MB_String &src, MB_String &out, PGM_P token1, PGM_P token2,
-                               int &ofs1, int ofs2, bool advanced)
+    bool tokenSubString(const MB_String &src, MB_String &out, PGM_P token1, PGM_P token2,
+                        int &ofs1, int ofs2, bool advanced)
     {
         size_t pos1 = src.find(pgm2Str(token1), ofs1);
         size_t pos2 = MB_String::npos;
@@ -259,7 +202,7 @@ namespace StringHelper
         return false;
     }
 
-    inline bool tokenSubStringInt(const MB_String &buf, int &out, PGM_P token1, PGM_P token2, int &ofs1, int ofs2, bool advanced)
+    bool tokenSubStringInt(const MB_String &buf, int &out, PGM_P token1, PGM_P token2, int &ofs1, int ofs2, bool advanced)
     {
         MB_String s;
         if (tokenSubString(buf, s, token1, token2, ofs1, ofs2, advanced))
@@ -269,14 +212,13 @@ namespace StringHelper
         }
         return false;
     }
+};
 
-}
-
-namespace URLHelper
+class URLHelper
 {
-
+public:
     /* Append a parameter to URL */
-    inline bool addParam(MB_String &url, PGM_P key, const MB_String &val, bool &hasParam, bool allowEmptyValue = false)
+    bool addParam(MB_String &url, PGM_P key, const MB_String &val, bool &hasParam, bool allowEmptyValue = false)
     {
         if (!allowEmptyValue && val.length() == 0)
             return false;
@@ -289,10 +231,10 @@ namespace URLHelper
             _key[0] = '&';
 
         if (_key[0] != '?' && _key[0] != '&')
-            url += !hasParam ? fb_esp_pgm_str_7 /* "?" */ : fb_esp_pgm_str_8 /* "&" */;
+            url += !hasParam ? firebase_pgm_str_7 /* "?" */ : firebase_pgm_str_8 /* "&" */;
 
         if (_key[_key.length() - 1] != '=' && _key.find('=') == MB_String::npos)
-            _key += fb_esp_pgm_str_13; // "="
+            _key += firebase_pgm_str_13; // "="
 
         url += _key;
         url += val;
@@ -301,114 +243,114 @@ namespace URLHelper
     }
 
     /* Append the comma separated tokens as URL parameters */
-    inline void addParamsTokens(MB_String &url, PGM_P key, MB_String val, bool &hasParam)
+    void addParamsTokens(StringHelper *sh, MB_String &url, PGM_P key, MB_String val, bool &hasParam)
     {
         if (val.length() == 0)
             return;
 
         MB_VECTOR<MB_String> tk;
-        StringHelper::splitTk(val, tk, ",");
+        sh->splitTk(val, tk, ",");
         for (size_t i = 0; i < tk.size(); i++)
             addParam(url, key, tk[i], hasParam);
     }
 
     /* Append the path to URL */
-    inline void addPath(MB_String &url, const MB_String &path)
+    void addPath(MB_String &url, const MB_String &path)
     {
         if (path.length() > 0)
         {
             if (path[0] != '/')
-                url += fb_esp_pgm_str_1; // "/"
+                url += firebase_pgm_str_1; // "/"
         }
         else
-            url += fb_esp_pgm_str_1; // "/"
+            url += firebase_pgm_str_1; // "/"
 
         url += path;
     }
 #if defined(FIREBASE_ESP_CLIENT)
     /* Append the string with google storage URL */
-    inline void addGStorageURL(MB_String &uri, const MB_String &bucketID, const MB_String &storagePath)
+    void addGStorageURL(MB_String &uri, const MB_String &bucketID, const MB_String &storagePath)
     {
-        uri += fb_esp_pgm_str_21; // "gs://"
+        uri += firebase_pgm_str_21; // "gs://"
         uri += bucketID;
         if (storagePath[0] != '/')
-            uri += fb_esp_pgm_str_1; // "/"
+            uri += firebase_pgm_str_1; // "/"
         uri += storagePath;
     }
 
     /* Append the string with cloudfunctions project host */
-    inline void addFunctionsHost(MB_String &uri, const MB_String &locationId, const MB_String &projectId,
-                                 const MB_String &path, bool url)
+    void addFunctionsHost(MB_String &uri, const MB_String &locationId, const MB_String &projectId,
+                          const MB_String &path, bool url)
     {
-#if defined(ENABLE_FB_FUNCTIONS)
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
         if (url)
-            uri = fb_esp_pgm_str_22; // "https://"
+            uri = firebase_pgm_str_22; // "https://"
         uri += locationId;
-        uri += fb_esp_pgm_str_14; // "-"
+        uri += firebase_pgm_str_14; // "-"
         uri += projectId;
-        uri += fb_esp_func_pgm_str_82; // ".cloudfunctions.net"
+        uri += firebase_func_pgm_str_82; // ".cloudfunctions.net"
         if (path.length() > 0)
         {
-            uri += fb_esp_pgm_str_1; // "/"
+            uri += firebase_pgm_str_1; // "/"
             uri += path;
         }
 #endif
     }
 
-    inline void addGAPIv1Path(MB_String &uri)
+    void addGAPIv1Path(MB_String &uri)
     {
-        uri += fb_esp_pgm_str_23; // "/v1/projects/"
+        uri += firebase_pgm_str_23; // "/v1/projects/"
     }
 
-    inline void addGAPIv1beta1Path(MB_String &uri)
+    void addGAPIv1beta1Path(MB_String &uri)
     {
-        uri += fb_esp_pgm_str_24; // "/v1beta1/projects/"
+        uri += firebase_pgm_str_24; // "/v1beta1/projects/"
     }
 #endif
 
-    inline void host2Url(MB_String &url, MB_String &host)
+    void host2Url(MB_String &url, MB_String &host)
     {
-        url = fb_esp_pgm_str_22; // "https://"
+        url = firebase_pgm_str_22; // "https://"
         url += host;
     }
 
-    inline void parse(MB_FS *mbfs, const MB_String &url, struct fb_esp_url_info_t &info)
+    void parse(MB_FS *mbfs, const MB_String &url, struct firebase_url_info_t &info)
     {
-        char *host = MemoryHelper::createBuffer<char *>(mbfs, url.length());
-        char *uri = MemoryHelper::createBuffer<char *>(mbfs, url.length());
-        char *auth = MemoryHelper::createBuffer<char *>(mbfs, url.length());
+        char *host = reinterpret_cast<char *>(mbfs->newP(url.length()));
+        char *uri = reinterpret_cast<char *>(mbfs->newP(url.length()));
+        char *auth = reinterpret_cast<char *>(mbfs->newP(url.length()));
 
         int p1 = 0;
-        int x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_25 /* "https://%[^/]/%s" */), host, uri);
-        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_26 /* "http://%[^/]/%s" */), host, uri);
-        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(fb_esp_pgm_str_27 /* "%[^/]/%s" */), host, uri);
+        int x = sscanf(url.c_str(), pgm2Str(firebase_pgm_str_25 /* "https://%[^/]/%s" */), host, uri);
+        x ? p1 = 8 : x = sscanf(url.c_str(), pgm2Str(firebase_pgm_str_26 /* "http://%[^/]/%s" */), host, uri);
+        x ? p1 = 7 : x = sscanf(url.c_str(), pgm2Str(firebase_pgm_str_27 /* "%[^/]/%s" */), host, uri);
 
         size_t p2 = 0;
         if (x > 0)
         {
-            p2 = MB_String(host).find(pgm2Str(fb_esp_pgm_str_7 /* "?" */), 0);
+            p2 = MB_String(host).find(pgm2Str(firebase_pgm_str_7 /* "?" */), 0);
             if (p2 != MB_String::npos)
-                x = sscanf(url.c_str() + p1, pgm2Str(fb_esp_pgm_str_28 /* "%[^?]?%s" */), host, uri);
+                x = sscanf(url.c_str() + p1, pgm2Str(firebase_pgm_str_28 /* "%[^?]?%s" */), host, uri);
         }
 
         if (strlen(uri) > 0)
         {
-#if defined(ENABLE_RTDB)
-            p2 = MB_String(uri).find(pgm2Str(fb_esp_rtdb_pgm_str_19 /* "auth=" */), 0);
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
+            p2 = MB_String(uri).find(pgm2Str(firebase_rtdb_pgm_str_19 /* "auth=" */), 0);
             if (p2 != MB_String::npos)
-                x = sscanf(uri + p2 + 5, pgm2Str(fb_esp_pgm_str_29 /* "%[^&]" */), auth);
+                x = sscanf(uri + p2 + 5, pgm2Str(firebase_pgm_str_29 /* "%[^&]" */), auth);
 #endif
         }
 
         info.uri = uri;
         info.host = host;
         info.auth = auth;
-        MemoryHelper::freeBuffer(mbfs, host);
-        MemoryHelper::freeBuffer(mbfs, uri);
-        MemoryHelper::freeBuffer(mbfs, auth);
+        mbfs->delP(&host);
+        mbfs->delP(&uri);
+        mbfs->delP(&auth);
     }
 
-    inline void hexchar(char c, char &hex1, char &hex2)
+    void hexchar(char c, char &hex1, char &hex2)
     {
         hex1 = c / 16;
         hex2 = c % 16;
@@ -416,7 +358,7 @@ namespace URLHelper
         hex2 += hex2 < 10 ? '0' : 'A' - 10;
     }
 
-    inline MB_String encode(const MB_String &s)
+    MB_String encode(const MB_String &s)
     {
         MB_String ret;
         ret.reserve(s.length() * 3 + 1);
@@ -443,24 +385,23 @@ namespace URLHelper
         ret.shrink_to_fit();
         return ret;
     }
-
 };
 
-namespace JsonHelper
+class JsonHelper
 {
-
+public:
     /* check for the JSON path or key */
-    inline bool isJsonPath(PGM_P path)
+    bool isJsonPath(PGM_P path)
     {
         return MB_String(path).find('/') != MB_String::npos;
     }
 
-    inline bool parseChunk(MB_String &val, const MB_String &chunk, const MB_String &key, int &pos)
+    bool parseChunk(MB_String &val, const MB_String &chunk, const MB_String &key, int &pos)
     {
         if (key.length() == 0)
             return false;
 
-        MB_String token = fb_esp_pgm_str_4; // "\""
+        MB_String token = firebase_pgm_str_4; // "\""
 
         MB_String _key;
 
@@ -473,7 +414,7 @@ namespace JsonHelper
         size_t p1 = chunk.find(_key, pos);
         if (p1 != MB_String::npos)
         {
-            size_t p2 = chunk.find(MB_String(fb_esp_pgm_str_2 /* ":" */).c_str(), p1 + _key.length());
+            size_t p2 = chunk.find(MB_String(firebase_pgm_str_2 /* ":" */).c_str(), p1 + _key.length());
             if (p2 != MB_String::npos)
                 p2 = chunk.find(token, p2 + 1);
             if (p2 != MB_String::npos)
@@ -491,13 +432,13 @@ namespace JsonHelper
     }
 
     /* convert comma separated tokens into JSON Array and set/add to JSON object */
-    inline void addTokens(FirebaseJson *json, PGM_P key, const MB_String &tokens, const char *pre = "")
+    void addTokens(StringHelper *sh, FirebaseJson *json, PGM_P key, const MB_String &tokens, const char *pre = "")
     {
         if (json && tokens.length() > 0)
         {
             FirebaseJsonArray arr;
             MB_VECTOR<MB_String> ta;
-            StringHelper::splitTk(tokens, ta, ",");
+            sh->splitTk(tokens, ta, ",");
             for (size_t i = 0; i < ta.size(); i++)
             {
                 if (strlen(pre))
@@ -520,7 +461,7 @@ namespace JsonHelper
         }
     }
 
-    inline bool addString(FirebaseJson *json, PGM_P key, const MB_String &val)
+    bool addString(FirebaseJson *json, PGM_P key, const MB_String &val)
     {
         if (json && val.length() > 0)
         {
@@ -533,32 +474,32 @@ namespace JsonHelper
         return false;
     }
 
-    inline bool remove(FirebaseJson *json, PGM_P key)
+    bool remove(FirebaseJson *json, PGM_P key)
     {
         if (json)
             return json->remove(pgm2Str(key));
         return false;
     }
 
-    inline void addString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
+    void addString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
     {
         if (addString(json, key, val))
             flag = true;
     }
 
-    inline void addBoolString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
+    void addBoolString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
     {
         if (json && val.length() > 0)
         {
             if (isJsonPath(key))
-                json->set(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_20 /* "true" */)) == 0 ? true : false);
+                json->set(pgm2Str(key), strcmp(val.c_str(), pgm2Str(firebase_pgm_str_20 /* "true" */)) == 0 ? true : false);
             else
-                json->add(pgm2Str(key), strcmp(val.c_str(), pgm2Str(fb_esp_pgm_str_20 /* "true" */)) == 0 ? true : false);
+                json->add(pgm2Str(key), strcmp(val.c_str(), pgm2Str(firebase_pgm_str_20 /* "true" */)) == 0 ? true : false);
             flag = true;
         }
     }
 
-    inline void addArrayString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
+    void addArrayString(FirebaseJson *json, PGM_P key, const MB_String &val, bool &flag)
     {
         if (val.length() > 0)
         {
@@ -573,7 +514,7 @@ namespace JsonHelper
         }
     }
 
-    inline void addObject(FirebaseJson *json, PGM_P key, FirebaseJson *val, bool clearAfterAdded)
+    void addObject(FirebaseJson *json, PGM_P key, FirebaseJson *val, bool clearAfterAdded)
     {
         if (json)
         {
@@ -592,7 +533,7 @@ namespace JsonHelper
         }
     }
 
-    inline void addNumberString(FirebaseJson *json, PGM_P key, const MB_String &val)
+    void addNumberString(FirebaseJson *json, PGM_P key, const MB_String &val)
     {
         if (json && val.length() > 0)
         {
@@ -603,7 +544,7 @@ namespace JsonHelper
         }
     }
 
-    inline void arrayAddObjectString(FirebaseJsonArray *arr, MB_String &val, bool clearAfterAdded)
+    void arrayAddObjectString(FirebaseJsonArray *arr, MB_String &val, bool clearAfterAdded)
     {
         if (arr && val.length() > 0)
         {
@@ -614,7 +555,7 @@ namespace JsonHelper
         }
     }
 
-    inline void arrayAddObject(FirebaseJsonArray *arr, FirebaseJson *val, bool clearAfterAdded)
+    void arrayAddObject(FirebaseJsonArray *arr, FirebaseJson *val, bool clearAfterAdded)
     {
         if (arr && val)
         {
@@ -624,7 +565,7 @@ namespace JsonHelper
         }
     }
 
-    inline void addArray(FirebaseJson *json, PGM_P key, FirebaseJsonArray *val, bool clearAfterAdded)
+    void addArray(FirebaseJson *json, PGM_P key, FirebaseJsonArray *val, bool clearAfterAdded)
     {
         if (json && val)
         {
@@ -637,7 +578,7 @@ namespace JsonHelper
         }
     }
 
-    inline bool parse(FirebaseJson *json, FirebaseJsonData *result, PGM_P key)
+    bool parse(FirebaseJson *json, FirebaseJsonData *result, PGM_P key)
     {
         bool ret = false;
         if (json && result)
@@ -649,7 +590,7 @@ namespace JsonHelper
         return ret;
     }
 
-    inline bool setData(FirebaseJson *json, MB_String &val, bool clearAfterAdded)
+    bool setData(FirebaseJson *json, MB_String &val, bool clearAfterAdded)
     {
         bool ret = false;
 
@@ -662,7 +603,7 @@ namespace JsonHelper
         return ret;
     }
 
-    inline void toString(FirebaseJson *json, MB_String &out, bool clearSource, bool prettify = false)
+    void toString(FirebaseJson *json, MB_String &out, bool clearSource, bool prettify = false)
     {
         if (json)
         {
@@ -673,99 +614,99 @@ namespace JsonHelper
         }
     }
 
-    inline void clear(FirebaseJson *json)
+    void clear(FirebaseJson *json)
     {
         if (json)
             json->clear();
     }
 
-    inline void arrayClear(FirebaseJsonArray *arr)
+    void arrayClear(FirebaseJsonArray *arr)
     {
         if (arr)
             arr->clear();
     }
-
 };
 
-namespace HttpHelper
+class HttpHelper
 {
-    inline void addNewLine(MB_String &header)
+public:
+    void addNewLine(MB_String &header)
     {
-        header += fb_esp_pgm_str_30; // "\r\n"
+        header += firebase_pgm_str_30; // "\r\n"
     }
 
-    inline void addGAPIsHost(MB_String &str, PGM_P sub)
+    void addGAPIsHost(MB_String &str, PGM_P sub)
     {
         str += sub;
         if (str[str.length() - 1] != '.')
-            str += fb_esp_pgm_str_5; // "."
-        str += fb_esp_pgm_str_31;    // "googleapis.com"
+            str += firebase_pgm_str_5; // "."
+        str += firebase_pgm_str_31;    // "googleapis.com"
     }
 
-    inline void addGAPIsHostHeader(MB_String &header, PGM_P sub)
+    void addGAPIsHostHeader(MB_String &header, PGM_P sub)
     {
-        header += fb_esp_pgm_str_32; // "Host: "
+        header += firebase_pgm_str_32; // "Host: "
         addGAPIsHost(header, sub);
         addNewLine(header);
     }
 
-    inline void addHostHeader(MB_String &header, PGM_P host)
+    void addHostHeader(MB_String &header, PGM_P host)
     {
-        header += fb_esp_pgm_str_32; // "Host: "
+        header += firebase_pgm_str_32; // "Host: "
         header += host;
         addNewLine(header);
     }
 
-    inline void addContentTypeHeader(MB_String &header, PGM_P v)
+    void addContentTypeHeader(MB_String &header, PGM_P v)
     {
-        header += fb_esp_pgm_str_33; // "Content-Type: "
+        header += firebase_pgm_str_33; // "Content-Type: "
         header += v;
-        header += fb_esp_pgm_str_30; // "\r\n"
+        header += firebase_pgm_str_30; // "\r\n"
     }
 
-    inline void addContentLengthHeader(MB_String &header, size_t len)
+    void addContentLengthHeader(MB_String &header, size_t len)
     {
-        header += fb_esp_pgm_str_34; // "Content-Length: "
+        header += firebase_pgm_str_34; // "Content-Length: "
         header += len;
         addNewLine(header);
     }
 
-    inline void addUAHeader(MB_String &header)
+    void addUAHeader(MB_String &header)
     {
-        header += fb_esp_pgm_str_35; // "User-Agent: ESP\r\n"
+        header += firebase_pgm_str_35; // "User-Agent: ESP\r\n"
     }
 
-    inline void addConnectionHeader(MB_String &header, bool keepAlive)
+    void addConnectionHeader(MB_String &header, bool keepAlive)
     {
-        header += keepAlive ? fb_esp_pgm_str_36 /* "Connection: keep-alive\r\n" */
-                            : fb_esp_pgm_str_37 /* "Connection: close\r\n" */;
+        header += keepAlive ? firebase_pgm_str_36 /* "Connection: keep-alive\r\n" */
+                            : firebase_pgm_str_37 /* "Connection: close\r\n" */;
     }
 
     /* Append the string with first request line (HTTP method) */
-    inline bool addRequestHeaderFirst(MB_String &header, fb_esp_request_method method)
+    bool addRequestHeaderFirst(MB_String &header, firebase_request_method method)
     {
         bool post = false;
         switch (method)
         {
         case http_get:
-            header += fb_esp_pgm_str_41; // "GET"
+            header += firebase_pgm_str_41; // "GET"
             break;
         case http_post:
-            header += fb_esp_pgm_str_40; // "POST"
+            header += firebase_pgm_str_40; // "POST"
             post = true;
             break;
 
         case http_patch:
-            header += fb_esp_pgm_str_38; // "PATCH"
+            header += firebase_pgm_str_38; // "PATCH"
             post = true;
             break;
 
         case http_delete:
-            header += fb_esp_pgm_str_42; // "DELETE"
+            header += firebase_pgm_str_42; // "DELETE"
             break;
 
         case http_put:
-            header += fb_esp_pgm_str_39; // "PUT"
+            header += firebase_pgm_str_39; // "PUT"
             break;
 
         default:
@@ -773,30 +714,30 @@ namespace HttpHelper
         }
 
         if (method == http_get || method == http_post || method == http_patch || method == http_delete || method == http_put)
-            header += fb_esp_pgm_str_9; // " "
+            header += firebase_pgm_str_9; // " "
 
         return post;
     }
 
     /* Append the string with last request line (HTTP version) */
-    inline void addRequestHeaderLast(MB_String &header)
+    void addRequestHeaderLast(MB_String &header)
     {
-        header += fb_esp_pgm_str_43; // " HTTP/1.1\r\n"
+        header += firebase_pgm_str_43; // " HTTP/1.1\r\n"
     }
 
     /* Append the string with first part of Authorization header */
-    inline void addAuthHeaderFirst(MB_String &header, fb_esp_auth_token_type type)
+    void addAuthHeaderFirst(MB_String &header, firebase_auth_token_type type)
     {
-        header += fb_esp_pgm_str_44; // "Authorization: "
+        header += firebase_pgm_str_44; // "Authorization: "
         if (type == token_type_oauth2_access_token)
-            header += fb_esp_pgm_str_45; // "Bearer "
+            header += firebase_pgm_str_45; // "Bearer "
         else if (type == token_type_id_token || type == token_type_custom_token)
-            header += fb_esp_pgm_str_46; // "Firebase "
+            header += firebase_pgm_str_46; // "Firebase "
         else
-            header += fb_esp_pgm_str_47; // "key="
+            header += firebase_pgm_str_47; // "key="
     }
 
-    inline void parseRespHeader(const MB_String &src, struct server_response_data_t &response)
+    void parseRespHeader(StringHelper *sh, const MB_String &src, struct server_response_data_t &response)
     {
         int beginPos = 0;
 
@@ -805,24 +746,24 @@ namespace HttpHelper
         if (response.httpCode != -1)
         {
 
-            StringHelper::tokenSubString(src, response.connection,
-                                         fb_esp_pgm_str_48 /* "Connection: " */,
-                                         fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
-            StringHelper::tokenSubString(src, response.contentType,
-                                         fb_esp_pgm_str_33 /* "Content-Type: " */,
-                                         fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
-            StringHelper::tokenSubStringInt(src, response.contentLen,
-                                            fb_esp_pgm_str_34 /* "Content-Length: " */,
-                                            fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
-            StringHelper::tokenSubString(src, response.etag,
-                                         fb_esp_pgm_str_49 /* "ETag: " */,
-                                         fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
+            sh->tokenSubString(src, response.connection,
+                               firebase_pgm_str_48 /* "Connection: " */,
+                               firebase_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
+            sh->tokenSubString(src, response.contentType,
+                               firebase_pgm_str_33 /* "Content-Type: " */,
+                               firebase_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
+            sh->tokenSubStringInt(src, response.contentLen,
+                                  firebase_pgm_str_34 /* "Content-Length: " */,
+                                  firebase_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
+            sh->tokenSubString(src, response.etag,
+                               firebase_pgm_str_49 /* "ETag: " */,
+                               firebase_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
             response.payloadLen = response.contentLen;
 
-            if (StringHelper::tokenSubString(src, response.transferEnc,
-                                             fb_esp_pgm_str_50 /* "Transfer-Encoding: " */,
-                                             fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false) &&
-                StringHelper::compare(response.transferEnc, 0, fb_esp_pgm_str_51 /* "chunked" */))
+            if (sh->tokenSubString(src, response.transferEnc,
+                                   firebase_pgm_str_50 /* "Transfer-Encoding: " */,
+                                   firebase_pgm_str_30 /* "\r\n" */, beginPos, 0, false) &&
+                sh->compare(response.transferEnc, 0, firebase_pgm_str_51 /* "chunked" */))
                 response.isChunkedEnc = true;
 
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_OK ||
@@ -830,25 +771,25 @@ namespace HttpHelper
                 response.httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT ||
                 response.httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY ||
                 response.httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
-                StringHelper::tokenSubString(src, response.location,
-                                             fb_esp_pgm_str_52 /* "Location: " */,
-                                             fb_esp_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
+                sh->tokenSubString(src, response.location,
+                                   firebase_pgm_str_52 /* "Location: " */,
+                                   firebase_pgm_str_30 /* "\r\n" */, beginPos, 0, false);
 
             if (response.httpCode == FIREBASE_ERROR_HTTP_CODE_NO_CONTENT)
                 response.noContent = true;
         }
     }
 
-    inline int getStatusCode(const MB_String &header, int &pos)
+    int getStatusCode(StringHelper *sh, const MB_String &header, int &pos)
     {
         int code = 0;
-        StringHelper::tokenSubStringInt(header, code,
-                                        fb_esp_pgm_str_53 /* "HTTP/1.1 " */,
-                                        fb_esp_pgm_str_9 /* " " */, pos, 0, false);
+        sh->tokenSubStringInt(header, code,
+                              firebase_pgm_str_53 /* "HTTP/1.1 " */,
+                              firebase_pgm_str_9 /* " " */, pos, 0, false);
         return code;
     }
 
-    inline void setNumDataType(const MB_String &buf, int ofs, struct server_response_data_t &response, bool dec)
+    void setNumDataType(const MB_String &buf, int ofs, struct server_response_data_t &response, bool dec)
     {
         if (ofs < 0)
             return;
@@ -867,12 +808,12 @@ namespace HttpHelper
                 if (response.payloadLen <= 7)
                 {
                     response.floatData = d;
-                    response.dataType = fb_esp_data_type::d_float;
+                    response.dataType = firebase_data_type::d_float;
                 }
                 else
                 {
                     response.doubleData = d;
-                    response.dataType = fb_esp_data_type::d_double;
+                    response.dataType = firebase_data_type::d_double;
                 }
             }
             else
@@ -880,56 +821,56 @@ namespace HttpHelper
                 if (d > 0x7fffffff)
                 {
                     response.doubleData = d;
-                    response.dataType = fb_esp_data_type::d_double;
+                    response.dataType = firebase_data_type::d_double;
                 }
                 else
                 {
                     response.intData = (int)d;
-                    response.dataType = fb_esp_data_type::d_integer;
+                    response.dataType = firebase_data_type::d_integer;
                 }
             }
         }
     }
 
-    inline void parseRespPayload(const MB_String &src, struct server_response_data_t &response, bool getOfs)
+    void parseRespPayload(StringHelper *sh, const MB_String &src, struct server_response_data_t &response, bool getOfs)
     {
         int payloadPos = 0;
         int payloadOfs = 0;
 
         MB_String out;
 
-#if defined(ENABLE_RTDB)
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
         if (!response.isEvent && !response.noEvent)
         {
-            if (StringHelper::tokenSubString(src, response.eventType,
-                                             fb_esp_rtdb_pgm_str_12 /* "event: " */,
-                                             fb_esp_pgm_str_12 /* "\n" */, payloadPos, 0, true))
+            if (sh->tokenSubString(src, response.eventType,
+                                   firebase_rtdb_pgm_str_12 /* "event: " */,
+                                   firebase_pgm_str_12 /* "\n" */, payloadPos, 0, true))
             {
                 response.isEvent = true;
                 payloadOfs = payloadPos;
 
-                if (StringHelper::tokenSubString(src, out,
-                                                 fb_esp_rtdb_pgm_str_13 /* "data: " */,
-                                                 fb_esp_pgm_str_12 /* "\n" */, payloadPos, 0, true))
+                if (sh->tokenSubString(src, out,
+                                       firebase_rtdb_pgm_str_13 /* "data: " */,
+                                       firebase_pgm_str_12 /* "\n" */, payloadPos, 0, true))
                 {
-                    payloadOfs += strlen_P(fb_esp_rtdb_pgm_str_13 /* "data: " */);
+                    payloadOfs += strlen_P(firebase_rtdb_pgm_str_13 /* "data: " */);
                     payloadPos = payloadOfs;
                     response.hasEventData = true;
 
-                    if (StringHelper::tokenSubString(src, response.eventPath,
-                                                     fb_esp_pgm_str_54 /* "\"path\":\"" */,
-                                                     fb_esp_pgm_str_4 /* "\"" */, payloadPos, 0, true))
+                    if (sh->tokenSubString(src, response.eventPath,
+                                           firebase_pgm_str_54 /* "\"path\":\"" */,
+                                           firebase_pgm_str_4 /* "\"" */, payloadPos, 0, true))
                     {
                         payloadOfs = payloadPos;
 
-                        if (StringHelper::tokenSubString(src, response.eventData,
-                                                         fb_esp_pgm_str_55 /* "\"data\":" */,
-                                                         fb_esp_pgm_str_12 /* "\n" */, payloadPos, 0, true))
+                        if (sh->tokenSubString(src, response.eventData,
+                                               firebase_pgm_str_55 /* "\"data\":" */,
+                                               firebase_pgm_str_12 /* "\n" */, payloadPos, 0, true))
                         {
                             response.eventData[response.eventData.length() - 1] = 0;
                             response.payloadLen = response.eventData.length();
-                            payloadOfs += strlen_P(fb_esp_pgm_str_55 /* "\"data\":" */) + 1;
+                            payloadOfs += strlen_P(firebase_pgm_str_55 /* "\"data\":" */) + 1;
                             response.payloadOfs = payloadOfs;
                         }
                     }
@@ -944,77 +885,77 @@ namespace HttpHelper
 
         if (response.dataType == 0)
         {
-            StringHelper::tokenSubString(src, response.pushName,
-                                         fb_esp_pgm_str_56 /* "{\"name\":\"" */,
-                                         fb_esp_pgm_str_4 /* "\"" */, payloadPos, 0, true);
+            sh->tokenSubString(src, response.pushName,
+                               firebase_pgm_str_56 /* "{\"name\":\"" */,
+                               firebase_pgm_str_4 /* "\"" */, payloadPos, 0, true);
 
-            if (StringHelper::tokenSubString(src, out,
-                                             fb_esp_pgm_str_57 /* "\"error\" : " */,
-                                             fb_esp_pgm_str_4 /* "\"" */, payloadPos, 0, true))
+            if (sh->tokenSubString(src, out,
+                                   firebase_pgm_str_57 /* "\"error\" : " */,
+                                   firebase_pgm_str_4 /* "\"" */, payloadPos, 0, true))
             {
                 FirebaseJson js;
                 FirebaseJsonData d;
                 js.setJsonData(src);
-                js.get(d, pgm2Str(fb_esp_pgm_str_58 /* "error" */));
+                js.get(d, pgm2Str(firebase_pgm_str_58 /* "error" */));
                 if (d.success)
                     response.fbError = d.stringValue.c_str();
             }
-#if defined(ENABLE_RTDB)
-            if (StringHelper::compare(src, payloadOfs, fb_esp_rtdb_pgm_str_7 /* "\"blob,base64," */, true))
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
+            if (sh->compare(src, payloadOfs, firebase_rtdb_pgm_str_7 /* "\"blob,base64," */, true))
             {
-                response.dataType = fb_esp_data_type::d_blob;
+                response.dataType = firebase_data_type::d_blob;
                 if ((response.isEvent && response.hasEventData) || getOfs)
                 {
                     if (response.eventData.length() > 0)
                     {
-                        int dlen = response.eventData.length() - strlen_P(fb_esp_rtdb_pgm_str_7) - 1;
+                        int dlen = response.eventData.length() - strlen_P(firebase_rtdb_pgm_str_7) - 1;
                         response.payloadLen = dlen;
                     }
-                    response.payloadOfs += strlen_P(fb_esp_rtdb_pgm_str_7);
+                    response.payloadOfs += strlen_P(firebase_rtdb_pgm_str_7);
                     response.eventData.clear();
                 }
             }
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_rtdb_pgm_str_8 /* "\"file,base64," */, true))
+            else if (sh->compare(src, payloadOfs, firebase_rtdb_pgm_str_8 /* "\"file,base64," */, true))
             {
-                response.dataType = fb_esp_data_type::d_file;
+                response.dataType = firebase_data_type::d_file;
                 if ((response.isEvent && response.hasEventData) || getOfs)
                 {
                     if (response.eventData.length() > 0)
                     {
-                        int dlen = response.eventData.length() - strlen_P(fb_esp_rtdb_pgm_str_8) - 1;
+                        int dlen = response.eventData.length() - strlen_P(firebase_rtdb_pgm_str_8) - 1;
                         response.payloadLen = dlen;
                     }
 
-                    response.payloadOfs += strlen_P(fb_esp_rtdb_pgm_str_8);
+                    response.payloadOfs += strlen_P(firebase_rtdb_pgm_str_8);
                     response.eventData.clear();
                 }
             }
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_4 /* "\"" */))
-                response.dataType = fb_esp_data_type::d_string;
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_10 /* "{" */))
-                response.dataType = fb_esp_data_type::d_json;
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_6 /* "[" */))
-                response.dataType = fb_esp_data_type::d_array;
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_19 /* "false" */) ||
-                     StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_20 /* "true" */))
+            else if (sh->compare(src, payloadOfs, firebase_pgm_str_4 /* "\"" */))
+                response.dataType = firebase_data_type::d_string;
+            else if (sh->compare(src, payloadOfs, firebase_pgm_str_10 /* "{" */))
+                response.dataType = firebase_data_type::d_json;
+            else if (sh->compare(src, payloadOfs, firebase_pgm_str_6 /* "[" */))
+                response.dataType = firebase_data_type::d_array;
+            else if (sh->compare(src, payloadOfs, firebase_pgm_str_19 /* "false" */) ||
+                     sh->compare(src, payloadOfs, firebase_pgm_str_20 /* "true" */))
             {
-                response.dataType = fb_esp_data_type::d_boolean;
-                response.boolData = StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_20 /* "true" */);
+                response.dataType = firebase_data_type::d_boolean;
+                response.boolData = sh->compare(src, payloadOfs, firebase_pgm_str_20 /* "true" */);
             }
-            else if (StringHelper::compare(src, payloadOfs, fb_esp_pgm_str_59 /* "null" */))
-                response.dataType = fb_esp_data_type::d_null;
+            else if (sh->compare(src, payloadOfs, firebase_pgm_str_59 /* "null" */))
+                response.dataType = firebase_data_type::d_null;
             else
-                setNumDataType(src, payloadOfs, response, src.find(pgm2Str(fb_esp_pgm_str_5 /* "." */), payloadOfs) != MB_String::npos);
+                setNumDataType(src, payloadOfs, response, src.find(pgm2Str(firebase_pgm_str_5 /* "." */), payloadOfs) != MB_String::npos);
 #endif
         }
     }
 
-    inline void getCustomHeaders(MB_String &header, const MB_String &tokens)
+    void getCustomHeaders(StringHelper *sh, MB_String &header, const MB_String &tokens)
     {
         if (tokens.length() > 0)
         {
             MB_VECTOR<MB_String> headers;
-            StringHelper::splitTk(tokens, headers, ",");
+            sh->splitTk(tokens, headers, ",");
             for (size_t i = 0; i < headers.size(); i++)
             {
                 size_t p1 = headers[i].find(F("X-Firebase-"));
@@ -1032,36 +973,36 @@ namespace HttpHelper
         }
     }
 
-    inline void initTCPSession(struct fb_esp_session_info_t &session)
+    void initTCPSession(struct firebase_session_info_t &session)
     {
 
-#ifdef ENABLE_RTDB
-        if (session.con_mode == fb_esp_con_mode_rtdb)
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
+        if (session.con_mode == firebase_con_mode_rtdb)
             session.rtdb.raw.clear();
 #endif
 
-#ifdef ENABLE_FIRESTORE
-        if (session.con_mode == fb_esp_con_mode_firestore)
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
+        if (session.con_mode == firebase_con_mode_firestore)
             session.cfs.payload.clear();
 #endif
 
-#ifdef ENABLE_FB_FUNCTIONS
-        if (session.con_mode == fb_esp_con_mode_functions)
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
+        if (session.con_mode == firebase_con_mode_functions)
             session.cfn.payload.clear();
 #endif
 
-#if defined(ENABLE_FCM) && defined(FIREBASE_ESP_CLIENT)
-        if (session.con_mode == fb_esp_con_mode_fcm)
+#if (defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)) && defined(FIREBASE_ESP_CLIENT)
+        if (session.con_mode == firebase_con_mode_fcm)
             session.fcm.payload.clear();
 #endif
 
-#ifdef ENABLE_GC_STORAGE
-        if (session.con_mode == fb_esp_con_mode_gc_storage)
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
+        if (session.con_mode == firebase_con_mode_gc_storage)
             session.gcs.payload.clear();
 #endif
 
-#ifdef ENABLE_FB_STORAGE
-        if (session.con_mode == fb_esp_con_mode_storage)
+#if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
+        if (session.con_mode == firebase_con_mode_storage)
             session.fcs.files.items.clear();
 #endif
 
@@ -1072,8 +1013,8 @@ namespace HttpHelper
         session.buffer_ovf = false;
     }
 
-    inline void intTCPHandler(Client *client, struct fb_esp_tcp_response_handler_t &tcpHandler,
-                              size_t defaultChunkSize, size_t respSize, MB_String *payload, bool isOTA)
+    void intTCPHandler(Client *client, struct firebase_tcp_response_handler_t &tcpHandler,
+                       size_t defaultChunkSize, size_t respSize, MB_String *payload, bool isOTA)
     {
         // set the client before calling available
         tcpHandler.client = client;
@@ -1090,7 +1031,7 @@ namespace HttpHelper
         tcpHandler.payload = payload;
     }
 
-    inline int readLine(Client *client, char *buf, int bufLen)
+    int readLine(Client *client, char *buf, int bufLen)
     {
         if (!client)
             return 0;
@@ -1105,7 +1046,7 @@ namespace HttpHelper
             if (!client)
                 break;
 
-            Utils::idle();
+            FBUtils::idle();
 
             res = client->read();
             if (res > -1)
@@ -1119,7 +1060,7 @@ namespace HttpHelper
         return idx;
     }
 
-    inline int readLine(Client *client, MB_String &buf)
+    int readLine(Client *client, MB_String &buf)
     {
         if (!client)
             return 0;
@@ -1134,7 +1075,7 @@ namespace HttpHelper
             if (!client)
                 break;
 
-            Utils::idle();
+            FBUtils::idle();
 
             res = client->read();
             if (res > -1)
@@ -1149,7 +1090,7 @@ namespace HttpHelper
         return idx;
     }
 
-    inline uint32_t hex2int(const char *hex)
+    uint32_t hex2int(const char *hex)
     {
         uint32_t val = 0;
         while (*hex)
@@ -1170,8 +1111,8 @@ namespace HttpHelper
     }
 
     // Returns -1 when complete
-    inline int readChunkedData(MB_FS *mbfs, Client *client, char *out1, MB_String *out2,
-                               struct fb_esp_tcp_response_handler_t &tcpHandler)
+    int readChunkedData(StringHelper *sh, MB_FS *mbfs, Client *client, char *out1, MB_String *out2,
+                        struct firebase_tcp_response_handler_t &tcpHandler)
     {
         if (!client)
             return 0;
@@ -1194,7 +1135,7 @@ namespace HttpHelper
                 readLen = readLine(client, s);
             else if (out1)
             {
-                buf = MemoryHelper::createBuffer<char *>(mbfs, bufLen);
+                buf = reinterpret_cast<char *>(mbfs->newP(bufLen));
                 readLen = readLine(client, buf, bufLen);
             }
 
@@ -1203,9 +1144,9 @@ namespace HttpHelper
                 if (out1)
                     s = buf;
 
-                p1 = StringHelper::strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR(";"), 0);
+                p1 = sh->strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR(";"), 0);
                 if (p1 == -1)
-                    p1 = StringHelper::strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR("\r\n"), 0);
+                    p1 = sh->strpos(s.c_str(), (const char *)MBSTRING_FLASH_MCR("\r\n"), 0);
 
                 if (p1 != -1)
                 {
@@ -1213,10 +1154,10 @@ namespace HttpHelper
                         tcpHandler.chunkState.chunkedSize = hex2int(s.substr(0, p1).c_str());
                     else if (out1)
                     {
-                        char *temp = MemoryHelper::createBuffer<char *>(mbfs, p1 + 1);
+                        char *temp = reinterpret_cast<char *>(mbfs->newP(p1 + 1));
                         memcpy(temp, buf, p1);
                         tcpHandler.chunkState.chunkedSize = hex2int(temp);
-                        MemoryHelper::freeBuffer(mbfs, temp);
+                        mbfs->delP(&temp);
                     }
                 }
 
@@ -1228,7 +1169,7 @@ namespace HttpHelper
                 tcpHandler.chunkState.state = 0;
 
             if (out1)
-                MemoryHelper::freeBuffer(mbfs, buf);
+                mbfs->delP(&buf);
         }
         else
         {
@@ -1241,7 +1182,7 @@ namespace HttpHelper
                     readLen = readLine(client, s);
                 else if (out1)
                 {
-                    buf = MemoryHelper::createBuffer<char *>(mbfs, bufLen);
+                    buf = reinterpret_cast<char *>(mbfs->newP(bufLen));
                     readLen = readLine(client, buf, bufLen);
                 }
 
@@ -1278,15 +1219,15 @@ namespace HttpHelper
                     olen = -1;
 
                 if (out1)
-                    MemoryHelper::freeBuffer(mbfs, buf);
+                    mbfs->delP(&buf);
             }
         }
 
         return olen;
     }
 
-    inline bool readStatusLine(MB_FS *mbfs, Client *client, struct fb_esp_tcp_response_handler_t &tcpHandler,
-                               struct server_response_data_t &response)
+    bool readStatusLine(StringHelper *sh, MB_FS *mbfs, Client *client, struct firebase_tcp_response_handler_t &tcpHandler,
+                        struct server_response_data_t &response)
     {
         tcpHandler.chunkIdx++;
 
@@ -1297,13 +1238,13 @@ namespace HttpHelper
             return false;
 
         // the first chunk (line) can be http response status or already connected stream payload
-        char *hChunk = MemoryHelper::createBuffer<char *>(mbfs, tcpHandler.chunkBufSize);
+        char *hChunk = reinterpret_cast<char *>(mbfs->newP(tcpHandler.chunkBufSize));
         int readLen = readLine(client, hChunk, tcpHandler.chunkBufSize);
         if (readLen > 0)
             tcpHandler.header += hChunk;
 
         int pos = 0;
-        int status = HttpHelper::getStatusCode(hChunk, pos);
+        int status = getStatusCode(sh, hChunk, pos);
         if (status > 0)
         {
             // http response status
@@ -1311,16 +1252,16 @@ namespace HttpHelper
             response.httpCode = status;
         }
 
-        MemoryHelper::freeBuffer(mbfs, hChunk);
+        mbfs->delP(&hChunk);
         return true;
     }
 
-    inline bool readHeader(MB_FS *mbfs, Client *client, struct fb_esp_tcp_response_handler_t &tcpHandler,
-                           struct server_response_data_t &response)
+    bool readHeader(StringHelper *sh, MB_FS *mbfs, Client *client, struct firebase_tcp_response_handler_t &tcpHandler,
+                    struct server_response_data_t &response)
     {
         // do not check of the config here to allow legacy fcm to work
 
-        char *hChunk = MemoryHelper::createBuffer<char *>(mbfs, tcpHandler.chunkBufSize);
+        char *hChunk = reinterpret_cast<char *>(mbfs->newP(tcpHandler.chunkBufSize));
         int readLen = readLine(client, hChunk, tcpHandler.chunkBufSize);
 
         // check is it the end of http header (\n or \r\n)?
@@ -1331,40 +1272,39 @@ namespace HttpHelper
         {
             // parse header string to get the header field
             tcpHandler.isHeader = false;
-            HttpHelper::parseRespHeader(tcpHandler.header, response);
+            parseRespHeader(sh, tcpHandler.header, response);
         }
         // accumulate the remaining header field
         else if (readLen > 0)
             tcpHandler.header += hChunk;
 
-        MemoryHelper::freeBuffer(mbfs, hChunk);
+        mbfs->delP(&hChunk);
         return tcpHandler.headerEnded;
     }
-
 };
 
-namespace Base64Helper
+class Base64Helper
 {
-
-    inline int getBase64Len(int n)
+public:
+    int getBase64Len(int n)
     {
         int len = (4 * ceil(n / 3.0));
         return len;
     }
 
-    inline int getBase64Padding(int n)
+    int getBase64Padding(int n)
     {
         int pLen = getBase64Len(n);
         int uLen = ceil(4.0 * n / 3.0);
         return pLen - uLen;
     }
 
-    inline size_t encodedLength(size_t len)
+    size_t encodedLength(size_t len)
     {
         return ((len + 2) / 3 * 4) + 1;
     }
 
-    inline int decodedLen(const char *src)
+    int decodedLen(const char *src)
     {
         int len = strlen(src), i = len - 1, pad = 0;
         if (len < 4)
@@ -1376,10 +1316,10 @@ namespace Base64Helper
         return (3 * (len / 4)) - pad;
     }
 
-    inline unsigned char *creatBase64EncBuffer(MB_FS *mbfs, bool isURL)
+    unsigned char *creatBase64EncBuffer(MB_FS *mbfs, bool isURL)
     {
-        unsigned char *base64EncBuf = MemoryHelper::createBuffer<unsigned char *>(mbfs, 65);
-        strcpy_P((char *)base64EncBuf, (char *)fb_esp_base64_table);
+        unsigned char *base64EncBuf = reinterpret_cast<unsigned char *>(mbfs->newP(65));
+        strcpy_P((char *)base64EncBuf, (char *)firebase_base64_table);
         if (isURL)
         {
             base64EncBuf[62] = '-';
@@ -1388,9 +1328,9 @@ namespace Base64Helper
         return base64EncBuf;
     }
 
-    inline bool updateWrite(uint8_t *data, size_t len)
+    bool updateWrite(uint8_t *data, size_t len)
     {
-#if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
+#if (defined(ENABLE_OTA_FIRMWARE_UPDATE) || defined(FIREBASE_ENABLE_OTA_FIRMWARE_UPDATE)) && (defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE))
 #if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
         return Update.write(data, len) == len;
 #endif
@@ -1398,18 +1338,18 @@ namespace Base64Helper
         return false;
     }
 
-    inline unsigned char *creatBase64DecBuffer(MB_FS *mbfs)
+    unsigned char *creatBase64DecBuffer(MB_FS *mbfs)
     {
-        unsigned char *base64DecBuf = MemoryHelper::createBuffer<unsigned char *>(mbfs, 256, false);
+        unsigned char *base64DecBuf = reinterpret_cast<unsigned char *>(mbfs->newP(256, false));
         memset(base64DecBuf, 0x80, 256);
-        for (size_t i = 0; i < sizeof(fb_esp_base64_table) - 1; i++)
-            base64DecBuf[fb_esp_base64_table[i]] = (unsigned char)i;
+        for (size_t i = 0; i < sizeof(firebase_base64_table) - 1; i++)
+            base64DecBuf[firebase_base64_table[i]] = (unsigned char)i;
         base64DecBuf['='] = 0;
         return base64DecBuf;
     }
 
     template <typename T = uint8_t>
-    inline bool writeOutput(MB_FS *mbfs, fb_esp_base64_io_t<T> &out)
+    bool writeOutput(MB_FS *mbfs, firebase_base64_io_t<T> &out)
     {
         size_t write = out.bufWrite;
         out.bufWrite = 0;
@@ -1430,7 +1370,7 @@ namespace Base64Helper
     }
 
     template <typename T = uint8_t>
-    inline bool setOutput(MB_FS *mbfs, uint8_t val, fb_esp_base64_io_t<T> &out, T **pos)
+    bool setOutput(MB_FS *mbfs, uint8_t val, firebase_base64_io_t<T> &out, T **pos)
     {
         if (out.outT)
         {
@@ -1450,11 +1390,11 @@ namespace Base64Helper
     }
 
     template <typename T>
-    inline bool decode(MB_FS *mbfs, unsigned char *base64DecBuf, const char *src, size_t len, fb_esp_base64_io_t<T> &out)
+    bool decode(MB_FS *mbfs, unsigned char *base64DecBuf, const char *src, size_t len, firebase_base64_io_t<T> &out)
     {
         // the maximum chunk size that writes to output is limited by out.bufLen, the minimum is depending on the source length
         bool ret = false;
-        unsigned char *block = MemoryHelper::createBuffer<unsigned char *>(mbfs, 4, false);
+        unsigned char *block = reinterpret_cast<unsigned char *>(mbfs->newP(4, false));
         unsigned char temp;
         size_t i, count;
         int pad = 0;
@@ -1525,13 +1465,13 @@ namespace Base64Helper
         ret = true;
 
     skip:
-        MemoryHelper::freeBuffer(mbfs, block);
+        mbfs->delP(&block);
         return ret;
     }
 
     template <typename T>
-    inline bool encodeLast(MB_FS *mbfs, unsigned char *base64EncBuf, const unsigned char *in, size_t len,
-                           fb_esp_base64_io_t<T> &out, T **pos)
+    bool encodeLast(MB_FS *mbfs, unsigned char *base64EncBuf, const unsigned char *in, size_t len,
+                    firebase_base64_io_t<T> &out, T **pos)
     {
         if (len > 2)
             return false;
@@ -1561,8 +1501,8 @@ namespace Base64Helper
     }
 
     template <typename T>
-    inline bool encode(MB_FS *mbfs, unsigned char *base64EncBuf, uint8_t *src, size_t len,
-                       fb_esp_base64_io_t<T> &out, bool writeAllRemaining = true)
+    bool encode(MB_FS *mbfs, unsigned char *base64EncBuf, uint8_t *src, size_t len,
+                firebase_base64_io_t<T> &out, bool writeAllRemaining = true)
     {
         const unsigned char *end, *in;
 
@@ -1592,30 +1532,30 @@ namespace Base64Helper
         return true;
     }
     template <typename T>
-    inline bool decodeToArray(MB_FS *mbfs, const MB_String &src, MB_VECTOR<T> &val)
+    bool decodeToArray(MB_FS *mbfs, const MB_String &src, MB_VECTOR<T> &val)
     {
-        fb_esp_base64_io_t<T> out;
+        firebase_base64_io_t<T> out;
         out.outL = &val;
         unsigned char *base64DecBuf = creatBase64DecBuffer(mbfs);
         bool ret = decode<T>(mbfs, base64DecBuf, src.c_str(), src.length(), out);
-        MemoryHelper::freeBuffer(mbfs, base64DecBuf);
+        mbfs->delP(&base64DecBuf);
         return ret;
     }
 
-    inline bool decodeToFile(MB_FS *mbfs, const char *src, size_t len, mbfs_file_type type)
+    bool decodeToFile(MB_FS *mbfs, const char *src, size_t len, mbfs_file_type type)
     {
-        fb_esp_base64_io_t<uint8_t> out;
+        firebase_base64_io_t<uint8_t> out;
         out.filetype = type;
-        uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(mbfs, out.bufLen);
+        uint8_t *buf = reinterpret_cast<uint8_t *>(mbfs->newP(out.bufLen));
         out.outT = buf;
         unsigned char *base64DecBuf = creatBase64DecBuffer(mbfs);
         bool ret = decode<uint8_t>(mbfs, base64DecBuf, src, strlen(src), out);
-        MemoryHelper::freeBuffer(mbfs, buf);
-        MemoryHelper::freeBuffer(mbfs, base64DecBuf);
+        mbfs->delP(&buf);
+        mbfs->delP(&base64DecBuf);
         return ret;
     }
 
-    inline void encodeUrl(MB_FS *mbfs, char *encoded, unsigned char *string, size_t len)
+    void encodeUrl(MB_FS *mbfs, char *encoded, unsigned char *string, size_t len)
     {
         size_t i;
         char *p = encoded;
@@ -1643,41 +1583,42 @@ namespace Base64Helper
 
         *p++ = '\0';
 
-        MemoryHelper::freeBuffer(mbfs, base64EncBuf);
+        mbfs->delP(&base64EncBuf);
     }
 
-    inline MB_String encodeToString(MB_FS *mbfs, uint8_t *src, size_t len)
+    MB_String encodeToString(MB_FS *mbfs, uint8_t *src, size_t len)
     {
         MB_String str;
-        char *encoded = MemoryHelper::createBuffer<char *>(mbfs, encodedLength(len) + 1);
-        fb_esp_base64_io_t<char> out;
+        char *encoded = reinterpret_cast<char *>(mbfs->newP(encodedLength(len) + 1));
+        firebase_base64_io_t<char> out;
         out.outT = encoded;
         unsigned char *base64EncBuf = creatBase64EncBuffer(mbfs, false);
         if (encode<char>(mbfs, base64EncBuf, (uint8_t *)src, len, out))
             str = encoded;
-        MemoryHelper::freeBuffer(mbfs, encoded);
-        MemoryHelper::freeBuffer(mbfs, base64EncBuf);
+        mbfs->delP(&encoded);
+        mbfs->delP(&base64EncBuf);
         return str;
     }
 
-    inline bool encodeToClient(Client *client, MB_FS *mbfs, size_t bufSize, uint8_t *data, size_t len)
+    bool encodeToClient(Client *client, MB_FS *mbfs, size_t bufSize, uint8_t *data, size_t len)
     {
-        fb_esp_base64_io_t<uint8_t> out;
+        firebase_base64_io_t<uint8_t> out;
         out.outC = client;
-        uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(mbfs, out.bufLen);
+        uint8_t *buf = reinterpret_cast<uint8_t *>(mbfs->newP(out.bufLen));
         out.outT = buf;
         unsigned char *base64EncBuf = creatBase64EncBuffer(mbfs, false);
         bool ret = encode<uint8_t>(mbfs, base64EncBuf, (uint8_t *)data, len, out);
-        MemoryHelper::freeBuffer(mbfs, buf);
-        MemoryHelper::freeBuffer(mbfs, base64EncBuf);
+        mbfs->delP(&buf);
+        mbfs->delP(&base64EncBuf);
         return ret;
     }
 };
 
-namespace OtaHelper
+class OtaHelper
 {
+public:
     // trim double quotes and return pad length
-    inline int trimLastChunkBase64(MB_String &s, int len)
+    int trimLastChunkBase64(MB_String &s, int len)
     {
         int padLen = -1;
         if (len > 1)
@@ -1701,167 +1642,41 @@ namespace OtaHelper
         return padLen;
     }
 
-    inline bool decodeBase64OTA(MB_FS *mbfs, const char *src, size_t len, int &code)
+    bool decodeBase64OTA(Base64Helper *bh, MB_FS *mbfs, const char *src, size_t len, int &code)
     {
         bool ret = true;
-        fb_esp_base64_io_t<uint8_t> out;
-        uint8_t *buf = MemoryHelper::createBuffer<uint8_t *>(mbfs, out.bufLen);
+        firebase_base64_io_t<uint8_t> out;
+        uint8_t *buf = reinterpret_cast<uint8_t *>(mbfs->newP(out.bufLen));
         out.ota = true;
         out.outT = buf;
-        unsigned char *base64DecBuf = Base64Helper::creatBase64DecBuffer(mbfs);
-        if (!Base64Helper::decode<uint8_t>(mbfs, base64DecBuf, src, strlen(src), out))
+        unsigned char *base64DecBuf = bh->creatBase64DecBuffer(mbfs);
+        if (!bh->decode<uint8_t>(mbfs, base64DecBuf, src, strlen(src), out))
         {
             code = FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED;
             ret = false;
         }
-        MemoryHelper::freeBuffer(mbfs, buf);
-        MemoryHelper::freeBuffer(mbfs, base64DecBuf);
+        mbfs->delP(&buf);
+        mbfs->delP(&base64DecBuf);
         return ret;
     }
-
 };
 
-namespace TimeHelper
+class Utils
 {
-
-    inline time_t getTime(uint32_t *mb_ts, uint32_t *mb_ts_offset)
-    {
-        uint32_t &tm = *mb_ts;
-#if defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(MB_ARDUINO_PICO)
-        tm = *mb_ts_offset + millis() / 1000;
-
-#if defined(MB_ARDUINO_PICO) || defined(ESP32) || defined(ESP8266)
-        if (tm < time(nullptr))
-            tm = time(nullptr);
-#endif
-
-#elif defined(ESP32) || defined(ESP8266)
-        tm = time(nullptr);
-#endif
-        return tm;
-    }
-
-    inline int setTimestamp(time_t ts)
-    {
-#if defined(ESP32) || defined(ESP8266)
-        struct timeval tm = {ts, 0}; // sec, us
-        return settimeofday((const timeval *)&tm, 0);
-#endif
-        return -1;
-    }
-
-    inline bool setTime(time_t ts, uint32_t *mb_ts, uint32_t *mb_ts_offset)
-    {
-        bool ret = false;
-
-#if defined(ESP32) || defined(ESP8266)
-        ret = TimeHelper::setTimestamp(ts) == 0;
-        *mb_ts = time(nullptr);
-#else
-        if (ts > ESP_DEFAULT_TS)
-        {
-            *mb_ts_offset = ts - millis() / 1000;
-            *mb_ts = ts;
-            ret = true;
-        }
-#endif
-
-        return ret;
-    }
-
-    inline bool updateClock(MB_NTP *ntp, uint32_t *mb_ts, uint32_t *mb_ts_offset)
-    {
-        uint32_t ts = ntp->getTime(2000 /* wait 10000 ms */);
-        if (ts > 0)
-            *mb_ts_offset = ts - millis() / 1000;
-
-        time_t now = getTime(mb_ts, mb_ts_offset);
-
-        bool rdy = now > ESP_DEFAULT_TS;
-
-#if defined(ESP32) || defined(ESP8266)
-        if (rdy && time(nullptr) < now)
-            setTime(now, mb_ts, mb_ts_offset);
-#endif
-
-        return rdy;
-    }
-
-    inline bool syncClock(MB_NTP *ntp, uint32_t *mb_ts, uint32_t *mb_ts_offset, float gmtOffset, FirebaseConfig *config)
-    {
-
-        if (!config)
-            return false;
-
-        time_t now = getTime(mb_ts, mb_ts_offset);
-
-        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
-
-        if (config->internal.fb_clock_rdy && gmtOffset == config->internal.fb_gmt_offset)
-            return true;
-
-        if (!config->internal.fb_clock_rdy || gmtOffset != config->internal.fb_gmt_offset)
-        {
-            if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
-                config->internal.fb_clock_synched = false;
-
-            if (!config->internal.fb_clock_synched)
-            {
-                config->internal.fb_clock_synched = true;
-
-#if defined(FB_ENABLE_EXTERNAL_CLIENT)
-
-                updateClock(ntp, mb_ts, mb_ts_offset);
-
-#else
-
-#if defined(ESP32) || defined(ESP8266) || defined(MB_ARDUINO_PICO)
-
-#if defined(MB_ARDUINO_PICO)
-                NTP.begin("pool.ntp.org", "time.nist.gov");
-                NTP.waitSet();
-
-                now = time(nullptr);
-                if (now > ESP_DEFAULT_TS)
-                    *mb_ts_offset = now - millis() / 1000;
-
-#else
-                configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
-#endif
-
-#endif
-
-#endif
-            }
-        }
-
-        now = getTime(mb_ts, mb_ts_offset);
-
-        config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
-        if (config->internal.fb_clock_rdy)
-            config->internal.fb_gmt_offset = gmtOffset;
-
-        return config->internal.fb_clock_rdy;
-    }
-
-};
-
-namespace Utils
-{
-
-    inline int ishex(int x)
+public:
+    int ishex(int x)
     {
         return (x >= '0' && x <= '9') ||
                (x >= 'a' && x <= 'f') ||
                (x >= 'A' && x <= 'F');
     }
 
-    inline char from_hex(char ch)
+    char from_hex(char ch)
     {
         return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
     }
 
-    inline void createDirs(MB_String dirs, fb_esp_mem_storage_type storageType)
+    void createDirs(MB_String dirs, firebase_mem_storage_type storageType)
     {
 #if defined(SD_FS)
         MB_String dir;
@@ -1891,7 +1706,7 @@ namespace Utils
     }
 
 #if defined(__AVR__)
-    inline unsigned long long strtoull_alt(const char *s)
+    unsigned long long strtoull_alt(const char *s)
     {
         unsigned long long sum = 0;
         while (*s)
@@ -1901,25 +1716,10 @@ namespace Utils
         return sum;
     }
 #endif
-
-    inline void setFloatDigit(uint8_t digit, FirebaseConfig *config)
+    MB_String getBoundary(MB_FS *mbfs, size_t len)
     {
-        if (!config)
-            return;
-        config->internal.fb_float_digits = digit;
-    }
-
-    inline void setDoubleDigit(uint8_t digit, FirebaseConfig *config)
-    {
-        if (!config)
-            return;
-        config->internal.fb_double_digits = digit;
-    }
-
-    inline MB_String getBoundary(MB_FS *mbfs, size_t len)
-    {
-        MB_String temp = fb_esp_boundary_table;
-        char *buf = MemoryHelper::createBuffer<char *>(mbfs, len);
+        MB_String temp = firebase_boundary_table;
+        char *buf = reinterpret_cast<char *>(mbfs->newP(len));
         if (len)
         {
             --len;
@@ -1933,39 +1733,16 @@ namespace Utils
             buf[len] = '\0';
         }
         MB_String out = buf;
-        MemoryHelper::freeBuffer(mbfs, buf);
+        mbfs->delP(&buf);
         return out;
     }
 
-    inline bool boolVal(const MB_String &v)
+    bool boolVal(const MB_String &v)
     {
-        return v.find(pgm2Str(fb_esp_pgm_str_20 /* "true" */)) != MB_String::npos;
+        return v.find(pgm2Str(firebase_pgm_str_20 /* "true" */)) != MB_String::npos;
     }
 
-    inline bool waitIdle(int &httpCode, FirebaseConfig *config)
-    {
-        if (!config)
-            return true;
-
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-        if (config->internal.fb_multiple_requests)
-            return true;
-
-        unsigned long wTime = millis();
-        while (config->internal.fb_processing)
-        {
-            if (millis() - wTime > 3000)
-            {
-                httpCode = FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED;
-                return false;
-            }
-            Utils::idle();
-        }
-#endif
-        return true;
-    }
-
-    inline bool validJS(const char *c)
+    bool validJS(const char *c)
     {
         size_t ob = 0, cb = 0, os = 0, cs = 0;
         for (size_t i = 0; i < strlen(c); i++)
@@ -1982,12 +1759,12 @@ namespace Utils
         return (ob == cb && os == cs);
     }
 
-    inline uint16_t calCRC(MB_FS *mbfs, const char *buf)
+    uint16_t calCRC(MB_FS *mbfs, const char *buf)
     {
         return mbfs->calCRC(buf);
     }
 
-    inline void makePath(MB_String &path)
+    void makePath(MB_String &path)
     {
         if (path.length() > 0)
         {
@@ -1996,62 +1773,62 @@ namespace Utils
         }
     }
 
-    inline MB_String makeFCMMsgPath(PGM_P sub = NULL)
+    MB_String makeFCMMsgPath(PGM_P sub = NULL)
     {
-        MB_String path = fb_esp_pgm_str_60; // "msg"
-        path += fb_esp_pgm_str_1;           // "/"
+        MB_String path = firebase_pgm_str_60; // "msg"
+        path += firebase_pgm_str_1;           // "/"
         if (sub)
             path += sub;
         return path;
     }
 
-#if defined(ENABLE_FCM)
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
 
-    inline MB_String makeFCMMessagePath(PGM_P sub = NULL)
+    MB_String makeFCMMessagePath(PGM_P sub = NULL)
     {
-        MB_String path = fb_esp_fcm_pgm_str_68; // "message"
-        path += fb_esp_pgm_str_1;               // "/"
+        MB_String path = firebase_fcm_pgm_str_68; // "message"
+        path += firebase_pgm_str_1;               // "/"
         if (sub)
             path += sub;
         return path;
     }
 
-    inline void addFCMNotificationPath(MB_String &path, PGM_P sub = NULL)
+    void addFCMNotificationPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_fcm_pgm_str_67; // "notification"
-        path += fb_esp_pgm_str_1;      // "/"
+        path += firebase_fcm_pgm_str_67; // "notification"
+        path += firebase_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
-    inline void addFCMAndroidPath(MB_String &path, PGM_P sub = NULL)
+    void addFCMAndroidPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_fcm_pgm_str_69; // "android"
-        path += fb_esp_pgm_str_1;      // "/"
+        path += firebase_fcm_pgm_str_69; // "android"
+        path += firebase_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
-    inline void addFCMWebpushPath(MB_String &path, PGM_P sub = NULL)
+    void addFCMWebpushPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_fcm_pgm_str_70; // "webpush";
-        path += fb_esp_pgm_str_1;      // "/"
+        path += firebase_fcm_pgm_str_70; // "webpush";
+        path += firebase_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
-    inline void addFCMApnsPath(MB_String &path, PGM_P sub = NULL)
+    void addFCMApnsPath(MB_String &path, PGM_P sub = NULL)
     {
-        path += fb_esp_fcm_pgm_str_71; // "apns";
-        path += fb_esp_pgm_str_1;      // "/"
+        path += firebase_fcm_pgm_str_71; // "apns";
+        path += firebase_pgm_str_1;      // "/"
         if (sub)
             path += sub;
     }
 
-    inline MB_String makeFCMNotificationPath(PGM_P sub = NULL)
+    MB_String makeFCMNotificationPath(PGM_P sub = NULL)
     {
-        MB_String path = fb_esp_fcm_pgm_str_67; // "notification"
-        path += fb_esp_pgm_str_1;               // "/"
+        MB_String path = firebase_fcm_pgm_str_67; // "notification"
+        path += firebase_pgm_str_1;               // "/"
         if (sub)
             path += sub;
         return path;
@@ -2059,34 +1836,34 @@ namespace Utils
 
 #endif
 
-#if defined(FIREBASE_ESP_CLIENT) && defined(ENABLE_FIRESTORE)
-    inline MB_String makeDocPath(struct fb_esp_firestore_req_t &req, const MB_String &projectId)
+#if defined(FIREBASE_ESP_CLIENT) && (defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE))
+    MB_String makeDocPath(struct firebase_firestore_req_t &req, const MB_String &projectId)
     {
-        MB_String str = fb_esp_func_pgm_str_47; // "projects/"
+        MB_String str = firebase_func_pgm_str_47; // "projects/"
         str += req.projectId.length() == 0 ? projectId : req.projectId;
-        str += fb_esp_cfs_pgm_str_32; // "/databases/"
-        str += req.databaseId.length() > 0 ? req.databaseId : fb_esp_cfs_pgm_str_33 /* "(default)" */;
-        str += fb_esp_cfs_pgm_str_21; // "/documents"
+        str += firebase_cfs_pgm_str_32; // "/databases/"
+        str += req.databaseId.length() > 0 ? req.databaseId : firebase_cfs_pgm_str_33 /* "(default)" */;
+        str += firebase_cfs_pgm_str_21; // "/documents"
         return str;
     }
 #endif
-    inline size_t getUploadBufSize(FirebaseConfig *config, fb_esp_con_mode mode)
+    size_t getUploadBufSize(FirebaseConfig *config, firebase_con_mode mode)
     {
         int bufLen = 0;
-#if defined(ENABLE_RTDB)
-        if (mode == fb_esp_con_mode_rtdb)
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
+        if (mode == firebase_con_mode_rtdb)
             bufLen = config->rtdb.upload_buffer_size;
 #endif
-#if defined(ENABLE_FB_FUNCTIONS)
-        if (mode == fb_esp_con_mode_functions)
+#if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
+        if (mode == firebase_con_mode_functions)
             bufLen = config->functions.upload_buffer_size;
 #endif
-#if defined(ENABLE_GC_STORAGE)
-        if (mode == fb_esp_con_mode_gc_storage)
+#if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
+        if (mode == firebase_con_mode_gc_storage)
             bufLen = config->gcs.upload_buffer_size;
 #endif
 #if defined(ENABLE_FB_STORAGE)
-        if (mode == fb_esp_con_mode_storage)
+        if (mode == firebase_con_mode_storage)
             bufLen = config->fcs.upload_buffer_size;
 #endif
 
@@ -2099,12 +1876,12 @@ namespace Utils
         return bufLen;
     }
 
-    inline bool isNoContent(server_response_data_t *response)
+    bool isNoContent(server_response_data_t *response)
     {
         return !response->isChunkedEnc && response->contentLen == 0;
     }
 
-    inline bool isResponseTimeout(fb_esp_tcp_response_handler_t *tcpHandler, bool &complete)
+    bool isResponseTimeout(firebase_tcp_response_handler_t *tcpHandler, bool &complete)
     {
         if (millis() - tcpHandler->dataTime > 5000)
         {
@@ -2115,7 +1892,7 @@ namespace Utils
         return complete;
     }
 
-    inline bool isResponseComplete(fb_esp_tcp_response_handler_t *tcpHandler, server_response_data_t *response, bool &complete, bool check = true)
+    bool isResponseComplete(firebase_tcp_response_handler_t *tcpHandler, server_response_data_t *response, bool &complete, bool check = true)
     {
         if (check && !response->isChunkedEnc &&
             (tcpHandler->bufferAvailable < 0 || tcpHandler->payloadRead >= response->contentLen))
@@ -2126,7 +1903,7 @@ namespace Utils
         return false;
     }
 
-    inline bool isChunkComplete(fb_esp_tcp_response_handler_t *tcpHandler, server_response_data_t *response, bool &complete)
+    bool isChunkComplete(firebase_tcp_response_handler_t *tcpHandler, server_response_data_t *response, bool &complete)
     {
         if (response->isChunkedEnc && tcpHandler->bufferAvailable < 0)
         {
