@@ -574,7 +574,7 @@ void FirebaseCore::getBaseTime()
     if (WiFI_CONNECTED)
         baseTs = WiFi.getTime() > FIREBASE_DEFAULT_TS ? WiFi.getTime() : *baseTs;
 #else
-    baseTs = *tsOffset + millis() / 1000;
+    baseTs = tsOffset + millis() / 1000;
 #endif
 
     if (baseTs > FIREBASE_DEFAULT_TS)
