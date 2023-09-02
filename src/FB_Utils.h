@@ -1039,13 +1039,9 @@ public:
         int res = -1;
         char c = 0;
         int idx = 0;
-
         if (!client)
             return idx;
-
-        unsigned long ms = millis();
-
-        while (millis() - ms < 5000 && client && client->connected() && client->available() && idx < bufLen)
+        while (client->available() && idx < bufLen)
         {
             if (!client)
                 break;
@@ -1055,7 +1051,6 @@ public:
             res = client->read();
             if (res > -1)
             {
-                ms = millis();
                 c = (char)res;
                 buf[idx++] = c;
                 if (c == '\n')

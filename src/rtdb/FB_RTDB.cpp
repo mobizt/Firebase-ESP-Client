@@ -352,7 +352,7 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, firebase_request_method method, M
     FBUtils::idle();
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
+    if (!Core.waitIdle(fbdo->session.response.code))
         return false;
 #endif
 
@@ -575,7 +575,7 @@ bool FB_RTDB::mBeginStream(FirebaseData *fbdo, MB_StringPtr path)
         return false;
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
+    if (!Core.waitIdle(fbdo->session.response.code))
         return false;
 #endif
 
@@ -631,7 +631,7 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
         return false;
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
+    if (!Core.waitIdle(fbdo->session.response.code))
         return false;
 #endif
 
@@ -1701,7 +1701,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct firebase_rtdb_request_inf
         return false;
 
 #if defined(MB_ARDUINO_PICO)
-    if (!Core.waitIdle(fbdo->session.response.code, Core.config))
+    if (!Core.waitIdle(fbdo->session.response.code))
         return false;
 #endif
 
