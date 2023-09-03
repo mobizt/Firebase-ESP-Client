@@ -99,7 +99,7 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
 
         struct firebase_url_info_t uinfo;
         Core.internal.fb_auth_uri = config->signer.tokens.token_type == token_type_legacy_token ||
-                                      config->signer.tokens.token_type == token_type_id_token;
+                                    config->signer.tokens.token_type == token_type_id_token;
 
         if (config->host.length() > 0)
             config->database_url = config->host;
@@ -132,22 +132,15 @@ struct token_info_t FIREBASE_CLASS::authTokenInfo()
 
 bool FIREBASE_CLASS::ready()
 {
-#if defined(ESP32) || defined(ESP8266)
-    // Stop the session only for ESPs to free the memory when token
-    // expired (actually nearly expired) as the Core needs memory
-    // to open another secure TCP session to request new or refresh token.
-    // We don't stop session to free memory on other devices e,g, Pico as it uses
-    // BearSSL engine that required less memory then it has enough free memory
-    // to do other things.
-    for (size_t id = 0; id < Core.internal.sessions.size(); id++)
+    if (Core.isExpired())
     {
-        FirebaseData *fbdo = addrTo<FirebaseData *>(Core.internal.sessions[id]);
-        // non-stream used session will stop
-        if (Core.isExpired() && fbdo && !fbdo->tcpClient.reserved && fbdo->session.con_mode != firebase_con_mode_rtdb_stream)
-            fbdo->closeSession();
+        for (size_t id = 0; id < Core.internal.sessions.size(); id++)
+        {
+            FirebaseData *fbdo = addrTo<FirebaseData *>(Core.internal.sessions[id].ptr);
+            if (fbdo)
+                fbdo->closeSession();
+        }
     }
-
-#endif
     return Core.tokenReady();
 }
 
@@ -348,11 +341,11 @@ time_t FIREBASE_CLASS::getCurrentTime()
 int FIREBASE_CLASS::getFreeHeap()
 {
 #if defined(MB_ARDUINO_ESP)
-  return ESP.getFreeHeap();
+    return ESP.getFreeHeap();
 #elif defined(MB_ARDUINO_PICO)
-  return rp2040.getFreeHeap();
+    return rp2040.getFreeHeap();
 #else
-  return 0;
+    return 0;
 #endif
 }
 
@@ -490,7 +483,7 @@ void FIREBASE_CLASS::begin(FirebaseConfig *config, FirebaseAuth *auth)
 
         struct firebase_url_info_t uinfo;
         Core.internal.fb_auth_uri = config->signer.tokens.token_type == token_type_legacy_token ||
-                                      config->signer.tokens.token_type == token_type_id_token;
+                                    config->signer.tokens.token_type == token_type_id_token;
 
         if (config->host.length() > 0)
             config->database_url = config->host;
@@ -754,11 +747,11 @@ const char *FIREBASE_CLASS::getToken()
 int FIREBASE_CLASS::getFreeHeap()
 {
 #if defined(MB_ARDUINO_ESP)
-  return ESP.getFreeHeap();
+    return ESP.getFreeHeap();
 #elif defined(MB_ARDUINO_PICO)
-  return rp2040.getFreeHeap();
+    return rp2040.getFreeHeap();
 #else
-  return 0;
+    return 0;
 #endif
 }
 

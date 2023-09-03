@@ -106,49 +106,65 @@ void FirebaseData::setNetworkStatus(bool status)
     tcpClient.setNetworkStatus(status);
 }
 
+int FirebaseData::tcpSend(const char *s)
+{
+    int r = tcpClient.send(s);
+    setSession(false, r > 0);
+    return r;
+}
+
 void FirebaseData::addSession(firebase_con_mode mode)
 {
     if (!Core.config)
         return;
 
-    removeSession();
+    setSession(true, false);
 
-    if (sessionPtr == 0)
+    if (sessionPtr.ptr == 0)
     {
-        sessionPtr = toAddr(*this);
+        sessionPtr.ptr = toAddr(*this);
         Core.internal.sessions.push_back(sessionPtr);
         session.con_mode = mode;
     }
 }
 
-void FirebaseData::removeSession()
+void FirebaseData::setSession(bool remove, bool status)
 {
     if (!Core.config)
         return;
 
-    if (sessionPtr > 0)
+    if (sessionPtr.ptr > 0)
     {
         for (size_t i = 0; i < Core.internal.sessions.size(); i++)
         {
-            if (sessionPtr > 0 && Core.internal.sessions[i] == sessionPtr)
+            if (sessionPtr.ptr > 0 && Core.internal.sessions[i].ptr == sessionPtr.ptr)
             {
-                session.con_mode = firebase_con_mode_undefined;
-                Core.internal.sessions.erase(Core.internal.sessions.begin() + i);
-                sessionPtr = 0;
+                if (remove)
+                {
+                    session.con_mode = firebase_con_mode_undefined;
+                    Core.internal.sessions.erase(Core.internal.sessions.begin() + i);
+                    sessionPtr.ptr = 0;
+                }
+                else
+                {
+                    Core.internal.sessions[i].status = status;
+                    sessionPtr.status = status;
+                }
                 break;
             }
         }
     }
 }
+
 #if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 void FirebaseData::addQueueSession()
 {
     if (!Core.config)
         return;
 
-    if (queueSessionPtr == 0)
+    if (queueSessionPtr.ptr == 0)
     {
-        queueSessionPtr = toAddr(*this);
+        queueSessionPtr.ptr = toAddr(*this);
         Core.internal.queueSessions.push_back(queueSessionPtr);
     }
 }
@@ -158,14 +174,14 @@ void FirebaseData::removeQueueSession()
     if (!Core.config)
         return;
 
-    if (queueSessionPtr > 0)
+    if (queueSessionPtr.ptr > 0)
     {
         for (size_t i = 0; i < Core.internal.queueSessions.size(); i++)
         {
-            if (queueSessionPtr > 0 && Core.internal.queueSessions[i] == queueSessionPtr)
+            if (queueSessionPtr.ptr > 0 && Core.internal.queueSessions[i].ptr == queueSessionPtr.ptr)
             {
                 Core.internal.queueSessions.erase(Core.internal.queueSessions.begin() + i);
-                queueSessionPtr = 0;
+                queueSessionPtr.ptr = 0;
                 break;
             }
         }
@@ -758,6 +774,7 @@ void FirebaseData::sendStreamToCB(int code, bool report)
 
 void FirebaseData::closeSession()
 {
+    setSession(false, false);
     Core.closeSession(&tcpClient, &session);
 }
 
@@ -783,7 +800,7 @@ void FirebaseData::setSecure()
     if (!Core.config)
         return;
 
-    if (sessionPtr == 0)
+    if (sessionPtr.ptr == 0)
         addSession(firebase_con_mode_undefined);
 
     setTimeout();
@@ -799,6 +816,7 @@ void FirebaseData::setSecure()
             Core.internal.fb_clock_rdy = true;
         tcpClient.clockReady = true;
     }
+
     tcpClient.setBufferSizes(session.bssl_rx_size, session.bssl_tx_size);
 
     if (tcpClient.certType == firebase_cert_type_undefined || session.cert_updated)

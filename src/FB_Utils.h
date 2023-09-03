@@ -1046,7 +1046,7 @@ public:
             if (!client)
                 break;
 
-            FBUtils::idle();
+             FBUtils::idle();
 
             res = client->read();
             if (res > -1)

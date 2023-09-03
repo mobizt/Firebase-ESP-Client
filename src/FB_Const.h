@@ -168,8 +168,6 @@ class QueryFilter;
 
 #include "FB_Error.h"
 
-class FirebaseData;
-
 typedef void (*FB_TCPConnectionRequestCallback)(const char *, int);
 typedef void (*FB_NetworkConnectionRequestCallback)(void);
 typedef void (*FB_NetworkStatusRequestCallback)(void);
@@ -601,7 +599,8 @@ struct firebase_wifi_credential_t
 
 class firebase_wifi
 {
-  friend class Firebase_TCP_Client;
+    friend class Firebase_TCP_Client;
+
 public:
     firebase_wifi(){};
     ~firebase_wifi()
@@ -1024,6 +1023,12 @@ struct firebase_stream_info_t
 };
 #endif
 
+struct firebase_session_info
+{
+    uint32_t ptr = 0;
+    bool status = false;
+};
+
 struct firebase_cfg_int_t
 {
     enum base_time_type_t
@@ -1055,8 +1060,8 @@ struct firebase_cfg_int_t
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
-    MB_VECTOR<uint32_t> sessions;
-    MB_VECTOR<uint32_t> queueSessions;
+    MB_VECTOR<firebase_session_info> sessions;
+    MB_VECTOR<firebase_session_info> queueSessions;
 
     MB_String auth_token;
     MB_String refresh_token;

@@ -814,7 +814,7 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
 
     fbdo->_multiPathDataCallback = NULL;
     fbdo->_timeoutCallback = NULL;
-    fbdo->removeSession();
+    fbdo->setSession(true, false);
 
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
     if (Core.internal.sessions.size() == 0)
@@ -905,7 +905,7 @@ void FB_RTDB::mRunStream()
     for (size_t id = 0; id < Core.internal.sessions.size(); id++)
     {
 
-        fbdo = addrTo<FirebaseData *>(Core.internal.sessions[id]);
+        fbdo = addrTo<FirebaseData *>(Core.internal.sessions[id].ptr);
 
         if (fbdo)
         {
@@ -978,7 +978,7 @@ void FB_RTDB::runErrorQueueTask()
 
     for (size_t id = 0; id < Core.internal.queueSessions.size(); id++)
     {
-        FirebaseData *fbdo = addrTo<FirebaseData *>(Core.internal.queueSessions[id]);
+        FirebaseData *fbdo = addrTo<FirebaseData *>(Core.internal.queueSessions[id].ptr);
 
         if (fbdo)
         {
@@ -2005,7 +2005,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_
     }
 
     fbdo->session.max_payload_length = 0;
-    
+
     fbdo->tcpClient.setSession(&fbdo->bsslSession);
     fbdo->tcpClient.begin(Core.config->database_url.c_str(), FIREBASE_PORT, &fbdo->session.response.code);
 
@@ -2087,13 +2087,13 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_
     {
         FirebaseJson *json = addrTo<FirebaseJson *>(req->data.address.din);
         if (json)
-            fbdo->tcpClient.send(json->raw());
+            fbdo->tcpSend(json->raw());
     }
     else if (req->payload.length() > 0 || (req->data.type == d_array && req->data.address.din > 0))
     {
         if (req->pre_payload.length() > 0)
         {
-            fbdo->tcpClient.send(req->pre_payload.c_str());
+            fbdo->tcpSend(req->pre_payload.c_str());
             if (fbdo->session.response.code < 0)
                 return false;
         }
@@ -2102,20 +2102,20 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_
         {
             FirebaseJsonArray *arr = addrTo<FirebaseJsonArray *>(req->data.address.din);
             if (arr)
-                fbdo->tcpClient.send(arr->raw());
+                fbdo->tcpSend(arr->raw());
 
             if (fbdo->session.response.code < 0)
                 return false;
         }
         else if (req->payload.length() > 0)
         {
-            fbdo->tcpClient.send(req->payload.c_str());
+            fbdo->tcpSend(req->payload.c_str());
             if (fbdo->session.response.code < 0)
                 return false;
         }
 
         if (req->post_payload.length() > 0)
-            fbdo->tcpClient.send(req->post_payload.c_str());
+            fbdo->tcpSend(req->post_payload.c_str());
     }
     else if (req->data.address.din > 0 && req->data.blobSize > 0)
     {
@@ -2124,12 +2124,12 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_
         if (blob)
         {
             // send first payload (file base64 signature)
-            fbdo->tcpClient.send(pgm2Str(firebase_rtdb_pgm_str_7 /* "\"blob,base64," */));
+            fbdo->tcpSend(pgm2Str(firebase_rtdb_pgm_str_7 /* "\"blob,base64," */));
             if (fbdo->session.response.code > 0)
             {
                 // convert blob to base64 string before sending
                 if (Core.bh.encodeToClient(&fbdo->tcpClient, &Core.mbfs, bufSize, blob, req->data.blobSize))
-                    fbdo->tcpClient.send(pgm2Str(firebase_pgm_str_4) /* "\"" */); // send last payload
+                    fbdo->tcpSend(pgm2Str(firebase_pgm_str_4) /* "\"" */); // send last payload
             }
         }
     }
@@ -2165,14 +2165,14 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_
                 s[2] = 'I'; // 2 paddings -> "fIle,base64,
 
             // send first payload (file base64 signature)
-            fbdo->tcpClient.send(s.c_str());
+            fbdo->tcpSend(s.c_str());
 
             if (fbdo->session.response.code < 0)
                 return false;
 
             // read file and convert to base64 string before sending
             if (encodeFileToClient(fbdo, bufSize, req->filename, (firebase_mem_storage_type)fbdo->session.rtdb.storage_type, req))
-                fbdo->tcpClient.send(pgm2Str(firebase_pgm_str_4) /* "\"" */); // send last payload
+                fbdo->tcpSend(pgm2Str(firebase_pgm_str_4) /* "\"" */); // send last payload
 
             if (fbdo->session.response.code < 0)
                 return false;
@@ -2201,7 +2201,7 @@ bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_
 
                 buf[toRead] = '\0';
 
-                fbdo->tcpClient.send(buf);
+                fbdo->tcpSend(buf);
 
                 Core.mbfs.delP(&buf);
 
@@ -2340,7 +2340,7 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo, firebase_rtdb_request_info_t *r
 
     Core.hh.initTCPSession(fbdo->session);
     Core.hh.intTCPHandler(&fbdo->tcpClient, tcpHandler, 2048 + strlen_P(firebase_rtdb_pgm_str_8 /* "\"file,base64," */),
-                              fbdo->session.resp_size, &payload, req->data.type == d_file_ota);
+                          fbdo->session.resp_size, &payload, req->data.type == d_file_ota);
 
 waits:
 
@@ -2397,7 +2397,7 @@ waits:
 
             // check connection types
             fbdo->session.rtdb.http_resp_conn_type = Core.sh.compare(response.connection,
-                                                                           0, firebase_pgm_str_15 /* "keep-alive" */)
+                                                                     0, firebase_pgm_str_15 /* "keep-alive" */)
                                                          ? firebase_http_connection_type_keep_alive
                                                          : firebase_http_connection_type_close;
 
@@ -2527,7 +2527,7 @@ waits:
 
                         Core.mbfs.remove(pgm2Str(firebase_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */), mb_fs_mem_storage_type_flash);
                         int sz = Core.mbfs.open(pgm2Str(firebase_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
-                                                   mb_fs_mem_storage_type_flash, mb_fs_open_mode_append);
+                                                mb_fs_mem_storage_type_flash, mb_fs_open_mode_append);
                         if (sz < 0)
                             fbdo->session.response.code = sz;
 
@@ -2544,7 +2544,7 @@ waits:
                         {
                             trimEndJson(payload);
                             Core.bh.decodeToFile(&Core.mbfs, payload.c_str(),
-                                                       payload.length(), mb_fs_mem_storage_type_flash);
+                                                 payload.length(), mb_fs_mem_storage_type_flash);
                         }
                         // stream event data is not complete, try to read incoming data as a chunk (multiples of 4 bytes length)
                         // base64 decoded and store in temp file
@@ -3235,7 +3235,7 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
         int p;
         if (req->data.address.din > 0 && req->data.type == d_json)
             hasServerValue = Core.sh.find(addrTo<FirebaseJson *>(req->data.address.din)->raw(),
-                                                firebase_rtdb_pgm_str_17 /* "\".sv\"" */, false, 0, p);
+                                          firebase_rtdb_pgm_str_17 /* "\".sv\"" */, false, 0, p);
         else
             hasServerValue = Core.sh.find(req->payload, firebase_rtdb_pgm_str_17 /* "\".sv\"" */, false, 0, p);
     }
@@ -3243,9 +3243,9 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
     MB_String header;
 
     Core.hh.addRequestHeaderFirst(header, fbdo->session.classic_request &&
-                                                      (http_method == http_put || http_method == http_delete)
-                                                  ? http_post
-                                                  : http_method);
+                                                  (http_method == http_put || http_method == http_delete)
+                                              ? http_post
+                                              : http_method);
 
     Core.ut.makePath(req->path);
     header += req->path;
@@ -3272,14 +3272,14 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
         if (Core.getTokenType() != token_type_oauth2_access_token && !Core.config->signer.test_mode)
             Core.uh.addParam(header, firebase_rtdb_pgm_str_19 /* "auth=" */, "", hasQueryParams, true);
 
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
 
         if (fbdo->session.response.code < 0)
             return false;
 
         if (Core.getTokenType() != token_type_oauth2_access_token && !Core.config->signer.test_mode)
-            fbdo->tcpClient.send(Core.internal.auth_token.c_str());
+            fbdo->tcpSend(Core.internal.auth_token.c_str());
 
         if (fbdo->session.response.code < 0)
             return false;
@@ -3287,10 +3287,10 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
 
     if (fbdo->session.rtdb.read_tmo > 0)
         Core.uh.addParam(header, firebase_rtdb_pgm_str_20 /* "timeout=" */,
-                            MB_String(fbdo->session.rtdb.read_tmo) + firebase_rtdb_pgm_str_21 /* "ms" */, hasQueryParams);
+                         MB_String(fbdo->session.rtdb.read_tmo) + firebase_rtdb_pgm_str_21 /* "ms" */, hasQueryParams);
 
     Core.uh.addParam(header, firebase_rtdb_pgm_str_22 /* "writeSizeLimit=" */,
-                        fbdo->session.rtdb.write_limit, hasQueryParams);
+                     fbdo->session.rtdb.write_limit, hasQueryParams);
 
     if (req->method == rtdb_get_shallow)
     {
@@ -3328,7 +3328,7 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
     Core.hh.addRequestHeaderLast(header);
     Core.hh.addHostHeader(header, Core.config->database_url.c_str());
     Core.hh.addUAHeader(header);
-    Core.hh.getCustomHeaders(&Core.sh,header, Core.config->signer.customHeaders);
+    Core.hh.getCustomHeaders(&Core.sh, header, Core.config->signer.customHeaders);
 
     if (Core.getTokenType() == token_type_oauth2_access_token)
     {
@@ -3338,13 +3338,13 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
             Core.config->signer.tokens.auth_type[Core.config->signer.tokens.auth_type.length() - 1] != ' ')
             header += firebase_pgm_str_9; // " "
 
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
 
         if (fbdo->session.response.code < 0)
             return false;
 
-        fbdo->tcpClient.send(Core.internal.auth_token.c_str());
+        fbdo->tcpSend(Core.internal.auth_token.c_str());
 
         if (fbdo->session.response.code < 0)
             return false;
@@ -3404,7 +3404,7 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
 
     Core.hh.addNewLine(header);
 
-    fbdo->tcpClient.send(header.c_str());
+    fbdo->tcpSend(header.c_str());
     header.clear();
 
     if (fbdo->session.response.code < 0)
@@ -3415,7 +3415,7 @@ bool FB_RTDB::sendRequestHeader(FirebaseData *fbdo, struct firebase_rtdb_request
 
 void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
 {
-    fbdo->removeSession();
+    fbdo->setSession(true, false);
 
     fbdo->_dataAvailableCallback = NULL;
     fbdo->_timeoutCallback = NULL;

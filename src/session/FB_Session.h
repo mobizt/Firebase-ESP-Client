@@ -963,8 +963,8 @@ private:
   bool intCfg = false;
   unsigned long last_reconnect_millis = 0;
   uint16_t reconnect_tmo = 10 * 1000;
-  uint32_t sessionPtr = 0;
-  uint32_t queueSessionPtr = 0;
+  firebase_session_info sessionPtr;
+  firebase_session_info queueSessionPtr;
 
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   QueueManager _qMan;
@@ -1072,7 +1072,8 @@ private:
   }
 #endif
   void addSession(firebase_con_mode mode);
-  void removeSession();
+  void setSession(bool remove, bool status);
+  int tcpSend(const char* s);
   void addQueueSession();
   void removeQueueSession();
   void setRaw(bool trim);

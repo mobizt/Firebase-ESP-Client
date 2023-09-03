@@ -662,8 +662,15 @@ void FirebaseCore::readNTPTime()
 
 void FirebaseCore::tokenProcessingTask()
 {
-    // We don't have to use memory reserved tasks e.g., FreeRTOS task in ESP32 for this JWT
-    // All tasks can be processed in a finite loop.
+     // All sessions should be closed
+     
+    freeClient(&tcpClient);
+
+    for (size_t i = 0; i < Core.internal.sessions.size(); i++)
+    {
+        if (Core.internal.sessions[i].status)
+            return;
+    }
 
     // return when task is currently running
     if (config->signer.tokenTaskRunning)
@@ -877,8 +884,8 @@ bool FirebaseCore::refreshToken()
 
 void FirebaseCore::newClient(Firebase_TCP_Client **client)
 {
-    freeClient(client);
 
+    freeClient(client);
     if (!*client)
     {
         *client = new Firebase_TCP_Client();
@@ -1563,22 +1570,15 @@ void FirebaseCore::setNetworkStatus(bool status)
 
 void FirebaseCore::closeSession(Firebase_TCP_Client *client, firebase_session_info_t *session)
 {
-    if (!session || !client)
-        return;
 
-    bool status = client->networkReady();
+    // close the socket and free the resources used by the SSL engine
+    internal.fb_last_reconnect_millis = millis();
 
-    if (status)
-    {
-        // close the socket and free the resources used by the SSL engine
-
-        if (config)
-            internal.fb_last_reconnect_millis = millis();
-
+    if (client)
         client->stop();
-    }
+
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
-    if (session->con_mode == firebase_con_mode_rtdb_stream)
+    if (session && session->con_mode == firebase_con_mode_rtdb_stream)
     {
         session->rtdb.stream_tmo_Millis = millis();
         session->rtdb.data_millis = millis();
@@ -1681,13 +1681,13 @@ bool FirebaseCore::reconnect()
 
     // We need tcpClient for network checking.
 
-    if (noClient)
-        newClient(&tcpClient);
+    // if (noClient)
+    //    newClient(&tcpClient);
 
-    reconnect(tcpClient, nullptr);
+    // reconnect(tcpClient, nullptr);
 
-    if (noClient)
-        freeClient(&tcpClient);
+    // if (noClient)
+    //    freeClient(&tcpClient);
 
     networkChecking = false;
 
@@ -2264,7 +2264,7 @@ void FirebaseCore::errorToString(int httpCode, MB_String &buff)
         break;
     case FIREBASE_ERROR_NO_WIFI_TIME:
         buff += firebase_time_err_pgm_str_2; // "NTP server time reading cannot begin when valid time is required because of no WiFi capability/activity detected."
-        buff += firebase_pgm_str_9;         // " "
+        buff += firebase_pgm_str_9;          // " "
         buff += firebase_time_err_pgm_str_3; // "Please set the library reference time manually using Firebase.setSystemTime"
         return;
     case FIREBASE_ERROR_USER_TIME_SETTING_REQUIRED:
