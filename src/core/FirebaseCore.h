@@ -246,6 +246,12 @@ private:
     FB_NetworkConnectionRequestCallback _net_con_cb = NULL;
     FB_NetworkStatusRequestCallback _net_stat_cb = NULL;
     Client *_cli = nullptr;
+
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+    MB_String _pin, _apn, _user, _password;
+    void *_modem = nullptr;
+#endif
+
 };
 
 extern FirebaseCore Core;

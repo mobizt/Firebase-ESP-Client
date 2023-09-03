@@ -115,9 +115,6 @@ int FirebaseData::tcpSend(const char *s)
 
 void FirebaseData::addSession(firebase_con_mode mode)
 {
-    if (!Core.config)
-        return;
-
     setSession(true, false);
 
     if (sessionPtr.ptr == 0)
@@ -130,9 +127,6 @@ void FirebaseData::addSession(firebase_con_mode mode)
 
 void FirebaseData::setSession(bool remove, bool status)
 {
-    if (!Core.config)
-        return;
-
     if (sessionPtr.ptr > 0)
     {
         for (size_t i = 0; i < Core.internal.sessions.size(); i++)
@@ -1554,7 +1548,7 @@ const char *FirebaseData::getTaskName(size_t taskStackSize, bool isStream)
 {
     MB_String taskName = firebase_rtdb_ss_pgm_str_14; // "task"
     taskName += isStream ? firebase_rtdb_ss_pgm_str_15 /* "_stream" */ : firebase_rtdb_ss_pgm_str_16 /* "_error_queue" */;
-    taskName += sessionPtr;
+    taskName += sessionPtr.ptr;
     if (isStream)
     {
         Core.internal.stream_task_stack_size = taskStackSize > STREAM_TASK_STACK_SIZE
@@ -1902,13 +1896,13 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     Core.hh.addGAPIsHostHeader(header, esp_fb_legacy_fcm_pgm_str_12 /* "fcm" */);
     Core.hh.addAuthHeaderFirst(header, token_type_undefined);
 
-    fbdo.tcpClient.send(header.c_str());
+    fbdo.tcpSend(header.c_str());
     header.clear();
 
     if (fbdo.session.response.code < 0)
         return false;
 
-    fbdo.tcpClient.send(server_key.to<const char *>());
+    fbdo.tcpSend(server_key.to<const char *>());
 
     if (fbdo.session.response.code < 0)
         return false;
@@ -1924,7 +1918,7 @@ bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
     Core.hh.addConnectionHeader(header, keepAlive);
     Core.hh.addNewLine(header);
 
-    fbdo.tcpClient.send(header.c_str());
+    fbdo.tcpSend(header.c_str());
     header.clear();
     if (fbdo.session.response.code < 0)
         return false;
@@ -2040,7 +2034,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, firebase_fcm_msg_type messageType)
         return false;
     }
 
-    fbdo.tcpClient.send(msg.to<const char *>());
+    fbdo.tcpSend(msg.to<const char *>());
 
     json.setJsonData(raw);
     json.remove(pgm2Str(esp_fb_legacy_fcm_pgm_str_16 /*  "msg" */));

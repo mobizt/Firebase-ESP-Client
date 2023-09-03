@@ -1098,11 +1098,10 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
         {
             for (size_t i = 0; i < Core.internal.queueSessions.size(); i++)
             {
-                FirebaseData *_fbdo = addrTo<FirebaseData *>(Core.internal.queueSessions[i]);
+                FirebaseData *_fbdo = addrTo<FirebaseData *>(Core.internal.queueSessions[i].ptr);
 
                 if (_fbdo)
                 {
-
                     if (_fbdo->_queueInfoCallback)
                         _this->processErrorQueue(_fbdo, _fbdo->_queueInfoCallback);
                     else

@@ -247,13 +247,13 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const cha
     {
         Core.hh.addAuthHeaderFirst(header, token_type_oauth2_access_token);
 
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
 
         if (fbdo->session.response.code < 0)
             return false;
 
-        fbdo->tcpClient.send(Core.getToken());
+        fbdo->tcpSend(Core.getToken());
 
         if (fbdo->session.response.code < 0)
             return false;
@@ -262,13 +262,13 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const cha
     {
         Core.hh.addAuthHeaderFirst(header, token_type_undefined);
 
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
 
         if (fbdo->session.response.code < 0)
             return false;
 
-        fbdo->tcpClient.send(server_key.c_str());
+        fbdo->tcpSend(server_key.c_str());
 
         if (fbdo->session.response.code < 0)
             return false;
@@ -292,7 +292,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const cha
     Core.hh.addConnectionHeader(header, keepAlive);
     Core.hh.addNewLine(header);
 
-    fbdo->tcpClient.send(header.c_str());
+    fbdo->tcpSend(header.c_str());
     header.clear();
 
     if (fbdo->session.response.code < 0)
@@ -892,7 +892,7 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const char 
     bool ret = sendHeader(fbdo, mode, msg);
 
     if (ret)
-        fbdo->tcpClient.send(msg);
+        fbdo->tcpSend(msg);
 
     fbdo->session.fcm.payload.clear();
     if (fbdo->session.response.code < 0)

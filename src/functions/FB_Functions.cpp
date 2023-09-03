@@ -656,12 +656,12 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct firebase_fun
 
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    fbdo->tcpClient.send(header.c_str());
+    fbdo->tcpSend(header.c_str());
     if (fbdo->session.response.code < 0)
         return false;
 
     if (fbdo->session.response.code > 0 && req->payload.length() > 0)
-        fbdo->tcpClient.send(req->payload.c_str());
+        fbdo->tcpSend(req->payload.c_str());
 
     header.clear();
     req->payload.clear();

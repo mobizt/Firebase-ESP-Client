@@ -514,13 +514,13 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
         {
             Core.hh.addAuthHeaderFirst(header, Core.getTokenType());
 
-            fbdo->tcpClient.send(header.c_str());
+            fbdo->tcpSend(header.c_str());
             header.clear();
 
             if (fbdo->session.response.code < 0)
                 return false;
 
-            fbdo->tcpClient.send(Core.getToken());
+            fbdo->tcpSend(Core.getToken());
 
             if (fbdo->session.response.code < 0)
                 return false;
@@ -641,14 +641,14 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
     if (req->requestType == firebase_gcs_request_type_download ||
         req->requestType == firebase_gcs_request_type_download_ota)
     {
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
         if (fbdo->session.response.code < 0)
             return false;
     }
     else
     {
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
         if (fbdo->session.response.code < 0)
             return false;
@@ -656,7 +656,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
         if (req->requestType == firebase_gcs_request_type_upload_resumable_init)
         {
             if (fbdo->session.jsonPtr)
-                fbdo->tcpClient.send(fbdo->session.jsonPtr->raw());
+                fbdo->tcpSend(fbdo->session.jsonPtr->raw());
 
             if (fbdo->session.response.code < 0)
                 return false;
@@ -676,7 +676,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
             if (req->requestType == firebase_gcs_request_type_upload_multipart)
             {
-                fbdo->tcpClient.send(multipart_header.c_str());
+                fbdo->tcpSend(multipart_header.c_str());
                 multipart_header.clear();
 
                 if (fbdo->session.response.code < 0)
@@ -718,7 +718,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
             if (req->requestType == firebase_gcs_request_type_upload_multipart)
             {
-                fbdo->tcpClient.send(multipart_header2.c_str());
+                fbdo->tcpSend(multipart_header2.c_str());
                 multipart_header2.clear();
 
                 if (fbdo->session.response.code < 0)

@@ -662,8 +662,8 @@ void FirebaseCore::readNTPTime()
 
 void FirebaseCore::tokenProcessingTask()
 {
-     // All sessions should be closed
-     
+    // All sessions should be closed
+
     freeClient(&tcpClient);
 
     for (size_t i = 0; i < Core.internal.sessions.size(); i++)
@@ -890,15 +890,16 @@ void FirebaseCore::newClient(Firebase_TCP_Client **client)
     {
         *client = new Firebase_TCP_Client();
 
-        if (*client)
+        if (_cli_type == firebase_client_type_external_basic_client)
+            (*client)->setClient(_cli, _net_con_cb, _net_stat_cb);
+        else if (_cli_type == firebase_client_type_external_gsm_client)
         {
-            (*client)->setConfig(config, &mbfs);
-            // restore only external client (gsm client integration cannot restore)
-            if (_cli_type == firebase_client_type_external_basic_client)
-                (*client)->setClient(_cli, _net_con_cb, _net_stat_cb);
-            else
-                (*client)->_client_type = _cli_type;
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+            (*client)->setGSMClient(_cli, _modem, _pin.c_str(), _apn.c_str(), _user.c_str(), _password.c_str());
+#endif
         }
+        else
+            (*client)->_client_type = _cli_type;
     }
 }
 
@@ -906,11 +907,23 @@ void FirebaseCore::freeClient(Firebase_TCP_Client **client)
 {
     if (*client)
     {
-        // Keep external client pointers
         _cli_type = (*client)->type();
-        _net_con_cb = (*client)->_network_connection_cb;
-        _net_stat_cb = (*client)->_network_status_cb;
         _cli = (*client)->_basic_client;
+        if (_cli_type == firebase_client_type_external_basic_client)
+        {
+            _net_con_cb = (*client)->_network_connection_cb;
+            _net_stat_cb = (*client)->_network_status_cb;
+        }
+        else if (_cli_type == firebase_client_type_external_gsm_client)
+        {
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+            _pin = (*client)->_pin;
+            _apn = (*client)->_apn;
+            _user = (*client)->_user;
+            _password = (*client)->_password;
+            _modem = (*client)->_modem;
+#endif
+        }
         delete *client;
     }
     *client = nullptr;
