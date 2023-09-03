@@ -701,7 +701,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
                 reportUploadProgress(fbdo, req, byteRead);
 
-                if ((int)fbdo->tcpClient.write(buf, read) != read)
+                if ((int)fbdo->tcpWrite(buf, read) != read)
                 {
                     fbdo->session.response.code = FIREBASE_ERROR_UPLOAD_DATA_ERRROR;
                     fbdo->closeSession();
@@ -760,7 +760,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
                 if (fbdo->tcpClient.connected())
                 {
-                    if ((int)fbdo->tcpClient.write(buf, read) != read)
+                    if ((int)fbdo->tcpWrite(buf, read) != read)
                     {
                         fbdo->session.response.code = FIREBASE_ERROR_UPLOAD_DATA_ERRROR;
                         fbdo->closeSession();

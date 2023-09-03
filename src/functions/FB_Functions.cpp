@@ -685,7 +685,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct firebase_fun
 
                 read = Core.mbfs.read(mbfs_type fbdo->session.cfn.storageType, buf, available);
 
-                if ((int)fbdo->tcpClient.write(buf, read) != read)
+                if ((int)fbdo->tcpWrite(buf, read) != read)
                     break;
 
                 available = Core.mbfs.available(mbfs_type fbdo->session.cfn.storageType);
@@ -709,7 +709,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct firebase_fun
                 if (available > bufLen)
                     available = bufLen;
                 memcpy_P(buf, req->pgmArc + pos, available);
-                if ((int)fbdo->tcpClient.write(buf, available) != available)
+                if ((int)fbdo->tcpWrite(buf, available) != available)
                     break;
                 pos += available;
                 len -= available;

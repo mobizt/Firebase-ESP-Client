@@ -439,13 +439,13 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct firebase_fcs_req_t *
     {
         Core.hh.addAuthHeaderFirst(header, Core.getTokenType());
 
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
 
         if (fbdo->session.response.code < 0)
             return false;
 
-        fbdo->tcpClient.send(Core.getToken());
+        fbdo->tcpSend(Core.getToken());
 
         if (fbdo->session.response.code < 0)
             return false;
@@ -472,7 +472,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct firebase_fcs_req_t *
         sendUploadCallback(fbdo, in, req->uploadCallback, req->uploadStatusInfo);
     }
 
-    fbdo->tcpClient.send(header.c_str());
+    fbdo->tcpSend(header.c_str());
     header.clear();
 
     if (fbdo->session.response.code > 0)
@@ -496,7 +496,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct firebase_fcs_req_t *
                     available = bufLen;
 
                 read = Core.mbfs.read(mbfs_type req->storageType, buf, available);
-                if (read && (int)fbdo->tcpClient.write(buf, read) != read)
+                if (read && (int)fbdo->tcpWrite(buf, read) != read)
                     break;
 
                 readCount += read;
@@ -526,7 +526,7 @@ bool FB_Storage::fcs_sendRequest(FirebaseData *fbdo, struct firebase_fcs_req_t *
                 if (available > bufLen)
                     available = bufLen;
                 memcpy_P(buf, req->pgmArc + pos, available);
-                if ((int)fbdo->tcpClient.write(buf, available) != available)
+                if ((int)fbdo->tcpWrite(buf, available) != available)
                     break;
 
                 reportUploadProgress(fbdo, req, pos);

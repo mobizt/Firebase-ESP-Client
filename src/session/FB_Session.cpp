@@ -113,6 +113,13 @@ int FirebaseData::tcpSend(const char *s)
     return r;
 }
 
+int FirebaseData::tcpWrite(const uint8_t *data, size_t size)
+{
+    int r = tcpClient.write(data, size);
+    setSession(false, r > 0);
+    return r;
+}
+
 void FirebaseData::addSession(firebase_con_mode mode)
 {
     setSession(true, false);

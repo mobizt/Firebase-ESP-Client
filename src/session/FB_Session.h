@@ -1074,6 +1074,7 @@ private:
   void addSession(firebase_con_mode mode);
   void setSession(bool remove, bool status);
   int tcpSend(const char* s);
+  int tcpWrite(const uint8_t *data, size_t size);
   void addQueueSession();
   void removeQueueSession();
   void setRaw(bool trim);
