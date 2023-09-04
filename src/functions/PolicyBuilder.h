@@ -60,7 +60,7 @@ private:
     FirebaseJsonArray arr;
 
     void mSetLogType(MB_StringPtr logType);
-    void mAddexemptedMembers(MB_StringPtr member);
+    void mAddExemptedMembers(MB_StringPtr member);
 
 public:
     AuditLogConfig();
@@ -89,7 +89,7 @@ public:
      *
      */
     template <typename T = const char *>
-    void addexemptedMembers(T member) { mAddexemptedMembers(toStringPtr(member)); }
+    void addExemptedMembers(T member) { mAddExemptedMembers(toStringPtr(member)); }
 
     /**
      * Clear all exempted members.

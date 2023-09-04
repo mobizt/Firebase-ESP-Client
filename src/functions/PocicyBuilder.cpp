@@ -57,7 +57,7 @@ void AuditLogConfig::mSetLogType(MB_StringPtr logType)
         json.set(pgm2Str(firebase_func_pgm_str_71 /* "logType" */), stringPtr2Str(logType));
 }
 
-void AuditLogConfig::mAddexemptedMembers(MB_StringPtr member)
+void AuditLogConfig::mAddExemptedMembers(MB_StringPtr member)
 {
         arr.add(stringPtr2Str(member));
         json.set(pgm2Str(firebase_func_pgm_str_72 /* "exemptedMembers" */), arr);
@@ -99,7 +99,6 @@ void AuditConfig::clearAuditLogConfigs()
 
 void AuditConfig::clear()
 {
-
         arr.clear();
         json.clear();
 }

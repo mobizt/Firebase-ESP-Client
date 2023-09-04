@@ -663,7 +663,6 @@ void FirebaseCore::readNTPTime()
 void FirebaseCore::tokenProcessingTask()
 {
     // All sessions should be closed
-
     freeClient(&tcpClient);
 
     for (size_t i = 0; i < Core.internal.sessions.size(); i++)

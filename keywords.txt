@@ -216,7 +216,7 @@ setEventTrigger KEYWORD2
 setIamPolicy    KEYWORD2
 getTriggerUrl   KEYWORD2
 setLogType  KEYWORD2
-addexemptedMembers  KEYWORD2
+addExemptedMembers  KEYWORD2
 clearexemptedMembers    KEYWORD2
 setService  KEYWORD2
 addAuditLogConfig   KEYWORD2
