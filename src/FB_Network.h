@@ -78,12 +78,18 @@
 #if __has_include(<Ethernet.h>)
 #if defined(ESP8266)
 #undef MAX_SOCK_NUM
-#endif
+
+#if defined(FIREBASE_DISABLE_NATIVE_ETHERNET)
 #include <Ethernet.h>
-#if defined(ESP8266)
-#undef MAX_SOCK_NUM
-#endif
 #define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
+#endif
+
+#undef MAX_SOCK_NUM
+#else
+#include <Ethernet.h>
+#define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
+#endif
+
 #endif
 
 #if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_RASPBERRY_PI_PICO_W) || \

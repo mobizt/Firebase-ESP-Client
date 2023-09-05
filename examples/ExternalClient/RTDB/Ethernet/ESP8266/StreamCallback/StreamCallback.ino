@@ -14,7 +14,7 @@
  *
  * For ESP8266 native Ethernet usage without external Ethernet client required, see examples/RTB/BasicEthernet/ESP8266/ESP8266.ino.
  *
- * To use external Ethernet client with ESP8266 as in this example, the following macro or build flag
+ * To use external Ethernet client with ESP8266 as in this example, the following macro in src/CustomFirebaseFS.h or build flag
  * should be assigned to disable the native internet inclusion that conflicts with Ethernet.h
  *
  * FIREBASE_DISABLE_NATIVE_ETHERNET
