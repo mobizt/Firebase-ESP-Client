@@ -1646,15 +1646,6 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct firebase_rtdb_request_in
     return ret;
 }
 
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-void FB_RTDB::allowMultipleRequests(bool enable)
-{
-    if (!Core.config)
-        return;
-    Core.internal.fb_multiple_requests = enable;
-}
-#endif
-
 void FB_RTDB::rescon(FirebaseData *fbdo, const char *host, firebase_rtdb_request_info_t *req)
 {
     fbdo->_responseCallback = NULL;

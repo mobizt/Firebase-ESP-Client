@@ -5,7 +5,7 @@
 
 /**
  * Google's Firebase Token Management class, FirebaseCore.cpp version 1.0.0
- * 
+ *
  * Created September 5, 2023
  *
  * The MIT License (MIT)
@@ -681,6 +681,7 @@ void FirebaseCore::tokenProcessingTask()
 
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
+
         FBUtils::idle();
 
         if (!internal.fb_clock_rdy && (config->cert.data != NULL || config->cert.file.length() > 0 || config->signer.tokens.token_type == token_type_oauth2_access_token || config->signer.tokens.token_type == token_type_custom_token))
@@ -730,10 +731,12 @@ void FirebaseCore::tokenProcessingTask()
 
         if (config->signer.tokens.token_type == token_type_id_token)
         {
-            config->signer.lastReqMillis = millis();
-
             // email/password verification and get id token
             ret = getIdToken(false, toStringPtr(_EMPTY_STR), toStringPtr(_EMPTY_STR));
+
+            // send error cb
+            if (!reconnect())
+                handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
         }
         else
         {
@@ -769,6 +772,10 @@ void FirebaseCore::tokenProcessingTask()
                     ret = requestTokens(false);
                     config->signer.step = ret || getTime() - now > 3599 ? firebase_jwt_generation_step_begin : firebase_jwt_generation_step_exchange;
                     ret = true;
+
+                    // send error cb
+                    if (!reconnect())
+                        handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
                 }
             }
         }
@@ -882,7 +889,7 @@ void FirebaseCore::newClient(Firebase_TCP_Client **client)
     freeClient(client);
     if (!*client)
     {
-      
+
         *client = new Firebase_TCP_Client();
 
         if (_cli_type == firebase_client_type_external_generic_client)

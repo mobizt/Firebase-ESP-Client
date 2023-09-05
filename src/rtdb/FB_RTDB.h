@@ -79,16 +79,6 @@ public:
    */
   void end(FirebaseData *fbdo);
 
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-  /** Enable multiple HTTP requests at a time (for ESP32 only).
-   *
-   * @param enable - The boolean value to enable/disable.
-   *
-   * @note The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
-   */
-  void allowMultipleRequests(bool enable);
-#endif
-
   /** Set the timeout of Firebase.get functions.
    *
    * @param fbdo The pointer to Firebase Data Object.

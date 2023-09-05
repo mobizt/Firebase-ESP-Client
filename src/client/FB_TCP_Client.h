@@ -1020,7 +1020,7 @@ public:
 
     if (_ethernet_reset_pin > -1)
     {
-      Serial.println((const char *)MBSTRING_FLASH_MCR("Resetting Ethernet Board...  "));
+      Serial.println((const char *)MBSTRING_FLASH_MCR("Resetting Ethernet Board..."));
       pinMode(_ethernet_reset_pin, OUTPUT);
       digitalWrite(_ethernet_reset_pin, HIGH);
       delay(200);
@@ -1036,17 +1036,17 @@ public:
 
       if (_static_ip->optional == false)
         Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
-      else if (!Ethernet.begin(_ethernet_mac))
+      else if (!Ethernet.begin(_ethernet_mac, 5000, 5000))
       {
         Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
       }
     }
     else
-      Ethernet.begin(_ethernet_mac);
+      Ethernet.begin(_ethernet_mac, 5000, 5000);
 
     unsigned long to = millis();
 
-    while (Ethernet.linkStatus() == LinkOFF || millis() - to < 2000)
+    while (Ethernet.linkStatus() == LinkOFF && millis() - to < 2000)
     {
       delay(100);
     }

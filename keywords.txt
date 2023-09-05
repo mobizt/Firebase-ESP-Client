@@ -163,7 +163,6 @@ sendMessage KEYWORD2
 broadcastMessage    KEYWORD2
 sendTopic   KEYWORD2
 setStreamTaskStackSize  KEYWORD2
-allowMultipleRequests    KEYWORD2
 authTokenInfo   KEYWORD2
 tokenReady  KEYWORD2
 signUp  KEYWORD2

@@ -1036,7 +1036,6 @@ struct firebase_cfg_int_t
         base_time_type_user = 2
     };
 
-    bool fb_multiple_requests = false;
     bool fb_processing = false;
     bool fb_rtoken_requested = false;
     uint8_t fb_stream_idx = 0;
