@@ -85,7 +85,7 @@
 #endif
 
 #undef MAX_SOCK_NUM
-#else
+#elif !defined(ARDUINO_NANO_RP2040_CONNECT)// Not support Ethernet in RP2040 on ArduinoCore-mbed
 #include <Ethernet.h>
 #define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
 #endif

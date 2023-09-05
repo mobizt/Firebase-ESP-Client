@@ -1010,6 +1010,7 @@ public:
 #endif
     return 0;
   }
+  
   bool ethernetConnect()
   {
     bool ret = false;
