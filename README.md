@@ -1,11 +1,11 @@
-# Firebase Arduino Client Library for ESP8266, ESP32 and RP2040 Pico
+# Firebase Arduino Client Library for for Arduino devices
 
 ![Compile](https://github.com/mobizt/Firebase-ESP-Client/actions/workflows/compile_library.yml/badge.svg) ![Examples](https://github.com/mobizt/Firebase-ESP-Client/actions/workflows/compile_examples.yml/badge.svg)  [![Github Stars](https://img.shields.io/github/stars/mobizt/Firebase-ESP-Client?logo=github)](https://github.com/mobizt/Firebase-ESP-Client/stargazers) ![Github Issues](https://img.shields.io/github/issues/mobizt/Firebase-ESP-Client?logo=github)
 
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg)
 
 
-The managed, complete, fast and secure Firebase Client Library that supports ESP8266 and ESP32 MCU from Espressif and RP2040 Pico from Raspberry Pi. The following are platforms in which the libraries are also available (RTDB only).
+The managed, complete, fast and secure Firebase Client Library that supports most Arduino devices except for AVR. The following are platforms in which the libraries are also available (RTDB only).
 
 
 * [Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
@@ -13,92 +13,64 @@ The managed, complete, fast and secure Firebase Client Library that supports ESP
 * [Arduino WiFi Shield 101 and Arduino MKR1000 WIFI](https://github.com/mobizt/Firebase-Arduino-WiFi101)
 
 
- 
-## Other Arduino devices supported using external Clients.
-
-Since version 3.0.0, library allows you to use external Arduino Clients network interfaces e.g. WiFiClient, EthernetClient and GSMClient, the Arduino supported devices that have enough flash size (> 128k) and memory can now use this library.
-
-To use external Client, see the [ExternalClient examples](/examples/ExternalClient).
-
-The authentication with OAuth2.0 and custom auth tokens, RTDB error queue features are not supported for other Arduino devices using external Clients.
-
-
-## Known Issues
-
-There is known issue in Client class in ESP32 Arduino Core SDK v2.0.x which the Client may close the connection after the Connection "Close" header was sent which causes the incomplete response received. 
-
-This strange behavior was partly fixed in this library by sending Connection "Keep-Alive" header in HTTP request but this is not totally prevent the problem that will be happened when transferring the large payloads.
-
-This strange behavior also existed in WiFiClientSecure core library used in this library which was fixed by sending Connection Keep-Alive header.
-
-This issue can't be fixed in the external client that uses Arduino Client derived class until the change was made in the ESP32 core.
-
-This OTA download and file upload/download functions using external Client may affected by this issue.
-
-For Raspberry Pi Pico, by including `FreeRTOS.h`, Pico device will hang when format or writing data to flash filesystem (LittleFS).
-
-
 
 ## Tested Devices
 
 ### This following devices were tested.
 
- * Sparkfun ESP32 Thing
- * NodeMCU-32
- * WEMOS LOLIN32
- * TTGO T8 V1.8
- * M5Stack ESP32
- * NodeMCU ESP8266
- * Wemos D1 Mini (ESP8266)
+ * ESP8266 MCUs based boards
+ * ESP32 MCUs based boards
  * Arduino MKR WiFi 1010
- * RP2040 Pico W
+ * Arduino MKR 1000 WIFI
+ * Arduino Nano 33 IoT
+ * Arduino MKR Vidor 4000
+ * Raspberry Pi Pico (RP2040)
+ * Arduino UNO R4 WiFi (Renesas).
  * LAN8720 Ethernet PHY
+ * TLK110 Ethernet PHY
+ * IP101 Ethernet PHY
  * ENC28J60 SPI Ethernet module
-
-### Supposted Arduino Devices with flash size > 128k, using custom Clients.
-
- * ESP32
- * ESP8266
- * Arduino SAMD
- * Arduino STM32
- * Arduino AVR
- * Teensy 3.1 to 4.1
- * Arduino Nano RP2040 Connect
- * Raspberry Pi Pico 
+ * W5100 SPI Ethernet module
+ * W5500 SPI Ethernet module
+ * SIMCom Modules with TinyGSMClient
 
 
 
 ## Features
 
+* Supports most Arduino devices (except for AVR)
 
-* **Supports Firebase Realtime database.**
+* Supports external Heap via SRAM/PSRAM in ESP8266 and ESP32.
 
-* **Supports Cloud Firestore database.**
+* TinyGSMClient and Ethernet Client integration.
 
-* **Supports Firebase Storage.**
+* Faster server reconnection with SSL Session Resumption.
 
-* **Supports Google Cloud Storage.**
+* Supports external network module.
 
-* **Supports Firebase Cloud Messaging**
+* Supports Firebase Realtime database.
 
-* **Supports Test Mode (No Auth)**
+* Supports Cloud Firestore database.
 
-* **Supports Firmware OTA updates via RTDB, Firebase Storage and Google Cloud Storage**
+* Supports Firebase Storage.
 
-* **Supports Cloud Functions for Firebase**
+* Supports Google Cloud Storage.
 
-* **Built-in JSON editor and deserializer.**
+* Supports Firebase Cloud Messaging.
 
-* **Supports external Heap via SRAM/PSRAM in ESP8266 and ESP32.**
+* Supports Test Mode (No Auth).
 
-* **Supports ethernet in ESP32 using LAN8720, TLK110 and IP101 Ethernet modules and ESP8266 using ENC28J60, W5100 and W5500 Ethernet modules.**
+* Supports Firmware OTA updates via RTDB, Firebase Storage and Google Cloud Storage.
+
+* Supports Cloud Functions for Firebase.
+
 
 
 
 ## Dependencies
 
 
-This library required **ESP8266 or ESP32 or RP2040 Pico Core SDK**.
+This library required **Platform's Core SDK** to be installed.
 
 ESP8266 Core SDK v2.5.0 and older versions are not supported.
 
@@ -132,9 +104,6 @@ For PlatformIO IDE, using the following command.
 **pio lib install "Firebase ESP Client""**
 
 Or at **PIO Home** -> **Library** -> **Registry** then search **Firebase ESP Client**.
-
-
-If you ever installed this library in Global storage in PlatformIO version prior to v2.0.0 and you have updated the PlatformIO to v2.0.0 and later, the global library installation was not available, the sources files of old library version still be able to search by the library dependency finder (LDF), you needed to remove the library from folder **C:\Users\\<UserName\>\\.platformio\lib** to prevent unexpected behavior when compile and run.
 
 
 
@@ -194,15 +163,19 @@ See [function description](/src/README.md) for all available functions.
 
 ```cpp
 
-// Include WiFi library
 #include <Arduino.h>
-#if defined(ESP32) || defined(PICO_RP2040)
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
 #endif
 
-// Include Firebase library (this library)
 #include <Firebase_ESP_Client.h>
 
 // Define the Firebase Data object
@@ -394,57 +367,6 @@ You can set the system time using the RTC chip or manually by calling **`Firebas
 While authenticate using Email and password, the process will be perform faster because no token generation and time setup required. 
 
 The authenticate using the legacy token (database secret) does not have these delay time because the token is ready to use.
-
-
-
-### Speed of data transfer
-
-
-This library focuses on the user privacy and user data protection which follows Google authentication processes. Setting the security rules to allow public access read and write, is not recommended even the data transmision time in this case was significantly reduced as it does not require any auth token then the overall data size was reduced, but anyone can steal, modify, or delete data in your database.
-
-
-Once the auth token is important and when it was created and ready for authentication process, the data transmission time will depend on the time used in SSL/TLS handshake process (only for new session opening), the size of http header (included auth token size) and payload to be transmitted and the SSL client buffer reserved size especially in ESP8266.
-
-
-The legacy token size is relatively small, only 40 bytes, result in smallest header to send, while the size of id token generated using Email/Password is quite large, approx. 900 bytes. result in larger header to send.
-
-
-There is a compromise between the speed of data transfer and the Rx/Tx buffer which then reduced the free memory available especially in ESP8266.
-
-
-When the reserved SSL client Rx/Tx buffer is smaller than the size of data to be transmitted, the data need to be sent as multiple chunks which required more transmission time.
-
-This affected especially in ESP8266 which has the limited free memory.
-
-
-To speed up the data transmission in ESP8266, the larger reserved Rx/Tx buffer size is necessary.
-
-
-The reserved SSL Rx/Tx buffer size in ESP8266 can be set through the function \<Firebase Data object\>.setBSSLBufferSize, e.g. **fbdo.setBSSLBufferSize(2048, 2048);**
-
-
-The larger BearSSL buffer reserved for ESP8266, the lower free memory available as long as the session opened (server connection).
-
-
-Therefore the time for data transfer will be varied from approx. neary 200 ms to 500 ms based on the reserved SSL client Rx/Tx buffer size and the size of data to transmit.
-
-
-In ESP8266, when the free memory and speed are concerned, the legacy token should be used instead of other authentication to reduce the header size and the lower SSL Rx/Tx buffer i.e. 1024 for Rx and 512 for Tx are enough.
-
-
-When the session was reused (in this library), the SSL handshake process will be ignored in the subsequence requests.
-
-
-The session was close when the host or ip changes or server closed or the session timed out in 3 minutes. 
-
-
-When the new session need to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
-
-
-For post (push) or put (set) request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
-
-
-With pushAsync and setAsync, the payload response will be ignored and the next data will be processed immediately.
 
 
 
