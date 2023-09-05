@@ -1,8 +1,6 @@
 /**
  * Firebase TCP Client v1.0.0
  *
- * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico MCUs.
- *
  * Created August 12, 2023
  *
  * The MIT License (MIT)
@@ -1010,18 +1008,12 @@ public:
 #endif
     return 0;
   }
-  
+
   bool ethernetConnect()
   {
     bool ret = false;
 
 #if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
-
-    if (Ethernet.hardwareStatus() == EthernetNoHardware)
-    {
-      Serial.println((const char *)MBSTRING_FLASH_MCR("No Ethernet module detected!"));
-      return ret;
-    }
 
     if (_ethernet_cs_pin > -1)
       Ethernet.init(_ethernet_cs_pin);
@@ -1117,7 +1109,6 @@ public:
 
   void setSPIEthernet(SPI_ETH_Module *eth) { this->eth = eth; }
 
-  bool reserved = false;
   unsigned long dataTime = 0;
   unsigned long dataStart = 0;
   firebase_cert_type certType = firebase_cert_type_undefined;

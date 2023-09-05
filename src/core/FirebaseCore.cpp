@@ -5,12 +5,8 @@
 
 /**
  * Google's Firebase Token Management class, FirebaseCore.cpp version 1.0.0
- *
- *
+ * 
  * Created September 5, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -964,10 +960,7 @@ bool FirebaseCore::handleTaskError(int code, int httpCode)
     // Close TCP connection and unlock used flag
 
     if (tcpClient)
-    {
         tcpClient->stop();
-        tcpClient->reserved = false;
-    }
 
     internal.fb_processing = false;
 
@@ -1757,9 +1750,6 @@ bool FirebaseCore::initClient(PGM_P subDomain, firebase_auth_token_status status
         return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED);
 
     tcpClient->setBufferSizes(2048, 1024);
-
-    // Used for authentication task
-    tcpClient->reserved = true;
 
     initJson();
 

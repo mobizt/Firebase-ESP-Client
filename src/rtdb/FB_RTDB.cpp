@@ -6,12 +6,7 @@
 /**
  * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.1.0
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
  * Created September 5, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -583,14 +578,13 @@ bool FB_RTDB::mBeginStream(FirebaseData *fbdo, MB_StringPtr path)
 
     fbdo->session.rtdb.new_stream = true;
 
-    if (!fbdo->tcpClient.reserved)
-        fbdo->closeSession();
+    fbdo->closeSession();
 
     fbdo->session.rtdb.stream_stop = false;
     fbdo->session.rtdb.data_tmo = false;
     fbdo->session.rtdb.stream_path = path;
 
-    if (!fbdo->tcpClient.reserved && !handleStreamRequest(fbdo, fbdo->session.rtdb.stream_path))
+    if (!handleStreamRequest(fbdo, fbdo->session.rtdb.stream_path))
     {
         if (!fbdo->tokenReady())
             return true;
@@ -634,10 +628,6 @@ bool FB_RTDB::handleStreamRead(FirebaseData *fbdo)
     if (!Core.waitIdle(fbdo->session.response.code))
         return false;
 #endif
-
-    // if the client used by the authentication task
-    if (fbdo->tcpClient.reserved)
-        return false;
 
     // prevent nested calling
     if (fbdo->session.streaming)
@@ -1971,8 +1961,6 @@ int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct firebase_rtdb_request_in
 
 bool FB_RTDB::sendRequest(FirebaseData *fbdo, struct firebase_rtdb_request_info_t *req)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
 
     fbdo->session.http_code = 0;
 

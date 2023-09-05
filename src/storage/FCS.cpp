@@ -4,14 +4,11 @@
 #endif
 
 /**
- * Google's Firebase Storage class, FCS.cpp version 1.2.11
+ * Google's Firebase Storage class, FCS.cpp version 1.2.12
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 29, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -55,9 +52,6 @@ FB_Storage ::~FB_Storage()
 
 bool FB_Storage::sendRequest(FirebaseData *fbdo, struct firebase_fcs_req_t *req)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     fbdo->session.http_code = 0;
 
     if (!Core.config)

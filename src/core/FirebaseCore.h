@@ -5,12 +5,8 @@
 
 /**
  * Google's Firebase Token Management class, FirebaseCore.h version 1.0.0
- *
- *
+ * 
  * Created September 5, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

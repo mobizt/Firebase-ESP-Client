@@ -6,8 +6,6 @@
 /**
  * Google's Firebase QueueInfo class, QueueInfo.h version 1.0.6
  *
- * This library supports Espressif ESP8266 and ESP32
- *
  * Created December 25, 2022
  *
  * This work is a part of Firebase ESP Client library
