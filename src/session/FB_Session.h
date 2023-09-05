@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.h version 1.3.10
+ * Google's Firebase Data class, FB_Session.h version 1.4.0
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 29, 2023
+ * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -48,8 +48,6 @@
 #include "./rtdb/stream/FB_MP_Stream.h"
 #include "./rtdb/QueueInfo.h"
 #include "./rtdb/QueueManager.h"
-
-
 
 #if defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_ARCH_SAMD)
 #if __has_include(<WiFiNINA.h>)
@@ -324,21 +322,31 @@ public:
    */
   FirebaseData(Client *client);
 
-  /** Assign external Arduino Client.
+  /** Assign external Arduino generic client.
+   *
+   * @param client The pointer to Arduino Client.
+   * @param networkConnectionCB The function that handles the network connection.
+   * @param networkStatusCB The function that handle the network connection status acknowledgement.
+   */
+  void setGenericClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
+                        FB_NetworkStatusRequestCallback networkStatusCB);
+
+  /** Assign external Arduino generic client (deprecated, use setGenericClient instead).
    *
    * @param client The pointer to Arduino Client derived class of SSL Client.
    */
-  void setExternalClient(Client *client);
+  void setExternalClient(Client *client) { setGenericClient(client, nullptr, nullptr); };
 
-  /** Assign the callback functions required for external Client usage.
+  /** Assign the callback functions required for external Client usage (deprecated, use setGenericClient instead).
    *
    * @param networkConnectionCB The function that handles the network connection.
    * @param networkStatusCB The function that handle the network connection status acknowledgement.
    */
-  void setExternalClientCallbacks(FB_NetworkConnectionRequestCallback networkConnectionCB,
-                                  FB_NetworkStatusRequestCallback networkStatusCB);
 
-  /** Assign the callback functions required for external Client usage (deprecated).
+  void setExternalClientCallbacks(FB_NetworkConnectionRequestCallback networkConnectionCB,
+                                  FB_NetworkStatusRequestCallback networkStatusCB) { setGenericClient(nullptr, networkConnectionCB, networkStatusCB); };
+
+  /** Assign the callback functions required for external Client usage (deprecated, use setGenericClient instead).
    *
    * @param tcpConnectionCB The function that handles the server connection.
    * @param networkConnectionCB The function that handles the network connection.
@@ -346,7 +354,29 @@ public:
    */
   void setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB,
                                   FB_NetworkConnectionRequestCallback networkConnectionCB,
-                                  FB_NetworkStatusRequestCallback networkStatusCB);
+                                  FB_NetworkStatusRequestCallback networkStatusCB) { setGenericClient(nullptr, networkConnectionCB, networkStatusCB); };
+
+  /** Assign external TinyGsm Client.
+   *
+   * @param client The pointer to TinyGsmClient.
+   * @param modem The pointer to TinyGsm modem object. Modem should be initialized and/or set mode before transfering data.
+   * @param pin The SIM pin.
+   * @param apn The GPRS APN (Access Point Name).
+   * @param user The GPRS user.
+   * @param password The GPRS password.
+   */
+  void setGSMClient(Client *client, void *modem, const char *pin, const char *apn, const char *user, const char *password);
+
+  /** Assign external Ethernet Client.
+   *
+   * @param client The pointer to Ethernet client object.
+   * @param macAddress The Ethernet MAC address.
+   * @param csPin The Ethernet module SPI chip select pin.
+   * @param resetPin The Ethernet module reset pin.
+   * @param staticIP (Optional) The pointer to Firebase_StaticIP object which included these IPAddress properties
+   * ipAddress, netMask, defaultGateway and dnsServer.
+   */
+  void setEthernetClient(Client *client, uint8_t macAddress[6], int csPin, int resetPin, Firebase_StaticIP *staticIP = nullptr);
 
   /** Set the network status acknowledgement.
    *
@@ -782,7 +812,7 @@ public:
     if (session.rtdb.resp_data_type == firebase_data_type::d_file)
     {
       int ret = Core.mbfs.open(pgm2Str(firebase_rtdb_pgm_str_10 /* "/fb_bin_0.tmp" */),
-                                  mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
+                               mbfs_type mem_storage_type_flash, mb_fs_open_mode_read);
       if (ret < 0)
         session.response.code = ret;
     }
@@ -940,7 +970,6 @@ public:
 #endif
 
 private:
-
   BearSSL_Session bsslSession;
   FB_ResponseCallback _responseCallback = NULL;
 
@@ -1073,7 +1102,7 @@ private:
 #endif
   void addSession(firebase_con_mode mode);
   void setSession(bool remove, bool status);
-  int tcpSend(const char* s);
+  int tcpSend(const char *s);
   int tcpWrite(const uint8_t *data, size_t size);
   void addQueueSession();
   void removeQueueSession();

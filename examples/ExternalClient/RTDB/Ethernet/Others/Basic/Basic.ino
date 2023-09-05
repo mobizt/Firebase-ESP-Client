@@ -11,13 +11,7 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used your Arduino device (ESP32 in this case) and WIZnet W5500 (Ethernet) device which SSLClient https://github.com/OPEnSLab-OSU/SSLClient
- * will be used as the external Client.
- *
- * This SSLClient, https://github.com/OPEnSLab-OSU/SSLClient can't use in ESP8266 device due to wdt reset error.
- *
- * Don't gorget to define this in FirebaseFS.h
- * #define FB_ENABLE_EXTERNAL_CLIENT
+ * This example used STM32F103ZET6 and WIZnet W5500 module.
  */
 
 #include <Firebase_ESP_Client.h>
@@ -30,45 +24,36 @@
 
 #include <Ethernet.h>
 
-/* 1. Install SSLClient library */
-// https://github.com/OPEnSLab-OSU/SSLClient
-#include <SSLClient.h>
-
-/* 2. Create Trus anchors for the server i.e. www.google.com */
-// https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md
-// or generate using this site https://openslab-osu.github.io/bearssl-certificate-utility/
-#include "trust_anchors.h"
-
-// For NTP time client
-#include "MB_NTP.h"
-
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
-/* 3. Define the API Key */
+/* 1. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 4. Define the RTDB URL */
+/* 2. Define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-/* 5. Define the user Email and password that alreadey registerd or added in your project */
+/* 3. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-/* 6. Defined the Ethernet module connection */
-#define WIZNET_RESET_PIN 26 // Connect W5500 Reset pin to GPIO 26 of ESP32
-#define WIZNET_CS_PIN 5     // Connect W5500 CS pin to GPIO 5 of ESP32
-#define WIZNET_MISO_PIN 19  // Connect W5500 MISO pin to GPIO 19 of ESP32
-#define WIZNET_MOSI_PIN 23  // Connect W5500 MOSI pin to GPIO 23 of ESP32
-#define WIZNET_SCLK_PIN 18  // Connect W5500 SCLK pin to GPIO 18 of ESP32
+/* 4. Defined the Ethernet module connection */
+#define WIZNET_RESET_PIN PA2 // Connect W5500 Reset pin to PA2 of STM32F103ZET6 (-1 for no reset pin assigned)
+#define WIZNET_CS_PIN PA4    // Connect W5500 CS pin to PA4 of STM32F103ZET6
+#define WIZNET_MISO_PIN PA6  // Connect W5500 MISO pin to PA6 of STM32F103ZET6
+#define WIZNET_MOSI_PIN PA7  // Connect W5500 MOSI pin to PA7 of STM32F103ZET6
+#define WIZNET_SCLK_PIN PA5  // Connect W5500 SCLK pin to PA5 of STM32F103ZET6
 
-/* 7. Define the analog GPIO pin to pull random bytes from, used in seeding the RNG for SSLClient */
-const int analog_pin = 34; // ESP32 GPIO 34 (Analog pin)
-
-/* 8. Define MAC */
+/* 5. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
-/* 9. Define IP (Optional) */
-IPAddress Eth_IP(192, 168, 1, 104);
+/* 6. Define the static IP (Optional)
+IPAddress localIP(192, 168, 1, 104);
+IPAddress subnet(255, 255, 0, 0);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress dnsServer(8, 8, 8, 8);
+bool optional = false; // Use this static IP only no DHCP
+Firebase_StaticIP staIP(localIP, subnet, gateway, dnsServer, optional);
+*/
 
 // Define Firebase Data object
 FirebaseData fbdo;
@@ -82,64 +67,7 @@ int count = 0;
 
 volatile bool dataChanged = false;
 
-// Define the basic client
-// The network interface devices that can be used to handle SSL data should
-// have large memory buffer up to 1k - 2k or more, otherwise the SSL/TLS handshake
-// will fail.
-EthernetClient basic_client;
-
-// This is the wrapper client that utilized the basic client for io and
-// provides the mean for the data encryption and decryption before sending to or after read from the io.
-// The most probable failures are related to the basic client itself that may not provide the buffer
-// that large enough for SSL data.
-// The SSL client can do nothing for this case, you should increase the basic client buffer memory.
-SSLClient ssl_client(basic_client, TAs, (size_t)TAs_NUM, analog_pin);
-
-void ResetEthernet()
-{
-    Serial.println("Resetting WIZnet W5500 Ethernet Board...  ");
-    pinMode(WIZNET_RESET_PIN, OUTPUT);
-    digitalWrite(WIZNET_RESET_PIN, HIGH);
-    delay(200);
-    digitalWrite(WIZNET_RESET_PIN, LOW);
-    delay(50);
-    digitalWrite(WIZNET_RESET_PIN, HIGH);
-    delay(200);
-}
-
-void networkConnection()
-{
-    Ethernet.init(WIZNET_CS_PIN);
-
-    ResetEthernet();
-
-    Serial.println("Starting Ethernet connection...");
-    Ethernet.begin(Eth_MAC);
-
-    unsigned long to = millis();
-
-    while (Ethernet.linkStatus() == LinkOFF || millis() - to < 2000)
-    {
-        delay(100);
-    }
-
-    if (Ethernet.linkStatus() == LinkON)
-    {
-        Serial.print("Connected with IP ");
-        Serial.println(Ethernet.localIP());
-    }
-    else
-    {
-        Serial.println("Can't connect");
-    }
-}
-
-// Define the callback function to handle server status acknowledgement
-void networkStatusRequestCallback()
-{
-    // Set the network status
-    fbdo.setNetworkStatus(Ethernet.linkStatus() == LinkON);
-}
+EthernetClient eth;
 
 void setup()
 {
@@ -163,15 +91,10 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
+    /* Assign the pointer to global defined Ethernet Client object */
+    fbdo.setEthernetClient(&eth, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN);// The staIP can be assigned to the fifth param
 
-    /* Assign the pointer to global defined external SSL Client object */
-    fbdo.setExternalClient(&ssl_client);
-
-    /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
-
-    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    // Comment or pass false value when network reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
 
     Firebase.setDoubleDigits(5);

@@ -1,12 +1,12 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * The Firebase class, Firebase.cpp v1.2.6
+ * The Firebase class, Firebase.cpp v1.2.7
  *
- *  Created June 14, 2023
+ *  Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

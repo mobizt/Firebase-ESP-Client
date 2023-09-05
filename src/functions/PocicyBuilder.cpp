@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
@@ -130,7 +130,7 @@ void Binding::mSetCondition(MB_StringPtr expression, MB_StringPtr title, MB_Stri
 
         MB_String b, t;
         b += firebase_func_pgm_str_77; // "condition"
-        b += firebase_pgm_str_1;   // "/"
+        b += firebase_pgm_str_1;       // "/"
 
         MB_String _expression = expression, _title = title, _description = description, _location = location;
 

@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
@@ -7,7 +7,7 @@
  * Google's Firebase Token Management class, FirebaseCore.h version 1.0.0
  *
  *
- * Created September 2, 2023
+ * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -247,11 +247,15 @@ private:
     FB_NetworkStatusRequestCallback _net_stat_cb = NULL;
     Client *_cli = nullptr;
 
+    int _ethernet_reset_pin = -1;
+    int _ethernet_cs_pin = -1;
+    uint8_t *_ethernet_mac = nullptr;
+    Firebase_StaticIP *_static_ip = nullptr;
+
 #if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
     MB_String _pin, _apn, _user, _password;
     void *_modem = nullptr;
 #endif
-
 };
 
 extern FirebaseCore Core;

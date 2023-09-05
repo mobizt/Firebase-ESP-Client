@@ -9,13 +9,7 @@
  *
  */
 
-/** This example shows the RTDB data changed notification with external Client.
- * This example used SAMD21 device and WiFiNINA as the external Client.
- */
-
-#if defined(ARDUINO_ARCH_SAMD)
-#include <WiFiNINA.h>
-#endif
+/** This example shows the RTDB data changed notification with external network Client. */
 
 #include <Firebase_ESP_Client.h>
 
@@ -54,40 +48,21 @@ int count = 0;
 
 volatile bool dataChanged = false;
 
-WiFiSSLClient ssl_client1;
+NetworkClient client1;
 
-WiFiSSLClient ssl_client2;
+NetworkClient client2;
 
 void networkConnection()
 {
-    // Reset the network connection
-    WiFi.disconnect();
-
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Connecting to Wi-Fi");
-    unsigned long ms = millis();
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print(".");
-        delay(300);
-        if (millis() - ms >= 5000)
-        {
-            Serial.println(" failed!");
-            return;
-        }
-    }
-    Serial.println();
-    Serial_Printf("Connected with IP: ");
-    Serial.println(WiFi.localIP());
-    Serial.println();
+    // Neywork connection code here
 }
 
 // Define the callback function to handle server status acknowledgement
 void networkStatusRequestCallback()
 {
-    // Set the network status
-    fbdo.setNetworkStatus(WiFi.status() == WL_CONNECTED);
-    stream.setNetworkStatus(WiFi.status() == WL_CONNECTED);
+    // Set the network status based on your network client
+    fbdo.setNetworkStatus(true /* or false */);
+    stream.setNetworkStatus(true /* or false */);
 }
 
 void streamCallback(FirebaseStream data)
@@ -145,11 +120,6 @@ void setup()
     /* Assign the RTDB URL (required) */
     config.database_url = DATABASE_URL;
 
-    // The WiFi credentials are required for WiFiNINA and WiFi101 libraries
-    // due to it does not have reconnect feature.
-    config.wifi.clearAP();
-    config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
-
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
@@ -159,20 +129,13 @@ void setup()
 
     // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
-    /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
+    /* Assign the pointer to global defined external SSL Client object and callbacls */
+    fbdo.setGenericClient(&client1, networkConnection, networkStatusRequestCallback);
 
-    /* Assign the pointer to global defined external SSL Client object */
-    fbdo.setExternalClient(&ssl_client1);
+    /* Assign the pointer to global defined external SSL Client object and callbacls */
+    stream.setGenericClient(&client2, networkConnection, networkStatusRequestCallback);
 
-    /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
-
-    /* Assign the pointer to global defined external SSL Client object */
-    stream.setExternalClient(&ssl_client2);
-
-    /* Assign the required callback functions */
-    stream.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
-
+     // Comment or pass false value when network reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
 
     Firebase.begin(&config, &auth);

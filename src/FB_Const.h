@@ -1,10 +1,10 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created July 11, 2023
+ * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

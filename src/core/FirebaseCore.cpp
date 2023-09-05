@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
@@ -7,7 +7,7 @@
  * Google's Firebase Token Management class, FirebaseCore.cpp version 1.0.0
  *
  *
- * Created September 2, 2023
+ * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -883,14 +883,18 @@ bool FirebaseCore::refreshToken()
 
 void FirebaseCore::newClient(Firebase_TCP_Client **client)
 {
-
     freeClient(client);
     if (!*client)
     {
+      
         *client = new Firebase_TCP_Client();
 
-        if (_cli_type == firebase_client_type_external_basic_client)
+        if (_cli_type == firebase_client_type_external_generic_client)
             (*client)->setClient(_cli, _net_con_cb, _net_stat_cb);
+        else if (_cli_type == firebase_client_type_external_ethernet_client)
+        {
+            (*client)->setEthernetClient(_cli, _ethernet_mac, _ethernet_cs_pin, _ethernet_reset_pin, _static_ip);
+        }
         else if (_cli_type == firebase_client_type_external_gsm_client)
         {
 #if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
@@ -906,21 +910,29 @@ void FirebaseCore::freeClient(Firebase_TCP_Client **client)
 {
     if (*client)
     {
+
         _cli_type = (*client)->type();
         _cli = (*client)->_basic_client;
-        if (_cli_type == firebase_client_type_external_basic_client)
+        if (_cli_type == firebase_client_type_external_generic_client)
         {
             _net_con_cb = (*client)->_network_connection_cb;
             _net_stat_cb = (*client)->_network_status_cb;
         }
+        else if (_cli_type == firebase_client_type_external_ethernet_client)
+        {
+            _ethernet_mac = (*client)->_ethernet_mac;
+            _ethernet_cs_pin = (*client)->_ethernet_cs_pin;
+            _ethernet_reset_pin = (*client)->_ethernet_reset_pin;
+            _static_ip = (*client)->_static_ip;
+        }
         else if (_cli_type == firebase_client_type_external_gsm_client)
         {
 #if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+            _modem = (*client)->_modem;
             _pin = (*client)->_pin;
             _apn = (*client)->_apn;
             _user = (*client)->_user;
             _password = (*client)->_password;
-            _modem = (*client)->_modem;
 #endif
         }
         delete *client;

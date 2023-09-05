@@ -50,7 +50,6 @@
 #define BASE_WIFICLIENT WiFiClient
 #endif
 
-
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
@@ -58,10 +57,33 @@ typedef enum
 {
   firebase_client_type_undefined,
   firebase_client_type_internal_basic_client,
-  firebase_client_type_external_basic_client,
-  firebase_client_type_external_gsm_client
+  firebase_client_type_external_generic_client,
+  firebase_client_type_external_gsm_client,
+  firebase_client_type_external_ethernet_client
 
 } firebase_client_type;
+
+typedef struct firebase_client_static_address
+{
+  friend class Firebase_TCP_Client;
+
+public:
+  firebase_client_static_address(IPAddress ipAddress, IPAddress netMask, IPAddress defaultGateway, IPAddress dnsServer, bool optional)
+  {
+    this->ipAddress = ipAddress;
+    this->netMask = netMask;
+    this->defaultGateway = defaultGateway;
+    this->dnsServer = dnsServer;
+    this->optional = optional;
+  };
+
+private:
+  IPAddress ipAddress;
+  IPAddress netMask;
+  IPAddress defaultGateway;
+  IPAddress dnsServer;
+  bool optional = false;
+} Firebase_StaticIP;
 
 class Firebase_TCP_Client : public Client
 {
@@ -84,6 +106,8 @@ public:
   /**
    * Set the client.
    * @param client The Client interface.
+   * @param networkConnectionCB The function that handles the network connection.
+   * @param networkStatusCB The function that handle the network connection status acknowledgement.
    */
   void setClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
                  FB_NetworkStatusRequestCallback networkStatusCB)
@@ -91,12 +115,12 @@ public:
 
     clear();
     _basic_client = client;
-    _client_type = firebase_client_type_external_basic_client;
+    _client_type = firebase_client_type_external_generic_client;
     _network_connection_cb = networkConnectionCB;
     _network_status_cb = networkStatusCB;
   }
 
-  /** Assign TinyGsm Clients.
+  /** Assign TinyGsm Client.
    *
    * @param client The pointer to TinyGsmClient.
    * @param modem The pointer to TinyGsm modem object. Modem should be initialized and/or set mode before transfering data
@@ -108,14 +132,34 @@ public:
   void setGSMClient(Client *client, void *modem = nullptr, const char *pin = nullptr, const char *apn = nullptr, const char *user = nullptr, const char *password = nullptr)
   {
 #if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+    _client_type = firebase_client_type_external_gsm_client;
+    _basic_client = client;
+    _modem = modem;
     _pin = pin;
     _apn = apn;
     _user = user;
     _password = password;
-    _modem = modem;
-    _client_type = firebase_client_type_external_gsm_client;
 #endif
   }
+
+  /** Assign external Ethernet Client.
+   *
+   * @param client The pointer to Ethernet client object.
+   * @param macAddress The Ethernet MAC address.
+   * @param csPin The Ethernet module SPI chip select pin.
+   * @param resetPin The Ethernet module reset pin.
+   * @param staticIP (Optional) The pointer to Firebase_StaticIP object which has these IPAddress in its constructor i.e.
+   * ipAddress, netMask, defaultGateway, dnsServer and optional.
+   */
+  void setEthernetClient(Client *client, uint8_t macAddress[6], int csPin, int resetPin, Firebase_StaticIP *staticIP = nullptr)
+  {
+    _client_type = firebase_client_type_external_ethernet_client;
+    _basic_client = client;
+    _ethernet_mac = macAddress;
+    _ethernet_cs_pin = csPin;
+    _ethernet_reset_pin = resetPin;
+    _static_ip = staticIP;
+  };
 
   /**
    * Set Root CA certificate to verify.
@@ -327,16 +371,20 @@ public:
   {
 
     // We will not invoke the network status request when device has built-in WiFi or Ethernet and it is connected.
-
     if (_client_type == firebase_client_type_external_gsm_client)
     {
       _network_status = gprsConnected();
       if (!_network_status)
         gprsConnect();
     }
+    else if (_client_type == firebase_client_type_external_ethernet_client)
+    {
+      if (!ethernetConnected())
+        ethernetConnect();
+    }
     else if (WiFI_CONNECTED || ethLinkUp())
       _network_status = true;
-    else if (_client_type == firebase_client_type_external_basic_client)
+    else if (_client_type == firebase_client_type_external_generic_client)
     {
       if (!_network_status_cb)
         _last_error = 1;
@@ -353,7 +401,7 @@ public:
   void networkReconnect()
   {
 
-    if (_client_type == firebase_client_type_external_basic_client)
+    if (_client_type == firebase_client_type_external_generic_client)
     {
 #if defined(FIREBASE_HAS_WIFI_DISCONNECT)
       // We can reconnect WiFi when device connected via built-in WiFi that supports reconnect
@@ -372,6 +420,10 @@ public:
     {
       gprsDisconnect();
       gprsConnect();
+    }
+    else if (_client_type == firebase_client_type_external_ethernet_client)
+    {
+      ethernetConnect();
     }
     else if (_client_type == firebase_client_type_internal_basic_client)
     {
@@ -407,16 +459,16 @@ public:
     bool rdy = true;
 #if !defined(FIREBASE_WIFI_IS_AVAILABLE)
 
-    if (_client_type == firebase_client_type_external_basic_client &&
+    if (_client_type == firebase_client_type_external_generic_client &&
         (!_network_connection_cb || !_network_status_cb))
       rdy = false;
-    else if (_client_type != firebase_client_type_external_basic_client ||
+    else if (_client_type != firebase_client_type_external_generic_client ||
              _client_type != firebase_client_type_external_gsm_client)
       rdy = false;
 #else
     // assume external client is WiFiClient and network status request callback is not required
     // when device was connected to network using on board WiFi
-    if (_client_type == firebase_client_type_external_basic_client &&
+    if (_client_type == firebase_client_type_external_generic_client &&
         (!_network_connection_cb || (!_network_status_cb && !WiFI_CONNECTED && !ethLinkUp())))
     {
       rdy = false;
@@ -509,12 +561,12 @@ public:
 
     if (!_basic_client)
     {
-      if (_client_type == firebase_client_type_external_basic_client)
+      if (_client_type == firebase_client_type_external_generic_client)
       {
         _last_error = 1;
         return false;
       }
-      else if (_client_type != firebase_client_type_external_gsm_client)
+      else if (_client_type != firebase_client_type_external_gsm_client && _client_type != firebase_client_type_external_ethernet_client)
       {
 // Device has no built-in WiFi, external client required.
 #if defined(FIREBASE_WIFI_IS_AVAILABLE)
@@ -943,11 +995,99 @@ public:
     {
       if (gsmModem->getNetworkTime(&year3, &month3, &day3, &hour3, &min3, &sec3, &timezone))
       {
-        return TimeHelper::getTimestamp(year3, month3, day3, hour3, min3, sec3);
+
+        struct tm timeinfo;
+        timeinfo.tm_year = year3 - 1900;
+        timeinfo.tm_mon = month3 - 1;
+        timeinfo.tm_mday = day3;
+        timeinfo.tm_hour = hour3;
+        timeinfo.tm_min = min3;
+        timeinfo.tm_sec = sec3;
+        time_t ts = mktime(&timeinfo);
+        return ts;
       }
     }
 #endif
     return 0;
+  }
+  bool ethernetConnect()
+  {
+    bool ret = false;
+
+#if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
+
+    if (Ethernet.hardwareStatus() == EthernetNoHardware)
+    {
+      Serial.println((const char *)MBSTRING_FLASH_MCR("No Ethernet module detected!"));
+      return ret;
+    }
+
+    if (_ethernet_cs_pin > -1)
+      Ethernet.init(_ethernet_cs_pin);
+
+    if (_ethernet_reset_pin > -1)
+    {
+      Serial.println((const char *)MBSTRING_FLASH_MCR("Resetting Ethernet Board...  "));
+      pinMode(_ethernet_reset_pin, OUTPUT);
+      digitalWrite(_ethernet_reset_pin, HIGH);
+      delay(200);
+      digitalWrite(_ethernet_reset_pin, LOW);
+      delay(50);
+      digitalWrite(_ethernet_reset_pin, HIGH);
+      delay(200);
+    }
+
+    Serial.println((const char *)MBSTRING_FLASH_MCR("Starting Ethernet connection..."));
+    if (_static_ip)
+    {
+
+      if (_static_ip->optional == false)
+        Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
+      else if (!Ethernet.begin(_ethernet_mac))
+      {
+        Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
+      }
+    }
+    else
+      Ethernet.begin(_ethernet_mac);
+
+    unsigned long to = millis();
+
+    while (Ethernet.linkStatus() == LinkOFF || millis() - to < 2000)
+    {
+      delay(100);
+    }
+
+    ret = ethernetConnected();
+
+    if (ret)
+    {
+      Serial.print((const char *)MBSTRING_FLASH_MCR("Connected with IP "));
+      Serial.println(Ethernet.localIP());
+    }
+
+#endif
+
+    if (!ret)
+      Serial.println((const char *)MBSTRING_FLASH_MCR("Can't connect"));
+
+    return ret;
+  }
+
+  bool ethernetConnected()
+  {
+#if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
+    _network_status = Ethernet.linkStatus() == LinkON;
+#endif
+    return _network_status;
+  }
+
+  bool wifiConnected()
+  {
+#if defined(FIREBASE_WIFI_MODULE_IS_AVAILABLE)
+    _network_status = Ethernet.linkStatus() == LinkON;
+#endif
+    return _network_status;
   }
 
   int setOption(int option, int *value)
@@ -1001,6 +1141,10 @@ private:
   MB_FS *_mbfs = nullptr;
   Client *_basic_client = nullptr;
   firebase_wifi *_wifi_multi = nullptr;
+  int _ethernet_reset_pin = -1;
+  int _ethernet_cs_pin = -1;
+  uint8_t *_ethernet_mac = nullptr;
+  Firebase_StaticIP *_static_ip = nullptr;
 
   FB_NetworkConnectionRequestCallback _network_connection_cb = NULL;
   FB_NetworkStatusRequestCallback _network_status_cb = NULL;

@@ -10,13 +10,8 @@
  *
  */
 
-/** This example shows the basic RTDB usage with external Client.
- * This example used SAMD21 device and WiFiNINA as the external Client.
- */
+/** This example shows the basic RTDB usage with external network Client. */
 
-#if defined(ARDUINO_ARCH_SAMD)
-#include <WiFiNINA.h>
-#endif
 
 #include <Firebase_ESP_Client.h>
 
@@ -52,37 +47,18 @@ unsigned long sendDataPrevMillis = 0;
 
 unsigned long count = 0;
 
-WiFiSSLClient ssl_client;
+NetworkClient client;
 
 void networkConnection()
 {
-    // Reset the network connection
-    WiFi.disconnect();
-
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Connecting to Wi-Fi");
-    unsigned long ms = millis();
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print(".");
-        delay(300);
-        if (millis() - ms >= 15000)
-        {
-            Serial.println(" failed!");
-            return;
-        }
-    }
-    Serial.println();
-    Serial_Printf("Connected with IP: ");
-    Serial.println(WiFi.localIP());
-    Serial.println();
+    // Neywork connection code here
 }
 
 // Define the callback function to handle server status acknowledgement
 void networkStatusRequestCallback()
 {
-    // Set the network status
-    fbdo.setNetworkStatus(WiFi.status() == WL_CONNECTED);
+    // Set the network status based on your network client
+    fbdo.setNetworkStatus(true/* or false */);
 }
 
 void setup()
@@ -109,23 +85,13 @@ void setup()
     /* Assign the RTDB URL (required) */
     config.database_url = DATABASE_URL;
 
-    // The WiFi credentials are required for WiFiNINA and WiFi101 libraries
-    // due to it does not have reconnect feature.
-    config.wifi.clearAP();
-    config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
-
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
+    /* Assign the pointer to global defined external SSL Client object and callbacls */
+    fbdo.setGenericClient(&client, networkConnection, networkStatusRequestCallback);
 
-    /* Assign the pointer to global defined external SSL Client object */
-    fbdo.setExternalClient(&ssl_client);
-
-    /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
-
-    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    // Comment or pass false value when network reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
 
     Firebase.setDoubleDigits(5);

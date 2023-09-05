@@ -4483,27 +4483,60 @@ The description of PolicyBuilder and FunctionsConfig classes and their functions
 
 
 
-#### Assign external Arduino Client.
+### Assign external Arduino generic client.
 
-param **`client`** The pointer to Arduino Client derived class e.g. WiFiClient, WiFiClientSecure, EthernetClient or GSMClient. 
+param **`client`** The pointer to Arduino Client.
 
-```cpp
-void setExternalClient(Client *client);
-```
-
-
-
-#### Assign the callback functions required for external Client usage.
-
-param **`tcpConnectionCB`** The function that handles the server connection. 
-
-param **`networkConnectionCB`** The function that handles the network connection. 
+param **`networkConnectionCB`** The function that handles the network connection.
 
 param **`networkStatusCB`** The function that handle the network connection status acknowledgement.
 
 ```cpp
-void setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB, FB_NetworkConnectionRequestCallback networkConnectionCB, FB_NetworkStatusRequestCallback networkStatusCB);
+void setGenericClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
+                        FB_NetworkStatusRequestCallback networkStatusCB);
 ```
+
+
+
+
+#### Assign TinyGsm Clients.
+
+param **`client`** The pointer to TinyGsmClient.
+
+param **`modem`** The pointer to TinyGsm modem object. Modem should be initialized and/or set mode before transfering data.
+
+param **`pin`** The SIM pin.
+
+param **`apn`** The GPRS APN (Access Point Name).
+
+param **`user`** The GPRS user.
+
+param **`password`** The GPRS password.
+
+```cpp
+void setGSMClient(Client *client, void *modem, const char *pin, const char *apn, const char *user, const char *password);
+```
+
+
+
+
+
+#### Assign external Ethernet Client.
+
+param **`client`** The pointer to Ethernet client object.
+
+param **`macAddress`** The Ethernet MAC address.
+
+param **`csPin`** The Ethernet module SPI chip select pin.
+
+param **`resetPin`** The Ethernet module reset pin.
+
+param **`staticIP`** (Optional) The pointer to `Firebase_StaticIP` object which included these IPAddress properties ipAddress, netMask, defaultGateway and dnsServer.
+
+```cpp
+ void setEthernetClient(Client *client, uint8_t macAddress[6], int csPin, int resetPin, Firebase_StaticIP *staticIP = nullptr);
+```
+
 
 
 

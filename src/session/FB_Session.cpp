@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.10
+ * Google's Firebase Data class, FB_Session.cpp version 1.4.0
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 29, 2023
+ * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -76,28 +76,45 @@ FirebaseData::~FirebaseData()
     }
 }
 
-void FirebaseData::setExternalClient(Client *client)
+void FirebaseData::setGenericClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
+                                    FB_NetworkStatusRequestCallback networkStatusCB)
 {
-    _client = client;
+    if (client)
+    {
+        _client = client;
+        Core.setTCPClient(&tcpClient);
+    }
+
     if (_networkConnectionCB && _networkStatusCB)
         tcpClient.setClient(_client, _networkConnectionCB, _networkStatusCB);
-    Core.setTCPClient(&tcpClient);
 }
 
-void FirebaseData::setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB,
-                                              FB_NetworkConnectionRequestCallback networkConnectionCB,
-                                              FB_NetworkStatusRequestCallback networkStatusCB)
+void FirebaseData::setGSMClient(Client *client, void *modem, const char *pin, const char *apn, const char *user, const char *password)
 {
-    setExternalClientCallbacks(networkConnectionCB, networkStatusCB);
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+
+    Core._cli_type = firebase_client_type_external_gsm_client;
+    Core._cli = client;
+    Core._modem = modem;
+    Core._pin = pin;
+    Core._apn = apn;
+    Core._user = user;
+    Core._password = password;
+
+    tcpClient.setGSMClient(client, modem, pin, apn, user, password);
+#endif
 }
 
-void FirebaseData::setExternalClientCallbacks(FB_NetworkConnectionRequestCallback networkConnectionCB,
-                                              FB_NetworkStatusRequestCallback networkStatusCB)
+void FirebaseData::setEthernetClient(Client *client, uint8_t macAddress[6], int csPin, int resetPin, Firebase_StaticIP *staticIP)
 {
-    _networkConnectionCB = networkConnectionCB;
-    _networkStatusCB = networkStatusCB;
-    if (_client)
-        tcpClient.setClient(_client, _networkConnectionCB, _networkStatusCB);
+    Core._cli_type = firebase_client_type_external_ethernet_client;
+    Core._cli = client;
+    Core._ethernet_mac = macAddress;
+    Core._ethernet_cs_pin = csPin;
+    Core._ethernet_reset_pin = resetPin;
+    Core._static_ip = staticIP;
+
+    tcpClient.setEthernetClient(client, macAddress, csPin, resetPin, staticIP);
 }
 
 void FirebaseData::setNetworkStatus(bool status)

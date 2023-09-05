@@ -1,14 +1,14 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.0.18
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.1.0
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created July 29, 2023
+ * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
