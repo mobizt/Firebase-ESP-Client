@@ -2379,11 +2379,6 @@ firebase_mem_storage_type FirebaseCore::getCAFileStorage()
 
 bool FirebaseCore::waitIdle(int &httpCode)
 {
-
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-    if (internal.fb_multiple_requests)
-        return true;
-
     unsigned long wTime = millis();
     while (internal.fb_processing)
     {
@@ -2394,7 +2389,6 @@ bool FirebaseCore::waitIdle(int &httpCode)
         }
         FBUtils::idle();
     }
-#endif
     return true;
 }
 
