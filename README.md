@@ -502,48 +502,87 @@ Below is how to assign the certificate data for server verification.
 
 
 
-## Excludes the unused classes to save memory
 
+## Library Build Options 
 
-The classes e.g. RTDB, Firestore, FCM, Storage, Cloud Storage, and Cloud Functions for Firebase in this library can be excluded or disabled to save memory usage through [**FirebaseFS.h**](/src/FirebaseFS.h).
+The library build options are defined as preprocessor macros (`#define name`).
 
-By comment the following macros.
+Some options can be disabled to reduce program space.
 
+### Predefined Options
+
+The predefined options that are already set in [**FirebaseFS.h**](src/FirebaseFS.h) are following.
+
+```cpp
+ENABLE_NTP_TIME // For enabling the device or library time setup from NTP server
+ENABLE_ERROR_STRING // For enabling the error string from error reason
+FIREBASE_ENABLE_RTDB // For RTDB class compilation
+FIREBASE_ENABLE_ERROR_QUEUE // For RTDB Error Queue compilation
+FIREBASE_ENABLE_FIRESTORE // For Firestore compilation
+FIREBASE_ENABLE_FCM // For Firebase Cloud Messaging compilation
+FIREBASE_ENABLE_FB_STORAGE // For Firebase Storage compilation
+FIREBASE_ENABLE_GC_STORAGE // For Google Cloud Storage compilation
+FIREBASE_ENABLE_FB_FUNCTIONS // For Functions for Firebase compilation
+FIREBASE_USE_PSRAM // For enabling PSRAM support
+ENABLE_OTA_FIRMWARE_UPDATE // For enabling OTA updates support via RTDB, Firebase Storage and Google Cloud Storage buckets
+USE_CONNECTION_KEEP_ALIVE_MODE // For enabling Keep Alive connection mode
 ```
-ENABLE_RTDB
 
-ENABLE_FIRESTORE
+### Optional Options
 
-ENABLE_FCM
+The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h) and can be assigned by user.
 
-ENABLE_FB_STORAGE
-
-ENABLE_GC_STORAGE
-
-ENABLE_FB_FUNCTIONS
+```cpp
+ENABLE_ESP8266_ENC28J60_ETH //  For ENC28J60 Ethernet module support in ESP8266
+ENABLE_ESP8266_W5500_ETH // For W5500 Ethernet module support in ESP8266
+ENABLE_ESP8266_W5100_ETH // For W5100 Ethernet module support in ESP8266
+FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
+FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
 ```
 
-To disable OTA update via RTDB , Firebase Storage and Google Cloud Storage, comment this macro.
 
+You can assign the optional build options using one of the following methods.
+
+- By creating user config file `CustomFirebaseFS.h` in library installed folder and define these optional options.
+
+- By adding compiler build flags with `-D name`.
+
+In PlatformIO IDE, using `build_flags` in PlatformIO IDE's platformio.ini is more convenient 
+
+```ini
+build_flags = -D DISABLE_FB_STORAGE
+              -D EFIREBASE_DISABLE_ONBOARD_WIFI
 ```
-ENABLE_OTA_FIRMWARE_UPDATE
+
+For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
+
+```cpp
+DISABLE_NTP_TIME // For disabling the NTP time setting
+DISABLE_ERROR_STRING // For disabling the error string from error reason
+DISABLE_RTDB // For disabling RTDB support
+DISABLE_ERROR_QUEUE // For disabling RTDB Error Queue support
+DISABLE_FIRESTORE // For disabling Firestore support
+DISABLE_FCM // For disabling Firebase Cloud Messaging support
+DISABLE_FB_STORAGE // For disabling Firebase Storage support
+DISABLE_GC_STORAGE // For disabling Google Cloud Storage support
+DISABLE_FB_FUNCTIONS // For disabling Functions for Firebase support
+DISABLE_PSRAM // For disabling PSRAM support
+DISABLE_OTA // For disabling OTA updates support
+DISABLE_KEEP_ALIVE // For disabling TCP Keep Alive support (See TCP Keep Alive)
+DISABLE_SD // For disabling flash filesystem support
+DISABLE_FLASH // For disabling SD filesystem support
+
+FIREBASE_DISABLE_ALL_OPTIONS // For disabling all predefined build options above
 ```
 
-### About FirebaseData object
+Note that, `CustomFirebaseFS.h` for user config should be placed in the library install folder inside src folder.
 
-`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client data transmission.
-
-The WiFiClientSecure instance was created in `FirebaseData` object when connecting to server. The response payload will store in this object that allows user to acquire and process leter.
-
-The memory consumed during server connection state is relatively large which depends on the SSL engine used in device Core SDK e.g., as much as 50k for ESP32 using mbedTLS SSL engine library.
-
-This library will send HTTP Keep-Alive header for session reuse by default as the macro `USE_CONNECTION_KEEP_ALIVE_MODE` defined in FirebaseFS.h and memory will be reserved as long as server connected.
+This `CustomFirebaseFS.h` will not change or overwrite when update the library.
 
 
-With HTTP Keep-Alive mode, you can take the benefit of TCP KeepAlive which will probe the server connection periodically.
 
+### TCP Keep Alive
 
-The disadvantage when using TCP KeepAlive is little or more data bandwidth consumed which depends on the TCP KeepAlive options set in `FirebaseData` object.
 
 The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
 

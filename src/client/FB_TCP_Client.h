@@ -1036,13 +1036,13 @@ public:
 
       if (_static_ip->optional == false)
         Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
-      else if (!Ethernet.begin(_ethernet_mac, 5000, 5000))
+      else if (!Ethernet.begin(_ethernet_mac))
       {
         Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
       }
     }
     else
-      Ethernet.begin(_ethernet_mac, 5000, 5000);
+      Ethernet.begin(_ethernet_mac);
 
     unsigned long to = millis();
 
@@ -1055,7 +1055,7 @@ public:
 
     if (ret)
     {
-      Serial.print((const char *)MBSTRING_FLASH_MCR("Connected with IP "));
+      Serial.print((const char *)MBSTRING_FLASH_MCR("Connected with IP "));     
       Serial.println(Ethernet.localIP());
     }
 
@@ -1070,7 +1070,7 @@ public:
   bool ethernetConnected()
   {
 #if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
-    _network_status = Ethernet.linkStatus() == LinkON;
+    _network_status = Ethernet.linkStatus() == LinkON && Ethernet.localIP().isSet();
 #endif
     return _network_status;
   }
