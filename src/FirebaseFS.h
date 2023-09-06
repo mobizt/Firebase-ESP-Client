@@ -12,9 +12,6 @@
 /**📍 Default Main Class */
 #define FIREBASE_ESP_CLIENT 1
 
-/**📍 Default debug port */
-#define FB_DEFAULT_DEBUG_PORT Serial
-
 /** 📌 Predefined Build Options
  * ⛔ Use following build flag to disable all predefined options.
  * -D FIREBASE_DISABLE_ALL_OPTIONS
@@ -193,6 +190,9 @@
  *
  * 🏷️ For disabling native (sdk) Ethernet functionality in case external Client usage
  * #define FIREBASE_DISABLE_NATIVE_ETHERNET
+ * 
+ * 🏷️ For debug port assignment
+ * #define FIREBASE_DEFAULT_DEBUG_PORT Serial
  *
  */
 #define ENABLE_ESP8266_ENC28J60_ETH

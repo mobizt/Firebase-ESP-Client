@@ -538,6 +538,7 @@ ENABLE_ESP8266_W5500_ETH // For W5500 Ethernet module support in ESP8266
 ENABLE_ESP8266_W5100_ETH // For W5100 Ethernet module support in ESP8266
 FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
 FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
+FIREBASE_DEFAULT_DEBUG_PORT // For debug port assignment
 ```
 
 
@@ -571,6 +572,7 @@ DISABLE_OTA // For disabling OTA updates support
 DISABLE_KEEP_ALIVE // For disabling TCP Keep Alive support (See TCP Keep Alive)
 DISABLE_SD // For disabling flash filesystem support
 DISABLE_FLASH // For disabling SD filesystem support
+DISABLE_DEBUG // For disable debug port
 
 FIREBASE_DISABLE_ALL_OPTIONS // For disabling all predefined build options above
 ```

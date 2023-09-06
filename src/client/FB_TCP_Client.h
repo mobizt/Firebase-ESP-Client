@@ -909,43 +909,46 @@ public:
       gsmModem->gprsConnect(_apn.c_str(), _user.c_str(), _password.c_str());
 #endif
 
+#if defined(FB_DEFAULT_DEBUG_PORT)
       if (_last_error == 0)
-        Serial.print((const char *)MBSTRING_FLASH_MCR("Waiting for network..."));
-
+        FB_DEFAULT_DEBUG_PORT.print((const char *)MBSTRING_FLASH_MCR("Waiting for network..."));
+#endif
       if (!gsmModem->waitForNetwork())
       {
-
+#if defined(FB_DEFAULT_DEBUG_PORT)
         if (_last_error == 0)
-          Serial.println((const char *)MBSTRING_FLASH_MCR(" fail"));
-
+          FB_DEFAULT_DEBUG_PORT.println((const char *)MBSTRING_FLASH_MCR(" fail"));
+#endif
         _last_error = 1;
         _network_status = false;
         return false;
       }
-
+#if defined(FB_DEFAULT_DEBUG_PORT)
       if (_last_error == 0)
-        Serial.println((const char *)MBSTRING_FLASH_MCR(" success"));
-
+        FB_DEFAULT_DEBUG_PORT.println((const char *)MBSTRING_FLASH_MCR(" success"));
+#endif
       if (gsmModem->isNetworkConnected())
       {
+#if defined(FB_DEFAULT_DEBUG_PORT)
         if (_last_error == 0)
         {
-          Serial.print((const char *)MBSTRING_FLASH_MCR("Connecting to "));
-          Serial.print(_apn.c_str());
+          FB_DEFAULT_DEBUG_PORT.print((const char *)MBSTRING_FLASH_MCR("Connecting to "));
+          FB_DEFAULT_DEBUG_PORT.print(_apn.c_str());
         }
-
+#endif
         _network_status = gsmModem->gprsConnect(_apn.c_str(), _user.c_str(), _password.c_str()) &&
                           gsmModem->isGprsConnected();
 
+#if defined(FB_DEFAULT_DEBUG_PORT)
         if (_last_error == 0)
         {
           if (_network_status)
-            Serial.println((const char *)MBSTRING_FLASH_MCR(" success"));
+            FB_DEFAULT_DEBUG_PORT.println((const char *)MBSTRING_FLASH_MCR(" success"));
           else
-            Serial.println((const char *)MBSTRING_FLASH_MCR(" fail"));
+            FB_DEFAULT_DEBUG_PORT.println((const char *)MBSTRING_FLASH_MCR(" fail"));
         }
       }
-
+#endif
       if (!_network_status)
         _last_error = 1;
 
@@ -1020,7 +1023,9 @@ public:
 
     if (_ethernet_reset_pin > -1)
     {
-      Serial.println((const char *)MBSTRING_FLASH_MCR("Resetting Ethernet Board..."));
+#if defined(FB_DEFAULT_DEBUG_PORT)
+      FB_DEFAULT_DEBUG_PORT.println((const char *)MBSTRING_FLASH_MCR("Resetting Ethernet Board..."));
+#endif
       pinMode(_ethernet_reset_pin, OUTPUT);
       digitalWrite(_ethernet_reset_pin, HIGH);
       delay(200);
@@ -1029,8 +1034,9 @@ public:
       digitalWrite(_ethernet_reset_pin, HIGH);
       delay(200);
     }
-
-    Serial.println((const char *)MBSTRING_FLASH_MCR("Starting Ethernet connection..."));
+#if defined(FB_DEFAULT_DEBUG_PORT)
+    FB_DEFAULT_DEBUG_PORT.println((const char *)MBSTRING_FLASH_MCR("Starting Ethernet connection..."));
+#endif
     if (_static_ip)
     {
 
@@ -1052,17 +1058,20 @@ public:
     }
 
     ret = ethernetConnected();
-
+#if defined(FB_DEFAULT_DEBUG_PORT)
     if (ret)
     {
-      Serial.print((const char *)MBSTRING_FLASH_MCR("Connected with IP "));     
-      Serial.println(Ethernet.localIP());
+      FB_DEFAULT_DEBUG_PORT.print((const char *)MBSTRING_FLASH_MCR("Connected with IP "));
+      FB_DEFAULT_DEBUG_PORT.println(Ethernet.localIP());
     }
-
 #endif
 
+#if defined(FB_DEFAULT_DEBUG_PORT)
     if (!ret)
-      Serial.println((const char *)MBSTRING_FLASH_MCR("Can't connect"));
+      FB_DEFAULT_DEBUG_PORT.println((const char *)MBSTRING_FLASH_MCR("Can't connect"));
+#endif
+
+#endif
 
     return ret;
   }
@@ -1070,7 +1079,7 @@ public:
   bool ethernetConnected()
   {
 #if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
-    _network_status = Ethernet.linkStatus() == LinkON && Ethernet.localIP().isSet();
+    _network_status = Ethernet.linkStatus() == LinkON;
 #endif
     return _network_status;
   }
