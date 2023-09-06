@@ -735,7 +735,7 @@ void FirebaseCore::tokenProcessingTask()
             ret = getIdToken(false, toStringPtr(_EMPTY_STR), toStringPtr(_EMPTY_STR));
 
             // send error cb
-            if (!reconnect())
+            if (!reconnect() && isErrorCBTimeOut())
                 handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
         }
         else
@@ -774,7 +774,7 @@ void FirebaseCore::tokenProcessingTask()
                     ret = true;
 
                     // send error cb
-                    if (!reconnect())
+                    if (!reconnect() && isErrorCBTimeOut())
                         handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
                 }
             }

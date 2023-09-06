@@ -141,8 +141,6 @@ void setup()
 
   /* Assign the pointer to global defined Ethernet Client object */
   fbdo.setEthernetClient(&eth1, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
-
-  /* Assign the pointer to global defined Ethernet Client object */
   stream.setEthernetClient(&eth2, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
 
   // Comment or pass false value when network reconnection will control by your code or third party library

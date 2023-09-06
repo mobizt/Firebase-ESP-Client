@@ -131,8 +131,6 @@ void setup()
 
     /* Assign the pointer to global defined external SSL Client object and callbacls */
     fbdo.setGenericClient(&client1, networkConnection, networkStatusRequestCallback);
-
-    /* Assign the pointer to global defined external SSL Client object and callbacls */
     stream.setGenericClient(&client2, networkConnection, networkStatusRequestCallback);
 
      // Comment or pass false value when network reconnection will control by your code or third party library

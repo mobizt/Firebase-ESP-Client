@@ -1,5 +1,5 @@
 /*
- * FirebaseJson, version 3.0.7
+ * FirebaseJson, version 3.0.8
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
@@ -456,6 +456,9 @@ void FirebaseJsonBase::mCollectIterator(MB_JSON *e, int type, int &arrIndex)
     char *p = MB_JSON_PrintUnformatted(e);
     if (p)
     {
+        if (result.ofs1 == 0)
+            result.ofs1 = iterator_data.buf_offset;
+
         int i = iterator_data.buf_offset;
         size_t pos = buf.find(p, i);
         if (pos != MB_String::npos)

@@ -216,7 +216,6 @@ void setup()
     // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
     fbdo.setGSMClient(&gsm_client1, &modem, GSM_PIN, apn, gprsUser, gprsPass);
-
     stream.setGSMClient(&gsm_client2, &modem, GSM_PIN, apn, gprsUser, gprsPass);
 
     Firebase.reconnectWiFi(true);
