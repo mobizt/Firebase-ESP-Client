@@ -30,9 +30,6 @@
 
 #include <Ethernet.h>
 
-// For NTP time client
-#include "MB_NTP.h"
-
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
 /* 1. Define the API Key */
@@ -133,11 +130,15 @@ void setup()
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
   /* Assign the pointer to global defined Ethernet Client object */
-  fbdo.setEthernetClient(&eth1, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
+  fbdo.setEthernetClient(&eth1, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN);   // The staIP can be assigned to the fifth param
   stream.setEthernetClient(&eth2, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
 
-  // Comment or pass false value when network reconnection will control by your code or third party library
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
   Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+  stream.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
   Firebase.setDoubleDigits(5);
 

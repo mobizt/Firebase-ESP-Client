@@ -144,6 +144,13 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+  stream.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
   // Or use legacy authenticate method
   // config.database_url = DATABASE_URL;
   // config.signer.tokens.legacy_token = "<database secret>";
@@ -151,13 +158,6 @@ void setup()
   // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
-
-  Firebase.reconnectWiFi(true);
-
-// Recommend for ESP8266 stream, adjust the buffer size to match your stream data size
-#if defined(ESP8266)
-  stream.setBSSLBufferSize(2048 /* Rx in bytes, 512 - 16384 */, 512 /* Tx in bytes, 512 - 16384 */);
-#endif
 
 // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
 // https://github.com/mobizt/Firebase-ESP-Client#enable-tcp-keepalive-for-reliable-http-streaming
@@ -236,7 +236,6 @@ void loop()
 // To pause stream
 // stream.pauseFirebase(true);
 // stream.clear(); // close session and release memory
-
 
 // To resume stream with callback
 // stream.pauseFirebase(false);

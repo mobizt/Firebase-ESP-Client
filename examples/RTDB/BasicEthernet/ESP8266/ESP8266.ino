@@ -110,6 +110,12 @@ void setupFirebase()
     config.spi_ethernet_module.w5500 = &eth;
 #endif
 
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    Firebase.reconnectWiFi(true);
+
+    // required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
     // Or use legacy authenticate method
     // config.database_url = DATABASE_URL;
     // config.signer.tokens.legacy_token = "<database secret>";
@@ -117,9 +123,6 @@ void setupFirebase()
     // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
     Firebase.begin(&config, &auth);
-
-    // Comment or pass false value when Ethernet reconnection will control by your code or third party library
-    Firebase.reconnectWiFi(true);
 
     Firebase.setDoubleDigits(5);
 }

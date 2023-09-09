@@ -114,14 +114,13 @@ void setup()
     // The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
     config.gcs.upload_buffer_size = 2048;
 
-#if defined(ESP8266)
-    // required for large file data, increase Tx size as needed.
-    fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 2048 /* Tx buffer size in bytes from 512 - 16384 */);
-#endif
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    Firebase.reconnectWiFi(true);
+
+    // required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     Firebase.begin(&config, &auth);
-
-    Firebase.reconnectWiFi(true);
 
     // if use SD card, mount it.
     SD_Card_Mounting(); // See src/addons/SDHelper.h

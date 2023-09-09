@@ -11,7 +11,7 @@
 
 /** This example shows the basic FCM HTTPv1 send message with external Client.
  * This example used ESP32 and WIZnet W5500 module.
- * 
+ *
  * For ESP32 and LAN8720 see examples/RTB/BasicEthernet/ESP32/ESP32.ino.
  *
  * ESP32 Arduino SDK native Ethernet using ETH.h is currently support Ethernet PHY chips included the following
@@ -112,8 +112,11 @@ void setup()
     /* Assign the pointer to global defined Ethernet Client object */
     fbdo.setEthernetClient(&eth, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN /* or -1 */, nullptr /* or &staIP */);
 
-    // Comment or pass false value when network reconnection will control by your code or third party library
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
+
+    // required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     Firebase.setDoubleDigits(5);
 

@@ -162,6 +162,12 @@ void setup()
   // Or custom set the root certificate for each FirebaseData object
   fbdo.setCert(rootCACert);
 
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
   /* Or assign the certificate file */
 
   /** From the test on January 2022, GlobalSign Root CA was missing from Google server
@@ -179,9 +185,6 @@ void setup()
   // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
-
-  // Comment or pass false value when WiFi reconnection will control by your code or third party library
-  Firebase.reconnectWiFi(true);
 
   Firebase.setDoubleDigits(5);
 

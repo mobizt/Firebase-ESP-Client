@@ -115,10 +115,11 @@ void setup()
   // otherwise the SSL connection will fail.
   //////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(ESP8266)
-  // In ESP8266 required for BearSSL rx/tx buffer for large data handle, increase Rx size as needed.
-  fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 2048 /* Tx buffer size in bytes from 512 - 16384 */);
-#endif
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
   // Limit the size of response payload to be collected in FirebaseData
   fbdo.setResponseSize(2048);
@@ -131,9 +132,6 @@ void setup()
   config.wifi.clearAP();
   config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
 #endif
-
-  // Comment or pass false value when WiFi reconnection will control by your code or third party library
-  Firebase.reconnectWiFi(true);
 
   Firebase.setDoubleDigits(5);
 
