@@ -132,35 +132,35 @@ void loop()
 
         Serial.print("Commit a document (append array)... ");
 
-        // The dyamic array of write object fb_esp_firestore_document_write_t.
-        std::vector<struct fb_esp_firestore_document_write_t> writes;
+        // The dyamic array of write object firebase_firestore_document_write_t.
+        std::vector<struct firebase_firestore_document_write_t> writes;
 
         // A write object that will be written to the document.
-        struct fb_esp_firestore_document_write_t transform_write;
+        struct firebase_firestore_document_write_t transform_write;
 
         // Set the write object write operation type.
-        // fb_esp_firestore_document_write_type_update,
-        // fb_esp_firestore_document_write_type_delete,
-        // fb_esp_firestore_document_write_type_transform
-        transform_write.type = fb_esp_firestore_document_write_type_transform;
+        // firebase_firestore_document_write_type_update,
+        // firebase_firestore_document_write_type_delete,
+        // firebase_firestore_document_write_type_transform
+        transform_write.type = firebase_firestore_document_write_type_transform;
 
         // Set the document path of document to write (transform)
         transform_write.document_transform.transform_document_path = "test_collection/test_document";
 
         // Set a transformation of a field of the document.
-        struct fb_esp_firestore_document_write_field_transforms_t field_transforms;
+        struct firebase_firestore_document_write_field_transforms_t field_transforms;
 
         // Set field path to write.
         field_transforms.fieldPath = "appended_map_array";
 
         // Set the transformation type.
-        // fb_esp_firestore_transform_type_set_to_server_value,
-        // fb_esp_firestore_transform_type_increment,
-        // fb_esp_firestore_transform_type_maaximum,
-        // fb_esp_firestore_transform_type_minimum,
-        // fb_esp_firestore_transform_type_append_missing_elements,
-        // fb_esp_firestore_transform_type_remove_all_from_array
-        field_transforms.transform_type = fb_esp_firestore_transform_type_append_missing_elements;
+        // firebase_firestore_transform_type_set_to_server_value,
+        // firebase_firestore_transform_type_increment,
+        // firebase_firestore_transform_type_maaximum,
+        // firebase_firestore_transform_type_minimum,
+        // firebase_firestore_transform_type_append_missing_elements,
+        // firebase_firestore_transform_type_remove_all_from_array
+        field_transforms.transform_type = firebase_firestore_transform_type_append_missing_elements;
 
         // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse/Create_Edit_Parse.ino
         FirebaseJson content;
@@ -177,7 +177,7 @@ void loop()
         // Add a write object to a write array.
         writes.push_back(transform_write);
 
-        if (Firebase.Firestore.commitDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, writes /* dynamic array of fb_esp_firestore_document_write_t */, "" /* transaction */))
+        if (Firebase.Firestore.commitDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, writes /* dynamic array of firebase_firestore_document_write_t */, "" /* transaction */))
             Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
         else
             Serial.println(fbdo.errorReason());

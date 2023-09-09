@@ -51,13 +51,22 @@
 
 #include <Firebase.h>
 
-
 #ifndef FIREBASE_STREAM_CLASS
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_STREAM_CLASS FirebaseStream
 #elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #define FIREBASE_STREAM_CLASS StreamData
 #endif
+#endif
+
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#define FBRTDB Firebase
+#define EXT *
+#define EXT2 
+#elif defined(FIREBASE_ESP_CLIENT)
+#define FBRTDB Firebase.RTDB
+#define EXT
+#define EXT2 &
 #endif
 
 using namespace mb_string;
@@ -850,8 +859,8 @@ void FireSenseClass::sendReadyStatus()
     if (!configReady())
         return;
 
-    Firebase.RTDB.setAsync(config->shared_fbdo, streamCmdPath().c_str(), (const char *)FPSTR("Idle"));
-    Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), (const char *)FPSTR("Ready"));
+    FBRTDB.setAsync(EXT config->shared_fbdo, streamCmdPath().c_str(), (const char *)FPSTR("Idle"));
+    FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), (const char *)FPSTR("Ready"));
 
     if (config->close_session)
         config->shared_fbdo->clear();
@@ -861,7 +870,7 @@ bool FireSenseClass::configExisted()
 {
     if (!configReady())
         return false;
-    config_existed = Firebase.RTDB.pathExisted(config->shared_fbdo, configPath().c_str());
+    config_existed = FBRTDB.pathExisted(EXT config->shared_fbdo, configPath().c_str());
 
     if (config->close_session)
         config->shared_fbdo->clear();
@@ -936,7 +945,6 @@ bool FireSenseClass::begin(struct firesense_config_t *config, const char *databa
     if (this->config->stream_fbdo)
         this->config->stream_fbdo->setBSSLBufferSize(2048, 512);
 
-
     this->config->shared_fbdo->setResponseSize(1024);
     if (this->config->stream_fbdo)
         this->config->stream_fbdo->setResponseSize(1024);
@@ -1008,7 +1016,7 @@ void FireSenseClass::setupStream()
     printUpdate("", 19);
     if (config->stream_fbdo)
     {
-        if (!Firebase.RTDB.beginStream(config->stream_fbdo, controlPath().c_str()))
+        if (!FBRTDB.beginStream(EXT config->stream_fbdo, controlPath().c_str()))
             printError(config->stream_fbdo);
         else
             printUpdate("", 21);
@@ -1016,14 +1024,14 @@ void FireSenseClass::setupStream()
     else
     {
 
-        if (!Firebase.RTDB.beginStream(config->shared_fbdo, controlPath().c_str()))
+        if (!FBRTDB.beginStream(EXT config->shared_fbdo, controlPath().c_str()))
             printError(config->stream_fbdo);
         else
             printUpdate("", 21);
     }
 #if defined(ESP32) || defined(ESP8266)
     if (config->stream_fbdo && !config->disable_command)
-        Firebase.RTDB.setStreamCallback(config->stream_fbdo, FiresenseStreamCB, FiresenseStreamToCB);
+        FBRTDB.setStreamCallback(EXT config->stream_fbdo, FiresenseStreamCB, FiresenseStreamToCB);
 #endif
 }
 
@@ -1080,7 +1088,7 @@ void FireSenseClass::clearLog()
         return;
 
     printUpdate("", 22);
-    if (!Firebase.RTDB.deleteNode(config->shared_fbdo, logPath().c_str()))
+    if (!FBRTDB.deleteNode(EXT config->shared_fbdo, logPath().c_str()))
         printError(config->shared_fbdo);
 
     if (config->close_session)
@@ -1300,12 +1308,12 @@ void FireSenseClass::executeStatement(struct conditions_info_t *conditionsListIt
                         printUpdate(statement->data.left.channel->id.c_str(), 0);
                         if (statement->data.left.channel->current_value.type == data_type_float)
                         {
-                            if (!Firebase.RTDB.setAsync(config->shared_fbdo, path.c_str(), statement->data.left.channel->current_value.float_data))
+                            if (!FBRTDB.setAsync(EXT config->shared_fbdo, path.c_str(), statement->data.left.channel->current_value.float_data))
                                 printError(config->shared_fbdo);
                         }
                         else
                         {
-                            if (!Firebase.RTDB.setAsync(config->shared_fbdo, path.c_str(), statement->data.left.channel->current_value.int_data))
+                            if (!FBRTDB.setAsync(EXT config->shared_fbdo, path.c_str(), statement->data.left.channel->current_value.int_data))
                                 printError(config->shared_fbdo);
                         }
 
@@ -2041,7 +2049,7 @@ void FireSenseClass::restart()
     if (!configReady())
         return;
     if (config->debug)
-        Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), "restarting device...");
+        FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), "restarting device...");
 #if defined(ESP32) || defined(ESP8266)
     ESP.restart();
 #endif
@@ -2100,7 +2108,7 @@ void FireSenseClass::checkCommand()
 
         s += (uint64_t)Firebase.getCurrentTime();
 
-        Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), s.c_str());
+        FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), s.c_str());
         if (config->close_session)
             config->shared_fbdo->clear();
     }
@@ -2110,13 +2118,13 @@ void FireSenseClass::checkCommand()
 
     else if (config->debug)
     {
-        Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), "Unknown command!");
+        FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), "Unknown command!");
 
         if (config->close_session)
             config->shared_fbdo->clear();
     }
 
-    Firebase.RTDB.setAsync(config->shared_fbdo, streamCmdPath().c_str(), (const char *)FPSTR("Idle"));
+    FBRTDB.setAsync(EXT config->shared_fbdo, streamCmdPath().c_str(), (const char *)FPSTR("Idle"));
     if (config->close_session)
         config->shared_fbdo->clear();
     streamCmd.clear();
@@ -2161,7 +2169,7 @@ void FireSenseClass::sendLog()
         if (logEnable)
         {
             printUpdate("", 20);
-            if (!Firebase.RTDB.deleteNodesByTimestamp(config->shared_fbdo, logPath().c_str(), (const char *)FPSTR("time"), config->max_node_to_delete, config->dataRetainingPeriod))
+            if (!FBRTDB.deleteNodesByTimestamp(EXT config->shared_fbdo, logPath().c_str(), (const char *)FPSTR("time"), config->max_node_to_delete, config->dataRetainingPeriod))
                 printError(config->shared_fbdo);
 
             if (config->close_session)
@@ -2194,7 +2202,7 @@ void FireSenseClass::sendLog()
                 path += (uint64_t)ts;
 
                 printUpdate("", 1);
-                if (!Firebase.RTDB.updateNode(config->shared_fbdo, path.c_str(), &_json))
+                if (!FBRTDB.updateNode(EXT config->shared_fbdo, path.c_str(), EXT2 _json))
                     printError(config->shared_fbdo);
 
                 if (config->close_session)
@@ -2224,7 +2232,7 @@ void FireSenseClass::sendLastSeen()
             _json.add((const char *)FPSTR("ts"), (uint64_t)Firebase.getCurrentTime());
 
             printUpdate("", 2);
-            if (!Firebase.RTDB.updateNode(config->shared_fbdo, lastSeenPath().c_str(), &_json))
+            if (!FBRTDB.updateNode(EXT config->shared_fbdo, lastSeenPath().c_str(), EXT2 _json))
                 printError(config->shared_fbdo);
 
             if (config->close_session)
@@ -2312,9 +2320,9 @@ bool FireSenseClass::loadConfig()
     printUpdate("", 25);
 
     if (config->debug)
-        Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), "Loading database config...");
+        FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), "Loading database config...");
 
-    if (!Firebase.RTDB.getShallowData(config->shared_fbdo, channelConfigPath().c_str()))
+    if (!FBRTDB.getShallowData(EXT config->shared_fbdo, channelConfigPath().c_str()))
     {
         loadingConfig = false;
         printUpdate("", 26);
@@ -2347,7 +2355,7 @@ bool FireSenseClass::loadConfig()
         path += (const char *)FPSTR("/");
         path += channelIdxs[i].c_str();
         printUpdate("", 27);
-        if (!Firebase.RTDB.get(config->shared_fbdo, path.c_str()))
+        if (!FBRTDB.get(EXT config->shared_fbdo, path.c_str()))
         {
             printError(config->shared_fbdo);
             loadingConfig = false;
@@ -2412,7 +2420,7 @@ bool FireSenseClass::backupConfig(const String &filename, firebase_mem_storage_t
 
     printUpdate("", 40);
     delay(0);
-    if (!Firebase.RTDB.backup(config->shared_fbdo, storageType, configPath().c_str(), filename.c_str()))
+    if (!FBRTDB.backup(EXT config->shared_fbdo, storageType, configPath().c_str(), filename.c_str()))
     {
         printError(config->shared_fbdo);
 
@@ -2433,7 +2441,7 @@ bool FireSenseClass::restoreConfig(const String &filename, firebase_mem_storage_
 
     delay(0);
     printUpdate("", 41);
-    if (!Firebase.RTDB.restore(config->shared_fbdo, storageType, configPath().c_str(), filename.c_str()))
+    if (!FBRTDB.restore(EXT config->shared_fbdo, storageType, configPath().c_str(), filename.c_str()))
     {
         printError(config->shared_fbdo);
 
@@ -2472,14 +2480,14 @@ void FireSenseClass::setClock(float time_zone, float daylight_offset_in_sec)
         _json.add((const char *)FPSTR("ts"), (uint64_t)Firebase.getCurrentTime());
 
         printUpdate("", 2);
-        if (!Firebase.RTDB.updateNode(config->shared_fbdo, lastSeenPath().c_str(), &_json) || !Firebase.RTDB.set(config->shared_fbdo, terminalPath().c_str(), (int)now))
+        if (!FBRTDB.updateNode(EXT config->shared_fbdo, lastSeenPath().c_str(), EXT2 _json) || !FBRTDB.set(EXT config->shared_fbdo, terminalPath().c_str(), (int)now))
             printError(config->shared_fbdo);
         _json.clear();
     }
     else
     {
         if (config->debug)
-            Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), "Acquiring NTP time...");
+            FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), "Acquiring NTP time...");
     }
 
     if (config->close_session)
@@ -2527,7 +2535,7 @@ void FireSenseClass::addCondition(struct firesense_condition_t cond, bool addToD
         delay(0);
 
         printUpdate("", 31);
-        if (!Firebase.RTDB.updateNode(config->shared_fbdo, path.c_str(), &_json))
+        if (!FBRTDB.updateNode(EXT config->shared_fbdo, path.c_str(), EXT2 _json))
             printError(config->shared_fbdo);
 
         if (config->close_session)
@@ -2554,10 +2562,10 @@ void FireSenseClass::loadConditionsList()
     conditionsList.clear();
 
     if (config->debug)
-        Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), "Loading conditions...");
+        FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), "Loading conditions...");
 
     printUpdate("", 42);
-    if (!Firebase.RTDB.getShallowData(config->shared_fbdo, conditionPath().c_str()))
+    if (!FBRTDB.getShallowData(EXT config->shared_fbdo, conditionPath().c_str()))
     {
         printError(config->shared_fbdo);
         loadingCondition = false;
@@ -2597,7 +2605,7 @@ void FireSenseClass::loadConditionsList()
         path += conditionIds[i].c_str();
 
         printUpdate(String(i).c_str(), 34);
-        if (!Firebase.RTDB.get(config->shared_fbdo, path.c_str()))
+        if (!FBRTDB.get(EXT config->shared_fbdo, path.c_str()))
         {
             printError(config->shared_fbdo);
 
@@ -2870,7 +2878,7 @@ void FireSenseClass::setChannelValue(struct channel_info_t &channel, struct data
             if (channel.status)
             {
                 printUpdate(channel.id.c_str(), 0);
-                if (!Firebase.RTDB.setAsync(config->shared_fbdo, path.c_str(), channel.current_value.int_data > 0))
+                if (!FBRTDB.setAsync(EXT config->shared_fbdo, path.c_str(), channel.current_value.int_data > 0))
                     printError(config->shared_fbdo);
 
                 if (config->close_session)
@@ -2891,7 +2899,7 @@ void FireSenseClass::setChannelValue(struct channel_info_t &channel, struct data
             if (channel.status)
             {
                 printUpdate(channel.id.c_str(), 0);
-                if (!Firebase.RTDB.setAsync(config->shared_fbdo, path.c_str(), v))
+                if (!FBRTDB.setAsync(EXT config->shared_fbdo, path.c_str(), v))
                     printError(config->shared_fbdo);
 
                 if (config->close_session)
@@ -2911,7 +2919,7 @@ void FireSenseClass::setChannelValue(struct channel_info_t &channel, struct data
             if (channel.status)
             {
                 printUpdate(channel.id.c_str(), 0);
-                if (!Firebase.RTDB.setAsync(config->shared_fbdo, path.c_str(), v))
+                if (!FBRTDB.setAsync(EXT config->shared_fbdo, path.c_str(), v))
                     printError(config->shared_fbdo);
 
                 if (config->close_session)
@@ -2987,12 +2995,12 @@ void FireSenseClass::setUserValue(struct channel_info_t *channel, bool fromUserV
             printUpdate(channel->id.c_str(), 0);
             if (val.type == data_type_float)
             {
-                if (!Firebase.RTDB.setAsync(config->shared_fbdo, path.c_str(), val.float_data))
+                if (!FBRTDB.setAsync(EXT config->shared_fbdo, path.c_str(), val.float_data))
                     printError(config->shared_fbdo);
             }
             else
             {
-                if (!Firebase.RTDB.setAsync(config->shared_fbdo, path.c_str(), val.int_data))
+                if (!FBRTDB.setAsync(EXT config->shared_fbdo, path.c_str(), val.int_data))
                     printError(config->shared_fbdo);
             }
 
@@ -3015,9 +3023,9 @@ void FireSenseClass::loadStatus()
     printUpdate("", 6);
 
     if (config->debug)
-        Firebase.RTDB.setAsync(config->shared_fbdo, terminalPath().c_str(), "Loading channels status...");
+        FBRTDB.setAsync(EXT config->shared_fbdo, terminalPath().c_str(), "Loading channels status...");
 
-    if (Firebase.RTDB.getJSON(config->shared_fbdo, channelStatusPath().c_str()))
+    if (FBRTDB.getJSON(EXT config->shared_fbdo, channelStatusPath().c_str()))
     {
 
         FirebaseJson *json = config->shared_fbdo->to<FirebaseJson *>();
@@ -3131,7 +3139,7 @@ void FireSenseClass::readStream(FirebaseData *fbdo)
     if (!configReady())
         return;
 
-    Firebase.RTDB.readStream(fbdo);
+    FBRTDB.readStream(EXT fbdo);
 
     if (fbdo->streamAvailable())
     {
@@ -3233,7 +3241,7 @@ void FireSenseClass::addDBChannel(struct channel_info_t &channel)
     path = channelConfigPath();
     path += (const char *)FPSTR("/");
     path += channelsList.size() - 1;
-    if (!Firebase.RTDB.updateNode(config->shared_fbdo, path.c_str(), &_json))
+    if (!FBRTDB.updateNode(EXT config->shared_fbdo, path.c_str(), EXT2 _json))
     {
         printError(config->shared_fbdo);
 
@@ -3267,7 +3275,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
             if (channel.current_value.type == data_type_float)
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), channel.current_value.float_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), channel.current_value.float_data))
                 {
                     printError(config->shared_fbdo);
 
@@ -3279,7 +3287,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
             else
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), channel.current_value.int_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), channel.current_value.int_data))
                 {
                     printError(config->shared_fbdo);
 
@@ -3294,7 +3302,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
         path += (const char *)FPSTR("/");
         path += channel.id.c_str();
         delay(0);
-        Firebase.RTDB.set(config->shared_fbdo, path.c_str(), 0);
+        FBRTDB.set(EXT config->shared_fbdo, path.c_str(), 0);
     }
     else if (channel.type == channel_type_t::Input)
     {
@@ -3303,7 +3311,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
         path += (const char *)FPSTR("/");
         path += channel.id.c_str();
         delay(0);
-        Firebase.RTDB.deleteNode(config->shared_fbdo, path.c_str());
+        FBRTDB.deleteNode(config->shared_fbdo, path.c_str());
         */
 
         path = channelStatusPath();
@@ -3316,7 +3324,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
             if (channel.current_value.type == data_type_float)
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), channel.current_value.float_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), channel.current_value.float_data))
                 {
                     printError(config->shared_fbdo);
 
@@ -3328,7 +3336,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
             else
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), channel.current_value.int_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), channel.current_value.int_data))
                 {
                     printError(config->shared_fbdo);
                     return;
@@ -3343,7 +3351,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
         path += (const char *)FPSTR("/");
         path += channel.id.c_str();
         delay(0);
-        Firebase.RTDB.deleteNode(config->shared_fbdo, path.c_str());
+        FBRTDB.deleteNode(config->shared_fbdo, path.c_str());
         */
 
         path = channelStatusPath();
@@ -3356,13 +3364,13 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
             if (channel.current_value.type == data_type_float)
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), channel.current_value.float_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), channel.current_value.float_data))
                     printError(config->shared_fbdo);
             }
             else
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), channel.current_value.int_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), channel.current_value.int_data))
                     printError(config->shared_fbdo);
             }
         }
@@ -3373,7 +3381,7 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
         path += (const char *)FPSTR("/");
         path += channel.id.c_str();
         delay(0);
-        Firebase.RTDB.set(config->shared_fbdo, path.c_str(), 0);
+        FBRTDB.set(EXT config->shared_fbdo, path.c_str(), 0);
 
         if ((int)userValueList.size() > channel.value_index && channel.value_index > -1 && channel.status)
         {
@@ -3413,13 +3421,13 @@ void FireSenseClass::updateDBStatus(struct channel_info_t &channel)
             if (val.type == data_type_float)
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), val.float_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), val.float_data))
                     printError(config->shared_fbdo);
             }
             else
             {
                 delay(0);
-                if (!Firebase.RTDB.set(config->shared_fbdo, path.c_str(), val.int_data))
+                if (!FBRTDB.set(EXT config->shared_fbdo, path.c_str(), val.int_data))
                     printError(config->shared_fbdo);
             }
         }
@@ -4661,7 +4669,7 @@ void FireSenseClass::setLogQueryIndex()
 
     delay(0);
 
-    if (!Firebase.RTDB.setQueryIndex(config->shared_fbdo, logPath().c_str(), (const char *)FPSTR("time"), databaseSecret))
+    if (!FBRTDB.setQueryIndex(EXT config->shared_fbdo, logPath().c_str(), (const char *)FPSTR("time"), databaseSecret))
     {
         printError(config->shared_fbdo);
         if (config->debug)

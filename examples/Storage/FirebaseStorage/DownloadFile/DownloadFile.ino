@@ -128,19 +128,19 @@ void setup()
 // The Firebase Storage download callback function
 void fcsDownloadCallback(FCS_DownloadStatusInfo info)
 {
-    if (info.status == fb_esp_fcs_download_status_init)
+    if (info.status == firebase_fcs_download_status_init)
     {
         Serial.printf("Downloading file %s (%d) to %s\n", info.remoteFileName.c_str(), info.fileSize, info.localFileName.c_str());
     }
-    else if (info.status == fb_esp_fcs_download_status_download)
+    else if (info.status == firebase_fcs_download_status_download)
     {
         Serial.printf("Downloaded %d%s, Elapsed time %d ms\n", (int)info.progress, "%", info.elapsedTime);
     }
-    else if (info.status == fb_esp_fcs_download_status_complete)
+    else if (info.status == firebase_fcs_download_status_complete)
     {
         Serial.println("Download completed\n");
     }
-    else if (info.status == fb_esp_fcs_download_status_error)
+    else if (info.status == firebase_fcs_download_status_error)
     {
         Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
     }

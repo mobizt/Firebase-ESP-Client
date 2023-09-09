@@ -122,15 +122,15 @@ void setup()
 // The Firebase Storage upload callback function
 void fcsUploadCallback(FCS_UploadStatusInfo info)
 {
-    if (info.status == fb_esp_fcs_upload_status_init)
+    if (info.status == firebase_fcs_upload_status_init)
     {
         Serial.printf("Uploading data to %s\n", info.remoteFileName.c_str());
     }
-    else if (info.status == fb_esp_fcs_upload_status_upload)
+    else if (info.status == firebase_fcs_upload_status_upload)
     {
         Serial.printf("Uploaded %d%s, Elapsed time %d ms\n", (int)info.progress, "%", info.elapsedTime);
     }
-    else if (info.status == fb_esp_fcs_upload_status_complete)
+    else if (info.status == firebase_fcs_upload_status_complete)
     {
         Serial.println("Upload completed\n");
         FileMetaInfo meta = fbdo.metaData();
@@ -145,7 +145,7 @@ void fcsUploadCallback(FCS_UploadStatusInfo info)
         Serial.printf("Tokens: %s\n", meta.downloadTokens.c_str());
         Serial.printf("Download URL: %s\n\n", fbdo.downloadURL().c_str());
     }
-    else if (info.status == fb_esp_fcs_upload_status_error)
+    else if (info.status == firebase_fcs_upload_status_error)
     {
         Serial.printf("Upload failed, %s\n", info.errorMsg.c_str());
     }

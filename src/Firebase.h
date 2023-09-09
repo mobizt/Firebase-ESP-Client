@@ -96,9 +96,10 @@ class FIREBASE_CLASS
   friend class FirebaseSession;
 
 public:
-
+#if defined(FIREBASE_ESP_CLIENT)
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FB_RTDB RTDB;
+#endif
 #endif
 
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
@@ -2571,6 +2572,12 @@ public:
   }
 
 private:
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
+  FB_RTDB RTDB;
+#endif
+#endif
+
   void init(FirebaseConfig *config, FirebaseAuth *auth);
   void mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToken, size_t expire, MB_StringPtr refreshToken,
                      firebase_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret);

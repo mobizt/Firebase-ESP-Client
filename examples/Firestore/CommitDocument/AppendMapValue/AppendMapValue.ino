@@ -132,17 +132,17 @@ void loop()
 
         Serial.print("Commit a document (append map value in document)... ");
 
-        // The dyamic array of write object fb_esp_firestore_document_write_t.
-        std::vector<struct fb_esp_firestore_document_write_t> writes;
+        // The dyamic array of write object firebase_firestore_document_write_t.
+        std::vector<struct firebase_firestore_document_write_t> writes;
 
         // A write object that will be written to the document.
-        struct fb_esp_firestore_document_write_t update_write;
+        struct firebase_firestore_document_write_t update_write;
 
         // Set the write object write operation type.
-        // fb_esp_firestore_document_write_type_update,
-        // fb_esp_firestore_document_write_type_delete,
-        // fb_esp_firestore_document_write_type_transform
-        update_write.type = fb_esp_firestore_document_write_type_update;
+        // firebase_firestore_document_write_type_update,
+        // firebase_firestore_document_write_type_delete,
+        // firebase_firestore_document_write_type_transform
+        update_write.type = firebase_firestore_document_write_type_update;
 
         // Set the document content to write (transform)
 
@@ -162,7 +162,7 @@ void loop()
         // Add a write object to a write array.
         writes.push_back(update_write);
 
-        if (Firebase.Firestore.commitDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, writes /* dynamic array of fb_esp_firestore_document_write_t */, "" /* transaction */))
+        if (Firebase.Firestore.commitDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, writes /* dynamic array of firebase_firestore_document_write_t */, "" /* transaction */))
             Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
         else
             Serial.println(fbdo.errorReason());
