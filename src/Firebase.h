@@ -1,4 +1,4 @@
-#include "Firebase_Client_Version.h"
+#include "./core/Firebase_Client_Version.h"
 #if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
@@ -2478,33 +2478,6 @@ public:
 #endif // ERROR QUEUE
 
 #endif // RTDB
-
-#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-
-  /** Send Firebase Cloud Messaging to the device with the first registration token which added by
-   *  firebaseData.fcm.addDeviceToken.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param index The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sendMessage(FirebaseData &fbdo, uint16_t index);
-
-  /** Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool broadcastMessage(FirebaseData &fbdo);
-
-  /** Send Firebase Cloud Messaging to devices that subscribed to the topic.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sendTopic(FirebaseData &fbdo);
-
-#endif // FCM
 
 #endif // ESP8266, ESP32
 

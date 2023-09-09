@@ -1,4 +1,4 @@
-#include "Firebase_Client_Version.h"
+#include "./core/Firebase_Client_Version.h"
 #if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
@@ -265,7 +265,7 @@ public:
 
         url += path;
     }
-#if defined(FIREBASE_ESP_CLIENT)
+
     /* Append the string with google storage URL */
     void addGStorageURL(MB_String &uri, const MB_String &bucketID, const MB_String &storagePath)
     {
@@ -304,7 +304,6 @@ public:
     {
         uri += firebase_pgm_str_24; // "/v1beta1/projects/"
     }
-#endif
 
     void host2Url(MB_String &url, MB_String &host)
     {
@@ -989,7 +988,7 @@ public:
             session.cfn.payload.clear();
 #endif
 
-#if (defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)) && defined(FIREBASE_ESP_CLIENT)
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
         if (session.con_mode == firebase_con_mode_fcm)
             session.fcm.payload.clear();
 #endif
@@ -1044,7 +1043,7 @@ public:
             if (!client)
                 break;
 
-             FBUtils::idle();
+            FBUtils::idle();
 
             res = client->read();
             if (res > -1)
@@ -1834,7 +1833,7 @@ public:
 
 #endif
 
-#if defined(FIREBASE_ESP_CLIENT) && (defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE))
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
     MB_String makeDocPath(struct firebase_firestore_req_t &req, const MB_String &projectId)
     {
         MB_String str = firebase_func_pgm_str_47; // "projects/"

@@ -134,11 +134,9 @@
 #undef FIREBASE_DEFAULT_DEBUG_PORT
 #endif
 
-#define FIREBASE_STREAM_CLASS FirebaseStream
-#define FIREBASE_MP_STREAM_CLASS MultiPathStream
-
 #if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-
+#define FIREBASE_STREAM_CLASS StreamData
+#define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
 #if defined(ESP32)
 #define FIREBASE_CLASS FirebaseESP32
 #elif defined(ES8266) || defined(MB_ARDUINO_PICO)
@@ -146,6 +144,10 @@
 #endif
 
 #elif defined(FIREBASE_ESP_CLIENT)
+
+#define FIREBASE_STREAM_CLASS FirebaseStream
+#define FIREBASE_MP_STREAM_CLASS MultiPathStream
+
 #define FIREBASE_CLASS Firebase_ESP_Client
 #endif
 

@@ -1,4 +1,4 @@
-#include "Firebase_Client_Version.h"
+#include "./core/Firebase_Client_Version.h"
 #if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
@@ -164,14 +164,13 @@ typedef enum
 
 } firebase_cert_type;
 
-#if !defined(FIREBASE_ESP_CLIENT)
 struct StorageType
 {
     static const int8_t UNDEFINED = 0; // add to compatible with firebase_mem_storage_type enum
     static const int8_t FLASH = 1;     // now set to 1 instead of 0 in older version
     static const int8_t SD = 2;        // now set to 2 instead of 1 in older version
 };
-#endif
+
 
 enum firebase_con_mode
 {
@@ -332,8 +331,6 @@ enum firebase_rtdb_download_status
 };
 
 #endif
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
 enum firebase_cfs_upload_status
@@ -564,7 +561,7 @@ enum firebase_functions_operation_status
 
 #endif
 
-#endif
+
 
 struct firebase_wifi_credential_t
 {
@@ -1093,8 +1090,6 @@ struct firebase_url_info_t
     MB_String auth;
 };
 
-#if defined(FIREBASE_ESP_CLIENT)
-
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
 
 typedef struct firebase_cfs_upload_status_info_t
@@ -1220,7 +1215,7 @@ struct firebase_fcs_file_list_t
 };
 #endif
 
-#endif
+
 
 typedef struct token_info_t
 {
@@ -1374,8 +1369,6 @@ struct firebase_rtdb_info_t
 };
 
 #endif
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
 
@@ -1888,7 +1881,7 @@ struct firebase_firestore_document_write_t
 
 #endif
 
-#endif
+
 
 struct firebase_session_info_t
 {
@@ -1920,7 +1913,6 @@ struct firebase_session_info_t
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
     struct firebase_rtdb_info_t rtdb;
 #endif
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
     struct firebase_fcs_info_t fcs;
@@ -1937,13 +1929,11 @@ struct firebase_session_info_t
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
     struct firebase_functions_info_t cfn;
 #endif
-#endif
+
 
     uint16_t bssl_rx_size = 2048;
     uint16_t bssl_tx_size = 512;
 };
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
 typedef struct firebase_fcm_legacy_http_message_info_t FCM_Legacy_HTTP_Message;
@@ -1960,7 +1950,7 @@ typedef struct firebase_gcs_meta_info_t FileMetaInfo;
 typedef struct firebase_fcs_file_list_item_t FileItem;
 #endif
 
-#endif
+
 
 typedef struct firebase_auth_signin_provider_t FirebaseAuth;
 typedef struct firebase_cfg_t FirebaseConfig;
@@ -2174,7 +2164,6 @@ static const char firebase_rtdb_pgm_str_40[] PROGMEM = "object";
 
 // FCM class string
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-#if defined(FIREBASE_ESP_CLIENT)
 static const char firebase_fcm_pgm_str_1[] PROGMEM = "fcm";
 static const char firebase_fcm_pgm_str_2[] PROGMEM = "iid";
 static const char firebase_fcm_pgm_str_3[] PROGMEM = "/fcm/send";
@@ -2241,7 +2230,7 @@ static const char firebase_fcm_pgm_str_63[] PROGMEM = "light_on_duration";
 static const char firebase_fcm_pgm_str_64[] PROGMEM = "light_off_duration";
 static const char firebase_fcm_pgm_str_65[] PROGMEM = "headers";
 static const char firebase_fcm_pgm_str_66[] PROGMEM = "link";
-#endif
+
 
 // Commonly used for legacy FCM
 static const char firebase_fcm_pgm_str_67[] PROGMEM = "notification";
