@@ -159,9 +159,6 @@ processErrorQueue   KEYWORD2
 getErrorQueueID KEYWORD2
 isErrorQueueExisted KEYWORD2
 errorToString   KEYWORD2
-sendMessage KEYWORD2
-broadcastMessage    KEYWORD2
-sendTopic   KEYWORD2
 setStreamTaskStackSize  KEYWORD2
 authTokenInfo   KEYWORD2
 tokenReady  KEYWORD2
@@ -353,10 +350,10 @@ FireSense_Channel   KEYWORD3
 Firesense_Channel_Type  KEYWORD3
 FireSense_Condition KEYWORD3
 FireSense_Data_Type KEYWORD3
-fb_esp_firestore_document_write_field_transforms_t  KEYWORD3
-fb_esp_firestore_document_write_document_transform_t    KEYWORD3
-fb_esp_firestore_document_precondition_t    KEYWORD3
-fb_esp_firestore_document_write_t   KEYWORD3
+firebase_firestore_document_write_field_transforms_t  KEYWORD3
+firebase_firestore_document_write_document_transform_t    KEYWORD3
+firebase_firestore_document_precondition_t    KEYWORD3
+firebase_firestore_document_write_t   KEYWORD3
 TransactionOptions  KEYWORD3
 SPI_ETH_Module  KEYWORD3
 

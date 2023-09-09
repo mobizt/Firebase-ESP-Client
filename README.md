@@ -646,7 +646,7 @@ The data type of returning payload can be determined by `fbdo.dataType()` which 
 
 The String of type returns from `fbdo.dataType()` can be string, boolean, int, float, double, json, array, blob, file and null.
 
-The enum value type, fb_esp_rtdb_data_type returns from `fbdo.dataTypeEnum()` can be fb_esp_rtdb_data_type_null (1), fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double, fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json, fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
+The enum value type, firebase_rtdb_data_type returns from `fbdo.dataTypeEnum()` can be firebase_rtdb_data_type_null (1), firebase_rtdb_data_type_integer, firebase_rtdb_data_type_float, firebase_rtdb_data_type_double, firebase_rtdb_data_type_boolean, firebase_rtdb_data_type_string, firebase_rtdb_data_type_json, firebase_rtdb_data_type_array, firebase_rtdb_data_type_blob, and firebase_rtdb_data_type_file (10)
 
 
 
@@ -722,7 +722,7 @@ The following example showed how to read integer value from node "/test/int".
 ```cpp
   if (Firebase.RTDB.getInt(&fbdo, "/test/int")) {
 
-    if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_integer) {
+    if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_integer) {
       Serial.println(fbdo.to<int>());
     }
 
@@ -1070,22 +1070,22 @@ void streamCallback(FirebaseStream data)
   // Print out the value
   // Stream data can be many types which can be determined from function dataType
 
-  if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
+  if (data.dataTypeEnum() == firebase_rtdb_data_type_integer)
       Serial.println(data.to<int>());
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_float)
       Serial.println(data.to<float>(), 5);
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_double)
       printf("%.9lf\n", data.to<double>());
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_boolean)
       Serial.println(data.to<bool>()? "true" : "false");
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_string)
       Serial.println(data.to<String>());
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_json)
   {
       FirebaseJson *json = data.to<FirebaseJson *>();
       Serial.println(json->raw());
   }
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_array)
   {
       FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
       Serial.println(arr->raw());
@@ -1146,22 +1146,22 @@ if (fbdo.streamTimeout())
 
 if (fbdo.streamAvailable())
 {
-  if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
+  if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_integer)
     Serial.println(fbdo.to<int>());
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_float)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_float)
     Serial.println(fbdo.to<float>(), 5);
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_double)
     printf("%.9lf\n", fbdo.to<double>());
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_boolean)
     Serial.println(fbdo.to<bool>() ? "true" : "false");
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_string)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_string)
     Serial.println(fbdo.to<String>());
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_json)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_json)
   {
       FirebaseJson *json = fbdo.to<FirebaseJson *>();
       Serial.println(json->raw());
   }
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_array)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_array)
   {
       FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
       Serial.println(arr->raw());
