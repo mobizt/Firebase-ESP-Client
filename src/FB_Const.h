@@ -164,13 +164,14 @@ typedef enum
 
 } firebase_cert_type;
 
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 struct StorageType
 {
     static const int8_t UNDEFINED = 0; // add to compatible with firebase_mem_storage_type enum
     static const int8_t FLASH = 1;     // now set to 1 instead of 0 in older version
     static const int8_t SD = 2;        // now set to 2 instead of 1 in older version
 };
-
+#endif
 
 enum firebase_con_mode
 {
