@@ -4559,7 +4559,7 @@ void setResponseSize(uint16_t len);
 return **`WiFi client instance`**.
 
 ```cpp
-WiFiClientSecure *getWiFiClient();
+ESP_SSLClient *getWiFiClient();
 ```
 
 
