@@ -67,8 +67,6 @@ class SdSpiConfig;
 #include "message/FCM.h"
 #endif
 
-#if !defined(FIREBASE_ESP32_CLIENT) && !defined(FIREBASE_ESP8266_CLIENT)
-
 #if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
 #include "storage/FCS.h"
 #endif
@@ -86,7 +84,7 @@ class SdSpiConfig;
 #include "functions/FunctionsConfig.h"
 #endif
 
-#endif
+
 
 #ifndef FPSTR
 #define FPSTR MBSTRING_FLASH_MCR
