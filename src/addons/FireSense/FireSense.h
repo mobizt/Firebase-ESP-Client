@@ -49,19 +49,8 @@
 #ifndef FireSenseClass_H
 #define FireSenseClass_H
 
-#if defined(ESP32)
-#if defined(FIREBASE_ESP32_CLIENT)
-#include <FirebaseESP32.h>
-#endif
-#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
-#if defined(FIREBASE_ESP8266_CLIENT)
-#include <FirebaseESP8266.h>
-#endif
-#endif
+#include <Firebase.h>
 
-#if defined(FIREBASE_ESP_CLIENT)
-#include <Firebase_ESP_Client.h>
-#endif
 
 #ifndef FIREBASE_STREAM_CLASS
 #if defined(FIREBASE_ESP_CLIENT)
@@ -962,9 +951,6 @@ bool FireSenseClass::mBegin()
 
     initializing = true;
     initReady = false;
-#if defined(ESP32)
-    Firebase.RTDB.allowMultipleRequests(true);
-#endif
 
     if (!Firebase.ready())
     {

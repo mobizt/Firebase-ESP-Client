@@ -56,11 +56,7 @@ using namespace mb_string;
 class FB_RTDB
 {
 
-#if defined(FIREBASE_ESP8266_CLIENT) || defined(FIREBASE_ESP32_CLIENT)
   friend class FIREBASE_CLASS;
-#elif defined(FIREBASE_ESP_CLIENT)
-  friend class Firebase_ESP_Client;
-#endif
 
 #if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 #if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)

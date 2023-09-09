@@ -58,242 +58,33 @@
 
 using namespace mb_string;
 
-#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-
-enum firebase_fcm_msg_type
-{
-  msg_single,
-  msg_multicast,
-  msg_topic
-};
-
-class FCMObject
+class FirebaseData
 {
 
   friend class FIREBASE_CLASS;
-  friend class FirebaseData;
-
-public:
-  FCMObject();
-  ~FCMObject();
-
-  /** Store Firebase Cloud Messaging's authentication credentials.
-   *
-   * @param serverKey Server key found on Console: Project settings > Cloud Messaging
-   * @param spi_ethernet_module SPI_ETH_Module struct data, optional for ESP8266 use with Ethernet module.
-   *
-   * SPI_ETH_Module struct data is for ESP8266 Ethernet supported module lwip interface.
-   * The usage example for Ethernet.
-   *
-   * #include <ENC28J60lwIP.h>
-   *
-   * #define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
-   *
-   * ENC28J60lwIP eth(ETH_CS_PIN);
-   *
-   * FirebaseData fbdo;
-   *
-   * SPI_ETH_Module spi_ethernet_module;
-   * spi_ethernet_module.enc28j60 = &eth;
-   *
-   * fbdo.fcm.begin(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
-   *
-   */
-  template <typename T = const char *>
-  void begin(T serverKey, SPI_ETH_Module *spi_ethernet_module = NULL) { mBegin(toStringPtr(serverKey), spi_ethernet_module); }
-
-  /** Add recipient's device registration token or instant ID token.
-   *
-   * @param deviceToken Recipient's device registration token to add that message will be sent to.
-   */
-  template <typename T = const char *>
-  void addDeviceToken(T deviceToken) { mAddDeviceToken(toStringPtr(deviceToken)); }
-
-  /** Remove the recipient's device registration token or instant ID token.
-   *
-   * @param index Index (start from zero) of the recipient's device registration token that added to FCM Data Object of Firebase Data object.
-   */
-  void removeDeviceToken(uint16_t index);
-
-  /** Clear all recipient's device registration tokens.
-   */
-  void clearDeviceToken();
-
-  /** Set the notify message type information.
-   *
-   * @param title The title text of notification message.
-   * @param body The body text of notification message.
-   */
-  template <typename T1 = const char *, typename T2 = const char *>
-  void setNotifyMessage(T1 title, T2 body) { mSetNotifyMessage(toStringPtr(title), toStringPtr(body)); }
-
-  /** Set the notify message type information.
-   *
-   * @param title The title text of notification message.
-   * @param body The body text of notification message.
-   * @param icon The name and/or included URI/URL of the icon to show on notifying message.
-   */
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  void setNotifyMessage(T1 title, T2 body, T3 icon) { mSetNotifyMessage(toStringPtr(title), toStringPtr(body), toStringPtr(icon)); }
-
-  /** Set the notify message type information.
-   *
-   * @param title The title text of notification message.
-   * @param body The body text of notification message.
-   * @param icon The name and/or included URI/URL of the icon to show on notifying message.
-   * @param click_action The URL or intent to accept click event on the notification message.
-   */
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-  void setNotifyMessage(T1 title, T2 body, T3 icon, T4 click_action)
-  {
-    mSetNotifyMessage(toStringPtr(title), toStringPtr(body), toStringPtr(icon), toStringPtr(click_action));
-  }
-
-  /** add the custom key/value in the notify message type information.
-   *
-   * @param key The key field in notification message.
-   * @param value The value field in the notification message.
-   */
-  template <typename T1 = const char *, typename T2 = const char *>
-  void addCustomNotifyMessage(T1 key, T2 value) { mAddCustomNotifyMessage(toStringPtr(key), toStringPtr(value)); }
-
-  /** Clear all notify message information.
-   */
-  void clearNotifyMessage();
-
-  /** Set the custom data message type information.
-   *
-   * @param jsonString The JSON structured data string.
-   */
-  template <typename T = const char *>
-  void setDataMessage(T jsonString) { mSetDataMessage(toStringPtr(jsonString)); }
-
-  /** Set the custom data message type information.
-   *
-   * @param json The FirebaseJson object.
-   */
-  void setDataMessage(FirebaseJson &json);
-
-  /** Clear custom data message type information.
-   */
-  void clearDataMessage();
-
-  /** Set the priority of the message (notification and custom data).
-   *
-   * @param priority The priority string i.e. normal and high.
-   */
-  template <typename T = const char *>
-  void setPriority(T priority) { mSetPriority(toStringPtr(priority)); }
-
-  /** Set the collapse key of the message (notification and custom data).
-   *
-   * @param key String of collapse key.
-   */
-  template <typename T = const char *>
-  void setCollapseKey(T key) { mSetCollapseKey(toStringPtr(key)); }
-
-  /** Set the Time To Live of the message (notification and custom data).
-   *
-   * @param seconds Number of seconds from 0 to 2,419,200 (4 weeks).
-   */
-  void setTimeToLive(uint32_t seconds);
-
-  /** Set the topic of the message will be sent to.
-   *
-   * @param topic Topic string.
-   */
-  template <typename T = const char *>
-  void setTopic(T topic) { mSetTopic(toStringPtr(topic)); }
-
-  /** Get the send result.
-   *
-   * @return string of payload returned from the server.
-   */
-  const char *getSendResult();
-
-private:
-  bool waitResponse(FirebaseData &fbdo);
-
-  bool handleResponse(FirebaseData *fbdo);
-
-  void rescon(FirebaseData &fbdo, const char *host);
-
-  void fcm_begin(FirebaseData &fbdo);
-
-  bool fcm_send(FirebaseData &fbdo, firebase_fcm_msg_type messageType);
-
-  bool fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize);
-
-  void fcm_preparePayload(FirebaseData &fbdo, firebase_fcm_msg_type messageType);
-
-  void clear();
-
-  void mBegin(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
-
-  void mAddDeviceToken(MB_StringPtr deviceToken);
-
-  void mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body);
-
-  void mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon);
-
-  void mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon, MB_StringPtr click_action);
-
-  void mAddCustomNotifyMessage(MB_StringPtr key, MB_StringPtr value);
-
-  void mSetDataMessage(MB_StringPtr jsonString);
-
-  void mSetPriority(MB_StringPtr priority);
-
-  void mSetCollapseKey(MB_StringPtr key);
-
-  void mSetTopic(MB_StringPtr topic);
-
-  MB_String result;
-  MB_String raw;
-  MB_String idTokens;
-  int _ttl = -1;
-  uint16_t _index = 0;
-  uint16_t _port = FIREBASE_PORT;
-  SPI_ETH_Module *_spi_ethernet_module = NULL;
-};
-
-#endif
-
-class FirebaseData
-{
 
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   friend class FB_RTDB;
 #endif
-  friend class UtilsClass;
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   friend class FB_CM;
 #endif
+
 #if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   friend class FB_Storage;
 #endif
+
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
   friend class FB_Firestore;
 #endif
+
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
   friend class FB_Functions;
 #endif
+
 #if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
   friend class GG_CloudStorage;
-#endif
-
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-  friend class FIREBASE_CLASS;
-#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-  friend class FCMObject;
-#endif
-#endif
-
-#if defined(FIREBASE_ESP_CLIENT)
-  friend class Firebase_ESP_Client;
 #endif
 
 public:
@@ -304,7 +95,7 @@ public:
   typedef void (*QueueInfoCallback)(QueueInfo);
 #endif
 
-#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
+#if !defined(FIREBASE_ESP32_CLIENT) && !defined(FIREBASE_ESP8266_CLIENT) && (defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE))
   typedef void (*FirestoreBatchOperationsCallback)(const char *);
 #endif
 
@@ -957,12 +748,6 @@ public:
   bool isKeepAlive();
 
   Firebase_TCP_Client tcpClient;
-
-#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-  FCMObject fcm;
-#endif
-#endif
 
 private:
   BearSSL_Session bsslSession;

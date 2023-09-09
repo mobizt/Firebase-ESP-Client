@@ -5,8 +5,6 @@
 
 /**
  *
- * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico (RP2040)
- *
  * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library

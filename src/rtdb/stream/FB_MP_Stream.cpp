@@ -4,9 +4,9 @@
 #endif
 
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.6
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.7
  *
- * Created December 19, 2022
+ * Created September 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

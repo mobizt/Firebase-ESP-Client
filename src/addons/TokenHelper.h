@@ -4,15 +4,7 @@
 #include <Arduino.h>
 #include "FirebaseFS.h"
 
-#if defined(FIREBASE_ESP32_CLIENT)
-#include <FirebaseESP32.h>
-#elif defined(FIREBASE_ESP8266_CLIENT)
-#include <FirebaseESP8266.h>
-#endif
-
-#if defined(FIREBASE_ESP_CLIENT)
-#include <Firebase_ESP_Client.h>
-#endif
+#include <Firebase.h>
 
 // This header file includes the functions that provide the token generation process info.
 

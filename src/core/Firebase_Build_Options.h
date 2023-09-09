@@ -7,7 +7,7 @@
 #define FB_DEFAULT_DEBUG_PORT Serial
 #endif
 
-#if defined(FIREBASE_DISABLE_ALL_OPTIONS) || !defined(FIREBASE_ESP_CLIENT)
+#if defined(FIREBASE_DISABLE_ALL_OPTIONS)
 #undef FIREBASE_ENABLE_RTDB
 #undef ENABLE_RTDB
 #undef FIREBASE_ENABLE_ERROR_QUEUE
@@ -39,6 +39,28 @@
 #undef FORMAT_FLASH_IF_MOUNT_FAILED
 
 #endif
+
+
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+
+#if !defined(DISABLE_FIRESTORE)
+#define DISABLE_FIRESTORE
+#endif
+
+#if !defined(DISABLE_FB_STORAGE)
+#define DISABLE_FB_STORAGE
+#endif
+
+#if !defined(DISABLE_GC_STORAGE)
+#define DISABLE_GC_STORAGE
+#endif
+
+#if !defined(DISABLE_FB_FUNCTIONS)
+#define DISABLE_FB_FUNCTIONS
+#endif
+
+#endif
+
 
 #if defined(DISABLE_RTDB)
 #undef FIREBASE_ENABLE_RTDB
@@ -111,5 +133,25 @@
 #undef FB_DEFAULT_DEBUG_PORT
 #undef FIREBASE_DEFAULT_DEBUG_PORT
 #endif
+
+#define FIREBASE_STREAM_CLASS FirebaseStream
+#define FIREBASE_MP_STREAM_CLASS MultiPathStream
+
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+
+#if defined(ESP32)
+#define FIREBASE_CLASS FirebaseESP32
+#elif defined(ES8266) || defined(MB_ARDUINO_PICO)
+#define FIREBASE_CLASS FirebaseESP8266
+#endif
+
+#elif defined(FIREBASE_ESP_CLIENT)
+#define FIREBASE_CLASS Firebase_ESP_Client
+#endif
+
+#if defined(FIREBASE_ENABLE_FB_FUNCTIONS) || defined(ENABLE_FB_FUNCTIONS)
+class FunctionsConfig;
+#endif
+class FirebaseData;
 
 #endif

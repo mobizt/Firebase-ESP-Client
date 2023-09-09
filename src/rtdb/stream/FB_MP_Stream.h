@@ -4,9 +4,9 @@
 #endif
 
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.6
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.7
  *
- * Created December 19, 2022
+ * Created September 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -40,12 +40,6 @@
 #include "./FB_Utils.h"
 #include "./core/FirebaseCore.h"
 #include "FB_Stream.h"
-
-#if defined(FIREBASE_ESP_CLIENT)
-#define FIREBASE_MP_STREAM_CLASS MultiPathStream
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-#define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
-#endif
 
 using namespace mb_string;
 

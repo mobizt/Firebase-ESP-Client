@@ -45,7 +45,7 @@ using namespace mb_string;
 class FirebaseCore
 {
     friend class FIREBASE_CLASS;
-#if defined(FIREBASE_ESP_CLIENT)
+
     friend class FB_CM;
     friend class FB_Storage;
     friend class GG_CloudStorage;
@@ -56,9 +56,7 @@ class FirebaseCore
     friend class AuditLogConfig;
     friend class AuditConfig;
     friend class FunctionsConfig;
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-    friend class FCMObject;
-#endif
+
     friend class FIREBASE_STREAM_CLASS;
     friend class FIREBASE_MP_STREAM_CLASS;
     friend class UtilsClass;

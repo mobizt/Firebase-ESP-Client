@@ -4,9 +4,9 @@
 #endif
 
 /**
- * Google's Firebase Stream class, FB_Stream.cpp version 1.1.7
+ * Google's Firebase Stream class, FB_Stream.cpp version 1.1.8
  *
- * Created December 19, 2022
+ * Created September 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
