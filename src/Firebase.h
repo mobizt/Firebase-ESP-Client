@@ -102,25 +102,25 @@ public:
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FB_RTDB RTDB;
 #endif
+
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   FB_CM FCM;
 #endif
 
-#if !defined(FIREBASE_ESP32_CLIENT) && !defined(FIREBASE_ESP8266_CLIENT)
-
 #if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   FB_Storage Storage;
 #endif
+
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
   FB_Firestore Firestore;
 #endif
+
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
   FB_Functions Functions;
 #endif
+
 #if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
   GG_CloudStorage GCStorage;
-#endif
-
 #endif
 
   FIREBASE_CLASS();
@@ -249,71 +249,6 @@ public:
    * This returns false if ready() returns false (token generation is not ready).
    */
   bool authenticated();
-
-#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-  /** Store Firebase's legacy authentication credentials.
-   *
-   * @param databaseURL Your RTDB URL e.g. <databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
-   * @param databaseSecret Your database secret.
-   * @param caCert Root CA certificate base64 string (PEM file).
-   * @param caCertFile Root CA certificate DER file (binary).
-   * @param StorageType Type of storage, StorageType::SD and StorageType::FLASH.
-   * @param GMTOffset Optional for ESP8266. GMT time offset in hour is required to
-   * set the time for BearSSL certificate verification.
-   *
-   * @note This parameter is only required for ESP8266 Core SDK v2.5.x or later.
-   * The Root CA certificate DER file is only supported in Core SDK v2.5.x
-   *
-   * The file systems for flash and sd memory can be changed in FirebaseFS.h.
-   */
-  template <typename T1 = const char *, typename T2 = const char *>
-  void begin(T1 databaseURL, T2 databaseSecret)
-  {
-    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
-    begin(config, auth);
-  }
-
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  void begin(T1 databaseURL, T2 databaseSecret, T3 caCert, float GMTOffset = 0.0)
-  {
-    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
-    if (caCert)
-    {
-      config->cert.data = caCert;
-      config->time_zone = GMTOffset;
-    }
-    begin(config, auth);
-  }
-
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  void begin(T1 databaseURL, T2 databaseSecret, T3 caCertFile, uint8_t storageType, float GMTOffset = 0.0)
-  {
-    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
-
-    MB_String _caCertFile = caCertFile;
-
-    if (_caCertFile.length() > 0)
-    {
-      config->time_zone = GMTOffset;
-      config->cert.file = _caCertFile;
-      config->cert.file_storage = storageType;
-    }
-    begin(config, auth);
-  }
-
-  /** Stop Firebase and release all resources.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   */
-  void end(FirebaseData &fbdo)
-  {
-#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
-    RTDB.endStream(&fbdo);
-    RTDB.removeStreamCallback(&fbdo);
-#endif
-    fbdo.clear();
-  }
-#endif
 
   /** Sign up for a new user.
    *
