@@ -84,8 +84,6 @@ class SdSpiConfig;
 #include "functions/FunctionsConfig.h"
 #endif
 
-
-
 #ifndef FPSTR
 #define FPSTR MBSTRING_FLASH_MCR
 #endif
@@ -2479,6 +2477,12 @@ public:
 #endif // ERROR QUEUE
 
 #endif // RTDB
+
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
+  bool sendMessage(FirebaseData &fbdo, uint16_t index){ return false; }
+  bool broadcastMessage(FirebaseData &fbdo) { return false; }
+  bool sendTopic(FirebaseData &fbdo) { return false; }
+#endif // FCM
 
 #endif // ESP8266, ESP32
 

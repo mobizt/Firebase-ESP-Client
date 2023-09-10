@@ -58,6 +58,12 @@
 
 using namespace mb_string;
 
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
+#include "./message/LFCM.h"
+#endif
+#endif
+
 class FirebaseData
 {
 
@@ -748,6 +754,12 @@ public:
   bool isKeepAlive();
 
   Firebase_TCP_Client tcpClient;
+
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
+  FCMObject fcm;
+#endif
+#endif
 
 private:
   BearSSL_Session bsslSession;
