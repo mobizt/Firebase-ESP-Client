@@ -76,7 +76,6 @@
 #endif
 #endif
 
-
 #define FIREBASE_PORT 443
 
 #define MAX_REDIRECT 5
@@ -301,34 +300,61 @@ enum firebase_rtdb_task_type
 enum firebase_rtdb_value_type
 {
     firebase_rtdb_value_type_any = 0,
-    firebase_rtdb_value_type_std_string,
-    firebase_rtdb_value_type_arduino_string,
-    firebase_rtdb_value_type_mb_string,
-    firebase_rtdb_value_type_char_array,
-    firebase_rtdb_value_type_int,
-    firebase_rtdb_value_type_float,
-    firebase_rtdb_value_type_double,
-    firebase_rtdb_value_type_json,
-    firebase_rtdb_value_type_array,
-    firebase_rtdb_value_type_blob
+    firebase_rtdb_value_type_std_string = 1,
+    firebase_rtdb_value_type_arduino_string = 2,
+    firebase_rtdb_value_type_mb_string = 3,
+    firebase_rtdb_value_type_char_array = 4,
+    firebase_rtdb_value_type_int = 5,
+    firebase_rtdb_value_type_float = 6,
+    firebase_rtdb_value_type_double = 7,
+    firebase_rtdb_value_type_json = 8,
+    firebase_rtdb_value_type_array = 9,
+    firebase_rtdb_value_type_blob = 10,
+
+    // old version compat
+    fb_esp_rtdb_value_type_any = 0,
+    fb_esp_rtdb_value_type_std_string = 1,
+    fb_esp_rtdb_value_type_arduino_string = 2,
+    fb_esp_rtdb_value_type_mb_string = 3,
+    fb_esp_rtdb_value_type_char_array = 4,
+    fb_esp_rtdb_value_type_int = 5,
+    fb_esp_rtdb_value_type_float = 6,
+    fb_esp_rtdb_value_type_double = 7,
+    fb_esp_rtdb_value_type_json = 8,
+    fb_esp_rtdb_value_type_array = 9,
+    fb_esp_rtdb_value_type_blob = 10
 };
 
 enum firebase_rtdb_upload_status
 {
     firebase_rtdb_upload_status_error = -1,
     firebase_rtdb_upload_status_unknown = 0,
-    firebase_rtdb_upload_status_init,
-    firebase_rtdb_upload_status_upload,
-    firebase_rtdb_upload_status_complete
+    firebase_rtdb_upload_status_init = 1,
+    firebase_rtdb_upload_status_upload = 2,
+    firebase_rtdb_upload_status_complete = 3,
+
+    // old version compat
+    fb_esp_rtdb_upload_status_error = -1,
+    fb_esp_rtdb_upload_status_unknown = 0,
+    fb_esp_rtdb_upload_status_init = 1,
+    fb_esp_rtdb_upload_status_upload = 2,
+    fb_esp_rtdb_upload_status_complete = 3
 };
 
 enum firebase_rtdb_download_status
 {
     firebase_rtdb_download_status_error = -1,
     firebase_rtdb_download_status_unknown = 0,
-    firebase_rtdb_download_status_init,
-    firebase_rtdb_download_status_download,
-    firebase_rtdb_download_status_complete
+    firebase_rtdb_download_status_init = 2,
+    firebase_rtdb_download_status_download = 3,
+    firebase_rtdb_download_status_complete = 4,
+
+    // old version compat
+    fb_esp_rtdb_download_status_error = -1,
+    fb_esp_rtdb_download_status_unknown = 0,
+    fb_esp_rtdb_download_status_init = 2,
+    fb_esp_rtdb_download_status_download = 3,
+    fb_esp_rtdb_download_status_complete = 4
 };
 
 #endif
@@ -338,10 +364,18 @@ enum firebase_cfs_upload_status
 {
     firebase_cfs_upload_status_error = -1,
     firebase_cfs_upload_status_unknown = 0,
-    firebase_cfs_upload_status_init,
-    firebase_cfs_upload_status_upload,
-    firebase_cfs_upload_status_complete,
-    firebase_cfs_upload_status_process_response
+    firebase_cfs_upload_status_init = 1,
+    firebase_cfs_upload_status_upload = 2,
+    firebase_cfs_upload_status_complete = 3,
+    firebase_cfs_upload_status_process_response = 4,
+
+    // old version compat
+    fb_esp_cfs_upload_status_error = -1,
+    fb_esp_cfs_upload_status_unknown = 0,
+    fb_esp_cfs_upload_status_init = 1,
+    fb_esp_cfs_upload_status_upload = 2,
+    fb_esp_cfs_upload_status_complete = 3,
+    fb_esp_cfs_upload_status_process_response = 4
 };
 #endif
 
@@ -386,18 +420,32 @@ enum firebase_gcs_upload_status
 {
     firebase_gcs_upload_status_error = -1,
     firebase_gcs_upload_status_unknown = 0,
-    firebase_gcs_upload_status_init,
-    firebase_gcs_upload_status_upload,
-    firebase_gcs_upload_status_complete
+    firebase_gcs_upload_status_init = 1,
+    firebase_gcs_upload_status_upload = 2,
+    firebase_gcs_upload_status_complete = 3,
+
+    // old version compat
+    fb_esp_gcs_upload_status_error = -1,
+    fb_esp_gcs_upload_status_unknown = 0,
+    fb_esp_gcs_upload_status_init = 1,
+    fb_esp_gcs_upload_status_upload = 2,
+    fb_esp_gcs_upload_status_complete = 3
 };
 
 enum firebase_gcs_download_status
 {
     firebase_gcs_download_status_error = -1,
     firebase_gcs_download_status_unknown = 0,
-    firebase_gcs_download_status_init,
-    firebase_gcs_download_status_download,
-    firebase_gcs_download_status_complete
+    firebase_gcs_download_status_init = 1,
+    firebase_gcs_download_status_download = 2,
+    firebase_gcs_download_status_complete = 3,
+
+    // old version compat
+    fb_esp_gcs_download_status_error = -1,
+    fb_esp_gcs_download_status_unknown = 0,
+    fb_esp_gcs_download_status_init = 1,
+    fb_esp_gcs_download_status_download = 2,
+    fb_esp_gcs_download_status_complete = 3
 };
 
 #endif
@@ -419,18 +467,32 @@ enum firebase_fcs_upload_status
 {
     firebase_fcs_upload_status_error = -1,
     firebase_fcs_upload_status_unknown = 0,
-    firebase_fcs_upload_status_init,
-    firebase_fcs_upload_status_upload,
-    firebase_fcs_upload_status_complete
+    firebase_fcs_upload_status_init = 1,
+    firebase_fcs_upload_status_upload = 2,
+    firebase_fcs_upload_status_complete = 3,
+
+    // old version compat
+    fb_esp_fcs_upload_status_error = -1,
+    fb_esp_fcs_upload_status_unknown = 0,
+    fb_esp_fcs_upload_status_init = 1,
+    fb_esp_fcs_upload_status_upload = 2,
+    fb_esp_fcs_upload_status_complete = 3
 };
 
 enum firebase_fcs_download_status
 {
     firebase_fcs_download_status_error = -1,
     firebase_fcs_download_status_unknown = 0,
-    firebase_fcs_download_status_init,
-    firebase_fcs_download_status_download,
-    firebase_fcs_download_status_complete
+    firebase_fcs_download_status_init = 1,
+    firebase_fcs_download_status_download = 2,
+    firebase_fcs_download_status_complete = 3,
+
+    // old version compat
+    fb_esp_fcs_download_status_error = -1,
+    fb_esp_fcs_download_status_unknown = 0,
+    fb_esp_fcs_download_status_init = 1,
+    fb_esp_fcs_download_status_download = 2,
+    fb_esp_fcs_download_status_complete = 3
 };
 #endif
 
@@ -550,19 +612,27 @@ enum firebase_functions_status
 
 enum firebase_functions_operation_status
 {
-    firebase_functions_operation_status_unknown,
-    firebase_functions_operation_status_generate_upload_url,
-    firebase_functions_operation_status_upload_source_file_in_progress,
-    firebase_functions_operation_status_deploy_in_progress,
-    firebase_functions_operation_status_set_iam_policy_in_progress,
-    firebase_functions_operation_status_delete_in_progress,
-    firebase_functions_operation_status_finished,
-    firebase_functions_operation_status_error
+    firebase_functions_operation_status_unknown = -1,
+    firebase_functions_operation_status_generate_upload_url = 0,
+    firebase_functions_operation_status_upload_source_file_in_progress = 1,
+    firebase_functions_operation_status_deploy_in_progress = 2,
+    firebase_functions_operation_status_set_iam_policy_in_progress = 3,
+    firebase_functions_operation_status_delete_in_progress = 4,
+    firebase_functions_operation_status_finished = 5,
+    firebase_functions_operation_status_error = 6,
+
+    // old version compat
+    fb_esp_functions_operation_status_unknown = -1,
+    fb_esp_functions_operation_status_generate_upload_url = 0,
+    fb_esp_functions_operation_status_upload_source_file_in_progress = 1,
+    fb_esp_functions_operation_status_deploy_in_progress = 2,
+    fb_esp_functions_operation_status_set_iam_policy_in_progress = 3,
+    fb_esp_functions_operation_status_delete_in_progress = 4,
+    fb_esp_functions_operation_status_finished = 5,
+    fb_esp_functions_operation_status_error = 6
 };
 
 #endif
-
-
 
 struct firebase_wifi_credential_t
 {
@@ -1215,8 +1285,6 @@ struct firebase_fcs_file_list_t
     MB_VECTOR<struct firebase_fcs_file_list_item_t> items;
 };
 #endif
-
-
 
 typedef struct token_info_t
 {
@@ -1882,8 +1950,6 @@ struct firebase_firestore_document_write_t
 
 #endif
 
-
-
 struct firebase_session_info_t
 {
     int long_running_task = 0;
@@ -1931,7 +1997,6 @@ struct firebase_session_info_t
     struct firebase_functions_info_t cfn;
 #endif
 
-
     uint16_t bssl_rx_size = 2048;
     uint16_t bssl_tx_size = 512;
 };
@@ -1950,8 +2015,6 @@ typedef struct firebase_fcs_file_list_t FileList;
 typedef struct firebase_gcs_meta_info_t FileMetaInfo;
 typedef struct firebase_fcs_file_list_item_t FileItem;
 #endif
-
-
 
 typedef struct firebase_auth_signin_provider_t FirebaseAuth;
 typedef struct firebase_cfg_t FirebaseConfig;
@@ -2231,7 +2294,6 @@ static const char firebase_fcm_pgm_str_63[] PROGMEM = "light_on_duration";
 static const char firebase_fcm_pgm_str_64[] PROGMEM = "light_off_duration";
 static const char firebase_fcm_pgm_str_65[] PROGMEM = "headers";
 static const char firebase_fcm_pgm_str_66[] PROGMEM = "link";
-
 
 // Commonly used for legacy FCM
 static const char firebase_fcm_pgm_str_67[] PROGMEM = "notification";
