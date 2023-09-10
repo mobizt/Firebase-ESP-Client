@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 2.0.18
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 2.1.0
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
- * Created July 29, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -61,11 +56,7 @@ using namespace mb_string;
 class FB_RTDB
 {
 
-#if defined(FIREBASE_ESP8266_CLIENT) || defined(FIREBASE_ESP32_CLIENT)
   friend class FIREBASE_CLASS;
-#elif defined(FIREBASE_ESP_CLIENT)
-  friend class Firebase_ESP_Client;
-#endif
 
 #if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 #if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
@@ -83,16 +74,6 @@ public:
    * @param fbdo The pointer to Firebase Data Object.
    */
   void end(FirebaseData *fbdo);
-
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-  /** Enable multiple HTTP requests at a time (for ESP32 only).
-   *
-   * @param enable - The boolean value to enable/disable.
-   *
-   * @note The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
-   */
-  void allowMultipleRequests(bool enable);
-#endif
 
   /** Set the timeout of Firebase.get functions.
    *

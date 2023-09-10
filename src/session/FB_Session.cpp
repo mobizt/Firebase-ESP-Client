@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.3.10
+ * Google's Firebase Data class, FB_Session.cpp version 1.4.0
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
- * Created July 29, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -76,28 +71,45 @@ FirebaseData::~FirebaseData()
     }
 }
 
-void FirebaseData::setExternalClient(Client *client)
+void FirebaseData::setGenericClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
+                                    FB_NetworkStatusRequestCallback networkStatusCB)
 {
-    _client = client;
+    if (client)
+    {
+        _client = client;
+        Core.setTCPClient(&tcpClient);
+    }
+
     if (_networkConnectionCB && _networkStatusCB)
         tcpClient.setClient(_client, _networkConnectionCB, _networkStatusCB);
-    Core.setTCPClient(&tcpClient);
 }
 
-void FirebaseData::setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB,
-                                              FB_NetworkConnectionRequestCallback networkConnectionCB,
-                                              FB_NetworkStatusRequestCallback networkStatusCB)
+void FirebaseData::setGSMClient(Client *client, void *modem, const char *pin, const char *apn, const char *user, const char *password)
 {
-    setExternalClientCallbacks(networkConnectionCB, networkStatusCB);
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+
+    Core._cli_type = firebase_client_type_external_gsm_client;
+    Core._cli = client;
+    Core._modem = modem;
+    Core._pin = pin;
+    Core._apn = apn;
+    Core._user = user;
+    Core._password = password;
+
+    tcpClient.setGSMClient(client, modem, pin, apn, user, password);
+#endif
 }
 
-void FirebaseData::setExternalClientCallbacks(FB_NetworkConnectionRequestCallback networkConnectionCB,
-                                              FB_NetworkStatusRequestCallback networkStatusCB)
+void FirebaseData::setEthernetClient(Client *client, uint8_t macAddress[6], int csPin, int resetPin, Firebase_StaticIP *staticIP)
 {
-    _networkConnectionCB = networkConnectionCB;
-    _networkStatusCB = networkStatusCB;
-    if (_client)
-        tcpClient.setClient(_client, _networkConnectionCB, _networkStatusCB);
+    Core._cli_type = firebase_client_type_external_ethernet_client;
+    Core._cli = client;
+    Core._ethernet_mac = macAddress;
+    Core._ethernet_cs_pin = csPin;
+    Core._ethernet_reset_pin = resetPin;
+    Core._static_ip = staticIP;
+
+    tcpClient.setEthernetClient(client, macAddress, csPin, resetPin, staticIP);
 }
 
 void FirebaseData::setNetworkStatus(bool status)
@@ -106,49 +118,66 @@ void FirebaseData::setNetworkStatus(bool status)
     tcpClient.setNetworkStatus(status);
 }
 
+int FirebaseData::tcpSend(const char *s)
+{
+    int r = tcpClient.send(s);
+    setSession(false, r > 0);
+    return r;
+}
+
+int FirebaseData::tcpWrite(const uint8_t *data, size_t size)
+{
+    int r = tcpClient.write(data, size);
+    setSession(false, r > 0);
+    return r;
+}
+
 void FirebaseData::addSession(firebase_con_mode mode)
 {
-    if (!Core.config)
-        return;
+    setSession(true, false);
 
-    removeSession();
-
-    if (sessionPtr == 0)
+    if (sessionPtr.ptr == 0)
     {
-        sessionPtr = toAddr(*this);
+        sessionPtr.ptr = toAddr(*this);
         Core.internal.sessions.push_back(sessionPtr);
         session.con_mode = mode;
     }
 }
 
-void FirebaseData::removeSession()
+void FirebaseData::setSession(bool remove, bool status)
 {
-    if (!Core.config)
-        return;
-
-    if (sessionPtr > 0)
+    if (sessionPtr.ptr > 0)
     {
         for (size_t i = 0; i < Core.internal.sessions.size(); i++)
         {
-            if (sessionPtr > 0 && Core.internal.sessions[i] == sessionPtr)
+            if (sessionPtr.ptr > 0 && Core.internal.sessions[i].ptr == sessionPtr.ptr)
             {
-                session.con_mode = firebase_con_mode_undefined;
-                Core.internal.sessions.erase(Core.internal.sessions.begin() + i);
-                sessionPtr = 0;
+                if (remove)
+                {
+                    session.con_mode = firebase_con_mode_undefined;
+                    Core.internal.sessions.erase(Core.internal.sessions.begin() + i);
+                    sessionPtr.ptr = 0;
+                }
+                else
+                {
+                    Core.internal.sessions[i].status = status;
+                    sessionPtr.status = status;
+                }
                 break;
             }
         }
     }
 }
+
 #if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
 void FirebaseData::addQueueSession()
 {
     if (!Core.config)
         return;
 
-    if (queueSessionPtr == 0)
+    if (queueSessionPtr.ptr == 0)
     {
-        queueSessionPtr = toAddr(*this);
+        queueSessionPtr.ptr = toAddr(*this);
         Core.internal.queueSessions.push_back(queueSessionPtr);
     }
 }
@@ -158,14 +187,14 @@ void FirebaseData::removeQueueSession()
     if (!Core.config)
         return;
 
-    if (queueSessionPtr > 0)
+    if (queueSessionPtr.ptr > 0)
     {
         for (size_t i = 0; i < Core.internal.queueSessions.size(); i++)
         {
-            if (queueSessionPtr > 0 && Core.internal.queueSessions[i] == queueSessionPtr)
+            if (queueSessionPtr.ptr > 0 && Core.internal.queueSessions[i].ptr == queueSessionPtr.ptr)
             {
                 Core.internal.queueSessions.erase(Core.internal.queueSessions.begin() + i);
-                queueSessionPtr = 0;
+                queueSessionPtr.ptr = 0;
                 break;
             }
         }
@@ -758,6 +787,7 @@ void FirebaseData::sendStreamToCB(int code, bool report)
 
 void FirebaseData::closeSession()
 {
+    setSession(false, false);
     Core.closeSession(&tcpClient, &session);
 }
 
@@ -783,7 +813,7 @@ void FirebaseData::setSecure()
     if (!Core.config)
         return;
 
-    if (sessionPtr == 0)
+    if (sessionPtr.ptr == 0)
         addSession(firebase_con_mode_undefined);
 
     setTimeout();
@@ -799,6 +829,7 @@ void FirebaseData::setSecure()
             Core.internal.fb_clock_rdy = true;
         tcpClient.clockReady = true;
     }
+
     tcpClient.setBufferSizes(session.bssl_rx_size, session.bssl_tx_size);
 
     if (tcpClient.certType == firebase_cert_type_undefined || session.cert_updated)
@@ -1536,7 +1567,7 @@ const char *FirebaseData::getTaskName(size_t taskStackSize, bool isStream)
 {
     MB_String taskName = firebase_rtdb_ss_pgm_str_14; // "task"
     taskName += isStream ? firebase_rtdb_ss_pgm_str_15 /* "_stream" */ : firebase_rtdb_ss_pgm_str_16 /* "_error_queue" */;
-    taskName += sessionPtr;
+    taskName += sessionPtr.ptr;
     if (isStream)
     {
         Core.internal.stream_task_stack_size = taskStackSize > STREAM_TASK_STACK_SIZE
@@ -1701,377 +1732,5 @@ void FirebaseData::clear()
 #endif
 #endif
 }
-
-#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-
-#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-FCMObject::FCMObject()
-{
-}
-FCMObject::~FCMObject()
-{
-    clear();
-}
-
-void FCMObject::mBegin(MB_StringPtr serverKey, SPI_ETH_Module *spi_ethernet_module)
-{
-    _spi_ethernet_module = spi_ethernet_module;
-    FirebaseJson json(raw);
-    json.set(pgm2Str(esp_fb_legacy_fcm_pgm_str_1 /* "server_key" */), addrTo<const char *>(serverKey.address()));
-    raw.clear();
-    json.toString(raw);
-}
-
-void FCMObject::mAddDeviceToken(MB_StringPtr deviceToken)
-{
-    FirebaseJsonArray arr(idTokens);
-    arr.add(MB_String(deviceToken).c_str());
-    arr.toString(idTokens);
-}
-
-void FCMObject::removeDeviceToken(uint16_t index)
-{
-    FirebaseJsonArray arr(idTokens);
-    arr.remove(index);
-    arr.toString(idTokens);
-}
-
-void FCMObject::clearDeviceToken()
-{
-    idTokens.clear();
-}
-
-void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body)
-{
-    MB_String s = Core.ut.makeFCMMsgPath();
-    Core.ut.addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_3 /* "title" */);
-    FirebaseJson json(raw);
-    json.set(s, stringPtr2Str(title));
-
-    s = Core.ut.makeFCMMsgPath();
-    Core.ut.addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_4 /* "body" */);
-    json.set(s, stringPtr2Str(body));
-    json.toString(raw);
-}
-
-void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon)
-{
-    setNotifyMessage(title, body);
-    MB_String s = Core.ut.makeFCMMsgPath();
-    Core.ut.addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_5 /* "icon" */);
-    FirebaseJson json(raw);
-    json.set(s, stringPtr2Str(icon));
-    json.toString(raw);
-}
-
-void FCMObject::mSetNotifyMessage(MB_StringPtr title, MB_StringPtr body, MB_StringPtr icon, MB_StringPtr click_action)
-{
-    setNotifyMessage(title, body, icon);
-    MB_String s = Core.ut.makeFCMMsgPath();
-    Core.ut.addFCMNotificationPath(s, esp_fb_legacy_fcm_pgm_str_6 /* "click_action" */);
-    FirebaseJson json(raw);
-    json.set(s, stringPtr2Str(click_action));
-    json.toString(raw);
-}
-
-void FCMObject::mAddCustomNotifyMessage(MB_StringPtr key, MB_StringPtr value)
-{
-    MB_String s = Core.ut.makeFCMMsgPath();
-    Core.ut.addFCMNotificationPath(s);
-    s += key;
-    FirebaseJson json(raw);
-    json.set(s, stringPtr2Str(value));
-    json.toString(raw);
-}
-
-void FCMObject::clearNotifyMessage()
-{
-    MB_String s = Core.ut.makeFCMMsgPath();
-    Core.ut.addFCMNotificationPath(s);
-    FirebaseJson json(raw);
-    json.remove(s);
-    json.toString(raw);
-}
-
-void FCMObject::mSetDataMessage(MB_StringPtr jsonString)
-{
-    FirebaseJson js(stringPtr2Str(jsonString));
-    FirebaseJson json(raw);
-    json.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_7 /*  "data" */), js);
-    json.toString(raw);
-}
-
-void FCMObject::setDataMessage(FirebaseJson &json)
-{
-    FirebaseJson js(raw);
-    js.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_7 /*  "data" */), json);
-    js.toString(raw);
-}
-
-void FCMObject::clearDataMessage()
-{
-    FirebaseJson json(raw);
-    json.remove(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_7 /*  "data" */));
-    json.toString(raw);
-}
-
-void FCMObject::mSetPriority(MB_StringPtr priority)
-{
-    FirebaseJson json(raw);
-    json.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_8 /* "priority" */), stringPtr2Str(priority));
-    json.toString(raw);
-}
-
-void FCMObject::mSetCollapseKey(MB_StringPtr key)
-{
-    FirebaseJson json(raw);
-    json.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_9 /* "collapse_key" */), stringPtr2Str(key));
-    json.toString(raw);
-}
-
-void FCMObject::setTimeToLive(uint32_t seconds)
-{
-    _ttl = (seconds <= 2419200) ? seconds : -1;
-    FirebaseJson json(raw);
-    json.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_10 /* "time_to_live" */), _ttl);
-    json.toString(raw);
-}
-
-void FCMObject::mSetTopic(MB_StringPtr topic)
-{
-    MB_String s, v;
-    s += esp_fb_legacy_fcm_pgm_str_2;  // "topic"
-    v += esp_fb_legacy_fcm_pgm_str_11; // "/topics/"
-    v += topic;
-    FirebaseJson json(raw);
-    json.set(s, v);
-    json.toString(raw);
-}
-const char *FCMObject::getSendResult()
-{
-    return result.c_str();
-}
-
-void FCMObject::fcm_begin(FirebaseData &fbdo)
-{
-    fbdo.tcpClient.setSPIEthernet(_spi_ethernet_module);
-
-    if (!fbdo.tcpClient.networkReady())
-        return;
-
-    MB_String host;
-    Core.hh.addGAPIsHost(host, esp_fb_legacy_fcm_pgm_str_12 /* "fcm" */);
-    rescon(fbdo, host.c_str());
-    fbdo.tcpClient.begin(host.c_str(), _port, &fbdo.session.response.code);
-    if (Core.config)
-    {
-        fbdo.setSecure();
-        return;
-    }
-    // Without config, no sever certificate is available
-    fbdo.tcpClient.setInsecure();
-}
-
-bool FCMObject::fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize)
-{
-    MB_String header;
-    FirebaseJsonData server_key;
-    FirebaseJson json(raw);
-    json.get(server_key, pgm2Str(esp_fb_legacy_fcm_pgm_str_1 /* "server_key" */));
-    Core.hh.addRequestHeaderFirst(header, http_post);
-    header += esp_fb_legacy_fcm_pgm_str_13; // "/fcm/send"
-    Core.hh.addRequestHeaderLast(header);
-    Core.hh.addGAPIsHostHeader(header, esp_fb_legacy_fcm_pgm_str_12 /* "fcm" */);
-    Core.hh.addAuthHeaderFirst(header, token_type_undefined);
-
-    fbdo.tcpClient.send(header.c_str());
-    header.clear();
-
-    if (fbdo.session.response.code < 0)
-        return false;
-
-    fbdo.tcpClient.send(server_key.to<const char *>());
-
-    if (fbdo.session.response.code < 0)
-        return false;
-
-    Core.hh.addNewLine(header);
-    Core.hh.addUAHeader(header);
-    Core.hh.addContentTypeHeader(header, firebase_pgm_str_62 /* "application/json" */);
-    Core.hh.addContentLengthHeader(header, payloadSize);
-    bool keepAlive = false;
-#if defined(USE_CONNECTION_KEEP_ALIVE_MODE) || || defined(FIREBASE_USE_CONNECTION_KEEP_ALIVE_MODE)
-    keepAlive = true;
-#endif
-    Core.hh.addConnectionHeader(header, keepAlive);
-    Core.hh.addNewLine(header);
-
-    fbdo.tcpClient.send(header.c_str());
-    header.clear();
-    if (fbdo.session.response.code < 0)
-        return false;
-
-    return true;
-}
-
-void FCMObject::fcm_preparePayload(FirebaseData &fbdo, firebase_fcm_msg_type messageType)
-{
-
-    FirebaseJson json(raw);
-    if (messageType == firebase_fcm_msg_type::msg_single)
-    {
-        FirebaseJsonArray arr(idTokens);
-        FirebaseJsonData data;
-        arr.get(data, _index);
-        json.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_14 /* "to" */), data.to<const char *>());
-        json.toString(raw);
-    }
-    else if (messageType == firebase_fcm_msg_type::msg_multicast)
-    {
-        FirebaseJsonArray arr(idTokens);
-        Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_15 /* "registration_ids" */);
-        json.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_15 /* "registration_ids" */), arr);
-        json.toString(raw);
-    }
-    else if (messageType == firebase_fcm_msg_type::msg_topic)
-    {
-        FirebaseJsonData topic;
-        json.get(topic, pgm2Str(esp_fb_legacy_fcm_pgm_str_2 /* "topic" */));
-        json.set(Core.ut.makeFCMMsgPath(esp_fb_legacy_fcm_pgm_str_14 /* "to" */), topic.to<const char *>());
-        json.toString(raw);
-    }
-}
-
-bool FCMObject::waitResponse(FirebaseData &fbdo)
-{
-    return handleResponse(&fbdo);
-}
-
-bool FCMObject::handleResponse(FirebaseData *fbdo)
-{
-
-#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
-    if (fbdo->session.rtdb.pause)
-        return true;
-#endif
-    if (!fbdo->reconnect())
-        return false;
-
-    bool isOTA = false;
-    MB_String payload;
-    struct server_response_data_t response;
-    struct firebase_tcp_response_handler_t tcpHandler;
-
-    Core.hh.initTCPSession(fbdo->session);
-    Core.hh.intTCPHandler(fbdo->tcpClient.client, tcpHandler, 2048, fbdo->session.resp_size, &payload, isOTA);
-
-    if (!fbdo->waitResponse(tcpHandler))
-        return false;
-
-    if (!fbdo->tcpClient.connected())
-        fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
-
-    while (tcpHandler.available() > 0 /* data available to read payload */ ||
-           tcpHandler.payloadRead < response.contentLen /* incomplete content read  */)
-    {
-
-        if (!fbdo->readResponse(nullptr, tcpHandler, response))
-            break;
-
-        if (tcpHandler.pChunkIdx > 0)
-        {
-            MB_String pChunk;
-            fbdo->readPayload(&pChunk, tcpHandler, response);
-            if (tcpHandler.bufferAvailable > 0 && pChunk.length() > 0)
-            {
-                Core.ut.FBUtils::idle();
-                payload += pChunk;
-            }
-        }
-    }
-
-    // To make sure all chunks read and
-    // ready to send next request
-    if (response.isChunkedEnc)
-        fbdo->tcpClient.flush();
-
-    result = payload;
-    // parse payload for error
-    fbdo->getError(payload, tcpHandler, response, true);
-
-    return tcpHandler.error.code == 0;
-}
-
-bool FCMObject::fcm_send(FirebaseData &fbdo, firebase_fcm_msg_type messageType)
-{
-    if (fbdo.tcpClient.reserved)
-        return false;
-
-    fcm_preparePayload(fbdo, messageType);
-
-    FirebaseJson json(raw);
-    FirebaseJsonData msg;
-    json.get(msg, pgm2Str(esp_fb_legacy_fcm_pgm_str_16 /*  "msg" */));
-    json.toString(raw);
-
-    fcm_sendHeader(fbdo, strlen(msg.to<const char *>()));
-
-    if (fbdo.session.response.code < 0)
-    {
-        fbdo.closeSession();
-        return false;
-    }
-
-    fbdo.tcpClient.send(msg.to<const char *>());
-
-    json.setJsonData(raw);
-    json.remove(pgm2Str(esp_fb_legacy_fcm_pgm_str_16 /*  "msg" */));
-    json.toString(raw);
-
-    if (fbdo.session.response.code < 0)
-    {
-        fbdo.closeSession();
-        if (Core.config)
-            Core.internal.fb_processing = false;
-        return false;
-    }
-
-    bool ret = waitResponse(fbdo);
-
-    if (!ret)
-        fbdo.closeSession();
-
-    if (Core.config)
-        Core.internal.fb_processing = false;
-
-    return ret;
-}
-
-void FCMObject::rescon(FirebaseData &fbdo, const char *host)
-{
-    fbdo._responseCallback = NULL;
-
-    if (fbdo.session.cert_updated || millis() - fbdo.session.last_conn_ms > fbdo.session.conn_timeout ||
-        fbdo.session.con_mode != firebase_con_mode_fcm ||
-        strcmp(host, fbdo.session.host.c_str()) != 0)
-    {
-        fbdo.session.last_conn_ms = millis();
-        fbdo.closeSession();
-        fbdo.setSecure();
-    }
-    fbdo.session.host = host;
-    fbdo.session.con_mode = firebase_con_mode_fcm;
-}
-
-void FCMObject::clear()
-{
-    raw.clear();
-    result.clear();
-    _ttl = -1;
-    _index = 0;
-    clearDeviceToken();
-}
-#endif
-#endif
 
 #endif

@@ -17,6 +17,12 @@
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
 #endif
 
 #include <Firebase_ESP_Client.h>
@@ -105,6 +111,12 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
   // Or use legacy authenticate method
   // config.database_url = DATABASE_URL;
   // config.signer.tokens.legacy_token = "<database secret>";
@@ -112,8 +124,6 @@ void setup()
   // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
-
-  Firebase.reconnectWiFi(true);
 }
 
 void loop()

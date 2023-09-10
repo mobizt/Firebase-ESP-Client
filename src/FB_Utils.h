@@ -1,13 +1,11 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
  *
- * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico (RP2040)
- *
- * Created July 20, 2023
+ * Created September 5, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -267,7 +265,7 @@ public:
 
         url += path;
     }
-#if defined(FIREBASE_ESP_CLIENT)
+
     /* Append the string with google storage URL */
     void addGStorageURL(MB_String &uri, const MB_String &bucketID, const MB_String &storagePath)
     {
@@ -306,7 +304,6 @@ public:
     {
         uri += firebase_pgm_str_24; // "/v1beta1/projects/"
     }
-#endif
 
     void host2Url(MB_String &url, MB_String &host)
     {
@@ -991,7 +988,7 @@ public:
             session.cfn.payload.clear();
 #endif
 
-#if (defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)) && defined(FIREBASE_ESP_CLIENT)
+#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
         if (session.con_mode == firebase_con_mode_fcm)
             session.fcm.payload.clear();
 #endif
@@ -1836,7 +1833,7 @@ public:
 
 #endif
 
-#if defined(FIREBASE_ESP_CLIENT) && (defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE))
+#if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
     MB_String makeDocPath(struct firebase_firestore_req_t &req, const MB_String &projectId)
     {
         MB_String str = firebase_func_pgm_str_47; // "projects/"

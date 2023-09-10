@@ -11,14 +11,14 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used ESP8266 and WIZnet W5500 (Ethernet) devices which ESP_SSLClient will be used as the external Client.
+ * This example used ESP8266 and WIZnet W5500 module.
  *
- * Even the example for Ethernet that supports ENC28J60 and WIZnet W55xx is available at RTB/BasicEthernet/ESP8266/ESP8266.ino,
- * this example will show how to use external SSL Client that supports other network interfaces e.g. GSMClient and especially
- * EthernetClient in this example.
+ * For ESP8266 native Ethernet usage without external Ethernet client required, see examples/RTB/BasicEthernet/ESP8266/ESP8266.ino.
  *
- * Don't gorget to define this in FirebaseFS.h
- * #define FB_ENABLE_EXTERNAL_CLIENT
+ * To use external Ethernet client with ESP8266 as in this example, the following macro in src/CustomFirebaseFS.h or build flag
+ * should be assigned to disable the native internet inclusion that conflicts with Ethernet.h
+ *
+ * FIREBASE_DISABLE_NATIVE_ETHERNET
  */
 
 #include <Firebase_ESP_Client.h>
@@ -29,13 +29,7 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-// https://github.com/mobizt/ESP_SSLClient
-#include <ESP_SSLClient.h>
-
 #include <Ethernet.h>
-
-// For NTP time client
-#include "MB_NTP.h"
 
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
@@ -50,7 +44,7 @@
 #define USER_PASSWORD "USER_PASSWORD"
 
 /* 4. Defined the Ethernet module connection */
-#define WIZNET_RESET_PIN 5 // Connect W5500 Reset pin to GPIO 5 (D1) of ESP8266
+#define WIZNET_RESET_PIN 5 // Connect W5500 Reset pin to GPIO 5 (D1) of ESP8266 (-1 for no reset pin assigned)
 #define WIZNET_CS_PIN 4    // Connect W5500 CS pin to GPIO 4 (D2) of ESP8266
 #define WIZNET_MISO_PIN 12 // Connect W5500 MISO pin to GPIO 12 (D6) of ESP8266
 #define WIZNET_MOSI_PIN 13 // Connect W5500 MOSI pin to GPIO 13 (D7) of ESP8266
@@ -59,8 +53,14 @@
 /* 5. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
-/* 6. Define IP (Optional) */
-IPAddress Eth_IP(192, 168, 1, 104);
+/* 6. Define the static IP (Optional)
+IPAddress localIP(192, 168, 1, 104);
+IPAddress subnet(255, 255, 0, 0);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress dnsServer(8, 8, 8, 8);
+bool optional = false; // Use this static IP only no DHCP
+Firebase_StaticIP staIP(localIP, subnet, gateway, dnsServer, optional);
+*/
 
 // Define Firebase Data object
 FirebaseData fbdo;
@@ -72,64 +72,7 @@ unsigned long sendDataPrevMillis = 0;
 
 int count = 0;
 
-// Define the basic client
-// The network interface devices that can be used to handle SSL data should
-// have large memory buffer up to 1k - 2k or more, otherwise the SSL/TLS handshake
-// will fail.
-EthernetClient basic_client;
-
-// This is the wrapper client that utilized the basic client for io and
-// provides the mean for the data encryption and decryption before sending to or after read from the io.
-// The most probable failures are related to the basic client itself that may not provide the buffer
-// that large enough for SSL data.
-// The SSL client can do nothing for this case, you should increase the basic client buffer memory.
-ESP_SSLClient ssl_client;
-
-void ResetEthernet()
-{
-    Serial.println("Resetting WIZnet W5500 Ethernet Board...  ");
-    pinMode(WIZNET_RESET_PIN, OUTPUT);
-    digitalWrite(WIZNET_RESET_PIN, HIGH);
-    delay(200);
-    digitalWrite(WIZNET_RESET_PIN, LOW);
-    delay(50);
-    digitalWrite(WIZNET_RESET_PIN, HIGH);
-    delay(200);
-}
-
-void networkConnection()
-{
-    Ethernet.init(WIZNET_CS_PIN);
-
-    ResetEthernet();
-
-    Serial.println("Starting Ethernet connection...");
-    Ethernet.begin(Eth_MAC);
-
-    unsigned long to = millis();
-
-    while (Ethernet.linkStatus() == LinkOFF || millis() - to < 2000)
-    {
-        delay(100);
-    }
-
-    if (Ethernet.linkStatus() == LinkON)
-    {
-        Serial.print("Connected with IP ");
-        Serial.println(Ethernet.localIP());
-    }
-    else
-    {
-        Serial.println("Can't connect");
-    }
-}
-
-// Define the callback function to handle server status acknowledgement
-void networkStatusRequestCallback()
-{
-    // Set the network status
-    fbdo.setNetworkStatus(Ethernet.linkStatus() == LinkON);
-}
+EthernetClient eth;
 
 // Define the callback function to handle server connection
 
@@ -138,15 +81,7 @@ void setup()
 
     Serial.begin(115200);
 
-    networkConnection();
-
     Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-
-    /* Assign the basic Client (Ethernet) pointer to the basic Client */
-    ssl_client.setClient(&basic_client);
-
-    /* Similar to WiFiClientSecure */
-    ssl_client.setInsecure();
 
     /* Assign the api key (required) */
     config.api_key = API_KEY;
@@ -161,16 +96,14 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
+    /* Assign the pointer to global defined Ethernet Client object */
+    fbdo.setEthernetClient(&eth, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
 
-    /* Assign the pointer to global defined external SSL Client object */
-    fbdo.setExternalClient(&ssl_client);
-
-    /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
-
-    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+     // Comment or pass false value when WiFi reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
+
+    // required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     Firebase.setDoubleDigits(5);
 

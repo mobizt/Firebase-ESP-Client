@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.24
+ * Google's Cloud Functions class, Functions.cpp version 1.1.25
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
- * Created July 11, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -459,9 +454,6 @@ bool FB_Functions::uploadPGMArchive(FirebaseData *fbdo, const char *uploadUrl, c
 
 bool FB_Functions::sendRequest(FirebaseData *fbdo, struct firebase_functions_req_t *req)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     fbdo->session.http_code = 0;
 
     if (!Core.config)
@@ -656,12 +648,12 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct firebase_fun
 
     fbdo->session.response.code = FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED;
 
-    fbdo->tcpClient.send(header.c_str());
+    fbdo->tcpSend(header.c_str());
     if (fbdo->session.response.code < 0)
         return false;
 
     if (fbdo->session.response.code > 0 && req->payload.length() > 0)
-        fbdo->tcpClient.send(req->payload.c_str());
+        fbdo->tcpSend(req->payload.c_str());
 
     header.clear();
     req->payload.clear();
@@ -685,7 +677,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct firebase_fun
 
                 read = Core.mbfs.read(mbfs_type fbdo->session.cfn.storageType, buf, available);
 
-                if ((int)fbdo->tcpClient.write(buf, read) != read)
+                if ((int)fbdo->tcpWrite(buf, read) != read)
                     break;
 
                 available = Core.mbfs.available(mbfs_type fbdo->session.cfn.storageType);
@@ -709,7 +701,7 @@ bool FB_Functions::functions_sendRequest(FirebaseData *fbdo, struct firebase_fun
                 if (available > bufLen)
                     available = bufLen;
                 memcpy_P(buf, req->pgmArc + pos, available);
-                if ((int)fbdo->tcpClient.write(buf, available) != available)
+                if ((int)fbdo->tcpWrite(buf, available) != available)
                     break;
                 pos += available;
                 len -= available;

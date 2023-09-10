@@ -1,11 +1,10 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
-
 /**
- * Created August 14, 2023
+ * Created September 5, 2023
  */
 #ifndef FIREBASE_NETWORK_H
 #define FIREBASE_NETWORK_H
@@ -17,7 +16,6 @@
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>
 #endif
-
 
 #if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 
@@ -37,7 +35,14 @@
 #endif
 #endif
 
-#if defined __has_include
+#endif
+
+#if !defined(FIREBASE_DISABLE_NATIVE_ETHERNET)
+
+#if defined(ESP32) && __has_include(<ETH.h>)
+#include <ETH.h>
+#define FIREBASE_ETH_IS_AVAILABLE
+#elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
 
 #if __has_include(<LwipIntfDev.h>)
 #include <LwipIntfDev.h>
@@ -62,11 +67,30 @@
 
 #endif
 
+#if defined(INC_ENC28J60_LWIP) && defined(INC_W5100_LWIP) && defined(INC_W5500_LWIP)
+#define FIREBASE_ETH_IS_AVAILABLE
 #endif
 
 #endif
 
+#endif
 
+#if __has_include(<Ethernet.h>)
+#if defined(ESP8266)
+#undef MAX_SOCK_NUM
+
+#if defined(FIREBASE_DISABLE_NATIVE_ETHERNET)
+#include <Ethernet.h>
+#define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
+#endif
+
+#undef MAX_SOCK_NUM
+#elif !defined(ARDUINO_NANO_RP2040_CONNECT)
+#include <Ethernet.h>
+#define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
+#endif
+
+#endif
 
 #if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_RASPBERRY_PI_PICO_W) || \
     defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_PORTENTA_C33) ||                \
@@ -115,19 +139,6 @@
 #define FIREBASE_HAS_WIFIMULTI
 #endif
 
-#endif
-
-#endif
-
-#if !defined(FIREBASE_DISABLE_NATIVE_ETHERNET)
-
-#if defined(ESP32) && __has_include(<ETH.h>)
-#include <ETH.h>
-#define FIREBASE_ETH_IS_AVAILABLE
-#elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
-#if defined(INC_ENC28J60_LWIP) && defined(INC_W5100_LWIP) && defined(INC_W5500_LWIP)
-#define FIREBASE_ETH_IS_AVAILABLE
-#endif
 #endif
 
 #endif

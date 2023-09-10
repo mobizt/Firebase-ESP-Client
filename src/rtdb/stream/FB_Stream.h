@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Stream class, FB_Stream.h version 1.1.7
+ * Google's Firebase Stream class, FB_Stream.h version 1.1.8
  *
- * This library supports Espressif ESP8266 and ESP32
- *
- * Created December 19, 2022
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -43,12 +38,6 @@
 #include <Arduino.h>
 #include "./FB_Utils.h"
 #include "./core/FirebaseCore.h"
-
-#if defined(FIREBASE_ESP_CLIENT)
-#define FIREBASE_STREAM_CLASS FirebaseStream
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-#define FIREBASE_STREAM_CLASS StreamData
-#endif
 
 using namespace mb_string;
 

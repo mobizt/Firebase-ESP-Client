@@ -15,6 +15,12 @@
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
 #endif
 
 #include <Firebase_ESP_Client.h>
@@ -109,10 +115,11 @@ void setup()
   // otherwise the SSL connection will fail.
   //////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(ESP8266)
-  // In ESP8266 required for BearSSL rx/tx buffer for large data handle, increase Rx size as needed.
-  fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 2048 /* Tx buffer size in bytes from 512 - 16384 */);
-#endif
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
   // Limit the size of response payload to be collected in FirebaseData
   fbdo.setResponseSize(2048);
@@ -125,9 +132,6 @@ void setup()
   config.wifi.clearAP();
   config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
 #endif
-
-  // Comment or pass false value when WiFi reconnection will control by your code or third party library
-  Firebase.reconnectWiFi(true);
 
   Firebase.setDoubleDigits(5);
 
@@ -231,10 +235,10 @@ void loop()
     // The function, fbdo.dataType() returns types String e.g. string, boolean,
     // int, float, double, json, array, blob, file and null.
 
-    // The function, fbdo.dataTypeEnum() returns type enum (number) e.g. fb_esp_rtdb_data_type_null (1),
-    // fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double,
-    // fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json,
-    // fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
+    // The function, fbdo.dataTypeEnum() returns type enum (number) e.g. firebase_rtdb_data_type_null (1),
+    // firebase_rtdb_data_type_integer, firebase_rtdb_data_type_float, firebase_rtdb_data_type_double,
+    // firebase_rtdb_data_type_boolean, firebase_rtdb_data_type_string, firebase_rtdb_data_type_json,
+    // firebase_rtdb_data_type_array, firebase_rtdb_data_type_blob, and firebase_rtdb_data_type_file (10)
 
     count++;
   }

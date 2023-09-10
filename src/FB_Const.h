@@ -1,13 +1,10 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created July 11, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -79,29 +76,6 @@
 #endif
 #endif
 
-#if defined(FIREBASE_ESP_CLIENT)
-
-#define FIREBASE_STREAM_CLASS FirebaseStream
-#define FIREBASE_MP_STREAM_CLASS MultiPathStream
-#define FIREBASE_CLASS Firebase_ESP_Client
-
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-
-#define FIREBASE_STREAM_CLASS StreamData
-#define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
-#if defined(ESP32)
-#define FIREBASE_CLASS FirebaseESP32
-#elif defined(ES8266) || defined(MB_ARDUINO_PICO)
-#define FIREBASE_CLASS FirebaseESP8266
-#endif
-
-#endif
-
-class FirebaseData;
-class PolicyInfo;
-class FunctionsConfig;
-class QueryFilter;
-
 #define FIREBASE_PORT 443
 
 #define MAX_REDIRECT 5
@@ -168,8 +142,6 @@ class QueryFilter;
 
 #include "FB_Error.h"
 
-class FirebaseData;
-
 typedef void (*FB_TCPConnectionRequestCallback)(const char *, int);
 typedef void (*FB_NetworkConnectionRequestCallback)(void);
 typedef void (*FB_NetworkStatusRequestCallback)(void);
@@ -191,7 +163,7 @@ typedef enum
 
 } firebase_cert_type;
 
-#if !defined(FIREBASE_ESP_CLIENT)
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 struct StorageType
 {
     static const int8_t UNDEFINED = 0; // add to compatible with firebase_mem_storage_type enum
@@ -328,49 +300,82 @@ enum firebase_rtdb_task_type
 enum firebase_rtdb_value_type
 {
     firebase_rtdb_value_type_any = 0,
-    firebase_rtdb_value_type_std_string,
-    firebase_rtdb_value_type_arduino_string,
-    firebase_rtdb_value_type_mb_string,
-    firebase_rtdb_value_type_char_array,
-    firebase_rtdb_value_type_int,
-    firebase_rtdb_value_type_float,
-    firebase_rtdb_value_type_double,
-    firebase_rtdb_value_type_json,
-    firebase_rtdb_value_type_array,
-    firebase_rtdb_value_type_blob
+    firebase_rtdb_value_type_std_string = 1,
+    firebase_rtdb_value_type_arduino_string = 2,
+    firebase_rtdb_value_type_mb_string = 3,
+    firebase_rtdb_value_type_char_array = 4,
+    firebase_rtdb_value_type_int = 5,
+    firebase_rtdb_value_type_float = 6,
+    firebase_rtdb_value_type_double = 7,
+    firebase_rtdb_value_type_json = 8,
+    firebase_rtdb_value_type_array = 9,
+    firebase_rtdb_value_type_blob = 10,
+
+    // old version compat
+    fb_esp_rtdb_value_type_any = 0,
+    fb_esp_rtdb_value_type_std_string = 1,
+    fb_esp_rtdb_value_type_arduino_string = 2,
+    fb_esp_rtdb_value_type_mb_string = 3,
+    fb_esp_rtdb_value_type_char_array = 4,
+    fb_esp_rtdb_value_type_int = 5,
+    fb_esp_rtdb_value_type_float = 6,
+    fb_esp_rtdb_value_type_double = 7,
+    fb_esp_rtdb_value_type_json = 8,
+    fb_esp_rtdb_value_type_array = 9,
+    fb_esp_rtdb_value_type_blob = 10
 };
 
 enum firebase_rtdb_upload_status
 {
     firebase_rtdb_upload_status_error = -1,
     firebase_rtdb_upload_status_unknown = 0,
-    firebase_rtdb_upload_status_init,
-    firebase_rtdb_upload_status_upload,
-    firebase_rtdb_upload_status_complete
+    firebase_rtdb_upload_status_init = 1,
+    firebase_rtdb_upload_status_upload = 2,
+    firebase_rtdb_upload_status_complete = 3,
+
+    // old version compat
+    fb_esp_rtdb_upload_status_error = -1,
+    fb_esp_rtdb_upload_status_unknown = 0,
+    fb_esp_rtdb_upload_status_init = 1,
+    fb_esp_rtdb_upload_status_upload = 2,
+    fb_esp_rtdb_upload_status_complete = 3
 };
 
 enum firebase_rtdb_download_status
 {
     firebase_rtdb_download_status_error = -1,
     firebase_rtdb_download_status_unknown = 0,
-    firebase_rtdb_download_status_init,
-    firebase_rtdb_download_status_download,
-    firebase_rtdb_download_status_complete
+    firebase_rtdb_download_status_init = 2,
+    firebase_rtdb_download_status_download = 3,
+    firebase_rtdb_download_status_complete = 4,
+
+    // old version compat
+    fb_esp_rtdb_download_status_error = -1,
+    fb_esp_rtdb_download_status_unknown = 0,
+    fb_esp_rtdb_download_status_init = 2,
+    fb_esp_rtdb_download_status_download = 3,
+    fb_esp_rtdb_download_status_complete = 4
 };
 
 #endif
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
 enum firebase_cfs_upload_status
 {
     firebase_cfs_upload_status_error = -1,
     firebase_cfs_upload_status_unknown = 0,
-    firebase_cfs_upload_status_init,
-    firebase_cfs_upload_status_upload,
-    firebase_cfs_upload_status_complete,
-    firebase_cfs_upload_status_process_response
+    firebase_cfs_upload_status_init = 1,
+    firebase_cfs_upload_status_upload = 2,
+    firebase_cfs_upload_status_complete = 3,
+    firebase_cfs_upload_status_process_response = 4,
+
+    // old version compat
+    fb_esp_cfs_upload_status_error = -1,
+    fb_esp_cfs_upload_status_unknown = 0,
+    fb_esp_cfs_upload_status_init = 1,
+    fb_esp_cfs_upload_status_upload = 2,
+    fb_esp_cfs_upload_status_complete = 3,
+    fb_esp_cfs_upload_status_process_response = 4
 };
 #endif
 
@@ -415,18 +420,32 @@ enum firebase_gcs_upload_status
 {
     firebase_gcs_upload_status_error = -1,
     firebase_gcs_upload_status_unknown = 0,
-    firebase_gcs_upload_status_init,
-    firebase_gcs_upload_status_upload,
-    firebase_gcs_upload_status_complete
+    firebase_gcs_upload_status_init = 1,
+    firebase_gcs_upload_status_upload = 2,
+    firebase_gcs_upload_status_complete = 3,
+
+    // old version compat
+    fb_esp_gcs_upload_status_error = -1,
+    fb_esp_gcs_upload_status_unknown = 0,
+    fb_esp_gcs_upload_status_init = 1,
+    fb_esp_gcs_upload_status_upload = 2,
+    fb_esp_gcs_upload_status_complete = 3
 };
 
 enum firebase_gcs_download_status
 {
     firebase_gcs_download_status_error = -1,
     firebase_gcs_download_status_unknown = 0,
-    firebase_gcs_download_status_init,
-    firebase_gcs_download_status_download,
-    firebase_gcs_download_status_complete
+    firebase_gcs_download_status_init = 1,
+    firebase_gcs_download_status_download = 2,
+    firebase_gcs_download_status_complete = 3,
+
+    // old version compat
+    fb_esp_gcs_download_status_error = -1,
+    fb_esp_gcs_download_status_unknown = 0,
+    fb_esp_gcs_download_status_init = 1,
+    fb_esp_gcs_download_status_download = 2,
+    fb_esp_gcs_download_status_complete = 3
 };
 
 #endif
@@ -448,18 +467,32 @@ enum firebase_fcs_upload_status
 {
     firebase_fcs_upload_status_error = -1,
     firebase_fcs_upload_status_unknown = 0,
-    firebase_fcs_upload_status_init,
-    firebase_fcs_upload_status_upload,
-    firebase_fcs_upload_status_complete
+    firebase_fcs_upload_status_init = 1,
+    firebase_fcs_upload_status_upload = 2,
+    firebase_fcs_upload_status_complete = 3,
+
+    // old version compat
+    fb_esp_fcs_upload_status_error = -1,
+    fb_esp_fcs_upload_status_unknown = 0,
+    fb_esp_fcs_upload_status_init = 1,
+    fb_esp_fcs_upload_status_upload = 2,
+    fb_esp_fcs_upload_status_complete = 3
 };
 
 enum firebase_fcs_download_status
 {
     firebase_fcs_download_status_error = -1,
     firebase_fcs_download_status_unknown = 0,
-    firebase_fcs_download_status_init,
-    firebase_fcs_download_status_download,
-    firebase_fcs_download_status_complete
+    firebase_fcs_download_status_init = 1,
+    firebase_fcs_download_status_download = 2,
+    firebase_fcs_download_status_complete = 3,
+
+    // old version compat
+    fb_esp_fcs_download_status_error = -1,
+    fb_esp_fcs_download_status_unknown = 0,
+    fb_esp_fcs_download_status_init = 1,
+    fb_esp_fcs_download_status_download = 2,
+    fb_esp_fcs_download_status_complete = 3
 };
 #endif
 
@@ -579,17 +612,25 @@ enum firebase_functions_status
 
 enum firebase_functions_operation_status
 {
-    firebase_functions_operation_status_unknown,
-    firebase_functions_operation_status_generate_upload_url,
-    firebase_functions_operation_status_upload_source_file_in_progress,
-    firebase_functions_operation_status_deploy_in_progress,
-    firebase_functions_operation_status_set_iam_policy_in_progress,
-    firebase_functions_operation_status_delete_in_progress,
-    firebase_functions_operation_status_finished,
-    firebase_functions_operation_status_error
-};
+    firebase_functions_operation_status_unknown = -1,
+    firebase_functions_operation_status_generate_upload_url = 0,
+    firebase_functions_operation_status_upload_source_file_in_progress = 1,
+    firebase_functions_operation_status_deploy_in_progress = 2,
+    firebase_functions_operation_status_set_iam_policy_in_progress = 3,
+    firebase_functions_operation_status_delete_in_progress = 4,
+    firebase_functions_operation_status_finished = 5,
+    firebase_functions_operation_status_error = 6,
 
-#endif
+    // old version compat
+    fb_esp_functions_operation_status_unknown = -1,
+    fb_esp_functions_operation_status_generate_upload_url = 0,
+    fb_esp_functions_operation_status_upload_source_file_in_progress = 1,
+    fb_esp_functions_operation_status_deploy_in_progress = 2,
+    fb_esp_functions_operation_status_set_iam_policy_in_progress = 3,
+    fb_esp_functions_operation_status_delete_in_progress = 4,
+    fb_esp_functions_operation_status_finished = 5,
+    fb_esp_functions_operation_status_error = 6
+};
 
 #endif
 
@@ -601,6 +642,7 @@ struct firebase_wifi_credential_t
 
 class firebase_wifi
 {
+    friend class Firebase_TCP_Client;
 
 public:
     firebase_wifi(){};
@@ -1024,6 +1066,12 @@ struct firebase_stream_info_t
 };
 #endif
 
+struct firebase_session_info
+{
+    uint32_t ptr = 0;
+    bool status = false;
+};
+
 struct firebase_cfg_int_t
 {
     enum base_time_type_t
@@ -1034,7 +1082,6 @@ struct firebase_cfg_int_t
         base_time_type_user = 2
     };
 
-    bool fb_multiple_requests = false;
     bool fb_processing = false;
     bool fb_rtoken_requested = false;
     uint8_t fb_stream_idx = 0;
@@ -1055,8 +1102,8 @@ struct firebase_cfg_int_t
     uint8_t fb_float_digits = 5;
     uint8_t fb_double_digits = 9;
     bool fb_auth_uri = false;
-    MB_VECTOR<uint32_t> sessions;
-    MB_VECTOR<uint32_t> queueSessions;
+    MB_VECTOR<firebase_session_info> sessions;
+    MB_VECTOR<firebase_session_info> queueSessions;
 
     MB_String auth_token;
     MB_String refresh_token;
@@ -1113,8 +1160,6 @@ struct firebase_url_info_t
     MB_String uri;
     MB_String auth;
 };
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
 
@@ -1239,8 +1284,6 @@ struct firebase_fcs_file_list_t
 {
     MB_VECTOR<struct firebase_fcs_file_list_item_t> items;
 };
-#endif
-
 #endif
 
 typedef struct token_info_t
@@ -1395,8 +1438,6 @@ struct firebase_rtdb_info_t
 };
 
 #endif
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
 
@@ -1909,8 +1950,6 @@ struct firebase_firestore_document_write_t
 
 #endif
 
-#endif
-
 struct firebase_session_info_t
 {
     int long_running_task = 0;
@@ -1941,7 +1980,6 @@ struct firebase_session_info_t
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
     struct firebase_rtdb_info_t rtdb;
 #endif
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
     struct firebase_fcs_info_t fcs;
@@ -1958,13 +1996,10 @@ struct firebase_session_info_t
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
     struct firebase_functions_info_t cfn;
 #endif
-#endif
 
     uint16_t bssl_rx_size = 2048;
     uint16_t bssl_tx_size = 512;
 };
-
-#if defined(FIREBASE_ESP_CLIENT)
 
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
 typedef struct firebase_fcm_legacy_http_message_info_t FCM_Legacy_HTTP_Message;
@@ -1979,8 +2014,6 @@ typedef struct firebase_fcs_file_list_t FileList;
 // shared struct between fcs and gcs
 typedef struct firebase_gcs_meta_info_t FileMetaInfo;
 typedef struct firebase_fcs_file_list_item_t FileItem;
-#endif
-
 #endif
 
 typedef struct firebase_auth_signin_provider_t FirebaseAuth;
@@ -2195,7 +2228,6 @@ static const char firebase_rtdb_pgm_str_40[] PROGMEM = "object";
 
 // FCM class string
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-#if defined(FIREBASE_ESP_CLIENT)
 static const char firebase_fcm_pgm_str_1[] PROGMEM = "fcm";
 static const char firebase_fcm_pgm_str_2[] PROGMEM = "iid";
 static const char firebase_fcm_pgm_str_3[] PROGMEM = "/fcm/send";
@@ -2262,7 +2294,6 @@ static const char firebase_fcm_pgm_str_63[] PROGMEM = "light_on_duration";
 static const char firebase_fcm_pgm_str_64[] PROGMEM = "light_off_duration";
 static const char firebase_fcm_pgm_str_65[] PROGMEM = "headers";
 static const char firebase_fcm_pgm_str_66[] PROGMEM = "link";
-#endif
 
 // Commonly used for legacy FCM
 static const char firebase_fcm_pgm_str_67[] PROGMEM = "notification";
@@ -2603,17 +2634,17 @@ static const char firebase_mem_err_pgm_str_2[] PROGMEM = "payload too large";
 static const char firebase_ssl_err_pgm_str_1[] PROGMEM = "incomplete SSL client data";
 
 // Time error string
-static const char firebase_time_err_pgm_str_1[] PROGMEM = "system time was not set";
-static const char firebase_time_err_pgm_str_2[] PROGMEM = "cannot config time";
-static const char firebase_time_err_pgm_str_3[] PROGMEM = "device time was not set";
-static const char firebase_time_err_pgm_str_4[] PROGMEM = "NTP server time synching failed";
-static const char firebase_time_err_pgm_str_5[] PROGMEM = "Please set the library reference time manually using fbdo.setSystemTime";
+static const char firebase_time_err_pgm_str_1[] PROGMEM = "NTP server time reading timed out";
+static const char firebase_time_err_pgm_str_2[] PROGMEM = "NTP server time reading cannot begin when valid time is required because of no WiFi capability/activity detected.";
+static const char firebase_time_err_pgm_str_3[] PROGMEM = "Please set the library reference time manually using Firebase.setSystemTime";
+static const char firebase_time_err_pgm_str_4[] PROGMEM = "system time was not set";
 
 // RTDB error string
 static const char firebase_rtdb_err_pgm_str_1[] PROGMEM = "backup data should be the JSON object";
 static const char firebase_rtdb_err_pgm_str_2[] PROGMEM = "path not exist";
 static const char firebase_rtdb_err_pgm_str_3[] PROGMEM = "data type mismatch";
 static const char firebase_rtdb_err_pgm_str_4[] PROGMEM = "security rules is not a valid JSON";
+static const char firebase_rtdb_err_pgm_str_5[] PROGMEM = "the FirebaseData object was paused";
 
 // FCM error string
 static const char firebase_fcm_err_pgm_str_1[] PROGMEM = "no ID token or registration token provided";

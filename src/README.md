@@ -1,4 +1,4 @@
-# Firebase Arduino Client Library for ESP8266, ESP32 and RP2040 Pico
+# Firebase Arduino Client Library for Arduino
 
 
 Google's Firebase Arduino Client Library for ESP8266 and ESP32
@@ -490,18 +490,6 @@ void end(FirebaseData *fbdo);
 
 
 
-#### Enable multiple HTTP requests at a time (for ESP32 only).
-
-param **`enable`** The boolean value to enable/disable.
-
-note: The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
-
-```cpp
-void allowMultipleRequests(bool enable);
-```
-
-
-
 #### Set the timeouts of get function.
 
 param **`fbdo`** The pointer to Firebase Data Object.
@@ -552,7 +540,7 @@ param **`callback`** Optional. The callback function that accept RTDB_DownloadSt
 return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
- getRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> filename, RTDB_DownloadProgressCallback callback = NULL)
+ getRules(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> filename, RTDB_DownloadProgressCallback callback = NULL)
 ```
 
 
@@ -583,7 +571,7 @@ param **`callback`** Optional. The callback function that accept RTDB_UploadStat
 return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
- setRules(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> filename, RTDB_UploadProgressCallback callback = NULL)
+ setRules(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> filename, RTDB_UploadProgressCallback callback = NULL)
 ```
 
 
@@ -776,9 +764,9 @@ bool push(FirebaseData *fbdo, <string> path, uint8_t *blob, size_t size);
 
 bool pushAsync(FirebaseData *fbdo, <string> path, uint8_t *blob, size_t size);
 
-bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool push(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 
-bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool pushAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 ```
 
 
@@ -1068,9 +1056,9 @@ The key or name of new created node will be stored in Firebase Data object,
 call `<FirebaseData>.pushName()` to get the key.
 
 ```cpp
-bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
+bool pushFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 
-bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
+bool pushFileAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -1123,9 +1111,9 @@ bool set(FirebaseData *fbdo, <string> path, uint8_t *blob, size_t size);
 
 bool setAsync(FirebaseData *fbdo, <string> path, uint8_t *blob, size_t size);
 
-bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool set(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 
-bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool setAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 ```
 
 
@@ -1192,9 +1180,9 @@ bool set(FirebaseData *fbdo, <string> path, uint8_t *blob, size_t size, <string>
 
 bool setAsync(FirebaseData *fbdo, <string> path, uint8_t *blob, size_t size, <string> ETag);
 
-bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
+bool set(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
 
-bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
+bool setAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
 ```
 
 
@@ -1840,9 +1828,9 @@ return **`Boolean`** value, indicates the success of the operation.
 No payload returned from the server.
 
 ```cpp
-bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
+bool setFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 
-bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
+bool setFileAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -1871,9 +1859,9 @@ If ETag at the defined node does not match the provided ETag parameter,
 the operation will be failed with the http return code 412, Precondition Failed (ETag is not matched).
 
 ```cpp
-bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag, RTDB_DownloadProgressCallback callback = NULL);
+bool setFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag, RTDB_DownloadProgressCallback callback = NULL);
 
-bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag, RTDB_DownloadProgressCallback callback = NULL);
+bool setFileAsync(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2475,7 +2463,7 @@ param **`callback`** Optional. The callback function that accept RTDB_DownloadSt
 return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
-bool getFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
+bool getFile(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2734,7 +2722,7 @@ param **`callback`** Optional. The callback function that accept RTDB_DownloadSt
 return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
-bool backup(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
+bool backup(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2756,7 +2744,7 @@ param **`callback`** Optional. The callback function that accept RTDB_UploadStat
 return **`Boolean`** value, indicates the success of the operation.
 
 ```cpp
-bool restore(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
+bool restore(FirebaseData *fbdo, firebase_mem_storage_type storageType, <string> nodePath, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -2800,7 +2788,7 @@ param **`storageType`** The enum of memory storage type e.g. mem_storage_type_fl
 The file systems can be changed in FirebaseFS.h.
     
 ```cpp
-bool saveErrorQueue(FirebaseData *fbdo, <string> filename, fb_esp_mem_storage_type storageType);
+bool saveErrorQueue(FirebaseData *fbdo, <string> filename, firebase_mem_storage_type storageType);
 ```
 
 
@@ -2814,7 +2802,7 @@ param **`storageType`** The enum of memory storage type e.g. mem_storage_type_fl
 The file systems can be changed in FirebaseFS.h.
     
 ```cpp
-bool deleteStorageFile(<string> filename, fb_esp_mem_storage_type storageType);
+bool deleteStorageFile(<string> filename, firebase_mem_storage_type storageType);
 ```
 
 
@@ -2830,7 +2818,7 @@ param **`storageType`** The enum of memory storage type e.g. mem_storage_type_fl
 The file systems can be changed in FirebaseFS.h.
     
 ```cpp
-bool restoreErrorQueue(FirebaseData *fbdo, <string> filename, fb_esp_mem_storage_type storageType);
+bool restoreErrorQueue(FirebaseData *fbdo, <string> filename, firebase_mem_storage_type storageType);
 ```
 
 
@@ -2848,7 +2836,7 @@ The file systems can be changed in FirebaseFS.h.
 return **`Number`** (0-255) of queues store in defined queue file.
 
 ```cpp
-uint8_t errorQueueCount(FirebaseData *fbdo, <string> filename, fb_esp_mem_storage_type storageType);
+uint8_t errorQueueCount(FirebaseData *fbdo, <string> filename, firebase_mem_storage_type storageType);
 ```
 
 
@@ -3149,7 +3137,7 @@ param **`projectId`** The Firebase project id (only the name without the firebas
 
 param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
 
-param **`writes`** The dyamic array of write object fb_esp_firestore_document_write_t.
+param **`writes`** The dyamic array of write object firebase_firestore_document_write_t.
 
 For the write object, see https://firebase.google.com/docs/firestore/reference/rest/v1/Write
 
@@ -3163,10 +3151,10 @@ This function requires Email/password, Custom token or OAuth2.0 authentication.
 
 ```cpp
 bool commitDocument(FirebaseData *fbdo, <string> projectId, <string> databaseId, 
-std::vector<struct fb_esp_firestore_document_write_t> writes, <string> transaction = "");
+std::vector<struct firebase_firestore_document_write_t> writes, <string> transaction = "");
 
 bool commitDocumentAsync(FirebaseData *fbdo, <string> projectId, <string> databaseId, 
-std::vector<struct fb_esp_firestore_document_write_t> writes, <string> transaction = "");
+std::vector<struct firebase_firestore_document_write_t> writes, <string> transaction = "");
 ```
 
 
@@ -3179,7 +3167,7 @@ param **`projectId`** The Firebase project id (only the name without the firebas
 
 param **`databaseId`** The Firebase Cloud Firestore database id which is (default) or empty "".
 
-param **`writes`** The dyamic array of write object fb_esp_firestore_document_write_t.
+param **`writes`** The dyamic array of write object firebase_firestore_document_write_t.
 
 Method does not apply writes atomically and does not guarantee ordering.
 
@@ -3201,7 +3189,7 @@ For more description, see https://cloud.google.com/firestore/docs/reference/rest
 
 ```cpp
 bool batchWriteDocuments(FirebaseData *fbdo, <string> projectId, <string> databaseId, 
-std::vector<struct fb_esp_firestore_document_write_t> writes, FirebaseJson *labels = nullptr);
+std::vector<struct firebase_firestore_document_write_t> writes, FirebaseJson *labels = nullptr);
 ```
 
 
@@ -3371,9 +3359,9 @@ param **`documentPath`** The relative path of document to get.
 param **`structuredQuery`** The pointer to FirebaseJson object that contains the Firestore query. For the description of structuredQuery, see https://cloud.google.com/firestore/docs/reference/rest/v1/StructuredQuery
 
 param **`consistencyMode`** Optional. The consistency mode for this transaction 
-e.g. fb_esp_firestore_consistency_mode_transaction,
-fb_esp_firestore_consistency_mode_newTransaction
-and fb_esp_firestore_consistency_mode_readTime
+e.g. firebase_firestore_consistency_mode_transaction,
+firebase_firestore_consistency_mode_newTransaction
+and firebase_firestore_consistency_mode_readTime
 
 param **`consistency`** Optional. The value based on consistency mode e.g. transaction string, TransactionOptions (JSON) and date time string.
 
@@ -3386,7 +3374,7 @@ Use FirebaseData.payload() to get the returned payload.
 This function requires Email/password, Custom token or OAuth2.0 authentication.
 
 ```cpp
-bool runQuery(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> documentPath, <string> structuredQuery, fb_esp_firestore_consistency_mode consistencyMode, <string> consistency);
+bool runQuery(FirebaseData *fbdo, <string> projectId, <string> databaseId, <string> documentPath, <string> structuredQuery, firebase_firestore_consistency_mode consistencyMode, <string> consistency);
 ```
 
 
@@ -3603,17 +3591,6 @@ bool getIndex(FirebaseData *fbdo, <string> projectId, <string> databaseId, <stri
 ## Firebase Cloud Messaging Functions
 
 These functions can be called directly from FCM object in the Firebase object e.g. Firebase.FCM.\<function name\>
-
-
-
-#### Clear all Firbase Error Queues in Error Queue collection.
-
-param **`fbdo`** The pointer to Firebase Data Object.
-
-```cpp
-void clearErrorQueue(FirebaseData *fbdo);
-```
-
 
 
 #### Set the server key.
@@ -3835,7 +3812,7 @@ return **`Boolean`** value, indicates the success of the operation.
 Use FirebaseData.downloadURL() to get the download link.
 
 ```cpp
-bool upload(FirebaseData *fbdo, <string> bucketID, <string> localFileName, fb_esp_mem_storage_type storageType, <string> remotetFileName, <string> mime, FCS_UploadProgressCallback callback = NULL);
+bool upload(FirebaseData *fbdo, <string> bucketID, <string> localFileName, firebase_mem_storage_type storageType, <string> remotetFileName, <string> mime, FCS_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -3885,7 +3862,7 @@ param **`callback`** Optional. The callback function that accept FCS_DownloadSta
 return **`Boolean`** value, indicates the success of the operation. 
 
 ```cpp
-bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, fb_esp_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL);
+bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, firebase_mem_storage_type storageType, FCS_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -4016,7 +3993,7 @@ The upload with metadata supports allows the library to add the metadata interna
 User also can add custom metadata for the uploading file (object).
 
 ```cpp
-bool upload(FirebaseData *fbdo, <string> bucketID, <string> localFileName, fb_esp_mem_storage_type storageType, fb_esp_gcs_upload_type uploadType, <string> remoteFileName, <string> mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, ProgressCallback callback = NULL);
+bool upload(FirebaseData *fbdo, <string> bucketID, <string> localFileName, firebase_mem_storage_type storageType, firebase_gcs_upload_type uploadType, <string> remoteFileName, <string> mime, UploadOptions *uploadOptions = nullptr, RequestProperties *requestProps = nullptr, UploadStatusInfo *status = nullptr, ProgressCallback callback = NULL);
 ```
 
 
@@ -4046,7 +4023,7 @@ return **`Boolean`** value, indicates the success of the operation.
 This function requires OAuth2.0 authentication.
 
 ```cpp
-bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, fb_esp_mem_storage_type storageType, StorageGetOptions *options = nullptr, GCS_DownloadProgressCallback callback = NULL);
+bool download(FirebaseData *fbdo, <string> bucketID, <string> remoteFileName, <string> localFileName, firebase_mem_storage_type storageType, StorageGetOptions *options = nullptr, GCS_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -4483,27 +4460,60 @@ The description of PolicyBuilder and FunctionsConfig classes and their functions
 
 
 
-#### Assign external Arduino Client.
+### Assign external Arduino generic client.
 
-param **`client`** The pointer to Arduino Client derived class e.g. WiFiClient, WiFiClientSecure, EthernetClient or GSMClient. 
+param **`client`** The pointer to Arduino Client.
 
-```cpp
-void setExternalClient(Client *client);
-```
-
-
-
-#### Assign the callback functions required for external Client usage.
-
-param **`tcpConnectionCB`** The function that handles the server connection. 
-
-param **`networkConnectionCB`** The function that handles the network connection. 
+param **`networkConnectionCB`** The function that handles the network connection.
 
 param **`networkStatusCB`** The function that handle the network connection status acknowledgement.
 
 ```cpp
-void setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB, FB_NetworkConnectionRequestCallback networkConnectionCB, FB_NetworkStatusRequestCallback networkStatusCB);
+void setGenericClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
+                        FB_NetworkStatusRequestCallback networkStatusCB);
 ```
+
+
+
+
+#### Assign TinyGsm Clients.
+
+param **`client`** The pointer to TinyGsmClient.
+
+param **`modem`** The pointer to TinyGsm modem object. Modem should be initialized and/or set mode before transfering data.
+
+param **`pin`** The SIM pin.
+
+param **`apn`** The GPRS APN (Access Point Name).
+
+param **`user`** The GPRS user.
+
+param **`password`** The GPRS password.
+
+```cpp
+void setGSMClient(Client *client, void *modem, const char *pin, const char *apn, const char *user, const char *password);
+```
+
+
+
+
+
+#### Assign external Ethernet Client.
+
+param **`client`** The pointer to Ethernet client object.
+
+param **`macAddress`** The Ethernet MAC address.
+
+param **`csPin`** The Ethernet module SPI chip select pin.
+
+param **`resetPin`** The Ethernet module reset pin.
+
+param **`staticIP`** (Optional) The pointer to `Firebase_StaticIP` object which included these IPAddress properties ipAddress, netMask, defaultGateway and dnsServer.
+
+```cpp
+ void setEthernetClient(Client *client, uint8_t macAddress[6], int csPin, int resetPin, Firebase_StaticIP *staticIP = nullptr);
+```
+
 
 
 
@@ -4549,7 +4559,7 @@ void setResponseSize(uint16_t len);
 return **`WiFi client instance`**.
 
 ```cpp
-WiFiClientSecure *getWiFiClient();
+ESP_SSLClient *getWiFiClient();
 ```
 
 
@@ -4606,27 +4616,27 @@ String dataType();
 
 #### Get the data type of payload returned from the server (RTDB only)
 
-return **`The enumeration value of fb_esp_rtdb_data_type.`**
+return **`The enumeration value of firebase_rtdb_data_type.`**
 
-fb_esp_rtdb_data_type_null or 1,
+firebase_rtdb_data_type_null or 1,
 
-fb_esp_rtdb_data_type_integer or 2,
+firebase_rtdb_data_type_integer or 2,
 
-fb_esp_rtdb_data_type_float or 3,
+firebase_rtdb_data_type_float or 3,
 
-fb_esp_rtdb_data_type_double or 4,
+firebase_rtdb_data_type_double or 4,
 
-fb_esp_rtdb_data_type_boolean or 5,
+firebase_rtdb_data_type_boolean or 5,
 
-fb_esp_rtdb_data_type_string or 6,
+firebase_rtdb_data_type_string or 6,
 
-fb_esp_rtdb_data_type_json or 7,
+firebase_rtdb_data_type_json or 7,
 
-fb_esp_rtdb_data_type_array or 8,
+firebase_rtdb_data_type_array or 8,
 
-fb_esp_rtdb_data_type_blob or 9,
+firebase_rtdb_data_type_blob or 9,
 
-fb_esp_rtdb_data_type_file or 10
+firebase_rtdb_data_type_file or 10
 
 ```cpp
 uint8_t dataTypeEnum();

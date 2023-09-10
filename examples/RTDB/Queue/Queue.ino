@@ -11,10 +11,17 @@
 
 // This example shows how error retry and queues work.
 
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
 #endif
 
 #include <Firebase_ESP_Client.h>
@@ -137,6 +144,12 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
   // Or use legacy authenticate method
   // config.database_url = DATABASE_URL;
   // config.signer.tokens.legacy_token = "<database secret>";
@@ -147,8 +160,6 @@ void setup()
 
   // Or use legacy authenticate method
   // Firebase.begin(DATABASE_URL, DATABASE_SECRET);
-
-  Firebase.reconnectWiFi(true);
 
   // Open and retore Firebase Error Queues from file.
   // The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.

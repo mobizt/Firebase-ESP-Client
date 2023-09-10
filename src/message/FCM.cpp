@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Cloud Messaging class, FCM.cpp version 1.0.32
+ * Google's Firebase Cloud Messaging class, FCM.cpp version 1.1.0
  *
- * This library supports Espressif ESP8266 and ESP32
- *
- * Created July 11, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -66,9 +61,6 @@ bool FB_CM::checkServerKey(FirebaseData *fbdo)
 
 bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     if (!checkServerKey(fbdo))
         return false;
 
@@ -80,9 +72,6 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg)
 
 bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     Core.tokenReady();
 
     // Core.getTokenType() is required as Core.config is not set in fcm legacy
@@ -100,8 +89,6 @@ bool FB_CM::send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg)
 
 bool FB_CM::mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
 
     Core.tokenReady();
 
@@ -118,9 +105,6 @@ bool FB_CM::mSubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *
 
 bool FB_CM::mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char *IID[], size_t numToken)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     Core.tokenReady();
 
     if (!checkServerKey(fbdo))
@@ -134,9 +118,6 @@ bool FB_CM::mUnsubscribeTopic(FirebaseData *fbdo, MB_StringPtr topic, const char
 
 bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     if (!checkServerKey(fbdo))
         return false;
 
@@ -148,9 +129,6 @@ bool FB_CM::mAppInstanceInfo(FirebaseData *fbdo, const char *IID)
 
 bool FB_CM::mRegisAPNsTokens(FirebaseData *fbdo, MB_StringPtr application, bool sandbox, const char *APNs[], size_t numToken)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     Core.tokenReady();
 
     if (!checkServerKey(fbdo))
@@ -247,13 +225,13 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const cha
     {
         Core.hh.addAuthHeaderFirst(header, token_type_oauth2_access_token);
 
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
 
         if (fbdo->session.response.code < 0)
             return false;
 
-        fbdo->tcpClient.send(Core.getToken());
+        fbdo->tcpSend(Core.getToken());
 
         if (fbdo->session.response.code < 0)
             return false;
@@ -262,13 +240,13 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const cha
     {
         Core.hh.addAuthHeaderFirst(header, token_type_undefined);
 
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
 
         if (fbdo->session.response.code < 0)
             return false;
 
-        fbdo->tcpClient.send(server_key.c_str());
+        fbdo->tcpSend(server_key.c_str());
 
         if (fbdo->session.response.code < 0)
             return false;
@@ -292,7 +270,7 @@ bool FB_CM::sendHeader(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const cha
     Core.hh.addConnectionHeader(header, keepAlive);
     Core.hh.addNewLine(header);
 
-    fbdo->tcpClient.send(header.c_str());
+    fbdo->tcpSend(header.c_str());
     header.clear();
 
     if (fbdo->session.response.code < 0)
@@ -892,7 +870,7 @@ bool FB_CM::fcm_send(FirebaseData *fbdo, firebase_fcm_msg_mode mode, const char 
     bool ret = sendHeader(fbdo, mode, msg);
 
     if (ret)
-        fbdo->tcpClient.send(msg);
+        fbdo->tcpSend(msg);
 
     fbdo->session.fcm.payload.clear();
     if (fbdo->session.response.code < 0)

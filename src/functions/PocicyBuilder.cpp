@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
  * Google's IAM Policy Builder class, PolicyBuilder.cpp version 1.0.9
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
  * Created April 5, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -57,7 +52,7 @@ void AuditLogConfig::mSetLogType(MB_StringPtr logType)
         json.set(pgm2Str(firebase_func_pgm_str_71 /* "logType" */), stringPtr2Str(logType));
 }
 
-void AuditLogConfig::mAddexemptedMembers(MB_StringPtr member)
+void AuditLogConfig::mAddExemptedMembers(MB_StringPtr member)
 {
         arr.add(stringPtr2Str(member));
         json.set(pgm2Str(firebase_func_pgm_str_72 /* "exemptedMembers" */), arr);
@@ -99,7 +94,6 @@ void AuditConfig::clearAuditLogConfigs()
 
 void AuditConfig::clear()
 {
-
         arr.clear();
         json.clear();
 }
@@ -131,7 +125,7 @@ void Binding::mSetCondition(MB_StringPtr expression, MB_StringPtr title, MB_Stri
 
         MB_String b, t;
         b += firebase_func_pgm_str_77; // "condition"
-        b += firebase_pgm_str_1;   // "/"
+        b += firebase_pgm_str_1;       // "/"
 
         MB_String _expression = expression, _title = title, _description = description, _location = location;
 

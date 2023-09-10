@@ -20,6 +20,12 @@
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
 #endif
 
 #include <Firebase_ESP_Client.h>
@@ -99,10 +105,11 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-#if defined(ESP8266)
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    Firebase.reconnectWiFi(true);
+
     // required for large file data, increase Rx size as needed.
-    fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 2048 /* Tx buffer size in bytes from 512 - 16384 */);
-#endif
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     /* Assign download buffer size in byte */
     // Data to be downloaded will read as multiple chunks with this size, to compromise between speed and memory used for buffering.
@@ -111,8 +118,6 @@ void setup()
 
     Firebase.begin(&config, &auth);
 
-    Firebase.reconnectWiFi(true);
-
     // if use SD card, mount it.
     SD_Card_Mounting(); // See src/addons/SDHelper.h
 }
@@ -120,19 +125,19 @@ void setup()
 // The Google Cloud Storage download callback function
 void gcsDownloadCallback(DownloadStatusInfo info)
 {
-    if (info.status == fb_esp_gcs_download_status_init)
+    if (info.status == firebase_gcs_download_status_init)
     {
         Serial.printf("Downloading file %s (%d) to %s\n", info.remoteFileName.c_str(), info.fileSize, info.localFileName.c_str());
     }
-    else if (info.status == fb_esp_gcs_download_status_download)
+    else if (info.status == firebase_gcs_download_status_download)
     {
         Serial.printf("Downloaded %d%s, Elapsed time %d ms\n", (int)info.progress, "%", info.elapsedTime);
     }
-    else if (info.status == fb_esp_gcs_download_status_complete)
+    else if (info.status == firebase_gcs_download_status_complete)
     {
         Serial.println("Download completed\n");
     }
-    else if (info.status == fb_esp_gcs_download_status_error)
+    else if (info.status == firebase_gcs_download_status_error)
     {
         Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
     }

@@ -84,8 +84,9 @@ setFile KEYWORD2
 setTimestamp    KEYWORD2
 updateNode  KEYWORD2
 updateNodeSilent    KEYWORD2
-setExternalClient   KEYWORD2
-setExternalClientCallbacks  KEYWORD2
+setGenericClient    KEYWORD2
+setGSMClient    KEYWORD2
+setEthernetClient   KEYWORD2
 setNetworkStatus    KEYWORD2
 getFreeHeap KEYWORD2
 getCurrentTime  KEYWORD2
@@ -158,11 +159,7 @@ processErrorQueue   KEYWORD2
 getErrorQueueID KEYWORD2
 isErrorQueueExisted KEYWORD2
 errorToString   KEYWORD2
-sendMessage KEYWORD2
-broadcastMessage    KEYWORD2
-sendTopic   KEYWORD2
 setStreamTaskStackSize  KEYWORD2
-allowMultipleRequests    KEYWORD2
 authTokenInfo   KEYWORD2
 tokenReady  KEYWORD2
 signUp  KEYWORD2
@@ -216,7 +213,7 @@ setEventTrigger KEYWORD2
 setIamPolicy    KEYWORD2
 getTriggerUrl   KEYWORD2
 setLogType  KEYWORD2
-addexemptedMembers  KEYWORD2
+addExemptedMembers  KEYWORD2
 clearexemptedMembers    KEYWORD2
 setService  KEYWORD2
 addAuditLogConfig   KEYWORD2
@@ -353,10 +350,10 @@ FireSense_Channel   KEYWORD3
 Firesense_Channel_Type  KEYWORD3
 FireSense_Condition KEYWORD3
 FireSense_Data_Type KEYWORD3
-fb_esp_firestore_document_write_field_transforms_t  KEYWORD3
-fb_esp_firestore_document_write_document_transform_t    KEYWORD3
-fb_esp_firestore_document_precondition_t    KEYWORD3
-fb_esp_firestore_document_write_t   KEYWORD3
+firebase_firestore_document_write_field_transforms_t  KEYWORD3
+firebase_firestore_document_write_document_transform_t    KEYWORD3
+firebase_firestore_document_precondition_t    KEYWORD3
+firebase_firestore_document_write_t   KEYWORD3
 TransactionOptions  KEYWORD3
 SPI_ETH_Module  KEYWORD3
 

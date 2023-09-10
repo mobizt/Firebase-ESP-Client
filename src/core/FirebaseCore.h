@@ -1,16 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
  * Google's Firebase Token Management class, FirebaseCore.h version 1.0.0
- *
- *
- * Created September 2, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * 
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -49,7 +45,7 @@ using namespace mb_string;
 class FirebaseCore
 {
     friend class FIREBASE_CLASS;
-#if defined(FIREBASE_ESP_CLIENT)
+
     friend class FB_CM;
     friend class FB_Storage;
     friend class GG_CloudStorage;
@@ -60,9 +56,7 @@ class FirebaseCore
     friend class AuditLogConfig;
     friend class AuditConfig;
     friend class FunctionsConfig;
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-    friend class FCMObject;
-#endif
+
     friend class FIREBASE_STREAM_CLASS;
     friend class FIREBASE_MP_STREAM_CLASS;
     friend class UtilsClass;
@@ -246,6 +240,16 @@ private:
     FB_NetworkConnectionRequestCallback _net_con_cb = NULL;
     FB_NetworkStatusRequestCallback _net_stat_cb = NULL;
     Client *_cli = nullptr;
+
+    int _ethernet_reset_pin = -1;
+    int _ethernet_cs_pin = -1;
+    uint8_t *_ethernet_mac = nullptr;
+    Firebase_StaticIP *_static_ip = nullptr;
+
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+    MB_String _pin, _apn, _user, _password;
+    void *_modem = nullptr;
+#endif
 };
 
 extern FirebaseCore Core;

@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
  * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.9
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
  * Created April 5, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -60,7 +55,7 @@ private:
     FirebaseJsonArray arr;
 
     void mSetLogType(MB_StringPtr logType);
-    void mAddexemptedMembers(MB_StringPtr member);
+    void mAddExemptedMembers(MB_StringPtr member);
 
 public:
     AuditLogConfig();
@@ -89,7 +84,7 @@ public:
      *
      */
     template <typename T = const char *>
-    void addexemptedMembers(T member) { mAddexemptedMembers(toStringPtr(member)); }
+    void addExemptedMembers(T member) { mAddExemptedMembers(toStringPtr(member)); }
 
     /**
      * Clear all exempted members.

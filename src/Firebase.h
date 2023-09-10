@@ -1,12 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * The Firebase class, Firebase.h v1.2.6
+ * The Firebase class, Firebase.h v1.2.7
  *
- *  Created June 14, 2023
+ *  Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -39,23 +39,6 @@
 #include "./FirebaseFS.h"
 #include "./FB_Const.h"
 
-#if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
-#ifndef FB_ENABLE_EXTERNAL_CLIENT
-#define FB_ENABLE_EXTERNAL_CLIENT
-#endif
-#endif
-
-#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(MB_ARDUINO_PICO)
-
-#if !defined(ESP32) && !defined(ESP8266) && !defined(MB_ARDUINO_PICO)
-#ifdef __arm__
-// should use uinstd.h to define sbrk but Due causes a conflict
-extern "C" char *sbrk(int incr);
-#else  // __ARM__
-extern char *__brkval;
-#endif // __arm__
-#endif
-
 #if defined(ESP8266)
 #include <SPI.h>
 #include <time.h>
@@ -70,28 +53,32 @@ extern char *__brkval;
 #include "core/FirebaseCore.h"
 #include "session/FB_Session.h"
 
+#include "FB_Utils.h"
+
 #if defined(DEFAULT_SD_FS) && defined(CARD_TYPE_SD) && defined(ESP32) && defined(SD_FAT_VERSION)
 class SdSpiConfig;
 #endif
 
-#if defined(FIREBASE_ESP_CLIENT)
-
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 #include "rtdb/FB_RTDB.h"
 #endif
+
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
 #include "message/FCM.h"
 #endif
-#include "FB_Utils.h"
+
 #if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
 #include "storage/FCS.h"
 #endif
+
 #if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
 #include "gcs/GCS.h"
 #endif
+
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
 #include "firestore/FB_Firestore.h"
 #endif
+
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
 #include "functions/FB_Functions.h"
 #include "functions/FunctionsConfig.h"
@@ -107,21 +94,28 @@ class FIREBASE_CLASS
   friend class FirebaseSession;
 
 public:
+#if defined(FIREBASE_ESP_CLIENT)
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
   FB_RTDB RTDB;
 #endif
+#endif
+
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
   FB_CM FCM;
 #endif
+
 #if defined(ENABLE_FB_STORAGE) || defined(FIREBASE_ENABLE_FB_STORAGE)
   FB_Storage Storage;
 #endif
+
 #if defined(ENABLE_FIRESTORE) || defined(FIREBASE_ENABLE_FIRESTORE)
   FB_Firestore Firestore;
 #endif
+
 #if defined(ENABLE_FB_FUNCTIONS) || defined(FIREBASE_ENABLE_FB_FUNCTIONS)
   FB_Functions Functions;
 #endif
+
 #if defined(ENABLE_GC_STORAGE) || defined(FIREBASE_ENABLE_GC_STORAGE)
   GG_CloudStorage GCStorage;
 #endif
@@ -364,447 +358,9 @@ public:
    */
   void setDoubleDigits(uint8_t digits);
 
-#if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
-
-  /** Initiate SD card with SPI port configuration.
-   *
-   * @param ss SPI Chip/Slave Select pin.
-   * @param sck SPI Clock pin.
-   * @param miso SPI MISO pin.
-   * @param mosi SPI MOSI pin.
-   * @param frequency The SPI frequency
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
-
-#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
-
-  /** Initiate SD card with SD FS configurations (ESP8266 only).
-   *
-   * @param ss SPI Chip/Slave Select pin.
-   * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 and Pico only).
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(SDFSConfig *sdFSConfig);
-
-#endif
-
-#if defined(ESP32)
-  /** Initiate SD card with chip select and SPI configuration (ESP32 only).
-   *
-   * @param ss SPI Chip/Slave Select pin.
-   * @param spiConfig The pointer to SPIClass object for SPI configuartion.
-   * @param frequency The SPI frequency.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr, uint32_t frequency = 4000000);
-#endif
-
-#if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
-  /** Initiate SD card with SdFat SPI and pins configurations (with SdFat included only).
-   *
-   * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
-   * @param ss SPI Chip/Slave Select pin.
-   * @param sck SPI Clock pin.
-   * @param miso SPI MISO pin.
-   * @param mosi SPI MOSI pin.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
-
-  /** Initiate SD card with SdFat SDIO configuration (with SdFat included only).
-   *
-   * @param sdFatSDIOConfig The pointer to SdioConfig object for SdFat SDIO configuration.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(SdioConfig *sdFatSDIOConfig);
-
-#endif
-
-#endif
-
-#if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
-  /** Initialize the SD_MMC card (ESP32 only).
-   *
-   * @param mountpoint The mounting point.
-   * @param mode1bit Allow 1 bit data line (SPI mode).
-   * @param format_if_mount_failed Format SD_MMC card if mount failed.
-   * @return The boolean value indicates the success of operation.
-   */
-  bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
-#endif
-
-  /** Set system time with timestamp.
-   *
-   * @param ts timestamp in seconds from midnight Jan 1, 1970.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool setSystemTime(time_t ts);
-
-  /** Provide the http code error string
-   *
-   * @param httpCode The http code.
-   * @param buff The String buffer out.
-   */
-  void errorToString(int httpCode, String &buff)
-  {
-    MB_String out;
-    Core.errorToString(httpCode, out);
-    buff = out.c_str();
-  }
-
-private:
-  void init(FirebaseConfig *config, FirebaseAuth *auth);
-  void mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToken, size_t expire, MB_StringPtr refreshToken,
-                     firebase_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret);
-  bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
-  bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
-  bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
-  bool mSendResetPassword(FirebaseConfig *config, MB_StringPtr email);
-
-  FirebaseAuth *auth = nullptr;
-  FirebaseConfig *config = nullptr;
-};
-
-extern FIREBASE_CLASS Firebase;
-
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-
-#ifndef FPSTR
-#define FPSTR MBSTRING_FLASH_MCR
-#endif
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
-#include "rtdb/FB_RTDB.h"
-#endif
-
-class FIREBASE_CLASS
-{
-  friend class QueryFilter;
-  friend class FirebaseSession;
-
-public:
-#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
-  FB_RTDB RTDB;
-#endif
-
-  FIREBASE_CLASS();
-  ~FIREBASE_CLASS();
-
-  /** Initialize Firebase with the config and Firebase's authentication credentials.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param auth The pointer to FirebaseAuth data.
-   *
-   * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
-   */
-  void begin(FirebaseConfig *config, FirebaseAuth *auth);
-
-  /** Setup the ID token for authentication.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param idToken The ID Token.
-   * @param expire The expired interval in seeconds (max.3600 sec).
-   * @param refreshToken The refresh token for token refreshment.
-   *
-   * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
-   */
-  template <typename T1 = const char *, typename T2 = const char *>
-  void setIdToken(FirebaseConfig *config, T1 idToken, size_t expire = 3600, T2 refreshToken = "")
-  {
-    return mSetAuthToken(config, toStringPtr(idToken), expire, toStringPtr(refreshToken),
-                         token_type_id_token, toStringPtr(""), toStringPtr(""));
-  }
-
-  /** Setup the access token for authentication.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param accessToken The access Token.
-   * @param expire The expired interval in seeconds (max.3600 sec).
-   * @param refreshToken The refresh token for token refreshment.
-   * @param clientId The The client identifier issued to the client during the registration process.
-   * @param clientSecret The client secret.
-   *
-   * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
-   */
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *, typename T4 = const char *>
-  void setAccessToken(FirebaseConfig *config, T1 accessToken, size_t expire = 3600,
-                      T2 refreshToken = "", T3 clientId = "", T4 clientSecret = "")
-  {
-    return mSetAuthToken(config, toStringPtr(accessToken), expire, toStringPtr(refreshToken),
-                         token_type_oauth2_access_token, toStringPtr(clientId), toStringPtr(clientSecret));
-  }
-
-  /** Setup the custom token for authentication.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param customToken The Identity Platform custom token.
-   *
-   * If the refresh token from Custom token verification or sign in, was assigned here instead of
-   * custom token (signed JWT token), the token refresh process will be performed immediately.
-   *
-   * Any token that is not in the form header.payload.signature i.e., xxxxx.yyyyy.zzzzz will be treated as refresh token.
-   *
-   * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
-   */
-  template <typename T1 = const char *>
-  void setCustomToken(FirebaseConfig *config, T1 customToken)
-  {
-    return mSetAuthToken(config, toStringPtr(customToken), 0, toStringPtr(""),
-                         token_type_custom_token, toStringPtr(""), toStringPtr(""));
-  }
-
-  /** Check for token expiry status.
-   *
-   * @return bool of expiry status.
-   */
-  bool isTokenExpired();
-
-  /** Force the token to expire immediately and refresh.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   */
-  void refreshToken(FirebaseConfig *config);
-
-  /** Reset stored config authentiocation credentials.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   *
-   */
-  void reset(FirebaseConfig *config);
-
-  /** Provide the details of token generation.
-   *
-   * @return token_info_t The token_info_t structured data that indicates the status.
-   *
-   * @note Use type property to get the type enum value.
-   * token_type_undefined or 0,
-   * token_type_legacy_token or 1,
-   * token_type_id_token or 2,
-   * token_type_custom_token or 3,
-   * token_type_oauth2_access_token or 4
-   *
-   * Use status property to get the status enum value.
-   * token_status_uninitialized or 0,
-   * token_status_on_signing or 1,
-   * token_status_on_request or 2,
-   * token_status_on_refresh or 3,
-   * token_status_ready or 4
-   *
-   * In case of token generation and refreshment errors,
-   * use error.code property to get the error code number.
-   * Use error.message property to get the error message string.
-   *
-   */
-  struct token_info_t authTokenInfo();
-
-  /** Provide the ready status of token generation.
-   *
-   * This function should be called repeatedly to handle authentication tasks.
-   *
-   * @return Boolean type status indicates the token generation is completed.
-   */
-  bool ready();
-
-  /** Provide the grant access status for Firebase Services.
-   *
-   * @return Boolean type status indicates the device can access to the services
-   *
-   * This returns false if ready() returns false (token generation is not ready).
-   */
-  bool authenticated();
-
-  /** Store Firebase's legacy authentication credentials.
-   *
-   * @param databaseURL Your RTDB URL e.g. <databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
-   * @param databaseSecret Your database secret.
-   * @param caCert Root CA certificate base64 string (PEM file).
-   * @param caCertFile Root CA certificate DER file (binary).
-   * @param StorageType Type of storage, StorageType::SD and StorageType::FLASH.
-   * @param GMTOffset Optional for ESP8266. GMT time offset in hour is required to
-   * set the time for BearSSL certificate verification.
-   *
-   * @note This parameter is only required for ESP8266 Core SDK v2.5.x or later.
-   * The Root CA certificate DER file is only supported in Core SDK v2.5.x
-   *
-   * The file systems for flash and sd memory can be changed in FirebaseFS.h.
-   */
-  template <typename T1 = const char *, typename T2 = const char *>
-  void begin(T1 databaseURL, T2 databaseSecret)
-  {
-    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
-    begin(config, auth);
-  }
-
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  void begin(T1 databaseURL, T2 databaseSecret, T3 caCert, float GMTOffset = 0.0)
-  {
-    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
-    if (caCert)
-    {
-      float _gmtOffset = GMTOffset;
-      config->cert.data = caCert;
-#ifdef ESP8266
-      if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
-        _gmtOffset = GMTOffset;
-      TimeHelper::syncClock(&Core.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
-#endif
-    }
-    begin(config, auth);
-  }
-
-  template <typename T1 = const char *, typename T2 = const char *, typename T3 = const char *>
-  void begin(T1 databaseURL, T2 databaseSecret, T3 caCertFile, uint8_t storageType, float GMTOffset = 0.0)
-  {
-    pre_begin(toStringPtr(databaseURL), toStringPtr(databaseSecret));
-
-    MB_String _caCertFile = caCertFile;
-
-    if (_caCertFile.length() > 0)
-    {
-      float _gmtOffset = GMTOffset;
-      config->cert.file = _caCertFile;
-      config->cert.file_storage = storageType;
-#ifdef ESP8266
-      if (GMTOffset >= -12.0 && GMTOffset <= 14.0)
-        _gmtOffset = GMTOffset;
-      TimeHelper::syncClock(&Core.ntpClient, mb_ts, mb_ts_offset, _gmtOffset, config);
-#endif
-    }
-    begin(config, auth);
-  }
-  /** Stop Firebase and release all resources.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   */
-  void end(FirebaseData &fbdo);
-
-  /** Sign up for a new user.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param auth The pointer to FirebaseAuth data.
-   * @param email The user Email.
-   * @param password The user password.
-   * @return Boolean type status indicates the success of the operation.
-   *
-   * @note By calling Firebase.begin with config and auth after sign up will be signed in.
-   *
-   * This required Email/Password provider to be enabled,
-   * From Firebase console, select Authentication, select Sign-in method tab,
-   * under the Sign-in providers list, enable Email/Password provider.
-   *
-   * If the assigned email and passowrd are empty,
-   * the anonymous user will be created if Anonymous provider is enabled.
-   *
-   * To enable Anonymous provider,
-   * from Firebase console, select Authentication, select Sign-in method tab,
-   * under the Sign-in providers list, enable Anonymous provider.
-   */
-  template <typename T1 = const char *, typename T2 = const char *>
-  bool signUp(FirebaseConfig *config, FirebaseAuth *auth, T1 email, T2 password)
-  {
-    return mSignUp(config, auth, toStringPtr(email), toStringPtr(password));
-  }
-
-  /** Delete user from project.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param auth The pointer to FirebaseAuth data.
-   * @param idToken (optional) The id token of user, leave blank to delete the current sign in user.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  template <typename T = const char *>
-  bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, T idToken = "")
-  {
-    return mDeleteUser(config, auth, toStringPtr(idToken));
-  }
-
-  /** Send a user a verification Email.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param idToken The id token of user that was already signed in with Email and password (optional).
-   * @return Boolean type status indicates the success of the operation.
-   *
-   * @note The id token can be obtained from config.signer.tokens.id_token
-   * after begin with config and auth data
-   *
-   * If the idToken is not assigned, the internal config.signer.tokens.id_token
-   * will be used.
-   *
-   * See the Templates of Email address verification in the Firebase console
-   * , Authentication.
-   *
-   */
-  template <typename T = const char *>
-  bool sendEmailVerification(FirebaseConfig *config, T idToken = "")
-  {
-    return msendEmailVerification(config, toStringPtr(idToken));
-  }
-
-  /** Send a user a password reset link to Email.
-   *
-   * @param config The pointer to FirebaseConfig data.
-   * @param email The user Email to send the password resset link.
-   * @return Boolean type status indicates the success of the operation.
-   *
-   */
-  template <typename T = const char *>
-  bool sendResetPassword(FirebaseConfig *config, T email)
-  {
-    return mSendResetPassword(config, toStringPtr(email));
-  }
-
-  /** Reconnect WiFi if lost connection.
-   *
-   * @param reconnect The boolean to set/unset WiFi AP reconnection.
-   */
-  void reconnectWiFi(bool reconnect);
-
-  /** Get currently used auth token string.
-   *
-   * @return constant char* of currently used auth token.
-   */
-  const char *getToken();
-
-  /** Get free Heap memory.
-   *
-   * @return free Heap memory size.
-   */
-  int getFreeHeap();
-
-  /** Get current timestamp.
-   *
-   * @return current timestamp.
-   */
-  time_t getCurrentTime();
-
-  /** Set the decimal places for float value to be stored in database.
-   *
-   * @param digits The decimal places.
-   */
-  void setFloatDigits(uint8_t digits);
-
-  /** Set the decimal places for double value to be stored in database.
-   *
-   * @param digits The decimal places.
-   */
-  void setDoubleDigits(uint8_t digits);
-
-#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
-
-#ifdef ESP32
-  /** Enable multiple HTTP requests at a time.
-   *
-   * @param enable - The boolean value to enable/disable.
-   *
-   * @note The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
-   */
-  void allowMultipleRequests(bool enable)
-  {
-    if (Core.config)
-      Core.config->internal.fb_multiple_requests = enable;
-  }
-#endif
 
   /** Set the timeout of Firebase.get functions.
    *
@@ -2576,265 +2132,7 @@ public:
    */
   void setMaxRetry(FirebaseData &fbdo, uint8_t num) { RTDB.setMaxRetry(&fbdo, num); }
 
-#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
-  /** Set the maximum Firebase Error Queues in the collection (0 255).
-   * Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase
-   * Error Queues collection.
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param num The maximum Firebase Error Queues.
-   */
-  void setMaxErrorQueue(FirebaseData &fbdo, uint8_t num) { RTDB.setMaxErrorQueue(&fbdo, num); }
-
-  /** Save Firebase Error Queues as SPIFFS file (save only database store queues).
-   * Firebase read (get) operation will not be saved.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param filename Filename to be saved.
-   * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
-   */
-  template <typename T = const char *>
-  bool saveErrorQueue(FirebaseData &fbdo, T filename, uint8_t storageType)
-  {
-    return RTDB.saveErrorQueue(&fbdo, filename, getMemStorageType(storageType));
-  }
-
-  /** Delete file in Flash (SPIFFS) or SD card.
-   *
-   * @param filename File name to delete.
-   * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
-   *
-   * The file systems for flash and sd memory can be changed in FirebaseFS.h.
-   */
-  bool deleteStorageFile(const String &filename, uint8_t storageType)
-  {
-    return RTDB.deleteStorageFile(filename.c_str(), getMemStorageType(storageType));
-  }
-
-  /** estore Firebase Error Queues from the SPIFFS file.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param filename Filename to be read and restore queues.
-   * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
-   */
-  template <typename T = const char *>
-  bool restoreErrorQueue(FirebaseData &fbdo, T filename, uint8_t storageType)
-  {
-    return RTDB.restoreErrorQueue(&fbdo, filename, getMemStorageType(storageType));
-  }
-
-  /** Determine the number of Firebase Error Queues stored in a defined SPIFFS file.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param filename Filename to be read and count for queues.
-   * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
-   * @return Number (0-255) of queues store in defined SPIFFS file.
-   *
-   * The file systems for flash and sd memory can be changed in FirebaseFS.h.
-   */
-  template <typename T = const char *>
-  uint8_t errorQueueCount(FirebaseData &fbdo, T filename, uint8_t storageType)
-  {
-    return RTDB.errorQueueCount(&fbdo, filename, getMemStorageType(storageType));
-  }
-
-  /** Determine number of queues in Firebase Data object Firebase Error Queues collection.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @return Number (0-255) of queues in Firebase Data object queue collection.
-   */
-  uint8_t errorQueueCount(FirebaseData &fbdo) { return RTDB.errorQueueCount(&fbdo); }
-
-  /** Determine whether the  Firebase Error Queues collection was full or not.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @return Boolean type status indicates whether the  Firebase Error Queues collection was full or not.
-   */
-  bool isErrorQueueFull(FirebaseData &fbdo) { return RTDB.isErrorQueueFull(&fbdo); }
-
-  /** Process all failed Firebase operation queue items when the network is available.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param callback a Callback function that accepts QueueInfo parameter.
-   */
-  void processErrorQueue(FirebaseData &fbdo, FirebaseData::QueueInfoCallback callback = NULL)
-  {
-    return RTDB.processErrorQueue(&fbdo, callback);
-  }
-
-  /** Return Firebase Error Queue ID of last Firebase Error.
-   * Return 0 if there is no Firebase Error from the last operation.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @return Number of Queue ID.
-   */
-  uint32_t getErrorQueueID(FirebaseData &fbdo) { return RTDB.getErrorQueueID(&fbdo); }
-
-  /** Determine whether the Firebase Error Queue currently exists is Error Queue collection or not.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param errorQueueID The Firebase Error Queue ID get from getErrorQueueID.
-   * @return Boolean type status indicates the queue existence.
-   */
-  bool isErrorQueueExisted(FirebaseData &fbdo, uint32_t errorQueueID) { return RTDB.isErrorQueueExisted(&fbdo, errorQueueID); }
-
-  /** Start the Firebase Error Queues Auto Run Process.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param callback a Callback function that accepts QueueInfo Object as a parameter, optional.
-   *
-   * @note The following functions are available from QueueInfo Object accepted by callback.
-   *
-   * queueInfo.totalQueues(), get the total Error Queues in Error Queue Collection.
-   *
-   * queueInfo.currentQueueID(), get current Error Queue ID that is being processed.
-   *
-   * queueInfo.isQueueFull(), determine whether Error Queue Collection is full or not.
-   *
-   * queueInfo.dataType(), get a string of the Firebase call data type that is being processed of current Error Queue.
-   *
-   * queueInfo.method(), get a string of the Firebase call method that is being processed of current Error Queue.
-   *
-   * queueInfo.path(), get a string of the Firebase call path that is being processed of current Error Queue.
-   */
-  void beginAutoRunErrorQueue(FirebaseData &fbdo, FirebaseData::QueueInfoCallback callback = NULL)
-  {
-    RTDB.beginAutoRunErrorQueue(&fbdo, callback);
-  }
-
-  /** Stop the Firebase Error Queues Auto Run Process.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   */
-  void endAutoRunErrorQueue(FirebaseData &fbdo) { RTDB.endAutoRunErrorQueue(&fbdo); }
-
-  /** Clear all Firbase Error Queues in Error Queue collection.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   */
-  void clearErrorQueue(FirebaseData &fbdo) { RTDB.clearErrorQueue(&fbdo); };
-
-#endif
-
-#endif
-
-  /** Send Firebase Cloud Messaging to the device with the first registration token which added by
-   *  firebaseData.fcm.addDeviceToken.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @param index The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
-   * @return Boolean type status indicates the success of the operation.
-   */
-#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-  bool sendMessage(FirebaseData &fbdo, uint16_t index);
-#endif
-
-  /** Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @return Boolean type status indicates the success of the operation.
-   */
-#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-  bool broadcastMessage(FirebaseData &fbdo);
-#endif
-
-  /** Send Firebase Cloud Messaging to devices that subscribed to the topic.
-   *
-   * @param fbdo Firebase Data Object to hold data and instance.
-   * @return Boolean type status indicates the success of the operation.
-   */
-#if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-  bool sendTopic(FirebaseData &fbdo);
-#endif
-
-#if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
-
-  /** Initiate SD card with SPI port configuration.
-   *
-   * @param ss SPI Chip/Slave Select pin.
-   * @param sck SPI Clock pin.
-   * @param miso SPI MISO pin.
-   * @param mosi SPI MOSI pin.
-   * @param frequency The SPI frequency
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
-
-#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
-
-  /** Initiate SD card with SD FS configurations (ESP8266 only).
-   *
-   * @param ss SPI Chip/Slave Select pin.
-   * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 only).
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(SDFSConfig *sdFSConfig);
-
-#endif
-
-#if defined(ESP32)
-  /** Initiate SD card with chip select and SPI configuration (ESP32 only).
-   *
-   * @param ss SPI Chip/Slave Select pin.
-   * @param spiConfig The pointer to SPIClass object for SPI configuartion.
-   * @param frequency The SPI frequency.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr, uint32_t frequency = 4000000);
-#endif
-
-#if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
-  /** Initiate SD card with SdFat SPI and pins configurations (with SdFat included only).
-   *
-   * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
-   * @param ss SPI Chip/Slave Select pin.
-   * @param sck SPI Clock pin.
-   * @param miso SPI MISO pin.
-   * @param mosi SPI MOSI pin.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
-
-  /** Initiate SD card with SdFat SDIO configuration (with SdFat included only).
-   *
-   * @param sdFatSDIOConfig The pointer to SdioConfig object for SdFat SDIO configuration.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool sdBegin(SdioConfig *sdFatSDIOConfig);
-
-#endif
-
-#endif
-
-#if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
-  /** Initialize the SD_MMC card (ESP32 only).
-   *
-   * @param mountpoint The mounting point.
-   * @param mode1bit Allow 1 bit data line (SPI mode).
-   * @param format_if_mount_failed Format SD_MMC card if mount failed.
-   * @return The boolean value indicates the success of operation.
-   */
-  bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
-#endif
-
-  /** Set system time with timestamp.
-   *
-   * @param ts timestamp in seconds from midnight Jan 1, 1970.
-   * @return Boolean type status indicates the success of the operation.
-   */
-  bool setSystemTime(time_t ts);
-
-  /** Provide the http code error string
-   *
-   * @param httpCode The http code.
-   * @param buff The String buffer out.
-   */
-  void errorToString(int httpCode, String &buff)
-  {
-    MB_String out;
-    Core.errorToString(httpCode, out);
-    buff = out.c_str();
-  }
-
+  // Generic functions
   template <typename T1 = const char *, typename T2>
   bool set(FirebaseData &fbdo, T1 path, T2 value) { return RTDB.set(&fbdo, path, value); }
 
@@ -3039,19 +2337,260 @@ public:
     return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path, fileName);
   }
 
-private:
+#if defined(ENABLE_ERROR_QUEUE) || defined(FIREBASE_ENABLE_ERROR_QUEUE)
+  /** Set the maximum Firebase Error Queues in the collection (0 255).
+   * Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase
+   * Error Queues collection.
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param num The maximum Firebase Error Queues.
+   */
+  void setMaxErrorQueue(FirebaseData &fbdo, uint8_t num) { RTDB.setMaxErrorQueue(&fbdo, num); }
+
+  /** Save Firebase Error Queues as SPIFFS file (save only database store queues).
+   * Firebase read (get) operation will not be saved.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param filename Filename to be saved.
+   * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
+   */
+  template <typename T = const char *>
+  bool saveErrorQueue(FirebaseData &fbdo, T filename, uint8_t storageType)
+  {
+    return RTDB.saveErrorQueue(&fbdo, filename, getMemStorageType(storageType));
+  }
+
+  /** Delete file in Flash (SPIFFS) or SD card.
+   *
+   * @param filename File name to delete.
+   * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
+   *
+   * The file systems for flash and sd memory can be changed in FirebaseFS.h.
+   */
+  bool deleteStorageFile(const String &filename, uint8_t storageType)
+  {
+    return RTDB.deleteStorageFile(filename.c_str(), getMemStorageType(storageType));
+  }
+
+  /** estore Firebase Error Queues from the SPIFFS file.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param filename Filename to be read and restore queues.
+   * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
+   */
+  template <typename T = const char *>
+  bool restoreErrorQueue(FirebaseData &fbdo, T filename, uint8_t storageType)
+  {
+    return RTDB.restoreErrorQueue(&fbdo, filename, getMemStorageType(storageType));
+  }
+
+  /** Determine the number of Firebase Error Queues stored in a defined SPIFFS file.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param filename Filename to be read and count for queues.
+   * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
+   * @return Number (0-255) of queues store in defined SPIFFS file.
+   *
+   * The file systems for flash and sd memory can be changed in FirebaseFS.h.
+   */
+  template <typename T = const char *>
+  uint8_t errorQueueCount(FirebaseData &fbdo, T filename, uint8_t storageType)
+  {
+    return RTDB.errorQueueCount(&fbdo, filename, getMemStorageType(storageType));
+  }
+
+  /** Determine number of queues in Firebase Data object Firebase Error Queues collection.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @return Number (0-255) of queues in Firebase Data object queue collection.
+   */
+  uint8_t errorQueueCount(FirebaseData &fbdo) { return RTDB.errorQueueCount(&fbdo); }
+
+  /** Determine whether the  Firebase Error Queues collection was full or not.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @return Boolean type status indicates whether the  Firebase Error Queues collection was full or not.
+   */
+  bool isErrorQueueFull(FirebaseData &fbdo) { return RTDB.isErrorQueueFull(&fbdo); }
+
+  /** Process all failed Firebase operation queue items when the network is available.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param callback a Callback function that accepts QueueInfo parameter.
+   */
+  void processErrorQueue(FirebaseData &fbdo, FirebaseData::QueueInfoCallback callback = NULL)
+  {
+    return RTDB.processErrorQueue(&fbdo, callback);
+  }
+
+  /** Return Firebase Error Queue ID of last Firebase Error.
+   * Return 0 if there is no Firebase Error from the last operation.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @return Number of Queue ID.
+   */
+  uint32_t getErrorQueueID(FirebaseData &fbdo) { return RTDB.getErrorQueueID(&fbdo); }
+
+  /** Determine whether the Firebase Error Queue currently exists is Error Queue collection or not.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param errorQueueID The Firebase Error Queue ID get from getErrorQueueID.
+   * @return Boolean type status indicates the queue existence.
+   */
+  bool isErrorQueueExisted(FirebaseData &fbdo, uint32_t errorQueueID) { return RTDB.isErrorQueueExisted(&fbdo, errorQueueID); }
+
+  /** Start the Firebase Error Queues Auto Run Process.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   * @param callback a Callback function that accepts QueueInfo Object as a parameter, optional.
+   *
+   * @note The following functions are available from QueueInfo Object accepted by callback.
+   *
+   * queueInfo.totalQueues(), get the total Error Queues in Error Queue Collection.
+   *
+   * queueInfo.currentQueueID(), get current Error Queue ID that is being processed.
+   *
+   * queueInfo.isQueueFull(), determine whether Error Queue Collection is full or not.
+   *
+   * queueInfo.dataType(), get a string of the Firebase call data type that is being processed of current Error Queue.
+   *
+   * queueInfo.method(), get a string of the Firebase call method that is being processed of current Error Queue.
+   *
+   * queueInfo.path(), get a string of the Firebase call path that is being processed of current Error Queue.
+   */
+  void beginAutoRunErrorQueue(FirebaseData &fbdo, FirebaseData::QueueInfoCallback callback = NULL)
+  {
+    RTDB.beginAutoRunErrorQueue(&fbdo, callback);
+  }
+
+  /** Stop the Firebase Error Queues Auto Run Process.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   */
+  void endAutoRunErrorQueue(FirebaseData &fbdo) { RTDB.endAutoRunErrorQueue(&fbdo); }
+
+  /** Clear all Firbase Error Queues in Error Queue collection.
+   *
+   * @param fbdo Firebase Data Object to hold data and instance.
+   */
+  void clearErrorQueue(FirebaseData &fbdo) { RTDB.clearErrorQueue(&fbdo); };
+
+#endif // ERROR QUEUE
+
+#endif // RTDB
+
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-  bool handleFCMRequest(FirebaseData &fbdo, firebase_fcm_msg_type messageType);
+  bool sendMessage(FirebaseData &fbdo, uint16_t index){ return false; }
+  bool broadcastMessage(FirebaseData &fbdo) { return false; }
+  bool sendTopic(FirebaseData &fbdo) { return false; }
+#endif // FCM
+
+#endif // ESP8266, ESP32
+
+#if defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD)
+
+  /** Initiate SD card with SPI port configuration.
+   *
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sck SPI Clock pin.
+   * @param miso SPI MISO pin.
+   * @param mosi SPI MOSI pin.
+   * @param frequency The SPI frequency
+   * @return Boolean type status indicates the success of the operation.
+   */
+  bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
+
+#if defined(ESP8266) || defined(MB_ARDUINO_PICO)
+
+  /** Initiate SD card with SD FS configurations (ESP8266 only).
+   *
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sdFSConfig The pointer to SDFSConfig object (ESP8266 and Pico only).
+   * @return Boolean type status indicates the success of the operation.
+   */
+  bool sdBegin(SDFSConfig *sdFSConfig);
+
 #endif
-  firebase_mem_storage_type getMemStorageType(uint8_t old_type);
+
+#if defined(ESP32)
+  /** Initiate SD card with chip select and SPI configuration (ESP32 only).
+   *
+   * @param ss SPI Chip/Slave Select pin.
+   * @param spiConfig The pointer to SPIClass object for SPI configuartion.
+   * @param frequency The SPI frequency.
+   * @return Boolean type status indicates the success of the operation.
+   */
+  bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr, uint32_t frequency = 4000000);
+#endif
+
+#if defined(MBFS_ESP32_SDFAT_ENABLED) || defined(MBFS_SDFAT_ENABLED)
+  /** Initiate SD card with SdFat SPI and pins configurations (with SdFat included only).
+   *
+   * @param sdFatSPIConfig The pointer to SdSpiConfig object for SdFat SPI configuration.
+   * @param ss SPI Chip/Slave Select pin.
+   * @param sck SPI Clock pin.
+   * @param miso SPI MISO pin.
+   * @param mosi SPI MOSI pin.
+   * @return Boolean type status indicates the success of the operation.
+   */
+  bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+
+  /** Initiate SD card with SdFat SDIO configuration (with SdFat included only).
+   *
+   * @param sdFatSDIOConfig The pointer to SdioConfig object for SdFat SDIO configuration.
+   * @return Boolean type status indicates the success of the operation.
+   */
+  bool sdBegin(SdioConfig *sdFatSDIOConfig);
+
+#endif
+
+#endif
+
+#if defined(ESP32) && defined(MBFS_SD_FS) && defined(MBFS_CARD_TYPE_SD_MMC)
+  /** Initialize the SD_MMC card (ESP32 only).
+   *
+   * @param mountpoint The mounting point.
+   * @param mode1bit Allow 1 bit data line (SPI mode).
+   * @param format_if_mount_failed Format SD_MMC card if mount failed.
+   * @return The boolean value indicates the success of operation.
+   */
+  bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
+#endif
+
+  /** Set system time with timestamp.
+   *
+   * @param ts timestamp in seconds from midnight Jan 1, 1970.
+   * @return Boolean type status indicates the success of the operation.
+   */
+  bool setSystemTime(time_t ts);
+
+  /** Provide the http code error string
+   *
+   * @param httpCode The http code.
+   * @param buff The String buffer out.
+   */
+  void errorToString(int httpCode, String &buff)
+  {
+    MB_String out;
+    Core.errorToString(httpCode, out);
+    buff = out.c_str();
+  }
+
+private:
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
+  FB_RTDB RTDB;
+#endif
+#endif
+
   void init(FirebaseConfig *config, FirebaseAuth *auth);
-  bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
   void mSetAuthToken(FirebaseConfig *config, MB_StringPtr authToken, size_t expire, MB_StringPtr refreshToken,
                      firebase_auth_token_type type, MB_StringPtr clientId, MB_StringPtr clientSecret);
+  bool mSignUp(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr email, MB_StringPtr password);
   bool msendEmailVerification(FirebaseConfig *config, MB_StringPtr idToken);
   bool mDeleteUser(FirebaseConfig *config, FirebaseAuth *auth, MB_StringPtr idToken);
   bool mSendResetPassword(FirebaseConfig *config, MB_StringPtr email);
 
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
   void pre_begin(MB_StringPtr databaseURL, MB_StringPtr databaseSecret)
   {
     if (!config)
@@ -3066,18 +2605,18 @@ private:
     config->signer.tokens.legacy_token = addrTo<const char *>(databaseSecret.address());
   }
 
+  firebase_mem_storage_type getMemStorageType(uint8_t old_type)
+  {
+    return (firebase_mem_storage_type)(old_type);
+  }
+
+#endif
+
   FirebaseAuth *auth = nullptr;
   FirebaseConfig *config = nullptr;
-  MB_FS mbfs;
-  uint32_t mb_ts = 0;
-  uint32_t mb_ts_offset = 0;
   bool extConfig = true;
 };
 
 extern FIREBASE_CLASS Firebase;
-
-#endif /* FIREBASE_ESP32_CLIENT || FIREBASE_ESP8266_CLIENT */
-
-#endif /* ESP8266 || ESP32 */
 
 #endif /* Firebase_H */

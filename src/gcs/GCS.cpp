@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.11
+ * Google's Cloud Storage class, GCS.cpp version 1.2.12
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
- * Created July 29, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -84,9 +79,6 @@ bool GG_CloudStorage::mUpload(FirebaseData *fbdo, MB_StringPtr bucketID, MB_Stri
 
 bool GG_CloudStorage::sendRequest(FirebaseData *fbdo, struct firebase_gcs_req_t *req)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
-
     fbdo->session.http_code = 0;
 
     if (!Core.config)
@@ -514,13 +506,13 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
         {
             Core.hh.addAuthHeaderFirst(header, Core.getTokenType());
 
-            fbdo->tcpClient.send(header.c_str());
+            fbdo->tcpSend(header.c_str());
             header.clear();
 
             if (fbdo->session.response.code < 0)
                 return false;
 
-            fbdo->tcpClient.send(Core.getToken());
+            fbdo->tcpSend(Core.getToken());
 
             if (fbdo->session.response.code < 0)
                 return false;
@@ -641,14 +633,14 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
     if (req->requestType == firebase_gcs_request_type_download ||
         req->requestType == firebase_gcs_request_type_download_ota)
     {
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
         if (fbdo->session.response.code < 0)
             return false;
     }
     else
     {
-        fbdo->tcpClient.send(header.c_str());
+        fbdo->tcpSend(header.c_str());
         header.clear();
         if (fbdo->session.response.code < 0)
             return false;
@@ -656,7 +648,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
         if (req->requestType == firebase_gcs_request_type_upload_resumable_init)
         {
             if (fbdo->session.jsonPtr)
-                fbdo->tcpClient.send(fbdo->session.jsonPtr->raw());
+                fbdo->tcpSend(fbdo->session.jsonPtr->raw());
 
             if (fbdo->session.response.code < 0)
                 return false;
@@ -676,7 +668,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
             if (req->requestType == firebase_gcs_request_type_upload_multipart)
             {
-                fbdo->tcpClient.send(multipart_header.c_str());
+                fbdo->tcpSend(multipart_header.c_str());
                 multipart_header.clear();
 
                 if (fbdo->session.response.code < 0)
@@ -701,7 +693,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
                 reportUploadProgress(fbdo, req, byteRead);
 
-                if ((int)fbdo->tcpClient.write(buf, read) != read)
+                if ((int)fbdo->tcpWrite(buf, read) != read)
                 {
                     fbdo->session.response.code = FIREBASE_ERROR_UPLOAD_DATA_ERRROR;
                     fbdo->closeSession();
@@ -718,7 +710,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
             if (req->requestType == firebase_gcs_request_type_upload_multipart)
             {
-                fbdo->tcpClient.send(multipart_header2.c_str());
+                fbdo->tcpSend(multipart_header2.c_str());
                 multipart_header2.clear();
 
                 if (fbdo->session.response.code < 0)
@@ -760,7 +752,7 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
                 if (fbdo->tcpClient.connected())
                 {
-                    if ((int)fbdo->tcpClient.write(buf, read) != read)
+                    if ((int)fbdo->tcpWrite(buf, read) != read)
                     {
                         fbdo->session.response.code = FIREBASE_ERROR_UPLOAD_DATA_ERRROR;
                         fbdo->closeSession();

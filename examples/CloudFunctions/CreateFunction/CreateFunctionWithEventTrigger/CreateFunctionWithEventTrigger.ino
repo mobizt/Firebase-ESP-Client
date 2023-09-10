@@ -59,6 +59,12 @@
 #include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
 #endif
 
 #include <Firebase_ESP_Client.h>
@@ -165,9 +171,13 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    Firebase.begin(&config, &auth);
-
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
+
+    // required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
+    Firebase.begin(&config, &auth);
 }
 
 void loop()
@@ -229,24 +239,24 @@ void creatFunction()
 /* The function to show the Cloud Function deployment status */
 void functionCreationCallback(FunctionsOperationStatusInfo statusInfo)
 {
-    if (statusInfo.status == fb_esp_functions_operation_status_unknown)
+    if (statusInfo.status == firebase_functions_operation_status_unknown)
         Serial.printf("%s: Unknown\n", statusInfo.functionId.c_str());
-    else if (statusInfo.status == fb_esp_functions_operation_status_generate_upload_url)
+    else if (statusInfo.status == firebase_functions_operation_status_generate_upload_url)
         Serial.printf("%s: Generate the upload Url...\n", statusInfo.functionId.c_str());
-    else if (statusInfo.status == fb_esp_functions_operation_status_upload_source_file_in_progress)
+    else if (statusInfo.status == firebase_functions_operation_status_upload_source_file_in_progress)
         Serial.printf("%s: Uploading file...\n", statusInfo.functionId.c_str());
-    else if (statusInfo.status == fb_esp_functions_operation_status_deploy_in_progress)
+    else if (statusInfo.status == firebase_functions_operation_status_deploy_in_progress)
         Serial.printf("%s: Deploying function...\n", statusInfo.functionId.c_str());
-    else if (statusInfo.status == fb_esp_functions_operation_status_set_iam_policy_in_progress)
+    else if (statusInfo.status == firebase_functions_operation_status_set_iam_policy_in_progress)
         Serial.printf("%s: Set the IAM policy...\n", statusInfo.functionId.c_str());
-    else if (statusInfo.status == fb_esp_functions_operation_status_delete_in_progress)
+    else if (statusInfo.status == firebase_functions_operation_status_delete_in_progress)
         Serial.printf("%s: Delete the function...\n", statusInfo.functionId.c_str());
-    else if (statusInfo.status == fb_esp_functions_operation_status_finished)
+    else if (statusInfo.status == firebase_functions_operation_status_finished)
     {
         Serial.printf("%s: success\n", statusInfo.functionId.c_str());
         Serial.println();
     }
-    else if (statusInfo.status == fb_esp_functions_operation_status_error)
+    else if (statusInfo.status == firebase_functions_operation_status_error)
     {
         Serial.printf("%s: Error, ", statusInfo.functionId.c_str());
         Serial.println(statusInfo.errorMsg.c_str());

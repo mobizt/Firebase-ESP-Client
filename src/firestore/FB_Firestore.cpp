@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Firestore class, Forestore.cpp version 1.2.9
+ * Google's Cloud Firestore class, Forestore.cpp version 1.2.10
  *
- * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
- *
- * Created July 11, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -487,8 +482,7 @@ bool FB_Firestore::mListIndex(FirebaseData *fbdo, MB_StringPtr projectId, MB_Str
 
 bool FB_Firestore::sendRequest(FirebaseData *fbdo, struct firebase_firestore_req_t *req)
 {
-    if (fbdo->tcpClient.reserved)
-        return false;
+
     fbdo->session.http_code = 0;
     if (!Core.config)
     {

@@ -1,16 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
  * Google's Firebase Token Management class, FirebaseCore.cpp version 1.0.0
  *
- *
- * Created September 2, 2023
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 5, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -572,9 +568,9 @@ void FirebaseCore::getBaseTime()
 
 #elif defined(FIREBASE_HAS_WIFI_TIME)
     if (WiFI_CONNECTED)
-        baseTs = WiFi.getTime() > FIREBASE_DEFAULT_TS ? WiFi.getTime() : *baseTs;
+        baseTs = WiFi.getTime() > FIREBASE_DEFAULT_TS ? WiFi.getTime() : baseTs;
 #else
-    baseTs = *tsOffset + millis() / 1000;
+    baseTs = tsOffset + millis() / 1000;
 #endif
 
     if (baseTs > FIREBASE_DEFAULT_TS)
@@ -662,8 +658,14 @@ void FirebaseCore::readNTPTime()
 
 void FirebaseCore::tokenProcessingTask()
 {
-    // We don't have to use memory reserved tasks e.g., FreeRTOS task in ESP32 for this JWT
-    // All tasks can be processed in a finite loop.
+    // All sessions should be closed
+    freeClient(&tcpClient);
+
+    for (size_t i = 0; i < Core.internal.sessions.size(); i++)
+    {
+        if (Core.internal.sessions[i].status)
+            return;
+    }
 
     // return when task is currently running
     if (config->signer.tokenTaskRunning)
@@ -679,10 +681,13 @@ void FirebaseCore::tokenProcessingTask()
 
     while (!ret && config->signer.tokens.status != token_status_ready)
     {
+
         FBUtils::idle();
 
         if (!internal.fb_clock_rdy && (config->cert.data != NULL || config->cert.file.length() > 0 || config->signer.tokens.token_type == token_type_oauth2_access_token || config->signer.tokens.token_type == token_type_custom_token))
         {
+            int code = FIREBASE_ERROR_NTP_TIMEOUT;
+
             if (_cli_type == firebase_client_type_external_gsm_client)
             {
                 uint32_t _time = tcpClient->gprsGetTime();
@@ -693,14 +698,24 @@ void FirebaseCore::tokenProcessingTask()
                 }
             }
             else
-                readNTPTime();
+            {
+#if defined(FIREBASE_ENABLE_NTP_TIME) || defined(ENABLE_NTP_TIME)
+                if (WiFI_CONNECTED)
+                    readNTPTime();
+                else
+                    code = FIREBASE_ERROR_NO_WIFI_TIME;
+
+#else
+                code = FIREBASE_ERROR_USER_TIME_SETTING_REQUIRED;
+#endif
+            }
 
             if (readyToSync())
             {
                 if (isSyncTimeOut())
                 {
                     config->signer.tokens.error.message.clear();
-                    setTokenError(FIREBASE_ERROR_NTP_SYNC_TIMED_OUT);
+                    setTokenError(code);
                     sendTokenStatusCB();
                     config->signer.tokens.status = token_status_on_initialize;
                     internal.fb_last_jwt_generation_error_cb_millis = 0;
@@ -716,10 +731,12 @@ void FirebaseCore::tokenProcessingTask()
 
         if (config->signer.tokens.token_type == token_type_id_token)
         {
-            config->signer.lastReqMillis = millis();
-
             // email/password verification and get id token
             ret = getIdToken(false, toStringPtr(_EMPTY_STR), toStringPtr(_EMPTY_STR));
+
+            // send error cb
+            if (!reconnect() && isErrorCBTimeOut())
+                handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
         }
         else
         {
@@ -755,6 +772,10 @@ void FirebaseCore::tokenProcessingTask()
                     ret = requestTokens(false);
                     config->signer.step = ret || getTime() - now > 3599 ? firebase_jwt_generation_step_begin : firebase_jwt_generation_step_exchange;
                     ret = true;
+
+                    // send error cb
+                    if (!reconnect() && isErrorCBTimeOut())
+                        handleTaskError(FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST);
                 }
             }
         }
@@ -866,20 +887,25 @@ bool FirebaseCore::refreshToken()
 void FirebaseCore::newClient(Firebase_TCP_Client **client)
 {
     freeClient(client);
-
     if (!*client)
     {
+
         *client = new Firebase_TCP_Client();
 
-        if (*client)
+        if (_cli_type == firebase_client_type_external_generic_client)
+            (*client)->setClient(_cli, _net_con_cb, _net_stat_cb);
+        else if (_cli_type == firebase_client_type_external_ethernet_client)
         {
-            (*client)->setConfig(config, &mbfs);
-            // restore only external client (gsm client integration cannot restore)
-            if (_cli_type == firebase_client_type_external_basic_client)
-                (*client)->setClient(_cli, _net_con_cb, _net_stat_cb);
-            else
-                (*client)->_client_type = _cli_type;
+            (*client)->setEthernetClient(_cli, _ethernet_mac, _ethernet_cs_pin, _ethernet_reset_pin, _static_ip);
         }
+        else if (_cli_type == firebase_client_type_external_gsm_client)
+        {
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+            (*client)->setGSMClient(_cli, _modem, _pin.c_str(), _apn.c_str(), _user.c_str(), _password.c_str());
+#endif
+        }
+        else
+            (*client)->_client_type = _cli_type;
     }
 }
 
@@ -887,11 +913,31 @@ void FirebaseCore::freeClient(Firebase_TCP_Client **client)
 {
     if (*client)
     {
-        // Keep external client pointers
+
         _cli_type = (*client)->type();
-        _net_con_cb = (*client)->_network_connection_cb;
-        _net_stat_cb = (*client)->_network_status_cb;
         _cli = (*client)->_basic_client;
+        if (_cli_type == firebase_client_type_external_generic_client)
+        {
+            _net_con_cb = (*client)->_network_connection_cb;
+            _net_stat_cb = (*client)->_network_status_cb;
+        }
+        else if (_cli_type == firebase_client_type_external_ethernet_client)
+        {
+            _ethernet_mac = (*client)->_ethernet_mac;
+            _ethernet_cs_pin = (*client)->_ethernet_cs_pin;
+            _ethernet_reset_pin = (*client)->_ethernet_reset_pin;
+            _static_ip = (*client)->_static_ip;
+        }
+        else if (_cli_type == firebase_client_type_external_gsm_client)
+        {
+#if defined(FIREBASE_GSM_MODEM_IS_AVAILABLE)
+            _modem = (*client)->_modem;
+            _pin = (*client)->_pin;
+            _apn = (*client)->_apn;
+            _user = (*client)->_user;
+            _password = (*client)->_password;
+#endif
+        }
         delete *client;
     }
     *client = nullptr;
@@ -921,10 +967,7 @@ bool FirebaseCore::handleTaskError(int code, int httpCode)
     // Close TCP connection and unlock used flag
 
     if (tcpClient)
-    {
         tcpClient->stop();
-        tcpClient->reserved = false;
-    }
 
     internal.fb_processing = false;
 
@@ -1551,22 +1594,15 @@ void FirebaseCore::setNetworkStatus(bool status)
 
 void FirebaseCore::closeSession(Firebase_TCP_Client *client, firebase_session_info_t *session)
 {
-    if (!session || !client)
-        return;
 
-    bool status = client->networkReady();
+    // close the socket and free the resources used by the SSL engine
+    internal.fb_last_reconnect_millis = millis();
 
-    if (status)
-    {
-        // close the socket and free the resources used by the SSL engine
-
-        if (config)
-            internal.fb_last_reconnect_millis = millis();
-
+    if (client)
         client->stop();
-    }
+
 #if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
-    if (session->con_mode == firebase_con_mode_rtdb_stream)
+    if (session && session->con_mode == firebase_con_mode_rtdb_stream)
     {
         session->rtdb.stream_tmo_Millis = millis();
         session->rtdb.data_millis = millis();
@@ -1669,13 +1705,13 @@ bool FirebaseCore::reconnect()
 
     // We need tcpClient for network checking.
 
-    if (noClient)
-        newClient(&tcpClient);
+    // if (noClient)
+    //    newClient(&tcpClient);
 
-    reconnect(tcpClient, nullptr);
+    // reconnect(tcpClient, nullptr);
 
-    if (noClient)
-        freeClient(&tcpClient);
+    // if (noClient)
+    //    freeClient(&tcpClient);
 
     networkChecking = false;
 
@@ -1721,9 +1757,6 @@ bool FirebaseCore::initClient(PGM_P subDomain, firebase_auth_token_status status
         return handleTaskError(FIREBASE_ERROR_HTTP_CODE_REQUEST_TIMEOUT, FIREBASE_ERROR_EXTERNAL_CLIENT_NOT_INITIALIZED);
 
     tcpClient->setBufferSizes(2048, 1024);
-
-    // Used for authentication task
-    tcpClient->reserved = true;
 
     initJson();
 
@@ -2247,19 +2280,21 @@ void FirebaseCore::errorToString(int httpCode, MB_String &buff)
         return;
 #endif
 
-    case FIREBASE_ERROR_TOKEN_SET_TIME:
-        buff += firebase_time_err_pgm_str_1; // "system time was not set"
+    case FIREBASE_ERROR_NTP_TIMEOUT:
+        buff += firebase_time_err_pgm_str_1; // "NTP server time reading timed out"
         break;
-    case FIREBASE_ERROR_CANNOT_CONFIG_TIME:
-        buff += firebase_time_err_pgm_str_2; // "cannot config time"
+    case FIREBASE_ERROR_NO_WIFI_TIME:
+        buff += firebase_time_err_pgm_str_2; // "NTP server time reading cannot begin when valid time is required because of no WiFi capability/activity detected."
+        buff += firebase_pgm_str_9;          // " "
+        buff += firebase_time_err_pgm_str_3; // "Please set the library reference time manually using Firebase.setSystemTime"
+        return;
+    case FIREBASE_ERROR_USER_TIME_SETTING_REQUIRED:
+        buff += firebase_time_err_pgm_str_3; // "Please set the library reference time manually using Firebase.setSystemTime"
         return;
     case FIREBASE_ERROR_SYS_TIME_IS_NOT_READY:
-        buff += firebase_time_err_pgm_str_3; // "device time was not set"
-        return;
-    case FIREBASE_ERROR_NTP_SYNC_TIMED_OUT:
-        buff += firebase_time_err_pgm_str_4; // "NTP server time synching failed"
-        return;
 
+        buff += firebase_time_err_pgm_str_4; // "system time was not set"
+        return;
     case FIREBASE_ERROR_DATA_TYPE_MISMATCH:
         buff += firebase_rtdb_err_pgm_str_3; // "data type mismatch"
         return;
@@ -2272,6 +2307,9 @@ void FirebaseCore::errorToString(int httpCode, MB_String &buff)
     case FIREBASE_ERROR_INVALID_JSON_RULES:
         buff += firebase_rtdb_err_pgm_str_4; // "security rules is not a valid JSON"
         return;
+    case FIREBASE_ERROR_USER_PAUSE:
+        buff += firebase_rtdb_err_pgm_str_5; // "the FirebaseData object was paused"
+        break;
 
     case FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED:
         buff += firebase_fcm_err_pgm_str_1; // "no ID token or registration token provided"
@@ -2344,11 +2382,6 @@ firebase_mem_storage_type FirebaseCore::getCAFileStorage()
 
 bool FirebaseCore::waitIdle(int &httpCode)
 {
-
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-    if (internal.fb_multiple_requests)
-        return true;
-
     unsigned long wTime = millis();
     while (internal.fb_processing)
     {
@@ -2357,9 +2390,8 @@ bool FirebaseCore::waitIdle(int &httpCode)
             httpCode = FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED;
             return false;
         }
-        ut.FBUtils::idle();
+        FBUtils::idle();
     }
-#endif
     return true;
 }
 
