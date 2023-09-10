@@ -2307,6 +2307,9 @@ void FirebaseCore::errorToString(int httpCode, MB_String &buff)
     case FIREBASE_ERROR_INVALID_JSON_RULES:
         buff += firebase_rtdb_err_pgm_str_4; // "security rules is not a valid JSON"
         return;
+    case FIREBASE_ERROR_USER_PAUSE:
+        buff += firebase_rtdb_err_pgm_str_5; // "the FirebaseData object was paused"
+        break;
 
     case FIREBASE_ERROR_NO_FCM_ID_TOKEN_PROVIDED:
         buff += firebase_fcm_err_pgm_str_1; // "no ID token or registration token provided"

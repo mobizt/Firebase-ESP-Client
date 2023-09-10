@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.14
+ * FireSense v1.0.15
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created March 5, 2023
+ * Created September 10, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

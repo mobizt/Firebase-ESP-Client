@@ -2582,6 +2582,7 @@ static const char firebase_rtdb_err_pgm_str_1[] PROGMEM = "backup data should be
 static const char firebase_rtdb_err_pgm_str_2[] PROGMEM = "path not exist";
 static const char firebase_rtdb_err_pgm_str_3[] PROGMEM = "data type mismatch";
 static const char firebase_rtdb_err_pgm_str_4[] PROGMEM = "security rules is not a valid JSON";
+static const char firebase_rtdb_err_pgm_str_5[] PROGMEM = "the FirebaseData object was paused";
 
 // FCM error string
 static const char firebase_fcm_err_pgm_str_1[] PROGMEM = "no ID token or registration token provided";

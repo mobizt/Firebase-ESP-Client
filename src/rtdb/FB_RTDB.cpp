@@ -1557,7 +1557,7 @@ bool FB_RTDB::processRequest(FirebaseData *fbdo, struct firebase_rtdb_request_in
 
     FBUtils::idle();
 
-    if (!preRequestCheck(fbdo, req))
+    if (preRequestCheck(fbdo, req) <= 0)
         return false;
 
     if (req->method != http_get)
@@ -1677,7 +1677,7 @@ bool FB_RTDB::handleRequest(FirebaseData *fbdo, struct firebase_rtdb_request_inf
 {
     FBUtils::idle();
 
-    if (!preRequestCheck(fbdo, req))
+    if (preRequestCheck(fbdo, req) <= 0)
         return false;
 
 #if defined(MB_ARDUINO_PICO)
@@ -1928,7 +1928,7 @@ int FB_RTDB::preRequestCheck(FirebaseData *fbdo, struct firebase_rtdb_request_in
     if (!Core.config)
         code = FIREBASE_ERROR_UNINITIALIZED;
     else if (fbdo->session.rtdb.pause)
-        code = 0;
+        code = FIREBASE_ERROR_USER_PAUSE;
     else if (!fbdo->tokenReady())
         code = FIREBASE_ERROR_TOKEN_NOT_READY;
     else if (req->path.length() == 0 ||
@@ -3452,7 +3452,7 @@ bool FB_RTDB::handleStreamRequest(FirebaseData *fbdo, const MB_String &path)
     else
         req.path = path.c_str();
 
-    if (!preRequestCheck(fbdo, &req))
+    if (preRequestCheck(fbdo, &req) <= 0)
         return false;
 
     if (!sendRequest(fbdo, &req))
