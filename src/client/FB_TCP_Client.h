@@ -1087,14 +1087,6 @@ public:
     return _network_status;
   }
 
-  bool wifiConnected()
-  {
-#if defined(FIREBASE_WIFI_MODULE_IS_AVAILABLE)
-    _network_status = Ethernet.linkStatus() == LinkON;
-#endif
-    return _network_status;
-  }
-
   int setOption(int option, int *value)
   {
 #if defined(ESP32) && defined(FIREBASE_WIFI_IS_AVAILABLE)

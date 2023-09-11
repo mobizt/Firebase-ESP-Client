@@ -17,6 +17,10 @@
 #include <esp_idf_version.h>
 #endif
 
+#if __has_include(<IPAddress.h>)
+#include <IPAddress.h>
+#endif
+
 #if defined(ESP8266) || defined(MB_ARDUINO_PICO)
 
 #include <string>

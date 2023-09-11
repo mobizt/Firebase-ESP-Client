@@ -683,6 +683,7 @@ void FirebaseCore::tokenProcessingTask()
     {
 
         FBUtils::idle();
+        internal.fb_clock_rdy = timeReady();
 
         if (!internal.fb_clock_rdy && (config->cert.data != NULL || config->cert.file.length() > 0 || config->signer.tokens.token_type == token_type_oauth2_access_token || config->signer.tokens.token_type == token_type_custom_token))
         {
