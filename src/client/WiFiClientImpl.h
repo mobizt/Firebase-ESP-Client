@@ -411,7 +411,7 @@ private:
 
     int tcpPeek()
     {
-        if (!_rxBuff || _fillPos == _fillSize && !fillRxBuffer())
+        if (!_rxBuff || (_fillPos == _fillSize && !fillRxBuffer()))
         {
             return -1;
         }
