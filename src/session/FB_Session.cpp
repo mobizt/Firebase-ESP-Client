@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40403)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40404)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.4.0
+ * Google's Firebase Data class, FB_Session.cpp version 1.4.1
  *
- * Created September 5, 2023
+ * Created September 12, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -74,14 +74,13 @@ FirebaseData::~FirebaseData()
 void FirebaseData::setGenericClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
                                     FB_NetworkStatusRequestCallback networkStatusCB)
 {
-    if (client)
+    if (client && networkConnectionCB && networkStatusCB)
     {
         _client = client;
-        Core.setTCPClient(&tcpClient);
+        tcpClient.setClient(_client, networkConnectionCB, networkStatusCB);
     }
-
-    if (_networkConnectionCB && _networkStatusCB)
-        tcpClient.setClient(_client, _networkConnectionCB, _networkStatusCB);
+    // Client type shall be set before calling this.
+    Core.setTCPClient(&tcpClient);
 }
 
 void FirebaseData::setGSMClient(Client *client, void *modem, const char *pin, const char *apn, const char *user, const char *password)

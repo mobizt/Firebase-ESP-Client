@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40403)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40404)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Token Management class, FirebaseCore.cpp version 1.0.0
+ * Google's Firebase Token Management class, FirebaseCore.cpp version 1.0.1
  *
- * Created September 5, 2023
+ * Created September 12, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -939,9 +939,15 @@ void FirebaseCore::freeClient(Firebase_TCP_Client **client)
             _password = (*client)->_password;
 #endif
         }
-        delete *client;
+
+        // Only internal client can be deleted
+        if (_cli_type == firebase_client_type_internal_basic_client)
+            delete *client;
     }
-    *client = nullptr;
+
+    // Reset pointer in case internal client
+    if (_cli_type == firebase_client_type_internal_basic_client)
+        *client = nullptr;
 }
 
 void FirebaseCore::setTokenError(int code)
@@ -1708,12 +1714,12 @@ bool FirebaseCore::reconnect()
     // otherwise the networkStatus will not update
     // and network cannot resume.
 
-     if (noClient)
+    if (noClient)
         newClient(&tcpClient);
 
-     reconnect(tcpClient, nullptr);
+    reconnect(tcpClient, nullptr);
 
-     if (noClient)
+    if (noClient)
         freeClient(&tcpClient);
 
     networkChecking = false;

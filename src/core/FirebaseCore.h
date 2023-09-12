@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40403)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40404)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Token Management class, FirebaseCore.h version 1.0.0
+ * Google's Firebase Token Management class, FirebaseCore.h version 1.0.1
  * 
- * Created September 5, 2023
+ * Created September 12, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
