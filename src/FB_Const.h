@@ -1,10 +1,10 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40404)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40405)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created September 5, 2023
+ * Created September 12, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -186,6 +186,7 @@ enum firebase_con_mode
 
 enum firebase_data_type
 {
+    // Do not changes the order as it used by firebase_rtdb_data_type
     d_any = 0,
     d_null,
     d_integer,
@@ -205,15 +206,27 @@ enum firebase_data_type
 enum firebase_rtdb_data_type
 {
     firebase_rtdb_data_type_null = d_null,
-    firebase_rtdb_data_type_integer,
-    firebase_rtdb_data_type_float,
-    firebase_rtdb_data_type_double,
-    firebase_rtdb_data_type_boolean,
-    firebase_rtdb_data_type_string,
-    firebase_rtdb_data_type_json,
-    firebase_rtdb_data_type_array,
-    firebase_rtdb_data_type_blob,
-    firebase_rtdb_data_type_file
+    firebase_rtdb_data_type_integer = d_integer,
+    firebase_rtdb_data_type_float = d_float,
+    firebase_rtdb_data_type_double = d_double,
+    firebase_rtdb_data_type_boolean = d_boolean,
+    firebase_rtdb_data_type_string = d_string,
+    firebase_rtdb_data_type_json = d_json,
+    firebase_rtdb_data_type_array = d_array,
+    firebase_rtdb_data_type_blob = d_blob,
+    firebase_rtdb_data_type_file = d_file,
+
+    // old version compat
+    fb_esp_rtdb_data_type_null = d_null,
+    fb_esp_rtdb_data_type_integer = d_integer,
+    fb_esp_rtdb_data_type_float = d_float,
+    fb_esp_rtdb_data_type_double = d_double,
+    fb_esp_rtdb_data_type_boolean = d_boolean,
+    fb_esp_rtdb_data_type_string = d_string,
+    fb_esp_rtdb_data_type_json = d_json,
+    fb_esp_rtdb_data_type_array = d_array,
+    fb_esp_rtdb_data_type_blob = d_blob,
+    fb_esp_rtdb_data_type_file = d_file
 };
 
 enum firebase_request_method
@@ -309,20 +322,7 @@ enum firebase_rtdb_value_type
     firebase_rtdb_value_type_double = 7,
     firebase_rtdb_value_type_json = 8,
     firebase_rtdb_value_type_array = 9,
-    firebase_rtdb_value_type_blob = 10,
-
-    // old version compat
-    fb_esp_rtdb_value_type_any = 0,
-    fb_esp_rtdb_value_type_std_string = 1,
-    fb_esp_rtdb_value_type_arduino_string = 2,
-    fb_esp_rtdb_value_type_mb_string = 3,
-    fb_esp_rtdb_value_type_char_array = 4,
-    fb_esp_rtdb_value_type_int = 5,
-    fb_esp_rtdb_value_type_float = 6,
-    fb_esp_rtdb_value_type_double = 7,
-    fb_esp_rtdb_value_type_json = 8,
-    fb_esp_rtdb_value_type_array = 9,
-    fb_esp_rtdb_value_type_blob = 10
+    firebase_rtdb_value_type_blob = 10
 };
 
 enum firebase_rtdb_upload_status
