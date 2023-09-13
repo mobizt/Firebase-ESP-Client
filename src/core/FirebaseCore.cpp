@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40405)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
 #error "Mixed versions compilation."
 #endif
 
@@ -1581,9 +1581,9 @@ bool FirebaseCore::deleteIdToken(MB_StringPtr idToken)
     return true;
 }
 
-void FirebaseCore::setAutoReconnectWiFi(bool reconnect)
+void FirebaseCore::setAutoReconnectNetwork(bool reconnect)
 {
-    autoReconnectWiFi = reconnect;
+    autoReconnectNetwork = reconnect;
 }
 
 void FirebaseCore::setTCPClient(Firebase_TCP_Client *tcpClient)
@@ -1660,9 +1660,12 @@ bool FirebaseCore::reconnect(Firebase_TCP_Client *client, firebase_session_info_
             session->response.code = FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST;
         }
 
+        if (config && config->timeout.wifiReconnect > 0)
+            config->timeout.networkReconnect = config->timeout.wifiReconnect;
+
         resumeNetwork(client, config ? internal.net_once_connected : net_once_connected,
                       config ? internal.fb_last_reconnect_millis : last_reconnect_millis,
-                      config ? config->timeout.wifiReconnect : wifi_reconnect_tmo);
+                      config ? config->timeout.networkReconnect : net_reconnect_tmo);
 
         networkStatus = client->networkReady();
     }
@@ -1684,16 +1687,16 @@ bool FirebaseCore::reconnect(Firebase_TCP_Client *client, firebase_session_info_
     return networkStatus;
 }
 
-void FirebaseCore::resumeNetwork(Firebase_TCP_Client *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo)
+void FirebaseCore::resumeNetwork(Firebase_TCP_Client *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &net_reconnect_tmo)
 {
 
-    if (autoReconnectWiFi || !net_once_connected)
+    if (autoReconnectNetwork || !net_once_connected)
     {
-        if (wifi_reconnect_tmo < MIN_WIFI_RECONNECT_TIMEOUT ||
-            wifi_reconnect_tmo > MAX_WIFI_RECONNECT_TIMEOUT)
-            wifi_reconnect_tmo = MIN_WIFI_RECONNECT_TIMEOUT;
+        if (net_reconnect_tmo < MIN_NET_RECONNECT_TIMEOUT ||
+            net_reconnect_tmo > MAX_NET_RECONNECT_TIMEOUT)
+            net_reconnect_tmo = MIN_NET_RECONNECT_TIMEOUT;
 
-        if (millis() - last_reconnect_millis > wifi_reconnect_tmo)
+        if (millis() - last_reconnect_millis > net_reconnect_tmo)
         {
             client->networkReconnect();
             last_reconnect_millis = millis();

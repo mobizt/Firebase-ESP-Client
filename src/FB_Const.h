@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40405)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
 #error "Mixed versions compilation."
 #endif
 
@@ -80,8 +80,8 @@
 
 #define MAX_REDIRECT 5
 
-#define MIN_WIFI_RECONNECT_TIMEOUT 10 * 1000
-#define MAX_WIFI_RECONNECT_TIMEOUT 5 * 60 * 1000
+#define MIN_NET_RECONNECT_TIMEOUT 10 * 1000
+#define MAX_NET_RECONNECT_TIMEOUT 5 * 60 * 1000
 
 #define MIN_SOCKET_CONN_TIMEOUT 1 * 1000
 #define DEFAULT_SOCKET_CONN_TIMEOUT 10 * 1000
@@ -1086,7 +1086,7 @@ struct firebase_cfg_int_t
     bool fb_rtoken_requested = false;
     uint8_t fb_stream_idx = 0;
 
-    bool fb_reconnect_wifi = false;
+    bool fb_reconnect_network = false;
     unsigned long fb_last_reconnect_millis = 0;
     bool net_once_connected = false;
     unsigned long fb_last_jwt_begin_step_millis = 0;
@@ -1297,8 +1297,11 @@ typedef void (*TokenStatusCallback)(TokenInfo);
 
 struct firebase_client_timeout_t
 {
-    // WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
-    uint16_t wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
+    // Network reconnect timeout (interval) in ms (10 sec - 5 min) when network or WiFi disconnected.
+    uint16_t networkReconnect = MIN_NET_RECONNECT_TIMEOUT;
+    
+    // Deprecated, please use networkReconnect instead
+    uint16_t wifiReconnect = 0;
 
     // Socket connection and ssl handshake timeout in ms (1 sec - 1 min).
     unsigned long socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;

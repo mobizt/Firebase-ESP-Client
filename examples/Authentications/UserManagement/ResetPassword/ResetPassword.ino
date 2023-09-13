@@ -100,7 +100,7 @@ void setup()
     config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
 #endif
 
-    Firebase.reconnectWiFi(true);
+    Firebase.reconnectNetwork(true);
 
     Serial.printf("Send Email reset password link... %s\n", Firebase.sendResetPassword(&config, USER_EMAIL) ? "ok" : config.signer.resetPswError.message.c_str());
 }

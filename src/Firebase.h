@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40405)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * The Firebase class, Firebase.h v1.2.7
+ * The Firebase class, Firebase.h v1.2.8
  *
- *  Created September 5, 2023
+ *  Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -316,10 +316,13 @@ public:
   template <typename T = const char *>
   bool sendResetPassword(FirebaseConfig *config, T email) { return mSendResetPassword(config, toStringPtr(email)); }
 
-  /** Reconnect WiFi if lost connection.
+  /** Reconnect network if lost connection.
    *
    * @param reconnect The boolean to set/unset WiFi AP reconnection.
    */
+  void reconnectNetwork(bool reconnect);
+
+  /* Deprecated, use reconnectNetwork instead. */
   void reconnectWiFi(bool reconnect);
 
   /** Get currently used auth token string.
@@ -2479,7 +2482,10 @@ public:
 #endif // RTDB
 
 #if defined(ENABLE_FCM) || defined(FIREBASE_ENABLE_FCM)
-  bool sendMessage(FirebaseData &fbdo, uint16_t index){ return false; }
+  bool sendMessage(FirebaseData &fbdo, uint16_t index)
+  {
+    return false;
+  }
   bool broadcastMessage(FirebaseData &fbdo) { return false; }
   bool sendTopic(FirebaseData &fbdo) { return false; }
 #endif // FCM

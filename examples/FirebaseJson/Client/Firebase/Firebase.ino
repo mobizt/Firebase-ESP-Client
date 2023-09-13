@@ -83,6 +83,10 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
+    // Since Firebase v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
+    // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
+    fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
     // Or use legacy authenticate method
     // config.database_url = DATABASE_URL;
     // config.signer.tokens.legacy_token = "<database secret>";
@@ -90,7 +94,7 @@ void setup()
     Firebase.begin(&config, &auth);
 
     // Comment or pass false value when WiFi reconnection will control by your code or third party library
-    Firebase.reconnectWiFi(true);
+    Firebase.reconnectNetwork(true);
 }
 
 void loop()

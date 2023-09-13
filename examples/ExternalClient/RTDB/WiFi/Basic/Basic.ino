@@ -126,7 +126,7 @@ void setup()
     fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
     // Comment or pass false value when WiFi reconnection will control by your code or third party library
-    Firebase.reconnectWiFi(true);
+    Firebase.reconnectNetwork(true);
 
     Firebase.setDoubleDigits(5);
 

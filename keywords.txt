@@ -49,7 +49,7 @@ isTokenExpired  KEYWORD2
 refreshToken    KEYWORD2
 reset   KEYWORD2
 deleteUser  KEYWORD2
-reconnectWiFi   KEYWORD2
+reconnectNetwork   KEYWORD2
 setFloatDigits  KEYWORD2
 setDoubleDigits KEYWORD2
 setReadTimeout  KEYWORD2

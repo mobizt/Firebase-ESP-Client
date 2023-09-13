@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40405)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * The Firebase class, Firebase.cpp v1.2.7
+ * The Firebase class, Firebase.cpp v1.2.8
  *
- *  Created September 5, 2023
+ *  Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -309,7 +309,7 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
     if (!this->auth)
         this->auth = new FirebaseAuth();
 
-    Core.internal.fb_reconnect_wifi = Core.autoReconnectWiFi;
+    Core.internal.fb_reconnect_network = Core.autoReconnectNetwork;
 
     config->signer.lastReqMillis = 0;
 
@@ -321,12 +321,17 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
     config->signer.tokens.error.message.clear();
 }
 
-void FIREBASE_CLASS::reconnectWiFi(bool reconnect)
+void FIREBASE_CLASS::reconnectNetwork(bool reconnect)
 {
 #if defined(FIREBASE_WIFI_IS_AVAILABLE) && (defined(ESP32) || defined(ESP8266))
     WiFi.setAutoReconnect(reconnect);
 #endif
-    Core.setAutoReconnectWiFi(reconnect);
+    Core.setAutoReconnectNetwork(reconnect);
+}
+
+void FIREBASE_CLASS::reconnectWiFi(bool reconnect)
+{
+    reconnectNetwork(reconnect);
 }
 
 time_t FIREBASE_CLASS::getCurrentTime()
@@ -417,8 +422,6 @@ bool FIREBASE_CLASS::setSystemTime(time_t ts)
     return Core.setTime(ts);
 }
 
-
 FIREBASE_CLASS Firebase = FIREBASE_CLASS();
-
 
 #endif /* Firebase_CPP */

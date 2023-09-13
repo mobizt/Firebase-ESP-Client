@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40405)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
 #error "Mixed versions compilation."
 #endif
 
@@ -95,12 +95,12 @@ private:
     FirebaseJsonData *resultPtr = nullptr;
     int response_code = 0;
     time_t ts = 0;
-    bool autoReconnectWiFi = false;
+    bool autoReconnectNetwork = false;
 
     // Used as local vars in reconnect
     unsigned long last_reconnect_millis = 0;
     bool net_once_connected = false;
-    uint16_t wifi_reconnect_tmo = MIN_WIFI_RECONNECT_TIMEOUT;
+    uint16_t net_reconnect_tmo = MIN_NET_RECONNECT_TIMEOUT;
 
     volatile bool networkStatus = false;
     bool networkChecking = false;
@@ -209,7 +209,7 @@ private:
     /* resume network connection */
     bool reconnect(Firebase_TCP_Client *client, firebase_session_info_t *session, unsigned long dataTime = 0);
     bool reconnect();
-    void resumeNetwork(Firebase_TCP_Client *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &wifi_reconnect_tmo);
+    void resumeNetwork(Firebase_TCP_Client *client, bool &net_once_connected, unsigned long &last_reconnect_millis, uint16_t &net_reconnect_tmo);
     /* close TCP session */
     void closeSession(Firebase_TCP_Client *client, firebase_session_info_t *session);
     /* set external Client */
@@ -221,7 +221,7 @@ private:
     /* set the system time */
     bool setTime(time_t ts);
     /* set the WiFi (or network) auto reconnection option */
-    void setAutoReconnectWiFi(bool reconnect);
+    void setAutoReconnectNetwork(bool reconnect);
 
 #if defined(ESP8266)
     void set_scheduled_callback(callback_function_t callback)

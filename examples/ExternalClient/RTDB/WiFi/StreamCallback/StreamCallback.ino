@@ -173,7 +173,7 @@ void setup()
     /* Assign the required callback functions */
     stream.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
-    Firebase.reconnectWiFi(true);
+    Firebase.reconnectNetwork(true);
 
     Firebase.begin(&config, &auth);
 
