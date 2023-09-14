@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Storage class, GCS.cpp version 1.2.12
+ * Google's Cloud Storage class, GCS.cpp version 1.2.13
  *
- * Created September 5, 2023
+ * Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -209,16 +209,12 @@ bool GG_CloudStorage::mDownloadOTA(FirebaseData *fbdo, MB_StringPtr bucketID,
 
     fbdo->closeSession();
 
-#if defined(ESP8266)
     int rx_size = fbdo->session.bssl_rx_size;
     fbdo->session.bssl_rx_size = 16384;
-#endif
 
     bool ret = sendRequest(fbdo, &req);
 
-#if defined(ESP8266)
     fbdo->session.bssl_rx_size = rx_size;
-#endif
 
     fbdo->closeSession();
 
@@ -547,10 +543,10 @@ bool GG_CloudStorage::gcs_sendRequest(FirebaseData *fbdo, struct firebase_gcs_re
 
         if (req->remoteFileName[0] == '/')
             Core.jh.addString(fbdo->session.jsonPtr, firebase_pgm_str_66 /* "name" */,
-                                  Core.uh.encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1)));
+                              Core.uh.encode(req->remoteFileName.substr(1, req->remoteFileName.length() - 1)));
         else
             Core.jh.addString(fbdo->session.jsonPtr, firebase_pgm_str_66 /* "name" */,
-                                  Core.uh.encode(req->remoteFileName));
+                              Core.uh.encode(req->remoteFileName));
 
         Core.jh.addString(fbdo->session.jsonPtr, firebase_storage_ss_pgm_str_9 /* "contentType" */, req->mime);
 
@@ -857,17 +853,17 @@ void GG_CloudStorage::setGetOptions(struct firebase_gcs_req_t *req, MB_String &h
     if (req->getOptions)
     {
         Core.uh.addParam(header, firebase_gcs_pgm_str_15 /* "generation=" */,
-                            req->getOptions->generation, hasParams);
+                         req->getOptions->generation, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_16 /* "ifGenerationMatch=" */,
-                            req->getOptions->ifGenerationMatch, hasParams);
+                         req->getOptions->ifGenerationMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_17 /* "ifGenerationNotMatch=" */,
-                            req->getOptions->ifGenerationNotMatch, hasParams);
+                         req->getOptions->ifGenerationNotMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_18 /* "ifMetagenerationMatch=" */,
-                            req->getOptions->ifMetagenerationMatch, hasParams);
+                         req->getOptions->ifMetagenerationMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_19 /* "ifMetagenerationNotMatch=" */,
-                            req->getOptions->ifMetagenerationNotMatch, hasParams);
+                         req->getOptions->ifMetagenerationNotMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_21 /* "projection=" */,
-                            req->getOptions->projection, hasParams);
+                         req->getOptions->projection, hasParams);
     }
 }
 
@@ -876,21 +872,21 @@ void GG_CloudStorage::setUploadOptions(struct firebase_gcs_req_t *req, MB_String
     if (req->uploadOptions)
     {
         Core.uh.addParam(header, firebase_gcs_pgm_str_20 /* "contentEncoding=" */,
-                            req->uploadOptions->contentEncoding, hasParams);
+                         req->uploadOptions->contentEncoding, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_16 /* "ifGenerationMatch=" */,
-                            req->uploadOptions->ifGenerationMatch, hasParams);
+                         req->uploadOptions->ifGenerationMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_17 /* "ifGenerationNotMatch=" */,
-                            req->uploadOptions->ifGenerationNotMatch, hasParams);
+                         req->uploadOptions->ifGenerationNotMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_18 /* "ifMetagenerationMatch=" */,
-                            req->uploadOptions->ifMetagenerationMatch, hasParams);
+                         req->uploadOptions->ifMetagenerationMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_19 /* "ifMetagenerationNotMatch=" */,
-                            req->uploadOptions->ifMetagenerationNotMatch, hasParams);
+                         req->uploadOptions->ifMetagenerationNotMatch, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_22 /* "kmsKeyName=" */,
-                            req->uploadOptions->kmsKeyName, hasParams);
+                         req->uploadOptions->kmsKeyName, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_23 /* "predefinedAcl=" */,
-                            req->uploadOptions->predefinedAcl, hasParams);
+                         req->uploadOptions->predefinedAcl, hasParams);
         Core.uh.addParam(header, firebase_gcs_pgm_str_21 /* "projection=" */,
-                            req->uploadOptions->projection, hasParams);
+                         req->uploadOptions->projection, hasParams);
     }
 }
 
@@ -910,37 +906,37 @@ void GG_CloudStorage::setRequestproperties(struct firebase_gcs_req_t *req, Fireb
     }
 
     Core.jh.addString(json, firebase_gcs_pgm_str_24 /* "firebaseStorageDownloadTokens" */,
-                          MB_String(firebase_gcs_pgm_str_25 /* "a82781ce-a115-442f-bac6-a52f7f63b3e8" */));
+                      MB_String(firebase_gcs_pgm_str_25 /* "a82781ce-a115-442f-bac6-a52f7f63b3e8" */));
     Core.jh.addObject(json, firebase_gcs_pgm_str_36 /* "metadata" */, &js, false);
 
     if (req->requestProps)
     {
         Core.jh.addArrayString(json, firebase_gcs_pgm_str_26 /* "acl" */,
-                                   req->requestProps->acl, hasProps);
+                               req->requestProps->acl, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_27 /* "cacheControl" */),
-                              req->requestProps->cacheControl, hasProps);
+                          req->requestProps->cacheControl, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_28 /* "contentDisposition" */),
-                              req->requestProps->contentDisposition, hasProps);
+                          req->requestProps->contentDisposition, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_29 /* "contentEncoding" */),
-                              req->requestProps->contentEncoding, hasProps);
+                          req->requestProps->contentEncoding, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_30 /* "contentLanguage" */),
-                              req->requestProps->contentLanguage, hasProps);
+                          req->requestProps->contentLanguage, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_31 /* "contentType" */),
-                              req->requestProps->contentType, hasProps);
+                          req->requestProps->contentType, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_32 /* "crc32c" */),
-                              req->requestProps->crc32c, hasProps);
+                          req->requestProps->crc32c, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_33 /* "customTime" */),
-                              req->requestProps->customTime, hasProps);
+                          req->requestProps->customTime, hasProps);
         Core.jh.addBoolString(json, pgm2Str(firebase_gcs_pgm_str_34 /* "eventBasedHold" */),
-                                  req->requestProps->eventBasedHold, hasProps);
+                              req->requestProps->eventBasedHold, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_35 /* "md5Hash" */),
-                              req->requestProps->md5Hash, hasProps);
+                          req->requestProps->md5Hash, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_37 /* "name" */),
-                              req->requestProps->name, hasProps);
+                          req->requestProps->name, hasProps);
         Core.jh.addString(json, pgm2Str(firebase_gcs_pgm_str_38 /* "storageClass" */),
-                              req->requestProps->storageClass, hasProps);
+                          req->requestProps->storageClass, hasProps);
         Core.jh.addBoolString(json, pgm2Str(firebase_gcs_pgm_str_39 /* "temporaryHold" */),
-                                  req->requestProps->temporaryHold, hasProps);
+                              req->requestProps->temporaryHold, hasProps);
     }
 }
 
@@ -949,19 +945,19 @@ void GG_CloudStorage::setDeleteOptions(struct firebase_gcs_req_t *req, MB_String
     if (req->deleteOptions)
     {
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_16 /* "ifGenerationMatch=" */,
-                                      req->deleteOptions->ifGenerationMatch, hasParams)
+                                   req->deleteOptions->ifGenerationMatch, hasParams)
                       ? Core.sh.intStr2Str(req->deleteOptions->ifGenerationMatch)
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_17 /* "ifGenerationNotMatch=" */,
-                                      req->deleteOptions->ifGenerationNotMatch, hasParams)
+                                   req->deleteOptions->ifGenerationNotMatch, hasParams)
                       ? Core.sh.intStr2Str(req->deleteOptions->ifGenerationNotMatch)
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_18 /* "fMetagenerationMatch=" */,
-                                      req->deleteOptions->ifMetagenerationMatch, hasParams)
+                                   req->deleteOptions->ifMetagenerationMatch, hasParams)
                       ? Core.sh.intStr2Str(req->deleteOptions->ifMetagenerationMatch)
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_19 /* "ifMetagenerationNotMatch=" */,
-                                      req->deleteOptions->ifMetagenerationNotMatch, hasParams)
+                                   req->deleteOptions->ifMetagenerationNotMatch, hasParams)
                       ? Core.sh.intStr2Str(req->deleteOptions->ifMetagenerationNotMatch)
                       : "";
     }
@@ -972,39 +968,39 @@ void GG_CloudStorage::setListOptions(struct firebase_gcs_req_t *req, MB_String &
     if (req->listOptions)
     {
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_41 /* "delimiter=" */,
-                                      req->listOptions->delimiter, hasParams)
+                                   req->listOptions->delimiter, hasParams)
                       ? req->listOptions->delimiter
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_42 /* "endOffset=" */,
-                                      req->listOptions->endOffset, hasParams)
+                                   req->listOptions->endOffset, hasParams)
                       ? req->listOptions->endOffset
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_43 /* "includeTrailingDelimiter=" */,
-                                      req->listOptions->includeTrailingDelimiter, hasParams)
+                                   req->listOptions->includeTrailingDelimiter, hasParams)
                       ? Core.sh.boolStr2Str(req->listOptions->includeTrailingDelimiter)
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_40 /* "maxResults=" */,
-                                      req->listOptions->maxResults, hasParams)
+                                   req->listOptions->maxResults, hasParams)
                       ? Core.sh.intStr2Str(req->listOptions->maxResults)
                       : "";
         header += Core.uh.addParam(header, firebase_pgm_str_65 /* "pageToken" */,
-                                      req->listOptions->pageToken, hasParams)
+                                   req->listOptions->pageToken, hasParams)
                       ? req->listOptions->pageToken
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_44 /* "prefix=" */,
-                                      req->listOptions->prefix, hasParams)
+                                   req->listOptions->prefix, hasParams)
                       ? req->listOptions->prefix
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_21 /* "projection=" */,
-                                      req->listOptions->projection, hasParams)
+                                   req->listOptions->projection, hasParams)
                       ? req->listOptions->projection
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_45 /* "startOffset=" */,
-                                      req->listOptions->startOffset, hasParams)
+                                   req->listOptions->startOffset, hasParams)
                       ? req->listOptions->startOffset
                       : "";
         header += Core.uh.addParam(header, firebase_gcs_pgm_str_46 /* "versions=" */,
-                                      req->listOptions->versions, hasParams)
+                                   req->listOptions->versions, hasParams)
                       ? Core.sh.boolStr2Str(req->listOptions->versions)
                       : "";
     }
@@ -1061,108 +1057,99 @@ void GG_CloudStorage::makeDownloadStatus(DownloadStatusInfo &info, const MB_Stri
     info.errorMsg = msg;
 }
 
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-void GG_CloudStorage::runResumableUploadTask(const char *taskName)
-#else
-void GG_CloudStorage::runResumableUploadTask()
-#endif
+void GG_CloudStorage::mRunResumableUploadTask()
 {
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-
-    static GG_CloudStorage *_this = this;
-
-    TaskFunction_t taskCode = [](void *param)
+    if (Core.internal.resumable_upload_loop_task_enabnle)
     {
-        while (_this->_resumable_upload_task_enable)
-        {
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-
-            if (_this->_resumableUploadTasks.size() == 0)
-                break;
-
-            if (_this->_resumableUplaodTaskIndex < _this->_resumableUploadTasks.size() - 1)
-                _this->_resumableUplaodTaskIndex++;
-            else
-                _this->_resumableUplaodTaskIndex = 0;
-
-            struct fb_gcs_upload_resumable_task_info_t *taskInfo = &_this->_resumableUploadTasks[_this->_resumableUplaodTaskIndex];
-
-            if (!taskInfo->done)
-            {
-                taskInfo->done = true;
-                if (!_this->gcs_sendRequest(taskInfo->fbdo, &taskInfo->req))
-                    taskInfo->fbdo->closeSession();
-            }
-
-            size_t n = 0;
-            for (size_t i = 0; i < _this->_resumableUploadTasks.size(); i++)
-                if (_this->_resumableUploadTasks[i].done)
-                    n++;
-
-            if (n == _this->_resumableUploadTasks.size())
-            {
-                _this->_resumableUploadTasks.clear();
-                _this->_resumable_upload_task_enable = false;
-            }
-
-            yield();
-        }
-
-        Core.internal.resumable_upload_task_handle = NULL;
-        vTaskDelete(NULL);
-    };
 #if defined(ESP32)
-    xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Core.internal.resumable_upload_task_handle, 1);
-#elif defined(MB_ARDUINO_PICO)
-    /* Create a task, storing the handle. */
-    xTaskCreate(taskCode, taskName, 12000, NULL, 3, &Core.internal.resumable_upload_task_handle);
 
-    /* Define the core affinity mask such that this task can only run on core 0
-     * and core 1. */
-    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
+        static GG_CloudStorage *_this = this;
+        MB_String taskName = "ResumableUpload_";
+        taskName += random(1,100);
 
-    /* Set the core affinity mask for the task. */
-    vTaskCoreAffinitySet(Core.internal.resumable_upload_task_handle, uxCoreAffinityMask);
-#endif
+        TaskFunction_t taskCode = [](void *param)
+        {
+            while (_this->_resumable_upload_task_enable)
+            {
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+
+                if (!_this->mRunResumableUpload())
+                    break;
+
+                yield();
+
+                if (!Core.internal.resumable_upload_loop_task_enabnle)
+                    break;
+            }
+
+            Core.internal.resumable_upload_task_handle = NULL;
+            vTaskDelete(NULL);
+        };
+        xTaskCreatePinnedToCore(taskCode, taskName.c_str(), 12000, NULL, 3, &Core.internal.resumable_upload_task_handle, 1);
+
 #elif defined(ESP8266)
 
-    if (_resumable_upload_task_enable)
-    {
-        delay(100);
-
-        if (_resumableUploadTasks.size() == 0)
+        if (!mRunResumableUpload())
             return;
 
-        if (_resumableUplaodTaskIndex < _resumableUploadTasks.size() - 1)
-            _resumableUplaodTaskIndex++;
-        else
-            _resumableUplaodTaskIndex = 0;
-
-        struct fb_gcs_upload_resumable_task_info_t *taskInfo = &_resumableUploadTasks[_resumableUplaodTaskIndex];
-
-        if (!taskInfo->done)
-        {
-            taskInfo->done = true;
-            if (!gcs_sendRequest(taskInfo->fbdo, &taskInfo->req))
-                taskInfo->fbdo->closeSession();
-        }
-
-        size_t n = 0;
-        for (size_t i = 0; i < _resumableUploadTasks.size(); i++)
-            if (_resumableUploadTasks[i].done)
-                n++;
-
-        if (_resumableUploadTasks.size() > 0 && n < _resumableUploadTasks.size())
-            Core.set_scheduled_callback(std::bind(&GG_CloudStorage::runResumableUploadTask, this));
-
-        if (n == _resumableUploadTasks.size())
-        {
-            _resumableUploadTasks.clear();
-            _resumable_upload_task_enable = false;
-        }
-    }
+        if (_resumableUploadTasks.size() > 0)
+            Core.set_scheduled_callback(std::bind(&GG_CloudStorage::mRunResumableUploadTask, this));
 
 #endif
+    }
+    else
+        mRunResumableUpload();
+}
+
+bool GG_CloudStorage::mRunResumableUpload()
+{
+    if (_resumableUploadTasks.size() == 0)
+        return false;
+
+    if (_resumableUplaodTaskIndex < _resumableUploadTasks.size() - 1)
+        _resumableUplaodTaskIndex++;
+    else
+        _resumableUplaodTaskIndex = 0;
+
+    struct fb_gcs_upload_resumable_task_info_t *taskInfo = &_resumableUploadTasks[_resumableUplaodTaskIndex];
+
+    if (!taskInfo->done)
+    {
+        taskInfo->done = true;
+        if (!gcs_sendRequest(taskInfo->fbdo, &taskInfo->req))
+            taskInfo->fbdo->closeSession();
+    }
+
+    mResumableUploadUpdate();
+
+    return _resumableUploadTasks.size() > 0;
+}
+
+void GG_CloudStorage::mResumableUploadUpdate()
+{
+    size_t n = 0;
+    for (size_t i = 0; i < _resumableUploadTasks.size(); i++)
+        if (_resumableUploadTasks[i].done)
+            n++;
+
+    if (n == _resumableUploadTasks.size())
+    {
+        _resumableUploadTasks.clear();
+        _resumable_upload_task_enable = false;
+    }
+}
+
+void GG_CloudStorage::runResumableUploadTask()
+{
+    Core.internal.resumable_upload_loop_task_enabnle = false;
+
+#if defined(ESP32)
+    if (Core.internal.resumable_upload_task_handle)
+        return;
+#endif
+
+    if (_resumableUploadTasks.size() > 0)
+        mRunResumableUploadTask();
 }
 
 bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct firebase_gcs_req_t *req)
@@ -1260,13 +1247,7 @@ bool GG_CloudStorage::handleResponse(FirebaseData *fbdo, struct firebase_gcs_req
             }
 
             if (_resumable_upload_task_enable && _resumableUploadTasks.size() == 1)
-            {
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-                runResumableUploadTask(pgm2Str(firebase_gcs_pgm_str_47 /* "resumableUploadTask" */));
-#elif defined(ESP8266)
-                runResumableUploadTask();
-#endif
-            }
+                mRunResumableUploadTask();
 
             if (_resumable_upload_task_enable && response.contentLen == 0)
                 break;

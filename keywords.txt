@@ -140,6 +140,7 @@ setMultiPathStreamCallback  KEYWORD2
 removeStreamCallback    KEYWORD2
 removeMultiPathStreamCallback   KEYWORD2
 runStream   KEYWORD2
+runResumableUploadTask  KEYWORD2
 beginAutoRunErrorQueue  KEYWORD2
 endAutoRunErrorQueue    KEYWORD2
 clearErrorQueue KEYWORD2

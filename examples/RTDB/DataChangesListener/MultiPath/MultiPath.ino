@@ -156,11 +156,11 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library e.g. WiFiManager
   Firebase.reconnectNetwork(true);
 
   // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
-  // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
+  // Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
   fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
   stream.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
@@ -222,10 +222,8 @@ void loop()
 
   // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
-#if defined(ARDUINO_RASPBERRY_PI_PICO_W)
-
+#if !defined(ESP8266) && !defined(ESP32)
   Firebase.RTDB.runStream();
-
 #endif
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
@@ -242,9 +240,7 @@ void loop()
       json.set("node1/num", count);
       json.set("node2/data", "v2");
       json.set("node2/num", count * 3);
-      // The response is ignored in this async function, it may return true as long as the connection is established.
-      // The purpose for this async function is to set, push and update data instantly.
-      Firebase.RTDB.setJSONAsync(&fbdo, parentPath, &json);
+      Firebase.RTDB.setJSON(&fbdo, parentPath, &json);
       count++;
     }
 

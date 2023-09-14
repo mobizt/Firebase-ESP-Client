@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.1.0
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 2.1.1
  *
- * Created September 5, 2023
+ * Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -467,18 +467,14 @@ bool FB_RTDB::buildRequest(FirebaseData *fbdo, firebase_request_method method, M
     if (type == d_file_ota)
         fbdo->closeSession();
 
-#if defined(ESP8266)
     int rx_size = fbdo->session.bssl_rx_size;
     if (type == d_file_ota)
         fbdo->session.bssl_rx_size = 16384;
-#endif
 
     bool ret = processRequest(fbdo, &req);
 
-#if defined(ESP8266)
     if (type == d_file_ota)
         fbdo->session.bssl_rx_size = rx_size;
-#endif
 
     if (type == d_file_ota)
         fbdo->closeSession();
@@ -727,7 +723,7 @@ bool FB_RTDB::exitStream(FirebaseData *fbdo, bool status)
     return status;
 }
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
 void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                                 FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
@@ -752,16 +748,14 @@ void FB_RTDB::setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCal
     fbdo->addSession(firebase_con_mode_rtdb_stream);
     Core.internal.stream_loop_task_enable = true;
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
-#elif defined(ESP8266)
+#if defined(ESP8266)
     Core.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
-runStreamTask();
+    runStreamTask();
 #endif
 }
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
 void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
@@ -785,12 +779,10 @@ void FB_RTDB::setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::Multi
     fbdo->addSession(firebase_con_mode_rtdb_stream);
     Core.internal.stream_loop_task_enable = true;
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-    runStreamTask(fbdo, fbdo->getTaskName(streamTaskStackSize, true));
-#elif defined(ESP8266)
+#if defined(ESP8266)
     Core.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #else
-runStreamTask();
+    runStreamTask();
 #endif
 }
 
@@ -806,7 +798,7 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
     fbdo->_timeoutCallback = NULL;
     fbdo->setSession(true, false);
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
     if (Core.internal.sessions.size() == 0)
     {
         if (Core.internal.stream_task_handle)
@@ -817,19 +809,17 @@ void FB_RTDB::removeMultiPathStreamCallback(FirebaseData *fbdo)
 #endif
 }
 
-#if defined(ESP32) || defined(ENABLE_PICO_FREE_RTOS)
-void FB_RTDB::runStreamTask(FirebaseData *fbdo, const char *taskName)
-#else
 void FB_RTDB::runStreamTask()
-#endif
 {
     if (!Core.config || !Core.internal.stream_loop_task_enable)
         return;
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
 
     static FB_RTDB *_this = this;
-    MB_String name = taskName;
+
+    MB_String taskName = "Stream_";
+    taskName += random(1, 100);
 
     TaskFunction_t taskCode = [](void *param)
     {
@@ -848,49 +838,33 @@ void FB_RTDB::runStreamTask()
         vTaskDelete(NULL);
     };
 
-#if defined(ESP32)
-    xTaskCreatePinnedToCore(taskCode, name.c_str(), Core.internal.stream_task_stack_size,
+    xTaskCreatePinnedToCore(taskCode, taskName.c_str(), Core.internal.stream_task_stack_size,
                             Core.config, Core.internal.stream_task_priority,
                             &Core.internal.stream_task_handle,
                             Core.internal.stream_task_cpu_core);
-#elif defined(MB_ARDUINO_PICO)
-
-    /* Create a task, storing the handle. */
-    xTaskCreate(taskCode, name.c_str(), Core.internal.stream_task_stack_size, Core.config,
-                Core.internal.stream_task_priority, &(Core.internal.stream_task_handle));
-
-    /* Define the core affinity mask such that this task can only run on core 0
-     * and core 1. */
-    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
-
-    /* Set the core affinity mask for the task. */
-    vTaskCoreAffinitySet(Core.internal.stream_task_handle, uxCoreAffinityMask);
-
-#endif
 
 #else
     mRunStream();
+
 #if defined(ESP8266)
     Core.set_scheduled_callback(std::bind(&FB_RTDB::runStreamTask, this));
 #endif
+
 #endif
 }
 
 void FB_RTDB::mStopStreamLoopTask()
 {
-    if (Core.config)
-        Core.internal.stream_loop_task_enable = false;
+    Core.internal.stream_loop_task_enable = false;
 }
 
 void FB_RTDB::mRunStream()
 {
+
+    if (Core.isExpired() || !Core.tokenReady())
+        return;
+
     FirebaseData *fbdo = nullptr;
-
-    if (!Core.config)
-        return;
-
-    if (Core.isExpired())
-        return;
 
     for (size_t id = 0; id < Core.internal.sessions.size(); id++)
     {
@@ -1055,8 +1029,8 @@ bool FB_RTDB::isErrorQueueExisted(FirebaseData *fbdo, uint32_t errorQueueID)
     return false;
 }
 
-#if defined(ESP32) || defined(MB_ARDUINO_PICO) || defined(ESP8266)
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
+#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32)
 void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback,
                                      size_t queueTaskStackSize)
 #else
@@ -1076,9 +1050,11 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
 
     fbdo->addQueueSession();
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
 
     static FB_RTDB *_this = this;
+    MB_String taskName = "Queue_";
+    taskName += random(1, 100);
 
     TaskFunction_t taskCode = [](void *param)
     {
@@ -1107,28 +1083,11 @@ void FB_RTDB::beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfo
         Core.internal.queue_task_handle = NULL;
         vTaskDelete(NULL);
     };
-#if defined(ESP32)
-    xTaskCreatePinnedToCore(taskCode, fbdo->getTaskName(queueTaskStackSize, false),
-                            Core.internal.queue_task_stack_size,
-                            Core.config,
-                            Core.internal.queue_task_priority,
+
+    xTaskCreatePinnedToCore(taskCode, taskName.c_str(), Core.internal.queue_task_stack_size,
+                            Core.config, Core.internal.queue_task_priority,
                             &Core.internal.queue_task_handle,
                             Core.internal.queue_task_cpu_core);
-
-#elif defined(MB_ARDUINO_PICO)
-
-    /* Create a task, storing the handle. */
-    xTaskCreate(taskCode, fbdo->getTaskName(queueTaskStackSize, false), Core.internal.queue_task_stack_size, Core.config,
-                Core.internal.queue_task_priority, &(Core.internal.queue_task_handle));
-
-    /* Define the core affinity mask such that this task can only run on core 0
-     * and core 1. */
-    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
-
-    /* Set the core affinity mask for the task. */
-    vTaskCoreAffinitySet(Core.internal.queue_task_handle, uxCoreAffinityMask);
-
-#endif
 
 #elif defined(ESP8266)
     Core.set_scheduled_callback(std::bind(&FB_RTDB::runErrorQueueTask, this));
@@ -1146,7 +1105,7 @@ void FB_RTDB::endAutoRunErrorQueue(FirebaseData *fbdo)
 
     fbdo->_queueInfoCallback = NULL;
     fbdo->removeQueueSession();
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
     if (Core.internal.queueSessions.size() == 0)
     {
         if (Core.internal.queue_task_handle)
@@ -3400,7 +3359,7 @@ void FB_RTDB::removeStreamCallback(FirebaseData *fbdo)
 
     if (Core.internal.sessions.size() == 0)
     {
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
         if (Core.internal.stream_task_handle)
             vTaskDelete(Core.internal.stream_task_handle);
 

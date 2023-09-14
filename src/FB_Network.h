@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
@@ -79,19 +79,52 @@
 
 #endif
 
-#if __has_include(<Ethernet.h>)
+#if __has_include(<Ethernet.h>) ||  (defined(FIREBASE_ETHERNET_MODULE_LIB) && defined(FIREBASE_ETHERNET_MODULE_CLASS))
+
 #if defined(ESP8266)
 #undef MAX_SOCK_NUM
 
 #if defined(FIREBASE_DISABLE_NATIVE_ETHERNET)
+
+#if defined(FIREBASE_ETHERNET_MODULE_LIB) && defined(FIREBASE_ETHERNET_MODULE_CLASS)
+#if __has_include(FIREBASE_ETHERNET_MODULE_LIB)
+#include FIREBASE_ETHERNET_MODULE_LIB
+#define ETH_MODULE_CLASS FIREBASE_ETHERNET_MODULE_CLASS
+#elif __has_include(<Ethernet.h>)
 #include <Ethernet.h>
+#define ETH_MODULE_CLASS Ethernet
+#endif
+#else
+#include <Ethernet.h>
+#define ETH_MODULE_CLASS Ethernet
+#endif
+
+#if defined(ETH_MODULE_CLASS)
 #define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
+#endif
+
 #endif
 
 #undef MAX_SOCK_NUM
 #elif !defined(ARDUINO_NANO_RP2040_CONNECT)
+
+#if defined(FIREBASE_ETHERNET_MODULE_LIB) && defined(FIREBASE_ETHERNET_MODULE_CLASS)
+#if __has_include(FIREBASE_ETHERNET_MODULE_LIB)
+#include FIREBASE_ETHERNET_MODULE_LIB
+#define ETH_MODULE_CLASS FIREBASE_ETHERNET_MODULE_CLASS
+#elif __has_include(<Ethernet.h>)
 #include <Ethernet.h>
+#define ETH_MODULE_CLASS Ethernet
+#endif
+#else
+#include <Ethernet.h>
+#define ETH_MODULE_CLASS Ethernet
+#endif
+
+#if defined(ETH_MODULE_CLASS)
 #define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
+#endif
+
 #endif
 
 #endif

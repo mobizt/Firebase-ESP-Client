@@ -218,11 +218,11 @@ void setup()
     fbdo.setGSMClient(&gsm_client1, &modem, GSM_PIN, apn, gprsUser, gprsPass);
     stream.setGSMClient(&gsm_client2, &modem, GSM_PIN, apn, gprsUser, gprsPass);
 
-    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library e.g. WiFiManager
     Firebase.reconnectNetwork(true);
 
     // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
-    // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
+    // Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
     fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
     stream.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
@@ -236,11 +236,12 @@ void setup()
 
 void loop()
 {
-    // For use with stream callback function
-    // for non-ESP devices
-    Firebase.RTDB.runStream();
 
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
+#if !defined(ESP8266) && !defined(ESP32)
+    Firebase.RTDB.runStream();
+#endif
 
     if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
     {

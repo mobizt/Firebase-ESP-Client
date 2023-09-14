@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
@@ -148,8 +148,8 @@
  *
  * 📍 For SD MMC (ESP32)
  * #include <SD_MMC.h>
- * #define CARD_TYPE_SD_MMC SD_MMC //For ESP32 SDMMC
- * #define ESP_MAIL_CARD_TYPE_SD_MMC 1
+ * #define DEFAULT_SD_FS SD_MMC //For ESP32 SDMMC
+ * #define CARD_TYPE_SD_MMC 1
  *
  * 📍 For SdFat on ESP32 and other devices except for ESP8266
  * #include <SdFat.h> //https://github.com/greiman/SdFat
@@ -175,14 +175,22 @@
 
 /** 🔖 Optional Build Options
  *
+ * 🏷️ For external Ethernet module support.
+ * - Should define both library name and class object name.
+ * - FIREBASE_ETHERNET_MODULE_LIB is the Ethernet library name with extension (.h) and
+ *   should be inside "" or <> e.g. "Ethernet.h".
+ * - FIREBASE_ETHERNET_MODULE_CLASS is the name of static object defined from class e.g. Ethernet.
+ * 
+ * #define FIREBASE_ETHERNET_MODULE_LIB "EthernetLib.h"
+ * #define FIREBASE_ETHERNET_MODULE_CLASS EthernetClass
  *
- * 🏷️ For ENC28J60 Ethernet module support in ESP8266
+ * 🏷️ For native core library ENC28J60 Ethernet module support in ESP8266
  * #define ENABLE_ESP8266_ENC28J60_ETH
  *
- * 🏷️ For W5500 Ethernet module support in ESP8266
+ * 🏷️ For native core library W5500 Ethernet module support in ESP8266
  * #define ENABLE_ESP8266_W5500_ETH
  *
- * 🏷️ For W5100 Ethernet module support in ESP8266
+ * 🏷️ For native core library W5100 Ethernet module support in ESP8266
  * #define ENABLE_ESP8266_W5100_ETH
  *
  * 🏷️ For disabling on-board WiFI functionality in case external Client usage
@@ -191,7 +199,7 @@
  * 🏷️ For disabling native (sdk) Ethernet functionality in case external Client usage
  * #define FIREBASE_DISABLE_NATIVE_ETHERNET
  * 
- * 🏷️ For debug port assignment
+ * 🏷️ For debug port assignment.
  * #define FIREBASE_DEFAULT_DEBUG_PORT Serial
  *
  */
@@ -204,6 +212,3 @@
 #include "./core/Firebase_Build_Options.h"
 
 #endif
-
-// For Raspberry Pi Pico, FreeRTOS was not used in this library by default as it can cause some operation deadlocks.
-// To use or enable FreeRTOS in this library, include FreeRTOS header in this file or CustomFirebaseFS.h.

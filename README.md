@@ -14,26 +14,103 @@ The managed, complete, fast and secure Firebase Client Library that supports mos
 
 
 
-## Tested Devices
+## Contents
 
-### This following devices were tested.
+[1. Features](#features)
 
- * ESP8266 MCUs based boards
- * ESP32 MCUs based boards
- * Arduino MKR WiFi 1010
- * Arduino MKR 1000 WIFI
- * Arduino Nano 33 IoT
- * Arduino MKR Vidor 4000
- * Raspberry Pi Pico (RP2040)
- * Arduino UNO R4 WiFi (Renesas).
- * LAN8720 Ethernet PHY
- * TLK110 Ethernet PHY
- * IP101 Ethernet PHY
- * ENC28J60 SPI Ethernet module
- * W5100 SPI Ethernet module
- * W5500 SPI Ethernet module
- * SIMCom Modules with TinyGSMClient
+[2. Supported Devices](#supported-devices)
 
+[3. Dependencies](#dependencies)
+
+[4. Installation](#installation)
+
+- [Using Library Manager](#using-library-manager)
+
+- [Manual installation](#manual-installation)
+
+- [RP2040 Arduino SDK installation](#rp2040-arduino-sdk-installation)
+
+[5. Usages](#usages)
+
+- [Initialization](#initialization)
+
+[6. Memory Options](#memory-options)
+
+- [Memory Options for ESP8266](#memory-options-for-esp8266)
+
+- [Arduino IDE](#arduino-ide)
+
+- [PlatformIO IDE](#platformio-ide)
+
+- [ESP8266 and SRAM/PSRAM Chip connection](#esp8266-and-srampsram-chip-connection)
+
+- [Memory Options for ESP32](#memory-options-for-esp32)
+
+- [Arduino IDE](#arduino-ide-1)
+
+- [PlatformIO IDE](#platformio-ide-1)
+
+[7. Authentication](#authentication)
+
+- [Access in Test Mode (No Auth)](#access-in-test-mode-no-auth)
+
+- [The authenication credentials and prerequisites](#the-authenication-credentials-and-prerequisites)
+
+[8. Library Build Options](#library-build-options)
+
+- [Predefined Options](#predefined-options)
+
+- [Optional Options](#optional-options)
+
+[9. TCP Keep Alive](#tcp-keep-alive)
+
+[10. Realtime Database](#realtime-database)
+
+- [Read Data](#read-data)
+
+- [Store Data](#store-data)
+
+- [Append Data](#append-data)
+
+- [Patch Data](#patch-data)
+
+- [Delete Data](#delete-data)
+
+- [Filtering Data](#filtering-data)
+
+- [Monitoring data](#monitoring-data)
+
+- [Enable TCP KeepAlive for reliable HTTP Streaming](#enable-tcp-keepalive-for-reliable-http-streaming)
+
+- [HTTP Streaming examples](#http-streaming-examples)
+
+- [Backup and Restore Data](#backup-and-restore-data)
+
+- [Database Error Handling](#database-error-handling)
+
+[11. Add On](#add-on)
+
+- [FireSense, The Programmable Data Logging and IO Control (Deprecated)](#firesense-the-programmable-data-logging-and-io-control-deprecated)
+
+[12. Firebase Cloud Messaging (FCM)](#firebase-cloud-messaging-fcm)
+
+[13. Firebase Cloud Firestore](#firebase-cloud-firestore)
+
+[14. Firebase Storage](#firebase-storage)
+
+[15. Google Cloud Storage](#google-cloud-storage)
+
+[16. Cloud Functions for Firebase](#cloud-functions-for-firebase)
+
+- [IAM Permission and API Enable](#iam-permission-and-api-enable)
+
+[17. Create, Edit, Serializing and Deserializing the JSON Objects](#create-edit-serializing-and-deserializing-the-json-objects)
+
+[18. Acheivement](#acheivement)
+
+- [Open Sourcs Contribution Awards](#open-sourcs-contribution-awards)
+
+[19. License](#license)
 
 
 ## Features
@@ -64,6 +141,23 @@ The managed, complete, fast and secure Firebase Client Library that supports mos
 
 * Supports Cloud Functions for Firebase.
 
+## Supported Devices.
+
+ * ESP8266 MCUs based boards
+ * ESP32 MCUs based boards
+ * Arduino MKR WiFi 1010
+ * Arduino MKR 1000 WIFI
+ * Arduino Nano 33 IoT
+ * Arduino MKR Vidor 4000
+ * Raspberry Pi Pico (RP2040)
+ * Arduino UNO R4 WiFi (Renesas).
+ * LAN8720 Ethernet PHY
+ * TLK110 Ethernet PHY
+ * IP101 Ethernet PHY
+ * ENC28J60 SPI Ethernet module
+ * W5100 SPI Ethernet module
+ * W5500 SPI Ethernet module
+ * SIMCom Modules with TinyGSMClient
 
 
 
@@ -119,15 +213,6 @@ Rename **Firebase-ESP-Client-main** folder to **Firebase_Arduino_Client_Library_
 
 Go to menu **Files** -> **Examples** -> **Firebase-ESP-Client-main** and choose one from examples.
 
-### Important Note for Manual Installation in Arduino IDE
-
-Folder renaming to **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** was required for making the library can be updated via Library Manager without problems.
-
-Without folder renaming, when you update the library via Library Manager, library will be updated to the another folder named  **Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32** which leads to compilation error when there are two different versions of library found in the libraries folder and can cause the conflicts when file structures and functions changed in the newer version. 
-
-For example, the library version 2.7.7 and earlier were installed manually by downloading ZIP file and extracted to **Firebase-ESP-Client-main** folder. If the library was later updated to v2.8.2 and newer via Library Manager, the compilation error will take place because the newer version files structures and functions changed and compiler is trying to compile these two versions of source files together. 
-
-In this case, you need to delete **Firebase-ESP-Client-main** folder from libraries folder.
 
 
 ### RP2040 Arduino SDK installation
@@ -213,30 +298,27 @@ Firebase.RTDB.setMaxErrorQueue(&fbdo, 30);
 // device connected behind the Firewall that allows only GET and POST requests.
 Firebase.RTDB.enableClassicRequest(&fbdo, true);
 
-#if defined(ESP8266)
-// Optional, set the size of BearSSL WiFi to receive and transmit buffers
-// Firebase may not support the data transfer fragmentation, you may need to reserve the buffer to match
-// the data to transport.
-fbdo.setBSSLBufferSize(1024, 1024); // minimum size is 512 bytes, maximum size is 16384 bytes
-#endif
+// Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
+// Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
+fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
+// Limit the size of response payload to be collected in FirebaseData
+fbdo.setResponseSize(2048);
 
-// Optional, set the size of HTTP response buffer
-// Prevent out of memory for large payload but data may be truncated and can't determine its type.
-fbdo.setResponseSize(1024); // minimum size is 1024 bytes
 ```
 See [other authentication examples](/examples/Authentications) for more sign in methods.
 
 
 
+## Memory Options
 
-## Memory Options for ESP8266
+### Memory Options for ESP8266
 
 When you update the ESP8266 Arduino Core SDK to v3.0.0, the memory can be configurable from IDE.
 
 You can choose the Heap memory between internal and external memory chip from IDE e.g. Arduino IDE and PlatformIO on VSCode or Atom IDE.
 
-### Arduino IDE
+#### Arduino IDE
 
 
 For ESP8266 devices that don't have external SRAM/PSRAM chip installed, choose the MMU **option 3**, 16KB cache + 48KB IRAM and 2nd Heap (shared).
@@ -250,7 +332,7 @@ For ESP8266 devices that have external 23LC1024 SRAM chip installed, choose the 
 For ESP8266 devices that have external ESP-PSRAM64 chip installed, choose the MMU **option 6**, 1M External 64 MBit PSRAM.
 
 
-### PlatformIO IDE
+#### PlatformIO IDE
 
 The MMU options can be selected from build_flags in your project's platformio.ini file
 
@@ -292,7 +374,7 @@ monitor_speed = 115200
 ```
 
 
-### ESP8266 and SRAM/PSRAM Chip connection
+#### ESP8266 and SRAM/PSRAM Chip connection
 
 Most ESP8266 modules don't have the built-in SRAM/PSRAM on board. External memory chip connection can be done via SPI port as below.
 
@@ -319,18 +401,18 @@ This macro was defined by default when you installed or update the library.
 
 
 
-## Memory Options for ESP32
+### Memory Options for ESP32
 
 In ESP32 module that has PSRAM installed, you can enable it and set the library to use this external memory instead.
 
-### Arduino IDE
+#### Arduino IDE
 
 To enable PSRAM in ESP32 module.
 
 ![Enable PSRAM in ESP32](/media/images/ESP32-PSRAM.png)
 
 
-### PlatformIO IDE
+#### PlatformIO IDE
 
 
 In PlatformIO on VSCode or Atom IDE, add the following build_flags in your project's platformio.ini file.
@@ -526,21 +608,37 @@ FIREBASE_ENABLE_FB_FUNCTIONS // For Functions for Firebase compilation
 FIREBASE_USE_PSRAM // For enabling PSRAM support
 ENABLE_OTA_FIRMWARE_UPDATE // For enabling OTA updates support via RTDB, Firebase Storage and Google Cloud Storage buckets
 USE_CONNECTION_KEEP_ALIVE_MODE // For enabling Keep Alive connection mode
+DEFAULT_FLASH_FS // For enabling Flash filesystem support
+DEFAULT_SD_FS // For enabling SD filesystem support 
+CARD_TYPE_SD or CARD_TYPE_SD_MMC // The SD card type for SD filesystem
 ```
+
+The Flash and SD filesystems are predefined.
+
+SD is the default SD filesystem for all devices.
+
+For ESP8266 and Arduino Pico, LittleFS is the default flash filesystem.
+
+For ESP32 since v2.0.x, LittleFS is the default flash filesystem otherwise SPIFFS is the default flash filesystem.
+
+In otherr devices, SPIFFS is the default flash filesystem.
+
+User can change `DEFAULT_FLASH_FS` and `DEFAULT_SD_FS` with `CARD_TYPE_SD` or `CARD_TYPE_SD_MMC` defined values for other filesystems.
 
 ### Optional Options
 
 The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h) and can be assigned by user.
 
 ```cpp
-ENABLE_ESP8266_ENC28J60_ETH //  For ENC28J60 Ethernet module support in ESP8266
-ENABLE_ESP8266_W5500_ETH // For W5500 Ethernet module support in ESP8266
-ENABLE_ESP8266_W5100_ETH // For W5100 Ethernet module support in ESP8266
+FIREBASE_ETHERNET_MODULE_LIB `"EthernetLibrary.h"` // For the Ethernet library to work with external Ethernet module
+FIREBASE_ETHERNET_MODULE_CLASS EthernetClass // For the Ethernet class object of Ethernet library to work with external Ethernet module
+ENABLE_ESP8266_ENC28J60_ETH //  For native core library ENC28J60 Ethernet module support in ESP8266
+ENABLE_ESP8266_W5500_ETH // For native core library W5500 Ethernet module support in ESP8266
+ENABLE_ESP8266_W5100_ETH // For native core library W5100 Ethernet module support in ESP8266
 FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
 FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
 FIREBASE_DEFAULT_DEBUG_PORT // For debug port assignment
 ```
-
 
 You can assign the optional build options using one of the following methods.
 
@@ -554,6 +652,13 @@ In PlatformIO IDE, using `build_flags` in PlatformIO IDE's platformio.ini is mor
 build_flags = -D DISABLE_FB_STORAGE
               -D EFIREBASE_DISABLE_ONBOARD_WIFI
 ```
+
+For external Ethernet module integation used with function `setEthernetClient`, both `FIREBASE_ETHERNET_MODULE_LIB` and `FIREBASE_ETHERNET_MODULE_CLASS` should be defined.
+
+`FIREBASE_ETHERNET_MODULE_LIB` is the Ethernet library name with extension (.h) and should be inside `""` or `<>` e.g. `"Ethernet.h"`.
+
+`FIREBASE_ETHERNET_MODULE_CLASS` is the name of static object defined from class e.g. `Ethernet`.
+
 
 For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
 
@@ -583,7 +688,7 @@ This `CustomFirebaseFS.h` will not change or overwrite when update the library.
 
 
 
-### TCP Keep Alive
+## TCP Keep Alive
 
 
 The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
@@ -968,7 +1073,7 @@ query.clear();
 ```
 
 
-### Server Data Changes Listener with Server-Sent Events or HTTP Streaming
+### Monitoring Data
 
 This library uses HTTP GET request with `text/event-stream` header to make [**HTTP streaming**](https://en.wikipedia.org/wiki/Server-sent_events) connection.
 
@@ -1386,7 +1491,10 @@ Firebase.RTDB.saveErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
 
 ```
 
-## FireSense, The Programmable Data Logging and IO Control (Deprecated Add On)
+## Add On
+
+
+### FireSense, The Programmable Data Logging and IO Control (Deprecated)
 
 This add on library is for the advance usages and works with Firebase RTDB.
 
@@ -1970,7 +2078,9 @@ The result of the above code
 
 ```
 
-## Open Sourcs Contribution Awards
+## Acheivement
+
+### Open Sourcs Contribution Awards
 
 This project **Firebase Arduino Client Library for ESP8266 and ESP32** wins the [Google Open Source Peer Bonus program](https://opensource.google/documentation/reference/growing/peer-bonus).
 

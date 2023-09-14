@@ -100,6 +100,7 @@ void setup()
     config.wifi.addAP(WIFI_SSID, WIFI_PASSWORD);
 #endif
 
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library e.g. WiFiManager
     Firebase.reconnectNetwork(true);
 
     Serial.printf("Send Email reset password link... %s\n", Firebase.sendResetPassword(&config, USER_EMAIL) ? "ok" : config.signer.resetPswError.message.c_str());

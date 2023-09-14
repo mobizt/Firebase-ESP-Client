@@ -3938,6 +3938,14 @@ bool listFiles(FirebaseData *fbdo, <string> bucketID);
 
 
 
+#### Run Resumable upload tasks manually.
+
+```cpp
+void runResumableUploadTask();
+```
+
+
+
 ## Google Cloud Storage Functions.
 
 These functions can be called directly from GCStorage object in the Firebase object e.g. Firebase.GCStorage.\<function name\>

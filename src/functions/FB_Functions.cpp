@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Functions class, Functions.cpp version 1.1.25
+ * Google's Cloud Functions class, Functions.cpp version 1.1.26
  *
- * Created September 5, 2023
+ * Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -108,14 +108,7 @@ void FB_Functions::addCreationTask(FirebaseData *fbdo, FunctionsConfig *config, 
     {
         // The first task?, running in loop task by default
         if (_deployTasks.size() == 1)
-        {
-
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-            runDeployTask(pgm2Str(firebase_func_pgm_str_1 /* "deployTask" */));
-#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
             runDeployTask();
-#endif
-        }
     }
     else // User intends to run task manually, run immediately.
         mDeployTasks();
@@ -850,15 +843,13 @@ bool FB_Functions::handleResponse(FirebaseData *fbdo)
         return tcpHandler.error.code == 0;
 }
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-void FB_Functions::runDeployTask(const char *taskName)
-#else
 void FB_Functions::runDeployTask()
-#endif
 {
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
 
     static FB_Functions *_this = this;
+    MB_String taskName = "Deploy_";
+    taskName += random(1, 100);
 
     TaskFunction_t taskCode = [](void *param)
     {
@@ -882,24 +873,9 @@ void FB_Functions::runDeployTask()
         vTaskDelete(NULL);
     };
 
-#if defined(ESP32)
-    xTaskCreatePinnedToCore(taskCode, taskName, 12000, NULL, 3, &Core.internal.functions_check_task_handle, 1);
+    xTaskCreatePinnedToCore(taskCode, taskName.c_str(), 12000, NULL, 3, &Core.internal.functions_check_task_handle, 1);
 
-#elif defined(MB_ARDUINO_PICO)
-
-    /* Create a task, storing the handle. */
-    xTaskCreate(taskCode, taskName, 12000, NULL,
-                3, &(Core.internal.functions_check_task_handle));
-
-    /* Define the core affinity mask such that this task can only run on core 0
-     * and core 1. */
-    UBaseType_t uxCoreAffinityMask = ((1 << 0) | (1 << 1));
-
-    /* Set the core affinity mask for the task. */
-    vTaskCoreAffinitySet(Core.internal.functions_check_task_handle, uxCoreAffinityMask);
-
-#endif
-#elif defined(ESP8266) || defined(MB_ARDUINO_PICO)
+#else
     mDeployTasks();
 #endif
 }
@@ -1212,7 +1188,7 @@ void FB_Functions::mRunDeployTasks()
 {
     Core.internal.deploy_loop_task_enable = false;
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
     if (Core.internal.functions_check_task_handle)
         return;
 #endif

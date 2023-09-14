@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Functions class, Functions.h version 1.1.25
+ * Google's Cloud Functions class, Functions.h version 1.1.26
  *
- * Created September 5, 2023
+ * Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -367,12 +367,7 @@ private:
     bool mListFunctions(FirebaseData *fbdo, MB_StringPtr projectId, MB_StringPtr locationId,
                         MB_StringPtr pageSize, MB_StringPtr pageToken);
     bool mListOperations(FirebaseData *fbdo, MB_StringPtr filter, MB_StringPtr pageSize, MB_StringPtr pageToken);
-
-#if defined(ESP32) || defined(ENABLE_PICO_FREE_RTOS)
-    void runDeployTask(const char *taskName);
-#else
     void runDeployTask();
-#endif
     void mDeployTasks();
     void mRunDeployTasks();
 };

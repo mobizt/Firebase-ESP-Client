@@ -1022,7 +1022,7 @@ public:
 #if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
 
     if (_ethernet_cs_pin > -1)
-      Ethernet.init(_ethernet_cs_pin);
+      ETH_MODULE_CLASS.init(_ethernet_cs_pin);
 
     if (_ethernet_reset_pin > -1)
     {
@@ -1044,18 +1044,18 @@ public:
     {
 
       if (_static_ip->optional == false)
-        Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
-      else if (!Ethernet.begin(_ethernet_mac))
+        ETH_MODULE_CLASS.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
+      else if (!ETH_MODULE_CLASS.begin(_ethernet_mac))
       {
-        Ethernet.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
+        ETH_MODULE_CLASS.begin(_ethernet_mac, _static_ip->ipAddress, _static_ip->dnsServer, _static_ip->defaultGateway, _static_ip->netMask);
       }
     }
     else
-      Ethernet.begin(_ethernet_mac);
+      ETH_MODULE_CLASS.begin(_ethernet_mac);
 
     unsigned long to = millis();
 
-    while (Ethernet.linkStatus() == LinkOFF && millis() - to < 2000)
+    while (ETH_MODULE_CLASS.linkStatus() == LinkOFF && millis() - to < 2000)
     {
       delay(100);
     }
@@ -1065,7 +1065,7 @@ public:
     if (ret)
     {
       FB_DEFAULT_DEBUG_PORT.print((const char *)MBSTRING_FLASH_MCR("Connected with IP "));
-      FB_DEFAULT_DEBUG_PORT.println(Ethernet.localIP());
+      FB_DEFAULT_DEBUG_PORT.println(ETH_MODULE_CLASS.localIP());
     }
 #endif
 
@@ -1082,7 +1082,7 @@ public:
   bool ethernetConnected()
   {
 #if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
-    _network_status = Ethernet.linkStatus() == LinkON;
+    _network_status = ETH_MODULE_CLASS.linkStatus() == LinkON;
 #endif
     return _network_status;
   }

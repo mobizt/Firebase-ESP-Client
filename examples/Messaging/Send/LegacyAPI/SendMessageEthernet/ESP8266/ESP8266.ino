@@ -128,11 +128,11 @@ void setup()
 #endif
     Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
 
-    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library e.g. WiFiManager
     Firebase.reconnectNetwork(true);
 
     // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
-    // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
+    // Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
     fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     sendMessage();

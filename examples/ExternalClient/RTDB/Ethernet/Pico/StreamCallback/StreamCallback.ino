@@ -38,7 +38,13 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
+// https://github.com/arduino-libraries/Ethernet
 #include <Ethernet.h>
+
+// For using other Ethernet library that works with other Ethernet module, 
+// the following build flags or macros should be assigned in src/FirebaseFS.h or your CustomFirebaseFS.h.
+// FIREBASE_ETHERNET_MODULE_LIB and FIREBASE_ETHERNET_MODULE_CLASS
+// See src/FirebaseFS.h for detail.
 
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
@@ -122,8 +128,6 @@ void setup()
   Serial.begin(115200);
   delay(5000);
 
-  networkConnection();
-
   Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
   /* Assign the api key (required) */
@@ -143,11 +147,11 @@ void setup()
   fbdo.setEthernetClient(&eth1, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN);   // The staIP can be assigned to the fifth param
   stream.setEthernetClient(&eth2, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
 
-  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library e.g. WiFiManager
   Firebase.reconnectNetwork(true);
 
   // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
-    // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
+  // Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
   fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
   stream.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
@@ -165,6 +169,10 @@ void loop()
 {
 
   // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
+#if !defined(ESP8266) && !defined(ESP32)
+  Firebase.RTDB.runStream();
+#endif
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {

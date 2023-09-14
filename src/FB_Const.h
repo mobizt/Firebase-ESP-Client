@@ -1,10 +1,10 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created September 12, 2023
+ * Created September 14, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -1116,6 +1116,7 @@ struct firebase_cfg_int_t
 
     bool stream_loop_task_enable = true;
     bool deploy_loop_task_enable = true;
+    bool resumable_upload_loop_task_enabnle = true;
 #if defined(ESP32) || defined(MB_ARDUINO_PICO)
 
 #if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))

@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Cloud Storage class, GCS.h version 1.2.12
+ * Google's Cloud Storage class, GCS.h version 1.2.13
  *
- * Created September 5, 2023
+ * Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -188,6 +188,9 @@ public:
     {
         return mListFiles(fbdo, toStringPtr(bucketID), options);
     }
+    
+    /** Run Resumable upload tasks manually. */
+    void runResumableUploadTask();
 
 private:
     const uint32_t gcs_min_chunkSize = 256 * 1024; // Min Google recommended length
@@ -229,12 +232,9 @@ private:
     bool mDeleteFile(FirebaseData *fbdo, MB_StringPtr bucketID, MB_StringPtr fileName, DeleteOptions *options = nullptr);
     bool mListFiles(FirebaseData *fbdo, MB_StringPtr bucketID, ListOptions *options = nullptr);
     bool parseJsonResponse(FirebaseData *fbdo, PGM_P key_path);
-
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
-    void runResumableUploadTask(const char *taskName);
-#else
-    void runResumableUploadTask();
-#endif
+    bool mRunResumableUpload();
+    void mResumableUploadUpdate();
+    void mRunResumableUploadTask();
 };
 
 #endif

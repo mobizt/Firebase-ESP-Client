@@ -114,11 +114,11 @@ void setup()
     // The memory from external SRAM/PSRAM will not use in the TCP client internal tx buffer.
     config.gcs.upload_buffer_size = 2048;
 
-    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library e.g. WiFiManager
     Firebase.reconnectNetwork(true);
 
     // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
-    // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
+    // Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
     fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     Firebase.begin(&config, &auth);
@@ -162,6 +162,12 @@ void loop()
 {
 
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
+// In case resumable upload
+#if !defined(ESP32) && !defined(ESP8266)
+    if (Firebase.ready())
+        Firebase.GCStorage.runResumableUploadTask();
+#endif
 
     if (Firebase.ready() && !taskCompleted)
     {

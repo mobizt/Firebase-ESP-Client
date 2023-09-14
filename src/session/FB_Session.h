@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
@@ -848,10 +848,6 @@ private:
                      struct firebase_fcs_file_list_item_t *fileitem, int &pos);
   void getAllUploadInfo(int type, int &currentStage, const MB_String &payload, bool isList, bool isMeta,
                         struct firebase_fcs_file_list_item_t *fileitem);
-#endif
-
-#if (defined(ESP32) || defined(MB_ARDUINO_PICO)) && (defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB))
-  const char *getTaskName(size_t taskStackSize, bool isStream);
 #endif
 
   void getError(MB_String &payload, struct firebase_tcp_response_handler_t &tcpHandler,

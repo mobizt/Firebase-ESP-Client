@@ -1,14 +1,14 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Storage class, FCS.h version 1.2.12
+ * Google's Firebase Storage class, FCS.h version 1.2.13
  *
  * This library supports Espressif ESP8266, ESP32 and RP2040 Pico
  *
- * Created September 5, 2023
+ * Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)

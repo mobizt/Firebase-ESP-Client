@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
@@ -1558,26 +1558,6 @@ void FirebaseData::getAllUploadInfo(int type, int &currentStage, const MB_String
                 currentStage++;
         };
     }
-}
-#endif
-
-#if (defined(ESP32) || defined(MB_ARDUINO_PICO)) && (defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB))
-const char *FirebaseData::getTaskName(size_t taskStackSize, bool isStream)
-{
-    MB_String taskName = firebase_rtdb_ss_pgm_str_14; // "task"
-    taskName += isStream ? firebase_rtdb_ss_pgm_str_15 /* "_stream" */ : firebase_rtdb_ss_pgm_str_16 /* "_error_queue" */;
-    taskName += sessionPtr.ptr;
-    if (isStream)
-    {
-        Core.internal.stream_task_stack_size = taskStackSize > STREAM_TASK_STACK_SIZE
-                                                   ? taskStackSize
-                                                   : STREAM_TASK_STACK_SIZE;
-    }
-    else
-        Core.internal.queue_task_stack_size = taskStackSize > QUEUE_TASK_STACK_SIZE
-                                                  ? taskStackSize
-                                                  : QUEUE_TASK_STACK_SIZE;
-    return taskName.c_str();
 }
 #endif
 

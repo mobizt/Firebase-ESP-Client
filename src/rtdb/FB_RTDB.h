@@ -1,12 +1,12 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 2.1.0
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 2.1.1
  *
- * Created September 5, 2023
+ * Created September 13, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -2204,7 +2204,7 @@ public:
    * the payload returned from the server.
    */
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
   void setStreamCallback(FirebaseData *fbdo, FirebaseData::StreamEventCallback dataAvailableCallback,
                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize = 8192);
 #else
@@ -2234,7 +2234,7 @@ public:
    * These properties will store the result from calling the function [MultiPathStreamData object].get.
    */
 
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
+#if defined(ESP32)
   void setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback,
                                   FirebaseData::StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 #else
@@ -2428,8 +2428,8 @@ public:
    *
    * queueInfo.path(), get a string of the Firebase call path that is being processed of current Error Queue.
    */
-#if defined(ESP32) || defined(MB_ARDUINO_PICO) || defined(ESP8266)
-#if defined(ESP32) || defined(MB_ARDUINO_PICO)
+#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32)
   void beginAutoRunErrorQueue(FirebaseData *fbdo, FirebaseData::QueueInfoCallback callback = NULL,
                               size_t queueTaskStackSize = 8192);
 #else
@@ -2679,11 +2679,7 @@ private:
                             RTDB_DownloadStatusInfo *out);
   void makeDownloadStatus(RTDB_DownloadStatusInfo &info, const MB_String &local, const MB_String &remote,
                           firebase_rtdb_download_status status, size_t progress, size_t size, int elapsedTime, const MB_String &msg);
-#if defined(ESP32) || (defined(MB_ARDUINO_PICO) && defined(ENABLE_PICO_FREE_RTOS))
-  void runStreamTask(FirebaseData *fbdo, const char *taskName);
-#else
   void runStreamTask();
-#endif
   void mStopStreamLoopTask();
   void mRunStream();
 

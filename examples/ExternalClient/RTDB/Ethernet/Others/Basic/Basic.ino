@@ -22,7 +22,13 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
+// https://github.com/arduino-libraries/Ethernet
 #include <Ethernet.h>
+
+// For using other Ethernet library that works with other Ethernet module, 
+// the following build flags or macros should be assigned in src/FirebaseFS.h or your CustomFirebaseFS.h.
+// FIREBASE_ETHERNET_MODULE_LIB and FIREBASE_ETHERNET_MODULE_CLASS
+// See src/FirebaseFS.h for detail.
 
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
@@ -94,11 +100,11 @@ void setup()
     /* Assign the pointer to global defined Ethernet Client object */
     fbdo.setEthernetClient(&eth, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
 
-    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library e.g. WiFiManager
     Firebase.reconnectNetwork(true);
 
     // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
-    // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
+    // Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
     fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     Firebase.setDoubleDigits(5);
