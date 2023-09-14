@@ -161,7 +161,7 @@ void loop()
 
         Serial.println("\nDownload firmware file...\n");
 
-        // In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+        // This function will allocate 16k+ memory for internal SSL client.
         if (!Firebase.Storage.downloadOTA(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "<firmware.bin>" /* path of firmware file stored in the bucket */, fcsDownloadCallback /* callback function */))
             Serial.println(fbdo.errorReason());
     }

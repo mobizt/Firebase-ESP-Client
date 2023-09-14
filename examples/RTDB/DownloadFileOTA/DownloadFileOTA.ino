@@ -197,7 +197,7 @@ void loop()
 
         Serial.println("\nDownload firmware file...\n");
 
-        // In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+        // This function will allocate 16k+ memory for internal SSL client.
         // In Pico, the free space of device should be larger than the firmware file size.
         // You can upload blank filesystem image to clear the space.
         if (!Firebase.RTDB.downloadOTA(&fbdo, F("test/firmware/bin"), rtdbDownloadCallback /* callback function */))

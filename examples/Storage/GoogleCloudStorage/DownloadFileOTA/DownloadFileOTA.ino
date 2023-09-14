@@ -154,7 +154,7 @@ void loop()
 
         Serial.println("\nDownload firmware file OTA with Google Cloud Storage JSON API...\n");
 
-        // In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+        // This function will allocate 16k+ memory for internal SSL client.
         // In Pico, the free space of device should be larger than the firmware file size.
         // You can upload blank filesystem image to clear the space.
         if (!Firebase.GCStorage.downloadOTA(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, "<firmware.bin>" /* path of firmware file stored in the bucket */, gcsDownloadCallback /* callback function */))
