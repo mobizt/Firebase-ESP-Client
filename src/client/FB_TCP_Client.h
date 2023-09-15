@@ -255,7 +255,7 @@ public:
 #if defined(FIREBASE_ETH_IS_AVAILABLE)
 
 #if defined(ESP32)
-    if (strcmp(ETH.localIP().toString().c_str(), (const char *)MBSTRING_FLASH_MCR("0.0.0.0")) != 0)
+    if (validIP(ETH.localIP()))
     {
       ETH.linkUp();
       ret = true;
