@@ -2647,7 +2647,7 @@ static const char firebase_time_err_pgm_str_4[] PROGMEM = "system time was not s
 static const char firebase_rtdb_err_pgm_str_1[] PROGMEM = "backup data should be the JSON object";
 static const char firebase_rtdb_err_pgm_str_2[] PROGMEM = "path not exist";
 static const char firebase_rtdb_err_pgm_str_3[] PROGMEM = "data type mismatch";
-static const char firebase_rtdb_err_pgm_str_4[] PROGMEM = "security rules is not a valid JSON";
+static const char firebase_rtdb_err_pgm_str_4[] PROGMEM = "security rules are not a valid JSON";
 static const char firebase_rtdb_err_pgm_str_5[] PROGMEM = "the FirebaseData object was paused";
 
 // FCM error string
