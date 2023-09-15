@@ -267,7 +267,6 @@ public:
     if (!eth)
       return false;
 
-    bool ret = false;
 #if defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)
 
 #if defined(INC_ENC28J60_LWIP)
