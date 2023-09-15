@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.0.1
+ * Firebase TCP Client v1.0.2
  *
- * Created September 11, 2023
+ * Created September 14, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -1055,7 +1055,7 @@ public:
 
     unsigned long to = millis();
 
-    while (ETH_MODULE_CLASS.linkStatus() == LinkOFF && millis() - to < 2000)
+    while (ETH_MODULE_CLASS.linkStatus() == LinkOFF && millis() - to < FIREBASE_ETHERNET_MODULE_TIMEOUT)
     {
       delay(100);
     }
@@ -1082,7 +1082,12 @@ public:
   bool ethernetConnected()
   {
 #if defined(FIREBASE_ETHERNET_MODULE_IS_AVAILABLE)
-    _network_status = ETH_MODULE_CLASS.linkStatus() == LinkON;
+    _network_status = ETH_MODULE_CLASS.linkStatus() == LinkON && validIP(ETH_MODULE_CLASS.localIP());
+    if (!_network_status)
+    {
+      delay(FIREBASE_ETHERNET_MODULE_TIMEOUT);
+      _network_status = ETH_MODULE_CLASS.linkStatus() == LinkON && validIP(ETH_MODULE_CLASS.localIP());
+    }
 #endif
     return _network_status;
   }

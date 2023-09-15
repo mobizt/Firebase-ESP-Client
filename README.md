@@ -5,13 +5,13 @@
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg)
 
 
-The managed, complete, fast and secure Firebase Client Library that supports most Arduino devices except for AVR. The following are platforms in which the libraries are also available (RTDB only).
+This library provides Firebase Realtime database, Firebase Cloud Messaging, Cloud Firestore database, Firebase Storage, Google Cloud Storage and Cloud Functions for Firebase functions and supports most Arduino devices except for AVR devices that have resources and compiler limit.
 
+This library can work with on-chip/on-board network (WiFi/Ethernet) and External network module via Client library.
 
-* [Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
+The features can be configurable to add and exclude some unused features, see [Library Build Options](#library-build-options).
 
-* [Arduino WiFi Shield 101 and Arduino MKR1000 WIFI](https://github.com/mobizt/Firebase-Arduino-WiFi101)
-
+The [ESP8266 and Raspberry Pi Pico](https://github.com/mobizt/Firebase-ESP8266) and [ESP32](https://github.com/mobizt/Firebase-ESP32) versions are available which provide only Firebase Realtime database and Firebase Cloud Messaging functions.
 
 
 ## Contents
@@ -115,31 +115,20 @@ The managed, complete, fast and secure Firebase Client Library that supports mos
 
 ## Features
 
-* Supports most Arduino devices (except for AVR)
+* Supports most Arduino devices (except for AVR) with or without external neywork module.
 
-* Supports external Heap via SRAM/PSRAM in ESP8266 and ESP32.
+* Supports most Firebase Services included Google Cloud Storage.
+
+* Supports external Heap using SRAM/PSRAM in ESP8266 and ESP32.
 
 * TinyGSMClient and Ethernet Client integration.
 
 * Faster server reconnection with SSL Session Resumption.
 
-* Supports external network module.
+* Supports Authentications and Test Mode (No Auth for some services).
 
-* Supports Firebase Realtime database.
+* Supports Firmware OTA updates.
 
-* Supports Cloud Firestore database.
-
-* Supports Firebase Storage.
-
-* Supports Google Cloud Storage.
-
-* Supports Firebase Cloud Messaging.
-
-* Supports Test Mode (No Auth).
-
-* Supports Firmware OTA updates via RTDB, Firebase Storage and Google Cloud Storage.
-
-* Supports Cloud Functions for Firebase.
 
 ## Supported Devices.
 
@@ -632,6 +621,7 @@ The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h
 ```cpp
 FIREBASE_ETHERNET_MODULE_LIB `"EthernetLibrary.h"` // For the Ethernet library to work with external Ethernet module
 FIREBASE_ETHERNET_MODULE_CLASS EthernetClass // For the Ethernet class object of Ethernet library to work with external Ethernet module
+FIREBASE_ETHERNET_MODULE_TIMEOUT 2000 // For the time out in milliseconds to wait external Ethernet module to connect to network
 ENABLE_ESP8266_ENC28J60_ETH //  For native core library ENC28J60 Ethernet module support in ESP8266
 ENABLE_ESP8266_W5500_ETH // For native core library W5500 Ethernet module support in ESP8266
 ENABLE_ESP8266_W5100_ETH // For native core library W5100 Ethernet module support in ESP8266
@@ -659,6 +649,7 @@ For external Ethernet module integation used with function `setEthernetClient`, 
 
 `FIREBASE_ETHERNET_MODULE_CLASS` is the name of static object defined from class e.g. `Ethernet`.
 
+`FIREBASE_ETHERNET_MODULE_TIMEOUT` is the time out in milliseconds to wait network connection.
 
 For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
 

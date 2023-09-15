@@ -1,10 +1,10 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40408)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created September 5, 2023
+ * Created September 14, 2023
  */
 #ifndef FIREBASE_NETWORK_H
 #define FIREBASE_NETWORK_H
@@ -71,7 +71,7 @@
 
 #endif
 
-#if defined(INC_ENC28J60_LWIP) && defined(INC_W5100_LWIP) && defined(INC_W5500_LWIP)
+#if defined(INC_ENC28J60_LWIP) || defined(INC_W5100_LWIP) || defined(INC_W5500_LWIP)
 #define FIREBASE_ETH_IS_AVAILABLE
 #endif
 
@@ -79,12 +79,15 @@
 
 #endif
 
+
 #if __has_include(<Ethernet.h>) ||  (defined(FIREBASE_ETHERNET_MODULE_LIB) && defined(FIREBASE_ETHERNET_MODULE_CLASS))
 
 #if defined(ESP8266)
 #undef MAX_SOCK_NUM
+#endif
 
-#if defined(FIREBASE_DISABLE_NATIVE_ETHERNET)
+#if (defined(ESP8266)  && defined(FIREBASE_DISABLE_NATIVE_ETHERNET)) || (!defined(ESP8266) && !defined(ARDUINO_NANO_RP2040_CONNECT))
+
 
 #if defined(FIREBASE_ETHERNET_MODULE_LIB) && defined(FIREBASE_ETHERNET_MODULE_CLASS)
 #if __has_include(FIREBASE_ETHERNET_MODULE_LIB)
@@ -100,32 +103,27 @@
 #endif
 
 #if defined(ETH_MODULE_CLASS)
+
 #define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
+
+#if !defined(FIREBASE_ETHERNET_MODULE_TIMEOUT)
+#define FIREBASE_ETHERNET_MODULE_TIMEOUT 2000
+#elif FIREBASE_ETHERNET_MODULE_TIMEOUT <= 0 || FIREBASE_ETHERNET_MODULE_TIMEOUT > 120 * 1000
+#undef FIREBASE_ETHERNET_MODULE_TIMEOUT
+#define FIREBASE_ETHERNET_MODULE_TIMEOUT 2000
 #endif
+
 
 #endif
 
+
+#endif
+
+
+#if defined(ESP8266)
 #undef MAX_SOCK_NUM
-#elif !defined(ARDUINO_NANO_RP2040_CONNECT)
-
-#if defined(FIREBASE_ETHERNET_MODULE_LIB) && defined(FIREBASE_ETHERNET_MODULE_CLASS)
-#if __has_include(FIREBASE_ETHERNET_MODULE_LIB)
-#include FIREBASE_ETHERNET_MODULE_LIB
-#define ETH_MODULE_CLASS FIREBASE_ETHERNET_MODULE_CLASS
-#elif __has_include(<Ethernet.h>)
-#include <Ethernet.h>
-#define ETH_MODULE_CLASS Ethernet
-#endif
-#else
-#include <Ethernet.h>
-#define ETH_MODULE_CLASS Ethernet
 #endif
 
-#if defined(ETH_MODULE_CLASS)
-#define FIREBASE_ETHERNET_MODULE_IS_AVAILABLE
-#endif
-
-#endif
 
 #endif
 
