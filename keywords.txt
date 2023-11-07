@@ -8,11 +8,7 @@
 
 Firebase    KEYWORD1
 FirebaseData    KEYWORD1
-FirebaseStream  KEYWORD1
-MultiPathStream KEYWORD1
 QueryFilter KEYWORD1
-QueueManager    KEYWORD1
-QueueInfo   KEYWORD1
 FCM KEYWORD1
 RTDB    KEYWORD1
 Storage KEYWORD1
@@ -58,32 +54,11 @@ getShallowData  KEYWORD2
 enableClassicRequest    KEYWORD2
 setPriority KEYWORD2
 getPriority KEYWORD2
-getRules    KEYWORD2
-setRules    KEYWORD2
-setReadWriteRules   KEYWORD2
-pathExist   KEYWORD2
+pathExisted   KEYWORD2
 getETag KEYWORD2
 enableClassicRequest    KEYWORD2
-pushInt KEYWORD2
-pushFloat   KEYWORD2
-pushDouble  KEYWORD2
-pushBool    KEYWORD2
-pushString  KEYWORD2
-pushJSON    KEYWORD2
-pushBlob    KEYWORD2
-pushFile    KEYWORD2
 pushTimestamp   KEYWORD2
-setInt  KEYWORD2
-setFloat    KEYWORD2
-setDouble   KEYWORD2
-setBool KEYWORD2
-setString   KEYWORD2
-setJSON KEYWORD2
-setBlob KEYWORD2
-setFile KEYWORD2
 setTimestamp    KEYWORD2
-updateNode  KEYWORD2
-updateNodeSilent    KEYWORD2
 setGenericClient    KEYWORD2
 setGSMClient    KEYWORD2
 setEthernetClient   KEYWORD2
@@ -93,74 +68,26 @@ getCurrentTime  KEYWORD2
 addAP   KEYWORD2
 clearAP KEYWORD2
 setNetworkStatus    KEYWORD2
-
+get KEYWORD2
 set KEYWORD2
 push    KEYWORD2
-setAsync    KEYWORD2
-pushAsync   KEYWORD2
-pushIntAsync    KEYWORD2
-pushFloatAsync  KEYWORD2
-pushDoubleAsync KEYWORD2
-pushBoolAsync   KEYWORD2
-pushStringAsync KEYWORD2
-pushJSONAsync   KEYWORD2
-pushBlobAsync   KEYWORD2
-pushFileAsync   KEYWORD2
-pushTimestampAsync  KEYWORD2
-setIntAsync KEYWORD2
-setFloatAsync   KEYWORD2
-setDoubleAsync  KEYWORD2
-setBoolAsync    KEYWORD2
-setStringAsync  KEYWORD2
-setJSONAsync    KEYWORD2
-setBlobAsync    KEYWORD2
-setFileAsync    KEYWORD2
-setTimestampAsync   KEYWORD2
-updateNodeAsync KEYWORD2
-updateNodeSilentAsync   KEYWORD2
-setPriorityAsync    KEYWORD2
-
-
-getInt  KEYWORD2
-getFloat    KEYWORD2
-getDouble   KEYWORD2
-getBool KEYWORD2
-getString   KEYWORD2
-getJSON KEYWORD2
-getBlob KEYWORD2
-getFile KEYWORD2
-deleteNode  KEYWORD2
-deleteNodesByTimestamp  KEYWORD2
+update  KEYWORD2
+remove  KEYWORD2
+callbackEventType   KEYWORD2
+setWaitResponse    KEYWORD2
+waitStatus  KEYWORD2
+setRequestId    KEYWORD2
+getRequestId    KEYWORD2
 beginStream KEYWORD2
-beginMultiPathStream    KEYWORD2
 readStream  KEYWORD2
 endStream   KEYWORD2
-setStreamCallback   KEYWORD2
-setMultiPathStreamCallback  KEYWORD2
-removeStreamCallback    KEYWORD2
-removeMultiPathStreamCallback   KEYWORD2
 runStream   KEYWORD2
 runResumableUploadTask  KEYWORD2
-beginAutoRunErrorQueue  KEYWORD2
-endAutoRunErrorQueue    KEYWORD2
-clearErrorQueue KEYWORD2
-backup  KEYWORD2
-restore KEYWORD2
 sdBegin KEYWORD2
 sdMMCBegin  KEYWORD2
 setSystemTime   KEYWORD2
 setMaxRetry KEYWORD2
-setMaxErrorQueue    KEYWORD2
-saveErrorQueue  KEYWORD2
-deleteStorageFile   KEYWORD2
-restoreErrorQueue   KEYWORD2
-errorQueueCount KEYWORD2
-isErrorQueueFull    KEYWORD2
-processErrorQueue   KEYWORD2
-getErrorQueueID KEYWORD2
-isErrorQueueExisted KEYWORD2
 errorToString   KEYWORD2
-setStreamTaskStackSize  KEYWORD2
 authTokenInfo   KEYWORD2
 tokenReady  KEYWORD2
 signUp  KEYWORD2
@@ -174,7 +101,6 @@ commitDocument  KEYWORD2
 batchWriteDocuments  KEYWORD2
 beginTransaction    KEYWORD2
 rollback    KEYWORD2
-commitDocumentAsync KEYWORD2
 getDocument KEYWORD2
 batchGetDocuments    KEYWORD2
 deleteDocument  KEYWORD2
@@ -231,8 +157,6 @@ setETag KEYWORD2
 clearBindings   KEYWORD2
 runQuery    KEYWORD2
 setDeviceTime   KEYWORD2
-setQueryIndex   KEYWORD2
-removeQueryIndex    
 authenticated   KEYWORD2
 ready   KEYWORD2
 getToken    KEYWORD2
@@ -264,17 +188,6 @@ streamPath  KEYWORD2
 dataPath    KEYWORD2
 errorReason KEYWORD2
 errorCode   KEYWORD2
-intData KEYWORD2
-floatData   KEYWORD2
-doubleData  KEYWORD2
-boolData    KEYWORD2
-stringData  KEYWORD2
-jsonObjectPtr   KEYWORD2
-jsonObject  KEYWORD2
-jsonArrayPtr    KEYWORD2
-jsonArray   KEYWORD2
-jsonString  KEYWORD2
-blobData    KEYWORD2
 pushName    KEYWORD2
 isStream    KEYWORD2
 httpConnected   KEYWORD2
@@ -283,8 +196,6 @@ dataAvailable   KEYWORD2
 streamAvailable KEYWORD2
 mismatchDataType    KEYWORD2
 httpCode    KEYWORD2
-getBackupFilename   KEYWORD2
-getBackupFileSize   KEYWORD2
 clear   KEYWORD2
 fileTransferError   KEYWORD2
 payload KEYWORD2
@@ -324,39 +235,22 @@ startAt KEYWORD2
 endAt   KEYWORD2
 equalTo KEYWORD2
 
-################################
-# Methods for QueInfo (KEYWORD2)
-################################
-
-totalQueues KEYWORD2
-currentQueueID  KEYWORD2
-isQueueFull KEYWORD2
-dataType    KEYWORD2
-firebaseMethod  KEYWORD2
-dataPath    EYWORD2
-
 #######################################
 # Struct (KEYWORD3)
 #######################################
 
 FirebaseDataType    KEYWORD3
 FirebaseMethod  KEYWORD3
-QueueStorageType    KEYWORD3
-QueueItem   KEYWORD3
 token_info_t    KEYWORD3
 TokenInfo   KEYWORD3
 fb_json_last_error_t    KEYWORD3
-Firesense_Config    KEYWORD3
-FireSense_Channel   KEYWORD3
-Firesense_Channel_Type  KEYWORD3
-FireSense_Condition KEYWORD3
-FireSense_Data_Type KEYWORD3
 firebase_firestore_document_write_field_transforms_t  KEYWORD3
 firebase_firestore_document_write_document_transform_t    KEYWORD3
 firebase_firestore_document_precondition_t    KEYWORD3
 firebase_firestore_document_write_t   KEYWORD3
 TransactionOptions  KEYWORD3
 SPI_ETH_Module  KEYWORD3
+firebase_callback_event_type    KEYWORD3
 
 #######################################
 # FirebaseJson Struct (KEYWORD3)
@@ -404,21 +298,6 @@ errorPosition   KEYWORD2
 getPath KEYWORD2
 isMember    KEYWORD2
 
-#########################################
-# Methods for FireSense addons (KEYWORD2)
-#########################################
-
-loadConfig  KEYWORD2
-backupConfig    KEYWORD2
-restoreConfig   KEYWORD2
-enableController    KEYWORD2
-addChannel  KEYWORD2
-addCondition    KEYWORD2
-addCallbackFunction KEYWORD2
-clearAllCallbackFunctions   KEYWORD2
-addUserValue    KEYWORD2
-clearAllUserValues  KEYWORD2
-getDeviceId KEYWORD2
 
 ######################################
 # Constants (LITERAL1)
