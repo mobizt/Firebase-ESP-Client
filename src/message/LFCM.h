@@ -1,9 +1,4 @@
 
-#include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40408)
-#error "Mixed versions compilation."
-#endif
-
 #include <Arduino.h>
 #include "./mbfs/MB_MCU.h"
 #include "./FirebaseFS.h"

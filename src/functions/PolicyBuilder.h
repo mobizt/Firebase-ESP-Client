@@ -1,7 +1,3 @@
-#include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40408)
-#error "Mixed versions compilation."
-#endif
 
 /**
  * Google's IAM Policy Builder class, PolicyBuilder.h version 1.0.9
