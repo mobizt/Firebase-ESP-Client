@@ -1,11 +1,15 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.9
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.10
  *
- * Created December 3, 2022
+ * Created November 15, 2023
  *
  * Changes Log
  *
+ * 
+ * v1.2.10
+ * - add support Arduino UNO WiFi R4
+ * 
  * v1.2.9
  * - substring optimization
  *
@@ -900,7 +904,7 @@ public:
             s = boolStr(value);
         else if (is_num_neg_int<T>::value)
         {
-#if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
+#if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_UNOWIFIR4)
             s = int32Str(value);
 #else
             s = int64Str(value);
@@ -908,7 +912,7 @@ public:
         }
         else if (is_num_pos_int<T>::value)
         {
-#if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
+#if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_UNOWIFIR4)
             s = uint32Str(value);
 #else
             s = uint64Str(value);
@@ -1475,7 +1479,7 @@ public:
     static const size_t npos = -1;
 
 private:
-#if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
+#if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT) || defined(ARDUINO_UNOWIFIR4)
 
     char *int32Str(signed long value)
     {
