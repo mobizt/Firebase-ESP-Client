@@ -13,21 +13,16 @@ The features can be configurable to add and exclude some unused features, see [L
 
 The [ESP8266 and Raspberry Pi Pico](https://github.com/mobizt/Firebase-ESP8266) and [ESP32](https://github.com/mobizt/Firebase-ESP32) versions are available which provide only Firebase Realtime database and Firebase Cloud Messaging functions.
 
-Try the beta version of new [AsyncFirebaseClient](https://github.com/mobizt/AsyncFirebaseClient) library which is faster and more reliable.
-
-The new [AsyncFirebaseClient](https://github.com/mobizt/AsyncFirebaseClient) is currently support Realtime Database.
 
 ## Contents
 
 [1. Features](#features)
 
-[2. Breaking Changes from version 4](#breaking-changes-from-version-4)
+[2. Supported Devices](#supported-devices)
 
-[3. Supported Devices](#supported-devices)
+[3. Dependencies](#dependencies)
 
-[4. Dependencies](#dependencies)
-
-[5. Installation](#installation)
+[4. Installation](#installation)
 
 - [Using Library Manager](#using-library-manager)
 
@@ -35,11 +30,11 @@ The new [AsyncFirebaseClient](https://github.com/mobizt/AsyncFirebaseClient) is 
 
 - [RP2040 Arduino SDK installation](#rp2040-arduino-sdk-installation)
 
-[6. Usages](#usages)
+[5. Usages](#usages)
 
 - [Initialization](#initialization)
 
-[7. IDE Build Options](#ide-build-options)
+[6. Memory Options](#memory-options)
 
 - [Memory Options for ESP8266](#memory-options-for-esp8266)
 
@@ -55,26 +50,21 @@ The new [AsyncFirebaseClient](https://github.com/mobizt/AsyncFirebaseClient) is 
 
 - [PlatformIO IDE](#platformio-ide-1)
 
+[7. Authentication](#authentication)
+
+- [Access in Test Mode (No Auth)](#access-in-test-mode-no-auth)
+
+- [The authenication credentials and prerequisites](#the-authenication-credentials-and-prerequisites)
+
 [8. Library Build Options](#library-build-options)
 
 - [Predefined Options](#predefined-options)
 
 - [Optional Options](#optional-options)
 
-[9. TCP Client Options](#tcp-client-options)
+[9. TCP Keep Alive](#tcp-keep-alive)
 
-- [TCP Keep Alive](#tcp-keep-alive)
-
-- [TCP Time Out](#tcp-time-out)
-
-[10. Firebase Authentications Options](#firebase-authentications-options)
-
-- [Access in Test Mode (No Auth)](#access-in-test-mode-no-auth)
-
-- [The authenication credentials and prerequisites](#the-authenication-credentials-and-prerequisites)
-
-
-[11. Realtime Database](#realtime-database)
+[10. Realtime Database](#realtime-database)
 
 - [Read Data](#read-data)
 
@@ -93,6 +83,14 @@ The new [AsyncFirebaseClient](https://github.com/mobizt/AsyncFirebaseClient) is 
 - [Enable TCP KeepAlive for reliable HTTP Streaming](#enable-tcp-keepalive-for-reliable-http-streaming)
 
 - [HTTP Streaming examples](#http-streaming-examples)
+
+- [Backup and Restore Data](#backup-and-restore-data)
+
+- [Database Error Handling](#database-error-handling)
+
+[11. Add On](#add-on)
+
+- [FireSense, The Programmable Data Logging and IO Control (Deprecated)](#firesense-the-programmable-data-logging-and-io-control-deprecated)
 
 [12. Firebase Cloud Messaging (FCM)](#firebase-cloud-messaging-fcm)
 
@@ -131,185 +129,6 @@ The new [AsyncFirebaseClient](https://github.com/mobizt/AsyncFirebaseClient) is 
 
 * Supports Firmware OTA updates.
 
-## Breaking Changes from version 4
-
-To keep support only necessary options and features that provided by Firebase which can be reduce the program footprint, there are some functions removed from this library in version 5.
-
-Note that, the following changes applied for [Firebase-ESP-Client](https://github.com/mobizt/Firebase-ESP-Client),  [Firebase-ESP8266](https://github.com/mobizt/Firebase-ESP8266) and [Firebase-ESP32](https://github.com/mobizt/Firebase-ESP32) libraries.
-
-### The functions removal.
-
-- The MultiPath Streaming in RTDB (no replacement).
-
-  `beginMultiPathStream`, `setMultiPathStreamCallback`, and `removeMultiPathStreamCallback`
-  
-- The Streaming in RTDB (with replacement).
-  
-  `beginStream`, `endStream`, `setStreamCallback` and `removeStreamCallback`
-
-  Note that, use `stream` and `stopStream` instead of `beginStream` and `endStream`.
-
-- The backup and restore in RTDB (no replacement).
-
-  `backup`, `restore`, `getBackupFilename`, and `getBackupFileSize`
-
-- The error queue and its data type in RTDB (no replacement).
-
-  `setMaxErrorQueue`, `saveErrorQueue`, `deleteStorageFile`, `restoreErrorQueue`, `errorQueueCount`, `isErrorQueueFull`, `processErrorQueue`, `getErrorQueueID`, `isErrorQueueExisted`, `beginAutoRunErrorQueue`, `endAutoRunErrorQueue`, and `clearErrorQueue`
-
-- The security rules download, upload and set the read/write rules in RTDB (no replacement).
-
-   `getRules`, `setRules` and `setReadWriteRules`.
-
-- The database security rules's query index set/remove in RTDB (no replacement).
-
-  `setQueryIndex` and `removeQueryIndex`
-
-- The anync functions in RTDB (no replacement but alternative).
-  
-  `setPriorityAsync`, `pushAsync`, `pushIntAsync`, `pushFloatAsync`, `pushDoubleAsync`, `pushBoolAsync`, `pushStringAsync`, `pushJSONAsync`, `pushArrayAsync`, `pushBlobAsync`, `pushFileAsync`, `pushTimestampAsync`, `setAsync`, `setIntAsync`, `setFloatAsync`, `setDoubleAsync`, `setDoubleAsync`, `setBoolAsync`, `setStringAsync`, `setJSONAsync`, `setArrayAsyn`, `setBlobAsync`, `setFileAsync`, `setTimestampAsync`, `updateNodeAsync`, and `updateNodeSilentAsync`
-
-  Note that, see [Store Data](#store-data), [Append Data](#append-data) and [Patch Data](#patch-data) topics for alternative.
-
-- The node deletion in RTDB (with replacement).
-
-  `deleteNode` and `deleteNodesByTimestamp`
-
-  Note that, use `remove` for `deleteNode` instead. No alternative function of `deleteNodesByTimestamp` is available.
-
-- Old API in FCM for [Firebase-ESP8266](https://github.com/mobizt/Firebase-ESP8266) and [Firebase-ESP32](https://github.com/mobizt/Firebase-ESP32) libraries (no replacement).
-
-  `fcm.begin`, `fcm.addDeviceToken`, `fcm.removeDeviceToken`, `fcm.clearDeviceToken`, `fcm.setNotifyMessage`, `fcm.addCustomNotifyMessage`, `fcm.setDataMessage`, `fcm.clearDataMessage`, `fcm.setPriority`, `fcm.setCollapseKey`, `fcm.setTimeToLive`, `fcm.setTopic`, `fcm.getSendResult`, `sendMessage`, `broadcastMessage` and `sendTopic`
-
-- The async function in Cloud Firestore (no replacement).
-
-  `commitDocumentAsync`
-
-- The functions getXXX, pushXXX, and setXXX in RTDB (with replacement)
-  
-  `pushInt`, `pushFloat`, `pushDouble`, `pushBool`, `pushString`, `pushJSON`, `pushArray`, `pushBlob`, `pushFile`, `setInt`, `setFloat`, `setDouble`, `setBool`, `setString`, `setJSON`, `setArray`, `setBlob`, `setFile`,`getInt`, `getFloat`, `getDouble`, `getBool`, `getString`,`getJSON`, `getArray`, `getBlob`, `getFile`.
-
-  Note that, use generic `get`,`push`, and `set` instead.
-
-- The update (patch) functions in RTDB (with replacement).
-
-  `updateNode` and `updateNodeSilent`
-
-  Note that, use `update` instead.
-
-- Old API in RTDB for [Firebase-ESP8266](https://github.com/mobizt/Firebase-ESP8266) and [Firebase-ESP32](https://github.com/mobizt/Firebase-ESP32) libraries (with replacement).
-
-  `setReadTimeout`, `setwriteSizeLimit`, `pathExisted`, `pathExist`, `getETag`, `getShallowData`, `enableClassicRequest`, `setPriority`, `getPriority`, `push`, `pushInt`, `pushFloat`, `pushDouble`, `pushBool`, `pushString`, `pushJSON`, `pushArray`, `pushBlob`, `pushFile`, `pushTimestamp`, `setInt`, `setFloat`, `setDouble`, `setBool`, `setString`, `setJSON`, `setArray`, `setBlob`, `setFile`, `setTimestamp`, `updateNode`, `updateNodeSilent`, `get`, `getInt`, `getFloat`, `getDouble`, `getBool`, `getString`, `getJSON`, `getArray`, `getBlob`, `getFile`, `downloadOTA`, `deleteNode`, `beginStream`, `readStream`, `runStream`, and `setMaxRetry`
-
-  Note that these functions should be called from `RTDB` member class of `Firebase` class and use the pointer to `FirebaseData`, `FirebaseJson` and `FirebaseJsonArray` in the functions.
-
-- The legacy functions in `FirebaseData` (with replacement).
-
-  `intData`, `floatData`, `doubleData`, `boolData`, `stringData`, `jsonString`, `jsonObject`, `jsonObjectPtr`, `jsonArray`, `jsonArrayPtr`, `blobData`, and `fileStream`
-
-- The external Client functions (with replacement).
-
-  `setExternalClient` and `setExternalClientCallbacks`
-
-- The FireSense add on in RTDB (no replacement).
-
-  `loadConfig`, `backupConfig`, `restoreConfig`, `enableController`, `addChannel`, `addCondition`, `addCallbackFunction`, `clearAllCallbackFunctions`, `addUserValue`, `clearAllUserValues`, and `getDeviceId`
-
-### The classes removal.
-
-- The MultiPath Streaming in RTDB (no replacement).
-
-   `MultiPathStream`
-
-- The Streaming in RTDB (no replacement).
-
-  `FirebaseStream` for [Firebase-ESP-Client](https://github.com/mobizt/Firebase-ESP-Client) and `StreamData` for [Firebase-ESP8266](https://github.com/mobizt/Firebase-ESP8266) and [Firebase-ESP32](https://github.com/mobizt/Firebase-ESP32) libraries.
-
-- The error queue in RTDB (no replacement).
-
-  `QueueManager` and `QueueInfo`
-
-- FireSense add on in RTDB (no replacement).
-  
-  `FireSenseClass`
-
-### The enums and structs removal
-
-  For naming consitency across the library, the followings are removed.
-
-- The `fb_esp_rtdb_data_type` enums in RTDB (with replacement).
-
-  `fb_esp_rtdb_data_type_null`, `fb_esp_rtdb_data_type_integer`, `fb_esp_rtdb_data_type_float`, `fb_esp_rtdb_data_type_double`, `fb_esp_rtdb_data_type_boolean`, `fb_esp_rtdb_data_type_string`, `fb_esp_rtdb_data_type_json`, `fb_esp_rtdb_data_type_array`, `fb_esp_rtdb_data_type_blob`, and `fb_esp_rtdb_data_type_file`
-
-- The `fb_esp_rtdb_upload_status` enums in RTDB (with replacement).
-  
-  `fb_esp_rtdb_upload_status_error`, `fb_esp_rtdb_upload_status_unknown`, `fb_esp_rtdb_upload_status_init` `fb_esp_rtdb_upload_status_upload`, and `fb_esp_rtdb_upload_status_complete`
-
-- The `fb_esp_rtdb_download_status` enums in RTDB (with replacement).
-  
-  `fb_esp_rtdb_download_status_error`, `fb_esp_rtdb_download_status_unknown`, `fb_esp_rtdb_download_status_init` `fb_esp_rtdb_download_status_download`,and `fb_esp_rtdb_download_status_complete`
-
-- The `fb_esp_cfs_upload_status` enums in Cloud Firestore (with replacement).
-  
-  `fb_esp_cfs_upload_status_error`, `fb_esp_cfs_upload_status_unknown`, `fb_esp_cfs_upload_status_init` `fb_esp_cfs_upload_status_upload`,`fb_esp_cfs_upload_status_complete`, and `fb_esp_cfs_upload_status_process_response`
-
-- The `fb_esp_gcs_upload_status` enums in Google Cloud Storage (with replacement).
-  
-  `fb_esp_gcs_upload_status_error`, `fb_esp_gcs_upload_status_unknown`, `fb_esp_gcs_upload_status_init` `fb_esp_gcs_upload_status_upload`, and `fb_esp_gcs_upload_status_complete`
-
-- The `fb_esp_gcs_download_status` enums in Google Cloud Storage (with replacement).
-  
-  `fb_esp_gcs_download_status_error`, `fb_esp_gcs_download_status_unknown`, `fb_esp_gcs_download_status_init` `fb_esp_gcs_download_status_download`, and `fb_esp_gcs_download_status_complete`
-
-- The `fb_esp_fcs_upload_status` enums in Firebase Storage (with replacement).
-  
-  `fb_esp_fcs_upload_status_error`, `fb_esp_fcs_upload_status_unknown`, `fb_esp_fcs_upload_status_init` `fb_esp_fcs_upload_status_upload`, and `fb_esp_fcs_upload_status_complete`
-
-- The `fb_esp_fcs_download_status` enums in Firebase Storage (with replacement).
-  
-  `fb_esp_fcs_download_status_error`, `fb_esp_fcs_download_status_unknown`, `fb_esp_fcs_download_status_init` `fb_esp_fcs_download_status_download`, and `fb_esp_fcs_download_status_complete`
-
-- The `fb_esp_functions_operation_status` enums in Cloud Functions for Firebase (with replacement).
-  
-  `fb_esp_functions_operation_status_unknown`, `fb_esp_functions_operation_status_generate_upload_url`, `fb_esp_functions_operation_status_upload_source_file_in_progress` `fb_esp_functions_operation_status_deploy_in_progress`, `fb_esp_functions_operation_status_set_iam_policy_in_progress`, `fb_esp_functions_operation_status_delete_in_progress`, `fb_esp_functions_operation_status_finished` and `fb_esp_functions_operation_status_error`
-
-Note that, you can replace the enums `fb_esp_xxx` with `firebase_xxx`.
-
-- The StorageType struct for [Firebase-ESP8266](https://github.com/mobizt/Firebase-ESP8266) and [Firebase-ESP32](https://github.com/mobizt/Firebase-ESP32) libraries (with replacement).
-  
-  `StorageType::UNDEFINED`, `StorageType::FLASH` and `StorageType::SD`
-
-Note that, `mem_storage_type_undefined`, `mem_storage_type_flash`, and `mem_storage_type_sd` was used instead.
-
-- The error queue in RTDB (no replacement).
-  
-  `QueueStorageType` and `QueueItem`
-
-- The FireSense add on (no replacement).
-
-  `Firesense_Config`, `FireSense_Channel`, `Firesense_Channel_Type`, `FireSense_Condition`, and `FireSense_Data_Type`
-
-### The platform and its features removal.
-
-Because of no benefit we gain from using `FreeRTOS` in `Raspberry Pi Pico` platform in this library and limited resources and C++ functions supported in `AVR` platform, the following are changes.
-
-- `FreeRTOS` removal in Raspberry Pi Pico in Google Cloud Storage upload task.
-
-- `FreeRTOS` removal in Raspberry Pi Pico in Functions for Firebase task.
-
-  `createFunction` and `runDeployTasks`
-
-- The `std::vecor` was used to represent the dynamic array and it breaks the `AVR` platform supports.
-
-
-For proper usage guidlines, see [examples](/examples/)
-
-
-### To bring back the removed functions.
-You should copy the relevant functions you used in the source code of version 4 (mostly in `FB_RTDB.h` and `FB_RTDB.cpp`) to your sketch.
-
-The removed functions implemented using the library public functions and some private helper functions.
-
 
 ## Supported Devices.
 
@@ -320,7 +139,6 @@ The removed functions implemented using the library public functions and some pr
  * Arduino Nano 33 IoT
  * Arduino MKR Vidor 4000
  * Raspberry Pi Pico (RP2040)
- * Arduino UNO R4 WiFi (Renesas).
  * LAN8720 Ethernet PHY
  * TLK110 Ethernet PHY
  * IP101 Ethernet PHY
@@ -343,6 +161,10 @@ For Arduino IDE, ESP8266 Core SDK can be installed through **Boards Manager**.
 For PlatfoemIO IDE, ESP8266 Core SDK can be installed through **PIO Home** > **Platforms** > **Espressif 8266 or Espressif 32**.
 
 The RP2040 boards required Arduino-Pico SDK from Earle F. Philhower https://github.com/earlephilhower/arduino-pico
+
+## Migrate from Firebase-ESP8266 or Firebase-ESP32 to Firebase-ESP-Client
+
+All function for Realtime database between these libraries are compattible.  [See this guide](/examples/README.md) for migrating.
 
 
 
@@ -407,11 +229,76 @@ See [all examples](/examples) for complete usages.
 
 See [function description](/src/README.md) for all available functions.
 
+
+
+### Initialization
+
+
+```cpp
+
+#include <Arduino.h>
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
+#include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
+#endif
+
+#include <Firebase_ESP_Client.h>
+
+// Define the Firebase Data object
+FirebaseData fbdo;
+
+// Define the FirebaseAuth data for authentication data
+FirebaseAuth auth;
+
+// Define the FirebaseConfig data for config data
+FirebaseConfig config;
+
+// Assign the project host and api key 
+config.host = FIREBASE_HOST;
+
+config.api_key = API_KEY;
+
+// Assign the user sign in credentials
+auth.user.email = USER_EMAIL;
+auth.user.password = USER_PASSWORD;
+
+// Initialize the library with the Firebase authen and config.
+Firebase.begin(&config, &auth);
+
+// Optional, set AP reconnection in setup()
+Firebase.reconnectWiFi(true);
+
+// Optional, set number of error retry
+Firebase.RTDB.setMaxRetry(&fbdo, 3);
+
+// Optional, set number of error resumable queues
+Firebase.RTDB.setMaxErrorQueue(&fbdo, 30);
+
+// Optional, use classic HTTP GET and POST requests.
+// This option allows get and delete functions (PUT and DELETE HTTP requests) works for
+// device connected behind the Firewall that allows only GET and POST requests.
+Firebase.RTDB.enableClassicRequest(&fbdo, true);
+
+// Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
+// Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
+fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
+// Limit the size of response payload to be collected in FirebaseData
+fbdo.setResponseSize(2048);
+
+```
 See [other authentication examples](/examples/Authentications) for more sign in methods.
 
 
 
-## IDE Build Options
+## Memory Options
 
 ### Memory Options for ESP8266
 
@@ -529,196 +416,27 @@ As in ESP8266, once the external Heap memory was enabled in IDE, to allow the li
 ```
 
 
-## Library Build Options 
 
-The library build options are defined as preprocessor macros (`#define name`).
+## Authentication
 
-Some options can be disabled to reduce program space.
+This library supports many types of authentications.
 
-### Predefined Options
-
-The predefined options that are already set in [**FirebaseFS.h**](src/FirebaseFS.h) are following.
-
-```cpp
-ENABLE_NTP_TIME // For enabling the device or library time setup from NTP server
-ENABLE_ERROR_STRING // For enabling the error string from error reason
-FIREBASE_ENABLE_RTDB // For RTDB class compilation
-FIREBASE_ENABLE_FIRESTORE // For Firestore compilation
-FIREBASE_ENABLE_FCM // For Firebase Cloud Messaging compilation
-FIREBASE_ENABLE_FB_STORAGE // For Firebase Storage compilation
-FIREBASE_ENABLE_GC_STORAGE // For Google Cloud Storage compilation
-FIREBASE_ENABLE_FB_FUNCTIONS // For Functions for Firebase compilation
-FIREBASE_USE_PSRAM // For enabling PSRAM support
-ENABLE_OTA_FIRMWARE_UPDATE // For enabling OTA updates support via RTDB, Firebase Storage and Google Cloud Storage buckets
-USE_CONNECTION_KEEP_ALIVE_MODE // For enabling Keep Alive connection mode
-DEFAULT_FLASH_FS // For enabling Flash filesystem support
-DEFAULT_SD_FS // For enabling SD filesystem support 
-CARD_TYPE_SD or CARD_TYPE_SD_MMC // The SD card type for SD filesystem
-```
-
-The Flash and SD filesystems are predefined.
-
-SD is the default SD filesystem for all devices.
-
-For ESP8266 and Arduino Pico, LittleFS is the default flash filesystem.
-
-For ESP32 since v2.0.x, LittleFS is the default flash filesystem otherwise SPIFFS is the default flash filesystem.
-
-In otherr devices, SPIFFS is the default flash filesystem.
-
-User can change `DEFAULT_FLASH_FS` and `DEFAULT_SD_FS` with `CARD_TYPE_SD` or `CARD_TYPE_SD_MMC` defined values for other filesystems.
-
-### Optional Options
-
-The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h) and can be assigned by user.
-
-```cpp
-FIREBASE_ETHERNET_MODULE_LIB `"EthernetLibrary.h"` // For the Ethernet library to work with external Ethernet module
-FIREBASE_ETHERNET_MODULE_CLASS EthernetClass // For the Ethernet class object of Ethernet library to work with external Ethernet module
-FIREBASE_ETHERNET_MODULE_TIMEOUT 2000 // For the time out in milliseconds to wait external Ethernet module to connect to network
-ENABLE_ESP8266_ENC28J60_ETH //  For native core library ENC28J60 Ethernet module support in ESP8266
-ENABLE_ESP8266_W5500_ETH // For native core library W5500 Ethernet module support in ESP8266
-ENABLE_ESP8266_W5100_ETH // For native core library W5100 Ethernet module support in ESP8266
-FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
-FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
-FIREBASE_DEFAULT_DEBUG_PORT // For debug port assignment
-```
-
-You can assign the optional build options using one of the following methods.
-
-- By creating user config file `CustomFirebaseFS.h` in library installed folder and define these optional options.
-
-- By adding compiler build flags with `-D name`.
-
-In PlatformIO IDE, using `build_flags` in PlatformIO IDE's platformio.ini is more convenient 
-
-```ini
-build_flags = -D DISABLE_FB_STORAGE
-              -D EFIREBASE_DISABLE_ONBOARD_WIFI
-```
-
-For external Ethernet module integation used with function `setEthernetClient`, both `FIREBASE_ETHERNET_MODULE_LIB` and `FIREBASE_ETHERNET_MODULE_CLASS` should be defined.
-
-`FIREBASE_ETHERNET_MODULE_LIB` is the Ethernet library name with extension (.h) and should be inside `""` or `<>` e.g. `"Ethernet.h"`.
-
-`FIREBASE_ETHERNET_MODULE_CLASS` is the name of static object defined from class e.g. `Ethernet`.
-
-`FIREBASE_ETHERNET_MODULE_TIMEOUT` is the time out in milliseconds to wait network connection.
-
-For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
-
-```cpp
-DISABLE_NTP_TIME // For disabling the NTP time setting
-DISABLE_ERROR_STRING // For disabling the error string from error reason
-DISABLE_RTDB // For disabling RTDB support
-DISABLE_FIRESTORE // For disabling Firestore support
-DISABLE_FCM // For disabling Firebase Cloud Messaging support
-DISABLE_FB_STORAGE // For disabling Firebase Storage support
-DISABLE_GC_STORAGE // For disabling Google Cloud Storage support
-DISABLE_FB_FUNCTIONS // For disabling Functions for Firebase support
-DISABLE_PSRAM // For disabling PSRAM support
-DISABLE_OTA // For disabling OTA updates support
-DISABLE_KEEP_ALIVE // For disabling TCP Keep Alive support (See TCP Keep Alive)
-DISABLE_SD // For disabling flash filesystem support
-DISABLE_FLASH // For disabling SD filesystem support
-DISABLE_DEBUG // For disable debug port
-
-FIREBASE_DISABLE_ALL_OPTIONS // For disabling all predefined build options above
-```
-
-Note that, `CustomFirebaseFS.h` for user config should be placed in the library install folder inside src folder.
-
-This `CustomFirebaseFS.h` will not change or overwrite when update the library.
-
-
-
-## TCP Client Options
-
-### TCP Keep Alive
-
-
-The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
-
-`tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
-
-Ex.
-
-```cpp
-fbdo.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
-
-// If one of three arguments is zero, the KeepAlive will be disabled.
-```
-
-To check the KeepAlive status, use `<FirebaseData>.isKeepAlive`.
-
-
-For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
-
-You can check the server connecting status, by executing `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
-
-
-The TCP KeepAlive was currently available in ESP32 unless in ESP8266, [this ESP8266 PR #8940](https://github.com/esp8266/Arduino/pull/8940) should be merged in the [ESP8266 Arduino Core SDK](https://github.com/esp8266/Arduino/releases), i.e., it will be supported in the ESP8266 core version newer than v3.1.2.
-
-
-In ESP8266 core v3.1.2 and older, the error can be occurred when executing `<FirebaseData>.keepAlive` because of object slicing.
-
-
-The Arduino Pico is currently not support TCP KeepAlive until it's implemented in WiFiClientSecure library as in ESP8266.
-
- 
-For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
-
-
-### TCP Time Out
-
-  The timeout for TCP client can be set from `FirebaseConfig` object included following.
-
-  - Network reconnect timeout (interval) in ms (10 sec - 5 min) when network or WiFi disconnected.
-
-    Ex. `config.timeout.networkReconnect = 10 * 1000;`
-
-  - Socket connection and SSL handshake timeout in ms (1 sec - 1 min).
-
-    Ex. `config.timeout.socketConnection = 10 * 1000;`
-
-  - Server response read timeout in ms (1 sec - 1 min).
-
-    Ex. `config.timeout.serverResponse = 10 * 1000;`
-
-  - RTDB Stream keep-alive timeout in ms (20 sec - 2 min) when no server's keep-alive event data received.
-  
-    Ex. `config.timeout.rtdbKeepAlive = 45 * 1000;`
-
-  - RTDB Stream reconnect timeout (interval) in ms (1 sec - 1 min) when RTDB Stream closed and want to resume.
-
-    Ex. `config.timeout.rtdbStreamReconnect = 1 * 1000;`
-
-  - RTDB Stream error notification timeout (interval) in ms (3 sec - 30 sec). It determines how often the `readStream` will return false (error) when it called repeatedly in loop.
-
-    Ex. `config.timeout.rtdbStreamError = 3 * 1000;`
-
-
-
-## Firebase Authentications Options
-
-The Firebase authentications methods support by this library included none or no-auth, legacy token (database secret) for RTDB, ID token, custom token and OAuth2.0 token.
-
-See [other authentication examples](/examples/Authentications) for more authentications usage.
+See [other authentication examples](/examples/Authentications) for more authentication methods.
 
 Some authentication methods require the token generaion and exchanging process which take more time than using the legacy token.
 
-The system time must be set before authenticate using the custom and OAuth2.0 tokens or when the root certificate was set for verification. 
+The system time must be set before authenticate using the custom and OAuth2.0 tokens or when the root certificate was set for data transfer. 
 
-The authentication with custom and OAuth2.0 tokens takes the time, several seconds in overall process which included the NTP server time request, JWT token generation and signing process.
+The authentication with custom and OAuth2.0 tokens takes the time, several seconds in overall process which included the NTP time acquisition (system time setup), JWT token generation and signing process.
 
-By setting the system (device) time prior to calling the **`Firebase.begin`**, the internal NTP server time request process will be ignored.
+By setting the system time prior to calling the **`Firebase.begin`**, the internal NTP time acquisition process will be ignored.
 
-You can set the system time from the RTC chip or set manually by calling **`Firebase.setSystemTime`**.
+You can set the system time using the RTC chip or manually by calling **`Firebase.setSystemTime`**.
 
 
-While authenticating using Email and password, the process will be perform faster because no token generation and NTP server time request required. 
+While authenticate using Email and password, the process will be perform faster because no token generation and time setup required. 
 
-The authentication using the legacy token (database secret) does not have the delay because the token is always available for use.
+The authenticate using the legacy token (database secret) does not have these delay time because the token is ready to use.
 
 
 
@@ -852,20 +570,147 @@ Below is how to assign the certificate data for server verification.
   // config.cert.file_storage = mem_storage_type_flash; // or mem_storage_type_sd
 ```
 
-## TCP Session Reusage and Asynchronous operation
-
-The `FirbaseData` object is the class object that used as the user data container which used to pass to all library functions to keep the server response payload and TCP session.
-
-Since version 5, you can call all functions without `FirbaseData` object with asynchronous operation supports. 
-
-The `FirbaseData` object will be used in case where you want to re-use the TCP session to avoid to do SSL handshake everytime you want to sending request to server especially when `FirbaseData` object was defined in global or usage scope.
 
 
-The transfer speed is faster than withou using `FirbaseData` object because of no additional delay for SSL handshake required in subsequence calls.
 
-Without using `FirbaseData` object, the SSL handshake time was much reduced in the subsequence request because of SSL session resumption was implemented since version 5.
+## Library Build Options 
 
-The asynchronous operation was done by assign the DataCallback function to `FirbaseData` object before use it or assign the assign the `DataCallback` to the supported functions directly in case no `FirbaseData` object was assigned. 
+The library build options are defined as preprocessor macros (`#define name`).
+
+Some options can be disabled to reduce program space.
+
+### Predefined Options
+
+The predefined options that are already set in [**FirebaseFS.h**](src/FirebaseFS.h) are following.
+
+```cpp
+ENABLE_NTP_TIME // For enabling the device or library time setup from NTP server
+ENABLE_ERROR_STRING // For enabling the error string from error reason
+FIREBASE_ENABLE_RTDB // For RTDB class compilation
+FIREBASE_ENABLE_ERROR_QUEUE // For RTDB Error Queue compilation
+FIREBASE_ENABLE_FIRESTORE // For Firestore compilation
+FIREBASE_ENABLE_FCM // For Firebase Cloud Messaging compilation
+FIREBASE_ENABLE_FB_STORAGE // For Firebase Storage compilation
+FIREBASE_ENABLE_GC_STORAGE // For Google Cloud Storage compilation
+FIREBASE_ENABLE_FB_FUNCTIONS // For Functions for Firebase compilation
+FIREBASE_USE_PSRAM // For enabling PSRAM support
+ENABLE_OTA_FIRMWARE_UPDATE // For enabling OTA updates support via RTDB, Firebase Storage and Google Cloud Storage buckets
+USE_CONNECTION_KEEP_ALIVE_MODE // For enabling Keep Alive connection mode
+DEFAULT_FLASH_FS // For enabling Flash filesystem support
+DEFAULT_SD_FS // For enabling SD filesystem support 
+CARD_TYPE_SD or CARD_TYPE_SD_MMC // The SD card type for SD filesystem
+```
+
+The Flash and SD filesystems are predefined.
+
+SD is the default SD filesystem for all devices.
+
+For ESP8266 and Arduino Pico, LittleFS is the default flash filesystem.
+
+For ESP32 since v2.0.x, LittleFS is the default flash filesystem otherwise SPIFFS is the default flash filesystem.
+
+In otherr devices, SPIFFS is the default flash filesystem.
+
+User can change `DEFAULT_FLASH_FS` and `DEFAULT_SD_FS` with `CARD_TYPE_SD` or `CARD_TYPE_SD_MMC` defined values for other filesystems.
+
+### Optional Options
+
+The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h) and can be assigned by user.
+
+```cpp
+FIREBASE_ETHERNET_MODULE_LIB `"EthernetLibrary.h"` // For the Ethernet library to work with external Ethernet module
+FIREBASE_ETHERNET_MODULE_CLASS EthernetClass // For the Ethernet class object of Ethernet library to work with external Ethernet module
+FIREBASE_ETHERNET_MODULE_TIMEOUT 2000 // For the time out in milliseconds to wait external Ethernet module to connect to network
+ENABLE_ESP8266_ENC28J60_ETH //  For native core library ENC28J60 Ethernet module support in ESP8266
+ENABLE_ESP8266_W5500_ETH // For native core library W5500 Ethernet module support in ESP8266
+ENABLE_ESP8266_W5100_ETH // For native core library W5100 Ethernet module support in ESP8266
+FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
+FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
+FIREBASE_DEFAULT_DEBUG_PORT // For debug port assignment
+```
+
+You can assign the optional build options using one of the following methods.
+
+- By creating user config file `CustomFirebaseFS.h` in library installed folder and define these optional options.
+
+- By adding compiler build flags with `-D name`.
+
+In PlatformIO IDE, using `build_flags` in PlatformIO IDE's platformio.ini is more convenient 
+
+```ini
+build_flags = -D DISABLE_FB_STORAGE
+              -D EFIREBASE_DISABLE_ONBOARD_WIFI
+```
+
+For external Ethernet module integation used with function `setEthernetClient`, both `FIREBASE_ETHERNET_MODULE_LIB` and `FIREBASE_ETHERNET_MODULE_CLASS` should be defined.
+
+`FIREBASE_ETHERNET_MODULE_LIB` is the Ethernet library name with extension (.h) and should be inside `""` or `<>` e.g. `"Ethernet.h"`.
+
+`FIREBASE_ETHERNET_MODULE_CLASS` is the name of static object defined from class e.g. `Ethernet`.
+
+`FIREBASE_ETHERNET_MODULE_TIMEOUT` is the time out in milliseconds to wait network connection.
+
+For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
+
+```cpp
+DISABLE_NTP_TIME // For disabling the NTP time setting
+DISABLE_ERROR_STRING // For disabling the error string from error reason
+DISABLE_RTDB // For disabling RTDB support
+DISABLE_ERROR_QUEUE // For disabling RTDB Error Queue support
+DISABLE_FIRESTORE // For disabling Firestore support
+DISABLE_FCM // For disabling Firebase Cloud Messaging support
+DISABLE_FB_STORAGE // For disabling Firebase Storage support
+DISABLE_GC_STORAGE // For disabling Google Cloud Storage support
+DISABLE_FB_FUNCTIONS // For disabling Functions for Firebase support
+DISABLE_PSRAM // For disabling PSRAM support
+DISABLE_OTA // For disabling OTA updates support
+DISABLE_KEEP_ALIVE // For disabling TCP Keep Alive support (See TCP Keep Alive)
+DISABLE_SD // For disabling flash filesystem support
+DISABLE_FLASH // For disabling SD filesystem support
+DISABLE_DEBUG // For disable debug port
+
+FIREBASE_DISABLE_ALL_OPTIONS // For disabling all predefined build options above
+```
+
+Note that, `CustomFirebaseFS.h` for user config should be placed in the library install folder inside src folder.
+
+This `CustomFirebaseFS.h` will not change or overwrite when update the library.
+
+
+
+## TCP Keep Alive
+
+
+The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
+
+`tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
+
+Ex.
+
+```cpp
+fbdo.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
+
+// If one of three arguments is zero, the KeepAlive will be disabled.
+```
+
+To check the KeepAlive status, use `<FirebaseData>.isKeepAlive`.
+
+
+For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
+
+You can check the server connecting status, by executing `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+
+
+The TCP KeepAlive was currently available in ESP32 unless in ESP8266, [this ESP8266 PR #8940](https://github.com/esp8266/Arduino/pull/8940) should be merged in the [ESP8266 Arduino Core SDK](https://github.com/esp8266/Arduino/releases), i.e., it will be supported in the ESP8266 core version newer than v3.1.2.
+
+
+In ESP8266 core v3.1.2 and older, the error can be occurred when executing `<FirebaseData>.keepAlive` because of object slicing.
+
+
+The Arduino Pico is currently not support TCP KeepAlive until it's implemented in WiFiClientSecure library as in ESP8266.
+
+ 
+For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
 
 
 ## Realtime Database
@@ -873,34 +718,34 @@ The asynchronous operation was done by assign the DataCallback function to `Firb
 See [RTDB examples](/examples/RTDB) for complete usages.
 
 
+
 ### Read Data
 
-Data at a specific node in Firebase RTDB can be read through the `get` function.
+Data at a specific node in Firebase RTDB can be read through these get functions.
 
-As noted in [Breaking Changes from version 4](#breaking-changes-from-version-4), the functions `getInt`, `getFloat`, `getDouble`, `getBool`, `getString`, `getJSON`, `getArray`, `getBlob`, `getFile` were removed and replaced by `get`.
+The functions included `get`, `getInt`, `getFloat`, `getDouble`, `getBool`, `getString`, `getJSON`, `getArray`, `getBlob`, `getFile`.
 
 
-The function `get` returns the boolean value indicates the success of the operation which will be `true` if all of the following conditions were met.
+These functions return boolean value indicates the success of the operation which will be `true` if all of the following conditions were met.
 
 * Server returns HTTP status code 200
 
 * The data types matched between request and response.
 
-Since version 5, you can call `get` without `FirbaseData` object with asynchronous operation supports. 
+
+For generic get, use Firebase.RTDB.get(&fbdo, \<path\>).
+
+And check its type with fbdo.dataType() or fbdo.dataTypeEnum() and cast the value from it e.g. fbdo.to\<int\>(), fbdo.to\<std::string\>().
+
+The data type of returning payload can be determined by `fbdo.dataType()` which returns String or `fbdo.dataTypeEnum()` returns enum value.
+
+The String of type returns from `fbdo.dataType()` can be string, boolean, int, float, double, json, array, blob, file and null.
+
+The enum value type, firebase_rtdb_data_type returns from `fbdo.dataTypeEnum()` can be firebase_rtdb_data_type_null (1), firebase_rtdb_data_type_integer, firebase_rtdb_data_type_float, firebase_rtdb_data_type_double, firebase_rtdb_data_type_boolean, firebase_rtdb_data_type_string, firebase_rtdb_data_type_json, firebase_rtdb_data_type_array, firebase_rtdb_data_type_blob, and firebase_rtdb_data_type_file (10)
 
 
-Since version 5, the data or value to be taken from calling `get` can be obtained from the `FirbaseData` object that passed to the function, or `FirbaseData` object in the `DataCallback` function, or from the object or variable that passed to the function to store the value.
 
-
-The type of received data can be obtained from `fbdo.dataType()` and `fbdo.dataTypeEnum()`.
-
-The `fbdo.dataType()` returns `string`, `boolean`, `int`, `float`, `double`, `json`, `array`, `blob`, `file` or `null`.
-
-The`fbdo.dataTypeEnum()` returns `firebase_rtdb_data_type_null` (1), `firebase_rtdb_data_type_integer`, `firebase_rtdb_data_type_float`, `firebase_rtdb_data_type_double`, `firebase_rtdb_data_type_boolean`, `firebase_rtdb_data_type_string`, `firebase_rtdb_data_type_json`, `firebase_rtdb_data_type_array`, `firebase_rtdb_data_type_blob`, and `firebase_rtdb_data_type_file` (10).
-
-To get the value from `FirebaseData` object, use `fbdo.to<T>()` which `T` is the class or variable type name.
-
-The following examples showed how to get value from `FirebaseData` object.
+The database data's payload (response) can be read or access through the casting value from FirebaseData object with to\<type\>() functions (since v2.4.0).
 
 * `String s = fbdo.to<String>();`
 
@@ -930,17 +775,47 @@ The following examples showed how to get value from `FirebaseData` object.
 
 * `File file = fbdo.to<File>();`
 
+Or through the legacy methods
 
-The BLOB and file stream data are stored as special base64 encoded string which are only supported and implemented in this library.
+* `int i = fbdo.intData();`
 
-The encoded base64 string will be prefixed with some header string (`"file,base64,"` and `"blob,base64,"`) for data type manipulation. 
+* `float f = fbdo.floatData();`
+
+* `double d = fbdo.doubleData();`
+
+* `bool b = fbdo.boolData();`
+
+* `String s = fbdo.stringData();`
+
+* `String js = fbdo.jsonString();`
+
+* `FirebaseJson &json = fbdo.jsonObject();`
+
+* `FirebaseJson *jsonPtr = fbdo.jsonObjectPtr();`
+
+* `FirebaseJsonArray &arr = fbdo.jsonArray();` 
+
+* `FirebaseJsonArray *arrPtr = fbdo.jsonArrayPtr();`
+
+* `std::vector<uint8_t> blob = fbdo.blobData();`
+
+ * `File file = fbdo.fileStream();`
 
 
-The following example showed how to get value from node "/test/data".
+
+Read the data which its type does not match the data type in the database from above functions will return empty (string, object or array).
+
+BLOB and file stream data are stored as special base64 encoded string which are only supported and implemented by this library.
+
+The encoded base64 string will be prefixed with some header string ("file,base64," and "blob,base64,") for data type manipulation. 
+
+
+
+The following example showed how to read integer value from node "/test/int".
 
 
 ```cpp
-  if (Firebase.RTDB.get(&fbdo, "/test/data")) {
+  if (Firebase.RTDB.getInt(&fbdo, "/test/int")) {
 
     if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_integer) {
       Serial.println(fbdo.to<int>());
@@ -951,76 +826,7 @@ The following example showed how to get value from node "/test/data".
   }
 ```
 
-The asynchronous operation can be achieved by assigning the callback function to `FirebaseData` object.
 
-As long as the function `Firebase.ready()` was executed in `loop()`, the callback function will be called when data is available or some events occurred.
-
-The type of callback event can be checked from `callbackEventType` and the following five events can be happened. 
-
-`firebase_callback_event_request_sent` occurred when device sending request.
-
-`firebase_callback_event_response_timed_out` occurred when the response reading was timed out or RTDB stream was timed out.
-
-`firebase_callback_event_response_error` occurred when the response reading error or RTDB stream error occurred.
-
-`firebase_callback_event_response_received` occurred when server response was received.
-
-`firebase_callback_event_response_keepalive` occurred when server sending keep-alive data in RTDB stream.
-
-`firebase_callback_event_response_auth_revoked` occurred when authentication is revoked or auth token was expired in case RTDB stream.
-
-Because data from the callback is asynchronously received, to identify which function or task that this data requested from, you can assign the request ID per task via `setRequestId`.
-
-```cpp
-// Assume 100 is the ID of this request.
-fbdo.setRequestId(100);
-
-Firebase.RTDB.getBool(&fbdo, "/test/bool");
-
-```
-
-In the callback function, check the ID when data received.
-
-```cpp
-void responseCallback(FirebaseData &data)
-{
-  if (data.getRequestId() == 100)
-  {
-     Serial.println(data.to<bool>());
-  }
-}
-```
-
-```cpp
-
-fbdo.dataCallback = responseCallback;
-
-// Assign NULL to fbdo.dataCallback to remove the callback.
-
-if (!Firebase.RTDB.getInt(&fbdo, "/test/int"))
-{
-  Serial.println(fbdo.errorReason());
-}
-
-void responseCallback(FirebaseData &data)
-{
-  if (data.callbackEventType() == firebase_callback_event_request_sent)
-    Serial.println("Request sent");
-  else if (data.callbackEventType() == firebase_callback_event_response_timed_out)
-    Serial.println("Response timed out");
-  else if (data.callbackEventType() == firebase_callback_event_response_error)
-    Serial.printf("Response error, %s", data.errorReason());
-  else if (data.callbackEventType() == firebase_callback_event_response_received)
-  {
-    Serial.println("Response received");
-    if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_integer)
-    {
-      Serial.println(fbdo.to<int>());
-    }
-  }
-}
-
-```
 
 ### Store Data
 
@@ -1028,11 +834,14 @@ To store data at a specific node in Firebase RTDB, use these set functions.
 
 The function included `set`, `setInt`, `setFloat`, `setDouble`, `setBool`, `setString`, `setJSON`, `setArray`, `setBlob` and `setFile`. 
 
+For faster sending data, non-waits or async mode functions are available e.g. `setAsync`, `setIntAsync`, `setFloatAsync`, `setDoubleAsync`, `setBoolAsync`, `setStringAsync`, `setJSONAsync`, `setArrayAsync`, `setBlobAsync` and `setFileAsync`. 
+
 For generic set, use Firebase.RTDB.set(&fbdo, \<path\>, \<any variable or value\>).
 
-As noted in [Breaking Changes from version 4](#breaking-changes-from-version-4), the `setAsync` abd `setXXXAsync` were removed. 
+These async functions will ignore the server responses.
 
-The functions return boolean value indicates the success of the operation which will be `true` if all of the following conditions matched.
+
+The above functions return boolean value indicates the success of the operation which will be `true` if all of the following conditions matched.
 
 * Server returns HTTP status code 200
 
@@ -1057,58 +866,31 @@ The server's **Timestamp** can be stored in the database through `Firebase.RTDB.
 
 The returned **Timestamp** value can get from `fbdo.to<int>()`. 
 
-The following example showed how to store string to "/test/string".
+The file systems for flash and sd memory can be changed in [**FirebaseFS.h**](/src/FirebaseFS.h).
+
+
+
+The following example showed how to store file data to flash memory at node "/test/file_data".
 
 
 ```cpp
 
-if (!Firebase.RTDB.setString(&fbdo, "/test/string", "hello"))
+if (Firebase.RTDB.getFile(&fbdo, mem_storage_type_flash, "/test/file_data", "/test.txt"))
 {
-  Serial.println(fbdo.errorReason());
+  // The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+  File file = DEFAULT_FLASH_FS.open("/test.txt", "r");
+
+  while (file.available())
+  {     
+    Serial.print(file.read(), HEX);     
+  }    
+  file.close();
+  Serial.println();
+
+} else {
+  Serial.println(fbdo.fileTransferError());
 }
 ```
-
-
-Similare to [Read Data](#read-data), if callback function was assigned to `FirebaseData` object, it will operate in async mode.
-
-```cpp
-
-fbdo.dataCallback = responseCallback;
-
-// Assign NULL to fbdo.dataCallback to remove the callback.
-
-if (!Firebase.RTDB.setString(&fbdo, "/test/string", "hello"))
-{
-  Serial.println(fbdo.errorReason());
-}
-
-void responseCallback(FirebaseData &data)
-{
-  if (data.callbackEventType() == firebase_callback_event_request_sent)
-    Serial.println("Request sent");
-  else if (data.callbackEventType() == firebase_callback_event_response_timed_out)
-    Serial.println("Response timed out");
-  else if (data.callbackEventType() == firebase_callback_event_response_error)
-    Serial.printf("Response error, %s", data.errorReason());
-  else if (data.callbackEventType() == firebase_callback_event_response_received)
-  {
-    Serial.println("Response received");
-    Serial.println(fbdo.to<String>());
-  }
-}
-
-```
-
-Eventhough the functions `setAsync` and `setXXAsync` were removed, you can still ignore the server response and starting the next request immediately by calling `setWaitResponse(false)` from `FirebaseData` object and calling `waitStatus()` to check its waiting status.
-
-The skipping server response via function `setWaitResponse` will be applied only when the callback was assign to `FirebaseData`. Without setting the callback, the server response skipping will not be taken place.
-
-```cpp
-// For simplicity of demonstration, we use the labda function as callback and use setWaitResponse inside it.
-fbdo.dataCallback = [](FirebaseData &d){ d.setWaitResponse(false); };
-```
-
-Skipping the server response can cause unexpected result then using it is your own risk.
 
 
 ### Append Data
@@ -1117,9 +899,9 @@ To append new data to a specific node in Firebase RTDB, use these push functions
 
 The function included `push`, `pushInt`, `pushFloat`, `pushDouble`, `pushBool`, `pushString`, `pushJSON`, `pushArray`, `pushBlob`, and `pushFile`.
 
-These functions return boolean value indicates the success of the operation.
+For faster sending data, non-waits or async mode functions are available e.g. `pushAsync`, `pushIntAsync`, `pushFloatAsync`, `pushDoubleAsync`, `pushBoolAsync`, `pushStringAsync`, `pushJSONAsync`, `pushArrayAsync`, `pushBlobAsync` and `pushFileAsync`. 
 
-As noted in [Breaking Changes from version 4](#breaking-changes-from-version-4), the `pushAsync` abd `pushXXXAsync` were removed. 
+These functions return boolean value indicates the success of the operation.
 
 The **unique key** of a new appended node can be determined from `fbdo.pushName()`.
 
@@ -1130,6 +912,7 @@ As set functions, the Firebase's push functions support **priority**.
 The server's **Timestamp** can be appended in the database through `Firebase.RTDB.pushTimestamp`.
 
 The unique key of Timestamp can be determined after Timestamp was appended.
+
 
 
 The following example showed how to append new data (using FirebaseJson object) to node "/test/append.
@@ -1147,7 +930,9 @@ json.add("parent 002", json2);
 if (Firebase.RTDB.pushJSON(&fbdo, "/test/append", &json)) {
 
   Serial.println(fbdo.dataPath());
+
   Serial.println(fbdo.pushName());
+
   Serial.println(fbdo.dataPath() + "/"+ fbdo.pushName());
 
 } else {
@@ -1155,73 +940,22 @@ if (Firebase.RTDB.pushJSON(&fbdo, "/test/append", &json)) {
 }
 ```
 
-Similare to [Store Data](#store-data), if callback function was assigned to `FirebaseData` object, it will operate in async mode.
-
-
-```cpp
-
-fbdo.dataCallback = responseCallback;
-
-FirebaseJson json;
-FirebaseJson json2;
-
-json2.add("child_of_002", 123.456);
-json.add("parent_001", "parent 001 text");
-json.add("parent 002", json2);
-
-// Assign NULL to fbdo.dataCallback to remove the callback.
-
-if (!Firebase.RTDB.pushJSON(&fbdo, "/test/append", &json))
-{
-  Serial.println(fbdo.errorReason());
-}
-
-void responseCallback(FirebaseData &data)
-{
-  if (data.callbackEventType() == firebase_callback_event_request_sent)
-    Serial.println("Request sent");
-  else if (data.callbackEventType() == firebase_callback_event_response_timed_out)
-    Serial.println("Response timed out");
-  else if (data.callbackEventType() == firebase_callback_event_response_error)
-    Serial.printf("Response error, %s", data.errorReason());
-  else if (data.callbackEventType() == firebase_callback_event_response_received)
-  {
-    Serial.println("Response received");
-    Serial.println(fbdo.dataPath());
-    Serial.println(fbdo.pushName());
-    Serial.println(fbdo.dataPath() + "/"+ fbdo.pushName());
-  }
-}
-
-```
-
-Eventhough the functions `pushAsync` and `pushXXAsync` were removed, you can still ignore the server response and starting the next request immediately by calling `setWaitResponse(false)` from `FirebaseData` object and calling `waitStatus()` to check its waiting status.
-
-The skipping server response via function `setWaitResponse` will be applied only when the callback was assign to `FirebaseData`. Without setting the callback, the server response skipping will not be taken place.
-
-```cpp
-// For simplicity of demonstration, we use the labda function as callback and use setWaitResponse inside it.
-fbdo.dataCallback = [](FirebaseData &d){ d.setWaitResponse(false); };
-```
-
-Skipping the server response can cause unexpected result then using it is your own risk.
 
 
 ### Patch Data
 
 Firebase's update functions used to patch or update new or existing data at the defined node.
 
-As noted in [Breaking Changes from version 4](#breaking-changes-from-version-4), the `updateNode`, `updateNodeAsync`, `updateNodeSilent` and `updateNodeSilentAsync` were removed and replaced by `update`. 
+These functions, `updateNode` and `updateNodeSilent` are available and work with JSON object (FirebaseJson object only).
 
-The functions, `update` is available and work with JSON object (`FirebaseJson` object only).
+For faster sending data, non-waits or async mode functions are available e.g. `updateNodeAsync`, and `updateNodeSilentAsync`.
 
 If any key name provided at a defined node in JSON object has not existed, a new key will be created.
 
 The server returns JSON data payload which was successfully patched.
 
-By assigning `dataCallback` to `FirebaseData` object, the payload will be return otherwise no payload returned.
+Return of large JSON payload will cost the network data, alternative function `updateNodeSilent` or `updateNodeSilentAsync` should be used to save the network data.
 
-Return of large JSON payload will cost the network bandwidth, assigning `NULL` as `dataCallback` to `FirebaseData` will save the network bandwidth.
 
 
 The following example showed how to patch data at "/test".
@@ -1235,11 +969,13 @@ json.add("_data2","_value2");
 updateData.add("data1","value1");
 updateData.add("data2", json);
 
-if (Firebase.RTDB.update(&fbdo, "/test/update", &updateData)) {
+if (Firebase.RTDB.updateNode(&fbdo, "/test/update", &updateData)) {
 
   Serial.println(fbdo.dataPath());
+
   Serial.println(fbdo.dataType());
-  Serial.println(fbdo.to<String>()); 
+
+  Serial.println(fbdo.jsonString()); 
 
 } else {
   Serial.println(fbdo.errorReason());
@@ -1247,58 +983,13 @@ if (Firebase.RTDB.update(&fbdo, "/test/update", &updateData)) {
 ```
 
 
-Similare to [Store Data](#store-data), if callback function was assigned to `FirebaseData` object, it will operate in async mode.
+### Delete Data
+
+
+The following example showed how to delete data and its children at node "/test/append"
 
 ```cpp
-
-fbdo.dataCallback = responseCallback;
-
-// Assign NULL to fbdo.dataCallback to remove the callback.
-
-if (!Firebase.RTDB.update(&fbdo, "/test/int", 123))
-{
-  Serial.println(fbdo.errorReason());
-}
-
-void responseCallback(FirebaseData &data)
-{
-  if (data.callbackEventType() == firebase_callback_event_request_sent)
-    Serial.println("Request sent");
-  else if (data.callbackEventType() == firebase_callback_event_response_timed_out)
-    Serial.println("Response timed out");
-  else if (data.callbackEventType() == firebase_callback_event_response_error)
-    Serial.printf("Response error, %s", data.errorReason());
-  else if (data.callbackEventType() == firebase_callback_event_response_received)
-  {
-    Serial.println("Response received");
-    Serial.println(fbdo.dataPath());
-    Serial.println(fbdo.dataType());
-    Serial.println(fbdo.to<String>()); 
-  }
-}
-
-```
-
-Eventhough the functions `updateNodeAsync` and `updateNodeSilentAsync` were removed, you can still ignore the server response and starting the next request immediately by calling `setWaitResponse(false)` from `FirebaseData` object and calling `waitStatus()` to check its waiting status.
-
-The skipping server response via function `setWaitResponse` will be applied only when the callback was assign to `FirebaseData`. Without setting the callback, the server response skipping will not be taken place.
-
-```cpp
-// For simplicity of demonstration, we use the labda function as callback and use setWaitResponse inside it.
-fbdo.dataCallback = [](FirebaseData &d){ d.setWaitResponse(false); };
-```
-
-Skipping the server response can cause unexpected result then using it is your own risk.
-
-
-### Remove Data
-
-As noted in [Breaking Changes from version 4](#breaking-changes-from-version-4), the `deleteNode` was removed and replaced by `remove`. 
-
-The following example showed how to remove data and its children at node "/test/append"
-
-```cpp
-Firebase.RTDB.remove(&fbdo, "/test/append");
+Firebase.RTDB.deleteNode(&fbdo, "/test/append");
 ```
 
 
@@ -1359,7 +1050,7 @@ query.limitToLast(5);
 if (Firebase.RTDB.getJSON(&fbdo, "/test/data", &query))
 {
   // Success, then try to read the JSON payload value
-  Serial.println(fbdo.to<String>());
+  Serial.println(fbdo.jsonString());
 }
 else
 {
@@ -1376,78 +1067,45 @@ query.clear();
 
 This library uses HTTP GET request with `text/event-stream` header to make [**HTTP streaming**](https://en.wikipedia.org/wiki/Server-sent_events) connection.
 
-As noted in [Breaking Changes from version 4](#breaking-changes-from-version-4), the `beginStream`, `beginStream`, `endStream`, `removeStreamCallback`, `beginMultiPathStream`, `setMultiPathStreamCallback`, and `removeMultiPathStreamCallback` were removed and replaced with `stream`, `setDataCallback`, `readStream` and `stopStream`.
+The Firebase's functions that involved the stream operations are `beginStream`, `beginMultiPathStream`, 
+`setStreamCallback`, `setMultiPathStreamCallback` and/or `readStream`.
 
-There are three modes to operate stream in this library i.e. with using `FirebaseData` (manually and using callback function) and without using `FirebaseData`.
+Function `beginStream` is to subscribe to the data changes at a defined node.
 
-#### Operate stream manualy with `FirebaseData` object
+Function `beginMultiPathStream` is to subscribe to the data changes at a defined parent node path with multiple child nodes value parsing and works with setMultiPathStreamCallback.
 
-Calling the function `stream` by passing the pointer to globally defined `FirebaseData` object and path as parameters.
+Function `setStreamCallback` is to assign the callback function that accepts the **FirebaseStream** class as parameter.
 
-Polling get stream's event data by calling `readStream` in `loop()`.
+Function `setMultiPathStreamCallback` is to assign the callback function that accepts the **MultiPathStream** class as parameter.
 
-Checking the available stream event data from `FirebaseData` that passed to `stream` by calling its member function `streamAvailable` then taking the data from it if event data is available.
 
-Note that, when using the shared `FirebaseData` object for stream and CRUD usages(normal operation to create,read, update and remove data), the stream connection will be interrupted (closed) to connect in other HTTP mode, the stream will be resumed (open) after the CRUD usages.
+The **FirebaseStream** contains stream's event/data payloadd and interface function calls are similar to `FirebaseData` object.
 
-For the above case, you need to provide the idle time for `FirebaseData` object to establish the streaming connection and get the stream payload. The changes on the server at the streaming node path during the stream interruption will be missed.
+The **MultiPathStream** contains stream's event/data payload for various child nodes.
+
+
+To polling the stream's event/data payload manually, use `readStream` in loop().
+
+Function `readStream` used in the loop() task to continuously read the stream's event and data.
+
+Since polling the stream's event/data payload with `readStream`, use `fbdo.streamAvailable` to check if stream event/data payoad is available.
+
+Function `fbdo.streamAvailable` returned true when new stream's event/data payload was available. 
+
+When new stream payload was available, its data and event can be accessed from `FirebaseData` object functions.
+
+Function `endStream` ends the stream operation.
+
+
+Note that, when using the shared `FirebaseData` object for stream and CRUD usages(normal operation to create,read, update and delete data), the stream connection will be interrupted (closed) to connect in other HTTP mode, the stream will be resumed (open) after the CRUD usages.
+
+For the above case, you need to provide the idle time for `FirebaseData` object to established the streaming connection and received the stream payload. The changes on the server at the streaming node path during the stream interruption will be missed.
 
 To avoid this sitation, don't share the usage of stream's `FirebaseData` object, another `FirebaseData` object should be used.
 
 In addition, delay function used in the same loop of `readStream()` will defer the streaming, the server data changes may be missed.
 
-
-#### Operate stream with Callback and `FirebaseData` object
-
-Calling the function `stream` by passing the pointer to globally defined `FirebaseData` object, path and `DataCallback` as parameters.
-
-The callback function `DataCallback` is the function that `FirebaseData` was pass by reference to the function.
-
-Take and process event data from the `FirebaseData` that passed in to the callback function.
-
-In ESP32, the FreeRTOS task will be created when calling `stream` to operate stream repeatedly.
-
-In ESP8266, the new schedule task will be set to run repeatedly.
-
-For other devices (not ESP32 and ESP8266), you need to call `runStream` in `loop()` to polling get stream's event data.
-
-The stack memory for ESP32 stream FreeRTOS task is 8192 which can be assign via build flag or maro `FIREBASE_RTDB_STREAM_TASK_STACK_SIZE` in `FirebaseFS.h` or `CustomFirebaseFS.h`.
-
-By assihning `NULL` as `DataCallback` or later set by calling `FirebaseData` object member's function`setDataCallback`, the stream taks will stop immediately.
-
-Note that, when `runStream` was executed in `loop()`, the infinite loop tasks (ESP32 FreeRTOS task and ESP8266 Schedule task) will stop and the stream will be operate via `runStream` only.
-
-
-#### Operate stream with Callback (no `FirebaseData` object)
-
-
-Calling the function `stream` by passing the path, `DataCallback` and `slot` number as parameters.
-
-This operating mode is similar to [Operate stream with Callback and `FirebaseData` object](#operate-stream-with-callback-and-firebasedata-object) unless no `FirebaseData` object required.
-
-The internal `FirebaseData` object will be created internally and its ID was assigned via `slot` number.
-
-The maximum numbers of `slot` is 10 or can be assign via build flag or maro `FIREBASE_RTDB_STREAM_MAX_INTERNAL_SLOT` in `FirebaseFS.h` or `CustomFirebaseFS.h`.
-
-For non-ESP devices, the function `runStream` should be executed in `loop()`.
-
-There is some limitation for this stream operating mode, the default `BearSSL` RX and TX buffer sizes are 2048 and 512 which the large streaming data may not be received and causes the stream timed out. 
-
-For large stream event data, use global defined`FirebaseData` object for stream instead.
-
-
-#### Stop stream operation
-
-To stop stream operation that is currently running, use `stopStream` with the pointer to `FirebaseData` object that you want to stop as parameter.
-
-
-In case of no `FirebaseData` object stream, to stop internal stream, the `slot` number should be pass to function `stopStream`.
-
-To stop all stream operations, call `stopStream()` (without parameter).
-
-
-To pause stream operation that using `FirebaseData` object, call `pauseFirebase(true)` from the `FirebaseData` object.
-
+Keep in mind that `FirebaseData` object will create the SSL client inside of HTTPS data transaction and uses large memory.
 
 
 ### Enable TCP KeepAlive for reliable HTTP Streaming
@@ -1473,78 +1131,72 @@ stream.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interv
 
 ### HTTP Streaming examples
 
-Callback with FirebaseData object
+The following example showed how to subscribe to the data changes at node "/test/data" with a callback function.
 
 ```cpp
 
-// In setup(), set the streaming path to "/test/data" and begin stream connection.
+// In setup(), set the stream callback function to handle data
+// streamCallback is the function that called when database data changes or updates occurred
+// streamTimeoutCallback is the function that called when the connection between the server 
+// and client was timeout during HTTP stream
 
-if (!Firebase.RTDB.Stream(&fbdo, "/test/data", dataCallback))
+Firebase.RTDB.setStreamCallback(&fbdo, streamCallback, streamTimeoutCallback);
+
+// In setup(), set the streaming path to "/test/data" and begin stream connection
+
+if (!Firebase.RTDB.beginStream(&fbdo, "/test/data"))
 {
-  // Could not begin stream connection, then print out the error detail.
+  // Could not begin stream connection, then print out the error detail
   Serial.println(fbdo.errorReason());
 }
 
   
   // Global function that handles stream data
-void dataCallback(FirebaseData &data)
+void streamCallback(FirebaseStream data)
 {
 
-  if (data.isStream())
+  // Print out all information
+
+  Serial.println("Stream Data...");
+  Serial.println(data.streamPath());
+  Serial.println(data.dataPath());
+  Serial.println(data.dataType());
+
+  // Print out the value
+  // Stream data can be many types which can be determined from function dataType
+
+  if (data.dataTypeEnum() == firebase_rtdb_data_type_integer)
+      Serial.println(data.to<int>());
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_float)
+      Serial.println(data.to<float>(), 5);
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_double)
+      printf("%.9lf\n", data.to<double>());
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_boolean)
+      Serial.println(data.to<bool>()? "true" : "false");
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_string)
+      Serial.println(data.to<String>());
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_json)
   {
-
-    if (data.callbackEventType() == firebase_callback_event_response_keepalive)
-    {
-      Serial.println("Stream keep alive event");
-    }
-    else if (data.callbackEventType() == firebase_callback_event_response_auth_revoked)
-    {
-      Serial.println("Stream auth revoked event");
-    }
-    else if (data.callbackEventType() == firebase_callback_event_response_timed_out)
-    {
-      Serial.println("Stream timed out");
-
-      if (!stream.httpConnected())
-        Serial_Printf("error code: %d, reason: %s\n\n", data.httpCode(), data.errorReason().c_str());
-    }
-    else if (data.callbackEventType() == firebase_callback_event_response_error)
-       Serial.printf("Stream error, %s", data.errorReason());
-    else if (data.callbackEventType() == firebase_callback_event_response_received)
-    {
-      Serial.println("Stream payload received");
-
-      Serial_Printf("sream path, %s\nevent path, %s\ndata type, %s\nevent type, %s\n\n",
-                    data.streamPath().c_str(),
-                    data.dataPath().c_str(),
-                    data.dataType().c_str(),
-                    data.eventType().c_str());
-
-      if (data.dataTypeEnum() == firebase_rtdb_data_type_integer)
-        Serial.println(data.to<int>());
-      else if (data.dataTypeEnum() == firebase_rtdb_data_type_float)
-        Serial.println(data.to<float>(), 5);
-      else if (data.dataTypeEnum() == firebase_rtdb_data_type_double)
-        printf("%.9lf\n", data.to<double>());
-      else if (data.dataTypeEnum() == firebase_rtdb_data_type_boolean)
-        Serial.println(data.to<bool>() ? "true" : "false");
-      else if (data.dataTypeEnum() == firebase_rtdb_data_type_string)
-        Serial.println(data.to<String>());
-      else if (data.dataTypeEnum() == firebase_rtdb_data_type_json)
-      {
-        FirebaseJson *json = data.to<FirebaseJson *>();
-        Serial.println(json->raw());
-      }
-      else if (data.dataTypeEnum() == firebase_rtdb_data_type_array)
-      {
-        FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
-        Serial.println(arr->raw());
-      }
-
-      Serial.println();
-    }
+      FirebaseJson *json = data.to<FirebaseJson *>();
+      Serial.println(json->raw());
   }
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_array)
+  {
+      FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
+      Serial.println(arr->raw());
+  }
+     
 
+}
+
+// Global function that notifies when stream connection lost
+// The library will resume the stream connection automatically
+void streamTimeoutCallback(bool timeout)
+{
+  if(timeout){
+    // Stream timeout occurred
+    Serial.println("Stream timeout, resume streaming...");
+  }  
 }
 
 // For authentication except for legacy token, Firebase.ready() should be called repeatedly 
@@ -1561,10 +1213,15 @@ void loop()
 
 ```
 
+
+
+For multiple paths streaming, see the MultiPath example.
+
+
 The following example showed how to subscribe to the data changes at "/test/data" and polling the stream manually.
 
 ```cpp
-// In setup(), set the streaming path to "/test/data" and begin stream connection.
+// In setup(), set the streaming path to "/test/data" and begin stream connection
 if (!Firebase.RTDB.beginStream(&fbdo, "/test/data"))
 {
   Serial.println(fbdo.errorReason());
@@ -1619,6 +1276,225 @@ void loop()
 }
 
 ```
+
+
+### Backup and Restore Data
+
+
+This library allows data backup and restores at a defined path.
+
+The backup file will store in SD/SDMMC card or flash memory.
+
+The file systems for flash and SD memory can be changed via [**FirebaseFS.h**](/src/FirebaseFS.h).
+
+Due to SD library used, only 8.3 DOS format file name supported.
+
+The maximum 8 characters for a file name and 3 characters for file extension.
+
+The database restoration returned completed status only when Firebase server successfully updates the data. 
+
+Any failed operation will not affect the database (no updates or changes).
+
+The following example showed how to backup all database data at "/" and restore.
+
+```cpp
+ String backupFileName;
+
+ if (!Firebase.RTDB.backup(&fbdo, mem_storage_type_sd, "/", "/backup.txt"))
+ {
+   Serial.println(fbdo.errorReason());
+ }
+ else
+ {
+   Serial.println(fbdo.getBackupFilename());
+   Serial.println(fbdo.getBackupFileSize());
+   backupFileName = fbdo.getBackupFilename();
+  }
+
+
+  // Begin restore backed dup data back to database
+  if (!Firebase.RTDB.restore(&fbdo, mem_storage_type_sd, "/", backupFileName.c_str()))
+  {
+    Serial.println(fbdo.errorReason());
+  }
+  else
+  {
+    Serial.println(fbdo.getBackupFilename());
+  }
+```
+
+
+### Database Error Handling
+
+When read store, append and update operations were failed due to buffer overflow and network problems.
+
+These operations can retry and queued after the retry amount was reached the maximum retry set in function `setMaxRetry`.
+
+```cpp
+// set maximum retry amount to 3
+ Firebase.RTDB.setMaxRetry(&fbdo, 3);
+```
+
+The function `setMaxErrorQueue` limits the maximum queues in Error Queue collection.
+
+The full of queue collection can be checked through function `isErrorQueueFull`.
+
+
+```cpp
+ // set maximum queues to 10
+ Firebase.RTDB.setMaxErrorQueue(&fbdo, 10);
+
+ // determine whether Error Queue collection is full or not
+ Firebase.RTDB.isErrorQueueFull(&fbdo);
+```
+
+This library provides two approaches to run or process Error Queues with two functions. 
+
+* `beginAutoRunErrorQueue`
+* `processErrorQueue`
+
+The function `beginAutoRunErrorQueue` will run or process queues automatically and can be called once. 
+
+While function `processErrorQueue` will run or process queues and should call inside the loop().
+
+With function `beginAutoRunErrorQueue`, you can assigned callback function that accept **QueueInfo** object as parameter.
+
+Which contains all information about being processed queue, number of remaining queues and Error Queue collection status.
+
+Otherwise, Error Queues can be tracked manually with the following functions.
+
+Function `getErrorQueueID` will return the unsigned integer presents the id of the queue which will keep using later.
+
+Use `getErrorQueueID` and `isErrorQueueExisted` to check whether this queue id is still existed or not. 
+
+If Error Queue ID does not exist in Error Queues collection, that queue is already done.
+
+The following example showed how to run Error Queues automatically and track the status with the callback function.
+
+```cpp
+
+// In setup()
+
+// Set the maximum Firebase Error Queues in collection (0 - 255).
+// Firebase read/store operation causes by network problems and buffer overflow will be 
+// added to Firebase Error Queues collection.
+Firebase.RTDB.setMaxErrorQueue(&fbdo, 10);
+
+// Begin to run Error Queues in Error Queue collection  
+Firebase.RTDB.beginAutoRunErrorQueue(&fbdo, callback);
+
+
+// Use to stop the auto run queues
+// Firebase.endAutoRunErrorQueue(fbdo);
+
+void errorQueueCallback (QueueInfo queueinfo){
+
+  if (queueinfo.isQueueFull())
+  {
+    Serial.println("Queue is full");
+  }
+
+  Serial.print("Remaining queues: ");
+  Serial.println(queueinfo.totalQueues());
+
+  Serial.print("Being processed queue ID: ");
+  Serial.println(queueinfo.currentQueueID());  
+
+  Serial.print("Data type:");
+  Serial.println(queueinfo.dataType()); 
+
+  Serial.print("Method: ");
+  Serial.println(queueinfo.firebaseMethod());
+
+  Serial.print("Path: ");
+  Serial.println(queueinfo.dataPath());
+
+  Serial.println();
+}
+```
+
+
+
+The following example showed how to run Error Queues and track its status manually.
+
+```cpp
+// In setup()
+
+// Set the maximum Firebase Error Queues in collection (0 - 255).
+// Firebase read/store operation causes by network problems and buffer overflow will be added to 
+// Firebase Error Queues collection.
+Firebase.RTDB.setMaxErrorQueue(&fbdo, 10);
+
+
+// All of the following are in loop()
+
+Firebase.RTDB.processErrorQueue(&fbdo);
+
+// Detrnine the queue status
+if (Firebase.RTDB.isErrorQueueFull(&fbdo))
+{
+  Serial.println("Queue is full");
+}
+
+// Remaining Error Queues in Error Queue collection
+Serial.print("Remaining queues: ");
+Serial.println(Firebase.RTDB.errorQueueCount(&fbdo));
+
+// Assumed that queueID is unsigned integer array of queue that added to Error Queue collection 
+// when error and use Firebase.getErrorQueueID to get this Error Queue id.
+
+for (uint8_t i = 0; i < LENGTH_OF_QUEUEID_ARRAY; i++)
+{
+  Serial.print("Error Queue ");
+  Serial.print(queueID[i]);
+  if (Firebase.RTDB.isErrorQueueExisted(&fbdo, queueID[i]))
+    Serial.println(" is queuing");
+  else
+    Serial.println(" is done");
+}
+Serial.println();
+```
+
+
+
+Error Queues can be saved as a file in SD/SDMMC card or flash memory with function `saveErrorQueue`.
+
+The file systems for flash and SD memory can be changed via [**FirebaseFS.h**](/src/FirebaseFS.h).
+
+Error Queues stored as a file can be restored to Error Queue collection with function `restoreErrorQueue`.
+
+Two types of storage can be assigned with these functions, `mem_storage_type_flash` and `mem_storage_type_sd`.
+
+The following example showed how to restore and save Error Queues in /test.txt file.
+
+```cpp
+// To restore Error Queues
+
+if (Firebase.RTDB.errorQueueCount(&fbdo, "/test.txt", mem_storage_type_flash) > 0)
+{
+    Firebase.RTDB.restoreErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
+    Firebase.deleteStorageFile("/test.txt", mem_storage_type_flash);
+}
+
+// To save Error Queues to file
+Firebase.RTDB.saveErrorQueue(&fbdo, "/test.txt", mem_storage_type_flash);
+
+```
+
+## Add On
+
+
+### FireSense, The Programmable Data Logging and IO Control (Deprecated)
+
+This add on library is for the advance usages and works with Firebase RTDB.
+
+With this add on library, you can remotely program your device to control its IOs or do some task or call predefined functions on the fly.
+
+This allows you to change your device behaviour and functions without to flash a new firmware via serial or OTA.
+
+For FireSense function description, see [src/addons/FireSense/README.md](src/addons/FireSense/README.md).
+
+FireSense is now inactive development and deprecated.
 
 
 
