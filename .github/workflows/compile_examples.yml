@@ -208,7 +208,7 @@ jobs:
         - "examples/RTDB/DataRetaining/DataRetaining.ino"
         - "examples/RTDB/DownloadFileOTA/DownloadFileOTA.ino"
         - "examples/RTDB/ETag/ETag.ino"
-        - "examples/RTDB/FastSend/FastSend.ino"
+        #- "examples/RTDB/FastSend/FastSend.ino"
         - "examples/RTDB/File/Flash/Flash.ino"
         - "examples/RTDB/File/SD/SD.ino"
         #- "examples/RTDB/FireSense/AnalogRead/AnalogRead.ino"

@@ -71,7 +71,7 @@ void setup()
     audit_config.setService("allServices");
 
     audit_log_config.setLogType("DATA_READ");
-    audit_log_config.addexemptedMembers("user:jose@example.com");
+    audit_log_config.addExemptedMembers("user:jose@example.com");
     audit_config.addAuditLogConfig(&audit_log_config, true);
 
     audit_log_config.setLogType("DATA_WRITE");
