@@ -1,8 +1,8 @@
 
 /**
- * Google's Firebase Token Management class, FirebaseCore.h version 1.0.1
+ * Google's Firebase Token Management class, FirebaseCore.h version 1.0.2
  * 
- * Created September 12, 2023
+ * Created December 27, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
