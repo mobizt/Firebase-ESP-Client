@@ -88,7 +88,7 @@ void setup()
     audit_config.addAuditLogConfig(&audit_log_config, true);
 
     audit_log_config.setLogType("DATA_WRITE");
-    audit_log_config.addexemptedMembers("user:aliya@example.com");
+    audit_log_config.addExemptedMembers("user:aliya@example.com");
     audit_config.addAuditLogConfig(&audit_log_config, true);
 
     policy.addAuditConfig(&audit_config, true);
