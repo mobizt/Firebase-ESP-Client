@@ -13,6 +13,10 @@ The features can be configurable to add and exclude some unused features, see [L
 
 The [ESP8266 and Raspberry Pi Pico](https://github.com/mobizt/Firebase-ESP8266) and [ESP32](https://github.com/mobizt/Firebase-ESP32) versions are available which provide only Firebase Realtime database and Firebase Cloud Messaging functions.
 
+Try the beta version of new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library which is faster and more reliable.
+
+The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) is currently support Realtime Database.
+
 
 ## Contents
 
