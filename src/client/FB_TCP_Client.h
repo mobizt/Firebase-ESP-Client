@@ -462,7 +462,7 @@ public:
     if (_client_type == firebase_client_type_external_generic_client &&
         (!_network_connection_cb || !_network_status_cb))
       rdy = false;
-    else if (_client_type != firebase_client_type_external_generic_client ||
+    else if (_client_type != firebase_client_type_external_generic_client &&
              _client_type != firebase_client_type_external_gsm_client)
       rdy = false;
 #else
@@ -658,7 +658,7 @@ public:
 
   size_t write(const uint8_t *data, size_t size)
   {
-
+    
     if (!_tcp_client)
       return setError(FIREBASE_ERROR_TCP_CLIENT_NOT_INITIALIZED);
 
