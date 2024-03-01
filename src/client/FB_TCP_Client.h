@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.0.3
+ * Firebase TCP Client v1.0.4
  *
- * Created December 27, 2023
+ * Created March 1, 2024
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -32,7 +32,11 @@
 #include "./FB_Const.h"
 #include "./mbfs/MB_FS.h"
 #include "./FB_Utils.h"
+#if __has_include(<ESP_SSLClient.h>)
+#include <ESP_SSLClient.h>
+#else
 #include "./client/SSLClient/ESP_SSLClient.h"
+#endif
 #include "./FB_Network.h"
 
 #if defined(ESP32)
@@ -658,7 +662,7 @@ public:
 
   size_t write(const uint8_t *data, size_t size)
   {
-    
+
     if (!_tcp_client)
       return setError(FIREBASE_ERROR_TCP_CLIENT_NOT_INITIALIZED);
 
