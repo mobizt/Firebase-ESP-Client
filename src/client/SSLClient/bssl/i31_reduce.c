@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(I31_REDUCE_C) && defined(USE_LIB_SSL_ENGINE)
+#define I31_REDUCE_C
 
 #include "inner.h"
 

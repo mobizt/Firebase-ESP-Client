@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(MD5SHA1_C) && defined(USE_LIB_SSL_ENGINE)
+#define MD5SHA1_C
 
 #include "inner.h"
 

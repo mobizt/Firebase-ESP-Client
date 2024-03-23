@@ -1,6 +1,7 @@
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(PKEY_DECODER_C) && defined(USE_LIB_SSL_ENGINE)
+#define PKEY_DECODER_C
 
 #include <stddef.h>
 #include <stdint.h>

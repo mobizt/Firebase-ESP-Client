@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(EC_SECP521R1_C) && defined(USE_LIB_SSL_ENGINE)
+#define EC_SECP521R1_C
 
 #include "inner.h"
 

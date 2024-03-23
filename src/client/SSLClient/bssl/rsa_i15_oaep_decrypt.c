@@ -23,7 +23,9 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(RSA_I15_OAEP_DECRYPT_C) && defined(USE_LIB_SSL_ENGINE)
+#define RSA_I15_OAEP_DECRYPT_C
+
 
 #include "inner.h"
 

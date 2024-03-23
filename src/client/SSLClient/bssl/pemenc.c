@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(PEMENC_C) && defined(USE_LIB_SSL_ENGINE)
+#define PEMENC_C
 
 #include "inner.h"
 

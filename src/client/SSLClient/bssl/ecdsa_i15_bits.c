@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(ECDSA_I15_BITS_C) && defined(USE_LIB_SSL_ENGINE)
+#define ECDSA_I15_BITS_C
 
 #include "inner.h"
 

@@ -2,7 +2,8 @@
 
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(X509_DECODER_C) && defined(USE_LIB_SSL_ENGINE)
+#define X509_DECODER_C
 
 #include <stddef.h>
 #include <stdint.h>

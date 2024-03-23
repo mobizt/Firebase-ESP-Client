@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(MULTIHASH_C) && defined(USE_LIB_SSL_ENGINE)
+#define MULTIHASH_C
 
 #include "inner.h"
 

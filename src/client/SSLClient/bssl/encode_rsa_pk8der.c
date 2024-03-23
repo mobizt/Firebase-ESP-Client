@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(ENCODE_RSA_PK8DER_C) && defined(USE_LIB_SSL_ENGINE)
+#define ENCODE_RSA_PK8DER_C
 
 #include "inner.h"
 

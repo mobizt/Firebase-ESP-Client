@@ -1,9 +1,9 @@
 #include "./core/Firebase_Client_Version.h"
 
 /**
- * The Firebase class, Firebase.h v1.2.8
+ * The Firebase class, Firebase.h v1.2.9
  *
- *  Created September 13, 2023
+ *  Created March 23, 2024
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -2576,6 +2576,21 @@ public:
     MB_String out;
     Core.errorToString(httpCode, out);
     buff = out.c_str();
+  }
+
+  void printf(const char *format, ...)
+  {
+    int size = 2048;
+    char s[size];
+    va_list va;
+    va_start(va, format);
+    vsnprintf(s, size, format, va);
+    va_end(va);
+#if defined(FIREBASE_DEFAULT_DEBUG_PORT)
+    FIREBASE_DEFAULT_DEBUG_PORT.print(s);
+#else
+    Serial.print(s);
+#endif
   }
 
 private:

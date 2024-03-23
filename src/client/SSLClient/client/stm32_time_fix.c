@@ -1,7 +1,8 @@
 
 // _gettimeofday link missing in STM32 
 
-#if defined(ARDUINO_ARCH_STM32)
+#if !defined(STM32_TIME_FIX_C) && defined(ARDUINO_ARCH_STM32)
+#define STM32_TIME_FIX_C
 
 #include <sys/time.h>
 

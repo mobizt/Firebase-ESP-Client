@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(POLY1305_CTMUL32_C) && defined(USE_LIB_SSL_ENGINE)
+#define POLY1305_CTMUL32_C
 
 #include "inner.h"
 

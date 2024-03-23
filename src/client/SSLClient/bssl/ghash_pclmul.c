@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(GHASH_PCLMUL_C) && defined(USE_LIB_SSL_ENGINE)
+#define GHASH_PCLMUL_C
 
 #define BR_ENABLE_INTRINSICS   1
 #include "inner.h"

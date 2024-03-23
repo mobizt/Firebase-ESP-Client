@@ -2,7 +2,8 @@
 
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(SSL_HS_CLIENT_C) && defined(USE_LIB_SSL_ENGINE)
+#define SSL_HS_CLIENT_C
 
 #include <stddef.h>
 #include <stdint.h>

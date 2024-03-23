@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(RSA_PSS_SIG_UNPAD_C) && defined(USE_LIB_SSL_ENGINE)
+#define RSA_PSS_SIG_UNPAD_C
 
 #include "inner.h"
 

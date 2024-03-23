@@ -23,7 +23,8 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if defined(USE_LIB_SSL_ENGINE)
+#if !defined(I62_MODPOW2_C) && defined(USE_LIB_SSL_ENGINE)
+#define I62_MODPOW2_C
 
 #include "inner.h"
 

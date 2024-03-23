@@ -49,7 +49,7 @@
 #endif
 #endif
 
-#if defined(USE_LIB_SSL_ENGINE) && !defined(USE_EMBED_SSL_ENGINE)
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "BSSL_Helper.h"
 #include "BSSL_CertStore.h"

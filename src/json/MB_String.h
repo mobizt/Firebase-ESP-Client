@@ -1,11 +1,13 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.10
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.11
  *
- * Created November 15, 2023
+ * Created March 23, 2024
  *
  * Changes Log
  *
+ * v1.2.11
+ * - fix float to string conversion
  * 
  * v1.2.10
  * - add support Arduino UNO WiFi R4
@@ -1528,10 +1530,18 @@ private:
         {
             MB_String fmt = MBSTRING_FLASH_MCR("%.");
             fmt += precision;
-            if (type == 2)
-                fmt += MBSTRING_FLASH_MCR("L");
-            fmt += MBSTRING_FLASH_MCR("f");
-            sprintf(t, fmt.c_str(), value);
+
+            if (type < 2)
+            {
+                fmt += MBSTRING_FLASH_MCR("f");
+                sprintf(t, fmt.c_str(), (double)value);
+            }
+            else
+            {
+                fmt += MBSTRING_FLASH_MCR("Lf");
+                sprintf(t, fmt.c_str(), value);
+            }
+
             trim(t);
         }
 
