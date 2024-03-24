@@ -13,7 +13,18 @@ The features can be configurable to add and exclude some unused features, see [L
 
 The [ESP8266 and Raspberry Pi Pico](https://github.com/mobizt/Firebase-ESP8266) and [ESP32](https://github.com/mobizt/Firebase-ESP32) versions are available which provide only Firebase Realtime database and Firebase Cloud Messaging functions.
 
-The new version of new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is availavle for you to try.
+## We're moving to the new library
+
+The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is now availavle in Arduino IDE and PlatformIO's Library Manager.
+
+It will be the old Firebase libraries (Firebase-ESP-Client, Firebase-ESP8266 and FirebaseESP32) replacement.
+
+The new library provides simpler APIs interface, faster and more reliable operations.  It can use in both sync and async operations.
+
+All old Firebase libraries will be deprecated soon this year and we recommended to upgrade your current code to work with new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library instead.
+
+For Arduino NANO 33 IoT, Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000, Arduino Nano RP2040 Connect, we recommend to use new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library instead of this old [Firebase-Arduino-WiFiNINA](https://github.com/mobizt/Firebase-Arduino-WiFiNINA) library.
+
 
 
 ## Contents
