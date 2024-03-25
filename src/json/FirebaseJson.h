@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 3.0.9
+ * FirebaseJson, version 3.0.10
  *
  * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  *
- * Created November 17, 2023
+ * Created March 25, 2024
  *
  * Features
  * - Using path to access node element in search style e.g. json.get(result,"a/b/c")
@@ -385,7 +385,7 @@ public:
      * This should call after parse or get function.
      */
     template <typename T>
-    auto to() -> typename MB_ENABLE_IF<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
+    auto to() -> typename std::enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, T>::type
     {
         if (is_bool<T>::value)
             return iVal.uint32 > 0;
@@ -405,28 +405,28 @@ public:
             return iVal.int64;
         else if (is_num_uint64<T>::value)
             return iVal.uint64;
-        else if (MB_IS_SAME<T, float>::value)
+        else if (std::is_same<T, float>::value)
             return fVal.f;
-        else if (MB_IS_SAME<T, double>::value)
+        else if (std::is_same<T, double>::value)
             return fVal.d;
         else
             return 0;
     }
 
     template <typename T>
-    auto to() -> typename MB_ENABLE_IF<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
+    auto to() -> typename std::enable_if<is_const_chars<T>::value || is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, T>::type
     {
         return stringValue.c_str();
     }
 
     template <typename T>
-    auto get(T &json) -> typename MB_ENABLE_IF<MB_IS_SAME<T, FirebaseJson>::value>::type
+    auto get(T &json) -> typename std::enable_if<std::is_same<T, FirebaseJson>::value>::type
     {
         getJSON(json);
     }
 
     template <typename T>
-    auto get(T &arr) -> typename MB_ENABLE_IF<MB_IS_SAME<T, FirebaseJsonArray>::value>::type
+    auto get(T &arr) -> typename std::enable_if<std::is_same<T, FirebaseJsonArray>::value>::type
     {
         getArray(arr);
     }
@@ -517,20 +517,20 @@ private:
     void *newP(size_t len);
 
     template <typename T>
-    auto getStr(const T &val, uint32_t &addr) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val, uint32_t &addr) -> typename std::enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || std::is_same<T, StringSumHelper>::value, const char *>::type
     {
         addr = 0;
         return val.c_str();
     }
 
     template <typename T>
-    auto getStr(T val, uint32_t &addr) -> typename MB_ENABLE_IF<is_arduino_flash_string_helper<T>::value, const char *>::type
+    auto getStr(T val, uint32_t &addr) -> typename std::enable_if<is_arduino_flash_string_helper<T>::value, const char *>::type
     {
         return getStr(reinterpret_cast<PGM_P>(val), addr);
     }
 
     template <typename T>
-    auto getStr(T val, uint32_t &addr) -> typename MB_ENABLE_IF<is_const_chars<T>::value, const char *>::type
+    auto getStr(T val, uint32_t &addr) -> typename std::enable_if<is_const_chars<T>::value, const char *>::type
     {
         int len = strlen_P((PGM_P)val) + 1;
         char *out = (char *)newP(len);
@@ -705,7 +705,7 @@ protected:
     MB_String buf;
 
     template <typename T>
-    auto getStr(T val, uint32_t &addr) -> typename MB_ENABLE_IF<is_bool<T>::value || is_num_int<T>::value || MB_IS_SAME<T, float>::value || MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value, const char *>::type
+    auto getStr(T val, uint32_t &addr) -> typename std::enable_if<is_bool<T>::value || is_num_int<T>::value || std::is_same<T, float>::value || std::is_same<T, double>::value || std::is_same<T, long double>::value, const char *>::type
     {
         MB_String t;
 
@@ -713,9 +713,9 @@ protected:
             t.appendNum(val, 0);
         else if (is_num_int<T>::value)
             t.appendNum(val, -1);
-        else if (MB_IS_SAME<T, float>::value)
+        else if (std::is_same<T, float>::value)
             t.appendNum(val, floatDigits);
-        else if (MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value)
+        else if (std::is_same<T, double>::value || std::is_same<T, long double>::value)
             t.appendNum(val, doubleDigits);
 
         char *out = (char *)newP(t.length() + 1);
@@ -726,20 +726,20 @@ protected:
     }
 
     template <typename T>
-    auto getStr(const T &val, uint32_t &addr) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, const char *>::type
+    auto getStr(const T &val, uint32_t &addr) -> typename std::enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value || std::is_same<T, StringSumHelper>::value, const char *>::type
     {
         addr = 0;
         return val.c_str();
     }
 
     template <typename T>
-    auto getStr(T val, uint32_t &addr) -> typename MB_ENABLE_IF<is_arduino_flash_string_helper<T>::value, const char *>::type
+    auto getStr(T val, uint32_t &addr) -> typename std::enable_if<is_arduino_flash_string_helper<T>::value, const char *>::type
     {
         return getStr(reinterpret_cast<PGM_P>(val), addr);
     }
 
     template <typename T>
-    auto getStr(T val, uint32_t &addr) -> typename MB_ENABLE_IF<is_const_chars<T>::value, const char *>::type
+    auto getStr(T val, uint32_t &addr) -> typename std::enable_if<is_const_chars<T>::value, const char *>::type
     {
         int len = strlen_P((PGM_P)val) + 1;
         char *out = (char *)newP(len);
@@ -756,7 +756,7 @@ protected:
         if (!root || !ptr)
             return false;
 
-        if (MB_IS_SAME<T, char>::value)
+        if (std::is_same<T, char>::value)
         {
             char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
             if (p)
@@ -770,7 +770,7 @@ protected:
     }
 
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<is_string<T>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename std::enable_if<is_string<T>::value, bool>::type
     {
         if (!root)
             return false;
@@ -786,7 +786,7 @@ protected:
     }
 
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, MB_SERIAL_CLASS>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename std::enable_if<std::is_same<T, MB_SERIAL_CLASS>::value, bool>::type
     {
         char *p = prettify ? MB_JSON_Print(root) : MB_JSON_PrintUnformatted(root);
         if (p)
@@ -799,7 +799,7 @@ protected:
     }
 
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, Stream>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename std::enable_if<std::is_same<T, Stream>::value, bool>::type
     {
         return writeStream(out, prettify);
     }
@@ -807,13 +807,13 @@ protected:
 #if defined(MB_JSON_FS_H)
 #if defined(MB_ARDUINO_PICO)
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, fs::File>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename std::enable_if<std::is_same<T, fs::File>::value, bool>::type
     {
         return writeStream(out, prettify);
     }
 #else
     template <typename T>
-    auto toStringHandler(T &out, bool prettify) -> typename MB_ENABLE_IF<MB_IS_SAME<T, File>::value, bool>::type
+    auto toStringHandler(T &out, bool prettify) -> typename std::enable_if<std::is_same<T, File>::value, bool>::type
     {
         return writeStream(out, prettify);
     }
@@ -2014,7 +2014,7 @@ private:
     bool mRemoveIdx(int index);
 
     template <typename T>
-    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename MB_ENABLE_IF<is_string<T>::value, bool>::type
+    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename std::enable_if<is_string<T>::value, bool>::type
     {
         uint32_t addr = 0;
         bool ret = mGet(root, &result, getStr(arg, addr), prettify);
@@ -2023,13 +2023,13 @@ private:
     }
 
     template <typename T>
-    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename MB_ENABLE_IF<is_num_int<T>::value, bool>::type
+    auto dataGetHandler(T arg, FirebaseJsonData &result, bool prettify) -> typename std::enable_if<is_num_int<T>::value, bool>::type
     {
         return mGetIdx(&result, arg, prettify);
     }
 
     template <typename T>
-    auto dataRemoveHandler(T arg) -> typename MB_ENABLE_IF<is_string<T>::value, bool>::type
+    auto dataRemoveHandler(T arg) -> typename std::enable_if<is_string<T>::value, bool>::type
     {
         uint32_t addr = 0;
         bool ret = mRemove(getStr(arg, addr));
@@ -2038,13 +2038,13 @@ private:
     }
 
     template <typename T>
-    auto dataRemoveHandler(T arg) -> typename MB_ENABLE_IF<is_num_int<T>::value, bool>::type
+    auto dataRemoveHandler(T arg) -> typename std::enable_if<is_num_int<T>::value, bool>::type
     {
         return mRemoveIdx(arg);
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_bool<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename std::enable_if<is_bool<T>::value, FirebaseJsonArray &>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2056,7 +2056,7 @@ private:
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_num_int<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename std::enable_if<is_num_int<T>::value, FirebaseJsonArray &>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2068,7 +2068,7 @@ private:
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<MB_IS_SAME<T, float>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename std::enable_if<std::is_same<T, float>::value, FirebaseJsonArray &>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2080,7 +2080,7 @@ private:
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, long double>::value, FirebaseJsonArray &>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2092,7 +2092,7 @@ private:
     }
 
     template <typename T>
-    auto dataAddHandler(T arg) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJsonArray &>::type
+    auto dataAddHandler(T arg) -> typename std::enable_if<is_string<T>::value, FirebaseJsonArray &>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2107,7 +2107,7 @@ private:
 
 #if !defined(__AVR__)
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, std::nullptr_t>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<is_string<T1>::value && std::is_same<T2, std::nullptr_t>::value>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2120,14 +2120,14 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, std::nullptr_t>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && std::is_same<T2, std::nullptr_t>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateNull);
     }
 #endif
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_bool<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<is_string<T1>::value && is_bool<T2>::value>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2140,13 +2140,13 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_bool<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_bool<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateBool(arg2));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_num_int<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<is_string<T1>::value && is_num_int<T2>::value>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2159,13 +2159,13 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_num_int<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_num_int<T2>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, -1)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, float>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<is_string<T1>::value && std::is_same<T2, float>::value>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2178,13 +2178,13 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, float>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && std::is_same<T2, float>::value>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, floatDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && (MB_IS_SAME<T2, double>::value || MB_IS_SAME<T2, long double>::value)>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<is_string<T1>::value && (std::is_same<T2, double>::value || std::is_same<T2, long double>::value)>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2197,13 +2197,13 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && (MB_IS_SAME<T2, double>::value || MB_IS_SAME<T2, long double>::value)>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && (std::is_same<T2, double>::value || std::is_same<T2, long double>::value)>::type
     {
         mSetIdx(arg1, MB_JSON_CreateRaw(num2Str(arg2, doubleDigits)));
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && is_string<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<is_string<T1>::value && is_string<T2>::value>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2218,7 +2218,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_string<T2>::value>::type
+    auto dataSetHandler(T1 arg1, T2 arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && is_string<T2>::value>::type
     {
         uint32_t addr = 0;
         mSetIdx(arg1, MB_JSON_CreateString(getStr(arg2, addr)));
@@ -2226,7 +2226,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, FirebaseJson>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename std::enable_if<is_string<T1>::value && std::is_same<T2, FirebaseJson>::value>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2240,14 +2240,14 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, FirebaseJson>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && std::is_same<T2, FirebaseJson>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, FirebaseJsonArray>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename std::enable_if<is_string<T1>::value && std::is_same<T2, FirebaseJsonArray>::value>::type
     {
         if (root_type != Root_Type_JSONArray)
             mClear();
@@ -2261,7 +2261,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename MB_ENABLE_IF<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && MB_IS_SAME<T2, FirebaseJsonArray>::value>::type
+    auto dataSetHandler(T1 arg1, T2 &arg2) -> typename std::enable_if<(is_num_int<T1>::value || is_num_float<T1>::value || is_bool<T1>::value) && std::is_same<T2, FirebaseJsonArray>::value>::type
     {
         MB_JSON *e = MB_JSON_Duplicate(arg2.root, true);
         mSetIdx(arg1, e);
@@ -2636,7 +2636,7 @@ private:
     FirebaseJson &nAdd(const char *key, MB_JSON *value);
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_bool<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename std::enable_if<is_string<T1>::value && is_bool<T2>::value, FirebaseJson &>::type
     {
         if (root_type != Root_Type_JSON)
             mClear();
@@ -2653,7 +2653,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_num_int<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename std::enable_if<is_string<T1>::value && is_num_int<T2>::value, FirebaseJson &>::type
     {
         if (root_type != Root_Type_JSON)
             mClear();
@@ -2670,7 +2670,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && MB_IS_SAME<T2, float>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename std::enable_if<is_string<T1>::value && std::is_same<T2, float>::value, FirebaseJson &>::type
     {
         if (root_type != Root_Type_JSON)
             mClear();
@@ -2687,7 +2687,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && (MB_IS_SAME<T2, double>::value || MB_IS_SAME<T2, long double>::value), FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename std::enable_if<is_string<T1>::value && (std::is_same<T2, double>::value || std::is_same<T2, long double>::value), FirebaseJson &>::type
     {
         if (root_type != Root_Type_JSON)
             mClear();
@@ -2704,7 +2704,7 @@ private:
     }
 
     template <typename T1, typename T2>
-    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T1>::value && is_string<T2>::value, FirebaseJson &>::type
+    auto dataHandler(T1 arg1, T2 arg2, fb_json_func_type_t type) -> typename std::enable_if<is_string<T1>::value && is_string<T2>::value, FirebaseJson &>::type
     {
         if (root_type != Root_Type_JSON)
             mClear();
@@ -2723,7 +2723,7 @@ private:
     }
 
     template <typename T>
-    auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJson &>::type
+    auto dataHandler(T arg, FirebaseJson &json, fb_json_func_type_t type) -> typename std::enable_if<is_string<T>::value, FirebaseJson &>::type
     {
         if (root_type != Root_Type_JSON)
             mClear();
@@ -2741,7 +2741,7 @@ private:
     }
 
     template <typename T>
-    auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename MB_ENABLE_IF<is_string<T>::value, FirebaseJson &>::type
+    auto dataHandler(T arg, FirebaseJsonArray &arr, fb_json_func_type_t type) -> typename std::enable_if<is_string<T>::value, FirebaseJson &>::type
     {
         if (root_type != Root_Type_JSON)
             mClear();

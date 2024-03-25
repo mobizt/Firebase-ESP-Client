@@ -1,11 +1,14 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.11
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.12
  *
- * Created March 23, 2024
+ * Created March 25, 2024
  *
  * Changes Log
  *
+ * v1.2.12
+ * - using std namespace
+ * 
  * v1.2.11
  * - fix float to string conversion
  * 
@@ -113,13 +116,6 @@ class MB_String;
 #define pgm2Str(p) (MB_String().appendP(p).c_str())
 #define num2Str(v, p) (MB_String().appendNum(v, p).c_str())
 
-#if defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
-#define MB_IS_SAME std::is_same
-#define MB_ENABLE_IF std::enable_if
-#else
-#define MB_IS_SAME is_same
-#define MB_ENABLE_IF enable_if
-#endif
 
 namespace mb_string
 {
@@ -194,52 +190,52 @@ namespace mb_string
     template <typename T>
     struct is_num_int8
     {
-        static bool const value = MB_IS_SAME<T, int8_t>::value || MB_IS_SAME<T, signed char>::value;
+        static bool const value = std::is_same<T, int8_t>::value || std::is_same<T, signed char>::value;
     };
 
     template <typename T>
     struct is_num_uint8
     {
-        static bool const value = MB_IS_SAME<T, uint8_t>::value || MB_IS_SAME<T, unsigned char>::value;
+        static bool const value = std::is_same<T, uint8_t>::value || std::is_same<T, unsigned char>::value;
     };
 
     template <typename T>
     struct is_num_int16
     {
-        static bool const value = MB_IS_SAME<T, int16_t>::value || MB_IS_SAME<T, signed short>::value;
+        static bool const value = std::is_same<T, int16_t>::value || std::is_same<T, signed short>::value;
     };
 
     template <typename T>
     struct is_num_uint16
     {
-        static bool const value = MB_IS_SAME<T, uint16_t>::value || MB_IS_SAME<T, unsigned short>::value;
+        static bool const value = std::is_same<T, uint16_t>::value || std::is_same<T, unsigned short>::value;
     };
 
     template <typename T>
     struct is_num_int32
     {
-        static bool const value = MB_IS_SAME<T, signed int>::value || MB_IS_SAME<T, int>::value ||
-                                  MB_IS_SAME<T, int32_t>::value || MB_IS_SAME<T, long>::value ||
-                                  MB_IS_SAME<T, signed long>::value;
+        static bool const value = std::is_same<T, signed int>::value || std::is_same<T, int>::value ||
+                                  std::is_same<T, int32_t>::value || std::is_same<T, long>::value ||
+                                  std::is_same<T, signed long>::value;
     };
 
     template <typename T>
     struct is_num_uint32
     {
-        static bool const value = MB_IS_SAME<T, unsigned int>::value || MB_IS_SAME<T, uint32_t>::value ||
-                                  MB_IS_SAME<T, unsigned long>::value;
+        static bool const value = std::is_same<T, unsigned int>::value || std::is_same<T, uint32_t>::value ||
+                                  std::is_same<T, unsigned long>::value;
     };
 
     template <typename T>
     struct is_num_int64
     {
-        static bool const value = MB_IS_SAME<T, int64_t>::value || MB_IS_SAME<T, signed long long>::value;
+        static bool const value = std::is_same<T, int64_t>::value || std::is_same<T, signed long long>::value;
     };
 
     template <typename T>
     struct is_num_uint64
     {
-        static bool const value = MB_IS_SAME<T, uint64_t>::value || MB_IS_SAME<T, unsigned long long>::value;
+        static bool const value = std::is_same<T, uint64_t>::value || std::is_same<T, unsigned long long>::value;
     };
 
     template <typename T>
@@ -265,44 +261,44 @@ namespace mb_string
     template <typename T>
     struct is_num_float
     {
-        static bool const value = MB_IS_SAME<T, float>::value || MB_IS_SAME<T, double>::value || MB_IS_SAME<T, long double>::value;
+        static bool const value = std::is_same<T, float>::value || std::is_same<T, double>::value || std::is_same<T, long double>::value;
     };
 
     template <typename T>
     struct is_bool
     {
-        static bool const value = MB_IS_SAME<T, bool>::value;
+        static bool const value = std::is_same<T, bool>::value;
     };
 
     template <typename T>
     struct cs_t
     {
-        static bool const value = MB_IS_SAME<T, char *>::value;
+        static bool const value = std::is_same<T, char *>::value;
     };
 
     template <typename T>
     struct ccs_t
     {
-        static bool const value = MB_IS_SAME<T, const char *>::value;
+        static bool const value = std::is_same<T, const char *>::value;
     };
 
     template <typename T>
     struct as_t
     {
-        static bool const value = MB_IS_SAME<T, String>::value;
+        static bool const value = std::is_same<T, String>::value;
     };
 
     template <typename T>
     struct cas_t
     {
-        static bool const value = MB_IS_SAME<T, const String>::value;
+        static bool const value = std::is_same<T, const String>::value;
     };
 
     template <typename T>
     struct ss_t
     {
 #if !defined(__AVR__)
-        static bool const value = MB_IS_SAME<T, std::string>::value;
+        static bool const value = std::is_same<T, std::string>::value;
 #else
         static bool const value = false;
 #endif
@@ -312,7 +308,7 @@ namespace mb_string
     struct css_t
     {
 #if !defined(__AVR__)
-        static bool const value = MB_IS_SAME<T, const std::string>::value;
+        static bool const value = std::is_same<T, const std::string>::value;
 #else
         static bool const value = false;
 #endif
@@ -321,31 +317,31 @@ namespace mb_string
     template <typename T>
     struct ssh_t
     {
-        static bool const value = MB_IS_SAME<T, StringSumHelper>::value;
+        static bool const value = std::is_same<T, StringSumHelper>::value;
     };
 
     template <typename T>
     struct fs_t
     {
-        static bool const value = MB_IS_SAME<T, const __FlashStringHelper *>::value;
+        static bool const value = std::is_same<T, const __FlashStringHelper *>::value;
     };
 
     template <typename T>
     struct mbs_t
     {
-        static bool const value = MB_IS_SAME<T, MB_String>::value;
+        static bool const value = std::is_same<T, MB_String>::value;
     };
 
     template <typename T>
     struct cmbs_t
     {
-        static bool const value = MB_IS_SAME<T, const MB_String>::value;
+        static bool const value = std::is_same<T, const MB_String>::value;
     };
 
     template <typename T>
     struct pgm_t
     {
-        static bool const value = MB_IS_SAME<T, PGM_P>::value;
+        static bool const value = std::is_same<T, PGM_P>::value;
     };
 
     template <typename T>
@@ -403,14 +399,14 @@ namespace mb_string
     }
 #else
     template <typename T>
-    auto addrTo(int address) -> typename MB_ENABLE_IF<!MB_IS_SAME<T, nullptr_t>::value, T>::type
+    auto addrTo(int address) -> typename std::enable_if<!std::is_same<T, nullptr_t>::value, T>::type
     {
         return reinterpret_cast<T>(address);
     }
 #endif
 
     template <typename T>
-    auto getSubType(T val) -> typename MB_ENABLE_IF<is_num_int<T>::value || is_num_float<T>::value || MB_IS_SAME<T, bool>::value || is_const_chars<T>::value || is_arduino_flash_string_helper<T>::value || is_arduino_string<T>::value || is_std_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, mb_string_sub_type>::type
+    auto getSubType(T val) -> typename std::enable_if<is_num_int<T>::value || is_num_float<T>::value || std::is_same<T, bool>::value || is_const_chars<T>::value || is_arduino_flash_string_helper<T>::value || is_arduino_string<T>::value || is_std_string<T>::value || is_mb_string<T>::value || std::is_same<T, StringSumHelper>::value, mb_string_sub_type>::type
     {
         if (is_num_uint64<T>::value)
             return mb_string_sub_type_uint64;
@@ -428,11 +424,11 @@ namespace mb_string
             return mb_string_sub_type_uint8;
         else if (is_num_int8<T>::value)
             return mb_string_sub_type_int8;
-        else if (MB_IS_SAME<T, bool>::value)
+        else if (std::is_same<T, bool>::value)
             return mb_string_sub_type_bool;
-        else if (MB_IS_SAME<T, float>::value)
+        else if (std::is_same<T, float>::value)
             return mb_string_sub_type_float;
-        else if (MB_IS_SAME<T, double>::value)
+        else if (std::is_same<T, double>::value)
             return mb_string_sub_type_double;
         else if (is_arduino_string<T>::value)
             return mb_string_sub_type_arduino_string;
@@ -442,7 +438,7 @@ namespace mb_string
             return mb_string_sub_type_mb_string;
         else if (is_arduino_flash_string_helper<T>::value)
             return mb_string_sub_type_fptr;
-        else if (MB_IS_SAME<T, StringSumHelper>::value)
+        else if (std::is_same<T, StringSumHelper>::value)
             return mb_string_sub_type_string_sum_helper;
         else if (ccs_t<T>::value)
             return mb_string_sub_type_cstring;
@@ -453,19 +449,19 @@ namespace mb_string
     }
 
     template <typename T>
-    auto getSubType(T *val) -> typename MB_ENABLE_IF<is_num_int<T>::value || is_num_float<T>::value || MB_IS_SAME<T, bool>::value || is_const_chars<T>::value || is_arduino_flash_string_helper<T>::value || is_arduino_string<T>::value || is_std_string<T>::value || is_mb_string<T>::value || MB_IS_SAME<T, StringSumHelper>::value, mb_string_sub_type>::type
+    auto getSubType(T *val) -> typename std::enable_if<is_num_int<T>::value || is_num_float<T>::value || std::is_same<T, bool>::value || is_const_chars<T>::value || is_arduino_flash_string_helper<T>::value || is_arduino_string<T>::value || is_std_string<T>::value || is_mb_string<T>::value || std::is_same<T, StringSumHelper>::value, mb_string_sub_type>::type
     {
         return getSubType(*val);
     }
 
     template <typename T>
-    auto toStringPtr(const T &val) -> typename MB_ENABLE_IF<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, MB_StringPtr>::type
+    auto toStringPtr(const T &val) -> typename std::enable_if<is_std_string<T>::value || is_arduino_string<T>::value || is_mb_string<T>::value, MB_StringPtr>::type
     {
         return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val));
     }
 
     template <typename T>
-    auto toStringPtr(const T &val) -> typename MB_ENABLE_IF<MB_IS_SAME<T, StringSumHelper>::value, MB_StringPtr>::type
+    auto toStringPtr(const T &val) -> typename std::enable_if<std::is_same<T, StringSumHelper>::value, MB_StringPtr>::type
     {
 #if defined(ESP8266)
         return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val), -1);
@@ -476,27 +472,27 @@ namespace mb_string
     }
 
     template <typename T>
-    auto toStringPtr(T val) -> typename MB_ENABLE_IF<is_const_chars<T>::value, MB_StringPtr>::type { return MB_StringPtr(reinterpret_cast<uint32_t>(val), getSubType(val)); }
+    auto toStringPtr(T val) -> typename std::enable_if<is_const_chars<T>::value, MB_StringPtr>::type { return MB_StringPtr(reinterpret_cast<uint32_t>(val), getSubType(val)); }
 
     template <typename T>
-    auto toStringPtr(T &val) -> typename MB_ENABLE_IF<is_arduino_flash_string_helper<T>::value, MB_StringPtr>::type { return MB_StringPtr(reinterpret_cast<uint32_t>(val), getSubType(val)); }
+    auto toStringPtr(T &val) -> typename std::enable_if<is_arduino_flash_string_helper<T>::value, MB_StringPtr>::type { return MB_StringPtr(reinterpret_cast<uint32_t>(val), getSubType(val)); }
 
 #if !defined(__AVR__)
     template <typename T>
-    auto toStringPtr(T val) -> typename MB_ENABLE_IF<MB_IS_SAME<T, std::nullptr_t>::value, MB_StringPtr>::type
+    auto toStringPtr(T val) -> typename std::enable_if<std::is_same<T, std::nullptr_t>::value, MB_StringPtr>::type
     {
         return MB_StringPtr();
     }
 #endif
 
     template <typename T>
-    auto toStringPtr(T val) -> typename MB_ENABLE_IF<MB_IS_SAME<T, MB_StringPtr>::value, MB_StringPtr>::type
+    auto toStringPtr(T val) -> typename std::enable_if<std::is_same<T, MB_StringPtr>::value, MB_StringPtr>::type
     {
         return val;
     }
 
     template <typename T>
-    auto toStringPtr(T &val, int precision = -1) -> typename MB_ENABLE_IF<is_num_int<T>::value || is_num_float<T>::value || MB_IS_SAME<T, bool>::value, MB_StringPtr>::type { return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val), precision); }
+    auto toStringPtr(T &val, int precision = -1) -> typename std::enable_if<is_num_int<T>::value || is_num_float<T>::value || std::is_same<T, bool>::value, MB_StringPtr>::type { return MB_StringPtr(reinterpret_cast<uint32_t>(&val), getSubType(val), precision); }
 }
 
 using namespace mb_string;
@@ -797,7 +793,7 @@ public:
     }
 
     template <typename T = int>
-    auto operator=(T value) -> typename MB_ENABLE_IF<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, MB_String &>::type
+    auto operator=(T value) -> typename std::enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, MB_String &>::type
     {
         clear();
         appendNum(value);
@@ -805,7 +801,7 @@ public:
     }
 
     template <typename T = int>
-    auto operator+=(T value) -> typename MB_ENABLE_IF<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, MB_String &>::type
+    auto operator+=(T value) -> typename std::enable_if<is_num_int<T>::value || is_num_float<T>::value || is_bool<T>::value, MB_String &>::type
     {
         appendNum(value);
         return (*this);
@@ -898,7 +894,7 @@ public:
     };
 
     template <typename T = int>
-    auto appendNum(T value, int precision = 0) -> typename MB_ENABLE_IF<is_num_int<T>::value || is_bool<T>::value, MB_String &>::type
+    auto appendNum(T value, int precision = 0) -> typename std::enable_if<is_num_int<T>::value || is_bool<T>::value, MB_String &>::type
     {
         char *s = NULL;
 
