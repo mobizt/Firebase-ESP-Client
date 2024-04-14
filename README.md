@@ -15,6 +15,9 @@ The [ESP8266 and Raspberry Pi Pico](https://github.com/mobizt/Firebase-ESP8266) 
 
 ## We're moving to the new library
 
+> [!WARNING] 
+> Due to the issues that cannot be fixed, this This library is now obsoleted and replaced by the new [FirebaseClient](https://github.com/mobizt/FirebaseClient) library.
+
 The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is now availavle in Arduino IDE and PlatformIO's Library Manager.
 
 It will be the old Firebase libraries (Firebase-ESP-Client, Firebase-ESP8266 and FirebaseESP32) replacement.
