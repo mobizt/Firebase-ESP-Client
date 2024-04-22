@@ -5,14 +5,6 @@
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20Arduino%20Client%20Library%20for%20ESP8266%20and%20ESP32.svg)
 
 
-This library provides Firebase Realtime database, Firebase Cloud Messaging, Cloud Firestore database, Firebase Storage, Google Cloud Storage and Cloud Functions for Firebase functions and supports most Arduino devices except for AVR devices that have resources and compiler limit.
-
-This library can work with on-chip/on-board network (WiFi/Ethernet) and External network module via Client library.
-
-The features can be configurable to add and exclude some unused features, see [Library Build Options](#library-build-options).
-
-The [ESP8266 and Raspberry Pi Pico](https://github.com/mobizt/Firebase-ESP8266) and [ESP32](https://github.com/mobizt/Firebase-ESP32) versions are available which provide only Firebase Realtime database and Firebase Cloud Messaging functions.
-
 ## We're moving to the new library
 
 > [!WARNING] 
