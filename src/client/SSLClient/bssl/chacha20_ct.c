@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(CHACHA20_CT_C) && defined(USE_LIB_SSL_ENGINE)
-#define CHACHA20_CT_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

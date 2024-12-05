@@ -1,7 +1,7 @@
 /**
- * BSSL_TCP_Client v2.0.12 for Arduino devices.
+ * BSSL_TCP_Client v2.0.15 for Arduino devices.
  *
- * Created August 27, 2023
+ * Created December 5, 2024
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -72,7 +72,6 @@ BSSL_TCP_Client::BSSL_TCP_Client()
 
 BSSL_TCP_Client::~BSSL_TCP_Client()
 {
-    stop();
     setClient(nullptr);
 }
 
@@ -98,10 +97,10 @@ int BSSL_TCP_Client::connect(IPAddress ip, uint16_t port, int32_t timeout)
 
     if (timeout > 0)
     {
-        _timeout = timeout;
+        _timeout_ms = timeout;
         if (_basic_client)
-            _basic_client->setTimeout(_timeout);
-        _ssl_client.setTimeout(_timeout);
+            _basic_client->setTimeout(_timeout_ms);
+        _ssl_client.setTimeout(_timeout_ms);
     }
 
     return _ssl_client.connect(ip, port);
@@ -120,10 +119,10 @@ int BSSL_TCP_Client::connect(const char *host, uint16_t port, int32_t timeout)
 
     if (timeout > 0)
     {
-        _timeout = timeout;
+        _timeout_ms = timeout;
         if (_basic_client)
-            _basic_client->setTimeout(_timeout);
-        _ssl_client.setTimeout(_timeout);
+            _basic_client->setTimeout(_timeout_ms);
+        _ssl_client.setTimeout(_timeout_ms);
     }
 
     return _ssl_client.connect(host, port);
@@ -167,7 +166,7 @@ int BSSL_TCP_Client::read(uint8_t *buf, size_t size)
 
 int BSSL_TCP_Client::send(const char *data)
 {
-    return write((uint8_t *)data, strlen(data));
+    return write(reinterpret_cast<const uint8_t *>(data), strlen(data));
 }
 
 int BSSL_TCP_Client::print(const char *data)
@@ -184,7 +183,7 @@ int BSSL_TCP_Client::print(int data)
 {
     char buf[64];
     memset(buf, 0, 64);
-    sprintf(buf, (const char *)FPSTR("%d"), data);
+    sprintf(buf, "%d", data);
     int ret = send(buf);
     return ret;
 }
@@ -194,7 +193,7 @@ int BSSL_TCP_Client::println(const char *data)
     int len = send(data);
     if (len < 0)
         return len;
-    int sz = send((const char *)FPSTR("\r\n"));
+    int sz = send("\r\n");
     if (sz < 0)
         return sz;
     return len + sz;
@@ -209,7 +208,7 @@ int BSSL_TCP_Client::println(int data)
 {
     char buf[64];
     memset(buf, 0, 64);
-    sprintf(buf, (const char *)FPSTR("%d\r\n"), data);
+    sprintf(buf, "%d\r\n", data);
     int ret = send(buf);
     return ret;
 }
@@ -228,7 +227,7 @@ size_t BSSL_TCP_Client::write(uint8_t data)
 
 size_t BSSL_TCP_Client::write_P(PGM_P buf, size_t size) { return _ssl_client.write_P(buf, size); }
 
-size_t BSSL_TCP_Client::write(const char *buf) { return write((const uint8_t *)buf, strlen(buf)); }
+size_t BSSL_TCP_Client::write(const char *buf) { return write(reinterpret_cast<const uint8_t *>(buf), strlen(buf)); }
 
 size_t BSSL_TCP_Client::write(Stream &stream) { return _ssl_client.write(stream); }
 
@@ -267,8 +266,8 @@ void BSSL_TCP_Client::stop()
 
 int BSSL_TCP_Client::setTimeout(uint32_t seconds)
 {
-    _timeout = seconds * 1000;
-    _ssl_client.setTimeout(_timeout);
+    _timeout_ms = seconds * 1000;
+    _ssl_client.setTimeout(_timeout_ms);
     return 1;
 }
 
@@ -278,6 +277,14 @@ void BSSL_TCP_Client::setHandshakeTimeout(unsigned long handshake_timeout)
 {
     _handshake_timeout = handshake_timeout * 1000;
     _ssl_client.setHandshakeTimeout(_handshake_timeout);
+}
+
+void BSSL_TCP_Client::setSessionTimeout(uint32_t seconds)
+{
+    if (seconds > 0 && seconds < BSSL_SSL_CLIENT_MIN_SESSION_TIMEOUT_SEC)
+        seconds = BSSL_SSL_CLIENT_MIN_SESSION_TIMEOUT_SEC;
+    _tcp_session_timeout = seconds;
+    _ssl_client.setSessionTimeout(seconds);
 }
 
 void BSSL_TCP_Client::flush()
@@ -402,7 +409,7 @@ void BSSL_TCP_Client::setPrivateKey(const char *private_key) { return _ssl_clien
 
 bool BSSL_TCP_Client::loadCACert(Stream &stream, size_t size)
 {
-    char *dest = mStreamLoad(stream, size);
+    const char *dest = mStreamLoad(stream, size);
     bool ret = false;
     if (dest)
     {
@@ -425,10 +432,12 @@ BSSL_TCP_Client &BSSL_TCP_Client::operator=(const BSSL_TCP_Client &other)
     stop();
     setClient(other._basic_client);
     _use_insecure = other._use_insecure;
-    _timeout = other._timeout;
+    _timeout_ms = other._timeout_ms;
     _handshake_timeout = other._handshake_timeout;
-    _ssl_client.setTimeout(_timeout);
+    _tcp_session_timeout = other._tcp_session_timeout;
+    _ssl_client.setTimeout(_timeout_ms);
     _ssl_client.setHandshakeTimeout(_handshake_timeout);
+    _ssl_client.setSessionTimeout(_tcp_session_timeout);
     if (_use_insecure)
         _ssl_client.setInsecure();
     return *this;
@@ -436,7 +445,7 @@ BSSL_TCP_Client &BSSL_TCP_Client::operator=(const BSSL_TCP_Client &other)
 
 char *BSSL_TCP_Client::mStreamLoad(Stream &stream, size_t size)
 {
-    char *dest = (char *)malloc(size + 1);
+    char *dest = reinterpret_cast<char *>(malloc(size + 1));
     if (!dest)
     {
         return nullptr;

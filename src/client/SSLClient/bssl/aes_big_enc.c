@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(EAS_BIG_ENC_C) && defined(USE_LIB_SSL_ENGINE)
-#define EAS_BIG_ENC_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

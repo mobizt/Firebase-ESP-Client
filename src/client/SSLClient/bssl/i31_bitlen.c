@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(I31_BITLEN_C) && defined(USE_LIB_SSL_ENGINE)
-#define I31_BITLEN_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

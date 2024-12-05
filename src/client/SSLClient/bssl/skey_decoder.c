@@ -2,8 +2,7 @@
 
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(SKEY_DECODER_C) && defined(USE_LIB_SSL_ENGINE)
-#define SKEY_DECODER_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include <stddef.h>
 #include <stdint.h>

@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(HMAC_CT_C) && defined(USE_LIB_SSL_ENGINE)
-#define HMAC_CT_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

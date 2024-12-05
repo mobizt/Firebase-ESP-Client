@@ -1,8 +1,7 @@
 /* Automatically generated code; do not modify directly. */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(PEMDEC_C) && defined(USE_LIB_SSL_ENGINE)
-#define PEMDEC_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include <stddef.h>
 #include <stdint.h>

@@ -24,8 +24,7 @@
 
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(ECDSA_I15_SIGN_RAW_C) && defined(USE_LIB_SSL_ENGINE)
-#define ECDSA_I15_SIGN_RAW_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

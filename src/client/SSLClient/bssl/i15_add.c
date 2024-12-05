@@ -24,8 +24,7 @@
 
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(I15_ADD_C) && defined(USE_LIB_SSL_ENGINE)
-#define I15_ADD_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

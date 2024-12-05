@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(SSL_SERVER_MINV2G_C) && defined(USE_LIB_SSL_ENGINE)
-#define SSL_SERVER_MINV2G_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(DEC32LE_C) && defined(USE_LIB_SSL_ENGINE)
-#define DEC32LE_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

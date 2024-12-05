@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(SSL_ENGINE_DEFAULT_AESGCM_C) && defined(USE_LIB_SSL_ENGINE)
-#define SSL_ENGINE_DEFAULT_AESGCM_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

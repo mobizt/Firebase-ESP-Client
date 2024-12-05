@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(PRF_SHA394_C) && defined(USE_LIB_SSL_ENGINE)
-#define PRF_SHA384_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

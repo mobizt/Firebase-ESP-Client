@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(I15_MULADD_C) && defined(USE_LIB_SSL_ENGINE)
-#define I15_MULADD_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

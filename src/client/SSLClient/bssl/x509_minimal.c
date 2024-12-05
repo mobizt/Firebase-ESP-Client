@@ -2,8 +2,7 @@
 
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(X509_MINIMAL_C) && defined(USE_LIB_SSL_ENGINE)
-#define X509_MINIMAL_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include <stddef.h>
 #include <stdint.h>

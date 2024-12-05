@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(DES_CT_CBCENC_C) && defined(USE_LIB_SSL_ENGINE)
-#define DES_CT_CBCENC_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

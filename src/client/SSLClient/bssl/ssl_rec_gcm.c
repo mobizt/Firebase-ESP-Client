@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(SSL_REC_GCM_C) && defined(USE_LIB_SSL_ENGINE)
-#define SSL_REC_GCM_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

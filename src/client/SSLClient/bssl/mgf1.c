@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(MGF1_C) && defined(USE_LIB_SSL_ENGINE)
-#define MGF1_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

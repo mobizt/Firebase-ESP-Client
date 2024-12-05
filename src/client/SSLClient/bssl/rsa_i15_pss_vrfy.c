@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(RSA_I15_PSS_VRFY_C) && defined(USE_LIB_SSL_ENGINE)
-#define RSA_I15_PSS_VRFY_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

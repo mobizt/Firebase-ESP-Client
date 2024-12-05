@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(SHA2BIG_C) && defined(USE_LIB_SSL_ENGINE)
-#define SHA2BIG_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

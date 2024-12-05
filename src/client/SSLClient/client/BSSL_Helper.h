@@ -1,5 +1,7 @@
 
 /*
+  Updated June 12, 2004.
+  
   WiFiClientBearSSL- SSL client/server for esp8266 using BearSSL libraries
   - Mostly compatible with Arduino WiFi shield library and standard
     WiFiClient/ServerSecure (except for certificate handling).
@@ -173,10 +175,10 @@ namespace bssl
     {
     public:
         PublicKey();
-        PublicKey(const char *pemKey);
-        PublicKey(const uint8_t *derKey, size_t derLen);
-        PublicKey(Stream &stream, size_t size);
-        PublicKey(Stream &stream) : PublicKey(stream, stream.available()){};
+        explicit PublicKey(const char *pemKey);
+        explicit PublicKey(const uint8_t *derKey, size_t derLen);
+        explicit PublicKey(Stream &stream, size_t size);
+        explicit PublicKey(Stream &stream) : PublicKey(stream, stream.available()){};
         ~PublicKey();
 
         bool parse(const char *pemKey);
@@ -203,10 +205,10 @@ namespace bssl
     {
     public:
         PrivateKey();
-        PrivateKey(const char *pemKey);
-        PrivateKey(const uint8_t *derKey, size_t derLen);
-        PrivateKey(Stream &stream, size_t size);
-        PrivateKey(Stream &stream) : PrivateKey(stream, stream.available()){};
+        explicit PrivateKey(const char *pemKey);
+        explicit PrivateKey(const uint8_t *derKey, size_t derLen);
+        explicit PrivateKey(Stream &stream, size_t size);
+        explicit PrivateKey(Stream &stream) : PrivateKey(stream, stream.available()){};
         ~PrivateKey();
 
         bool parse(const char *pemKey);
@@ -236,10 +238,10 @@ namespace bssl
     {
     public:
         X509List();
-        X509List(const char *pemCert);
-        X509List(const uint8_t *derCert, size_t derLen);
-        X509List(Stream &stream, size_t size);
-        X509List(Stream &stream) : X509List(stream, stream.available()){};
+        explicit X509List(const char *pemCert);
+        explicit X509List(const uint8_t *derCert, size_t derLen);
+        explicit X509List(Stream &stream, size_t size);
+        explicit X509List(Stream &stream) : X509List(stream, stream.available()){};
         ~X509List();
 
         bool append(const char *pemCert);
@@ -260,7 +262,7 @@ namespace bssl
         }
 
         // Disable the copy constructor, we're pointer based
-        X509List(const X509List &that) = delete;
+        explicit X509List(const X509List &that) = delete;
         X509List &operator=(const X509List &that) = delete;
 
     private:
@@ -341,14 +343,14 @@ namespace bssl
         // Callback for the x509_minimal subject DN
         static void insecure_subject_dn_append(void *ctx, const void *buf, size_t len)
         {
-            br_x509_insecure_context *xc = (br_x509_insecure_context *)ctx;
+            br_x509_insecure_context *xc = reinterpret_cast<br_x509_insecure_context *>(ctx);
             br_sha256_update(&xc->sha256_subject, buf, len);
         }
 
         // Callback for the x509_minimal issuer DN
         static void insecure_issuer_dn_append(void *ctx, const void *buf, size_t len)
         {
-            br_x509_insecure_context *xc = (br_x509_insecure_context *)ctx;
+            br_x509_insecure_context *xc = reinterpret_cast<br_x509_insecure_context *>(ctx);
             br_sha256_update(&xc->sha256_issuer, buf, len);
         }
 
@@ -363,18 +365,18 @@ namespace bssl
         // Callback for each byte stream in the chain.  Only process first cert.
         static void insecure_append(const br_x509_class **ctx, const unsigned char *buf, size_t len)
         {
-            br_x509_insecure_context *xc = (br_x509_insecure_context *)ctx;
+            br_x509_insecure_context *xc = reinterpret_cast<br_x509_insecure_context *>(ctx);
             // Don't process anything but the first certificate in the chain
             if (!xc->done_cert)
             {
                 br_sha1_update(&xc->sha1_cert, buf, len);
-                br_x509_decoder_push(&xc->ctx, (const void *)buf, len);
+                br_x509_decoder_push(&xc->ctx, reinterpret_cast<const void *>(buf), len);
             }
         }
         // Callback on the first byte of any certificate
         static void insecure_start_chain(const br_x509_class **ctx, const char *server_name)
         {
-            br_x509_insecure_context *xc = (br_x509_insecure_context *)ctx;
+            br_x509_insecure_context *xc = reinterpret_cast<br_x509_insecure_context *>(ctx);
 #if defined(USE_EMBED_SSL_ENGINE)
             br_x509_decoder_init(&xc->ctx, insecure_subject_dn_append, xc, insecure_issuer_dn_append, xc);
 #elif defined(ESP32) || defined(USE_LIB_SSL_ENGINE)
@@ -390,7 +392,7 @@ namespace bssl
         // Callback on individual cert end.
         static void insecure_end_cert(const br_x509_class **ctx)
         {
-            br_x509_insecure_context *xc = (br_x509_insecure_context *)ctx;
+            br_x509_insecure_context *xc = reinterpret_cast<br_x509_insecure_context *>(ctx);
             xc->done_cert = true;
         }
 
@@ -398,7 +400,7 @@ namespace bssl
         // Return 0 on validation success, !0 on validation error
         static unsigned insecure_end_chain(const br_x509_class **ctx)
         {
-            const br_x509_insecure_context *xc = (const br_x509_insecure_context *)ctx;
+            const br_x509_insecure_context *xc = reinterpret_cast<const br_x509_insecure_context *>(ctx);
             if (!xc->done_cert)
             {
                 // BSSL_BSSL_SSL_Client_DEBUG_PRINTF("insecure_end_chain: No cert seen\n");
@@ -432,7 +434,7 @@ namespace bssl
         // Return the public key from the validator (set by x509_minimal)
         static const br_x509_pkey *insecure_get_pkey(const br_x509_class *const *ctx, unsigned *usages)
         {
-            const br_x509_insecure_context *xc = (const br_x509_insecure_context *)ctx;
+            const br_x509_insecure_context *xc = reinterpret_cast<const br_x509_insecure_context *>(ctx);
             if (usages != nullptr)
             {
                 *usages = BR_KEYTYPE_KEYX | BR_KEYTYPE_SIGN; // I said we were insecure!

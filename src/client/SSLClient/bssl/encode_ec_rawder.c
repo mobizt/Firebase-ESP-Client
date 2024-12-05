@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(ENCODE_EC_RAWDER_C) && defined(USE_LIB_SSL_ENGINE)
-#define ENCODE_EC_RAWDER_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

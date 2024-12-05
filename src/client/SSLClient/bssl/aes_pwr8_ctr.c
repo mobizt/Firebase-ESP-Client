@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(EAS_PWR8_CTR_C) && defined(USE_LIB_SSL_ENGINE)
-#define EAS_PWR8_CTR_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #define BR_POWER_ASM_MACROS   1
 #include "inner.h"

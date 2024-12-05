@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(EC_P256_M62_C) && defined(USE_LIB_SSL_ENGINE)
-#define EC_P256_M62_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #include "inner.h"
 

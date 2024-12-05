@@ -23,8 +23,7 @@
  */
 
 #include "../ESP_SSLClient_FS.h"
-#if !defined(CHACHA20_SSE2_C) && defined(USE_LIB_SSL_ENGINE)
-#define CHACHA20_SSE2_C
+#if defined(USE_LIB_SSL_ENGINE)
 
 #define BR_ENABLE_INTRINSICS   1
 #include "inner.h"

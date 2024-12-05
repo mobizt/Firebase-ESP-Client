@@ -1,4 +1,6 @@
 /*
+  Updated June 12, 2004.
+  
   WiFiClientBearSSL- SSL client/server for esp8266 using BearSSL libraries
   - Mostly compatible with Arduino WiFi shield library and standard
     WiFiClient/ServerSecure (except for certificate handling).
@@ -121,7 +123,7 @@ namespace key_bssl
     vec->reserve(vec->size() + len); // Allocate extra space all at once
     for (size_t i = 0; i < len; i++)
     {
-      vec->push_back(((uint8_t *)buff)[i]);
+      vec->push_back((reinterpret_cast<const uint8_t *>(buff))[i]);
     }
   }
 
@@ -134,7 +136,7 @@ namespace key_bssl
     // Clear everything in the Trust Anchor
     memset(ta, 0, sizeof(*ta));
 
-    br_x509_decoder_init(dc.get(), byte_vector_append, (void *)&vdn);
+    br_x509_decoder_init(dc.get(), byte_vector_append, reinterpret_cast<void *>(&vdn));
     br_x509_decoder_push(dc.get(), xc->data, xc->data_len);
     pk = br_x509_decoder_get_pkey(dc.get());
     if (pk == nullptr)
@@ -143,7 +145,7 @@ namespace key_bssl
     }
 
     // Copy the raw certificate data
-    ta->dn.data = (uint8_t *)malloc(vdn.size());
+    ta->dn.data = reinterpret_cast<uint8_t *>(malloc(vdn.size()));
     if (!ta->dn.data)
     {
       return false; // OOM, but nothing yet allocated
@@ -161,8 +163,8 @@ namespace key_bssl
     {
     case BR_KEYTYPE_RSA:
       ta->pkey.key_type = BR_KEYTYPE_RSA;
-      ta->pkey.key.rsa.n = (uint8_t *)malloc(pk->key.rsa.nlen);
-      ta->pkey.key.rsa.e = (uint8_t *)malloc(pk->key.rsa.elen);
+      ta->pkey.key.rsa.n = reinterpret_cast<uint8_t *>(malloc(pk->key.rsa.nlen));
+      ta->pkey.key.rsa.e = reinterpret_cast<uint8_t *>(malloc(pk->key.rsa.elen));
       if ((ta->pkey.key.rsa.n == nullptr) || (ta->pkey.key.rsa.e == nullptr))
       {
         free_ta_contents(ta); // OOM, so clean up
@@ -176,7 +178,7 @@ namespace key_bssl
     case BR_KEYTYPE_EC:
       ta->pkey.key_type = BR_KEYTYPE_EC;
       ta->pkey.key.ec.curve = pk->key.ec.curve;
-      ta->pkey.key.ec.q = (uint8_t *)malloc(pk->key.ec.qlen);
+      ta->pkey.key.ec.q = reinterpret_cast<uint8_t *>(malloc(pk->key.ec.qlen));
       if (ta->pkey.key.ec.q == nullptr)
       {
         free_ta_contents(ta); // OOM, so clean up
@@ -196,7 +198,7 @@ namespace key_bssl
 
   br_x509_trust_anchor *certificate_to_trust_anchor(const br_x509_certificate *xc)
   {
-    br_x509_trust_anchor *ta = (br_x509_trust_anchor *)malloc(sizeof(br_x509_trust_anchor));
+    br_x509_trust_anchor *ta = reinterpret_cast<br_x509_trust_anchor *>(malloc(sizeof(br_x509_trust_anchor)));
     if (!ta)
     {
       return nullptr;
@@ -287,7 +289,7 @@ namespace key_bssl
   char *strdupImpl(const char *s)
   {
     size_t slen = strlen(s);
-    char *result = (char *)malloc(slen + 1);
+    char *result = reinterpret_cast<char *>(malloc(slen + 1));
     if (!result)
       return NULL;
     memcpy(result, s, slen + 1);
@@ -305,13 +307,13 @@ namespace key_bssl
     {
       return nullptr;
     }
-    pem_object po, *pos;
-    const unsigned char *buff;
+    pem_object po, *pos = nullptr;
+    const unsigned char *buff = nullptr;
     std::vector<uint8_t> bv;
 
     *num = 0;
     br_pem_decoder_init(pc.get());
-    buff = (const unsigned char *)src;
+    buff = reinterpret_cast<const unsigned char *>(src);
     po.name = nullptr;
     po.data = nullptr;
     po.data_len = 0;
@@ -337,7 +339,7 @@ namespace key_bssl
         if (inobj)
         {
           // Stick data into the vector
-          po.data = (uint8_t *)malloc(bv.size());
+          po.data = reinterpret_cast<uint8_t *>(malloc(bv.size()));
           if (po.data)
           {
             memcpy(po.data, &bv[0], bv.size());
@@ -369,7 +371,7 @@ namespace key_bssl
       if (len == 0 && extra_nl)
       {
         extra_nl = false;
-        buff = (const unsigned char *)"\n";
+        buff = reinterpret_cast<const unsigned char *>("\n");
         len = 1;
       }
     }
@@ -384,7 +386,7 @@ namespace key_bssl
       return nullptr;
     }
 
-    pos = (pem_object *)malloc((1 + pem_list.size()) * sizeof(*pos));
+    pos = reinterpret_cast<pem_object *>(malloc((1 + pem_list.size()) * sizeof(*pos)));
     if (pos)
     {
       *num = pem_list.size();
@@ -399,21 +401,21 @@ namespace key_bssl
   br_x509_certificate *read_certificates(const char *buff, size_t len, size_t *num)
   {
     std::vector<br_x509_certificate> cert_list;
-    pem_object *pos;
-    size_t u, num_pos;
-    br_x509_certificate *xcs;
+    pem_object *pos = nullptr;
+    size_t u = 0, num_pos = 0;
+    br_x509_certificate *xcs = nullptr;
     br_x509_certificate dummy;
 
     *num = 0;
 
-    if (looks_like_DER((const unsigned char *)buff, len))
+    if (looks_like_DER(reinterpret_cast<const unsigned char *>(buff), len))
     {
-      xcs = (br_x509_certificate *)malloc(2 * sizeof(*xcs));
+      xcs = reinterpret_cast<br_x509_certificate *>(malloc(2 * sizeof(*xcs)));
       if (!xcs)
       {
         return nullptr;
       }
-      xcs[0].data = (uint8_t *)malloc(len);
+      xcs[0].data = reinterpret_cast<uint8_t *>(malloc(len));
       if (!xcs[0].data)
       {
         free(xcs);
@@ -457,7 +459,7 @@ namespace key_bssl
     dummy.data = nullptr;
     dummy.data_len = 0;
     cert_list.push_back(dummy);
-    xcs = (br_x509_certificate *)malloc(cert_list.size() * sizeof(*xcs));
+    xcs = reinterpret_cast<br_x509_certificate *>(malloc(cert_list.size() * sizeof(*xcs)));
     if (!xcs)
     {
       for (size_t i = 0; i < cert_list.size(); i++)
@@ -508,14 +510,14 @@ namespace key_bssl
     {
     case BR_KEYTYPE_RSA:
       rk = br_pkey_decoder_get_rsa(dc.get());
-      pk = (public_key *)malloc(sizeof *pk);
+      pk = reinterpret_cast<public_key *>(malloc(sizeof *pk));
       if (!pk)
       {
         return nullptr;
       }
       pk->key_type = BR_KEYTYPE_RSA;
-      pk->key.rsa.n = (uint8_t *)malloc(rk->nlen);
-      pk->key.rsa.e = (uint8_t *)malloc(rk->elen);
+      pk->key.rsa.n = reinterpret_cast<uint8_t *>(malloc(rk->nlen));
+      pk->key.rsa.e = reinterpret_cast<uint8_t *>(malloc(rk->elen));
       if (!pk->key.rsa.n || !pk->key.rsa.e)
       {
         free(pk->key.rsa.n);
@@ -531,13 +533,13 @@ namespace key_bssl
 
     case BR_KEYTYPE_EC:
       ek = br_pkey_decoder_get_ec(dc.get());
-      pk = (public_key *)malloc(sizeof *pk);
+      pk = reinterpret_cast<public_key *>(malloc(sizeof *pk));
       if (!pk)
       {
         return nullptr;
       }
       pk->key_type = BR_KEYTYPE_EC;
-      pk->key.ec.q = (uint8_t *)malloc(ek->qlen);
+      pk->key.ec.q = reinterpret_cast<uint8_t *>(malloc(ek->qlen));
       if (!pk->key.ec.q)
       {
         free(pk);
@@ -594,17 +596,17 @@ namespace key_bssl
     {
     case BR_KEYTYPE_RSA:
       rk = br_skey_decoder_get_rsa(dc.get());
-      sk = (private_key *)malloc(sizeof *sk);
+      sk = reinterpret_cast<private_key *>(malloc(sizeof *sk));
       if (!sk)
       {
         return nullptr;
       }
       sk->key_type = BR_KEYTYPE_RSA;
-      sk->key.rsa.p = (uint8_t *)malloc(rk->plen);
-      sk->key.rsa.q = (uint8_t *)malloc(rk->qlen);
-      sk->key.rsa.dp = (uint8_t *)malloc(rk->dplen);
-      sk->key.rsa.dq = (uint8_t *)malloc(rk->dqlen);
-      sk->key.rsa.iq = (uint8_t *)malloc(rk->iqlen);
+      sk->key.rsa.p = reinterpret_cast<uint8_t *>(malloc(rk->plen));
+      sk->key.rsa.q = reinterpret_cast<uint8_t *>(malloc(rk->qlen));
+      sk->key.rsa.dp = reinterpret_cast<uint8_t *>(malloc(rk->dplen));
+      sk->key.rsa.dq = reinterpret_cast<uint8_t *>(malloc(rk->dqlen));
+      sk->key.rsa.iq = reinterpret_cast<uint8_t *>(malloc(rk->iqlen));
       if (!sk->key.rsa.p || !sk->key.rsa.q || !sk->key.rsa.dp || !sk->key.rsa.dq || !sk->key.rsa.iq)
       {
         free_private_key(sk);
@@ -625,14 +627,14 @@ namespace key_bssl
 
     case BR_KEYTYPE_EC:
       ek = br_skey_decoder_get_ec(dc.get());
-      sk = (private_key *)malloc(sizeof *sk);
+      sk = reinterpret_cast<private_key *>(malloc(sizeof *sk));
       if (!sk)
       {
         return nullptr;
       }
       sk->key_type = BR_KEYTYPE_EC;
       sk->key.ec.curve = ek->curve;
-      sk->key.ec.x = (uint8_t *)malloc(ek->xlen);
+      sk->key.ec.x = reinterpret_cast<uint8_t *>(malloc(ek->xlen));
       if (!sk->key.ec.x)
       {
         free_private_key(sk);
@@ -688,9 +690,9 @@ namespace key_bssl
     private_key *sk = nullptr;
     pem_object *pos = nullptr;
 
-    if (looks_like_DER((const unsigned char *)buff, len))
+    if (looks_like_DER(reinterpret_cast<const unsigned char *>(buff), len))
     {
-      sk = decode_private_key((const unsigned char *)buff, len);
+      sk = decode_private_key(reinterpret_cast<const unsigned char *>(buff), len);
       return sk;
     }
 
@@ -720,9 +722,9 @@ namespace key_bssl
     public_key *pk = nullptr;
     pem_object *pos = nullptr;
 
-    if (looks_like_DER((const unsigned char *)buff, len))
+    if (looks_like_DER(reinterpret_cast<const unsigned char *>(buff), len))
     {
-      pk = decode_public_key((const unsigned char *)buff, len);
+      pk = decode_public_key(reinterpret_cast<const unsigned char *>(buff), len);
       return pk;
     }
     size_t num;
@@ -749,7 +751,7 @@ namespace key_bssl
 
   static uint8_t *loadStream(Stream &stream, size_t size)
   {
-    uint8_t *dest = (uint8_t *)malloc(size);
+    uint8_t *dest = reinterpret_cast<uint8_t *>(malloc(size));
     if (!dest)
     {
       return nullptr; // OOM error
@@ -806,7 +808,7 @@ namespace bssl
 
   bool PublicKey::parse(const char *pemKey)
   {
-    return parse((const uint8_t *)pemKey, strlen_P(pemKey));
+    return parse(reinterpret_cast<const uint8_t *>(pemKey), strlen_P(pemKey));
   }
 
   bool PublicKey::parse(const uint8_t *derKey, size_t derLen)
@@ -816,7 +818,7 @@ namespace bssl
       key_bssl::free_public_key(_key);
       _key = nullptr;
     }
-    _key = key_bssl::read_public_key((const char *)derKey, derLen);
+    _key = key_bssl::read_public_key(reinterpret_cast<const char *>(derKey), derLen);
     return _key ? true : false;
   }
 
@@ -896,7 +898,7 @@ namespace bssl
 
   bool PrivateKey::parse(const char *pemKey)
   {
-    return parse((const uint8_t *)pemKey, strlen_P(pemKey));
+    return parse(reinterpret_cast<const uint8_t *>(pemKey), strlen_P(pemKey));
   }
 
   bool PrivateKey::parse(const uint8_t *derKey, size_t derLen)
@@ -906,7 +908,7 @@ namespace bssl
       key_bssl::free_private_key(_key);
       _key = nullptr;
     }
-    _key = key_bssl::read_private_key((const char *)derKey, derLen);
+    _key = key_bssl::read_private_key(reinterpret_cast<const char *>(derKey), derLen);
     return _key ? true : false;
   }
 
@@ -996,13 +998,13 @@ namespace bssl
 
   bool X509List::append(const char *pemCert)
   {
-    return append((const uint8_t *)pemCert, strlen_P(pemCert));
+    return append(reinterpret_cast<const uint8_t *>(pemCert), strlen_P(pemCert));
   }
 
   bool X509List::append(const uint8_t *derCert, size_t derLen)
   {
     size_t numCerts;
-    br_x509_certificate *newCerts = key_bssl::read_certificates((const char *)derCert, derLen, &numCerts);
+    br_x509_certificate *newCerts = key_bssl::read_certificates(reinterpret_cast<const char *>(derCert), derLen, &numCerts);
     if (!newCerts)
     {
       return false;
@@ -1010,7 +1012,7 @@ namespace bssl
 
     // Add in the certificates
     br_x509_certificate *saveCert = _cert;
-    _cert = (br_x509_certificate *)realloc(_cert, (numCerts + _count) * sizeof(br_x509_certificate));
+    _cert = reinterpret_cast<br_x509_certificate *>(realloc(_cert, (numCerts + _count) * sizeof(br_x509_certificate)));
     if (!_cert)
     {
       free(newCerts);
@@ -1022,7 +1024,7 @@ namespace bssl
 
     // Build TAs for each certificate
     br_x509_trust_anchor *saveTa = _ta;
-    _ta = (br_x509_trust_anchor *)realloc(_ta, (numCerts + _count) * sizeof(br_x509_trust_anchor));
+    _ta = reinterpret_cast<br_x509_trust_anchor *>(realloc(_ta, (numCerts + _count) * sizeof(br_x509_trust_anchor)));
     if (!_ta)
     {
       _ta = saveTa;
