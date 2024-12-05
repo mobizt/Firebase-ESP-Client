@@ -108,7 +108,7 @@ public:
      * @param timeout The connection time out in miiliseconds.
      * @return 1 for success or 0 for error.
      */
-    int connect(IPAddress ip, uint16_t port, int32_t timeout) ESP32_ARDUINO_CORE_CLIENT_CONNECT_OVERRRIDE;
+    int connect(IPAddress ip, uint16_t port, int32_t timeout) ESP32_ARDUINO_CORE_CLIENT_CONNECT_OVERRIDE;
 
     /**
      * Connect to server.
@@ -125,7 +125,7 @@ public:
      * @param timeout The connection time out in miiliseconds.
      * @return 1 for success or 0 for error.
      */
-    int connect(const char *host, uint16_t port, int32_t timeout) ESP32_ARDUINO_CORE_CLIENT_CONNECT_OVERRRIDE;
+    int connect(const char *host, uint16_t port, int32_t timeout) ESP32_ARDUINO_CORE_CLIENT_CONNECT_OVERRIDE;
 
     /**
      * Get TCP connection status.
