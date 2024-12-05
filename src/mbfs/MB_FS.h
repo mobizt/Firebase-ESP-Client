@@ -131,7 +131,7 @@ struct mbfs_sd_config_info_t
 {
     int ss = -1;
 #if defined(MBFS_SD_FS)
-    SDFSConfig *sdFSConfig = nullptr;
+    sdFSConfig *sdFSConfig = nullptr;
 #endif
 };
 #else
