@@ -1,7 +1,7 @@
 /**
- * BSSL_SSL_Client library v1.0.18 for Arduino devices.
+ * BSSL_SSL_Client library v1.0.19 for Arduino devices.
  *
- * Created December 5, 2024
+ * Created January 9, 2025
  *
  * This work contains codes based on WiFiClientSecure from Earle F. Philhower and SSLClient from OSU OPEnS Lab.
  *
@@ -47,7 +47,8 @@
 #endif
 
 #if defined(ESP_ARDUINO_VERSION) /* ESP32 core >= v2.0.x */
-#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 1, 0)
+// ESP32 Client.h Arduino API breaking fix only for ESP32 Arduino Core v3.1.0
+#if ESP_ARDUINO_VERSION == ESP_ARDUINO_VERSION_VAL(3, 1, 0) 
 #define ESP32_ARDUINO_CORE_CLIENT_CONNECT_OVERRIDE override;
 #define ESP32_ARDUINO_CORE_CLIENT_CONNECT_HAS_TMO
 #else
