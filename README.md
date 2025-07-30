@@ -12,7 +12,7 @@
 > We recommended the [FirebaseClient](https://github.com/mobizt/FirebaseClient) library for ongoing supports.
 > You have to read the library documentation thoroughly before use.
 
-The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is now availavle in Arduino IDE and PlatformIO's Library Manager.
+The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is now available in Arduino IDE and PlatformIO's Library Manager.
 
 The new library provides simpler APIs interface, faster and more reliable operations.  It can use in both sync and async operations.
 
