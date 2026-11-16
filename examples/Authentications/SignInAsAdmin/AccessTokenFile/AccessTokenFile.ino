@@ -100,14 +100,14 @@ void setup()
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
   /* Assign the certificate file (optional) */
-  /** From the test as of July 2021, GlobalSign Root CA was missing from Google server
-   * when checking with https://www.sslchecker.com/sslchecker.
-   * The certificate chain, GTS Root R1 can be used instead.
+  /** google_roots.pem holds Google's GTS Root R1-R4. Google serves a chain that
+   * ends at GTS Root R4 to clients that offer ECDSA cipher suites, so a file with
+   * GTS Root R1 only (gtsr1.pem) fails the TLS handshake on those hosts.
    *
    * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
    */
-  config.cert.file = "/gtsr1.pem";
+  config.cert.file = "/google_roots.pem";
   config.cert.file_storage = mem_storage_type_flash; // or mem_storage_type_sd
 
   /* The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. */
